@@ -490,22 +490,20 @@
         });
     }
 
-    // 🚪 안전하게 마이크를 끄고 일기장 창을 닫는 함수
+    // 🚪 마이크를 끄고 앱을 즉시 이탈(종료)하는 스마트 개선 함수
     function closeApp() {
-        if (confirm("일기장을 안전하게 종료하시겠습니까?")) {
-            shouldRestart = false;
-            if (recognition && isRecording) {
-                recognition.stop();
-            }
-            
-            // 모바일 브라우저의 경우 이전 화면으로 가거나 홈으로 나가도록 처리
-            if (window.history.length > 1) {
-                window.history.back();
-            } else {
-                window.close();
-                // 일반 브라우저 보안상 window.close()가 안 먹힐 때를 대비해 안내 팝업 출력
-                alert("안전하게 종료되었습니다. 인터넷 창(탭)을 닫아주시면 됩니다.");
-            }
+        // 1) 마이크 작동을 즉시 완전히 정지
+        shouldRestart = false;
+        if (recognition && isRecording) {
+            recognition.stop();
+        }
+        
+        // 2) 확인창 없이 즉시 스마트폰의 이전 화면이나 홈 화면으로 튕겨 나가도록 유도
+        if (window.history.length > 1) {
+            window.history.back();
+        } else {
+            // 더 이상 갈 곳이 없다면 스마트폰 홈 화면 역할을 하도록 네이버나 구글 등으로 즉시 튕겨 나가게 처리
+            window.location.replace("https://www.google.com");
         }
     }
 
