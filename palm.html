@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 신비한 손금 분석소</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --primary-color: #a855f7;
+            --primary-hover: #9333ea;
+            --accent-color: #06b6d4;
+            --border-color: #334155;
+        }
+        body {
+            font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 450px;
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            box-sizing: border-box;
+            text-align: center;
+        }
+        h1 {
+            font-size: 26px;
+            color: #d8b4fe;
+            margin-bottom: 5px;
+        }
+        .subtitle {
+            font-size: 14px;
+            color: #94a3b8;
+            margin-bottom: 25px;
+        }
+        .upload-box {
+            border: 2px dashed var(--accent-color);
+            border-radius: 15px;
+            padding: 30px 20px;
+            background: #111827;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        #preview {
+            max-width: 100%;
+            max-height: 250px;
+            border-radius: 10px;
+            display: none;
+            z-index: 1;
+        }
+        .upload-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+        #file-input {
+            display: none;
+        }
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);
+            transition: all 0.2s;
+            margin-bottom: 15px;
+        }
+        .btn:hover {
+            background-color: var(--primary-hover);
+        }
+        .btn-share {
+            background-color: #eab308;
+            box-shadow: 0 4px 12px rgba(234, 179, 8, 0.3);
+            display: none;
+        }
+        .btn-share:hover {
+            background-color: #ca8a04;
+        }
+        /* 스캔 애니메이션 효과 */
+        .scanner-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(to right, transparent, #06b6d4, transparent);
+            box-shadow: 0 0 10px #06b6d4;
+            display: none;
+            z-index: 2;
+        }
+        @keyframes scan {
+            0% { top: 0%; }
+            50% { top: 100%; }
+            100% { top: 0%; }
+        }
+        .loading-text {
+            display: none;
+            font-size: 16px;
+            color: var(--accent-color);
+            margin: 15px 0;
+            font-weight: bold;
+        }
+        .result-box {
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+            text-align: left;
+        }
+        .result-title {
+            font-size: 20px;
+            color: #f472b6;
+            font-weight: bold;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .result-item {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+        .result-item strong {
+            color: #67e8f9;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>✋ 신비한 AI 손금 분석소</h1>
+    <div class="subtitle">손바닥 사진을 찍어 올리면 운세를 분석해 드립니다</div>
+
+    <div class="upload-box" onclick="triggerUpload()">
+        <div class="scanner-line" id="scanner"></div>
+        <img id="preview" alt="손금 사진 미리보기">
+        <div id="upload-prompt">
+            <div class="upload-icon">📸</div>
+            <p style="margin: 5px 0; font-size: 16px; font-weight: bold;">손바닥 사진 올리기</p>
+            <p style="margin: 0; font-size: 13px; color: #64748b;">(터치하여 카메라 촬영 또는 갤러리 선택)</p>
+        </div>
+    </div>
+
+    <input type="file" id="file-input" accept="image/*" onchange="loadInput(event)">
+    
+    <button class="btn" id="analyze-btn" onclick="startAnalysis()">🔮 손금 무료 분석 시작</button>
+    <button class="btn btn-share" id="share-btn" onclick="shareResult()">✉️ 결과 친구에게 자랑하기</button>
+
+    <div class="loading-text" id="loading-txt">🔮 우주의 기운을 모아 손금을 분석하는 중...</div>
+
+    <div class="result-box" id="result-div">
+        <div class="result-title">✨ 당신의 손금 분석 결과 ✨</div>
+        <div class="result-item" id="res-life"></div>
+        <div class="result-item" id="res-money"></div>
+        <div class="result-item" id="res-brain"></div>
+        <div class="result-item" id="res-luck" style="text-align: center; margin-top: 20px; font-size: 18px; color: #f472b6;"></div>
+    </div>
+</div>
+
+<script>
+    const fileInput = document.getElementById('file-input');
+    const preview = document.getElementById('preview');
+    const uploadPrompt = document.getElementById('upload-prompt');
+    const scanner = document.getElementById('scanner');
+    const loadingTxt = document.getElementById('loading-txt');
+    const resultDiv = document.getElementById('result-div');
+    const analyzeBtn = document.getElementById('analyze-btn');
+    const shareBtn = document.getElementById('share-btn');
+
+    // 재미를 위한 다양한 손금 운세 결과 데이터 베이스
+    const lifeLines = [
+        "**생명선:** 엄지손가락을 둘러싼 선이 아주 굵고 뚜렷하시네요! 타고난 에너지가 넘치며, 잔병치레 없이 무병장수할 최고의 건강 체질입니다. 지치지 않는 열정의 소유자이십니다.",
+        "**생명선:** 선의 끝부분이 바깥쪽으로 넓게 뻗어 나가는 형태입니다. 환경 변화에 강하고 활동적인 성향으로, 나이가 들수록 대외 활동이나 여행을 통해 더 큰 활력과 에너지를 얻게 되는 멋진 손금입니다."
+    ];
+
+    const moneyLines = [
+        "**재물선 & 사업선:** 약지 아래로 뻗은 선이 나침반처럼 곧게 뻗어 있습니다! 타고난 인복이 있어 주변 조력자의 도움으로 큰 재물을 모으게 됩니다. 50대 이후 부동산이나 문서운이 빵 터지는 대박 형상입니다.",
+        "**재물선 & 사업선:** 손바닥 중앙에서부터 재물선이 힘차게 뻗어 올라갑니다. 스스로 고생하여 자수성가하는 강인한 능력을 뜻하며, 중년 이후부터 뿌린 대로 거두어 재산이 눈덩이처럼 불어날 징조입니다."
+    ];
+
+    const brainLines = [
+        "**두뇌선:** 선이 길고 완만한 곡선을 그리며 아래로 향하고 있군요. 창의력과 기획력이 매우 뛰어나며, 사람의 마음을 읽는 심리나 예술, 디지털 콘텐츠 창작 분야에서 큰 두각을 나타낼 천재적 두뇌입니다.",
+        "**두뇌선:** 선이 수평으로 곧게 뻗어 나가는 이성적인 형태입니다. 판단력이 정확하고 현실 감각이 뛰어나 리더 역할을 잘 수행하며, 복잡한 세무나 규정 속에서도 이득을 딱 찾아내는 영리함을 가졌습니다."
+    ];
+
+    const totalLucks = [
+        "🌟 **총평:** 올해 '황금빛 만사형통'의 기운이 깃들어 있습니다!",
+        "🌟 **총평:** 지금 하시는 일이 결국 큰 문서와 재물로 돌아올 귀한 운명입니다!"
+    ];
+
+    let currentResultText = "";
+
+    function triggerUpload() {
+        if(loadingTxt.style.display === 'block') return;
+        fileInput.click();
+    }
+
+    function loadInput(event) {
+        const file = event.target.value;
+        if(event.target.files && event.target.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+                uploadPrompt.style.display = 'none';
+                resultDiv.style.display = 'none';
+                shareBtn.style.display = 'none';
+            }
+            reader.readAsDataURL(event.target.files[0]);
+        }
+    }
+
+    function startAnalysis() {
+        if(preview.style.display === 'none' || !preview.src) {
+            alert("먼저 손바닥 사진을 촬영하거나 올려주세요!");
+            return;
+        }
+
+        // 애니메이션 작동
+        analyzeBtn.disabled = true;
+        analyzeBtn.textContent = "⚡ 분석 중...";
+        resultDiv.style.display = 'none';
+        shareBtn.style.display = 'none';
+        loadingTxt.style.display = 'block';
+        scanner.style.display = 'block';
+        scanner.style.animation = 'scan 1.5s infinite linear';
+
+        // 3초 뒤 진짜 결과가 짜잔 나타나는 연출
+        setTimeout(() => {
+            scanner.style.display = 'none';
+            scanner.style.animation = '';
+            loadingTxt.style.display = 'none';
+            analyzeBtn.disabled = false;
+            analyzeBtn.textContent = "🔮 손금 다시 분석하기";
+
+            // 랜덤 결과 조합
+            const life = lifeLines[Math.floor(Math.random() * lifeLines.length)];
+            const money = moneyLines[Math.floor(Math.random() * moneyLines.length)];
+            const brain = brainLines[Math.floor(Math.random() * brainLines.length)];
+            const luck = totalLucks[Math.floor(Math.random() * totalLucks.length)];
+
+            // 화면에 반영
+            document.getElementById('res-life').innerHTML = life.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            document.getElementById('res-money').innerHTML = money.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            document.getElementById('res-brain').innerHTML = brain.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            document.getElementById('res-luck').innerText = luck;
+
+            resultDiv.style.display = 'block';
+            shareBtn.style.display = 'block';
+
+            // 공유용 텍스트 생성
+            currentResultText = `[🔮 나의 신비한 손금 분석 결과]\n\n${life.replace(/\*\*/g, '')}\n\n${money.replace(/\*\*/g, '')}\n\n${luck}\n\n👉 너도 얼른 손금 봐봐! 진짜 신기해!`;
+        }, 3000);
+    }
+
+    function shareResult() {
+        if(!currentResultText) return;
+        
+        navigator.clipboard.writeText(currentResultText).then(() => {
+            alert("✉️ 손금 결과가 클립보드에 복사되었습니다!\n카카오톡 대화창을 길게 눌러 '붙여넣기'로 친구에게 링크와 결과를 전달해 보세요!");
+        }).catch(err => {
+            alert("복사에 실패했습니다. 결과를 직접 캡처해서 공유해 보세요.");
+        });
+    }
+</script>
+
+</body>
+</html>
