@@ -11,6 +11,8 @@
             --text-color: #4a3f35;
             --primary-color: #ff8e94;
             --primary-hover: #ff7179;
+            --save-color: #4da6ff;
+            --save-hover: #358be6;
             --border-color: #eaddd3;
             --pill-success: #2eb82e;
         }
@@ -81,7 +83,8 @@
         }
         .btn-box {
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            gap: 12px;
             margin-bottom: 20px;
         }
         #record-btn {
@@ -97,30 +100,52 @@
             transition: all 0.2s ease;
             width: 100%;
         }
-        #record-btn:hover {
-            background-color: var(--primary-hover);
-        }
         #record-btn.recording {
             background-color: #b3a297;
             animation: pulse 1.5s infinite;
             box-shadow: 0 4px 10px rgba(179, 162, 151, 0.4);
+        }
+        /* 💾 저장 버튼 스타일 추가 */
+        #save-btn {
+            background-color: var(--save-color);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(77, 166, 255, 0.3);
+            transition: all 0.2s ease;
+            width: 100%;
+            display: none; /* 평소에는 안 보이다가 글자가 입력되면 등장 */
+        }
+        #save-btn:hover {
+            background-color: var(--save-hover);
         }
         @keyframes pulse {
             0% { opacity: 1; }
             50% { opacity: 0.7; }
             100% { opacity: 1; }
         }
+        /* 글자 확인 및 편집창을 직접 수정 가능하게 바꿈 */
         #text-output {
             width: 100%;
-            min-height: 100px;
+            min-height: 120px;
             border: 2px dashed var(--border-color);
             border-radius: 12px;
             padding: 15px;
             box-sizing: border-box;
             margin-bottom: 25px;
-            font-size: 20px;
+            font-size: 22px;
             line-height: 1.6;
             background-color: #fffdfb;
+            color: #2b231c;
+            outline: none;
+        }
+        #text-output:focus {
+            border-style: solid;
+            border-color: var(--save-color);
         }
         .diary-list {
             margin-top: 10px;
@@ -142,7 +167,6 @@
             display: inline-block;
             padding: 4px 8px;
             border-radius: 6px;
-            border: 1px solid transparent;
             outline: none;
         }
         .diary-date:focus {
@@ -166,8 +190,6 @@
             word-break: break-all;
             padding: 8px;
             border-radius: 6px;
-            border: 1px solid transparent;
-            transition: all 0.2s;
             outline: none;
             color: #2b231c;
             font-weight: 500;
@@ -176,7 +198,6 @@
         .diary-text:focus {
             background-color: #f7f1eb;
             border-color: var(--primary-color);
-            box-shadow: 0 0 5px rgba(255, 142, 148, 0.2);
         }
         .delete-btn {
             position: absolute;
@@ -216,24 +237,28 @@
     
     <div class="btn-box">
         <button id="record-btn">🎤 눌러서 말하기</button>
+        <!-- 💾 수동 저장 버튼 추가 -->
+        <button id="save-btn" onclick="manualSaveDiary()">💾 이 내용으로 일기 저장</button>
     </div>
     
-    <div id="text-output" placeholder="여기에 말한 내용이 글자로 나타납니다..."></div>
+    <!-- 터치해서 직접 편집할 수 있도록 contenteditable="true" 적용 -->
+    <div id="text-output" contenteditable="true" placeholder="여기에 말한 내용이 글자로 나타납니다... 잘못 받아적은 부분은 터치해서 직접 고칠 수 있습니다."></div>
     
     <hr style="border: 0; height: 1px; background: var(--border-color); margin-bottom: 20px;">
     
-    <p class="tip-text">💡 저장된 일기 내용과 [날짜]를 터치하면 바로 수정할 수 있습니다!</p>
+    <p class="tip-text">💡 아래 저장된 일기 내용과 [날짜]도 터치하면 바로 수정할 수 있습니다!</p>
     <div class="diary-list" id="diary-list"></div>
 </div>
 
 <script>
     const recordBtn = document.getElementById('record-btn');
+    const saveBtn = document.getElementById('save-btn');
     const textOutput = document.getElementById('text-output');
     const diaryList = document.getElementById('diary-list');
 
     let recognition;
     let isRecording = false;
-    let finalPhrases = new Set(); // 중복 문장을 원천 차단하기 위한 철통 필터 변수
+    let finalPhrases = new Set();
 
     function getTodayStr() {
         const now = new Date();
@@ -243,12 +268,10 @@
     function loadPillState() {
         const savedDate = localStorage.getItem('pillDate');
         const today = getTodayStr();
-        
         if (savedDate !== today) {
             localStorage.setItem('pillDate', today);
             localStorage.setItem('pillState', JSON.stringify({ morning: false, lunch: false, dinner: false }));
         }
-        
         const state = JSON.parse(localStorage.getItem('pillState') || '{"morning":false,"lunch":false,"dinner":false}');
         updatePillButton('morning', state.morning, '☀️ 아침');
         updatePillButton('lunch', state.lunch, '🌤️ 점심');
@@ -285,8 +308,9 @@
             isRecording = true;
             recordBtn.textContent = '🛑 말하기 완료 (터치)';
             recordBtn.classList.add('recording');
-            textOutput.textContent = '듣고 있습니다... 말씀을 시작하세요.';
-            finalPhrases.clear(); // 시작할 때 중복 필터 깨끗이 청소
+            textOutput.innerText = '듣고 있습니다... 말씀을 시작하세요.';
+            saveBtn.style.display = 'none'; // 녹음 시작할 땐 저장 단추 숨김
+            finalPhrases.clear();
         };
 
         recognition.onerror = (event) => {
@@ -296,41 +320,33 @@
 
         recognition.onend = () => {
             stopRecording();
-            const text = textOutput.textContent.trim();
-            if (text.length > 0 && text !== '듣고 있습니다... 말씀을 시작하세요.' && text !== '인식된 목소리가 없습니다. 다시 시도해 주세요.') {
-                saveDiary(text);
-                textOutput.textContent = '';
+            const currentText = textOutput.innerText.trim();
+            if (currentText.length > 0 && currentText !== '듣고 있습니다... 말씀을 시작하세요.' && currentText !== '인식된 목소리가 없습니다. 다시 시도해 주세요.') {
+                saveBtn.style.display = 'block'; // 녹음이 끝나면 눈으로 확인하고 저장하라고 단추 띄움
             } else {
-                textOutput.textContent = '인식된 목소리가 없습니다. 다시 시도해 주세요.';
+                textOutput.innerText = '인식된 목소리가 없습니다. 다시 시도해 주세요.';
+                saveBtn.style.display = 'none';
             }
         };
 
         recognition.onresult = (event) => {
             let interimTranscript = '';
-
             for (let i = event.resultIndex; i < event.results.length; ++i) {
                 const speechText = event.results[i][0].transcript.trim();
                 if (event.results[i].isFinal) {
-                    // 똑같은 단어나 문장이 이미 확정 리스트에 있다면 절대 추가하지 않음
-                    if (speechText.length > 0) {
-                        finalPhrases.add(speechText);
-                    }
+                    if (speechText.length > 0) finalPhrases.add(speechText);
                 } else {
                     interimTranscript = speechText;
                 }
             }
-            
-            // 필터링되어 유일하게 살아남은 문장들만 한 칸씩 띄워 정렬
             const combinedFinal = Array.from(finalPhrases).join(' ');
-            
-            // 화면 텍스트창 업데이트 (실시간 글자 뜨기 + 중복 완벽 제거)
             if (combinedFinal || interimTranscript) {
-                textOutput.textContent = (combinedFinal + ' ' + interimTranscript).trim();
+                textOutput.innerText = (combinedFinal + ' ' + interimTranscript).trim();
             }
         };
     } else {
         recordBtn.style.display = 'none';
-        textOutput.textContent = '이 브라우저는 음성 인식을 지원하지 않습니다. 삼성 인터넷이나 크롬을 이용해 주세요.';
+        textOutput.innerText = '이 브라우저는 음성 인식을 지원하지 않습니다.';
     }
 
     function stopRecording() {
@@ -347,7 +363,14 @@
         }
     });
 
-    function saveDiary(text) {
+    // [핵심 변경] 사용자가 직접 저장 버튼을 눌러야만 저장되는 수동 저장 함수
+    function manualSaveDiary() {
+        const text = textOutput.innerText.trim();
+        if (!text) {
+            alert('내용이 없습니다.');
+            return;
+        }
+
         const diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
         const now = new Date();
         const dateStr = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일 ${now.getHours()}시 ${now.getMinutes()}분`;
@@ -370,15 +393,19 @@
             pills: pillHistory
         });
         localStorage.setItem('myDiaries', JSON.stringify(diaries));
+        
+        // 저장 후 창 깨끗하게 비우고 저장버튼 숨기기
+        textOutput.innerText = '';
+        saveBtn.style.display = 'none';
+        
         displayDiaries();
+        alert('일기가 안전하게 저장되었습니다!');
     }
 
     function updateField(id, field, value) {
         let diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
         diaries = diaries.map(item => {
-            if (item.id === id) {
-                return { ...item, [field]: value.trim() };
-            }
+            if (item.id === id) return { ...item, [field]: value.trim() };
             return item;
         });
         localStorage.setItem('myDiaries', JSON.stringify(diaries));
@@ -400,7 +427,6 @@
         diaries.forEach(item => {
             const diaryItem = document.createElement('div');
             diaryItem.className = 'diary-item';
-            
             const pillTag = item.pills ? `<span class="diary-pill-tag">${item.pills}</span>` : '';
             
             diaryItem.innerHTML = `
@@ -411,23 +437,18 @@
                 <div class="diary-text" contenteditable="true" data-id="${item.id}">${item.content}</div>
                 <button class="delete-btn" onclick="deleteDiary(${item.id})">❌ 삭제</button>
             `;
-            
             diaryList.appendChild(diaryItem);
         });
 
         document.querySelectorAll('.diary-date').forEach(element => {
             element.addEventListener('blur', function() {
-                const id = parseInt(this.getAttribute('data-id'));
-                const newDate = this.innerText;
-                updateField(id, 'date', newDate);
+                updateField(parseInt(this.getAttribute('data-id')), 'date', this.innerText);
             });
         });
 
         document.querySelectorAll('.diary-text').forEach(element => {
             element.addEventListener('blur', function() {
-                const id = parseInt(this.getAttribute('data-id'));
-                const newContent = this.innerText;
-                updateField(id, 'content', newContent);
+                updateField(parseInt(this.getAttribute('data-id')), 'content', this.innerText);
             });
         });
     }
