@@ -41,7 +41,6 @@
             margin-bottom: 20px;
             color: #d17377;
         }
-        /* 💊 알약 체크 컨테이너 다시 복구 */
         .pill-container {
             background-color: #fff9f5;
             border: 2px solid var(--border-color);
@@ -146,6 +145,29 @@
             border-style: solid;
             border-color: var(--save-color);
         }
+        /* 📅 기간별 보기 필터 버튼 스타일 추가 */
+        .filter-container {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        .filter-btn {
+            padding: 8px 16px;
+            font-size: 15px;
+            font-weight: bold;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            background-color: white;
+            color: #8c7664;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .filter-btn.active {
+            background-color: #8c7664;
+            color: white;
+            border-color: #8c7664;
+        }
         .diary-list {
             margin-top: 10px;
         }
@@ -215,7 +237,6 @@
 <div class="container">
     <h1>📝 나의 목소리 일기장</h1>
     
-    <!-- 💊 알약 체크 기능 상단 배치 -->
     <div class="pill-container">
         <div class="pill-title">💊 오늘 약 챙겨 드셨나요? (터치하여 체크)</div>
         <div class="pill-buttons">
@@ -234,6 +255,13 @@
     
     <hr style="border: 0; height: 1px; background: var(--border-color); margin-bottom: 20px;">
     
+    <!-- 📅 다시 추가된 1주일/1달 필터 버튼 구성 -->
+    <div class="filter-container">
+        <button class="filter-btn active" id="filter-all" onclick="changeFilter('all')">전체보기</button>
+        <button class="filter-btn" id="filter-week" onclick="changeFilter('week')">1주일보기</button>
+        <button class="filter-btn" id="filter-month" onclick="changeFilter('month')">1달보기</button>
+    </div>
+
     <p class="tip-text">💡 아래 저장된 일기 내용과 [날짜]도 터치하면 바로 수정할 수 있습니다!</p>
     <div class="diary-list" id="diary-list"></div>
 </div>
@@ -248,6 +276,7 @@
     let isRecording = false;
     let shouldRestart = true; 
     let accumulatedText = '';
+    let currentFilter = 'all'; // 현재 보고 있는 필터 상태
 
     function getTodayStr() {
         const now = new Date();
@@ -368,11 +397,11 @@
         const now = new Date();
         const dateStr = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일 ${now.getHours()}시 ${now.getMinutes()}분`;
         
-        // 💊 일기 본문에는 약 복용 내역을 추가하지 않음 (선생님 요청사항 반영)
         diaries.unshift({ 
             id: Date.now(), 
             date: dateStr, 
-            content: text
+            content: text,
+            timestamp: Date.now() // 정확한 기간 필터링용 시간값 추가
         });
         localStorage.setItem('myDiaries', JSON.stringify(diaries));
         
@@ -401,15 +430,33 @@
         }
     }
 
+    // 필터 버튼 누르면 상태 변경하는 함수
+    function changeFilter(filterType) {
+        currentFilter = filterType;
+        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(`filter-${filterType}`).classList.add('active');
+        displayDiaries();
+    }
+
     function displayDiaries() {
         diaryList.innerHTML = '';
-        const diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
+        let diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
+        
+        const now = Date.now();
+        const oneWeek = 7 * 24 * 60 * 60 * 1000;
+        const oneMonth = 30 * 24 * 60 * 60 * 1000;
+
+        // 기간 조건에 맞춰 일기 필터링하기
+        if (currentFilter === 'week') {
+            diaries = diaries.filter(item => (now - (item.timestamp || item.id)) <= oneWeek);
+        } else if (currentFilter === 'month') {
+            diaries = diaries.filter(item => (now - (item.timestamp || item.id)) <= oneMonth);
+        }
         
         diaries.forEach(item => {
             const diaryItem = document.createElement('div');
             diaryItem.className = 'diary-item';
             
-            // 일기장 리스트 UI에는 오직 날짜와 본문만 깔끔하게 나오도록 유지
             diaryItem.innerHTML = `
                 <div>
                     <div class="diary-date" contenteditable="true" data-id="${item.id}">${item.date}</div>
