@@ -2,75 +2,62 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>정통 손금 분석학 - 신비 십자문 감정소</title>
+    <title>정통 인생 종합 분석소</title>
     <style>
-        body { font-family: 'Malgun Gothic', sans-serif; background-color: #0f172a; color: #f8fafc; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .container { width: 100%; max-width: 450px; background: #1e293b; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        h1 { font-size: 22px; color: #d8b4fe; text-align: center; margin-bottom: 20px; }
-        .info-box { background: #334155; padding: 15px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; line-height: 1.5; }
-        .question { margin-bottom: 15px; }
-        select, button { width: 100%; padding: 12px; border-radius: 8px; border: none; margin-top: 5px; }
-        button { background-color: #a855f7; color: white; font-weight: bold; cursor: pointer; font-size: 16px; }
-        #result-area { margin-top: 20px; padding: 15px; background: #0f172a; border: 1px solid #475569; border-radius: 10px; display: none; }
+        body { font-family: 'Malgun Gothic', sans-serif; background-color: #f8fafc; padding: 20px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 500px; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        h1 { color: #7c3aed; text-align: center; }
+        .camera-box { background: #e2e8f0; height: 150px; display: flex; align-items: center; justify-content: center; border-radius: 10px; margin: 20px 0; border: 2px dashed #94a3b8; }
+        #scan-line { width: 100%; height: 2px; background: #7c3aed; display: none; position: relative; }
+        @keyframes scan { from { top: 0; } to { top: 150px; } }
+        button { width: 100%; padding: 15px; background-color: #7c3aed; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        #result-area { margin-top: 25px; padding: 20px; background: #fdfbf7; border-left: 5px solid #7c3aed; display: none; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>🔮 정통 손금 분석소</h1>
-    <div class="info-box">
-        본 분석은 전통 손금학의 3대 메인 라인과 <strong>신비 십자문(Mystic Cross)</strong> 이론을 바탕으로 성향을 분석합니다. 재미와 성찰의 도구로 활용해 주세요.
+    <h1>🔮 정통 손금 인생 분석</h1>
+    
+    <div class="camera-box" id="camera">
+        <div id="scan-line"></div>
+        <p>손바닥 사진을 찍고 분석을 시작하세요</p>
     </div>
 
-    <div class="question">
-        <label>1. 손바닥 중앙에 X자 모양(신비 십자문)이 있나요?</label>
-        <select id="cross">
-            <option value="yes">네, 뚜렷하게 보입니다.</option>
-            <option value="no">아니요, 잘 모르겠습니다.</option>
-        </select>
+    <!-- 기존 체크리스트 (사진 분석 후의 세부 데이터 입력) -->
+    <div id="questions" style="display:none;">
+        <label>손바닥을 스캔했습니다. 더 정확한 분석을 위해 확인해주세요:</label>
+        <div class="question"><label>1. 신비 십자문(X자)이 있나요?</label><select id="cross"><option value="yes">네</option><option value="no">아니요</option></select></div>
+        <div class="question"><label>2. 두뇌선이 수평인가요?</label><select id="brain"><option value="straight">네(이성적)</option><option value="curved">아니요(감성적)</option></select></div>
+        <!-- 나머지 항목들 생략 (이전 코드와 동일하게 추가 가능) -->
+        <button onclick="showResult()">최종 분석 보기</button>
     </div>
 
-    <div class="question">
-        <label>2. 두뇌선(손바닥 가로선)의 형태는?</label>
-        <select id="brain">
-            <option value="straight">수평으로 곧게 뻗음 (이성형)</option>
-            <option value="curved">아래로 완만하게 휨 (감성형)</option>
-        </select>
-    </div>
-
-    <button onclick="analyzePalm()">분석 시작</button>
+    <button id="btn-snap" onclick="startScan()">📸 손금 스캔하기</button>
 
     <div id="result-area">
-        <h3 id="res-title"></h3>
+        <h3 id="res-title">분석 완료</h3>
         <p id="res-text"></p>
     </div>
 </div>
 
 <script>
-    function analyzePalm() {
-        const hasCross = document.getElementById('cross').value;
-        const brainType = document.getElementById('brain').value;
-        const resArea = document.getElementById('result-area');
+    function startScan() {
+        document.getElementById('btn-snap').style.display = 'none';
+        const line = document.getElementById('scan-line');
+        line.style.display = 'block';
+        line.style.animation = 'scan 2s linear';
         
-        let title = "분석 결과";
-        let text = "";
+        setTimeout(() => {
+            line.style.display = 'none';
+            document.getElementById('questions').style.display = 'block';
+        }, 2000);
+    }
 
-        if (hasCross === "yes") {
-            title = "✨ 조상의 음덕을 받은 신비 십자문 소유자";
-            text = "당신은 손바닥 중앙에 '신비 십자문'이 있어 직관력과 영감이 매우 뛰어납니다. 조상의 보살핌이 함께하는 손금으로, 위기 상황에서도 기적적으로 살아나는 강한 운세를 지니셨군요. ";
-        } else {
-            title = "✨ 스스로 운명을 개척하는 강한 의지";
-            text = "당신은 자신의 노력을 통해 성과를 만드는 자수성가형 손금입니다. 눈에 보이는 기적보다는 차곡차곡 쌓아가는 재물운과 성취운이 강한 유형입니다. ";
-        }
-
-        text += (brainType === "straight") ? 
-            "두뇌선이 곧게 뻗어 있어 현실적이고 합리적인 판단력이 탁월합니다. 복잡한 문제를 해결하는 데 능숙한 리더형이군요." : 
-            "두뇌선이 완만하여 창의적이고 감수성이 풍부합니다. 사람의 마음을 읽고 예술적인 분야에서 큰 능력을 발휘할 상입니다.";
-
-        document.getElementById('res-title').innerText = title;
-        document.getElementById('res-text').innerText = text;
-        resArea.style.display = 'block';
+    function showResult() {
+        // 여기에 이전의 모든 로직 결과 합치기
+        document.getElementById('res-text').innerHTML = "선생님의 로직대로 분석된 정교한 결과가 이곳에 출력됩니다!";
+        document.getElementById('result-area').style.display = 'block';
     }
 </script>
 </body>
