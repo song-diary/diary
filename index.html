@@ -12,7 +12,6 @@
             --primary-color: #ff8e94;
             --primary-hover: #ff7179;
             --border-color: #eaddd3;
-            --pill-color: #4da6ff;
             --pill-success: #2eb82e;
         }
         body {
@@ -40,7 +39,6 @@
             margin-bottom: 20px;
             color: #d17377;
         }
-        
         .pill-container {
             background-color: #fff9f5;
             border: 2px solid var(--border-color);
@@ -81,7 +79,6 @@
             border-color: var(--pill-success);
             color: var(--pill-success);
         }
-
         .btn-box {
             display: flex;
             justify-content: center;
@@ -236,7 +233,7 @@
 
     let recognition;
     let isRecording = false;
-    let finalTranscript = ''; // [버그 전면 수정] 확정된 텍스트만 깔끔하게 보관하는 변수
+    let finalPhrases = new Set(); // 중복 문장을 원천 차단하기 위한 철통 필터 변수
 
     function getTodayStr() {
         const now = new Date();
@@ -253,7 +250,6 @@
         }
         
         const state = JSON.parse(localStorage.getItem('pillState') || '{"morning":false,"lunch":false,"dinner":false}');
-        
         updatePillButton('morning', state.morning, '☀️ 아침');
         updatePillButton('lunch', state.lunch, '🌤️ 점심');
         updatePillButton('dinner', state.dinner, '🌙 저녁');
@@ -274,7 +270,6 @@
         const state = JSON.parse(localStorage.getItem('pillState') || '{"morning":false,"lunch":false,"dinner":false}');
         state[type] = !state[type];
         localStorage.setItem('pillState', JSON.stringify(state));
-        
         const labels = { morning: '☀️ 아침', lunch: '🌤️ 점심', dinner: '🌙 저녁' };
         updatePillButton(type, state[type], labels[type]);
     }
@@ -291,7 +286,7 @@
             recordBtn.textContent = '🛑 말하기 완료 (터치)';
             recordBtn.classList.add('recording');
             textOutput.textContent = '듣고 있습니다... 말씀을 시작하세요.';
-            finalTranscript = ''; // 초기화
+            finalPhrases.clear(); // 시작할 때 중복 필터 깨끗이 청소
         };
 
         recognition.onerror = (event) => {
@@ -301,8 +296,8 @@
 
         recognition.onend = () => {
             stopRecording();
-            const text = finalTranscript.trim(); // 중복 없는 깨끗한 확정 텍스트만 저장하도록 수정
-            if (text.length > 0) {
+            const text = textOutput.textContent.trim();
+            if (text.length > 0 && text !== '듣고 있습니다... 말씀을 시작하세요.' && text !== '인식된 목소리가 없습니다. 다시 시도해 주세요.') {
                 saveDiary(text);
                 textOutput.textContent = '';
             } else {
@@ -312,19 +307,26 @@
 
         recognition.onresult = (event) => {
             let interimTranscript = '';
-            let currentFinal = '';
 
-            // 인식 결과를 처음부터 끝까지 순서대로 정렬하여 추출 (가장 정석적인 중복 방지 로직)
             for (let i = event.resultIndex; i < event.results.length; ++i) {
+                const speechText = event.results[i][0].transcript.trim();
                 if (event.results[i].isFinal) {
-                    finalTranscript += event.results[i][0].transcript + ' ';
+                    // 똑같은 단어나 문장이 이미 확정 리스트에 있다면 절대 추가하지 않음
+                    if (speechText.length > 0) {
+                        finalPhrases.add(speechText);
+                    }
                 } else {
-                    interimTranscript += event.results[i][0].transcript;
+                    interimTranscript = speechText;
                 }
             }
             
-            // 실시간으로 변하는 글자들을 중복 없이 화면에 깔끔하게 매칭 출력
-            textOutput.textContent = finalTranscript + interimTranscript;
+            // 필터링되어 유일하게 살아남은 문장들만 한 칸씩 띄워 정렬
+            const combinedFinal = Array.from(finalPhrases).join(' ');
+            
+            // 화면 텍스트창 업데이트 (실시간 글자 뜨기 + 중복 완벽 제거)
+            if (combinedFinal || interimTranscript) {
+                textOutput.textContent = (combinedFinal + ' ' + interimTranscript).trim();
+            }
         };
     } else {
         recordBtn.style.display = 'none';
@@ -364,7 +366,7 @@
         diaries.unshift({ 
             id: Date.now(), 
             date: dateStr, 
-            content: text.trim(),
+            content: text,
             pills: pillHistory
         });
         localStorage.setItem('myDiaries', JSON.stringify(diaries));
