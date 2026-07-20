@@ -41,7 +41,6 @@
             color: #d17377;
         }
         
-        /* 알약 챙기기 구역 스타일 */
         .pill-container {
             background-color: #fff9f5;
             border: 2px solid var(--border-color);
@@ -153,7 +152,6 @@
             background-color: #f7f1eb;
             border-color: var(--primary-color);
         }
-        /* 일기 내 약 복용 표시 */
         .diary-pill-tag {
             font-size: 13px;
             color: var(--pill-success);
@@ -210,7 +208,6 @@
 <div class="container">
     <h1>📝 나의 목소리 일기장</h1>
     
-    <!-- 💊 오늘의 약 챙기기 구역 추가 -->
     <div class="pill-container">
         <div class="pill-title">💊 오늘 약 챙겨 드셨나요? (터치하여 체크)</div>
         <div class="pill-buttons">
@@ -239,20 +236,17 @@
 
     let recognition;
     let isRecording = false;
-    let accumulatedTranscript = '';
+    let finalTranscript = ''; // [버그 전면 수정] 확정된 텍스트만 깔끔하게 보관하는 변수
 
-    // 오늘 날짜 구하기 (YYYY-MM-DD)
     function getTodayStr() {
         const now = new Date();
         return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
     }
 
-    // 약 체크 상태 불러오기 및 리셋 검사
     function loadPillState() {
         const savedDate = localStorage.getItem('pillDate');
         const today = getTodayStr();
         
-        // 날짜가 바뀌었으면 약 체크 리셋
         if (savedDate !== today) {
             localStorage.setItem('pillDate', today);
             localStorage.setItem('pillState', JSON.stringify({ morning: false, lunch: false, dinner: false }));
@@ -265,7 +259,6 @@
         updatePillButton('dinner', state.dinner, '🌙 저녁');
     }
 
-    // 약 버튼 디자인 변경
     function updatePillButton(type, isTaken, label) {
         const btn = document.getElementById(`pill-${type}`);
         if (isTaken) {
@@ -277,7 +270,6 @@
         }
     }
 
-    // 약 버튼 누를 때 토글
     function togglePill(type) {
         const state = JSON.parse(localStorage.getItem('pillState') || '{"morning":false,"lunch":false,"dinner":false}');
         state[type] = !state[type];
@@ -287,7 +279,6 @@
         updatePillButton(type, state[type], labels[type]);
     }
 
-    // 음성 인식 설정
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         recognition = new SpeechRecognition();
@@ -300,7 +291,7 @@
             recordBtn.textContent = '🛑 말하기 완료 (터치)';
             recordBtn.classList.add('recording');
             textOutput.textContent = '듣고 있습니다... 말씀을 시작하세요.';
-            accumulatedTranscript = '';
+            finalTranscript = ''; // 초기화
         };
 
         recognition.onerror = (event) => {
@@ -310,8 +301,8 @@
 
         recognition.onend = () => {
             stopRecording();
-            const text = textOutput.textContent.trim();
-            if (text.length > 0 && text !== '듣고 있습니다... 말씀을 시작하세요.' && text !== '인식된 목소리가 없습니다. 다시 시도해 주세요.') {
+            const text = finalTranscript.trim(); // 중복 없는 깨끗한 확정 텍스트만 저장하도록 수정
+            if (text.length > 0) {
                 saveDiary(text);
                 textOutput.textContent = '';
             } else {
@@ -320,22 +311,20 @@
         };
 
         recognition.onresult = (event) => {
-            let currentInterim = '';
+            let interimTranscript = '';
             let currentFinal = '';
 
+            // 인식 결과를 처음부터 끝까지 순서대로 정렬하여 추출 (가장 정석적인 중복 방지 로직)
             for (let i = event.resultIndex; i < event.results.length; ++i) {
                 if (event.results[i].isFinal) {
-                    currentFinal += event.results[i][0].transcript + ' ';
+                    finalTranscript += event.results[i][0].transcript + ' ';
                 } else {
-                    currentInterim += event.results[i][0].transcript;
+                    interimTranscript += event.results[i][0].transcript;
                 }
             }
             
-            if (currentFinal) {
-                accumulatedTranscript += currentFinal;
-            }
-
-            textOutput.textContent = accumulatedTranscript + currentInterim;
+            // 실시간으로 변하는 글자들을 중복 없이 화면에 깔끔하게 매칭 출력
+            textOutput.textContent = finalTranscript + interimTranscript;
         };
     } else {
         recordBtn.style.display = 'none';
@@ -356,13 +345,11 @@
         }
     });
 
-    // 일기 저장할 때 약 먹은 기록도 함께 글머리에 붙여 저장
     function saveDiary(text) {
         const diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
         const now = new Date();
         const dateStr = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일 ${now.getHours()}시 ${now.getMinutes()}분`;
         
-        // 일기 쓸 당시의 약 상태 파악
         const pillState = JSON.parse(localStorage.getItem('pillState') || '{"morning":false,"lunch":false,"dinner":false}');
         let pillHistory = '';
         const takenList = [];
@@ -378,7 +365,7 @@
             id: Date.now(), 
             date: dateStr, 
             content: text.trim(),
-            pills: pillHistory // 약 기록 추가
+            pills: pillHistory
         });
         localStorage.setItem('myDiaries', JSON.stringify(diaries));
         displayDiaries();
@@ -412,7 +399,6 @@
             const diaryItem = document.createElement('div');
             diaryItem.className = 'diary-item';
             
-            // 약 기록 태그가 있으면 보여줌
             const pillTag = item.pills ? `<span class="diary-pill-tag">${item.pills}</span>` : '';
             
             diaryItem.innerHTML = `
@@ -444,7 +430,6 @@
         });
     }
 
-    // 처음 실행 시 약 상태 및 일기 목록 불러오기
     loadPillState();
     displayDiaries();
 </script>
