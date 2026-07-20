@@ -2,62 +2,54 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>정통 인생 종합 분석소</title>
+    <title>AI 손금 분석기</title>
     <style>
-        body { font-family: 'Malgun Gothic', sans-serif; background-color: #f8fafc; padding: 20px; display: flex; justify-content: center; }
-        .container { width: 100%; max-width: 500px; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-        h1 { color: #7c3aed; text-align: center; }
-        .camera-box { background: #e2e8f0; height: 150px; display: flex; align-items: center; justify-content: center; border-radius: 10px; margin: 20px 0; border: 2px dashed #94a3b8; }
-        #scan-line { width: 100%; height: 2px; background: #7c3aed; display: none; position: relative; }
-        @keyframes scan { from { top: 0; } to { top: 150px; } }
-        button { width: 100%; padding: 15px; background-color: #7c3aed; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        #result-area { margin-top: 25px; padding: 20px; background: #fdfbf7; border-left: 5px solid #7c3aed; display: none; }
+        body { font-family: 'Malgun Gothic', sans-serif; background: #0f172a; color: #f8fafc; padding: 20px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 450px; background: #1e293b; padding: 25px; border-radius: 20px; text-align: center; }
+        #canvas { width: 100%; height: 200px; background: #334155; border-radius: 10px; margin: 20px 0; border: 2px dashed #64748b; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        #scan-bar { width: 100%; height: 5px; background: #a855f7; display: none; position: relative; animation: scan 2s linear infinite; }
+        @keyframes scan { from { top: -100px; } to { top: 100px; } }
+        button { width: 100%; padding: 15px; background: #a855f7; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        #result { margin-top: 20px; padding: 15px; background: #0f172a; border-radius: 10px; text-align: left; display: none; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>🔮 정통 손금 인생 분석</h1>
-    
-    <div class="camera-box" id="camera">
-        <div id="scan-line"></div>
-        <p>손바닥 사진을 찍고 분석을 시작하세요</p>
-    </div>
-
-    <!-- 기존 체크리스트 (사진 분석 후의 세부 데이터 입력) -->
-    <div id="questions" style="display:none;">
-        <label>손바닥을 스캔했습니다. 더 정확한 분석을 위해 확인해주세요:</label>
-        <div class="question"><label>1. 신비 십자문(X자)이 있나요?</label><select id="cross"><option value="yes">네</option><option value="no">아니요</option></select></div>
-        <div class="question"><label>2. 두뇌선이 수평인가요?</label><select id="brain"><option value="straight">네(이성적)</option><option value="curved">아니요(감성적)</option></select></div>
-        <!-- 나머지 항목들 생략 (이전 코드와 동일하게 추가 가능) -->
-        <button onclick="showResult()">최종 분석 보기</button>
-    </div>
-
-    <button id="btn-snap" onclick="startScan()">📸 손금 스캔하기</button>
-
-    <div id="result-area">
-        <h3 id="res-title">분석 완료</h3>
-        <p id="res-text"></p>
-    </div>
+    <h1>🔮 AI 정통 손금 분석</h1>
+    <div id="canvas"><p id="status">손바닥 사진을 찍어주세요</p><div id="scan-bar"></div></div>
+    <button id="snap-btn" onclick="takePhoto()">📸 손바닥 스캔 시작</button>
+    <div id="result"></div>
 </div>
 
 <script>
-    function startScan() {
-        document.getElementById('btn-snap').style.display = 'none';
-        const line = document.getElementById('scan-line');
-        line.style.display = 'block';
-        line.style.animation = 'scan 2s linear';
-        
+    function takePhoto() {
+        document.getElementById('status').innerText = "이미지 처리 중...";
+        document.getElementById('snap-btn').disabled = true;
+        document.getElementById('scan-bar').style.display = 'block';
+
         setTimeout(() => {
-            line.style.display = 'none';
-            document.getElementById('questions').style.display = 'block';
-        }, 2000);
+            document.getElementById('scan-bar').style.display = 'none';
+            document.getElementById('status').innerText = "분석이 완료되었습니다.";
+            showAnalysis();
+        }, 3000);
     }
 
-    function showResult() {
-        // 여기에 이전의 모든 로직 결과 합치기
-        document.getElementById('res-text').innerHTML = "선생님의 로직대로 분석된 정교한 결과가 이곳에 출력됩니다!";
-        document.getElementById('result-area').style.display = 'block';
+    function showAnalysis() {
+        const results = [
+            "✨ **조상운:** 신비 십자문이 선명합니다. 조상의 보호를 받는 강한 운세입니다.",
+            "✨ **지능운:** 두뇌선이 깊어 현실적인 판단력이 뛰어난 리더형입니다.",
+            "✨ **재물운:** 재물선이 안정적이라 정직한 노력의 결실이 큽니다.",
+            "✨ **배우자운:** 결혼선이 곧게 뻗어 인연이 깊고 다정한 가정운입니다.",
+            "✨ **자녀운:** 자녀선이 뚜렷하여 가족의 화목함이 큰 활력소입니다.",
+            "✨ **부모운:** 목성구의 기운이 좋아 부모님의 덕을 많이 받을 상입니다."
+        ];
+        
+        let html = "<h3>📋 AI 정밀 분석 결과</h3>";
+        results.forEach(r => html += `<p>${r}</p>`);
+        const resDiv = document.getElementById('result');
+        resDiv.innerHTML = html;
+        resDiv.style.display = 'block';
     }
 </script>
 </body>
