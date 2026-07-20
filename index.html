@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1e1b4b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>오늘의 목소리 일기 v1.4</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(135deg,#1e1b4b,#311042);color:white;min-height:100vh;padding:18px}
+.container{max-width:520px;margin:auto}
+h1{text-align:center;margin:10px 0 4px;font-size:28px;color:#f472b6}
+.subtitle{text-align:center;color:#cbd5e1;margin-bottom:20px}
+.card{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:18px;margin-bottom:16px;backdrop-filter:blur(8px)}
+
+.date-badge{font-size:16px;color:#f472b6;font-weight:bold;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.diary-text{width:100%;min-height:180px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.2);border-radius:14px;padding:16px;color:#fff;font-size:22px;line-height:1.6;overflow-y:auto;word-break:break-all}
+.diary-text:empty::before{content:"🔴 직접 글을 입력하시거나 마이크를 통해 말씀하신 후 완료를 누르면 아래 목록에 저장됩니다.";color:#94a3b8;font-size:18px}
+
+.btn-mic{width:100%;border:0;border-radius:100px;padding:18px;font-size:20px;font-weight:bold;cursor:pointer;background:#ec4899;color:white;margin-top:10px;box-shadow:0 4px 10px rgba(236,72,153,0.3);display:flex;align-items:center;justify-content:center;gap:10px;transition:all 0.3s}
+.btn-mic.recording{background:#ef4444;box-shadow:0 0 15px #ef4444;animation:pulse 1.5s infinite}
+
+.list-title{font-size:18px;color:#fbbf24;font-weight:bold;margin:24px 0 10px;display:flex;align-items:center;gap:6px}
+
+/* 📅 시니어 맞춤형 큼직한 필터 탭 버튼 스타일 */
+.filter-buttons{display:flex;gap:8px;margin-bottom:14px}
+.btn-filter{flex:1;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#cbd5e1;padding:12px 6px;border-radius:12px;font-size:16px;font-weight:bold;cursor:pointer;transition:all 0.2s}
+.btn-filter.active{background:#fbbf24;color:#111827;border-color:#fbbf24;box-shadow:0 0 8px rgba(251,191,36,0.4)}
+
+.diary-list{display:flex;flex-direction:column;gap:10px}
+.diary-item{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:14px;position:relative}
+.item-date{font-size:14px;color:#f472b6;font-weight:bold;margin-bottom:6px}
+.item-content{font-size:18px;line-height:1.5;color:#f8fafc;white-space:pre-wrap;margin-bottom:12px}
+
+.item-controls{display:flex;gap:10px;margin-top:8px}
+.btn-speak{flex:1;background:#fbbf24;border:0;color:#111827;border-radius:8px;padding:10px;font-size:15px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px}
+.btn-delete{background:transparent;border:1px solid rgba(239,68,68,0.4);color:#f87171;border-radius:8px;padding:10px 14px;font-size:14px;cursor:pointer}
+
+.btn-clear{width:100%;border:1px solid rgba(255,255,255,0.2);border-radius:14px;padding:12px;font-size:15px;font-weight:bold;cursor:pointer;background:transparent;color:#cbd5e1;margin-top:20px}
+@keyframes pulse { 0%{transform:scale(1)} 50%{transform:scale(.98)} 100%{transform:scale(1)} }
+.status-msg{text-align:center;font-size:15px;color:#cbd5e1;margin-top:12px;height:20px}
+.empty-list{text-align:center;color:#94a3b8;padding:30px 0;font-size:16px}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🎙️ 오늘의 목소리 일기 v1.4</h1>
+  <div class="subtitle">말하는 대로 쏙쏙 적히는 나만의 일기장</div>
+  
+  <div class="card">
+    <div id="dateToday" class="date-badge">📅 일기 쓰는 날짜...</div>
+    <div id="diaryText" class="diary-text" contenteditable="true"></div>
+  </div>
+
+  <button id="micBtn" class="btn-mic" onclick="toggleSpeech()">
+    <span id="micIcon">🔴</span> <span id="btnText">목소리로 기록 시작하기</span>
+  </button>
+  <div id="statusMsg" class="status-msg"></div>
+
+  <hr style="border:0;border-top:1px solid rgba(255,255,255,0.15);margin-top:20px;">
+
+  <div class="list-title">📂 내가 저장한 일기 기록</div>
+  
+  <!-- 📅 과거 일기 바로가기 필터 탭 -->
+  <div class="filter-buttons">
+    <button id="filter-all" class="btn-filter active" onclick="changeFilter('all')">전체 보기</button>
+    <button id="filter-week" class="btn-filter" onclick="changeFilter('week')">⏳ 지난주 일기</button>
+    <button id="filter-month" class="btn-filter" onclick="changeFilter('month')">🗓️ 한 달 전 일기</button>
+  </div>
+
+  <div id="diaryList" class="diary-list"></div>
+  
+  <button class="btn-clear" onclick="clearAllData()">🗑️ 모든 일기 데이터 전체 삭제</button>
+</div>
+
+<script>
+window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+let recognition = null;
+let isRecording = false;
+let accumulatedTranscript = '';
+let savedDiaries = [];
+let currentFilter = 'all'; // 현재 선택된 필터 상태 ('all', 'week', 'month')
+
+function getTodayString() {
+  const today = new Date();
+  return `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`;
+}
+
+if (window.SpeechRecognition) {
+  recognition = new SpeechRecognition();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = 'ko-KR';
+
+  recognition.onresult = function(event) {
+    let interimTranscript = '';
+    let finalTranscript = '';
+
+    for (let i = event.resultIndex; i < event.results.length; ++i) {
+      if (event.results[i].isFinal) {
+        finalTranscript += event.results[i][0].transcript + ' ';
+      } else {
+        interimTranscript += event.results[i][0].transcript;
+      }
+    }
+    document.getElementById('diaryText').innerText = accumulatedTranscript + finalTranscript + interimTranscript;
+  };
+
+  recognition.onend = function() {
+    if (isRecording) recognition.start();
+  };
+}
+
+function toggleSpeech() {
+  if (!recognition) {
+    saveToHistory();
+    return;
+  }
+
+  const btn = document.getElementById('micBtn');
+  const btnText = document.getElementById('btnText');
+  const micIcon = document.getElementById('micIcon');
+  const statusMsg = document.getElementById('statusMsg');
+  const diaryDiv = document.getElementById('diaryText');
+
+  if (!isRecording) {
+    accumulatedTranscript = diaryDiv.innerText + ' ';
+    try {
+      recognition.start();
+      isRecording = true;
+      btn.classList.add('recording');
+      btnText.innerText = "이야기 듣는 중... (누르면 완료)";
+      micIcon.innerText = "⏹️";
+      statusMsg.innerText = "🎙️ 편하게 말씀하세요. 다 하신 후 완료를 누르세요.";
+    } catch (e) { 
+      saveToHistory();
+    }
+  } else {
+    isRecording = false;
+    recognition.stop();
+    btn.classList.remove('recording');
+    btnText.innerText = "목소리로 기록 시작하기";
+    micIcon.innerText = "🔴";
+    
+    saveToHistory();
+  }
+}
+
+function saveToHistory() {
+  const diaryDiv = document.getElementById('diaryText');
+  const text = diaryDiv.innerText.trim();
+
+  if(text === '') {
+    document.getElementById('statusMsg').innerText = "❌ 내용이 비어있어 저장되지 않았습니다.";
+    return;
+  }
+
+  const newDiary = {
+    id: Date.now(), // 타임스탬프 밀리초 (날짜 연산에 활용)
+    date: getTodayString(),
+    content: text
+  };
+
+  savedDiaries.unshift(newDiary);
+  localStorage.setItem('sh_voice_diary_list_v14', JSON.stringify(savedDiaries));
+  
+  diaryDiv.innerText = '';
+  document.getElementById('statusMsg').innerText = "💾 새 일기가 아래 목록에 등록되었습니다!";
+  renderList();
+}
+
+// ⏳ 필터 변경 함수
+function changeFilter(filterType) {
+  currentFilter = filterType;
+  
+  // 버튼 활성화 스타일 제어
+  document.querySelectorAll('.btn-filter').forEach(btn => btn.classList.remove('active'));
+  document.getElementById(`filter-${filterType}`).classList.add('active');
+  
+  renderList();
+}
+
+function renderList() {
+  const listDiv = document.getElementById('diaryList');
+  const now = Date.now();
+  
+  // 일주일(7일)을 밀리초로 환산
+  const oneWeekMs = 7 * 24 * 60 * 60 * 1000;
+  // 한 달(30일)을 밀리초로 환산
+  const oneMonthMs = 30 * 24 * 60 * 60 * 1000;
+
+  // 필터 기준에 맞게 데이터 걸러내기
+  const filteredDiaries = savedDiaries.filter(item => {
+    const timeDiff = now - item.id; // 작성 기준 현재로부터 지난 시간 계산
+    
+    if (currentFilter === 'week') {
+      // 정확히 '지난주(7일 전~14일 전)' 범위를 보거나 '7일 이상 경과한 글'을 필터링
+      return timeDiff >= oneWeekMs && timeDiff < (oneWeekMs * 2);
+    } else if (currentFilter === 'month') {
+      // '한 달 전(30일 전~60일 전)' 혹은 '30일 이상 경과한 글'을 필터링
+      return timeDiff >= oneMonthMs && timeDiff < (oneMonthMs * 2);
+    }
+    return true; // 'all'일 때는 전체 리턴
+  });
+  
+  if(filteredDiaries.length === 0) {
+    let msg = '📭 아직 저장된 일기가 없습니다.';
+    if(currentFilter === 'week') msg = '⏳ 해당 기간(지난주)에 작성된 일기가 없습니다.';
+    if(currentFilter === 'month') msg = '🗓️ 해당 기간(한 달 전)에 작성된 일기가 없습니다.';
+    
+    listDiv.innerHTML = `<div class="empty-list">${msg}</div>`;
+    return;
+  }
+
+  let html = '';
+  filteredDiaries.forEach(item => {
+    html += `
+      <div class="diary-item">
+        <div class="item-date">📅 ${item.date}</div>
+        <div class="item-content" id="content_${item.id}">${item.content}</div>
+        <div class="item-controls">
+          <button class="btn-speak" onclick="speakDiary('${item.id}')">🔊 목소리로 듣기</button>
+          <button class="btn-delete" onclick="deleteItem(${item.id})">삭제</button>
+        </div>
+      </div>
+    `;
+  });
+  listDiv.innerHTML = html;
+}
+
+function speakDiary(id) {
+  window.speechSynthesis.cancel();
+  const text = document.getElementById(`content_${id}`).innerText;
+  const speech = new SpeechSynthesisUtterance(text);
+  speech.lang = 'ko-KR';
+  speech.rate = 0.9;
+  speech.pitch = 1.0;
+  window.speechSynthesis.speak(speech);
+  document.getElementById('statusMsg').innerText = "📢 일기를 소리 내어 읽는 중입니다...";
+}
+
+function deleteItem(id) {
+  window.speechSynthesis.cancel();
+  if(confirm('이 일기를 삭제하시겠습니까?')) {
+    savedDiaries = savedDiaries.filter(item => item.id !== id);
+    localStorage.setItem('sh_voice_diary_list_v14', JSON.stringify(savedDiaries));
+    renderList();
+  }
+}
+
+function clearAllData() {
+  window.speechSynthesis.cancel();
+  if(confirm('정말로 모든 일기 기록을 완전히 지우시겠습니까?')) {
+    savedDiaries = [];
+    localStorage.removeItem('sh_voice_diary_list_v14');
+    renderList();
+    document.getElementById('statusMsg').innerText = "모든 데이터가 초기화되었습니다.";
+  }
+}
+
+function init() {
+  document.getElementById('dateToday').innerText = `📅 ${getTodayString()}`;
+  
+  if (!window.SpeechRecognition) {
+    document.getElementById('btnText').innerText = "✏️ 글 작성 후 완료 (저장하기)";
+  }
+
+  const stored = localStorage.getItem('sh_voice_diary_list_v14');
+  if(stored) {
+    savedDiaries = JSON.parse(stored);
+  }
+  renderList();
+}
+
+init();
+</script>
+</body>
+</html>
