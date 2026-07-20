@@ -222,7 +222,7 @@
             margin-top: -5px;
             margin-bottom: 20px;
         }
-        /* 🚪 종료 버튼 스타일 */
+        /* 🔒 잠금/정리 버튼 스타일 */
         #exit-btn {
             background-color: var(--exit-color);
             color: white;
@@ -274,8 +274,8 @@
     <p class="tip-text">💡 아래 저장된 일기 내용과 [날짜]도 터치하면 바로 수정할 수 있습니다!</p>
     <div class="diary-list" id="diary-list"></div>
     
-    <!-- 🚪 화면 맨 아래에 배치한 안전 종료 버튼 -->
-    <button id="exit-btn" onclick="closeApp()">🚪 일기장 종료하기</button>
+    <!-- 🔒 마이크를 끄고 내용을 정리하는 안전 잠금 버튼 -->
+    <button id="exit-btn" onclick="closeApp()">🔒 일기장 안전하게 잠그기</button>
 </div>
 
 <script>
@@ -490,21 +490,17 @@
         });
     }
 
-    // 🚪 마이크를 끄고 앱을 즉시 이탈(종료)하는 스마트 개선 함수
+    // 🔒 마이크를 끄고 화면을 안전하게 초기화하는 함수
     function closeApp() {
-        // 1) 마이크 작동을 즉시 완전히 정지
         shouldRestart = false;
         if (recognition && isRecording) {
             recognition.stop();
         }
+        accumulatedText = '';
+        textOutput.innerText = '';
+        saveBtn.style.display = 'none';
         
-        // 2) 확인창 없이 즉시 스마트폰의 이전 화면이나 홈 화면으로 튕겨 나가도록 유도
-        if (window.history.length > 1) {
-            window.history.back();
-        } else {
-            // 더 이상 갈 곳이 없다면 스마트폰 홈 화면 역할을 하도록 네이버나 구글 등으로 즉시 튕겨 나가게 처리
-            window.location.replace("https://www.google.com");
-        }
+        alert("🔒 마이크가 꺼졌으며 일기 창이 안전하게 정리되었습니다. 이제 스마트폰 홈 버튼을 누르고 나가시면 됩니다!");
     }
 
     loadPillState();
