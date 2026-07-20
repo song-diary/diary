@@ -194,13 +194,13 @@
 
     let recognition;
     let isRecording = false;
-    let accumulatedText = ''; // 중복 축적을 막기 위한 텍스트 저장소
+    let shouldRestart = true; // [핵심] 사용자가 완료 버튼을 누르기 전까진 계속 다시 켜지게 제어
+    let accumulatedText = '';
 
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         recognition = new SpeechRecognition();
         recognition.continuous = true;
-        // [핵심 변경] 실시간 중간 결과를 끄고 완전히 끝난 문장만 정제해서 받음
         recognition.interimResults = false; 
         recognition.lang = 'ko-KR';
 
@@ -208,36 +208,44 @@
             isRecording = true;
             recordBtn.textContent = '🛑 말하기 완료 (터치)';
             recordBtn.classList.add('recording');
-            textOutput.innerText = '음성을 부드럽게 인식하고 있습니다... 편하게 말씀하세요.';
+            if(!accumulatedText) {
+                textOutput.innerText = '귀 기울여 듣고 있습니다... 편하게 말씀하세요.';
+            }
             saveBtn.style.display = 'none';
-            accumulatedText = '';
         };
 
         recognition.onerror = (event) => {
             console.error(event.error);
-            stopRecording();
+            // 에러가 나도 사용자가 완료를 누른 게 아니라면 계속 유지시킴
+            if (isRecording) stopRecording(); 
         };
 
+        // [핵심 변경] 폰이 뜸 들여서 음성 인식이 끊어지면 바로 재실행 시킴
         recognition.onend = () => {
-            stopRecording();
-            const resultText = accumulatedText.trim();
-            if (resultText.length > 0) {
-                textOutput.innerText = resultText;
-                saveBtn.style.display = 'block'; 
+            if (shouldRestart && isRecording) {
+                console.log("인식이 잠깐 끊겨 자동으로 재연결합니다.");
+                recognition.start();
             } else {
-                textOutput.innerText = '인식된 목소리가 없습니다. 다시 시도해 주세요.';
-                saveBtn.style.display = 'none';
+                stopRecording();
+                const resultText = accumulatedText.trim();
+                if (resultText.length > 0) {
+                    textOutput.innerText = resultText;
+                    saveBtn.style.display = 'block'; 
+                } else {
+                    textOutput.innerText = '인식된 목소리가 없습니다. 다시 시도해 주세요.';
+                    saveBtn.style.display = 'none';
+                }
             }
         };
 
         recognition.onresult = (event) => {
-            // 안드로이드 브라우저의 뜸들이기 중복을 막기 위해 철저히 마지막 결과문장만 순치 취합
             for (let i = event.resultIndex; i < event.results.length; ++i) {
                 if (event.results[i].isFinal) {
                     const speechText = event.results[i][0].transcript.trim();
-                    // 이전 문장과 완전히 똑같은 문장이 연속으로 들어오면 필터링
                     if (speechText.length > 0 && !accumulatedText.includes(speechText)) {
                         accumulatedText += speechText + ' ';
+                        // 재연결되는 동안에도 안심하시게끔 화면에 누적 텍스트를 보여줌
+                        textOutput.innerText = accumulatedText.trim();
                     }
                 }
             }
@@ -255,8 +263,11 @@
 
     recordBtn.addEventListener('click', () => {
         if (isRecording) {
+            shouldRestart = false; // 완료 단추를 누르면 재연결을 완전히 끔
             recognition.stop();
         } else {
+            shouldRestart = true;
+            accumulatedText = '';
             recognition.start();
         }
     });
@@ -272,7 +283,6 @@
         const now = new Date();
         const dateStr = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일 ${now.getHours()}시 ${now.getMinutes()}분`;
         
-        // 💊 알약 상태 체크 및 리스트 표시 로직 완전 삭제 (깔끔화)
         diaries.unshift({ 
             id: Date.now(), 
             date: dateStr, 
@@ -313,7 +323,6 @@
             const diaryItem = document.createElement('div');
             diaryItem.className = 'diary-item';
             
-            // 알약 태그 부분 완전히 들어내어 UI를 깔끔하게 변경
             diaryItem.innerHTML = `
                 <div>
                     <div class="diary-date" contenteditable="true" data-id="${item.id}">${item.date}</div>
