@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>나만의 목소리 일기장</title>
+    <title>나만의 목소리 건강 일기장</title>
     <style>
         :root {
             --bg-color: #fdf6f0;
@@ -12,6 +12,8 @@
             --primary-color: #ff8e94;
             --primary-hover: #ff7179;
             --border-color: #eaddd3;
+            --pill-color: #4da6ff;
+            --pill-success: #2eb82e;
         }
         body {
             font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
@@ -35,9 +37,52 @@
         h1 {
             text-align: center;
             font-size: 26px;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             color: #d17377;
         }
+        
+        /* 알약 챙기기 구역 스타일 */
+        .pill-container {
+            background-color: #fff9f5;
+            border: 2px solid var(--border-color);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .pill-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: #8c7664;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+        }
+        .pill-buttons {
+            display: flex;
+            justify-content: space-around;
+            gap: 10px;
+        }
+        .pill-btn {
+            flex: 1;
+            padding: 12px 5px;
+            font-size: 16px;
+            font-weight: bold;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            background-color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #777;
+        }
+        .pill-btn.taken {
+            background-color: #e6f7e6;
+            border-color: var(--pill-success);
+            color: var(--pill-success);
+        }
+
         .btn-box {
             display: flex;
             justify-content: center;
@@ -96,7 +141,7 @@
         .diary-date {
             font-size: 16px;
             color: #a09184;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
             font-weight: bold;
             display: inline-block;
             padding: 4px 8px;
@@ -107,6 +152,17 @@
         .diary-date:focus {
             background-color: #f7f1eb;
             border-color: var(--primary-color);
+        }
+        /* 일기 내 약 복용 표시 */
+        .diary-pill-tag {
+            font-size: 13px;
+            color: var(--pill-success);
+            background-color: #e6f7e6;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-left: 5px;
+            display: inline-block;
         }
         .diary-text {
             font-size: 22px;
@@ -120,6 +176,7 @@
             outline: none;
             color: #2b231c;
             font-weight: 500;
+            margin-top: 5px;
         }
         .diary-text:focus {
             background-color: #f7f1eb;
@@ -153,6 +210,16 @@
 <div class="container">
     <h1>📝 나의 목소리 일기장</h1>
     
+    <!-- 💊 오늘의 약 챙기기 구역 추가 -->
+    <div class="pill-container">
+        <div class="pill-title">💊 오늘 약 챙겨 드셨나요? (터치하여 체크)</div>
+        <div class="pill-buttons">
+            <button class="pill-btn" id="pill-morning" onclick="togglePill('morning')">☀️ 아침</button>
+            <button class="pill-btn" id="pill-lunch" onclick="togglePill('lunch')">🌤️ 점심</button>
+            <button class="pill-btn" id="pill-dinner" onclick="togglePill('dinner')">🌙 저녁</button>
+        </div>
+    </div>
+    
     <div class="btn-box">
         <button id="record-btn">🎤 눌러서 말하기</button>
     </div>
@@ -172,8 +239,55 @@
 
     let recognition;
     let isRecording = false;
-    let accumulatedTranscript = ''; // 이미 확정된 문장들을 모아두는 곳
+    let accumulatedTranscript = '';
 
+    // 오늘 날짜 구하기 (YYYY-MM-DD)
+    function getTodayStr() {
+        const now = new Date();
+        return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+    }
+
+    // 약 체크 상태 불러오기 및 리셋 검사
+    function loadPillState() {
+        const savedDate = localStorage.getItem('pillDate');
+        const today = getTodayStr();
+        
+        // 날짜가 바뀌었으면 약 체크 리셋
+        if (savedDate !== today) {
+            localStorage.setItem('pillDate', today);
+            localStorage.setItem('pillState', JSON.stringify({ morning: false, lunch: false, dinner: false }));
+        }
+        
+        const state = JSON.parse(localStorage.getItem('pillState') || '{"morning":false,"lunch":false,"dinner":false}');
+        
+        updatePillButton('morning', state.morning, '☀️ 아침');
+        updatePillButton('lunch', state.lunch, '🌤️ 점심');
+        updatePillButton('dinner', state.dinner, '🌙 저녁');
+    }
+
+    // 약 버튼 디자인 변경
+    function updatePillButton(type, isTaken, label) {
+        const btn = document.getElementById(`pill-${type}`);
+        if (isTaken) {
+            btn.classList.add('taken');
+            btn.innerHTML = `✅ ${label.split(' ')[1]}`;
+        } else {
+            btn.classList.remove('taken');
+            btn.innerHTML = label;
+        }
+    }
+
+    // 약 버튼 누를 때 토글
+    function togglePill(type) {
+        const state = JSON.parse(localStorage.getItem('pillState') || '{"morning":false,"lunch":false,"dinner":false}');
+        state[type] = !state[type];
+        localStorage.setItem('pillState', JSON.stringify(state));
+        
+        const labels = { morning: '☀️ 아침', lunch: '🌤️ 점심', dinner: '🌙 저녁' };
+        updatePillButton(type, state[type], labels[type]);
+    }
+
+    // 음성 인식 설정
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         recognition = new SpeechRecognition();
@@ -217,12 +331,10 @@
                 }
             }
             
-            // 텀을 줘서 문장이 새로 끊겨 들어올 때만 누적 창에 보태줍니다.
             if (currentFinal) {
                 accumulatedTranscript += currentFinal;
             }
 
-            // 화면에는 여태까지 확정된 말들과 지금 실시간으로 하고 있는 말을 합쳐서 띄웁니다 (실시간 듣기 복구!)
             textOutput.textContent = accumulatedTranscript + currentInterim;
         };
     } else {
@@ -244,12 +356,30 @@
         }
     });
 
+    // 일기 저장할 때 약 먹은 기록도 함께 글머리에 붙여 저장
     function saveDiary(text) {
         const diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
         const now = new Date();
         const dateStr = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일 ${now.getHours()}시 ${now.getMinutes()}분`;
         
-        diaries.unshift({ id: Date.now(), date: dateStr, content: text.trim() });
+        // 일기 쓸 당시의 약 상태 파악
+        const pillState = JSON.parse(localStorage.getItem('pillState') || '{"morning":false,"lunch":false,"dinner":false}');
+        let pillHistory = '';
+        const takenList = [];
+        if (pillState.morning) takenList.push('아침');
+        if (pillState.lunch) takenList.push('점심');
+        if (pillState.dinner) takenList.push('저녁');
+        
+        if (takenList.length > 0) {
+            pillHistory = `💊 복용 완료: ${takenList.join(', ')}`;
+        }
+        
+        diaries.unshift({ 
+            id: Date.now(), 
+            date: dateStr, 
+            content: text.trim(),
+            pills: pillHistory // 약 기록 추가
+        });
         localStorage.setItem('myDiaries', JSON.stringify(diaries));
         displayDiaries();
     }
@@ -282,8 +412,14 @@
             const diaryItem = document.createElement('div');
             diaryItem.className = 'diary-item';
             
+            // 약 기록 태그가 있으면 보여줌
+            const pillTag = item.pills ? `<span class="diary-pill-tag">${item.pills}</span>` : '';
+            
             diaryItem.innerHTML = `
-                <div class="diary-date" contenteditable="true" data-id="${item.id}">${item.date}</div>
+                <div>
+                    <div class="diary-date" contenteditable="true" data-id="${item.id}">${item.date}</div>
+                    ${pillTag}
+                </div>
                 <div class="diary-text" contenteditable="true" data-id="${item.id}">${item.content}</div>
                 <button class="delete-btn" onclick="deleteDiary(${item.id})">❌ 삭제</button>
             `;
@@ -308,6 +444,8 @@
         });
     }
 
+    // 처음 실행 시 약 상태 및 일기 목록 불러오기
+    loadPillState();
     displayDiaries();
 </script>
 
