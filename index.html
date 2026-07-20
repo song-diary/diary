@@ -172,7 +172,6 @@
 
     let recognition;
     let isRecording = false;
-    let finalTranscript = '';
 
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -186,7 +185,6 @@
             recordBtn.textContent = '🛑 말하기 완료 (터치)';
             recordBtn.classList.add('recording');
             textOutput.textContent = '듣고 있습니다... 말씀을 시작하세요.';
-            finalTranscript = '';
         };
 
         recognition.onerror = (event) => {
@@ -196,8 +194,9 @@
 
         recognition.onend = () => {
             stopRecording();
-            if (finalTranscript.trim().length > 0) {
-                saveDiary(finalTranscript);
+            const text = textOutput.textContent.trim();
+            if (text.length > 0 && text !== '듣고 있습니다... 말씀을 시작하세요.' && text !== '인식된 목소리가 없습니다. 다시 시도해 주세요.') {
+                saveDiary(text);
                 textOutput.textContent = '';
             } else {
                 textOutput.textContent = '인식된 목소리가 없습니다. 다시 시도해 주세요.';
@@ -205,7 +204,9 @@
         };
 
         recognition.onresult = (event) => {
+            let finalTranscript = '';
             let interimTranscript = '';
+
             for (let i = event.resultIndex; i < event.results.length; ++i) {
                 if (event.results[i].isFinal) {
                     finalTranscript += event.results[i][0].transcript + ' ';
@@ -213,7 +214,11 @@
                     interimTranscript += event.results[i][0].transcript;
                 }
             }
-            textOutput.textContent = finalTranscript + interimTranscript;
+            
+            // 실시간으로 텍스트 출력창에 중복 없이 깔끔하게 반영
+            if(finalTranscript || interimTranscript) {
+                textOutput.textContent = finalTranscript + interimTranscript;
+            }
         };
     } else {
         recordBtn.style.display = 'none';
@@ -244,7 +249,6 @@
         displayDiaries();
     }
 
-    // 날짜와 내용 통합 수정 함수
     function updateField(id, field, value) {
         let diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
         diaries = diaries.map(item => {
@@ -282,7 +286,6 @@
             diaryList.appendChild(diaryItem);
         });
 
-        // 날짜 수정 이벤트
         document.querySelectorAll('.diary-date').forEach(element => {
             element.addEventListener('blur', function() {
                 const id = parseInt(this.getAttribute('data-id'));
@@ -291,7 +294,6 @@
             });
         });
 
-        // 내용 수정 이벤트
         document.querySelectorAll('.diary-text').forEach(element => {
             element.addEventListener('blur', function() {
                 const id = parseInt(this.getAttribute('data-id'));
