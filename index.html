@@ -172,6 +172,7 @@
 
     let recognition;
     let isRecording = false;
+    let accumulatedTranscript = ''; // 이미 확정된 문장들을 모아두는 곳
 
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -185,6 +186,7 @@
             recordBtn.textContent = '🛑 말하기 완료 (터치)';
             recordBtn.classList.add('recording');
             textOutput.textContent = '듣고 있습니다... 말씀을 시작하세요.';
+            accumulatedTranscript = '';
         };
 
         recognition.onerror = (event) => {
@@ -204,21 +206,24 @@
         };
 
         recognition.onresult = (event) => {
-            let finalTranscript = '';
-            let interimTranscript = '';
+            let currentInterim = '';
+            let currentFinal = '';
 
             for (let i = event.resultIndex; i < event.results.length; ++i) {
                 if (event.results[i].isFinal) {
-                    finalTranscript += event.results[i][0].transcript + ' ';
+                    currentFinal += event.results[i][0].transcript + ' ';
                 } else {
-                    interimTranscript += event.results[i][0].transcript;
+                    currentInterim += event.results[i][0].transcript;
                 }
             }
             
-            // 실시간으로 텍스트 출력창에 중복 없이 깔끔하게 반영
-            if(finalTranscript || interimTranscript) {
-                textOutput.textContent = finalTranscript + interimTranscript;
+            // 텀을 줘서 문장이 새로 끊겨 들어올 때만 누적 창에 보태줍니다.
+            if (currentFinal) {
+                accumulatedTranscript += currentFinal;
             }
+
+            // 화면에는 여태까지 확정된 말들과 지금 실시간으로 하고 있는 말을 합쳐서 띄웁니다 (실시간 듣기 복구!)
+            textOutput.textContent = accumulatedTranscript + currentInterim;
         };
     } else {
         recordBtn.style.display = 'none';
