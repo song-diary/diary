@@ -222,7 +222,6 @@
             margin-top: -5px;
             margin-bottom: 20px;
         }
-        /* 🔒 잠금/정리 버튼 스타일 */
         #exit-btn {
             background-color: var(--exit-color);
             color: white;
@@ -274,7 +273,6 @@
     <p class="tip-text">💡 아래 저장된 일기 내용과 [날짜]도 터치하면 바로 수정할 수 있습니다!</p>
     <div class="diary-list" id="diary-list"></div>
     
-    <!-- 🔒 마이크를 끄고 내용을 정리하는 안전 잠금 버튼 -->
     <button id="exit-btn" onclick="closeApp()">🔒 일기장 안전하게 잠그기</button>
 </div>
 
@@ -398,10 +396,10 @@
         }
     });
 
+    // 💾 확인 알림창을 없애고 즉시 저장되도록 대폭 간소화한 함수
     function manualSaveDiary() {
         const text = textOutput.innerText.trim();
         if (!text) {
-            alert('내용이 없습니다.');
             return;
         }
 
@@ -421,7 +419,7 @@
         saveBtn.style.display = 'none';
         
         displayDiaries();
-        alert('일기가 안전하게 저장되었습니다!');
+        // 불필요한 alert 창을 삭제하여 딜레이 없이 즉시 완료됩니다!
     }
 
     function updateField(id, field, value) {
@@ -490,7 +488,6 @@
         });
     }
 
-    // 🔒 마이크를 끄고 화면을 안전하게 초기화하는 함수
     function closeApp() {
         shouldRestart = false;
         if (recognition && isRecording) {
@@ -500,7 +497,7 @@
         textOutput.innerText = '';
         saveBtn.style.display = 'none';
         
-        alert("🔒 마이크가 꺼졌으며 일기 창이 안전하게 정리되었습니다. 이제 스마트폰 홈 버튼을 누르고 나가시면 됩니다!");
+        alert("🔒 마이크가 꺼졌으며 일기 창이 안전하게 정리되었습니다. 이제 스마트폰 홈 버튼을 누르고 나가하시면 됩니다!");
     }
 
     loadPillState();
