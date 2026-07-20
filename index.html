@@ -14,7 +14,6 @@
             --save-color: #4da6ff;
             --save-hover: #358be6;
             --border-color: #eaddd3;
-            --pill-success: #2eb82e;
         }
         body {
             font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
@@ -38,48 +37,8 @@
         h1 {
             text-align: center;
             font-size: 26px;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             color: #d17377;
-        }
-        .pill-container {
-            background-color: #fff9f5;
-            border: 2px solid var(--border-color);
-            border-radius: 15px;
-            padding: 15px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        .pill-title {
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 12px;
-            color: #8c7664;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 5px;
-        }
-        .pill-buttons {
-            display: flex;
-            justify-content: space-around;
-            gap: 10px;
-        }
-        .pill-btn {
-            flex: 1;
-            padding: 12px 5px;
-            font-size: 16px;
-            font-weight: bold;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            background-color: white;
-            cursor: pointer;
-            transition: all 0.2s;
-            color: #777;
-        }
-        .pill-btn.taken {
-            background-color: #e6f7e6;
-            border-color: var(--pill-success);
-            color: var(--pill-success);
         }
         .btn-box {
             display: flex;
@@ -105,7 +64,6 @@
             animation: pulse 1.5s infinite;
             box-shadow: 0 4px 10px rgba(179, 162, 151, 0.4);
         }
-        /* 💾 저장 버튼 스타일 추가 */
         #save-btn {
             background-color: var(--save-color);
             color: white;
@@ -118,7 +76,7 @@
             box-shadow: 0 4px 10px rgba(77, 166, 255, 0.3);
             transition: all 0.2s ease;
             width: 100%;
-            display: none; /* 평소에는 안 보이다가 글자가 입력되면 등장 */
+            display: none;
         }
         #save-btn:hover {
             background-color: var(--save-hover);
@@ -128,7 +86,6 @@
             50% { opacity: 0.7; }
             100% { opacity: 1; }
         }
-        /* 글자 확인 및 편집창을 직접 수정 가능하게 바꿈 */
         #text-output {
             width: 100%;
             min-height: 120px;
@@ -173,16 +130,6 @@
             background-color: #f7f1eb;
             border-color: var(--primary-color);
         }
-        .diary-pill-tag {
-            font-size: 13px;
-            color: var(--pill-success);
-            background-color: #e6f7e6;
-            padding: 2px 8px;
-            border-radius: 20px;
-            font-weight: bold;
-            margin-left: 5px;
-            display: inline-block;
-        }
         .diary-text {
             font-size: 22px;
             line-height: 1.6;
@@ -226,22 +173,11 @@
 <div class="container">
     <h1>📝 나의 목소리 일기장</h1>
     
-    <div class="pill-container">
-        <div class="pill-title">💊 오늘 약 챙겨 드셨나요? (터치하여 체크)</div>
-        <div class="pill-buttons">
-            <button class="pill-btn" id="pill-morning" onclick="togglePill('morning')">☀️ 아침</button>
-            <button class="pill-btn" id="pill-lunch" onclick="togglePill('lunch')">🌤️ 점심</button>
-            <button class="pill-btn" id="pill-dinner" onclick="togglePill('dinner')">🌙 저녁</button>
-        </div>
-    </div>
-    
     <div class="btn-box">
         <button id="record-btn">🎤 눌러서 말하기</button>
-        <!-- 💾 수동 저장 버튼 추가 -->
         <button id="save-btn" onclick="manualSaveDiary()">💾 이 내용으로 일기 저장</button>
     </div>
     
-    <!-- 터치해서 직접 편집할 수 있도록 contenteditable="true" 적용 -->
     <div id="text-output" contenteditable="true" placeholder="여기에 말한 내용이 글자로 나타납니다... 잘못 받아적은 부분은 터치해서 직접 고칠 수 있습니다."></div>
     
     <hr style="border: 0; height: 1px; background: var(--border-color); margin-bottom: 20px;">
@@ -258,59 +194,23 @@
 
     let recognition;
     let isRecording = false;
-    let finalPhrases = new Set();
-
-    function getTodayStr() {
-        const now = new Date();
-        return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
-    }
-
-    function loadPillState() {
-        const savedDate = localStorage.getItem('pillDate');
-        const today = getTodayStr();
-        if (savedDate !== today) {
-            localStorage.setItem('pillDate', today);
-            localStorage.setItem('pillState', JSON.stringify({ morning: false, lunch: false, dinner: false }));
-        }
-        const state = JSON.parse(localStorage.getItem('pillState') || '{"morning":false,"lunch":false,"dinner":false}');
-        updatePillButton('morning', state.morning, '☀️ 아침');
-        updatePillButton('lunch', state.lunch, '🌤️ 점심');
-        updatePillButton('dinner', state.dinner, '🌙 저녁');
-    }
-
-    function updatePillButton(type, isTaken, label) {
-        const btn = document.getElementById(`pill-${type}`);
-        if (isTaken) {
-            btn.classList.add('taken');
-            btn.innerHTML = `✅ ${label.split(' ')[1]}`;
-        } else {
-            btn.classList.remove('taken');
-            btn.innerHTML = label;
-        }
-    }
-
-    function togglePill(type) {
-        const state = JSON.parse(localStorage.getItem('pillState') || '{"morning":false,"lunch":false,"dinner":false}');
-        state[type] = !state[type];
-        localStorage.setItem('pillState', JSON.stringify(state));
-        const labels = { morning: '☀️ 아침', lunch: '🌤️ 점심', dinner: '🌙 저녁' };
-        updatePillButton(type, state[type], labels[type]);
-    }
+    let accumulatedText = ''; // 중복 축적을 막기 위한 텍스트 저장소
 
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         recognition = new SpeechRecognition();
         recognition.continuous = true;
-        recognition.interimResults = true;
+        // [핵심 변경] 실시간 중간 결과를 끄고 완전히 끝난 문장만 정제해서 받음
+        recognition.interimResults = false; 
         recognition.lang = 'ko-KR';
 
         recognition.onstart = () => {
             isRecording = true;
             recordBtn.textContent = '🛑 말하기 완료 (터치)';
             recordBtn.classList.add('recording');
-            textOutput.innerText = '듣고 있습니다... 말씀을 시작하세요.';
-            saveBtn.style.display = 'none'; // 녹음 시작할 땐 저장 단추 숨김
-            finalPhrases.clear();
+            textOutput.innerText = '음성을 부드럽게 인식하고 있습니다... 편하게 말씀하세요.';
+            saveBtn.style.display = 'none';
+            accumulatedText = '';
         };
 
         recognition.onerror = (event) => {
@@ -320,9 +220,10 @@
 
         recognition.onend = () => {
             stopRecording();
-            const currentText = textOutput.innerText.trim();
-            if (currentText.length > 0 && currentText !== '듣고 있습니다... 말씀을 시작하세요.' && currentText !== '인식된 목소리가 없습니다. 다시 시도해 주세요.') {
-                saveBtn.style.display = 'block'; // 녹음이 끝나면 눈으로 확인하고 저장하라고 단추 띄움
+            const resultText = accumulatedText.trim();
+            if (resultText.length > 0) {
+                textOutput.innerText = resultText;
+                saveBtn.style.display = 'block'; 
             } else {
                 textOutput.innerText = '인식된 목소리가 없습니다. 다시 시도해 주세요.';
                 saveBtn.style.display = 'none';
@@ -330,18 +231,15 @@
         };
 
         recognition.onresult = (event) => {
-            let interimTranscript = '';
+            // 안드로이드 브라우저의 뜸들이기 중복을 막기 위해 철저히 마지막 결과문장만 순치 취합
             for (let i = event.resultIndex; i < event.results.length; ++i) {
-                const speechText = event.results[i][0].transcript.trim();
                 if (event.results[i].isFinal) {
-                    if (speechText.length > 0) finalPhrases.add(speechText);
-                } else {
-                    interimTranscript = speechText;
+                    const speechText = event.results[i][0].transcript.trim();
+                    // 이전 문장과 완전히 똑같은 문장이 연속으로 들어오면 필터링
+                    if (speechText.length > 0 && !accumulatedText.includes(speechText)) {
+                        accumulatedText += speechText + ' ';
+                    }
                 }
-            }
-            const combinedFinal = Array.from(finalPhrases).join(' ');
-            if (combinedFinal || interimTranscript) {
-                textOutput.innerText = (combinedFinal + ' ' + interimTranscript).trim();
             }
         };
     } else {
@@ -363,7 +261,6 @@
         }
     });
 
-    // [핵심 변경] 사용자가 직접 저장 버튼을 눌러야만 저장되는 수동 저장 함수
     function manualSaveDiary() {
         const text = textOutput.innerText.trim();
         if (!text) {
@@ -375,26 +272,14 @@
         const now = new Date();
         const dateStr = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일 ${now.getHours()}시 ${now.getMinutes()}분`;
         
-        const pillState = JSON.parse(localStorage.getItem('pillState') || '{"morning":false,"lunch":false,"dinner":false}');
-        let pillHistory = '';
-        const takenList = [];
-        if (pillState.morning) takenList.push('아침');
-        if (pillState.lunch) takenList.push('점심');
-        if (pillState.dinner) takenList.push('저녁');
-        
-        if (takenList.length > 0) {
-            pillHistory = `💊 복용 완료: ${takenList.join(', ')}`;
-        }
-        
+        // 💊 알약 상태 체크 및 리스트 표시 로직 완전 삭제 (깔끔화)
         diaries.unshift({ 
             id: Date.now(), 
             date: dateStr, 
-            content: text,
-            pills: pillHistory
+            content: text
         });
         localStorage.setItem('myDiaries', JSON.stringify(diaries));
         
-        // 저장 후 창 깨끗하게 비우고 저장버튼 숨기기
         textOutput.innerText = '';
         saveBtn.style.display = 'none';
         
@@ -427,12 +312,11 @@
         diaries.forEach(item => {
             const diaryItem = document.createElement('div');
             diaryItem.className = 'diary-item';
-            const pillTag = item.pills ? `<span class="diary-pill-tag">${item.pills}</span>` : '';
             
+            // 알약 태그 부분 완전히 들어내어 UI를 깔끔하게 변경
             diaryItem.innerHTML = `
                 <div>
                     <div class="diary-date" contenteditable="true" data-id="${item.id}">${item.date}</div>
-                    ${pillTag}
                 </div>
                 <div class="diary-text" contenteditable="true" data-id="${item.id}">${item.content}</div>
                 <button class="delete-btn" onclick="deleteDiary(${item.id})">❌ 삭제</button>
@@ -453,7 +337,6 @@
         });
     }
 
-    loadPillState();
     displayDiaries();
 </script>
 
