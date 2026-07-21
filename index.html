@@ -618,6 +618,12 @@
         return dateStr.trim();
     }
 
+    // 날짜를 YYYYMMDD 숫자로 바꿔서 정확한 범위 비교가 가능하도록 함
+    function dateToInt(dateStr) {
+        const clean = normalizeDateStr(dateStr).replace(/-/g, '');
+        return parseInt(clean, 10) || 0;
+    }
+
     function getFixedHolidays(year) {
         return [
             `${year}-01-01`, `${year}-03-01`, `${year}-05-05`, `${year}-06-06`,
@@ -991,7 +997,6 @@
             }
             cell.innerHTML = cellInner;
 
-            // 달력 날짜를 클릭하면 아래 목록이 지워지지 않고, 예약일 입력창에 날짜만 쏙 들어갑니다!
             cell.addEventListener('click', () => {
                 reservationDateInput.value = normalizedDateStr;
             });
@@ -1030,17 +1035,23 @@
             date: normalizeDateStr(d.date || d.reservationDate)
         }));
 
-        // 상단 기간 필터(1주일, 1달)가 선택된 경우에만 필터링, 'all'이면 모든 데이터 100% 그대로 표시
-        if (currentFilter === 'week') {
+        // 날짜 범위 필터링 로직 수정 (YYYYMMDD 정수형태로 정확히 비교)
+        if (currentFilter === 'week' || currentFilter === 'month') {
             const now = new Date();
-            const weekAgo = new Date();
-            weekAgo.setDate(now.getDate() - 7);
-            diaries = diaries.filter(d => new Date(d.date) >= weekAgo);
-        } else if (currentFilter === 'month') {
-            const now = new Date();
-            const monthAgo = new Date();
-            monthAgo.setMonth(now.getMonth() - 1);
-            diaries = diaries.filter(d => new Date(d.date) >= monthAgo);
+            const dObj = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            
+            if (currentFilter === 'week') {
+                dObj.setDate(dObj.getDate() - 7);
+            } else if (currentFilter === 'month') {
+                dObj.setMonth(dObj.getMonth() - 1);
+            }
+
+            const limitYear = dObj.getFullYear();
+            const limitMonth = String(dObj.getMonth() + 1).padStart(2, '0');
+            const limitDay = String(dObj.getDate()).padStart(2, '0');
+            const limitInt = parseInt(`${limitYear}${limitMonth}${limitDay}`, 10);
+
+            diaries = diaries.filter(d => dateToInt(d.date) >= limitInt);
         }
 
         if (diaries.length === 0) {
