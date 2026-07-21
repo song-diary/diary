@@ -620,9 +620,12 @@
         }
     }
 
-    // 날짜 문자열을 "YYYY-M-D" 형태로 완전히 일관되게 표준화하는 함수
+    // 날짜 문자열 표준화 함수 (어떤 형태든 YYYY-M-D 로 고정)
     function normalizeDateStr(dateStr) {
         if (!dateStr) return '';
+        if (typeof dateStr !== 'string') {
+            dateStr = String(dateStr);
+        }
         if (dateStr.includes('T')) {
             dateStr = dateStr.split('T')[0];
         }
@@ -784,11 +787,18 @@
         const reader = new FileReader();
         reader.onload = function(e) {
             try {
-                const importedData = JSON.parse(e.target.result);
+                let importedData = JSON.parse(e.target.result);
+                
+                // 객체 형태로 들어온 경우 배열로 변환 안전장치
+                if (!Array.isArray(importedData)) {
+                    if (typeof importedData === 'object' && importedData !== null) {
+                        importedData = Object.values(importedData);
+                    }
+                }
+
                 if (Array.isArray(importedData)) {
-                    // 데이터를 불러올 때 모든 날짜를 완벽하게 표준화하여 저장
                     const cleanedData = importedData.map(item => {
-                        let rawDate = item.date || item.reservationDate || getTodayStr();
+                        let rawDate = item.date || item.reservationDate || item.createdDate || getTodayStr();
                         return {
                             id: item.id || (Date.now() + Math.random()),
                             date: normalizeDateStr(rawDate),
@@ -800,10 +810,9 @@
                     localStorage.setItem('myDiaries', JSON.stringify(cleanedData));
                     selectedDateStr = null; 
                     
-                    // 데이터가 들어오자마자 달력과 리스트를 완벽하게 재렌더링
                     renderCalendar();
                     displayDiaries();
-                    alert('📥 데이터가 성공적으로 복원되었습니다! 달력의 점도 확인해 보세요.');
+                    alert('📥 데이터가 성공적으로 복원되었습니다!');
                 } else {
                     alert('올바른 백업 파일 형식이 아닙니다.');
                 }
@@ -1007,7 +1016,10 @@
         diaries.unshift(newDiary);
         localStorage.setItem('myDiaries', JSON.stringify(diaries));
 
+        // 입력창 및 변수 완벽 초기화 (덮어쓰기 방지)
+        textOutput.innerHTML = '';
         textOutput.innerText = '';
+        accumulatedText = '';
         removeImage();
         initReservationDate();
         saveBtn.style.display = 'none';
@@ -1031,9 +1043,9 @@
         let memoDates = new Set();
         
         diaries.forEach(d => {
-            if(d.date) {
-                // 저장된 모든 날짜를 확실하게 표준화해서 Set에 담기
-                memoDates.add(normalizeDateStr(d.date));
+            let targetDate = d.date || d.reservationDate;
+            if(targetDate) {
+                memoDates.add(normalizeDateStr(targetDate));
             }
         });
 
@@ -1119,7 +1131,7 @@
 
         diaries = diaries.map(d => ({
             ...d,
-            date: normalizeDateStr(d.date)
+            date: normalizeDateStr(d.date || d.reservationDate)
         }));
 
         if (selectedDateStr) {
