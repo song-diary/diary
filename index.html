@@ -388,24 +388,12 @@
             border: none;
             cursor: default;
         }
-        
-        .cal-cell.selected {
-            background-color: var(--primary-color) !important;
-            color: white !important;
-            border-color: var(--primary-hover) !important;
-        }
-        .cal-cell.selected span {
-            color: white !important;
-        }
         .memo-dot {
             width: 5px;
             height: 5px;
             background-color: #ff5252;
             border-radius: 50%;
             margin-top: 2px;
-        }
-        .cal-cell.selected .memo-dot {
-            background-color: white;
         }
 
         .filter-container {
@@ -571,7 +559,7 @@
         <button class="filter-btn" id="filter-month" onclick="changeFilter('month')">1달보기</button>
     </div>
 
-    <p class="tip-text">💡 날짜를 누르면 해당 날짜의 메모만 모아볼 수 있습니다!</p>
+    <p class="tip-text">💡 달력 날짜를 누르면 해당 날짜가 예약일에 지정됩니다!</p>
     <div class="diary-list" id="diary-list"></div>
 </div>
 
@@ -588,7 +576,6 @@
     let accumulatedText = '';
     
     let currentFilter = localStorage.getItem('lastFilterState') || 'all';
-    let selectedDateStr = null; 
     let currentPhotoBase64 = null;
 
     let calYear = new Date().getFullYear();
@@ -752,7 +739,6 @@
                     });
 
                     localStorage.setItem('myDiaries', JSON.stringify(cleanedData));
-                    selectedDateStr = null; 
                     renderCalendar();
                     displayDiaries();
                     alert('📥 데이터가 완벽하게 복원되었습니다!');
@@ -953,7 +939,6 @@
         initReservationDate();
         saveBtn.style.display = 'none';
 
-        selectedDateStr = null; // 저장 후에는 전체 목록이 보이도록 초기화
         renderCalendar();
         displayDiaries();
         alert('✨ 메모가 저장되었습니다!');
@@ -989,7 +974,7 @@
             const cell = document.createElement('div');
             cell.className = 'cal-cell';
             
-            const rawDateStr = `${calYear}-${calMonth + 1}-${day}`; 
+            const rawDateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`; 
             const normalizedDateStr = normalizeDateStr(rawDateStr);
             const dObj = new Date(calYear, calMonth, day);
             const dayOfWeek = dObj.getDay();
@@ -998,7 +983,6 @@
             else if (dayOfWeek === 6) cell.classList.add('saturday');
 
             if (holidays.has(normalizedDateStr)) cell.classList.add('holiday');
-            if (selectedDateStr === normalizedDateStr) cell.classList.add('selected');
 
             let cellInner = `<span>${day}</span>`;
             if (memoDates.has(normalizedDateStr)) {
@@ -1007,20 +991,9 @@
             }
             cell.innerHTML = cellInner;
 
+            // 달력 날짜를 누르면 아래 목록을 지우는 게 아니라, 예약일 입력창에 날짜가 쏙 들어가게 변경!
             cell.addEventListener('click', () => {
-                // 이미 선택된 날짜를 누르면 필터 해제(전체보기 상태로), 다른 날짜를 누르면 해당 날짜 선택
-                if (selectedDateStr === normalizedDateStr) {
-                    selectedDateStr = null;
-                } else {
-                    selectedDateStr = normalizedDateStr;
-                    // 필터 버튼 활성화 상태 제거 (날짜 선택이 우선되도록)
-                    ['all', 'week', 'month'].forEach(f => {
-                        const btn = document.getElementById(`filter-${f}`);
-                        if(btn) btn.classList.remove('active');
-                    });
-                }
-                renderCalendar();
-                displayDiaries();
+                reservationDateInput.value = normalizedDateStr;
             });
 
             grid.appendChild(cell);
@@ -1036,7 +1009,6 @@
 
     function changeFilter(filterType) {
         currentFilter = filterType;
-        selectedDateStr = null; // 상단 기간 필터를 누르면 날짜 개별 선택은 해제
         localStorage.setItem('lastFilterState', filterType);
         
         ['all', 'week', 'month'].forEach(f => {
@@ -1046,7 +1018,6 @@
         const activeBtn = document.getElementById(`filter-${filterType}`);
         if(activeBtn) activeBtn.classList.add('active');
 
-        renderCalendar();
         displayDiaries();
     }
 
@@ -1059,27 +1030,21 @@
             date: normalizeDateStr(d.date || d.reservationDate)
         }));
 
-        // 우선순위 1: 달력에서 특정 날짜를 클릭한 경우 무조건 해당 날짜의 메모만 표시
-        if (selectedDateStr) {
-            diaries = diaries.filter(d => d.date === selectedDateStr);
-        } else {
-            // 우선순위 2: 상단 기간 필터 적용
-            if (currentFilter === 'week') {
-                const now = new Date();
-                const weekAgo = new Date();
-                weekAgo.setDate(now.getDate() - 7);
-                diaries = diaries.filter(d => new Date(d.date) >= weekAgo);
-            } else if (currentFilter === 'month') {
-                const now = new Date();
-                const monthAgo = new Date();
-                monthAgo.setMonth(now.getMonth() - 1);
-                diaries = diaries.filter(d => new Date(d.date) >= monthAgo);
-            }
+        // 상단 기간 필터(전체, 1주일, 1달)에 따른 목록 표시 (달력 클릭으로 데이터가 지워지지 않음)
+        if (currentFilter === 'week') {
+            const now = new Date();
+            const weekAgo = new Date();
+            weekAgo.setDate(now.getDate() - 7);
+            diaries = diaries.filter(d => new Date(d.date) >= weekAgo);
+        } else if (currentFilter === 'month') {
+            const now = new Date();
+            const monthAgo = new Date();
+            monthAgo.setMonth(now.getMonth() - 1);
+            diaries = diaries.filter(d => new Date(d.date) >= monthAgo);
         }
 
         if (diaries.length === 0) {
-            let msg = selectedDateStr ? `${selectedDateStr}에 저장된 메모가 없습니다.` : '저장된 메모가 없습니다.';
-            diaryList.innerHTML = `<p style="text-align:center; color:#a09184; padding:20px; font-size:16px;">${msg}</p>`;
+            diaryList.innerHTML = `<p style="text-align:center; color:#a09184; padding:20px; font-size:16px;">저장된 메모가 없습니다.</p>`;
             return;
         }
 
