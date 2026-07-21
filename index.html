@@ -105,7 +105,6 @@
             color: var(--pill-success);
         }
 
-        /* 설정 메뉴 박스 스타일 */
         .setting-menu-box {
             background-color: #fff9f5;
             border: 2px solid var(--border-color);
@@ -472,7 +471,6 @@
         <button class="setting-btn" onclick="toggleSettingMenu()">⚙️ 설정</button>
     </div>
     
-    <!-- 확장된 설정 메뉴 박스 (약 체크 + 백업/복원) -->
     <div class="setting-menu-box" id="setting-menu-box">
         <span class="setting-section-title">💊 약 챙기기 기능 설정</span>
         <div class="setting-row">
@@ -631,6 +629,11 @@
         }
     }
 
+    // 설정창 닫는 공통 함수
+    function closeSettingMenu() {
+        document.getElementById('setting-menu-box').style.display = 'none';
+    }
+
     function togglePillDisplay() {
         let showPill = localStorage.getItem('showPillSetting');
         if (showPill === 'true') {
@@ -641,9 +644,9 @@
             alert('💊 약 챙기기 체크 기능이 켜졌습니다!');
         }
         initPillSetting();
+        closeSettingMenu(); // 확인 후 설정창 자동 닫힘
     }
 
-    // 백업하기 기능 (파일로 다운로드)
     function backupData() {
         const diaries = localStorage.getItem('myDiaries') || '[]';
         const blob = new Blob([diaries], { type: 'application/json' });
@@ -661,16 +664,16 @@
         URL.revokeObjectURL(url);
         
         alert('📤 백업 파일이 다운로드되었습니다! 안전한 곳에 보관해 주세요.');
+        closeSettingMenu(); // 작업 후 설정창 자동 닫힘
     }
 
-    // 복원하기 창 띄우기
     function triggerRestore() {
+        closeSettingMenu(); // 작업 진행 시 설정창 자동 닫힘
         if (confirm('기존 메모에 백업 파일의 내용을 덮어쓰거나 추가합니다. 백업해둔 파일(.json)을 선택해 주세요.')) {
             document.getElementById('restore-file-input').click();
         }
     }
 
-    // 복원 파일 읽기 및 적용
     function restoreData(event) {
         const file = event.target.files[0];
         if (!file) return;
@@ -692,7 +695,7 @@
             }
         };
         reader.readAsText(file);
-        event.target.value = ''; // 초기화
+        event.target.value = '';
     }
 
     function loadPillState() {
