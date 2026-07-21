@@ -398,11 +398,11 @@
         .filter-container {
             display: flex;
             justify-content: center;
-            gap: 8px;
+            gap: 10px;
             margin-bottom: 15px;
         }
         .filter-btn {
-            padding: 8px 16px;
+            padding: 10px 24px;
             font-size: 15px;
             font-weight: bold;
             border: 1px solid var(--border-color);
@@ -555,7 +555,6 @@
     <div class="filter-container">
         <button class="filter-btn" id="filter-all" onclick="changeFilter('all')">전체보기</button>
         <button class="filter-btn" id="filter-week" onclick="changeFilter('week')">1주일보기</button>
-        <button class="filter-btn" id="filter-month" onclick="changeFilter('month')">1달보기</button>
     </div>
 
     <p class="tip-text">💡 달력 날짜를 누르면 해당 날짜가 예약일에 지정됩니다!</p>
@@ -1003,10 +1002,11 @@
     }
 
     function changeFilter(filterType) {
+        if (filterType !== 'all' && filterType !== 'week') filterType = 'all';
         currentFilter = filterType;
         localStorage.setItem('lastFilterState', filterType);
         
-        ['all', 'week', 'month'].forEach(f => {
+        ['all', 'week'].forEach(f => {
             const btn = document.getElementById(`filter-${f}`);
             if(btn) btn.classList.remove('active');
         });
@@ -1025,7 +1025,7 @@
             date: normalizeDateStr(d.date || d.reservationDate || d.createdDate)
         }));
 
-        if (currentFilter === 'week' || currentFilter === 'month') {
+        if (currentFilter === 'week') {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             const todayTime = today.getTime();
@@ -1038,12 +1038,7 @@
                 const diffTime = todayTime - itemTime;
                 const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
                 
-                if (currentFilter === 'week') {
-                    return diffDays >= 0 && diffDays <= 7;
-                } else if (currentFilter === 'month') {
-                    return diffDays >= 0 && diffDays <= 30;
-                }
-                return true;
+                return diffDays >= 0 && diffDays <= 7;
             });
         }
 
@@ -1122,6 +1117,7 @@
         initReservationDate();
         initPillSetting();
         renderCalendar();
+        if (currentFilter !== 'all' && currentFilter !== 'week') currentFilter = 'all';
         changeFilter(currentFilter);
     };
 </script>
