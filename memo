@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>나만의 스마트 메모장</title>
+    <style>
+        body { font-family: 'Malgun Gothic', sans-serif; background-color: #f8fafc; color: #1e293b; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .container { width: 100%; max-width: 500px; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { font-size: 22px; color: #0284c7; text-align: center; margin-bottom: 20px; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 14px; color: #475569; }
+        input[type="text"], textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
+        textarea { height: 100px; resize: vertical; }
+        button { width: 100%; padding: 12px; background-color: #0284c7; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s; }
+        button:hover { background-color: #0369a1; }
+        
+        /* 메모 목록 스타일 */
+        .memo-list { margin-top: 25px; border-top: 2px solid #e2e8f0; padding-top: 15px; }
+        .memo-card { background: #f1f5f9; padding: 15px; border-radius: 8px; margin-bottom: 12px; border-left: 4px solid #0284c7; }
+        .memo-title { font-weight: bold; font-size: 15px; color: #0f172a; margin-bottom: 5px; }
+        .memo-date { font-size: 11px; color: #64748b; margin-bottom: 8px; }
+        .memo-content { font-size: 14px; color: #334155; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>📝 나만의 스마트 메모장</h1>
+    
+    <div class="input-group">
+        <label>제목</label>
+        <input type="text" id="memo-title" placeholder="메모의 제목을 입력하세요">
+    </div>
+
+    <div class="input-group">
+        <label>내용</label>
+        <textarea id="memo-content" placeholder="오늘의 기록, 아이디어를 적어보세요..."></textarea>
+    </div>
+
+    <button onclick="saveMemo()">메모 저장하기</button>
+
+    <div class="memo-list">
+        <h3>저장된 메모 목록</h3>
+        <div id="memo-container">
+            <!-- 저장된 메모들이 여기에 쌓입니다 -->
+        </div>
+    </div>
+</div>
+
+<script>
+    function saveMemo() {
+        const titleInput = document.getElementById('memo-title');
+        const contentInput = document.getElementById('memo-content');
+        const container = document.getElementById('memo-container');
+
+        const title = titleInput.value.trim();
+        const content = contentInput.value.trim();
+
+        if (!title || !content) {
+            alert("제목과 내용을 모두 입력해 주세요!");
+            return;
+        }
+
+        // 현재 날짜 구하기
+        const now = new Date();
+        const dateStr = `${now.getFullYear()}.${now.getMonth()+1}.${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+        // 메모 카드 만들기
+        const card = document.createElement('div');
+        card.className = 'memo-card';
+        card.innerHTML = `
+            <div class="memo-title">${title}</div>
+            <div class="memo-date">${dateStr}</div>
+            <div class="memo-content">${content}</div>
+        `;
+
+        // 목록의 맨 위에 추가
+        container.prepend(card);
+
+        // 입력창 비우기
+        titleInput.value = '';
+        contentInput.value = '';
+    }
+</script>
+
+</body>
+</html>
