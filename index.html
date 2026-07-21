@@ -1025,23 +1025,22 @@
             date: normalizeDateStr(d.date || d.reservationDate || d.createdDate)
         }));
 
-        // [완전 해결] 필터 오류 원인인 날짜 조건 연산을 안전하게 개선
         if (currentFilter === 'week' || currentFilter === 'month') {
             const today = new Date();
-            today.setHours(0, 0, 0, 0); // 시간을 00:00:00으로 맞춰 오차 방지
+            today.setHours(0, 0, 0, 0);
+            const todayTime = today.getTime();
 
             diaries = diaries.filter(d => {
                 const itemDate = parseDateObj(d.date);
                 itemDate.setHours(0, 0, 0, 0);
+                const itemTime = itemDate.getTime();
                 
-                const diffTime = today - itemDate;
+                const diffTime = todayTime - itemTime;
                 const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
                 
                 if (currentFilter === 'week') {
-                    // 오늘 기준 과거 7일 이내 및 오늘 날짜 포함 (미래 예약일 메모도 포함되도록 조건 완화)
                     return diffDays >= 0 && diffDays <= 7;
                 } else if (currentFilter === 'month') {
-                    // 오늘 기준 과거 30일 이내 및 오늘 날짜 포함
                     return diffDays >= 0 && diffDays <= 30;
                 }
                 return true;
