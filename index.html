@@ -340,13 +340,10 @@
             text-align: center;
         }
         .cal-day-name {
-            font-size: 13px !important;
+            font-size: 13px;
             font-weight: bold;
             color: #a09184;
             padding-bottom: 5px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
         }
         .cal-cell {
             aspect-ratio: 1;
@@ -361,50 +358,21 @@
             position: relative;
             border: 1px solid #f0e6df;
             color: #4a3f35;
-            overflow: hidden;
-            box-sizing: border-box;
-            padding: 2px;
-        }
-        .cal-cell span {
-            font-size: 15px !important;
-            line-height: 1.2;
-            font-weight: bold;
-        }
-
-        /* 일요일 & 공휴일: 눈에 띄게 진한 빨간색 강조 */
-        .cal-cell.sunday, .cal-cell.holiday {
-            background-color: #fff5f5;
-            color: #e63946 !important;
-        }
-        .cal-cell.sunday span, .cal-cell.holiday span {
-            color: #e63946 !important;
-        }
-
-        .cal-cell.saturday {
-            background-color: #f7fbff;
-            color: #337ab7;
-        }
-        .cal-cell.saturday span {
-            color: #337ab7;
         }
         .cal-cell.empty {
             background: transparent;
             border: none;
             cursor: default;
         }
-        
-        /* 메모가 있어도 날짜 배경색은 유지하고 점만 표시 */
         .cal-cell.has-memo {
-            /* 기존 배경색 유지 */
+            background-color: #fff0eb;
+            font-weight: bold;
+            border-color: #ffb3a7;
         }
-        
         .cal-cell.selected {
             background-color: var(--primary-color) !important;
             color: white !important;
             border-color: var(--primary-hover) !important;
-        }
-        .cal-cell.selected span {
-            color: white !important;
         }
         .memo-dot {
             width: 5px;
@@ -504,10 +472,9 @@
     </div>
     
     <div class="setting-menu-box" id="setting-menu-box">
-        <span class="setting-section-title">💊 약 챙기기 체크 설정</span>
+        <span class="setting-section-title">💊 약 챙기기 기능 설정</span>
         <div class="setting-row">
-            <button class="setting-action-btn" onclick="togglePillDisplay('on')">켜기</button>
-            <button class="setting-action-btn" onclick="togglePillDisplay('off')">끄기</button>
+            <button class="setting-action-btn" onclick="togglePillDisplay()">화면에서 약 체크 켜기/끄기</button>
         </div>
         
         <span class="setting-section-title" style="margin-top: 15px;">💾 데이터 안전 백업 및 복원</span>
@@ -561,13 +528,13 @@
             <button class="cal-nav-btn" onclick="changeMonth(1)">다음 ▶</button>
         </div>
         <div class="cal-grid">
-            <div class="cal-day-name" style="color:#e63946;">일</div>
+            <div class="cal-day-name" style="color:#ff5252;">일</div>
             <div class="cal-day-name">월</div>
             <div class="cal-day-name">화</div>
             <div class="cal-day-name">수</div>
             <div class="cal-day-name">목</div>
             <div class="cal-day-name">금</div>
-            <div class="cal-day-name" style="color:#337ab7;">토</div>
+            <div class="cal-day-name" style="color:#4da6ff;">토</div>
         </div>
         <div class="cal-grid" id="cal-days-grid" style="margin-top: 5px;"></div>
     </div>
@@ -575,7 +542,7 @@
     <button id="exit-btn" onclick="closeApp()">🔒 메모장 안전하게 잠그기</button>
 
     <div class="filter-container">
-        <button class="filter-btn" id="filter-all" onclick="changeFilter('all')">전체보기</button>
+        <button class="filter-btn active" id="filter-all" onclick="changeFilter('all')">전체보기</button>
         <button class="filter-btn" id="filter-week" onclick="changeFilter('week')">1주일보기</button>
         <button class="filter-btn" id="filter-month" onclick="changeFilter('month')">1달보기</button>
     </div>
@@ -595,9 +562,7 @@
     let isRecording = false;
     let shouldRestart = true; 
     let accumulatedText = '';
-    
-    let currentFilter = localStorage.getItem('lastFilterState') || 'all';
-    
+    let currentFilter = 'all';
     let selectedDateStr = null; 
     let currentPhotoBase64 = null;
 
@@ -624,66 +589,6 @@
         } else if (touchEndX > touchStartX + swipeThreshold) {
             changeMonth(-1);
         }
-    }
-
-    function getFixedHolidays(year) {
-        return [
-            `${year}-1-1`,
-            `${year}-3-1`,
-            `${year}-5-5`,
-            `${year}-6-6`,
-            `${year}-8-15`,
-            `${year}-10-3`,
-            `${year}-10-9`,
-            `${year}-12-25`
-        ];
-    }
-
-    function getKoreanHolidays(year) {
-        let holidays = new Set(getFixedHolidays(year));
-        
-        if (year === 2026) {
-            holidays.add('2026-2-16');
-            holidays.add('2026-2-17');
-            holidays.add('2026-2-18');
-            holidays.add('2026-5-24');
-            holidays.add('2026-5-25');
-            holidays.add('2026-9-24');
-            holidays.add('2026-9-25');
-            holidays.add('2026-9-26');
-        } else if (year === 2027) {
-            holidays.add('2027-2-6');
-            holidays.add('2027-2-7');
-            holidays.add('2027-2-8');
-            holidays.add('2027-5-13');
-            holidays.add('2027-9-14');
-            holidays.add('2027-9-15');
-            holidays.add('2027-9-16');
-        } else if (year === 2025) {
-            holidays.add('2025-1-28');
-            holidays.add('2025-1-29');
-            holidays.add('2025-1-30');
-            holidays.add('2025-5-5');
-            holidays.add('2025-5-6');
-            holidays.add('2025-10-5');
-            holidays.add('2025-10-6');
-            holidays.add('2025-10-7');
-            holidays.add('2025-10-8');
-        }
-
-        let originalList = Array.from(holidays);
-        originalList.forEach(dateStr => {
-            let parts = dateStr.split('-');
-            let dObj = new Date(parts[0], parts[1]-1, parts[2]);
-            let dayOfWeek = dObj.getDay();
-            if (dayOfWeek === 0) {
-                let nextDay = new Date(dObj);
-                nextDay.setDate(dObj.getDate() + 1);
-                holidays.add(`${nextDay.getFullYear()}-${nextDay.getMonth()+1}-${nextDay.getDate()}`);
-            }
-        });
-
-        return holidays;
     }
 
     function initReservationDate() {
@@ -724,20 +629,22 @@
         }
     }
 
+    // 설정창 닫는 공통 함수
     function closeSettingMenu() {
         document.getElementById('setting-menu-box').style.display = 'none';
     }
 
-    function togglePillDisplay(action) {
-        if (action === 'off') {
+    function togglePillDisplay() {
+        let showPill = localStorage.getItem('showPillSetting');
+        if (showPill === 'true') {
             localStorage.setItem('showPillSetting', 'false');
-            alert('약 챙기기 기능이 꺼졌습니다.');
+            alert('💊 약 챙기기 체크 기능이 숨겨졌습니다.');
         } else {
             localStorage.setItem('showPillSetting', 'true');
-            alert('약 챙기기 기능이 켜졌습니다!');
+            alert('💊 약 챙기기 체크 기능이 켜졌습니다!');
         }
         initPillSetting();
-        closeSettingMenu();
+        closeSettingMenu(); // 확인 후 설정창 자동 닫힘
     }
 
     function backupData() {
@@ -757,11 +664,11 @@
         URL.revokeObjectURL(url);
         
         alert('📤 백업 파일이 다운로드되었습니다! 안전한 곳에 보관해 주세요.');
-        closeSettingMenu();
+        closeSettingMenu(); // 작업 후 설정창 자동 닫힘
     }
 
     function triggerRestore() {
-        closeSettingMenu();
+        closeSettingMenu(); // 작업 진행 시 설정창 자동 닫힘
         if (confirm('기존 메모에 백업 파일의 내용을 덮어쓰거나 추가합니다. 백업해둔 파일(.json)을 선택해 주세요.')) {
             document.getElementById('restore-file-input').click();
         }
@@ -1033,19 +940,10 @@
     function changeFilter(filterType) {
         selectedDateStr = null; 
         currentFilter = filterType;
-        localStorage.setItem('lastFilterState', filterType);
-
-        updateFilterUI();
+        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(`filter-${filterType}`).classList.add('active');
         renderCalendar();
         displayDiaries();
-    }
-
-    function updateFilterUI() {
-        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-        const activeBtn = document.getElementById(`filter-${currentFilter}`);
-        if (activeBtn) {
-            activeBtn.classList.add('active');
-        }
     }
 
     function changeMonth(direction) {
@@ -1082,8 +980,6 @@
             }
         });
 
-        const holidays = getKoreanHolidays(calYear);
-
         for (let i = 0; i < firstDayIndex; i++) {
             const emptyCell = document.createElement('div');
             emptyCell.className = 'cal-cell empty';
@@ -1092,24 +988,12 @@
 
         for (let day = 1; day <= totalDays; day++) {
             const cell = document.createElement('div');
-            const thisDateObj = new Date(calYear, calMonth, day);
-            const dayOfWeek = thisDateObj.getDay();
+            cell.className = 'cal-cell';
             const thisDateStr = `${calYear}-${calMonth + 1}-${day}`;
             
-            let cellClass = 'cal-cell';
-            
-            if (dayOfWeek === 0) {
-                cellClass += ' sunday';
-            } else if (holidays.has(thisDateStr)) {
-                cellClass += ' holiday';
-            } else if (dayOfWeek === 6) {
-                cellClass += ' saturday';
-            }
-            
-            cell.className = cellClass;
-
             let htmlContent = `<span>${day}</span>`;
             if (memoDates.has(thisDateStr)) {
+                cell.classList.add('has-memo'); 
                 htmlContent += `<div class="memo-dot"></div>`;
             }
 
@@ -1235,7 +1119,6 @@
 
     initReservationDate();
     initPillSetting();
-    updateFilterUI();
     renderCalendar();
     displayDiaries();
 </script>
