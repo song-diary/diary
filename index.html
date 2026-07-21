@@ -185,7 +185,7 @@
         }
         .diary-photo {
             max-width: 100%;
-            max-height: 250px;
+            max-height: 300px;
             border-radius: 8px;
             margin-top: 12px;
             display: block;
@@ -382,15 +382,44 @@
         updatePillButton(type, state[type], labels[type]);
     }
 
+    // 📷 고화질 사진을 용량 작은 웹용 이미지로 압축 변환하는 기능
     function previewImage(event) {
         const file = event.target.files[0];
         if (file) {
             const reader = new FileReader();
             reader.onload = function(e) {
-                currentPhotoBase64 = e.target.result;
-                const previewImg = document.getElementById('image-preview');
-                previewImg.src = currentPhotoBase64;
-                document.getElementById('photo-preview-wrap').style.display = 'block';
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    const max_size = 600; // 가로/세로 최대 600px로 압축
+
+                    if (width > height) {
+                        if (width > max_size) {
+                            height *= max_size / width;
+                            width = max_size;
+                        }
+                    } else {
+                        if (height > max_size) {
+                            width *= max_size / height;
+                            height = max_size;
+                        }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // 압축된 사진 데이터를 생성
+                    currentPhotoBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                    
+                    const previewImg = document.getElementById('image-preview');
+                    previewImg.src = currentPhotoBase64;
+                    document.getElementById('photo-preview-wrap').style.display = 'block';
+                    saveBtn.style.display = 'block'; // 💡 사진만 올려도 저장 버튼 보이게 수정
+                }
+                img.src = e.target.result;
             }
             reader.readAsDataURL(file);
         }
@@ -401,6 +430,11 @@
         document.getElementById('diary-photo-input').value = '';
         document.getElementById('photo-preview-wrap').style.display = 'none';
         document.getElementById('image-preview').src = '';
+        
+        // 텍스트도 없고 사진도 없으면 저장 버튼 숨기기
+        if(!textOutput.innerText.trim()) {
+            saveBtn.style.display = 'none';
+        }
     }
 
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -475,30 +509,39 @@
         }
     });
 
+    // 💾 일기 저장 함수
     function manualSaveDiary() {
         const text = textOutput.innerText.trim();
-        if (!text && !currentPhotoBase64) {
+        // 글자가 안내 문구이거나 비어있으면 사진만 유효하게 처리
+        const isDefaultText = text.includes('인식된 목소리가 없습니다') || text.includes('귀 기울여 듣고 있습니다');
+        const cleanText = isDefaultText ? '' : text;
+
+        if (!cleanText && !currentPhotoBase64) {
             return;
         }
 
-        const diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
-        const now = new Date();
-        const dateStr = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일 ${now.getHours()}시 ${now.getMinutes()}분`;
-        
-        diaries.unshift({ 
-            id: Date.now(), 
-            date: dateStr, 
-            content: text,
-            photo: currentPhotoBase64,
-            timestamp: Date.now()
-        });
-        localStorage.setItem('myDiaries', JSON.stringify(diaries));
-        
-        textOutput.innerText = '';
-        removeImage();
-        saveBtn.style.display = 'none';
-        
-        displayDiaries();
+        try {
+            const diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일 ${now.getHours()}시 ${now.getMinutes()}분`;
+            
+            diaries.unshift({ 
+                id: Date.now(), 
+                date: dateStr, 
+                content: cleanText,
+                photo: currentPhotoBase64,
+                timestamp: Date.now()
+            });
+            localStorage.setItem('myDiaries', JSON.stringify(diaries));
+            
+            textOutput.innerText = '';
+            removeImage();
+            saveBtn.style.display = 'none';
+            
+            displayDiaries();
+        } catch(e) {
+            alert('사진 용량이 너무 큽니다. 다른 사진을 선택해주세요.');
+        }
     }
 
     function updateField(id, field, value) {
@@ -544,7 +587,6 @@
             const diaryItem = document.createElement('div');
             diaryItem.className = 'diary-item';
             
-            // 💡 [수정됨] 텍스트가 먼저 나오고, 사진(photoHtml)이 아래쪽으로 정렬되도록 순서 변경!
             const photoHtml = item.photo ? `<img src="${item.photo}" class="diary-photo" alt="일기 사진">` : '';
 
             diaryItem.innerHTML = `
