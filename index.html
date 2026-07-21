@@ -620,6 +620,23 @@
         }
     }
 
+    // 날짜 문자열을 "YYYY-M-D" 또는 "YYYY-MM-DD" 상관없이 일관된 'YYYY-M-D' 또는 표준화 형태로 변환하는 도우미 함수
+    function normalizeDateStr(dateStr) {
+        if (!dateStr) return '';
+        // 만약 ISO 형식이면 앞부분만 추출
+        if (dateStr.includes('T')) {
+            dateStr = dateStr.split('T')[0];
+        }
+        let parts = dateStr.split('-');
+        if (parts.length === 3) {
+            let y = parseInt(parts[0], 10);
+            let m = parseInt(parts[1], 10);
+            let d = parseInt(parts[2], 10);
+            return `${y}-${m}-${d}`;
+        }
+        return dateStr.trim();
+    }
+
     function getFixedHolidays(year) {
         return [
             `${year}-1-1`,
@@ -770,17 +787,18 @@
             try {
                 const importedData = JSON.parse(e.target.result);
                 if (Array.isArray(importedData)) {
-                    // 수정된 부분: 옛날 버전 파일에서 내용 필드명이 다를 경우를 대비해 유연하게 매핑
                     const cleanedData = importedData.map(item => {
+                        let rawDate = item.date || item.reservationDate || getTodayStr();
                         return {
-                            id: item.id || Date.now() + Math.random(),
-                            date: item.date || item.reservationDate || getTodayStr(),
+                            id: item.id || (Date.now() + Math.random()),
+                            date: normalizeDateStr(rawDate),
                             text: item.text || item.content || item.memo || '',
                             photo: item.photo || item.image || null
                         };
                     });
 
                     localStorage.setItem('myDiaries', JSON.stringify(cleanedData));
+                    selectedDateStr = null; // 복원 후 선택 날짜 초기화
                     renderCalendar();
                     displayDiaries();
                     alert('📥 데이터가 성공적으로 복원되었습니다!');
@@ -973,9 +991,8 @@
             return;
         }
 
-        const dateVal = reservationDateInput.value;
-        const now = new Date();
-        const timestamp = now.getTime();
+        const dateVal = normalizeDateStr(reservationDateInput.value);
+        const timestamp = Date.now();
         
         const newDiary = {
             id: timestamp,
@@ -1011,7 +1028,9 @@
         let diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
         let memoDates = new Set();
         diaries.forEach(d => {
-            if(d.date) memoDates.add(d.date);
+            if(d.date) {
+                memoDates.add(normalizeDateStr(d.date));
+            }
         });
 
         for (let i = 0; i < firstDayIndex; i++) {
@@ -1024,7 +1043,8 @@
             const cell = document.createElement('div');
             cell.className = 'cal-cell';
             
-            const dateStr = `${calYear}-${calMonth + 1}-${day}`;
+            const dateStr = `${calYear}-${calMonth + 1}-${day}`; // 예: "2026-7-21"
+            const normalizedDateStr = normalizeDateStr(dateStr);
             const dObj = new Date(calYear, calMonth, day);
             const dayOfWeek = dObj.getDay();
 
@@ -1034,26 +1054,26 @@
                 cell.classList.add('saturday');
             }
 
-            if (holidays.has(dateStr)) {
+            if (holidays.has(normalizedDateStr)) {
                 cell.classList.add('holiday');
             }
 
-            if (selectedDateStr === dateStr) {
+            if (selectedDateStr === normalizedDateStr) {
                 cell.classList.add('selected');
             }
 
             let cellInner = `<span>${day}</span>`;
-            if (memoDates.has(dateStr)) {
+            if (memoDates.has(normalizedDateStr)) {
                 cell.classList.add('has-memo');
                 cellInner += `<div class="memo-dot"></div>`;
             }
             cell.innerHTML = cellInner;
 
             cell.addEventListener('click', () => {
-                if (selectedDateStr === dateStr) {
-                    selectedDateStr = null; 
+                if (selectedDateStr === normalizedDateStr) {
+                    selectedDateStr = null; // 이미 선택된 날짜를 누르면 선택 해제 (전체보기로 복귀)
                 } else {
-                    selectedDateStr = dateStr;
+                    selectedDateStr = normalizedDateStr;
                 }
                 renderCalendar();
                 displayDiaries();
@@ -1092,6 +1112,12 @@
     function displayDiaries() {
         diaryList.innerHTML = '';
         let diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
+
+        // 날짜 데이터 표준화 반영
+        diaries = diaries.map(d => ({
+            ...d,
+            date: normalizeDateStr(d.date)
+        }));
 
         if (selectedDateStr) {
             diaries = diaries.filter(d => d.date === selectedDateStr);
@@ -1145,6 +1171,7 @@
         const index = diaries.findIndex(d => d.id === id);
         if (index !== -1) {
             let newDateStr = element.innerText.replace('📅', '').trim();
+            newDateStr = normalizeDateStr(newDateStr);
             if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(newDateStr)) {
                 diaries[index].date = newDateStr;
                 localStorage.setItem('myDiaries', JSON.stringify(diaries));
