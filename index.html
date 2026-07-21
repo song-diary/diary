@@ -991,7 +991,7 @@
             }
             cell.innerHTML = cellInner;
 
-            // 달력 날짜를 누르면 아래 목록을 지우는 게 아니라, 예약일 입력창에 날짜가 쏙 들어가게 변경!
+            // 달력 날짜를 클릭하면 아래 목록이 지워지지 않고, 예약일 입력창에 날짜만 쏙 들어갑니다!
             cell.addEventListener('click', () => {
                 reservationDateInput.value = normalizedDateStr;
             });
@@ -1030,7 +1030,7 @@
             date: normalizeDateStr(d.date || d.reservationDate)
         }));
 
-        // 상단 기간 필터(전체, 1주일, 1달)에 따른 목록 표시 (달력 클릭으로 데이터가 지워지지 않음)
+        // 상단 기간 필터(1주일, 1달)가 선택된 경우에만 필터링, 'all'이면 모든 데이터 100% 그대로 표시
         if (currentFilter === 'week') {
             const now = new Date();
             const weekAgo = new Date();
