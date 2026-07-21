@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>나만의 목소리 건강 일기장</title>
+    <title>스마트 메모장</title>
     <style>
         :root {
             --bg-color: #fdf6f0;
@@ -88,24 +88,58 @@
             gap: 12px;
             margin-bottom: 20px;
         }
+        
+        /* 💡 두 버튼을 나란히 한 줄로 배치하는 스타일 */
+        .action-row {
+            display: flex;
+            gap: 10px;
+        }
         #record-btn {
+            flex: 1;
             background-color: var(--primary-color);
             color: white;
             border: none;
-            padding: 18px 30px;
-            font-size: 20px;
+            padding: 15px 10px;
+            font-size: 17px;
             font-weight: bold;
-            border-radius: 50px;
+            border-radius: 15px;
             cursor: pointer;
             box-shadow: 0 4px 10px rgba(255, 142, 148, 0.4);
             transition: all 0.2s ease;
-            width: 100%;
         }
         #record-btn.recording {
             background-color: #b3a297;
             animation: pulse 1.5s infinite;
             box-shadow: 0 4px 10px rgba(179, 162, 151, 0.4);
         }
+        .photo-upload-box {
+            flex: 1;
+            display: flex;
+        }
+        .photo-file-input {
+            display: none;
+        }
+        .photo-upload-label {
+            flex: 1;
+            background-color: #f1e4d8;
+            color: #5c4d40;
+            padding: 15px 10px;
+            border-radius: 15px;
+            font-size: 17px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+            text-align: center;
+            box-sizing: border-box;
+            box-shadow: 0 4px 10px rgba(241, 228, 216, 0.4);
+        }
+        .photo-upload-label:hover {
+            background-color: #e5d4c3;
+        }
+
         #save-btn {
             background-color: var(--save-color);
             color: white;
@@ -147,31 +181,6 @@
             border-color: var(--save-color);
         }
         
-        .photo-upload-box {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .photo-file-input {
-            display: none;
-        }
-        .photo-upload-label {
-            background-color: #f1e4d8;
-            color: #5c4d40;
-            padding: 12px 20px;
-            border-radius: 30px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            display: inline-block;
-            transition: 0.2s;
-            text-align: center;
-            width: 100%;
-            box-sizing: border-box;
-        }
-        .photo-upload-label:hover {
-            background-color: #e5d4c3;
-        }
         .photo-preview-container {
             margin-top: 10px;
             position: relative;
@@ -290,7 +299,7 @@
 <body>
 
 <div class="container">
-    <h1>📝 나의 목소리 일기장</h1>
+    <h1>📝 스마트 메모장</h1>
     
     <div class="pill-container">
         <div class="pill-title">💊 오늘 약 챙겨 드셨나요? (터치하여 체크)</div>
@@ -302,21 +311,25 @@
     </div>
     
     <div class="btn-box">
-        <button id="record-btn">🎤 눌러서 말하기</button>
-        
-        <div class="photo-upload-box">
-            <label for="diary-photo-input" class="photo-upload-label">📷 메모지/풍경 사진 첨부하기</label>
-            <input type="file" id="diary-photo-input" class="photo-file-input" accept="image/*" onchange="previewImage(event)">
+        <!-- 💡 두 버튼을 한 줄(action-row)로 배치 -->
+        <div class="action-row">
+            <button id="record-btn">🎤 말하기</button>
+            
+            <div class="photo-upload-box">
+                <label for="diary-photo-input" class="photo-upload-label">📷 사진첨부</label>
+                <input type="file" id="diary-photo-input" class="photo-file-input" accept="image/*" onchange="previewImage(event)">
+            </div>
         </div>
+
         <div id="photo-preview-wrap" style="display:none;" class="photo-preview-container">
             <img id="image-preview" class="photo-preview" src="" alt="미리보기">
             <button onclick="removeImage()" style="background:none; border:none; color:red; cursor:pointer; font-size:13px; display:block; margin:8px auto; font-weight:bold;">❌ 첨부 사진 취소</button>
         </div>
 
-        <button id="save-btn" onclick="manualSaveDiary()">💾 이 내용으로 일기 저장</button>
+        <button id="save-btn" onclick="manualSaveDiary()">💾 이 내용으로 메모 저장</button>
     </div>
     
-    <div id="text-output" contenteditable="true" placeholder="여기에 말한 내용이 글자로 나타납니다... 잘못 받아적은 부분은 터치해서 직접 고칠 수 있습니다."></div>
+    <div id="text-output" contenteditable="true" placeholder="여기에 말한 내용이 나타나거나 직접 글을 쓸 수 있습니다... 수정할 부분은 터치해서 바로 고치세요."></div>
     
     <hr style="border: 0; height: 1px; background: var(--border-color); margin-bottom: 20px;">
     
@@ -326,10 +339,10 @@
         <button class="filter-btn" id="filter-month" onclick="changeFilter('month')">1달보기</button>
     </div>
 
-    <p class="tip-text">💡 아래 저장된 일기 내용과 [날짜]도 터치하면 바로 수정할 수 있습니다!</p>
+    <p class="tip-text">💡 아래 저장된 메모 내용과 [날짜]도 터치하면 바로 수정할 수 있습니다!</p>
     <div class="diary-list" id="diary-list"></div>
     
-    <button id="exit-btn" onclick="closeApp()">🔒 일기장 안전하게 잠그기</button>
+    <button id="exit-btn" onclick="closeApp()">🔒 메모장 안전하게 잠그기</button>
 </div>
 
 <script>
@@ -382,7 +395,6 @@
         updatePillButton(type, state[type], labels[type]);
     }
 
-    // 💡 키보드로 직접 입력할 때도 내용 감지하여 저장 버튼 표시
     textOutput.addEventListener('input', () => {
         const text = textOutput.innerText.trim();
         const isDefaultText = text.includes('인식된 목소리가 없습니다') || text.includes('귀 기울여 듣고 있습니다');
@@ -456,7 +468,7 @@
 
         recognition.onstart = () => {
             isRecording = true;
-            recordBtn.textContent = '🛑 말하기 완료 (터치)';
+            recordBtn.textContent = '🛑 완료';
             recordBtn.classList.add('recording');
             if(!accumulatedText) {
                 textOutput.innerText = '귀 기울여 듣고 있습니다... 편하게 말씀하세요.';
@@ -504,7 +516,7 @@
 
     function stopRecording() {
         isRecording = false;
-        recordBtn.textContent = '🎤 눌러서 말하기';
+        recordBtn.textContent = '🎤 말하기';
         recordBtn.classList.remove('recording');
     }
 
@@ -562,7 +574,7 @@
     }
 
     function deleteDiary(id) {
-        if (confirm('이 일기를 삭제하시겠습니까?')) {
+        if (confirm('이 메모를 삭제하시겠습니까?')) {
             let diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
             diaries = diaries.filter(item => item.id !== id);
             localStorage.setItem('myDiaries', JSON.stringify(diaries));
@@ -595,7 +607,7 @@
             const diaryItem = document.createElement('div');
             diaryItem.className = 'diary-item';
             
-            const photoHtml = item.photo ? `<img src="${item.photo}" class="diary-photo" alt="일기 사진">` : '';
+            const photoHtml = item.photo ? `<img src="${item.photo}" class="diary-photo" alt="메모 사진">` : '';
 
             diaryItem.innerHTML = `
                 <div>
@@ -631,7 +643,7 @@
         removeImage();
         saveBtn.style.display = 'none';
         
-        alert("🔒 마이크가 꺼졌으며 일기 창이 안전하게 정리되었습니다. 이제 스마트폰 홈 버튼을 누르고 나가하시면 됩니다!");
+        alert("🔒 마이크가 꺼졌으며 메모 창이 안전하게 정리되었습니다. 이제 스마트폰 홈 버튼을 누르고 나가하시면 됩니다!");
     }
 
     loadPillState();
