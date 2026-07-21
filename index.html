@@ -1,12 +1,4 @@
-# Let's write a python script to generate the updated Smart Memo HTML code
-# The code should feature:
-# 1. Automatic loading from GitHub/web (PWA-ready / standalone web app)
-# 2. A robust backup restore function: instead of forcing file selection (which fails in some webviews/Swing2App), 
-#    it can accept a JSON file upload OR a text paste/drop area or a direct textarea paste option for easy restoration,
-#    or better yet, a dual restore option: File upload (if supported) + Text Paste fallback where users can paste their JSON string and click "Restore from Text".
-# Let's make sure the HTML/CSS/JS is fully self-contained, clean, beautiful, and completely user-friendly for a beginner blogger/creator.
-
-html_content = """<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -82,7 +74,7 @@ html_content = """<!DOCTYPE html>
         .textarea-backup { width: 100%; height: 120px; font-family: monospace; font-size: 0.8rem; padding: 10px; border: 1px solid var(--border); border-radius: 8px; resize: none; }
 
         /* Toast message */
-        .toast { position: fixed; bottom: 30px; left: 50%<ctrl61>; transform: translateX(-50%) translateY(100px); background: rgba(30, 41, 59, 0.9); color: #fff; padding: 10px 20px; border-radius: 20px; font-size: 0.9rem; transition: transform 0.3s; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: rgba(30, 41, 59, 0.9); color: #fff; padding: 10px 20px; border-radius: 20px; font-size: 0.9rem; transition: transform 0.3s; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
         .toast.show { transform: translateX(-50%) translateY(0); }
     </style>
 </head>
@@ -146,7 +138,7 @@ html_content = """<!DOCTYPE html>
             </div>
             
             <div style="display: flex; flex-direction: column; gap: 6px;">
-                <label style="font-size:0.85srem; font-weight:600; color:var(--text-sub);">백업/복원용 데이터 코드</label>
+                <label style="font-size:0.85rem; font-weight:600; color:var(--text-sub);">백업/복원용 데이터 코드</label>
                 <textarea id="backupTextarea" class="textarea-backup" placeholder="백업 데이터를 여기에 붙여넣거나 백업 코드를 확인하세요..."></textarea>
             </div>
 
@@ -165,7 +157,6 @@ html_content = """<!DOCTYPE html>
     <div class="toast" id="toastMsg">알림 메시지</div>
 
     <script>
-        // App State
         let memos = JSON.parse(localStorage.getItem('smart_memos') || '{}');
         let currentDate = new Date();
         let selectedYear = currentDate.getFullYear();
@@ -184,7 +175,6 @@ html_content = """<!DOCTYPE html>
             selectDate(selectedYear, selectedMonth, selectedDay);
         }
 
-        // Calendar Logic
         function renderCalendar() {
             const titleEl = document.getElementById('calMonthTitle');
             titleEl.innerText = `${selectedYear}년 ${selectedMonth + 1}월`;
@@ -195,7 +185,6 @@ html_content = """<!DOCTYPE html>
             const firstDayIndex = new Date(selectedYear, selectedMonth, 1).getDay();
             const totalDays = new Date(selectedYear, selectedMonth + 1, 0).getDate();
 
-            // Blank spaces for previous month tail
             for (let i = 0; i < firstDayIndex; i++) {
                 let emptyDiv = document.createElement('div');
                 gridEl.appendChild(emptyDiv);
@@ -216,7 +205,6 @@ html_content = """<!DOCTYPE html>
                 dayEl.innerText = day;
                 dayEl.onclick = () => selectDate(selectedYear, selectedMonth, day);
 
-                // Check if memo exists for this date
                 if (memos[dateStr] && memos[dateStr].length > 0) {
                     let dot = document.createElement('div');
                     dot.className = 'memo-dot';
@@ -252,7 +240,6 @@ html_content = """<!DOCTYPE html>
             renderMemoList();
         }
 
-        // Memo Operations
         function saveMemo() {
             const text = document.getElementById('memoInput').value.trim();
             if (!text) {
@@ -320,7 +307,6 @@ html_content = """<!DOCTYPE html>
             return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
 
-        // Settings & Backup/Restore Modal
         function openSettings() {
             const textarea = document.getElementById('backupTextarea');
             textarea.value = JSON.stringify(memos, null, 2);
@@ -378,14 +364,7 @@ html_content = """<!DOCTYPE html>
             }, 2500);
         }
 
-        // Run on load
         window.onload = initApp;
     </script>
 </body>
 </html>
-"""
-
-with open("smart_memo.html", "w", encoding="utf-8") as f:
-    f.write(html_content)
-
-print("Smart memo file generated successfully.")
