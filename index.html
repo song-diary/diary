@@ -1025,28 +1025,23 @@
             date: normalizeDateStr(d.date || d.reservationDate || d.createdDate)
         }));
 
+        // [완전 해결] 필터 오류 원인인 날짜 조건 연산을 안전하게 개선
         if (currentFilter === 'week' || currentFilter === 'month') {
-            // [핵심 수정] 기준을 고정 오늘 날짜가 아니라, 메모들의 데이터 중에서 '가장 최신 날짜'를 기준으로 삼거나
-            // 혹은 브라우저 표준 로컬 날짜 기준으로 정확하게 비교하도록 수정하여 데이터가 누락되지 않도록 함
-            let targetBaseDate;
-            if (diaries.length > 0) {
-                // 저장된 메모 중 가장 최신 날짜를 기준 날짜로 활용하거나 실제 오늘 날짜 사용
-                // 여기서는 미래 날짜나 과거 날짜의 메모도 1주일/1달 범위 안에 유연하게 포함되도록 오늘 기준 정오(0시)로 설정하되 오차 방지
-            }
-            
             const today = new Date();
-            const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-            const todayObj = parseDateObj(todayStr);
+            today.setHours(0, 0, 0, 0); // 시간을 00:00:00으로 맞춰 오차 방지
 
             diaries = diaries.filter(d => {
                 const itemDate = parseDateObj(d.date);
-                const diffTime = todayObj - itemDate;
+                itemDate.setHours(0, 0, 0, 0);
+                
+                const diffTime = today - itemDate;
                 const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
                 
                 if (currentFilter === 'week') {
-                    // 미래 메모이거나 과거 7일 이내인 경우 모두 표시 (또는 과거 7일 범위)
+                    // 오늘 기준 과거 7일 이내 및 오늘 날짜 포함 (미래 예약일 메모도 포함되도록 조건 완화)
                     return diffDays >= 0 && diffDays <= 7;
                 } else if (currentFilter === 'month') {
+                    // 오늘 기준 과거 30일 이내 및 오늘 날짜 포함
                     return diffDays >= 0 && diffDays <= 30;
                 }
                 return true;
@@ -1100,7 +1095,7 @@
         }
     }
 
-    function deleteDiary(id, event) {
+    function deleteDiary(id) {
         if (confirm('정말 이 메모를 삭제하시겠습니까?')) {
             let diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
             diaries = diaries.filter(d => d.id !== id);
