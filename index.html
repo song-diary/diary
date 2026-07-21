@@ -382,7 +382,18 @@
         updatePillButton(type, state[type], labels[type]);
     }
 
-    // 📷 고화질 사진을 용량 작은 웹용 이미지로 압축 변환하는 기능
+    // 💡 키보드로 직접 입력할 때도 내용 감지하여 저장 버튼 표시
+    textOutput.addEventListener('input', () => {
+        const text = textOutput.innerText.trim();
+        const isDefaultText = text.includes('인식된 목소리가 없습니다') || text.includes('귀 기울여 듣고 있습니다');
+        
+        if ((text.length > 0 && !isDefaultText) || currentPhotoBase64) {
+            saveBtn.style.display = 'block';
+        } else {
+            saveBtn.style.display = 'none';
+        }
+    });
+
     function previewImage(event) {
         const file = event.target.files[0];
         if (file) {
@@ -393,7 +404,7 @@
                     const canvas = document.createElement('canvas');
                     let width = img.width;
                     let height = img.height;
-                    const max_size = 600; // 가로/세로 최대 600px로 압축
+                    const max_size = 600; 
 
                     if (width > height) {
                         if (width > max_size) {
@@ -411,13 +422,12 @@
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
                     
-                    // 압축된 사진 데이터를 생성
                     currentPhotoBase64 = canvas.toDataURL('image/jpeg', 0.7);
                     
                     const previewImg = document.getElementById('image-preview');
                     previewImg.src = currentPhotoBase64;
                     document.getElementById('photo-preview-wrap').style.display = 'block';
-                    saveBtn.style.display = 'block'; // 💡 사진만 올려도 저장 버튼 보이게 수정
+                    saveBtn.style.display = 'block'; 
                 }
                 img.src = e.target.result;
             }
@@ -431,8 +441,8 @@
         document.getElementById('photo-preview-wrap').style.display = 'none';
         document.getElementById('image-preview').src = '';
         
-        // 텍스트도 없고 사진도 없으면 저장 버튼 숨기기
-        if(!textOutput.innerText.trim()) {
+        const text = textOutput.innerText.trim();
+        if(!text || text.includes('인식된 목소리가 없습니다') || text.includes('귀 기울여 듣고 있습니다')) {
             saveBtn.style.display = 'none';
         }
     }
@@ -509,10 +519,8 @@
         }
     });
 
-    // 💾 일기 저장 함수
     function manualSaveDiary() {
         const text = textOutput.innerText.trim();
-        // 글자가 안내 문구이거나 비어있으면 사진만 유효하게 처리
         const isDefaultText = text.includes('인식된 목소리가 없습니다') || text.includes('귀 기울여 듣고 있습니다');
         const cleanText = isDefaultText ? '' : text;
 
