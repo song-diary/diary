@@ -508,7 +508,6 @@
         <div class="setting-row">
             <button class="setting-action-btn" onclick="backupData()">📤 데이터 백업하기(파일저장)</button>
             <button class="setting-action-btn" onclick="triggerRestore()">📥 데이터 가져오기(복원)</button>
-            <!-- 수정된 부분: accept 속성을 완전히 제거하여 카메라 대신 기기의 파일 탐색기/내 파일이 정상적으로 열리도록 함 -->
             <input type="file" id="restore-file-input" style="display:none;" onchange="restoreData(event)">
         </div>
     </div>
@@ -771,7 +770,17 @@
             try {
                 const importedData = JSON.parse(e.target.result);
                 if (Array.isArray(importedData)) {
-                    localStorage.setItem('myDiaries', JSON.stringify(importedData));
+                    // 수정된 부분: 옛날 버전 파일에서 내용 필드명이 다를 경우를 대비해 유연하게 매핑
+                    const cleanedData = importedData.map(item => {
+                        return {
+                            id: item.id || Date.now() + Math.random(),
+                            date: item.date || item.reservationDate || getTodayStr(),
+                            text: item.text || item.content || item.memo || '',
+                            photo: item.photo || item.image || null
+                        };
+                    });
+
+                    localStorage.setItem('myDiaries', JSON.stringify(cleanedData));
                     renderCalendar();
                     displayDiaries();
                     alert('📥 데이터가 성공적으로 복원되었습니다!');
@@ -1002,7 +1011,7 @@
         let diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
         let memoDates = new Set();
         diaries.forEach(d => {
-            memoDates.add(d.date);
+            if(d.date) memoDates.add(d.date);
         });
 
         for (let i = 0; i < firstDayIndex; i++) {
@@ -1114,8 +1123,8 @@
 
             item.innerHTML = `
                 <button class="delete-btn" onclick="deleteDiary(${diary.id})">🗑️ 삭제</button>
-                <div class="diary-date" contenteditable="true" onblur="updateDiaryDate(${diary.id}, this)">📅 ${diary.date}</div>
-                <div class="diary-text" contenteditable="true" onblur="updateDiaryText(${diary.id}, this)">${diary.text}</div>
+                <div class="diary-date" contenteditable="true" onblur="updateDiaryDate(${diary.id}, this)">📅 ${diary.date || ''}</div>
+                <div class="diary-text" contenteditable="true" onblur="updateDiaryText(${diary.id}, this)">${diary.text || ''}</div>
                 ${photoHtml}
             `;
             diaryList.appendChild(item);
