@@ -543,7 +543,7 @@
     <button id="exit-btn" onclick="closeApp()">🔒 메모장 안전하게 잠그기</button>
 
     <div class="filter-container">
-        <button class="filter-btn active" id="filter-all" onclick="changeFilter('all')">전체보기</button>
+        <button class="filter-btn" id="filter-all" onclick="changeFilter('all')">전체보기</button>
         <button class="filter-btn" id="filter-week" onclick="changeFilter('week')">1주일보기</button>
         <button class="filter-btn" id="filter-month" onclick="changeFilter('month')">1달보기</button>
     </div>
@@ -563,7 +563,10 @@
     let isRecording = false;
     let shouldRestart = true; 
     let accumulatedText = '';
-    let currentFilter = 'all';
+    
+    // 마지막 필터 상태 불러오기 (기본값: 'all')
+    let currentFilter = localStorage.getItem('lastFilterState') || 'all';
+    
     let selectedDateStr = null; 
     let currentPhotoBase64 = null;
 
@@ -939,10 +942,21 @@
     function changeFilter(filterType) {
         selectedDateStr = null; 
         currentFilter = filterType;
-        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-        document.getElementById(`filter-${filterType}`).classList.add('active');
+        
+        // 선택한 필터 상태 저장
+        localStorage.setItem('lastFilterState', filterType);
+
+        updateFilterUI();
         renderCalendar();
         displayDiaries();
+    }
+
+    function updateFilterUI() {
+        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+        const activeBtn = document.getElementById(`filter-${currentFilter}`);
+        if (activeBtn) {
+            activeBtn.classList.add('active');
+        }
     }
 
     function changeMonth(direction) {
@@ -1116,8 +1130,10 @@
         alert("🔒 마이크가 꺼졌으며 메모 창이 안전하게 정리되었습니다. 이제 스마트폰 홈 버튼을 누르고 나가하시면 됩니다!");
     }
 
+    // 초기 실행 시 저장된 필터 UI 반영
     initReservationDate();
     initPillSetting();
+    updateFilterUI();
     renderCalendar();
     displayDiaries();
 </script>
