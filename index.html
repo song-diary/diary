@@ -603,7 +603,7 @@
         }
     }
 
-    // 날짜 문자열을 YYYY-MM-DD 형식으로 확실하게 변환
+    // 날짜 문자열을 YYYY-MM-DD 형식으로 변환
     function normalizeDateStr(dateStr) {
         if (!dateStr) return getTodayStr();
         if (typeof dateStr !== 'string') dateStr = String(dateStr);
@@ -619,10 +619,11 @@
         return dateStr.trim();
     }
 
-    // 날짜를 YYYYMMDD 숫자로 변환하여 정확한 범위 비교 수행
-    function dateToInt(dateStr) {
-        const clean = normalizeDateStr(dateStr).replace(/-/g, '');
-        return parseInt(clean, 10) || 0;
+    // 날짜를 비교하기 쉬운 Date 객체로 변환 (시각 차이 제거)
+    function parseDateObj(dateStr) {
+        const normalized = normalizeDateStr(dateStr);
+        const [y, m, d] = normalized.split('-').map(Number);
+        return new Date(y, m - 1, d);
     }
 
     function getFixedHolidays(year) {
@@ -1031,33 +1032,32 @@
         diaryList.innerHTML = '';
         let diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
 
-        // 모든 데이터의 날짜 형식을 확실하게 YYYY-MM-DD로 정규화
+        // 데이터의 날짜 정규화
         diaries = diaries.map(d => ({
             ...d,
             date: normalizeDateStr(d.date || d.reservationDate)
         }));
 
-        // 1주일 보기 또는 1달 보기 필터 적용
+        // [핵심 수정] 오늘 기준 필터링 (오늘 포함 과거 7일 / 오늘 포함 과거 30일)
         if (currentFilter === 'week' || currentFilter === 'month') {
-            const now = new Date();
-            const dObj = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // 시간 초기화
             
+            const startDate = new Date(today);
             if (currentFilter === 'week') {
-                dObj.setDate(dObj.getDate() - 7);
+                startDate.setDate(today.getDate() - 6); // 오늘 포함 총 7일 (오늘 - 6일)
             } else if (currentFilter === 'month') {
-                dObj.setMonth(dObj.getMonth() - 1);
+                startDate.setDate(today.getDate() - 29); // 오늘 포함 총 30일 (오늘 - 29일)
             }
 
-            const limitYear = dObj.getFullYear();
-            const limitMonth = String(dObj.getMonth() + 1).padStart(2, '0');
-            const limitDay = String(dObj.getDate()).padStart(2, '0');
-            const limitInt = parseInt(`${limitYear}${limitMonth}${limitDay}`, 10);
-
-            diaries = diaries.filter(d => dateToInt(d.date) >= limitInt);
+            diaries = diaries.filter(d => {
+                const itemDate = parseDateObj(d.date);
+                return itemDate >= startDate && itemDate <= today;
+            });
         }
 
         if (diaries.length === 0) {
-            diaryList.innerHTML = `<p style="text-align:center; color:#a09184; padding:20px; font-size:16px;">저장된 메모가 없습니다.</p>`;
+            diaryList.innerHTML = `<p style="text-align:center; color:#a09184; padding:20px; font-size:16px;">조건에 맞는 저장된 메모가 없습니다.</p>`;
             return;
         }
 
