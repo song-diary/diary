@@ -551,7 +551,7 @@
     <div class="calendar-box" id="calendar-box">
         <div class="cal-header">
             <button class="cal-nav-btn" onclick="changeMonth(-1)">◀ 이전</button>
-            <span id="cal-month-title">2026년 7월</span>
+            <span id="cal-month-title"></span>
             <button class="cal-nav-btn" onclick="changeMonth(1)">다음 ▶</button>
         </div>
         <div class="cal-grid">
@@ -574,7 +574,7 @@
         <button class="filter-btn" id="filter-month" onclick="changeFilter('month')">1달보기</button>
     </div>
 
-    <p class="tip-text">💡 달력을 좌우로 손가락으로 밀거나(스와이프) 날짜를 눌러 확인해보세요!</p>
+    <p class="tip-text">💡 달력을 좌우로 밀거나 날짜를 눌러 메모를 확인해보세요!</p>
     <div class="diary-list" id="diary-list"></div>
 </div>
 
@@ -591,7 +591,6 @@
     let accumulatedText = '';
     
     let currentFilter = localStorage.getItem('lastFilterState') || 'all';
-    
     let selectedDateStr = null; 
     let currentPhotoBase64 = null;
 
@@ -620,20 +619,17 @@
         }
     }
 
-    // 날짜 키 매핑 강화 (어떤 백업 형태든 YYYY-M-D 로 고정)
+    // YYYY-MM-DD 형태로 정규화
     function normalizeDateStr(dateStr) {
         if (!dateStr) return '';
-        if (typeof dateStr !== 'string') {
-            dateStr = String(dateStr);
-        }
-        if (dateStr.includes('T')) {
-            dateStr = dateStr.split('T')[0];
-        }
+        if (typeof dateStr !== 'string') dateStr = String(dateStr);
+        if (dateStr.includes('T')) dateStr = dateStr.split('T')[0];
+        
         let parts = dateStr.split('-');
         if (parts.length === 3) {
-            let y = parseInt(parts[0], 10);
-            let m = parseInt(parts[1], 10);
-            let d = parseInt(parts[2], 10);
+            let y = parts[0].padStart(4, '0');
+            let m = parts[1].padStart(2, '0');
+            let d = parts[2].padStart(2, '0');
             return `${y}-${m}-${d}`;
         }
         return dateStr.trim();
@@ -641,61 +637,18 @@
 
     function getFixedHolidays(year) {
         return [
-            `${year}-1-1`,
-            `${year}-3-1`,
-            `${year}-5-5`,
-            `${year}-6-6`,
-            `${year}-8-15`,
-            `${year}-10-3`,
-            `${year}-10-9`,
-            `${year}-12-25`
+            `${year}-01-01`, `${year}-03-01`, `${year}-05-05`, `${year}-06-06`,
+            `${year}-08-15`, `${year}-10-03`, `${year}-10-09`, `${year}-12-25`
         ];
     }
 
     function getKoreanHolidays(year) {
         let holidays = new Set(getFixedHolidays(year));
-        
         if (year === 2026) {
-            holidays.add('2026-2-16');
-            holidays.add('2026-2-17');
-            holidays.add('2026-2-18');
-            holidays.add('2026-5-24');
-            holidays.add('2026-5-25');
-            holidays.add('2026-9-24');
-            holidays.add('2026-9-25');
-            holidays.add('2026-9-26');
-        } else if (year === 2027) {
-            holidays.add('2027-2-6');
-            holidays.add('2027-2-7');
-            holidays.add('2027-2-8');
-            holidays.add('2027-5-13');
-            holidays.add('2027-9-14');
-            holidays.add('2027-9-15');
-            holidays.add('2027-9-16');
-        } else if (year === 2025) {
-            holidays.add('2025-1-28');
-            holidays.add('2025-1-29');
-            holidays.add('2025-1-30');
-            holidays.add('2025-5-5');
-            holidays.add('2025-5-6');
-            holidays.add('2025-10-5');
-            holidays.add('2025-10-6');
-            holidays.add('2025-10-7');
-            holidays.add('2025-10-8');
+            holidays.add('2026-02-16'); holidays.add('2026-02-17'); holidays.add('2026-02-18');
+            holidays.add('2026-05-24'); holidays.add('2026-05-25');
+            holidays.add('2026-09-24'); holidays.add('2026-09-25'); holidays.add('2026-09-26');
         }
-
-        let originalList = Array.from(holidays);
-        originalList.forEach(dateStr => {
-            let parts = dateStr.split('-');
-            let dObj = new Date(parts[0], parts[1]-1, parts[2]);
-            let dayOfWeek = dObj.getDay();
-            if (dayOfWeek === 0) {
-                let nextDay = new Date(dObj);
-                nextDay.setDate(dObj.getDate() + 1);
-                holidays.add(`${nextDay.getFullYear()}-${nextDay.getMonth()+1}-${nextDay.getDate()}`);
-            }
-        });
-
         return holidays;
     }
 
@@ -709,7 +662,10 @@
 
     function getTodayStr() {
         const now = new Date();
-        return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
 
     function initPillSetting() {
@@ -718,7 +674,6 @@
             showPill = 'true';
             localStorage.setItem('showPillSetting', 'true');
         }
-        
         const container = document.getElementById('pill-box-container');
         if (showPill === 'true') {
             container.style.display = 'block';
@@ -753,7 +708,6 @@
         const diaries = localStorage.getItem('myDiaries') || '[]';
         const blob = new Blob([diaries], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
-        
         const now = new Date();
         const dateStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
         
@@ -784,7 +738,6 @@
         reader.onload = function(e) {
             try {
                 let importedData = JSON.parse(e.target.result);
-                
                 if (!Array.isArray(importedData)) {
                     if (typeof importedData === 'object' && importedData !== null) {
                         importedData = Object.values(importedData);
@@ -804,10 +757,9 @@
 
                     localStorage.setItem('myDiaries', JSON.stringify(cleanedData));
                     selectedDateStr = null; 
-                    
                     renderCalendar();
                     displayDiaries();
-                    alert('📥 데이터 복원 완료! (점 표시와 내용이 정상 반영되었습니다)');
+                    alert('📥 데이터가 완벽하게 복원되었습니다!');
                 } else {
                     alert('올바른 백업 파일 형식이 아닙니다.');
                 }
@@ -855,7 +807,6 @@
     textOutput.addEventListener('input', () => {
         const text = textOutput.innerText.trim();
         const isDefaultText = text.includes('인식된 목소리가 없습니다') || text.includes('귀 기울여 듣고 있습니다');
-        
         if ((text.length > 0 && !isDefaultText) || currentPhotoBase64) {
             saveBtn.style.display = 'block';
         } else {
@@ -886,7 +837,6 @@
                     ctx.drawImage(img, 0, 0, width, height);
                     
                     currentPhotoBase64 = canvas.toDataURL('image/jpeg', 0.7);
-                    
                     document.getElementById('image-preview').src = currentPhotoBase64;
                     document.getElementById('photo-preview-wrap').style.display = 'block';
                     saveBtn.style.display = 'block'; 
@@ -926,7 +876,7 @@
             saveBtn.style.display = 'none';
         };
 
-        recognition.onerror = (event) => {
+        recognition.onerror = () => {
             if (isRecording) stopRecording(); 
         };
 
@@ -980,15 +930,12 @@
         }
     });
 
-    // 새로 입력 시 덮어쓰기 방지 및 완전 초기화 로직 강화
     function manualSaveDiary() {
         const text = textOutput.innerText.trim();
         const isDefaultText = text.includes('인식된 목소리가 없습니다') || text.includes('귀 기울여 듣고 있습니다');
         const cleanText = isDefaultText ? '' : text;
 
-        if (!cleanText && !currentPhotoBase64) {
-            return;
-        }
+        if (!cleanText && !currentPhotoBase64) return;
 
         const dateVal = normalizeDateStr(reservationDateInput.value);
         const timestamp = Date.now();
@@ -1004,18 +951,15 @@
         diaries.unshift(newDiary);
         localStorage.setItem('myDiaries', JSON.stringify(diaries));
 
-        // 찌꺼기 방지를 위한 확실한 입력창 완전 비우기
-        textOutput.innerHTML = '';
-        textOutput.textContent = '';
+        textOutput.innerText = '';
         accumulatedText = '';
         removeImage();
         initReservationDate();
         saveBtn.style.display = 'none';
-        textOutput.blur();
 
         renderCalendar();
         displayDiaries();
-        alert('✨ 메모가 안전하게 저장되었습니다!');
+        alert('✨ 메모가 저장되었습니다!');
     }
 
     function renderCalendar() {
@@ -1085,6 +1029,7 @@
 
     function changeFilter(filterType) {
         currentFilter = filterType;
+        selectedDateStr = null; 
         localStorage.setItem('lastFilterState', filterType);
         
         ['all', 'week', 'month'].forEach(f => {
@@ -1094,6 +1039,7 @@
         const activeBtn = document.getElementById(`filter-${filterType}`);
         if(activeBtn) activeBtn.classList.add('active');
 
+        renderCalendar();
         displayDiaries();
     }
 
@@ -1128,7 +1074,6 @@
         diaries.forEach((diary) => {
             const item = document.createElement('div');
             item.className = 'diary-item';
-
             let photoHtml = diary.photo ? `<img src="${diary.photo}" class="diary-photo" alt="첨부 사진">` : '';
 
             item.innerHTML = `
@@ -1156,7 +1101,7 @@
         if (index !== -1) {
             let newDateStr = element.innerText.replace('📅', '').trim();
             newDateStr = normalizeDateStr(newDateStr);
-            if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(newDateStr)) {
+            if (/^\d{4}-\d{2}-\d{2}$/.test(newDateStr)) {
                 diaries[index].date = newDateStr;
                 localStorage.setItem('myDiaries', JSON.stringify(diaries));
                 renderCalendar();
