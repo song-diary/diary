@@ -35,13 +35,34 @@
             border-radius: 20px;
             box-shadow: 0 10px 20px rgba(234, 221, 211, 0.5);
             box-sizing: border-box;
+            position: relative;
+        }
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
         }
         h1 {
-            text-align: center;
             font-size: 26px;
-            margin-bottom: 20px;
+            margin: 0;
             color: #d17377;
         }
+        .setting-btn {
+            background: none;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 6px 12px;
+            font-size: 14px;
+            cursor: pointer;
+            color: #8c7664;
+            background-color: #fff9f5;
+            font-weight: bold;
+        }
+        .setting-btn:hover {
+            background-color: #f1e4d8;
+        }
+
         .pill-container {
             background-color: #fff9f5;
             border: 2px solid var(--border-color);
@@ -49,6 +70,7 @@
             padding: 15px;
             margin-bottom: 20px;
             text-align: center;
+            display: none; /* 기본은 숨김, 설정에 따라 표시 */
         }
         .pill-title {
             font-size: 16px;
@@ -215,7 +237,7 @@
             background-color: #8c7664;
         }
 
-        /* 💡 캘린더 스타일 */
+        /* 캘린더 스타일 */
         .calendar-box {
             background: #fff9f5;
             border: 2px solid var(--border-color);
@@ -374,9 +396,13 @@
 <body>
 
 <div class="container">
-    <h1>📝 스마트 메모장</h1>
+    <div class="header-row">
+        <h1>📝 스마트 메모장</h1>
+        <button class="setting-btn" onclick="togglePillSetting()">⚙️ 설정</button>
+    </div>
     
-    <div class="pill-container">
+    <!-- 약 체크 박스 (설정에 따라 켜고 끄기 가능) -->
+    <div class="pill-container" id="pill-box-container">
         <div class="pill-title">💊 오늘 약 챙겨 드셨나요? (터치하여 체크)</div>
         <div class="pill-buttons">
             <button class="pill-btn" id="pill-morning" onclick="togglePill('morning')">☀️ 아침</button>
@@ -407,7 +433,7 @@
     
     <hr style="border: 0; height: 1px; background: var(--border-color); margin-bottom: 20px;">
     
-    <!-- 💡 달력 UI 추가 -->
+    <!-- 캘린더 UI -->
     <div class="calendar-box">
         <div class="cal-header">
             <button class="cal-nav-btn" onclick="changeMonth(-1)">◀ 이전</button>
@@ -434,7 +460,7 @@
         <button class="filter-btn" id="filter-month" onclick="changeFilter('month')">1달보기</button>
     </div>
 
-    <p class="tip-text">💡 달력의 날짜를 누르면 해당 날짜의 메모만 모아볼 수 있습니다!</p>
+    <p class="tip-text">💡 달력의 날짜를 누르면 해당 날짜의 메모(예약 포함)만 모아볼 수 있습니다!</p>
     <div class="diary-list" id="diary-list"></div>
 </div>
 
@@ -449,16 +475,44 @@
     let shouldRestart = true; 
     let accumulatedText = '';
     let currentFilter = 'all';
-    let selectedDateStr = null; // 달력에서 선택한 특정 날짜 (예: "2026-7-21")
+    let selectedDateStr = null; 
     let currentPhotoBase64 = null;
 
-    // 캘린더용 현재 표시 연/월
     let calYear = new Date().getFullYear();
     let calMonth = new Date().getMonth();
 
     function getTodayStr() {
         const now = new Date();
         return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+    }
+
+    // 약 체크 기능 켜고 끄기 설정 관리
+    function initPillSetting() {
+        let showPill = localStorage.getItem('showPillSetting');
+        if (showPill === null) {
+            showPill = 'true'; // 기본값은 켜짐
+            localStorage.setItem('showPillSetting', 'true');
+        }
+        
+        const container = document.getElementById('pill-box-container');
+        if (showPill === 'true') {
+            container.style.display = 'block';
+            loadPillState();
+        } else {
+            container.style.display = 'none';
+        }
+    }
+
+    function togglePillSetting() {
+        let showPill = localStorage.getItem('showPillSetting');
+        if (showPill === 'true') {
+            localStorage.setItem('showPillSetting', 'false');
+            alert('💊 약 챙기기 체크 기능이 숨겨졌습니다. 필요하시면 설정에서 언제든 다시 켤 수 있습니다.');
+        } else {
+            localStorage.setItem('showPillSetting', 'true');
+            alert('💊 약 챙기기 체크 기능이 화면에 켜졌습니다!');
+        }
+        initPillSetting();
     }
 
     function loadPillState() {
@@ -476,6 +530,7 @@
 
     function updatePillButton(type, isTaken, label) {
         const btn = document.getElementById(`pill-${type}`);
+        if (!btn) return;
         if (isTaken) {
             btn.classList.add('taken');
             btn.innerHTML = `✅ ${label.split(' ')[1]}`;
@@ -641,7 +696,6 @@
         try {
             const diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
             const now = new Date();
-            // yyyy년 m월 d일 형식과 점검용 yyyy-m-d 객체용 날짜 함께 저장
             const dateStr = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일 ${now.getHours()}시 ${now.getMinutes()}분`;
             const simpleDateStr = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
             
@@ -686,7 +740,7 @@
     }
 
     function changeFilter(filterType) {
-        selectedDateStr = null; // 필터 누르면 달력 선택 해제
+        selectedDateStr = null; 
         currentFilter = filterType;
         document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
         document.getElementById(`filter-${filterType}`).classList.add('active');
@@ -694,7 +748,6 @@
         displayDiaries();
     }
 
-    // 캘린더 월 이동
     function changeMonth(direction) {
         calMonth += direction;
         if (calMonth > 11) {
@@ -707,7 +760,7 @@
         renderCalendar();
     }
 
-    // 캘린더 렌더링
+    // 캘린더 렌더링 (미래 예약일 포함 모든 메모일 표시)
     function renderCalendar() {
         document.getElementById('cal-month-title').innerText = `${calYear}년 ${calMonth + 1}월`;
         const grid = document.getElementById('cal-days-grid');
@@ -717,13 +770,12 @@
         const totalDays = new Date(calYear, calMonth + 1, 0).getDate();
 
         const diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
-        // 메모가 있는 날짜 세트 만들기 ("yyyy-m-d")
         const memoDates = new Set();
+        
         diaries.forEach(item => {
             if (item.simpleDate) {
                 memoDates.add(item.simpleDate);
             } else if (item.date) {
-                // 구버전 데이터 호환용 파싱
                 const match = item.date.match(/(\d+)년\s*(\d+)월\s*(\d+)일/);
                 if (match) {
                     memoDates.add(`${match[1]}-${match[2]}-${match[3]}`);
@@ -731,14 +783,12 @@
             }
         });
 
-        // 빈 칸 채우기 (첫 날 시작요일 맞춤)
         for (let i = 0; i < firstDayIndex; i++) {
             const emptyCell = document.createElement('div');
             emptyCell.className = 'cal-cell empty';
             grid.appendChild(emptyCell);
         }
 
-        // 날짜 칸 채우기
         for (let day = 1; day <= totalDays; day++) {
             const cell = document.createElement('div');
             cell.className = 'cal-cell';
@@ -746,7 +796,7 @@
             
             let htmlContent = `<span>${day}</span>`;
             if (memoDates.has(thisDateStr)) {
-                cell.classList.add('has-memo');
+                cell.classList.add('has-memo'); // 8월 1일 같은 미래 날짜도 메모가 있으면 점이 콕 찍힙니다!
                 htmlContent += `<div class="memo-dot"></div>`;
             }
 
@@ -756,13 +806,11 @@
 
             cell.innerHTML = htmlContent;
             
-            // 날짜 클릭 이벤트
             cell.addEventListener('click', () => {
                 if (selectedDateStr === thisDateStr) {
-                    selectedDateStr = null; // 다시 누르면 선택 해제 (전체보기로 복귀)
+                    selectedDateStr = null; 
                 } else {
                     selectedDateStr = thisDateStr;
-                    // 필터 버튼 활성화 해제
                     document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
                 }
                 renderCalendar();
@@ -781,7 +829,6 @@
         const oneWeek = 7 * 24 * 60 * 60 * 1000;
         const oneMonth = 30 * 24 * 60 * 60 * 1000;
 
-        // 1. 달력에서 날짜를 선택한 경우 해당 날짜 메모만 필터링
         if (selectedDateStr) {
             diaries = diaries.filter(item => {
                 if (item.simpleDate === selectedDateStr) return true;
@@ -792,7 +839,6 @@
                 return false;
             });
         } else {
-            // 2. 상단 필터 적용
             if (currentFilter === 'week') {
                 diaries = diaries.filter(item => (now - (item.timestamp || item.id)) <= oneWeek);
             } else if (currentFilter === 'month') {
@@ -845,10 +891,10 @@
         removeImage();
         saveBtn.style.display = 'none';
         
-        alert("🔒 마이크가 꺼졌으며 메모 창이 안전하게 정리되었습니다. 이제 스마트폰 홈 버튼을 누르고 나가하시면 됩니다!");
+        alert("🔒 마이크가 꺼졌으며 메모 창이 안전하게 정리되었습니다. 이제 스마트폰 홈 버튼을 누르고 나가시면 됩니다!");
     }
 
-    loadPillState();
+    initPillSetting();
     renderCalendar();
     displayDiaries();
 </script>
