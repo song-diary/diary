@@ -359,6 +359,16 @@
             border: 1px solid #f0e6df;
             color: #4a3f35;
         }
+        /* 일요일 칸 배경 연한 붉은빛 */
+        .cal-cell.sunday {
+            background-color: #fffafa;
+            color: #d9534f;
+        }
+        /* 토요일 칸 배경 연한 푸른빛 */
+        .cal-cell.saturday {
+            background-color: #f7fbff;
+            color: #337ab7;
+        }
         .cal-cell.empty {
             background: transparent;
             border: none;
@@ -529,13 +539,13 @@
             <button class="cal-nav-btn" onclick="changeMonth(1)">다음 ▶</button>
         </div>
         <div class="cal-grid">
-            <div class="cal-day-name" style="color:#ff5252;">일</div>
+            <div class="cal-day-name" style="color:#d9534f;">일</div>
             <div class="cal-day-name">월</div>
             <div class="cal-day-name">화</div>
             <div class="cal-day-name">수</div>
             <div class="cal-day-name">목</div>
             <div class="cal-day-name">금</div>
-            <div class="cal-day-name" style="color:#4da6ff;">토</div>
+            <div class="cal-day-name" style="color:#337ab7;">토</div>
         </div>
         <div class="cal-grid" id="cal-days-grid" style="margin-top: 5px;"></div>
     </div>
@@ -564,7 +574,6 @@
     let shouldRestart = true; 
     let accumulatedText = '';
     
-    // 마지막 필터 상태 불러오기 (기본값: 'all')
     let currentFilter = localStorage.getItem('lastFilterState') || 'all';
     
     let selectedDateStr = null; 
@@ -942,8 +951,6 @@
     function changeFilter(filterType) {
         selectedDateStr = null; 
         currentFilter = filterType;
-        
-        // 선택한 필터 상태 저장
         localStorage.setItem('lastFilterState', filterType);
 
         updateFilterUI();
@@ -1001,7 +1008,17 @@
 
         for (let day = 1; day <= totalDays; day++) {
             const cell = document.createElement('div');
-            cell.className = 'cal-cell';
+            const thisDateObj = new Date(calYear, calMonth, day);
+            const dayOfWeek = thisDateObj.getDay(); // 0: 일요일, 6: 토요일
+            
+            let cellClass = 'cal-cell';
+            if (dayOfWeek === 0) {
+                cellClass += ' sunday';
+            } else if (dayOfWeek === 6) {
+                cellClass += ' saturday';
+            }
+            cell.className = cellClass;
+
             const thisDateStr = `${calYear}-${calMonth + 1}-${day}`;
             
             let htmlContent = `<span>${day}</span>`;
@@ -1130,7 +1147,6 @@
         alert("🔒 마이크가 꺼졌으며 메모 창이 안전하게 정리되었습니다. 이제 스마트폰 홈 버튼을 누르고 나가하시면 됩니다!");
     }
 
-    // 초기 실행 시 저장된 필터 UI 반영
     initReservationDate();
     initPillSetting();
     updateFilterUI();
