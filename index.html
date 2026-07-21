@@ -436,10 +436,10 @@
     
     <div class="btn-box">
         <div class="action-row">
-            <button id="record-btn">🎤 말하기</button>
+            <button id="record-btn">🎤 음성메모</button>
             
             <div class="photo-upload-box">
-                <label for="diary-photo-input" class="photo-upload-label">📷 사진첨부</label>
+                <label for="diary-photo-input" class="photo-upload-label">📷 사진메모</label>
                 <input type="file" id="diary-photo-input" class="photo-file-input" accept="image/*" onchange="previewImage(event)">
             </div>
         </div>
@@ -704,7 +704,7 @@
 
     function stopRecording() {
         isRecording = false;
-        recordBtn.textContent = '🎤 말하기';
+        recordBtn.textContent = '🎤 음성메모';
         recordBtn.classList.remove('recording');
     }
 
@@ -879,7 +879,6 @@
         const oneMonth = 30 * 24 * 60 * 60 * 1000;
 
         if (selectedDateStr) {
-            // 달력에서 특정 날짜를 클릭했을 때: 해당 날짜와 일치하는 메모만 표시
             diaries = diaries.filter(item => {
                 if (item.simpleDate === selectedDateStr) return true;
                 if (item.date) {
@@ -889,14 +888,12 @@
                 return false;
             });
         } else {
-            // 필터 보기일 때: 미래 예약일(오늘 날짜보다 나중 날짜)은 1주일/1달 보기에서 제외함
             diaries = diaries.filter(item => {
                 let itemTime = nowTime;
                 if (item.simpleDate) {
                     const p = item.simpleDate.split('-');
                     itemTime = new Date(p[0], p[1]-1, p[2]).setHours(0,0,0,0);
                 }
-                // 미래 날짜 메모는 1주일/1달 보기에서 숨김 (전체보기에서는 모두 표시)
                 if (itemTime > nowTime && currentFilter !== 'all') {
                     return false;
                 }
