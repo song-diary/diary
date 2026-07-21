@@ -160,7 +160,6 @@
             background-color: #e5d4c3;
         }
 
-        /* 💡 예약 날짜 선택 박스 스타일 */
         .reservation-date-box {
             background-color: #fff9f5;
             border: 2px solid var(--border-color);
@@ -263,7 +262,6 @@
             background-color: #8c7664;
         }
 
-        /* 캘린더 스타일 */
         .calendar-box {
             background: #fff9f5;
             border: 2px solid var(--border-color);
@@ -451,7 +449,6 @@
             <button onclick="removeImage()" style="background:none; border:none; color:red; cursor:pointer; font-size:13px; display:block; margin:8px auto; font-weight:bold;">❌ 첨부 사진 취소</button>
         </div>
 
-        <!-- 💡 저장 시점에 날짜를 미리 지정할 수 있는 예약일 선택 박스 -->
         <div class="reservation-date-box">
             <span>📅 메모 예약일:</span>
             <input type="date" id="reservation-date-input">
@@ -512,7 +509,6 @@
     let calYear = new Date().getFullYear();
     let calMonth = new Date().getMonth();
 
-    // 페이지 열릴 때 예약일 기본값을 오늘 날짜로 세팅
     function initReservationDate() {
         const now = new Date();
         const year = now.getFullYear();
@@ -723,7 +719,6 @@
         }
     });
 
-    // 💡 선택한 예약일로 메모 저장
     function manualSaveDiary() {
         const text = textOutput.innerText.trim();
         const isDefaultText = text.includes('인식된 목소리가 없습니다') || text.includes('귀 기울여 듣고 있습니다');
@@ -736,7 +731,6 @@
         try {
             const diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
             
-            // 사용자가 선택한 예약일 가져오기 (예: "2026-08-01")
             const selectedVal = reservationDateInput.value;
             let dateStr = "";
             let simpleDateStr = "";
@@ -767,7 +761,7 @@
             textOutput.innerText = '';
             removeImage();
             saveBtn.style.display = 'none';
-            initReservationDate(); // 저장 후 예약일은 다시 오늘 날짜로 초기화
+            initReservationDate();
             
             renderCalendar();
             displayDiaries();
@@ -880,11 +874,12 @@
         diaryList.innerHTML = '';
         let diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
         
-        const now = Date.now();
+        const nowTime = new Date().setHours(0,0,0,0);
         const oneWeek = 7 * 24 * 60 * 60 * 1000;
         const oneMonth = 30 * 24 * 60 * 60 * 1000;
 
         if (selectedDateStr) {
+            // 달력에서 특정 날짜를 클릭했을 때: 해당 날짜와 일치하는 메모만 표시
             diaries = diaries.filter(item => {
                 if (item.simpleDate === selectedDateStr) return true;
                 if (item.date) {
@@ -894,10 +889,38 @@
                 return false;
             });
         } else {
+            // 필터 보기일 때: 미래 예약일(오늘 날짜보다 나중 날짜)은 1주일/1달 보기에서 제외함
+            diaries = diaries.filter(item => {
+                let itemTime = nowTime;
+                if (item.simpleDate) {
+                    const p = item.simpleDate.split('-');
+                    itemTime = new Date(p[0], p[1]-1, p[2]).setHours(0,0,0,0);
+                }
+                // 미래 날짜 메모는 1주일/1달 보기에서 숨김 (전체보기에서는 모두 표시)
+                if (itemTime > nowTime && currentFilter !== 'all') {
+                    return false;
+                }
+                return true;
+            });
+
             if (currentFilter === 'week') {
-                diaries = diaries.filter(item => (now - (item.timestamp || item.id)) <= oneWeek);
+                diaries = diaries.filter(item => {
+                    let itemTime = nowTime;
+                    if (item.simpleDate) {
+                        const p = item.simpleDate.split('-');
+                        itemTime = new Date(p[0], p[1]-1, p[2]).setHours(0,0,0,0);
+                    }
+                    return (nowTime - itemTime) <= oneWeek && itemTime <= nowTime;
+                });
             } else if (currentFilter === 'month') {
-                diaries = diaries.filter(item => (now - (item.timestamp || item.id)) <= oneMonth);
+                diaries = diaries.filter(item => {
+                    let itemTime = nowTime;
+                    if (item.simpleDate) {
+                        const p = item.simpleDate.split('-');
+                        itemTime = new Date(p[0], p[1]-1, p[2]).setHours(0,0,0,0);
+                    }
+                    return (nowTime - itemTime) <= oneMonth && itemTime <= nowTime;
+                });
             }
         }
         
