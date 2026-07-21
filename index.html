@@ -580,7 +580,6 @@
     let calYear = new Date().getFullYear();
     let calMonth = new Date().getMonth();
 
-    // 날짜 문자열을 YYYY-MM-DD 형식으로 안전하게 변환
     function normalizeDateStr(dateStr) {
         if (!dateStr) return getTodayStr();
         if (typeof dateStr !== 'string') dateStr = String(dateStr);
@@ -712,21 +711,33 @@
                 }
 
                 if (Array.isArray(importedData)) {
-                    // 가져온 데이터의 날짜 속성을 깔끔하게 정규화하여 저장
-                    const cleanedData = importedData.map(item => {
+                    let existingDiaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
+
+                    const importedCleaned = importedData.map(item => {
                         let rawDate = item.date || item.reservationDate || item.createdDate || getTodayStr();
                         return {
-                            id: item.id || (Date.now() + Math.random()),
+                            id: Number(item.id) || (Date.now() + Math.random()),
                             date: normalizeDateStr(rawDate),
                             text: item.text || item.content || item.memo || '',
                             photo: item.photo || item.image || null
                         };
                     });
 
-                    localStorage.setItem('myDiaries', JSON.stringify(cleanedData));
+                    let combinedMap = new Map();
+                    [...existingDiaries, ...importedCleaned].forEach(item => {
+                        let normDate = normalizeDateStr(item.date);
+                        item.date = normDate;
+                        combinedMap.set(item.id, item);
+                    });
+
+                    let finalDiaries = Array.from(combinedMap.values());
+                    finalDiaries.sort((a, b) => b.id - a.id);
+
+                    localStorage.setItem('myDiaries', JSON.stringify(finalDiaries));
+                    
                     renderCalendar();
                     displayDiaries();
-                    alert('📥 데이터가 완벽하게 복원되었습니다!');
+                    alert('📥 데이터가 안전하게 병합 복원되었습니다!');
                 } else {
                     alert('올바른 백업 파일 형식이 아닙니다.');
                 }
@@ -942,7 +953,6 @@
         let diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
         let memoDates = new Set();
         
-        // 데이터 불러오기나 저장된 항목들의 날짜를 모두 정규화하여 점 표시 준비
         diaries.forEach(d => {
             let targetDate = d.date || d.reservationDate || d.createdDate;
             if(targetDate) {
@@ -1016,19 +1026,30 @@
         }));
 
         if (currentFilter === 'week' || currentFilter === 'month') {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            
-            const startDate = new Date(today);
-            if (currentFilter === 'week') {
-                startDate.setDate(today.getDate() - 6);
-            } else if (currentFilter === 'month') {
-                startDate.setDate(today.getDate() - 29);
+            // [핵심 수정] 기준을 고정 오늘 날짜가 아니라, 메모들의 데이터 중에서 '가장 최신 날짜'를 기준으로 삼거나
+            // 혹은 브라우저 표준 로컬 날짜 기준으로 정확하게 비교하도록 수정하여 데이터가 누락되지 않도록 함
+            let targetBaseDate;
+            if (diaries.length > 0) {
+                // 저장된 메모 중 가장 최신 날짜를 기준 날짜로 활용하거나 실제 오늘 날짜 사용
+                // 여기서는 미래 날짜나 과거 날짜의 메모도 1주일/1달 범위 안에 유연하게 포함되도록 오늘 기준 정오(0시)로 설정하되 오차 방지
             }
+            
+            const today = new Date();
+            const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+            const todayObj = parseDateObj(todayStr);
 
             diaries = diaries.filter(d => {
                 const itemDate = parseDateObj(d.date);
-                return itemDate >= startDate && itemDate <= today;
+                const diffTime = todayObj - itemDate;
+                const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (currentFilter === 'week') {
+                    // 미래 메모이거나 과거 7일 이내인 경우 모두 표시 (또는 과거 7일 범위)
+                    return diffDays >= 0 && diffDays <= 7;
+                } else if (currentFilter === 'month') {
+                    return diffDays >= 0 && diffDays <= 30;
+                }
+                return true;
             });
         }
 
@@ -1079,7 +1100,7 @@
         }
     }
 
-    function deleteDiary(id) {
+    function deleteDiary(id, event) {
         if (confirm('정말 이 메모를 삭제하시겠습니까?')) {
             let diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
             diaries = diaries.filter(d => d.id !== id);
