@@ -221,7 +221,6 @@
             outline: none;
             position: relative;
         }
-        /* 빈 상태일 때 희미하게 띄우는 안내 문구 스타일 */
         #text-output:empty:before {
             content: attr(placeholder);
             color: #b5a595;
@@ -276,6 +275,7 @@
             border-radius: 15px;
             padding: 15px;
             margin-bottom: 20px;
+            touch-action: pan-y; /* 모바일에서 위아래 스크롤은 유지하고 좌우 터치 감지 */
         }
         .cal-header {
             display: flex;
@@ -469,7 +469,8 @@
     
     <hr style="border: 0; height: 1px; background: var(--border-color); margin-bottom: 20px;">
     
-    <div class="calendar-box">
+    <!-- 달력 박스 (스와이프 기능 적용) -->
+    <div class="calendar-box" id="calendar-box">
         <div class="cal-header">
             <button class="cal-nav-btn" onclick="changeMonth(-1)">◀ 이전</button>
             <span id="cal-month-title">2026년 7월</span>
@@ -495,7 +496,7 @@
         <button class="filter-btn" id="filter-month" onclick="changeFilter('month')">1달보기</button>
     </div>
 
-    <p class="tip-text">💡 달력의 날짜를 누르면 해당 날짜의 메모(예약 포함)만 모아볼 수 있습니다!</p>
+    <p class="tip-text">💡 달력을 좌우로 손가락으로 밀거나(스와이프) 날짜를 눌러 확인해보세요!</p>
     <div class="diary-list" id="diary-list"></div>
 </div>
 
@@ -516,6 +517,32 @@
 
     let calYear = new Date().getFullYear();
     let calMonth = new Date().getMonth();
+
+    // 스마트폰 터치 스와이프(좌우 밀기) 감지 변수
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    const calendarBox = document.getElementById('calendar-box');
+
+    calendarBox.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+    }, {passive: true});
+
+    calendarBox.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    }, {passive: true});
+
+    function handleSwipe() {
+        const swipeThreshold = 50; // 이 거리 이상 밀어야 동작
+        if (touchEndX < touchStartX - swipeThreshold) {
+            // 왼쪽으로 밀었을 때 -> 다음 달
+            changeMonth(1);
+        } else if (touchEndX > touchStartX + swipeThreshold) {
+            // 오른쪽으로 밀었을 때 -> 이전 달
+            changeMonth(-1);
+        }
+    }
 
     function initReservationDate() {
         const now = new Date();
