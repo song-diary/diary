@@ -88,8 +88,6 @@
             gap: 12px;
             margin-bottom: 20px;
         }
-        
-        /* 💡 두 버튼을 나란히 한 줄로 배치하는 스타일 */
         .action-row {
             display: flex;
             gap: 10px;
@@ -139,7 +137,6 @@
         .photo-upload-label:hover {
             background-color: #e5d4c3;
         }
-
         #save-btn {
             background-color: var(--save-color);
             color: white;
@@ -180,7 +177,6 @@
             border-style: solid;
             border-color: var(--save-color);
         }
-        
         .photo-preview-container {
             margin-top: 10px;
             position: relative;
@@ -199,6 +195,25 @@
             margin-top: 12px;
             display: block;
             border: 1px solid var(--border-color);
+        }
+
+        /* 💡 잠금 버튼 스타일 (목록 위로 이동) */
+        #exit-btn {
+            background-color: var(--exit-color);
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            font-size: 17px;
+            font-weight: bold;
+            border-radius: 15px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(160, 145, 132, 0.3);
+            transition: all 0.2s ease;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        #exit-btn:hover {
+            background-color: #8c7664;
         }
 
         .filter-container {
@@ -277,23 +292,6 @@
             margin-top: -5px;
             margin-bottom: 20px;
         }
-        #exit-btn {
-            background-color: var(--exit-color);
-            color: white;
-            border: none;
-            padding: 15px 25px;
-            font-size: 18px;
-            font-weight: bold;
-            border-radius: 50px;
-            cursor: pointer;
-            box-shadow: 0 4px 10px rgba(160, 145, 132, 0.3);
-            transition: all 0.2s ease;
-            width: 100%;
-            margin-top: 20px;
-        }
-        #exit-btn:hover {
-            background-color: #8c7664;
-        }
     </style>
 </head>
 <body>
@@ -311,7 +309,6 @@
     </div>
     
     <div class="btn-box">
-        <!-- 💡 두 버튼을 한 줄(action-row)로 배치 -->
         <div class="action-row">
             <button id="record-btn">🎤 말하기</button>
             
@@ -333,6 +330,9 @@
     
     <hr style="border: 0; height: 1px; background: var(--border-color); margin-bottom: 20px;">
     
+    <!-- 💡 메모장 안전하게 잠그기 버튼을 목록/필터 바로 위로 이동 -->
+    <button id="exit-btn" onclick="closeApp()">🔒 메모장 안전하게 잠그기</button>
+
     <div class="filter-container">
         <button class="filter-btn active" id="filter-all" onclick="changeFilter('all')">전체보기</button>
         <button class="filter-btn" id="filter-week" onclick="changeFilter('week')">1주일보기</button>
@@ -341,8 +341,6 @@
 
     <p class="tip-text">💡 아래 저장된 메모 내용과 [날짜]도 터치하면 바로 수정할 수 있습니다!</p>
     <div class="diary-list" id="diary-list"></div>
-    
-    <button id="exit-btn" onclick="closeApp()">🔒 메모장 안전하게 잠그기</button>
 </div>
 
 <script>
