@@ -197,7 +197,6 @@
             border: 1px solid var(--border-color);
         }
 
-        /* 💡 잠금 버튼 스타일 (목록 위로 이동) */
         #exit-btn {
             background-color: var(--exit-color);
             color: white;
@@ -214,6 +213,84 @@
         }
         #exit-btn:hover {
             background-color: #8c7664;
+        }
+
+        /* 💡 캘린더 스타일 */
+        .calendar-box {
+            background: #fff9f5;
+            border: 2px solid var(--border-color);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .cal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: #8c7664;
+            margin-bottom: 12px;
+        }
+        .cal-nav-btn {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 5px 12px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #8c7664;
+        }
+        .cal-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            text-align: center;
+        }
+        .cal-day-name {
+            font-size: 13px;
+            font-weight: bold;
+            color: #a09184;
+            padding-bottom: 5px;
+        }
+        .cal-cell {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: white;
+            border-radius: 8px;
+            font-size: 15px;
+            cursor: pointer;
+            position: relative;
+            border: 1px solid #f0e6df;
+            color: #4a3f35;
+        }
+        .cal-cell.empty {
+            background: transparent;
+            border: none;
+            cursor: default;
+        }
+        .cal-cell.has-memo {
+            background-color: #fff0eb;
+            font-weight: bold;
+            border-color: #ffb3a7;
+        }
+        .cal-cell.selected {
+            background-color: var(--primary-color) !important;
+            color: white !important;
+            border-color: var(--primary-hover) !important;
+        }
+        .memo-dot {
+            width: 5px;
+            height: 5px;
+            background-color: #ff5252;
+            border-radius: 50%;
+            margin-top: 2px;
+        }
+        .cal-cell.selected .memo-dot {
+            background-color: white;
         }
 
         .filter-container {
@@ -330,7 +407,25 @@
     
     <hr style="border: 0; height: 1px; background: var(--border-color); margin-bottom: 20px;">
     
-    <!-- 💡 메모장 안전하게 잠그기 버튼을 목록/필터 바로 위로 이동 -->
+    <!-- 💡 달력 UI 추가 -->
+    <div class="calendar-box">
+        <div class="cal-header">
+            <button class="cal-nav-btn" onclick="changeMonth(-1)">◀ 이전</button>
+            <span id="cal-month-title">2026년 7월</span>
+            <button class="cal-nav-btn" onclick="changeMonth(1)">다음 ▶</button>
+        </div>
+        <div class="cal-grid">
+            <div class="cal-day-name" style="color:#ff5252;">일</div>
+            <div class="cal-day-name">월</div>
+            <div class="cal-day-name">화</div>
+            <div class="cal-day-name">수</div>
+            <div class="cal-day-name">목</div>
+            <div class="cal-day-name">금</div>
+            <div class="cal-day-name" style="color:#4da6ff;">토</div>
+        </div>
+        <div class="cal-grid" id="cal-days-grid" style="margin-top: 5px;"></div>
+    </div>
+
     <button id="exit-btn" onclick="closeApp()">🔒 메모장 안전하게 잠그기</button>
 
     <div class="filter-container">
@@ -339,7 +434,7 @@
         <button class="filter-btn" id="filter-month" onclick="changeFilter('month')">1달보기</button>
     </div>
 
-    <p class="tip-text">💡 아래 저장된 메모 내용과 [날짜]도 터치하면 바로 수정할 수 있습니다!</p>
+    <p class="tip-text">💡 달력의 날짜를 누르면 해당 날짜의 메모만 모아볼 수 있습니다!</p>
     <div class="diary-list" id="diary-list"></div>
 </div>
 
@@ -354,7 +449,12 @@
     let shouldRestart = true; 
     let accumulatedText = '';
     let currentFilter = 'all';
+    let selectedDateStr = null; // 달력에서 선택한 특정 날짜 (예: "2026-7-21")
     let currentPhotoBase64 = null;
+
+    // 캘린더용 현재 표시 연/월
+    let calYear = new Date().getFullYear();
+    let calMonth = new Date().getMonth();
 
     function getTodayStr() {
         const now = new Date();
@@ -541,11 +641,14 @@
         try {
             const diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
             const now = new Date();
+            // yyyy년 m월 d일 형식과 점검용 yyyy-m-d 객체용 날짜 함께 저장
             const dateStr = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일 ${now.getHours()}시 ${now.getMinutes()}분`;
+            const simpleDateStr = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
             
             diaries.unshift({ 
                 id: Date.now(), 
                 date: dateStr, 
+                simpleDate: simpleDateStr,
                 content: cleanText,
                 photo: currentPhotoBase64,
                 timestamp: Date.now()
@@ -556,6 +659,7 @@
             removeImage();
             saveBtn.style.display = 'none';
             
+            renderCalendar();
             displayDiaries();
         } catch(e) {
             alert('사진 용량이 너무 큽니다. 다른 사진을 선택해주세요.');
@@ -576,15 +680,97 @@
             let diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
             diaries = diaries.filter(item => item.id !== id);
             localStorage.setItem('myDiaries', JSON.stringify(diaries));
+            renderCalendar();
             displayDiaries();
         }
     }
 
     function changeFilter(filterType) {
+        selectedDateStr = null; // 필터 누르면 달력 선택 해제
         currentFilter = filterType;
         document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
         document.getElementById(`filter-${filterType}`).classList.add('active');
+        renderCalendar();
         displayDiaries();
+    }
+
+    // 캘린더 월 이동
+    function changeMonth(direction) {
+        calMonth += direction;
+        if (calMonth > 11) {
+            calMonth = 0;
+            calYear++;
+        } else if (calMonth < 0) {
+            calMonth = 11;
+            calYear--;
+        }
+        renderCalendar();
+    }
+
+    // 캘린더 렌더링
+    function renderCalendar() {
+        document.getElementById('cal-month-title').innerText = `${calYear}년 ${calMonth + 1}월`;
+        const grid = document.getElementById('cal-days-grid');
+        grid.innerHTML = '';
+
+        const firstDayIndex = new Date(calYear, calMonth, 1).getDay();
+        const totalDays = new Date(calYear, calMonth + 1, 0).getDate();
+
+        const diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
+        // 메모가 있는 날짜 세트 만들기 ("yyyy-m-d")
+        const memoDates = new Set();
+        diaries.forEach(item => {
+            if (item.simpleDate) {
+                memoDates.add(item.simpleDate);
+            } else if (item.date) {
+                // 구버전 데이터 호환용 파싱
+                const match = item.date.match(/(\d+)년\s*(\d+)월\s*(\d+)일/);
+                if (match) {
+                    memoDates.add(`${match[1]}-${match[2]}-${match[3]}`);
+                }
+            }
+        });
+
+        // 빈 칸 채우기 (첫 날 시작요일 맞춤)
+        for (let i = 0; i < firstDayIndex; i++) {
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'cal-cell empty';
+            grid.appendChild(emptyCell);
+        }
+
+        // 날짜 칸 채우기
+        for (let day = 1; day <= totalDays; day++) {
+            const cell = document.createElement('div');
+            cell.className = 'cal-cell';
+            const thisDateStr = `${calYear}-${calMonth + 1}-${day}`;
+            
+            let htmlContent = `<span>${day}</span>`;
+            if (memoDates.has(thisDateStr)) {
+                cell.classList.add('has-memo');
+                htmlContent += `<div class="memo-dot"></div>`;
+            }
+
+            if (selectedDateStr === thisDateStr) {
+                cell.classList.add('selected');
+            }
+
+            cell.innerHTML = htmlContent;
+            
+            // 날짜 클릭 이벤트
+            cell.addEventListener('click', () => {
+                if (selectedDateStr === thisDateStr) {
+                    selectedDateStr = null; // 다시 누르면 선택 해제 (전체보기로 복귀)
+                } else {
+                    selectedDateStr = thisDateStr;
+                    // 필터 버튼 활성화 해제
+                    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+                }
+                renderCalendar();
+                displayDiaries();
+            });
+
+            grid.appendChild(cell);
+        }
     }
 
     function displayDiaries() {
@@ -595,12 +781,30 @@
         const oneWeek = 7 * 24 * 60 * 60 * 1000;
         const oneMonth = 30 * 24 * 60 * 60 * 1000;
 
-        if (currentFilter === 'week') {
-            diaries = diaries.filter(item => (now - (item.timestamp || item.id)) <= oneWeek);
-        } else if (currentFilter === 'month') {
-            diaries = diaries.filter(item => (now - (item.timestamp || item.id)) <= oneMonth);
+        // 1. 달력에서 날짜를 선택한 경우 해당 날짜 메모만 필터링
+        if (selectedDateStr) {
+            diaries = diaries.filter(item => {
+                if (item.simpleDate === selectedDateStr) return true;
+                if (item.date) {
+                    const match = item.date.match(/(\d+)년\s*(\d+)월\s*(\d+)일/);
+                    if (match && `${match[1]}-${match[2]}-${match[3]}` === selectedDateStr) return true;
+                }
+                return false;
+            });
+        } else {
+            // 2. 상단 필터 적용
+            if (currentFilter === 'week') {
+                diaries = diaries.filter(item => (now - (item.timestamp || item.id)) <= oneWeek);
+            } else if (currentFilter === 'month') {
+                diaries = diaries.filter(item => (now - (item.timestamp || item.id)) <= oneMonth);
+            }
         }
         
+        if (diaries.length === 0) {
+            diaryList.innerHTML = `<div style="text-align:center; color:#a09184; padding:20px; font-size:16px;">해당하는 메모가 없습니다.</div>`;
+            return;
+        }
+
         diaries.forEach(item => {
             const diaryItem = document.createElement('div');
             diaryItem.className = 'diary-item';
@@ -645,6 +849,7 @@
     }
 
     loadPillState();
+    renderCalendar();
     displayDiaries();
 </script>
 
