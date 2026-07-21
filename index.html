@@ -146,6 +146,53 @@
             border-style: solid;
             border-color: var(--save-color);
         }
+        
+        /* 📸 사진 첨부 관련 디자인 스타일 */
+        .photo-upload-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .photo-file-input {
+            display: none;
+        }
+        .photo-upload-label {
+            background-color: #f1e4d8;
+            color: #5c4d40;
+            padding: 12px 20px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            display: inline-block;
+            transition: 0.2s;
+            text-align: center;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .photo-upload-label:hover {
+            background-color: #e5d4c3;
+        }
+        .photo-preview-container {
+            margin-top: 10px;
+            position: relative;
+            text-align: center;
+        }
+        .photo-preview {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+        .diary-photo {
+            max-width: 100%;
+            max-height: 250px;
+            border-radius: 8px;
+            margin-top: 10px;
+            display: block;
+            border: 1px solid var(--border-color);
+        }
+
         .filter-container {
             display: flex;
             justify-content: center;
@@ -257,6 +304,17 @@
     
     <div class="btn-box">
         <button id="record-btn">🎤 눌러서 말하기</button>
+        
+        <!-- 📸 사진 첨부 버튼 구역 -->
+        <div class="photo-upload-box">
+            <label for="diary-photo-input" class="photo-upload-label">📷 메모지/풍경 사진 첨부하기</label>
+            <input type="file" id="diary-photo-input" class="photo-file-input" accept="image/*" onchange="previewImage(event)">
+        </div>
+        <div id="photo-preview-wrap" style="display:none;" class="photo-preview-container">
+            <img id="image-preview" class="photo-preview" src="" alt="미리보기">
+            <button onclick="removeImage()" style="background:none; border:none; color:red; cursor:pointer; font-size:13px; display:block; margin:8px auto; font-weight:bold;">❌ 첨부 사진 취소</button>
+        </div>
+
         <button id="save-btn" onclick="manualSaveDiary()">💾 이 내용으로 일기 저장</button>
     </div>
     
@@ -287,6 +345,7 @@
     let shouldRestart = true; 
     let accumulatedText = '';
     let currentFilter = 'all';
+    let currentPhotoBase64 = null; // 📸 사진 데이터 변수 추가
 
     function getTodayStr() {
         const now = new Date();
@@ -325,6 +384,28 @@
         updatePillButton(type, state[type], labels[type]);
     }
 
+    // 📸 사진 미리보기 및 취소 함수
+    function previewImage(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentPhotoBase64 = e.target.result;
+                const previewImg = document.getElementById('image-preview');
+                previewImg.src = currentPhotoBase64;
+                document.getElementById('photo-preview-wrap').style.display = 'block';
+            }
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function removeImage() {
+        currentPhotoBase64 = null;
+        document.getElementById('diary-photo-input').value = '';
+        document.getElementById('photo-preview-wrap').style.display = 'none';
+        document.getElementById('image-preview').src = '';
+    }
+
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         recognition = new SpeechRecognition();
@@ -353,8 +434,8 @@
             } else {
                 stopRecording();
                 const resultText = accumulatedText.trim();
-                if (resultText.length > 0) {
-                    textOutput.innerText = resultText;
+                if (resultText.length > 0 || currentPhotoBase64) {
+                    if (resultText.length > 0) textOutput.innerText = resultText;
                     saveBtn.style.display = 'block'; 
                 } else {
                     textOutput.innerText = '인식된 목소리가 없습니다. 다시 시도해 주세요.';
@@ -370,6 +451,7 @@
                     if (speechText.length > 0 && !accumulatedText.includes(speechText)) {
                         accumulatedText += speechText + ' ';
                         textOutput.innerText = accumulatedText.trim();
+                        saveBtn.style.display = 'block';
                     }
                 }
             }
@@ -396,10 +478,10 @@
         }
     });
 
-    // 💾 확인 알림창을 없애고 즉시 저장되도록 대폭 간소화한 함수
+    // 💾 일기 저장 함수 (사진 데이터 포함)
     function manualSaveDiary() {
         const text = textOutput.innerText.trim();
-        if (!text) {
+        if (!text && !currentPhotoBase64) {
             return;
         }
 
@@ -411,15 +493,16 @@
             id: Date.now(), 
             date: dateStr, 
             content: text,
+            photo: currentPhotoBase64, // 📸 사진 데이터 저장
             timestamp: Date.now()
         });
         localStorage.setItem('myDiaries', JSON.stringify(diaries));
         
         textOutput.innerText = '';
+        removeImage();
         saveBtn.style.display = 'none';
         
         displayDiaries();
-        // 불필요한 alert 창을 삭제하여 딜레이 없이 즉시 완료됩니다!
     }
 
     function updateField(id, field, value) {
@@ -465,11 +548,15 @@
             const diaryItem = document.createElement('div');
             diaryItem.className = 'diary-item';
             
+            // 📸 저장된 사진이 있으면 태그 생성, 없으면 빈칸
+            const photoHtml = item.photo ? `<img src="${item.photo}" class="diary-photo" alt="일기 사진">` : '';
+
             diaryItem.innerHTML = `
                 <div>
                     <div class="diary-date" contenteditable="true" data-id="${item.id}">${item.date}</div>
                 </div>
                 <div class="diary-text" contenteditable="true" data-id="${item.id}">${item.content}</div>
+                ${photoHtml}
                 <button class="delete-btn" onclick="deleteDiary(${item.id})">❌ 삭제</button>
             `;
             diaryList.appendChild(diaryItem);
@@ -495,6 +582,7 @@
         }
         accumulatedText = '';
         textOutput.innerText = '';
+        removeImage();
         saveBtn.style.display = 'none';
         
         alert("🔒 마이크가 꺼졌으며 일기 창이 안전하게 정리되었습니다. 이제 스마트폰 홈 버튼을 누르고 나가하시면 됩니다!");
