@@ -620,7 +620,7 @@
         }
     }
 
-    // 날짜 문자열 표준화 함수 (어떤 형태든 YYYY-M-D 로 고정)
+    // 날짜 키 매핑 강화 (어떤 백업 형태든 YYYY-M-D 로 고정)
     function normalizeDateStr(dateStr) {
         if (!dateStr) return '';
         if (typeof dateStr !== 'string') {
@@ -730,11 +730,7 @@
 
     function toggleSettingMenu() {
         const menuBox = document.getElementById('setting-menu-box');
-        if (menuBox.style.display === 'block') {
-            menuBox.style.display = 'none';
-        } else {
-            menuBox.style.display = 'block';
-        }
+        menuBox.style.display = (menuBox.style.display === 'block') ? 'none' : 'block';
     }
 
     function closeSettingMenu() {
@@ -769,13 +765,13 @@
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         
-        alert('📤 백업 파일이 다운로드되었습니다! 안전한 곳에 보관해 주세요.');
+        alert('📤 백업 파일이 다운로드되었습니다!');
         closeSettingMenu();
     }
 
     function triggerRestore() {
         closeSettingMenu();
-        if (confirm('기존 메모에 백업 파일의 내용을 덮어씁니다. 백업해둔 파일(.json)을 선택해 주세요.')) {
+        if (confirm('백업해둔 파일(.json)을 선택해 주세요.')) {
             document.getElementById('restore-file-input').click();
         }
     }
@@ -789,7 +785,6 @@
             try {
                 let importedData = JSON.parse(e.target.result);
                 
-                // 객체 형태로 들어온 경우 배열로 변환 안전장치
                 if (!Array.isArray(importedData)) {
                     if (typeof importedData === 'object' && importedData !== null) {
                         importedData = Object.values(importedData);
@@ -812,7 +807,7 @@
                     
                     renderCalendar();
                     displayDiaries();
-                    alert('📥 데이터가 성공적으로 복원되었습니다!');
+                    alert('📥 데이터 복원 완료! (점 표시와 내용이 정상 반영되었습니다)');
                 } else {
                     alert('올바른 백업 파일 형식이 아닙니다.');
                 }
@@ -881,15 +876,9 @@
                     const max_size = 600; 
 
                     if (width > height) {
-                        if (width > max_size) {
-                            height *= max_size / width;
-                            width = max_size;
-                        }
+                        if (width > max_size) { height *= max_size / width; width = max_size; }
                     } else {
-                        if (height > max_size) {
-                            width *= max_size / height;
-                            height = max_size;
-                        }
+                        if (height > max_size) { width *= max_size / height; height = max_size; }
                     }
                     canvas.width = width;
                     canvas.height = height;
@@ -898,8 +887,7 @@
                     
                     currentPhotoBase64 = canvas.toDataURL('image/jpeg', 0.7);
                     
-                    const previewImg = document.getElementById('image-preview');
-                    previewImg.src = currentPhotoBase64;
+                    document.getElementById('image-preview').src = currentPhotoBase64;
                     document.getElementById('photo-preview-wrap').style.display = 'block';
                     saveBtn.style.display = 'block'; 
                 }
@@ -939,7 +927,6 @@
         };
 
         recognition.onerror = (event) => {
-            console.error(event.error);
             if (isRecording) stopRecording(); 
         };
 
@@ -953,7 +940,7 @@
                     if (resultText.length > 0) textOutput.innerText = resultText;
                     saveBtn.style.display = 'block'; 
                 } else {
-                    textOutput.innerText = '인식된 목소리가 없습니다. 다시 시도해 주세요.';
+                    textOutput.innerText = '인식된 목소리가 없습니다.';
                     saveBtn.style.display = 'none';
                 }
             }
@@ -993,6 +980,7 @@
         }
     });
 
+    // 새로 입력 시 덮어쓰기 방지 및 완전 초기화 로직 강화
     function manualSaveDiary() {
         const text = textOutput.innerText.trim();
         const isDefaultText = text.includes('인식된 목소리가 없습니다') || text.includes('귀 기울여 듣고 있습니다');
@@ -1016,13 +1004,14 @@
         diaries.unshift(newDiary);
         localStorage.setItem('myDiaries', JSON.stringify(diaries));
 
-        // 입력창 및 변수 완벽 초기화 (덮어쓰기 방지)
+        // 찌꺼기 방지를 위한 확실한 입력창 완전 비우기
         textOutput.innerHTML = '';
-        textOutput.innerText = '';
+        textOutput.textContent = '';
         accumulatedText = '';
         removeImage();
         initReservationDate();
         saveBtn.style.display = 'none';
+        textOutput.blur();
 
         renderCalendar();
         displayDiaries();
@@ -1064,19 +1053,11 @@
             const dObj = new Date(calYear, calMonth, day);
             const dayOfWeek = dObj.getDay();
 
-            if (dayOfWeek === 0) {
-                cell.classList.add('sunday');
-            } else if (dayOfWeek === 6) {
-                cell.classList.add('saturday');
-            }
+            if (dayOfWeek === 0) cell.classList.add('sunday');
+            else if (dayOfWeek === 6) cell.classList.add('saturday');
 
-            if (holidays.has(normalizedDateStr)) {
-                cell.classList.add('holiday');
-            }
-
-            if (selectedDateStr === normalizedDateStr) {
-                cell.classList.add('selected');
-            }
+            if (holidays.has(normalizedDateStr)) cell.classList.add('holiday');
+            if (selectedDateStr === normalizedDateStr) cell.classList.add('selected');
 
             let cellInner = `<span>${day}</span>`;
             if (memoDates.has(normalizedDateStr)) {
@@ -1086,11 +1067,7 @@
             cell.innerHTML = cellInner;
 
             cell.addEventListener('click', () => {
-                if (selectedDateStr === normalizedDateStr) {
-                    selectedDateStr = null; 
-                } else {
-                    selectedDateStr = normalizedDateStr;
-                }
+                selectedDateStr = (selectedDateStr === normalizedDateStr) ? null : normalizedDateStr;
                 renderCalendar();
                 displayDiaries();
             });
@@ -1101,13 +1078,8 @@
 
     function changeMonth(direction) {
         calMonth += direction;
-        if (calMonth > 11) {
-            calMonth = 0;
-            calYear++;
-        } else if (calMonth < 0) {
-            calMonth = 11;
-            calYear--;
-        }
+        if (calMonth > 11) { calMonth = 0; calYear++; }
+        else if (calMonth < 0) { calMonth = 11; calYear--; }
         renderCalendar();
     }
 
@@ -1157,10 +1129,7 @@
             const item = document.createElement('div');
             item.className = 'diary-item';
 
-            let photoHtml = '';
-            if (diary.photo) {
-                photoHtml = `<img src="${diary.photo}" class="diary-photo" alt="첨부 사진">`;
-            }
+            let photoHtml = diary.photo ? `<img src="${diary.photo}" class="diary-photo" alt="첨부 사진">` : '';
 
             item.innerHTML = `
                 <button class="delete-btn" onclick="deleteDiary(${diary.id})">🗑️ 삭제</button>
