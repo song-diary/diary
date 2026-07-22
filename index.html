@@ -220,6 +220,10 @@
             border: none;
             cursor: default;
         }
+        .cal-cell.selected-date {
+            border: 2px solid var(--save-color);
+            background-color: #f0f7ff;
+        }
         
         .memo-bar {
             width: 70%;
@@ -371,7 +375,7 @@
             margin-bottom: 15px;
         }
         .filter-btn {
-            padding: 10px 24px;
+            padding: 10px 20px;
             font-size: 15px;
             font-weight: bold;
             border: 1px solid var(--border-color);
@@ -518,7 +522,8 @@
     
     <div class="filter-container">
         <button class="filter-btn" id="filter-all" onclick="changeFilter('all')">전체보기</button>
-        <button class="filter-btn" id="filter-month" onclick="changeFilter('month')">최근 30일 보기</button>
+        <button class="filter-btn" id="filter-month" onclick="changeFilter('month')">최근 30일</button>
+        <button class="filter-btn" id="filter-date" style="display:none; background-color:#e6f7ff; color:#337ab7;" onclick="clearDateFilter()">날짜선택 해제</button>
     </div>
 
     <div class="diary-list" id="diary-list"></div>
@@ -538,6 +543,7 @@
     let accumulatedText = '';
     
     let currentFilter = localStorage.getItem('lastFilterState') || 'all';
+    let selectedDateFilter = null; // 캘린더에서 클릭한 특정 날짜
     let currentPhotoBase64 = null;
 
     let calYear = new Date().getFullYear();
@@ -836,7 +842,6 @@
         let diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
         diaries.push(newDiary);
         
-        // 날짜/시간 객체 비교로 정확한 최신순 정렬
         diaries.sort((a, b) => {
             const timeA = new Date(`${normalizeDateStr(a.date || a.reservationDate || a.createdDate)}T${a.time || '00:00'}`).getTime();
             const timeB = new Date(`${normalizeDateStr(b.date || b.reservationDate || b.createdDate)}T${b.time || '00:00'}`).getTime();
@@ -853,7 +858,7 @@
         
         renderCalendar();
         displayDiaries();
-        alert('✨ 알람 예약 및 메모가 저장되었습니다!');
+        alert('✨ 메모가 저장되었습니다!');
     }
 
     setInterval(() => {
@@ -918,6 +923,7 @@
             else if (dayOfWeek === 6) cell.classList.add('saturday');
 
             if (holidays.has(normalizedDateStr)) cell.classList.add('holiday');
+            if (selectedDateFilter === normalizedDateStr) cell.classList.add('selected-date');
 
             let cellInner = `<span>${day}</span>`;
             if (memoDates.has(normalizedDateStr)) {
@@ -926,9 +932,11 @@
             }
             cell.innerHTML = cellInner;
 
+            // **[수정] 캘린더 날짜 클릭 시 입력창으로 안 들어가고 해당 날짜 메모만 필터링해서 보여줌**
             cell.addEventListener('click', () => {
-                reservationDateInput.value = normalizedDateStr;
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                selectedDateFilter = normalizedDateStr;
+                renderCalendar(); // 선택된 날짜 테두리 표시 갱신
+                displayDiaries(); // 해당 날짜 데이터만 하단에 표시
             });
 
             grid.appendChild(cell);
@@ -943,6 +951,9 @@
     }
 
     function changeFilter(filterType) {
+        selectedDateFilter = null; // 일반 필터 누르면 날짜 선택 해제
+        document.getElementById('filter-date').style.display = 'none';
+
         if (filterType !== 'all' && filterType !== 'month') filterType = 'all';
         currentFilter = filterType;
         localStorage.setItem('lastFilterState', filterType);
@@ -954,6 +965,14 @@
         const activeBtn = document.getElementById(`filter-${filterType}`);
         if(activeBtn) activeBtn.classList.add('active');
 
+        renderCalendar();
+        displayDiaries();
+    }
+
+    function clearDateFilter() {
+        selectedDateFilter = null;
+        document.getElementById('filter-date').style.display = 'none';
+        renderCalendar();
         displayDiaries();
     }
 
@@ -967,14 +986,21 @@
             time: d.time || '00:00'
         }));
 
-        // **[핵심 수정] 문자열 비교 대신 Date 밀리초 값으로 정확한 내림차순(최신순) 정렬 수행**
         diaries.sort((a, b) => {
             const timeA = new Date(`${a.date}T${a.time}`).getTime();
             const timeB = new Date(`${b.date}T${b.time}`).getTime();
             return timeB - timeA;
         });
 
-        if (currentFilter === 'month') {
+        // **[추가] 캘린더에서 특정 날짜를 클릭했다면 해당 날짜 데이터만 필터링**
+        if (selectedDateFilter) {
+            diaries = diaries.filter(d => d.date === selectedDateFilter);
+            document.getElementById('filter-date').style.display = 'block';
+            ['all', 'month'].forEach(f => {
+                const btn = document.getElementById(`filter-${f}`);
+                if(btn) btn.classList.remove('active');
+            });
+        } else if (currentFilter === 'month') {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             
@@ -989,7 +1015,8 @@
         }
 
         if (diaries.length === 0) {
-            diaryList.innerHTML = `<p style="text-align:center; color:#a09184; padding:20px; font-size:16px;">조건에 맞는 저장된 메모가 없습니다.</p>`;
+            const msg = selectedDateFilter ? `${selectedDateFilter}에 저장된 메모가 없습니다.` : '조건에 맞는 저장된 메모가 없습니다.';
+            diaryList.innerHTML = `<p style="text-align:center; color:#a09184; padding:20px; font-size:16px;">${msg}</p>`;
             return;
         }
 
