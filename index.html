@@ -208,11 +208,16 @@
             color: #8c7664;
             font-size: 16px;
         }
-        .reservation-date-box input[type="date"] {
-            padding: 8px 12px;
+        .reservation-inputs {
+            display: flex;
+            gap: 6px;
+        }
+        .reservation-date-box input[type="date"],
+        .reservation-date-box input[type="time"] {
+            padding: 6px 8px;
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            font-size: 16px;
+            font-size: 15px;
             font-family: inherit;
             color: var(--text-color);
             background-color: white;
@@ -293,7 +298,7 @@
             border-radius: 15px;
             padding: 15px;
             margin-bottom: 20px;
-            touch-action: pan-y; /* 모바일 스와이프 원활화 */
+            touch-action: pan-y;
         }
         .cal-header {
             display: flex;
@@ -411,7 +416,7 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.02);
         }
         .diary-date {
-            font-size: 16px;
+            font-size: 15px;
             color: #a09184;
             margin-bottom: 5px;
             font-weight: bold;
@@ -495,8 +500,11 @@
         </div>
 
         <div class="reservation-date-box">
-            <span>📅 메모 예약일:</span>
-            <input type="date" id="reservation-date-input">
+            <span>📅 예약 일시:</span>
+            <div class="reservation-inputs">
+                <input type="date" id="reservation-date-input">
+                <input type="time" id="reservation-time-input">
+            </div>
         </div>
 
         <button id="save-btn" onclick="manualSaveDiary()">💾 이 내용으로 메모 저장</button>
@@ -539,6 +547,7 @@
     const textOutput = document.getElementById('text-output');
     const diaryList = document.getElementById('diary-list');
     const reservationDateInput = document.getElementById('reservation-date-input');
+    const reservationTimeInput = document.getElementById('reservation-time-input');
 
     let recognition;
     let isRecording = false;
@@ -551,7 +560,6 @@
     let calYear = new Date().getFullYear();
     let calMonth = new Date().getMonth();
 
-    // 터치 스와이프를 위한 변수
     let touchStartX = 0;
     let touchEndX = 0;
 
@@ -565,12 +573,8 @@
     });
 
     function handleSwipe() {
-        if (touchEndX < touchStartX - 50) {
-            changeMonth(1); // 왼쪽으로 밀면 다음 달
-        }
-        if (touchEndX > touchStartX + 50) {
-            changeMonth(-1); // 오른쪽으로 밀면 이전 달
-        }
+        if (touchEndX < touchStartX - 50) changeMonth(1);
+        if (touchEndX > touchStartX + 50) changeMonth(-1);
     }
 
     function normalizeDateStr(dateStr) {
@@ -611,12 +615,16 @@
         return holidays;
     }
 
-    function initReservationDate() {
+    function initReservationDateTime() {
         const now = new Date();
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
         const day = String(now.getDate()).padStart(2, '0');
         reservationDateInput.value = `${year}-${month}-${day}`;
+
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        reservationTimeInput.value = `${hours}:${minutes}`;
     }
 
     function getTodayStr() {
@@ -830,13 +838,16 @@
         if (!cleanText && !currentPhotoBase64) return;
 
         const dateVal = normalizeDateStr(reservationDateInput.value);
+        const timeVal = reservationTimeInput.value || '00:00';
         const timestamp = Date.now();
         
         const newDiary = {
             id: timestamp,
             date: dateVal,
+            time: timeVal,
             text: cleanText,
-            photo: currentPhotoBase64
+            photo: currentPhotoBase64,
+            alarmChecked: false
         };
 
         let diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
@@ -846,13 +857,36 @@
         textOutput.innerText = '';
         accumulatedText = '';
         removeImage();
-        initReservationDate();
+        initReservationDateTime();
         saveBtn.style.display = 'none';
 
         renderCalendar();
         displayDiaries();
-        alert('✨ 메모가 저장되었습니다!');
+        alert('✨ 알람 예약 및 메모가 저장되었습니다!');
     }
+
+    // 알람 체크 루프 (앱이 켜져 있는 동안 지정된 시간이 되면 알림 창 띄우기)
+    setInterval(() => {
+        let diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
+        const now = new Date();
+        const todayStr = getTodayStr();
+        const currentHours = String(now.getHours()).padStart(2, '0');
+        const currentMinutes = String(now.getMinutes()).padStart(2, '0');
+        const currentTimeStr = `${currentHours}:${currentMinutes}`;
+
+        let updated = false;
+        diaries.forEach(d => {
+            if (d.date === todayStr && d.time === currentTimeStr && !d.alarmChecked) {
+                d.alarmChecked = true;
+                updated = true;
+                alert(`⏰ [예약 알람]\n\n${d.text ? d.text.substring(0, 30) + '...' : '사진 메모'}`);
+            }
+        });
+
+        if (updated) {
+            localStorage.setItem('myDiaries', JSON.stringify(diaries));
+        }
+    }, 10000); // 10초마다 시간 확인
 
     function renderCalendar() {
         const grid = document.getElementById('cal-days-grid');
@@ -953,7 +987,6 @@
                 const diffTime = todayTime - itemTime;
                 const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
                 
-                // 오늘부터 과거 30일 이내 (diffDays가 0 이상 30 이하)의 메모만 표시
                 return diffDays >= 0 && diffDays <= 30;
             });
         }
@@ -967,10 +1000,11 @@
             const item = document.createElement('div');
             item.className = 'diary-item';
             let photoHtml = diary.photo ? `<img src="${diary.photo}" class="diary-photo" alt="첨부 사진">` : '';
+            let timeStr = diary.time ? ` ${diary.time}` : '';
 
             item.innerHTML = `
                 <button class="delete-btn" onclick="deleteDiary(${diary.id})">🗑️ 삭제</button>
-                <div class="diary-date" contenteditable="true" onblur="updateDiaryDate(${diary.id}, this)">📅 ${diary.date || ''}</div>
+                <div class="diary-date" contenteditable="true" onblur="updateDiaryDate(${diary.id}, this)">📅 ${diary.date || ''}${timeStr}</div>
                 <div class="diary-text" contenteditable="true" onblur="updateDiaryText(${diary.id}, this)">${diary.text || ''}</div>
                 ${photoHtml}
             `;
@@ -991,10 +1025,14 @@
         let diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
         const index = diaries.findIndex(d => d.id === id);
         if (index !== -1) {
-            let newDateStr = element.innerText.replace('📅', '').trim();
-            newDateStr = normalizeDateStr(newDateStr);
+            let fullText = element.innerText.replace('📅', '').trim();
+            let parts = fullText.split(' ');
+            let newDateStr = normalizeDateStr(parts[0]);
+            let newTimeStr = parts[1] || '00:00';
+
             if (/^\d{4}-\d{2}-\d{2}$/.test(newDateStr)) {
                 diaries[index].date = newDateStr;
+                diaries[index].time = newTimeStr;
                 localStorage.setItem('myDiaries', JSON.stringify(diaries));
                 renderCalendar();
                 displayDiaries();
@@ -1016,7 +1054,7 @@
     }
 
     window.onload = function() {
-        initReservationDate();
+        initReservationDateTime();
         initPillSetting();
         renderCalendar();
         if (currentFilter !== 'all' && currentFilter !== 'month') currentFilter = 'all';
