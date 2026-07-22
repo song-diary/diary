@@ -837,8 +837,8 @@
         diaries.push(newDiary);
         
         diaries.sort((a, b) => {
-            const dateA = `${a.date || '0000-00-00'} ${a.time || '00:00'}`;
-            const dateB = `${b.date || '0000-00-00'} ${b.time || '00:00'}`;
+            const dateA = `${normalizeDateStr(a.date || a.reservationDate || a.createdDate)} ${a.time || '00:00'}`;
+            const dateB = `${normalizeDateStr(b.date || b.reservationDate || b.createdDate)} ${b.time || '00:00'}`;
             return dateB.localeCompare(dateA);
         });
 
@@ -865,7 +865,8 @@
 
         let updated = false;
         diaries.forEach(d => {
-            if (d.date === todayStr && d.time === currentTimeStr && !d.alarmChecked) {
+            const dDate = normalizeDateStr(d.date || d.reservationDate || d.createdDate);
+            if (dDate === todayStr && d.time === currentTimeStr && !d.alarmChecked) {
                 d.alarmChecked = true;
                 updated = true;
                 alert(`⏰ [예약 알람]\n\n${d.text ? d.text.substring(0, 30) + '...' : '사진 메모'}`);
@@ -959,15 +960,17 @@
         diaryList.innerHTML = '';
         let diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
 
+        // 데이터 전체에 표준화된 날짜와 시간 값 부여
         diaries = diaries.map(d => ({
             ...d,
-            date: normalizeDateStr(d.date || d.reservationDate || d.createdDate)
+            date: normalizeDateStr(d.date || d.reservationDate || d.createdDate),
+            time: d.time || '00:00'
         }));
 
-        // **전체보기 및 최근 30일 모두 날짜+시간 기준 최신순(내림차순)으로 정확히 정렬**
+        // **[확실한 전체 정렬] 전체보기/월보기 상관없이 날짜+시간 기준 최신순(내림차순) 정렬**
         diaries.sort((a, b) => {
-            const dateA = `${a.date || '0000-00-00'} ${a.time || '00:00'}`;
-            const dateB = `${b.date || '0000-00-00'} ${b.time || '00:00'}`;
+            const dateA = `${a.date} ${a.time}`;
+            const dateB = `${b.date} ${b.time}`;
             return dateB.localeCompare(dateA);
         });
 
@@ -1029,8 +1032,8 @@
                 diaries[index].time = newTimeStr;
                 
                 diaries.sort((a, b) => {
-                    const dateA = `${a.date || '0000-00-00'} ${a.time || '00:00'}`;
-                    const dateB = `${b.date || '0000-00-00'} ${b.time || '00:00'}`;
+                    const dateA = `${normalizeDateStr(a.date || a.reservationDate || a.createdDate)} ${a.time || '00:00'}`;
+                    const dateB = `${normalizeDateStr(b.date || b.reservationDate || b.createdDate)} ${b.time || '00:00'}`;
                     return dateB.localeCompare(dateA);
                 });
 
