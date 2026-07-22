@@ -162,7 +162,7 @@
             align-items: center;
         }
         
-        /* [예약일/알람시간] 버튼 디자인 */
+        /* [예약일/알람시간] 버튼 디자인 (클릭하면 숨겨진 달력 인풋이 열림) */
         .date-trigger-btn {
             background: white;
             border: 1px solid var(--border-color);
@@ -178,6 +178,15 @@
             background-color: #f1e4d8;
         }
 
+        /* 날짜/시간 실제 입력 인풋 숨기기 (버튼으로 제어) */
+        .hidden-date-input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+            width: 0;
+            height: 0;
+        }
+
         /* 알람시간 인풋박스 */
         .time-input-box {
             padding: 5px 8px;
@@ -189,96 +198,6 @@
             outline: none;
             width: 85px;
             box-sizing: border-box;
-        }
-
-        /* 인라인 팝업 달력 */
-        .popup-calendar-box {
-            background: #ffffff;
-            border: 2px solid var(--save-color);
-            border-radius: 12px;
-            padding: 12px;
-            margin-bottom: 10px;
-            display: none;
-            box-shadow: 0 4px 12px rgba(77, 166, 255, 0.2);
-            touch-action: pan-y;
-        }
-        .cal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 15px;
-            font-weight: bold;
-            color: #8c7664;
-            margin-bottom: 8px;
-        }
-        .cal-nav-btn {
-            background: white;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 3px 8px;
-            cursor: pointer;
-            font-weight: bold;
-            color: #8c7664;
-            font-size: 12px;
-        }
-        .cal-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 3px;
-            text-align: center;
-        }
-        .cal-day-name {
-            font-size: 11px !important;
-            font-weight: bold;
-            color: #a09184;
-            padding-bottom: 4px;
-        }
-        .cal-cell {
-            aspect-ratio: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: #fffdfb;
-            border-radius: 6px;
-            font-size: 13px;
-            cursor: pointer;
-            position: relative;
-            border: 1px solid #f0e6df;
-            color: #4a3f35;
-            box-sizing: border-box;
-            padding: 2px;
-        }
-        .cal-cell span {
-            font-size: 13px !important;
-            line-height: 1.2;
-            font-weight: bold;
-        }
-        .cal-cell:hover {
-            background-color: #f1e4d8;
-        }
-        .cal-cell.sunday, .cal-cell.holiday {
-            background-color: #fff5f5;
-            color: #e63946 !important;
-        }
-        .cal-cell.sunday span, .cal-cell.holiday span {
-            color: #e63946 !important;
-        }
-        .cal-cell.saturday {
-            background-color: #f7fbff;
-            color: #337ab7;
-        }
-        .cal-cell.saturday span {
-            color: #337ab7;
-        }
-        .cal-cell.empty {
-            background: transparent;
-            border: none;
-            cursor: default;
-        }
-        .cal-cell.selected-date {
-            border: 2px solid var(--save-color);
-            background-color: #f0f7ff;
         }
 
         .btn-box {
@@ -489,29 +408,13 @@
         <div class="input-top-row">
             <span class="section-label">✏️ 새 메모</span>
             <div class="datetime-group">
-                <!-- 예약일/알람시간 버튼으로 변경 -->
-                <button class="date-trigger-btn" id="date-trigger-btn" onclick="togglePopupCalendar()">📅 예약일/알람시간</button>
+                <!-- 예약일 버튼 (누르면 브라우저 기본 달력/날짜 선택 창이 뜸) -->
+                <button class="date-trigger-btn" id="date-trigger-btn" onclick="openDatePicker()">📅 예약일</button>
+                <input type="date" class="hidden-date-input" id="reservation-date-input" onchange="onDateChanged(this)">
+                
+                <!-- 알람시간 인풋박스 -->
                 <input type="time" class="time-input-box" id="reservation-time-input" value="08:00">
             </div>
-        </div>
-
-        <!-- 일자 선택 팝업 달력 (날짜 누르면 바로 선택되고 사라짐) -->
-        <div class="popup-calendar-box" id="popup-calendar-box">
-            <div class="cal-header">
-                <button class="cal-nav-btn" onclick="changePopupMonth(-1)">◀ 이전</button>
-                <span id="popup-cal-month-title"></span>
-                <button class="cal-nav-btn" onclick="changePopupMonth(1)">다음 ▶</button>
-            </div>
-            <div class="cal-grid">
-                <div class="cal-day-name" style="color:#e63946;">일</div>
-                <div class="cal-day-name">월</div>
-                <div class="cal-day-name">화</div>
-                <div class="cal-day-name">수</div>
-                <div class="cal-day-name">목</div>
-                <div class="cal-day-name">금</div>
-                <div class="cal-day-name" style="color:#337ab7;">토</div>
-            </div>
-            <div class="cal-grid" id="popup-cal-days-grid" style="margin-top: 4px;"></div>
         </div>
 
         <div class="btn-box">
@@ -549,9 +452,9 @@
     const saveBtn = document.getElementById('save-btn');
     const textOutput = document.getElementById('text-output');
     const diaryList = document.getElementById('diary-list');
+    const reservationDateInput = document.getElementById('reservation-date-input');
     const reservationTimeInput = document.getElementById('reservation-time-input');
     const dateTriggerBtn = document.getElementById('date-trigger-btn');
-    const popupCalendarBox = document.getElementById('popup-calendar-box');
 
     let recognition;
     let isRecording = false;
@@ -560,26 +463,6 @@
     
     let currentFilter = localStorage.getItem('lastFilterState') || 'all';
     let currentPhotoBase64 = null;
-    let selectedReservationDate = ''; 
-
-    let popupYear = new Date().getFullYear();
-    let popupMonth = new Date().getMonth();
-
-    let touchStartX = 0;
-    let touchEndX = 0;
-
-    popupCalendarBox.addEventListener('touchstart', (e) => {
-        touchStartX = e.changedTouches[0].screenX;
-    });
-    popupCalendarBox.addEventListener('touchend', (e) => {
-        touchEndX = e.changedTouches[0].screenX;
-        handleSwipe();
-    });
-
-    function handleSwipe() {
-        if (touchEndX < touchStartX - 50) changePopupMonth(1);
-        if (touchEndX > touchStartX + 50) changePopupMonth(-1);
-    }
 
     function setDefaultDateTime() {
         const now = new Date();
@@ -587,17 +470,23 @@
         const month = String(now.getMonth() + 1).padStart(2, '0');
         const day = String(now.getDate()).padStart(2, '0');
         
-        selectedReservationDate = `${year}-${month}-${day}`;
-        dateTriggerBtn.innerText = `📅 ${selectedReservationDate}`;
+        const todayStr = `${year}-${month}-${day}`;
+        reservationDateInput.value = todayStr;
+        dateTriggerBtn.innerText = `📅 ${todayStr}`;
         reservationTimeInput.value = '08:00'; 
     }
 
-    function togglePopupCalendar() {
-        if (popupCalendarBox.style.display === 'block') {
-            popupCalendarBox.style.display = 'none';
+    function openDatePicker() {
+        if (typeof reservationDateInput.showPicker === 'function') {
+            reservationDateInput.showPicker();
         } else {
-            popupCalendarBox.style.display = 'block';
-            renderPopupCalendar();
+            reservationDateInput.click();
+        }
+    }
+
+    function onDateChanged(input) {
+        if (input.value) {
+            dateTriggerBtn.innerText = `📅 ${input.value}`;
         }
     }
 
@@ -620,23 +509,6 @@
         const normalized = normalizeDateStr(dateStr);
         const [y, m, d] = normalized.split('-').map(Number);
         return new Date(y, m - 1, d);
-    }
-
-    function getFixedHolidays(year) {
-        return [
-            `${year}-01-01`, `${year}-03-01`, `${year}-05-05`, `${year}-06-06`,
-            `${year}-08-15`, `${year}-10-03`, `${year}-10-09`, `${year}-12-25`
-        ];
-    }
-
-    function getKoreanHolidays(year) {
-        let holidays = new Set(getFixedHolidays(year));
-        if (year === 2026) {
-            holidays.add('2026-02-16'); holidays.add('2026-02-17'); holidays.add('2026-02-18');
-            holidays.add('2026-05-24'); holidays.add('2026-05-25');
-            holidays.add('2026-09-24'); holidays.add('2026-09-25'); holidays.add('2026-09-26');
-        }
-        return holidays;
     }
 
     function getTodayStr() {
@@ -834,7 +706,7 @@
         const curH = String(now.getHours()).padStart(2, '0');
         const curMin = String(now.getMinutes()).padStart(2, '0');
 
-        const dateVal = selectedReservationDate || getTodayStr();
+        const dateVal = reservationDateInput.value || getTodayStr();
         const timeVal = reservationTimeInput.value || `${curH}:${curMin}`;
 
         const timestamp = Date.now();
@@ -890,56 +762,6 @@
             localStorage.setItem('myDiaries', JSON.stringify(diaries));
         }
     }, 10000);
-
-    function renderPopupCalendar() {
-        const grid = document.getElementById('popup-cal-days-grid');
-        const title = document.getElementById('popup-cal-month-title');
-        grid.innerHTML = '';
-        title.innerText = `${popupYear}년 ${popupMonth + 1}월`;
-
-        const firstDayIndex = new Date(popupYear, popupMonth, 1).getDay();
-        const totalDays = new Date(popupYear, popupMonth + 1, 0).getDate();
-        const holidays = getKoreanHolidays(popupYear);
-
-        for (let i = 0; i < firstDayIndex; i++) {
-            const emptyCell = document.createElement('div');
-            emptyCell.className = 'cal-cell empty';
-            grid.appendChild(emptyCell);
-        }
-
-        for (let day = 1; day <= totalDays; day++) {
-            const cell = document.createElement('div');
-            cell.className = 'cal-cell';
-            
-            const rawDateStr = `${popupYear}-${String(popupMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`; 
-            const normalizedDateStr = normalizeDateStr(rawDateStr);
-            const dObj = new Date(popupYear, popupMonth, day);
-            const dayOfWeek = dObj.getDay();
-
-            if (dayOfWeek === 0) cell.classList.add('sunday');
-            else if (dayOfWeek === 6) cell.classList.add('saturday');
-
-            if (holidays.has(normalizedDateStr)) cell.classList.add('holiday');
-            if (selectedReservationDate === normalizedDateStr) cell.classList.add('selected-date');
-
-            cell.innerHTML = `<span>${day}</span>`;
-
-            cell.addEventListener('click', () => {
-                selectedReservationDate = normalizedDateStr;
-                dateTriggerBtn.innerText = `📅 ${selectedReservationDate}`;
-                popupCalendarBox.style.display = 'none'; 
-            });
-
-            grid.appendChild(cell);
-        }
-    }
-
-    function changePopupMonth(direction) {
-        popupMonth += direction;
-        if (popupMonth > 11) { popupMonth = 0; popupYear++; }
-        else if (popupMonth < 0) { popupMonth = 11; popupYear--; }
-        renderPopupCalendar();
-    }
 
     function changeFilter(filterType) {
         if (filterType !== 'all' && filterType !== 'month') filterType = 'all';
@@ -1044,7 +866,8 @@
         }
     }
 
-    function deleteDiary(id) {
+    function deleteDiary(id, event) {
+        if (event) event.stopPropagation();
         if (confirm('정말 이 메모를 삭제하시겠습니까?')) {
             let diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
             diaries = diaries.filter(d => d.id !== id);
