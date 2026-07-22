@@ -836,10 +836,11 @@
         let diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
         diaries.push(newDiary);
         
+        // 날짜/시간 객체 비교로 정확한 최신순 정렬
         diaries.sort((a, b) => {
-            const dateA = `${normalizeDateStr(a.date || a.reservationDate || a.createdDate)} ${a.time || '00:00'}`;
-            const dateB = `${normalizeDateStr(b.date || b.reservationDate || b.createdDate)} ${b.time || '00:00'}`;
-            return dateB.localeCompare(dateA);
+            const timeA = new Date(`${normalizeDateStr(a.date || a.reservationDate || a.createdDate)}T${a.time || '00:00'}`).getTime();
+            const timeB = new Date(`${normalizeDateStr(b.date || b.reservationDate || b.createdDate)}T${b.time || '00:00'}`).getTime();
+            return timeB - timeA;
         });
 
         localStorage.setItem('myDiaries', JSON.stringify(diaries));
@@ -960,18 +961,17 @@
         diaryList.innerHTML = '';
         let diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
 
-        // 데이터 전체에 표준화된 날짜와 시간 값 부여
         diaries = diaries.map(d => ({
             ...d,
             date: normalizeDateStr(d.date || d.reservationDate || d.createdDate),
             time: d.time || '00:00'
         }));
 
-        // **[확실한 전체 정렬] 전체보기/월보기 상관없이 날짜+시간 기준 최신순(내림차순) 정렬**
+        // **[핵심 수정] 문자열 비교 대신 Date 밀리초 값으로 정확한 내림차순(최신순) 정렬 수행**
         diaries.sort((a, b) => {
-            const dateA = `${a.date} ${a.time}`;
-            const dateB = `${b.date} ${b.time}`;
-            return dateB.localeCompare(dateA);
+            const timeA = new Date(`${a.date}T${a.time}`).getTime();
+            const timeB = new Date(`${b.date}T${b.time}`).getTime();
+            return timeB - timeA;
         });
 
         if (currentFilter === 'month') {
@@ -1032,9 +1032,9 @@
                 diaries[index].time = newTimeStr;
                 
                 diaries.sort((a, b) => {
-                    const dateA = `${normalizeDateStr(a.date || a.reservationDate || a.createdDate)} ${a.time || '00:00'}`;
-                    const dateB = `${normalizeDateStr(b.date || b.reservationDate || b.createdDate)} ${b.time || '00:00'}`;
-                    return dateB.localeCompare(dateA);
+                    const timeA = new Date(`${normalizeDateStr(a.date || a.reservationDate || a.createdDate)}T${a.time || '00:00'}`).getTime();
+                    const timeB = new Date(`${normalizeDateStr(b.date || b.reservationDate || b.createdDate)}T${b.time || '00:00'}`).getTime();
+                    return timeB - timeA;
                 });
 
                 localStorage.setItem('myDiaries', JSON.stringify(diaries));
