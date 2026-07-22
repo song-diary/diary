@@ -141,6 +141,7 @@
             padding: 12px;
             margin-bottom: 15px;
             touch-action: pan-y;
+            display: none; /* 기본적으로 숨김, 버튼으로 토글 */
         }
         .cal-header {
             display: flex;
@@ -484,7 +485,7 @@
         </div>
     </div>
     
-    <!-- 캘린더 영역 -->
+    <!-- 예약일 선택용 캘린더 영역 -->
     <div class="calendar-box" id="calendar-box">
         <div class="cal-header">
             <button class="cal-nav-btn" onclick="changeMonth(-1)">◀ 이전</button>
@@ -507,7 +508,6 @@
     <div class="input-section">
         <div class="input-top-row">
             <span class="section-label">✏️ 새 메모 작성</span>
-            <!-- 문구 수정됨 -->
             <button class="datetime-toggle-btn" id="datetime-toggle-btn" onclick="toggleDateTimeInput()">📅 예약일/알람 시간</button>
         </div>
 
@@ -556,6 +556,7 @@
     const reservationTimeInput = document.getElementById('reservation-time-input');
     const datetimeRow = document.getElementById('datetime-row');
     const datetimeToggleBtn = document.getElementById('datetime-toggle-btn');
+    const calendarBox = document.getElementById('calendar-box');
 
     let recognition;
     let isRecording = false;
@@ -573,7 +574,6 @@
     let touchStartX = 0;
     let touchEndX = 0;
 
-    const calendarBox = document.getElementById('calendar-box');
     calendarBox.addEventListener('touchstart', (e) => {
         touchStartX = e.changedTouches[0].screenX;
     });
@@ -592,24 +592,26 @@
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
         const day = String(now.getDate()).padStart(2, '0');
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
         
         reservationDateInput.value = `${year}-${month}-${day}`;
-        reservationTimeInput.value = `${hours}:${minutes}`;
+        reservationTimeInput.value = `08:00`; // 기본 알람 시간 오전 8시
         isCustomDateTime = false;
         datetimeRow.style.display = 'none';
+        calendarBox.style.display = 'none';
         datetimeToggleBtn.innerText = '📅 예약일/알람 시간';
     }
 
     function toggleDateTimeInput() {
         if (datetimeRow.style.display === 'flex') {
             datetimeRow.style.display = 'none';
+            calendarBox.style.display = 'none';
             datetimeToggleBtn.innerText = '📅 예약일/알람 시간';
             isCustomDateTime = false;
             setDefaultDateTime();
         } else {
             datetimeRow.style.display = 'flex';
+            calendarBox.style.display = 'block'; // 달력 표시
+            renderCalendar();
             datetimeToggleBtn.innerText = '📅 기본(오늘)로 접기';
             isCustomDateTime = true;
         }
@@ -849,15 +851,13 @@
         const curY = now.getFullYear();
         const curM = String(now.getMonth() + 1).padStart(2, '0');
         const curD = String(now.getDate()).padStart(2, '0');
-        const curH = String(now.getHours()).padStart(2, '0');
-        const curMin = String(now.getMinutes()).padStart(2, '0');
 
         if (isCustomDateTime) {
             dateVal = reservationDateInput.value || `${curY}-${curM}-${curD}`;
-            timeVal = reservationTimeInput.value || `${curH}:${curMin}`;
+            timeVal = reservationTimeInput.value || `08:00`;
         } else {
             dateVal = `${curY}-${curM}-${curD}`;
-            timeVal = `${curH}:${curMin}`;
+            timeVal = `08:00`;
         }
 
         const timestamp = Date.now();
@@ -951,20 +951,20 @@
             else if (dayOfWeek === 6) cell.classList.add('saturday');
 
             if (holidays.has(normalizedDateStr)) cell.classList.add('holiday');
-            if (selectedDateFilter === normalizedDateStr) cell.classList.add('selected-date');
+            
+            // 예약일 입력창에 현재 들어가 있는 날짜와 일치하면 선택 효과 표시
+            if (reservationDateInput.value === normalizedDateStr && isCustomDateTime) {
+                cell.classList.add('selected-date');
+            }
 
             let hasMemo = memoDates.has(normalizedDateStr);
 
             cell.innerHTML = `<span>${day}</span>${hasMemo ? '<div class="memo-bar"></div>' : ''}`;
             
+            // 날짜를 누르면 예약일 입력창에 값이 들어가고 달력창이 닫히도록 수정
             cell.onclick = () => {
-                if (selectedDateFilter === normalizedDateStr) {
-                    selectedDateFilter = null;
-                } else {
-                    selectedDateFilter = normalizedDateStr;
-                }
-                renderCalendar();
-                displayDiaries();
+                reservationDateInput.value = normalizedDateStr;
+                calendarBox.style.display = 'none'; // 달력 숨기기
             };
 
             grid.appendChild(cell);
@@ -987,7 +987,6 @@
         currentFilter = type;
         selectedDateFilter = null;
         localStorage.setItem('lastFilterState', type);
-        renderCalendar();
         displayDiaries();
     }
 
@@ -1090,7 +1089,6 @@
         });
 
         localStorage.setItem('myDiaries', JSON.stringify(diaries));
-        renderCalendar();
     }
 
     function deleteDiary(id) {
@@ -1098,14 +1096,12 @@
         let diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
         diaries = diaries.filter(d => d.id !== id);
         localStorage.setItem('myDiaries', JSON.stringify(diaries));
-        renderCalendar();
         displayDiaries();
     }
 
     window.onload = () => {
         initPillSetting();
         setDefaultDateTime();
-        renderCalendar();
         displayDiaries();
     };
 </script>
