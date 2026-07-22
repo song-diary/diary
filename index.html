@@ -233,6 +233,7 @@
             margin-top: 3px;
         }
 
+        /* 입력 폼 영역 */
         .input-section {
             background-color: #fff9f5;
             border: 2px solid var(--border-color);
@@ -240,21 +241,47 @@
             padding: 15px;
             margin-bottom: 20px;
         }
+        
+        /* 날짜/시간 토글 영역 */
+        .datetime-toggle-box {
+            margin-bottom: 12px;
+        }
+        .datetime-toggle-btn {
+            background: white;
+            border: 1px dashed var(--border-color);
+            color: #8c7664;
+            width: 100%;
+            padding: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: center;
+            transition: 0.2s;
+        }
+        .datetime-toggle-btn:hover {
+            background-color: #f1e4d8;
+        }
         .datetime-row {
-            display: flex;
+            display: none; /* 기본은 숨김 */
             gap: 10px;
             margin-bottom: 12px;
+            background: white;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
         }
         .datetime-row input {
             flex: 1;
             padding: 8px 10px;
             border: 1px solid var(--border-color);
-            border-radius: 10px;
+            border-radius: 8px;
             font-size: 14px;
             background: white;
             color: var(--text-color);
             outline: none;
         }
+
         .btn-box {
             display: flex;
             flex-direction: column;
@@ -493,7 +520,12 @@
 
     <!-- 입력 폼 영역 -->
     <div class="input-section">
-        <div class="datetime-row">
+        <!-- 예약일/알림 시간 설정 버튼 (평소엔 숨겨져 있음) -->
+        <div class="datetime-toggle-box">
+            <button class="datetime-toggle-btn" id="datetime-toggle-btn" onclick="toggleDateTimeInput()">📅 예약일 / 알림 시간 설정하기</button>
+        </div>
+        <div class="datetime-row" id="datetime-row">
+            <div style="font-size: 12px; color: #8c7664; font-weight: bold; margin-bottom: 4px; width: 100%;">⏰ 지정할 날짜 및 알림 시간</div>
             <input type="date" id="reservation-date-input">
             <input type="time" id="reservation-time-input">
         </div>
@@ -520,7 +552,7 @@
     
     <hr style="border: 0; height: 1px; background: var(--border-color); margin-bottom: 20px;">
     
-    <!-- 필터 버튼 영역 (날짜선택 해제 버튼 제거됨) -->
+    <!-- 필터 버튼 영역 -->
     <div class="filter-container">
         <button class="filter-btn" id="filter-all" onclick="changeFilter('all')">전체보기</button>
         <button class="filter-btn" id="filter-month" onclick="changeFilter('month')">최근 30일</button>
@@ -536,6 +568,8 @@
     const diaryList = document.getElementById('diary-list');
     const reservationDateInput = document.getElementById('reservation-date-input');
     const reservationTimeInput = document.getElementById('reservation-time-input');
+    const datetimeRow = document.getElementById('datetime-row');
+    const datetimeToggleBtn = document.getElementById('datetime-toggle-btn');
 
     let recognition;
     let isRecording = false;
@@ -543,8 +577,9 @@
     let accumulatedText = '';
     
     let currentFilter = localStorage.getItem('lastFilterState') || 'all';
-    let selectedDateFilter = null; // 캘린더에서 클릭한 특정 날짜
+    let selectedDateFilter = null; 
     let currentPhotoBase64 = null;
+    let isCustomDateTime = false; // 사용자가 직접 날짜/시간을 열어서 수정했는지 여부
 
     let calYear = new Date().getFullYear();
     let calMonth = new Date().getMonth();
@@ -576,6 +611,22 @@
         
         reservationDateInput.value = `${year}-${month}-${day}`;
         reservationTimeInput.value = `${hours}:${minutes}`;
+        isCustomDateTime = false;
+        datetimeRow.style.display = 'none';
+        datetimeToggleBtn.innerText = '📅 예약일 / 알림 시간 설정하기';
+    }
+
+    function toggleDateTimeInput() {
+        if (datetimeRow.style.display === 'flex') {
+            datetimeRow.style.display = 'none';
+            datetimeToggleBtn.innerText = '📅 예약일 / 알림 시간 설정하기';
+            isCustomDateTime = false;
+            setDefaultDateTime();
+        } else {
+            datetimeRow.style.display = 'flex';
+            datetimeToggleBtn.innerText = '📅 예약일 / 알림 시간 숨기기 (오늘 날짜로 저장)';
+            isCustomDateTime = true;
+        }
     }
 
     function normalizeDateStr(dateStr) {
@@ -826,8 +877,23 @@
 
         if (!cleanText && !currentPhotoBase64) return;
 
-        const dateVal = reservationDateInput.value || getTodayStr();
-        const timeVal = reservationTimeInput.value || '00:00';
+        // 사용자가 날짜 설정을 열어서 지정했다면 그 날짜/시간 사용, 아니면 현재 저장 시점의 날짜/시간 사용
+        let dateVal, timeVal;
+        const now = new Date();
+        const curY = now.getFullYear();
+        const curM = String(now.getMonth() + 1).padStart(2, '0');
+        const curD = String(now.getDate()).padStart(2, '0');
+        const curH = String(now.getHours()).padStart(2, '0');
+        const curMin = String(now.getMinutes()).padStart(2, '0');
+
+        if (isCustomDateTime) {
+            dateVal = reservationDateInput.value || `${curY}-${curM}-${curD}`;
+            timeVal = reservationTimeInput.value || `${curH}:${curMin}`;
+        } else {
+            dateVal = `${curY}-${curM}-${curD}`;
+            timeVal = `${curH}:${curMin}`;
+        }
+
         const timestamp = Date.now();
         
         const newDiary = {
@@ -932,7 +998,6 @@
             }
             cell.innerHTML = cellInner;
 
-            // 캘린더 날짜 클릭 시 해당 날짜 메모만 필터링해서 보여줌
             cell.addEventListener('click', () => {
                 selectedDateFilter = normalizedDateStr;
                 renderCalendar(); 
@@ -951,7 +1016,7 @@
     }
 
     function changeFilter(filterType) {
-        selectedDateFilter = null; // 전체보기나 30일보기 누르면 날짜 선택 필터 해제됨
+        selectedDateFilter = null; 
 
         if (filterType !== 'all' && filterType !== 'month') filterType = 'all';
         currentFilter = filterType;
@@ -984,7 +1049,6 @@
             return timeB - timeA;
         });
 
-        // 캘린더에서 날짜를 찍었을 때
         if (selectedDateFilter) {
             diaries = diaries.filter(d => d.date === selectedDateFilter);
             ['all', 'month'].forEach(f => {
@@ -1065,7 +1129,7 @@
         }
     }
 
-    function deleteDiary(id) {
+    function deleteDiary(id, event) {
         if (confirm('정말 이 메모를 삭제하시겠습니까?')) {
             let diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
             diaries = diaries.filter(d => d.id !== id);
