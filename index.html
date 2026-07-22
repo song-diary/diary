@@ -133,6 +133,99 @@
             background-color: #f1e4d8;
         }
 
+        /* 캘린더 영역 */
+        .calendar-box {
+            background: #fff9f5;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 15px;
+            touch-action: pan-y;
+        }
+        .cal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 16px;
+            font-weight: bold;
+            color: #8c7664;
+            margin-bottom: 10px;
+        }
+        .cal-nav-btn {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 4px 10px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #8c7664;
+            font-size: 13px;
+        }
+        .cal-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 3px;
+            text-align: center;
+        }
+        .cal-day-name {
+            font-size: 12px !important;
+            font-weight: bold;
+            color: #a09184;
+            padding-bottom: 4px;
+        }
+        .cal-cell {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: white;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            position: relative;
+            border: 1px solid #f0e6df;
+            color: #4a3f35;
+            overflow: hidden;
+            box-sizing: border-box;
+            padding: 2px;
+        }
+        .cal-cell span {
+            font-size: 14px !important;
+            line-height: 1.2;
+            font-weight: bold;
+        }
+        .cal-cell.sunday, .cal-cell.holiday {
+            background-color: #fff5f5;
+            color: #e63946 !important;
+        }
+        .cal-cell.sunday span, .cal-cell.holiday span {
+            color: #e63946 !important;
+        }
+        .cal-cell.saturday {
+            background-color: #f7fbff;
+            color: #337ab7;
+        }
+        .cal-cell.saturday span {
+            color: #337ab7;
+        }
+        .cal-cell.empty {
+            background: transparent;
+            border: none;
+            cursor: default;
+        }
+        .cal-cell.selected-date {
+            border: 2px solid var(--save-color);
+            background-color: #f0f7ff;
+        }
+        .memo-bar {
+            width: 60%;
+            height: 2px;
+            background-color: #ff6b6b;
+            border-radius: 2px;
+            margin-top: 2px;
+        }
+
         /* 입력 폼 영역 */
         .input-section {
             background-color: #fff9f5;
@@ -142,30 +235,21 @@
             margin-bottom: 15px;
         }
         
+        /* 타이틀과 예약 버튼을 한 줄로 배치 */
         .input-top-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 10px;
-            gap: 5px;
         }
         .section-label {
             font-size: 14px;
             font-weight: bold;
             color: #8c7664;
-            white-space: nowrap;
         }
-        
-        .datetime-group {
-            display: flex;
-            gap: 6px;
-            align-items: center;
-        }
-        
-        /* [예약일/알람시간] 버튼 디자인 (클릭하면 숨겨진 달력 인풋이 열림) */
-        .date-trigger-btn {
+        .datetime-toggle-btn {
             background: white;
-            border: 1px solid var(--border-color);
+            border: 1px dashed var(--border-color);
             color: #8c7664;
             padding: 6px 10px;
             font-size: 12px;
@@ -174,30 +258,28 @@
             cursor: pointer;
             transition: 0.2s;
         }
-        .date-trigger-btn:hover {
+        .datetime-toggle-btn:hover {
             background-color: #f1e4d8;
         }
 
-        /* 날짜/시간 실제 입력 인풋 숨기기 (버튼으로 제어) */
-        .hidden-date-input {
-            position: absolute;
-            opacity: 0;
-            pointer-events: none;
-            width: 0;
-            height: 0;
-        }
-
-        /* 알람시간 인풋박스 */
-        .time-input-box {
-            padding: 5px 8px;
-            border: 1px solid var(--border-color);
+        .datetime-row {
+            display: none; 
+            gap: 8px;
+            margin-bottom: 10px;
+            background: white;
+            padding: 8px;
             border-radius: 8px;
-            font-size: 12px;
+            border: 1px solid var(--border-color);
+        }
+        .datetime-row input {
+            flex: 1;
+            padding: 6px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 13px;
             background: white;
             color: var(--text-color);
             outline: none;
-            width: 85px;
-            box-sizing: border-box;
         }
 
         .btn-box {
@@ -287,6 +369,7 @@
             border: 1px solid var(--border-color);
         }
 
+        /* 저장 버튼 (항상 보이거나 내용 있을 때 활성화) */
         #save-btn {
             background-color: var(--save-color);
             color: white;
@@ -309,6 +392,7 @@
             100% { opacity: 1; }
         }
 
+        /* 하단 목록 영역 */
         .filter-container {
             display: flex;
             justify-content: center;
@@ -403,18 +487,36 @@
         </div>
     </div>
     
+    <!-- 캘린더 영역 -->
+    <div class="calendar-box" id="calendar-box">
+        <div class="cal-header">
+            <button class="cal-nav-btn" onclick="changeMonth(-1)">◀ 이전</button>
+            <span id="cal-month-title"></span>
+            <button class="cal-nav-btn" onclick="changeMonth(1)">다음 ▶</button>
+        </div>
+        <div class="cal-grid">
+            <div class="cal-day-name" style="color:#e63946;">일</div>
+            <div class="cal-day-name">월</div>
+            <div class="cal-day-name">화</div>
+            <div class="cal-day-name">수</div>
+            <div class="cal-day-name">목</div>
+            <div class="cal-day-name">금</div>
+            <div class="cal-day-name" style="color:#337ab7;">토</div>
+        </div>
+        <div class="cal-grid" id="cal-days-grid" style="margin-top: 4px;"></div>
+    </div>
+
     <!-- 입력 폼 영역 -->
     <div class="input-section">
+        <!-- 타이틀과 예약일 설정 버튼을 한 줄로 배치 -->
         <div class="input-top-row">
-            <span class="section-label">✏️ 새 메모</span>
-            <div class="datetime-group">
-                <!-- 예약일 버튼 (누르면 브라우저 기본 달력/날짜 선택 창이 뜸) -->
-                <button class="date-trigger-btn" id="date-trigger-btn" onclick="openDatePicker()">📅 예약일</button>
-                <input type="date" class="hidden-date-input" id="reservation-date-input" onchange="onDateChanged(this)">
-                
-                <!-- 알람시간 인풋박스 -->
-                <input type="time" class="time-input-box" id="reservation-time-input" value="08:00">
-            </div>
+            <span class="section-label">✏️ 새 메모 작성</span>
+            <button class="datetime-toggle-btn" id="datetime-toggle-btn" onclick="toggleDateTimeInput()">📅 예약일/시간 변경</button>
+        </div>
+
+        <div class="datetime-row" id="datetime-row">
+            <input type="date" id="reservation-date-input">
+            <input type="time" id="reservation-time-input">
         </div>
 
         <div class="btn-box">
@@ -434,11 +536,13 @@
 
         <div id="text-output" contenteditable="true" placeholder="이곳을 터치하여 메모를 남기세요..."></div>
         
+        <!-- 저장 버튼 (항상 표시) -->
         <button id="save-btn" onclick="manualSaveDiary()">💾 메모 저장</button>
     </div>
     
     <hr style="border: 0; height: 1px; background: var(--border-color); margin-bottom: 15px;">
     
+    <!-- 필터 버튼 영역 -->
     <div class="filter-container">
         <button class="filter-btn" id="filter-all" onclick="changeFilter('all')">전체보기</button>
         <button class="filter-btn" id="filter-month" onclick="changeFilter('month')">최근 30일</button>
@@ -454,7 +558,8 @@
     const diaryList = document.getElementById('diary-list');
     const reservationDateInput = document.getElementById('reservation-date-input');
     const reservationTimeInput = document.getElementById('reservation-time-input');
-    const dateTriggerBtn = document.getElementById('date-trigger-btn');
+    const datetimeRow = document.getElementById('datetime-row');
+    const datetimeToggleBtn = document.getElementById('datetime-toggle-btn');
 
     let recognition;
     let isRecording = false;
@@ -462,31 +567,55 @@
     let accumulatedText = '';
     
     let currentFilter = localStorage.getItem('lastFilterState') || 'all';
+    let selectedDateFilter = null; 
     let currentPhotoBase64 = null;
+    let isCustomDateTime = false;
+
+    let calYear = new Date().getFullYear();
+    let calMonth = new Date().getMonth();
+
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    const calendarBox = document.getElementById('calendar-box');
+    calendarBox.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+    });
+    calendarBox.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    });
+
+    function handleSwipe() {
+        if (touchEndX < touchStartX - 50) changeMonth(1);
+        if (touchEndX > touchStartX + 50) changeMonth(-1);
+    }
 
     function setDefaultDateTime() {
         const now = new Date();
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
         const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
         
-        const todayStr = `${year}-${month}-${day}`;
-        reservationDateInput.value = todayStr;
-        dateTriggerBtn.innerText = `📅 ${todayStr}`;
-        reservationTimeInput.value = '08:00'; 
+        reservationDateInput.value = `${year}-${month}-${day}`;
+        reservationTimeInput.value = `${hours}:${minutes}`;
+        isCustomDateTime = false;
+        datetimeRow.style.display = 'none';
+        datetimeToggleBtn.innerText = '📅 예약일/시간 변경';
     }
 
-    function openDatePicker() {
-        if (typeof reservationDateInput.showPicker === 'function') {
-            reservationDateInput.showPicker();
+    function toggleDateTimeInput() {
+        if (datetimeRow.style.display === 'flex') {
+            datetimeRow.style.display = 'none';
+            datetimeToggleBtn.innerText = '📅 예약일/시간 변경';
+            isCustomDateTime = false;
+            setDefaultDateTime();
         } else {
-            reservationDateInput.click();
-        }
-    }
-
-    function onDateChanged(input) {
-        if (input.value) {
-            dateTriggerBtn.innerText = `📅 ${input.value}`;
+            datetimeRow.style.display = 'flex';
+            datetimeToggleBtn.innerText = '📅 기본(오늘)로 접기';
+            isCustomDateTime = true;
         }
     }
 
@@ -509,6 +638,23 @@
         const normalized = normalizeDateStr(dateStr);
         const [y, m, d] = normalized.split('-').map(Number);
         return new Date(y, m - 1, d);
+    }
+
+    function getFixedHolidays(year) {
+        return [
+            `${year}-01-01`, `${year}-03-01`, `${year}-05-05`, `${year}-06-06`,
+            `${year}-08-15`, `${year}-10-03`, `${year}-10-09`, `${year}-12-25`
+        ];
+    }
+
+    function getKoreanHolidays(year) {
+        let holidays = new Set(getFixedHolidays(year));
+        if (year === 2026) {
+            holidays.add('2026-02-16'); holidays.add('2026-02-17'); holidays.add('2026-02-18');
+            holidays.add('2026-05-24'); holidays.add('2026-05-25');
+            holidays.add('2026-09-24'); holidays.add('2026-09-25'); holidays.add('2026-09-26');
+        }
+        return holidays;
     }
 
     function getTodayStr() {
@@ -702,12 +848,21 @@
             return;
         }
 
+        let dateVal, timeVal;
         const now = new Date();
+        const curY = now.getFullYear();
+        const curM = String(now.getMonth() + 1).padStart(2, '0');
+        const curD = String(now.getDate()).padStart(2, '0');
         const curH = String(now.getHours()).padStart(2, '0');
         const curMin = String(now.getMinutes()).padStart(2, '0');
 
-        const dateVal = reservationDateInput.value || getTodayStr();
-        const timeVal = reservationTimeInput.value || `${curH}:${curMin}`;
+        if (isCustomDateTime) {
+            dateVal = reservationDateInput.value || `${curY}-${curM}-${curD}`;
+            timeVal = reservationTimeInput.value || `${curH}:${curMin}`;
+        } else {
+            dateVal = `${curY}-${curM}-${curD}`;
+            timeVal = `${curH}:${curMin}`;
+        }
 
         const timestamp = Date.now();
         
@@ -736,6 +891,7 @@
         removeImage();
         setDefaultDateTime();
         
+        renderCalendar();
         displayDiaries();
         alert('✨ 메모가 저장되었습니다!');
     }
@@ -763,7 +919,70 @@
         }
     }, 10000);
 
+    function renderCalendar() {
+        const grid = document.getElementById('cal-days-grid');
+        const title = document.getElementById('cal-month-title');
+        grid.innerHTML = '';
+        title.innerText = `${calYear}년 ${calMonth + 1}월`;
+
+        const firstDayIndex = new Date(calYear, calMonth, 1).getDay();
+        const totalDays = new Date(calYear, calMonth + 1, 0).getDate();
+        const holidays = getKoreanHolidays(calYear);
+
+        let diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
+        let memoDates = new Set();
+        
+        diaries.forEach(d => {
+            if(d.date) memoDates.add(normalizeDateStr(d.date));
+        });
+
+        for (let i = 0; i < firstDayIndex; i++) {
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'cal-cell empty';
+            grid.appendChild(emptyCell);
+        }
+
+        for (let day = 1; day <= totalDays; day++) {
+            const cell = document.createElement('div');
+            cell.className = 'cal-cell';
+            
+            const rawDateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`; 
+            const normalizedDateStr = normalizeDateStr(rawDateStr);
+            const dObj = new Date(calYear, calMonth, day);
+            const dayOfWeek = dObj.getDay();
+
+            if (dayOfWeek === 0) cell.classList.add('sunday');
+            else if (dayOfWeek === 6) cell.classList.add('saturday');
+
+            if (holidays.has(normalizedDateStr)) cell.classList.add('holiday');
+            if (selectedDateFilter === normalizedDateStr) cell.classList.add('selected-date');
+
+            let cellInner = `<span>${day}</span>`;
+            if (memoDates.has(normalizedDateStr)) {
+                cell.classList.add('has-memo');
+                cellInner += `<div class="memo-bar"></div>`;
+            }
+            cell.innerHTML = cellInner;
+
+            cell.addEventListener('click', () => {
+                selectedDateFilter = normalizedDateStr;
+                renderCalendar(); 
+                displayDiaries(); 
+            });
+
+            grid.appendChild(cell);
+        }
+    }
+
+    function changeMonth(direction) {
+        calMonth += direction;
+        if (calMonth > 11) { calMonth = 0; calYear++; }
+        else if (calMonth < 0) { calMonth = 11; calYear--; }
+        renderCalendar();
+    }
+
     function changeFilter(filterType) {
+        selectedDateFilter = null; 
         if (filterType !== 'all' && filterType !== 'month') filterType = 'all';
         currentFilter = filterType;
         localStorage.setItem('lastFilterState', filterType);
@@ -775,6 +994,7 @@
         const activeBtn = document.getElementById(`filter-${filterType}`);
         if(activeBtn) activeBtn.classList.add('active');
 
+        renderCalendar();
         displayDiaries();
     }
 
@@ -785,16 +1005,23 @@
         diaries = diaries.map(d => ({
             ...d,
             date: normalizeDateStr(d.date),
-            time: d.time || '08:00'
+            time: d.time || '00:00'
         }));
 
         diaries.sort((a, b) => {
             const timeA = new Date(`${a.date}T${a.time}`).getTime();
             const timeB = new Date(`${b.date}T${b.time}`).getTime();
-            return timeB - timeA; 
+            return timeB - timeB; // 최신순
+            return timeB - timeA;
         });
 
-        if (currentFilter === 'month') {
+        if (selectedDateFilter) {
+            diaries = diaries.filter(d => d.date === selectedDateFilter);
+            ['all', 'month'].forEach(f => {
+                const btn = document.getElementById(`filter-${f}`);
+                if(btn) btn.classList.remove('active');
+            });
+        } else if (currentFilter === 'month') {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             
@@ -809,7 +1036,8 @@
         }
 
         if (diaries.length === 0) {
-            diaryList.innerHTML = `<p style="text-align:center; color:#a09184; padding:15px; font-size:14px;">저장된 메모가 없습니다.</p>`;
+            const msg = selectedDateFilter ? `${selectedDateFilter}에 저장된 메모가 없습니다.` : '저장된 메모가 없습니다.';
+            diaryList.innerHTML = `<p style="text-align:center; color:#a09184; padding:15px; font-size:14px;">${msg}</p>`;
             return;
         }
 
@@ -845,19 +1073,20 @@
             let fullText = element.innerText.replace('📅', '').trim();
             let parts = fullText.split(' ');
             let newDateStr = normalizeDateStr(parts[0]);
-            let newTimeStr = parts[1] || '08:00';
+            let newTimeStr = parts[1] || '00:00';
 
             if (/^\d{4}-\d{2}-\d{2}$/.test(newDateStr)) {
                 diaries[index].date = newDateStr;
                 diaries[index].time = newTimeStr;
                 
                 diaries.sort((a, b) => {
-                    const timeA = new Date(`${normalizeDateStr(a.date)}T${a.time || '08:00'}`).getTime();
-                    const timeB = new Date(`${normalizeDateStr(b.date)}T${b.time || '08:00'}`).getTime();
+                    const timeA = new Date(`${normalizeDateStr(a.date)}T${a.time || '00:00'}`).getTime();
+                    const timeB = new Date(`${normalizeDateStr(b.date)}T${b.time || '00:00'}`).getTime();
                     return timeB - timeA;
                 });
 
                 localStorage.setItem('myDiaries', JSON.stringify(diaries));
+                renderCalendar();
                 displayDiaries();
             } else {
                 alert('날짜 형식은 YYYY-MM-DD 여야 합니다.');
@@ -866,12 +1095,12 @@
         }
     }
 
-    function deleteDiary(id, event) {
-        if (event) event.stopPropagation();
+    function deleteDiary(id) {
         if (confirm('정말 이 메모를 삭제하시겠습니까?')) {
             let diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
             diaries = diaries.filter(d => d.id !== id);
             localStorage.setItem('myDiaries', JSON.stringify(diaries));
+            renderCalendar();
             displayDiaries();
         }
     }
@@ -879,6 +1108,7 @@
     window.onload = function() {
         initPillSetting();
         setDefaultDateTime();
+        renderCalendar();
         if (currentFilter !== 'all' && currentFilter !== 'month') currentFilter = 'all';
         changeFilter(currentFilter);
     };
