@@ -195,15 +195,6 @@
             overflow: hidden;
             box-sizing: border-box;
             padding: 2px;
-            transition: all 0.1s;
-        }
-        .cal-cell:hover {
-            background-color: #fcece4;
-        }
-        .cal-cell.selected {
-            border: 2px solid var(--primary-color);
-            background-color: #ffeef0;
-            font-weight: bold;
         }
         .cal-cell span {
             font-size: 15px !important;
@@ -237,48 +228,28 @@
             margin-top: 2px;
         }
 
-        /* 선택된 날짜 패널 (입력 폼 컨테이너) */
-        .active-date-panel {
+        .input-section {
             background-color: #fff9f5;
-            border: 2px solid var(--primary-color);
+            border: 2px solid var(--border-color);
             border-radius: 15px;
             padding: 15px;
             margin-bottom: 20px;
-            display: none;
-            animation: fadeIn 0.2s ease-in-out;
         }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .panel-header {
-            font-size: 16px;
-            font-weight: bold;
-            color: #d17377;
-            margin-bottom: 12px;
+        .datetime-row {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .time-select-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            gap: 10px;
             margin-bottom: 12px;
-            font-size: 15px;
-            font-weight: bold;
-            color: #8c7664;
         }
-        .time-select-row input[type="time"] {
-            padding: 6px 8px;
+        .datetime-row input {
+            flex: 1;
+            padding: 8px 10px;
             border: 1px solid var(--border-color);
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 14px;
             background: white;
             color: var(--text-color);
             outline: none;
         }
-
         .btn-box {
             display: flex;
             flex-direction: column;
@@ -469,13 +440,6 @@
             display: block;
             border: 1px solid var(--border-color);
         }
-        .tip-text {
-            font-size: 14px;
-            color: #a09184;
-            text-align: center;
-            margin-top: 5px;
-            margin-bottom: 15px;
-        }
     </style>
 </head>
 <body>
@@ -503,7 +467,7 @@
         </div>
     </div>
     
-    <!-- 1단계: 달력 먼저 선택 -->
+    <!-- 캘린더 영역 -->
     <div class="calendar-box" id="calendar-box">
         <div class="cal-header">
             <button class="cal-nav-btn" onclick="changeMonth(-1)">◀ 이전</button>
@@ -522,17 +486,10 @@
         <div class="cal-grid" id="cal-days-grid" style="margin-top: 5px;"></div>
     </div>
 
-    <p class="tip-text" id="calendar-tip">👆 먼저 달력에서 **날짜를 선택**하면 메모 작성창이 열립니다!</p>
-
-    <!-- 2단계: 날짜 선택 후 열리는 입력 패널 -->
-    <div class="active-date-panel" id="active-date-panel">
-        <div class="panel-header">
-            <span id="selected-date-title">📅 2026-00-00 선택됨</span>
-            <button onclick="closeActivePanel()" style="background:none; border:none; cursor:pointer; font-size:14px; font-weight:bold; color:#8c7664;">✕ 닫기</button>
-        </div>
-        
-        <div class="time-select-row">
-            <span>⏰ 알람 시간:</span>
+    <!-- 입력 폼 영역 -->
+    <div class="input-section">
+        <div class="datetime-row">
+            <input type="date" id="reservation-date-input">
             <input type="time" id="reservation-time-input">
         </div>
 
@@ -571,10 +528,8 @@
     const saveBtn = document.getElementById('save-btn');
     const textOutput = document.getElementById('text-output');
     const diaryList = document.getElementById('diary-list');
+    const reservationDateInput = document.getElementById('reservation-date-input');
     const reservationTimeInput = document.getElementById('reservation-time-input');
-    const activeDatePanel = document.getElementById('active-date-panel');
-    const selectedDateTitle = document.getElementById('selected-date-title');
-    const calendarTip = document.getElementById('calendar-tip');
 
     let recognition;
     let isRecording = false;
@@ -583,7 +538,6 @@
     
     let currentFilter = localStorage.getItem('lastFilterState') || 'all';
     let currentPhotoBase64 = null;
-    let selectedDateStr = ''; // 현재 선택된 날짜
 
     let calYear = new Date().getFullYear();
     let calMonth = new Date().getMonth();
@@ -603,6 +557,18 @@
     function handleSwipe() {
         if (touchEndX < touchStartX - 50) changeMonth(1);
         if (touchEndX > touchStartX + 50) changeMonth(-1);
+    }
+
+    function setDefaultDateTime() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        
+        reservationDateInput.value = `${year}-${month}-${day}`;
+        reservationTimeInput.value = `${hours}:${minutes}`;
     }
 
     function normalizeDateStr(dateStr) {
@@ -846,55 +812,20 @@
         }
     });
 
-    function selectDate(dateStr) {
-        selectedDateStr = dateStr;
-        selectedDateTitle.innerText = `📅 ${dateStr} 선택됨`;
-        
-        // 현재 시간 설정
-        const now = new Date();
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        reservationTimeInput.value = `${hours}:${minutes}`;
-
-        // 입력 폼 초기화
-        textOutput.innerText = '';
-        accumulatedText = '';
-        removeImage();
-        saveBtn.style.display = 'none';
-
-        // 패널 표시 및 달력 선택 효과 갱신
-        activeDatePanel.style.display = 'block';
-        calendarTip.style.display = 'none';
-        renderCalendar();
-        
-        // 부드럽게 패널 쪽으로 스크롤 이동
-        activeDatePanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-
-    function closeActivePanel() {
-        activeDatePanel.style.display = 'none';
-        calendarTip.style.display = 'block';
-        selectedDateStr = '';
-        renderCalendar();
-    }
-
     function manualSaveDiary() {
         const text = textOutput.innerText.trim();
         const isDefaultText = text.includes('인식된 목소리가 없습니다') || text.includes('귀 기울여 듣고 있습니다');
         const cleanText = isDefaultText ? '' : text;
 
         if (!cleanText && !currentPhotoBase64) return;
-        if (!selectedDateStr) {
-            alert('날짜가 선택되지 않았습니다.');
-            return;
-        }
 
+        const dateVal = reservationDateInput.value || getTodayStr();
         const timeVal = reservationTimeInput.value || '00:00';
         const timestamp = Date.now();
         
         const newDiary = {
             id: timestamp,
-            date: selectedDateStr,
+            date: dateVal,
             time: timeVal,
             text: cleanText,
             photo: currentPhotoBase64,
@@ -905,7 +836,12 @@
         diaries.unshift(newDiary);
         localStorage.setItem('myDiaries', JSON.stringify(diaries));
 
-        closeActivePanel();
+        textOutput.innerText = '';
+        accumulatedText = '';
+        removeImage();
+        saveBtn.style.display = 'none';
+        setDefaultDateTime();
+        
         renderCalendar();
         displayDiaries();
         alert('✨ 알람 예약 및 메모가 저장되었습니다!');
@@ -972,7 +908,6 @@
             else if (dayOfWeek === 6) cell.classList.add('saturday');
 
             if (holidays.has(normalizedDateStr)) cell.classList.add('holiday');
-            if (selectedDateStr === normalizedDateStr) cell.classList.add('selected');
 
             let cellInner = `<span>${day}</span>`;
             if (memoDates.has(normalizedDateStr)) {
@@ -982,7 +917,8 @@
             cell.innerHTML = cellInner;
 
             cell.addEventListener('click', () => {
-                selectDate(normalizedDateStr);
+                reservationDateInput.value = normalizedDateStr;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             });
 
             grid.appendChild(cell);
@@ -1101,6 +1037,7 @@
 
     window.onload = function() {
         initPillSetting();
+        setDefaultDateTime();
         renderCalendar();
         if (currentFilter !== 'all' && currentFilter !== 'month') currentFilter = 'all';
         changeFilter(currentFilter);
