@@ -142,7 +142,6 @@
             margin-bottom: 15px;
         }
         
-        /* 타이틀과 예약/시간 설정 컨트롤을 한 줄로 배치 */
         .input-top-row {
             display: flex;
             justify-content: space-between;
@@ -163,7 +162,7 @@
             align-items: center;
         }
         
-        /* 예약일 버튼 (누르면 토글되는 달력 트리거) */
+        /* [예약일/알람시간] 버튼 디자인 */
         .date-trigger-btn {
             background: white;
             border: 1px solid var(--border-color);
@@ -192,7 +191,7 @@
             box-sizing: border-box;
         }
 
-        /* 인라인 팝업 달력 (평소엔 숨김) */
+        /* 인라인 팝업 달력 */
         .popup-calendar-box {
             background: #ffffff;
             border: 2px solid var(--save-color);
@@ -369,7 +368,6 @@
             border: 1px solid var(--border-color);
         }
 
-        /* 저장 버튼 */
         #save-btn {
             background-color: var(--save-color);
             color: white;
@@ -392,7 +390,6 @@
             100% { opacity: 1; }
         }
 
-        /* 하단 목록 영역 */
         .filter-container {
             display: flex;
             justify-content: center;
@@ -489,11 +486,11 @@
     
     <!-- 입력 폼 영역 -->
     <div class="input-section">
-        <!-- 타이틀과 예약일/알람시간을 한 줄로 배치 -->
         <div class="input-top-row">
             <span class="section-label">✏️ 새 메모</span>
             <div class="datetime-group">
-                <button class="date-trigger-btn" id="date-trigger-btn" onclick="togglePopupCalendar()">📅 예약일 선택</button>
+                <!-- 예약일/알람시간 버튼으로 변경 -->
+                <button class="date-trigger-btn" id="date-trigger-btn" onclick="togglePopupCalendar()">📅 예약일/알람시간</button>
                 <input type="time" class="time-input-box" id="reservation-time-input" value="08:00">
             </div>
         </div>
@@ -534,13 +531,11 @@
 
         <div id="text-output" contenteditable="true" placeholder="이곳을 터치하여 메모를 남기세요..."></div>
         
-        <!-- 저장 버튼 -->
         <button id="save-btn" onclick="manualSaveDiary()">💾 메모 저장</button>
     </div>
     
     <hr style="border: 0; height: 1px; background: var(--border-color); margin-bottom: 15px;">
     
-    <!-- 필터 버튼 영역 -->
     <div class="filter-container">
         <button class="filter-btn" id="filter-all" onclick="changeFilter('all')">전체보기</button>
         <button class="filter-btn" id="filter-month" onclick="changeFilter('month')">최근 30일</button>
@@ -565,7 +560,7 @@
     
     let currentFilter = localStorage.getItem('lastFilterState') || 'all';
     let currentPhotoBase64 = null;
-    let selectedReservationDate = ''; // 선택된 예약일 (YYYY-MM-DD)
+    let selectedReservationDate = ''; 
 
     let popupYear = new Date().getFullYear();
     let popupMonth = new Date().getMonth();
@@ -594,7 +589,7 @@
         
         selectedReservationDate = `${year}-${month}-${day}`;
         dateTriggerBtn.innerText = `📅 ${selectedReservationDate}`;
-        reservationTimeInput.value = '08:00'; // 기본 알람 시간 오전 8시
+        reservationTimeInput.value = '08:00'; 
     }
 
     function togglePopupCalendar() {
@@ -929,11 +924,10 @@
 
             cell.innerHTML = `<span>${day}</span>`;
 
-            // 날짜를 누르면 선택되고 바로 달력이 닫히도록 설정
             cell.addEventListener('click', () => {
                 selectedReservationDate = normalizedDateStr;
                 dateTriggerBtn.innerText = `📅 ${selectedReservationDate}`;
-                popupCalendarBox.style.display = 'none'; // 달력 닫기
+                popupCalendarBox.style.display = 'none'; 
             });
 
             grid.appendChild(cell);
@@ -975,7 +969,7 @@
         diaries.sort((a, b) => {
             const timeA = new Date(`${a.date}T${a.time}`).getTime();
             const timeB = new Date(`${b.date}T${b.time}`).getTime();
-            return timeB - timeA; // 최신순
+            return timeB - timeA; 
         });
 
         if (currentFilter === 'month') {
