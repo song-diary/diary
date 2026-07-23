@@ -145,7 +145,7 @@
             border-color: #8c7664;
         }
 
-        /* 캘린더 영역 */
+        /* 메인 캘린더 영역 (기존 그대로 유지) */
         .calendar-box {
             background: #fff9f5;
             border: 2px solid var(--border-color);
@@ -280,24 +280,73 @@
             background-color: #f1e4d8;
         }
 
-        .datetime-row {
-            display: none; 
-            gap: 8px;
-            margin-bottom: 10px;
+        /* 순차적 예약 입력 패널 스타일 */
+        .reservation-flow-box {
+            display: none;
             background: white;
-            padding: 8px;
-            border-radius: 8px;
             border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
         }
-        .datetime-row input {
-            flex: 1;
+        .reservation-info-bar {
+            font-size: 13px;
+            font-weight: bold;
+            color: #8c7664;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .mini-cal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            font-weight: bold;
+            color: #8c7664;
+            margin-bottom: 8px;
+        }
+        .mini-cal-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            text-align: center;
+        }
+        .mini-cal-cell {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #faf6f2;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #4a3f35;
+        }
+        .mini-cal-cell:hover {
+            background: #f1e4d8;
+        }
+        .mini-cal-cell.selected {
+            background: var(--save-color);
+            color: white;
+        }
+        .time-picker-area {
+            display: none;
+            margin-top: 10px;
+            text-align: center;
+            background: #fff9f5;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .time-picker-area input {
             padding: 6px;
+            font-size: 14px;
             border: 1px solid var(--border-color);
             border-radius: 6px;
-            font-size: 13px;
-            background: white;
-            color: var(--text-color);
             outline: none;
+            margin-left: 5px;
         }
 
         .btn-box {
@@ -523,7 +572,7 @@
         </div>
     </div>
     
-    <!-- 캘린더 영역 -->
+    <!-- 메인 캘린더 영역 (그대로 유지) -->
     <div class="calendar-box" id="calendar-box">
         <div class="cal-header">
             <button class="cal-nav-btn" onclick="changeMonth(-1)">◀ 이전</button>
@@ -546,12 +595,41 @@
     <div class="input-section">
         <div class="input-top-row">
             <span class="section-label">✏️ 새 메모 작성</span>
-            <button class="datetime-toggle-btn" id="datetime-toggle-btn" onclick="toggleDateTimeInput()">📅 예약일/알람 입력</button>
+            <button class="datetime-toggle-btn" id="datetime-toggle-btn" onclick="toggleReservationFlow()">📅 예약일/알람 설정</button>
         </div>
 
-        <div class="datetime-row" id="datetime-row">
-            <input type="date" id="reservation-date-input">
-            <input type="time" id="reservation-time-input">
+        <!-- 새로 바뀐 순차적 예약 입력 패널 -->
+        <div class="reservation-flow-box" id="reservation-flow-box">
+            <div class="reservation-info-bar">
+                <span id="reservation-guide-text">📅 예약할 날짜를 선택해주세요</span>
+                <button onclick="cancelReservation()" style="background:none; border:none; color:#e65c5c; cursor:pointer; font-weight:bold; font-size:12px;">❌ 취소</button>
+            </div>
+            
+            <!-- 미니 달력 -->
+            <div id="mini-cal-container">
+                <div class="mini-cal-header">
+                    <button class="cal-nav-btn" onclick="changeMiniMonth(-1)">◀</button>
+                    <span id="mini-cal-title"></span>
+                    <button class="cal-nav-btn" onclick="changeMiniMonth(1)">▶</button>
+                </div>
+                <div class="mini-cal-grid" style="margin-bottom:4px;">
+                    <div style="color:#e63946; font-size:11px; font-weight:bold;">일</div>
+                    <div style="font-size:11px; font-weight:bold; color:#a09184;">월</div>
+                    <div style="font-size:11px; font-weight:bold; color:#a09184;">화</div>
+                    <div style="font-size:11px; font-weight:bold; color:#a09184;">수</div>
+                    <div style="font-size:11px; font-weight:bold; color:#a09184;">목</div>
+                    <div style="font-size:11px; font-weight:bold; color:#a09184;">금</div>
+                    <div style="color:#337ab7; font-size:11px; font-weight:bold;">토</div>
+                </div>
+                <div class="mini-cal-grid" id="mini-cal-days-grid"></div>
+            </div>
+
+            <!-- 시간 선택 영역 (날짜 선택 후 등장) -->
+            <div class="time-picker-area" id="time-picker-area">
+                <span style="font-size:13px; font-weight:bold; color:#8c7664;">⏰ 시간 선택:</span>
+                <input type="time" id="reservation-time-input" value="08:00">
+                <button onclick="confirmTimeAndFocus()" style="background:var(--save-color); color:white; border:none; padding:6px 12px; border-radius:6px; font-weight:bold; font-size:13px; cursor:pointer; margin-left:8px;">확인</button>
+            </div>
         </div>
 
         <div class="btn-box">
@@ -591,22 +669,29 @@
     const saveBtn = document.getElementById('save-btn');
     const textOutput = document.getElementById('text-output');
     const diaryList = document.getElementById('diary-list');
-    const reservationDateInput = document.getElementById('reservation-date-input');
-    const reservationTimeInput = document.getElementById('reservation-time-input');
-    const datetimeRow = document.getElementById('datetime-row');
     const datetimeToggleBtn = document.getElementById('datetime-toggle-btn');
+    const reservationFlowBox = document.getElementById('reservation-flow-box');
+    const reservationGuideText = document.getElementById('reservation-guide-text');
+    const miniCalContainer = document.getElementById('mini-cal-container');
+    const timePickerArea = document.getElementById('time-picker-area');
+    const reservationTimeInput = document.getElementById('reservation-time-input');
 
     let recognition;
     let isRecording = false;
     let shouldRestart = true; 
     let accumulatedText = '';
     
-    // 최초 켤 때는 무조건 기본값 '3days' (오늘 포함 최근 3일)로 시작
     let currentFilter = '3days';
     let selectedDateFilter = null; 
     let currentPhotoBase64 = null;
+    
+    // 예약 관련 변수
     let isCustomDateTime = false;
+    let selectedReservationDate = null;
+    let miniCalYear = new Date().getFullYear();
+    let miniCalMonth = new Date().getMonth();
 
+    // 메인 캘린더 변수
     let calYear = new Date().getFullYear();
     let calMonth = new Date().getMonth();
 
@@ -663,30 +748,89 @@
         applyFontSize(savedSize);
     }
 
-    function setDefaultDateTime() {
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const day = String(now.getDate()).padStart(2, '0');
-        
-        reservationDateInput.value = `${year}-${month}-${day}`;
-        reservationTimeInput.value = `08:00`;
-        isCustomDateTime = false;
-        datetimeRow.style.display = 'none';
-        datetimeToggleBtn.innerText = '📅 예약일/알람 입력';
+    // 예약 입력 플로우 열기/닫기
+    function toggleReservationFlow() {
+        if (reservationFlowBox.style.display === 'block') {
+            cancelReservation();
+        } else {
+            reservationFlowBox.style.display = 'block';
+            datetimeToggleBtn.innerText = '📅 일반 메모로 전환';
+            miniCalYear = new Date().getFullYear();
+            miniCalMonth = new Date().getMonth();
+            renderMiniCalendar();
+        }
     }
 
-    function toggleDateTimeInput() {
-        if (datetimeRow.style.display === 'flex') {
-            datetimeRow.style.display = 'none';
-            datetimeToggleBtn.innerText = '📅 예약일/알람 입력';
-            isCustomDateTime = false;
-            setDefaultDateTime();
-        } else {
-            datetimeRow.style.display = 'flex';
-            datetimeToggleBtn.innerText = '📅 일반 메모로 전환';
-            isCustomDateTime = true;
+    function cancelReservation() {
+        reservationFlowBox.style.display = 'none';
+        datetimeToggleBtn.innerText = '📅 예약일/알람 설정';
+        isCustomDateTime = false;
+        selectedReservationDate = null;
+        timePickerArea.style.display = 'none';
+        miniCalContainer.style.display = 'block';
+    }
+
+    // 미니 캘린더 렌더링
+    function renderMiniCalendar() {
+        const grid = document.getElementById('mini-cal-days-grid');
+        const title = document.getElementById('mini-cal-title');
+        grid.innerHTML = '';
+        title.innerText = `${miniCalYear}년 ${miniCalMonth + 1}월`;
+
+        const firstDayIndex = new Date(miniCalYear, miniCalMonth, 1).getDay();
+        const totalDays = new Date(miniCalYear, miniCalMonth + 1, 0).getDate();
+        const todayStr = getTodayStr();
+
+        for (let i = 0; i < firstDayIndex; i++) {
+            const emptyCell = document.createElement('div');
+            grid.appendChild(emptyCell);
         }
+
+        for (let day = 1; day <= totalDays; day++) {
+            const cell = document.createElement('div');
+            cell.className = 'mini-cal-cell';
+            
+            const rawDateStr = `${miniCalYear}-${String(miniCalMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`; 
+            const normalizedDateStr = normalizeDateStr(rawDateStr);
+
+            cell.innerText = day;
+
+            if (selectedReservationDate === normalizedDateStr) {
+                cell.classList.add('selected');
+            }
+
+            cell.onclick = () => {
+                selectedReservationDate = normalizedDateStr;
+                renderMiniCalendar();
+                
+                // 날짜 선택 즉시 미니 달력 숨기고 시간 선택 폼 등장
+                miniCalContainer.style.display = 'none';
+                timePickerArea.style.display = 'block';
+                reservationGuideText.innerHTML = `✅ 선택일: <span style="color:#d17377;">${normalizedDateStr}</span>`;
+            };
+
+            grid.appendChild(cell);
+        }
+    }
+
+    function changeMiniMonth(direction) {
+        miniCalMonth += direction;
+        if (miniCalMonth > 11) {
+            miniCalMonth = 0;
+            miniCalYear++;
+        } else if (miniCalMonth < 0) {
+            miniCalMonth = 11;
+            miniCalYear--;
+        }
+        renderMiniCalendar();
+    }
+
+    // 시간 선택 완료 후 메모 입력창으로 커서 이동
+    function confirmTimeAndFocus() {
+        isCustomDateTime = true;
+        reservationFlowBox.style.display = 'none';
+        datetimeToggleBtn.innerText = `⏰ 예약: ${selectedReservationDate} ${reservationTimeInput.value} (변경)`;
+        textOutput.focus(); // 쏙 커서 이동!
     }
 
     function normalizeDateStr(dateStr) {
@@ -934,8 +1078,8 @@
 
         let isAlarmOn = false; 
 
-        if (isCustomDateTime) {
-            dateVal = reservationDateInput.value || `${curY}-${curM}-${curD}`;
+        if (isCustomDateTime && selectedReservationDate) {
+            dateVal = selectedReservationDate;
             timeVal = reservationTimeInput.value || `08:00`;
             isAlarmOn = true; 
         } else {
@@ -971,7 +1115,7 @@
         textOutput.innerText = '';
         accumulatedText = '';
         removeImage();
-        setDefaultDateTime();
+        cancelReservation();
         
         renderCalendar();
         displayDiaries();
@@ -1014,6 +1158,7 @@
         }
     }, 10000);
 
+    // 메인 캘린더 렌더링 (기존 유지)
     function renderCalendar() {
         const grid = document.getElementById('cal-days-grid');
         const title = document.getElementById('cal-month-title');
@@ -1111,7 +1256,6 @@
         } else if (currentFilter === 'alarm') {
             btnAlarm.classList.add('active');
         }
-        // '3days'일 때는 어떤 필터 버튼도 불이 켜지지 않거나 기본 상태 유지 (버튼 3개 외의 상태)
     }
 
     function displayDiaries() {
@@ -1131,7 +1275,6 @@
             }
 
             if (currentFilter === 'alarm') {
-                // 오늘 이후의 예약 메모만 필터링
                 const diffTime = dDateObj - todayObj;
                 const diffDays = diffTime / (1000 * 60 * 60 * 24);
                 return d.isAlarm && diffDays >= 0;
@@ -1142,14 +1285,12 @@
             } else if (currentFilter === 'all') {
                 return true;
             } else {
-                // 기본값: 오늘 포함 최근 3일 (diffDays가 0, 1, 2인 경우)
                 const diffTime = todayObj - dDateObj;
                 const diffDays = diffTime / (1000 * 60 * 60 * 24);
                 return diffDays >= 0 && diffDays <= 2;
             }
         });
 
-        // 예약보기 모드일 때: 1일 전(D-1)인 항목이 가장 맨 위에 오도록 정렬
         if (currentFilter === 'alarm') {
             filtered.sort((a, b) => {
                 const dateA = parseDateObj(a.date);
@@ -1157,11 +1298,9 @@
                 const diffA = Math.round((dateA - todayObj) / (1000 * 60 * 60 * 24));
                 const diffB = Math.round((dateB - todayObj) / (1000 * 60 * 60 * 24));
 
-                // 1일 전(diff === 1)인 항목을 최우선(-1)으로 정렬
                 if (diffA === 1 && diffB !== 1) return -1;
                 if (diffB === 1 && diffA !== 1) return 1;
 
-                // 나머지는 날짜가 가까운 순서대로 정렬
                 return dateA - dateB;
             });
         }
@@ -1258,7 +1397,6 @@
     window.onload = () => {
         initFontSize();
         initPillSetting();
-        setDefaultDateTime();
         renderCalendar();
         displayDiaries();
     };
