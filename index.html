@@ -593,7 +593,7 @@
         const day = String(now.getDate()).padStart(2, '0');
         
         reservationDateInput.value = `${year}-${month}-${day}`;
-        reservationTimeInput.value = `08:00`; // 알람 시간 기본 오전 8시
+        reservationTimeInput.value = `08:00`; // 예약할 때 기본으로 보여줄 시간 (오전 8시)
         isCustomDateTime = false;
         datetimeRow.style.display = 'none';
         datetimeToggleBtn.innerText = '📅 예약일/알람 시간';
@@ -607,7 +607,7 @@
             setDefaultDateTime();
         } else {
             datetimeRow.style.display = 'flex';
-            datetimeToggleBtn.innerText = '📅 기본(오늘)로 접기';
+            datetimeToggleBtn.innerText = '📅 일반 메모로 전환';
             isCustomDateTime = true;
         }
     }
@@ -846,13 +846,17 @@
         const curY = now.getFullYear();
         const curM = String(now.getMonth() + 1).padStart(2, '0');
         const curD = String(now.getDate()).padStart(2, '0');
+        const curHours = String(now.getHours()).padStart(2, '0');
+        const curMinutes = String(now.getMinutes()).padStart(2, '0');
 
         if (isCustomDateTime) {
+            // 예약/알람 모드가 켜져 있을 때만 지정된 예약 시간 반영
             dateVal = reservationDateInput.value || `${curY}-${curM}-${curD}`;
             timeVal = reservationTimeInput.value || `08:00`;
         } else {
+            // 일반 메모일 때는 현재 저장 시점의 날짜와 시간 반영
             dateVal = `${curY}-${curM}-${curD}`;
-            timeVal = `08:00`;
+            timeVal = `${curHours}:${curMinutes}`;
         }
 
         const timestamp = Date.now();
