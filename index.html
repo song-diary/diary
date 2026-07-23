@@ -226,7 +226,6 @@
             border: none;
             cursor: default;
         }
-        /* 오늘 일자 강조 색상 */
         .cal-cell.today-date {
             background-color: #fffae6 !important;
             border: 2px solid #ffb800 !important;
@@ -577,7 +576,7 @@
     
     <hr style="border: 0; height: 1px; background: var(--border-color); margin-bottom: 15px;">
     
-    <!-- 필터 버튼 영역 (전체보기, 최근30일, 예약보기) -->
+    <!-- 필터 버튼 영역 -->
     <div class="filter-container">
         <button class="filter-btn" id="filter-all" onclick="changeFilter('all')">전체보기</button>
         <button class="filter-btn" id="filter-month" onclick="changeFilter('month')">최근 30일</button>
@@ -602,7 +601,8 @@
     let shouldRestart = true; 
     let accumulatedText = '';
     
-    let currentFilter = localStorage.getItem('lastFilterState') || '3days'; // 기본값 3일 (최초 진입 시)
+    // 최초 켤 때는 무조건 기본값 '3days' (오늘 포함 최근 3일)로 시작
+    let currentFilter = '3days';
     let selectedDateFilter = null; 
     let currentPhotoBase64 = null;
     let isCustomDateTime = false;
@@ -978,7 +978,6 @@
         alert('✨ 다이어리가 저장되었습니다!');
     }
 
-    // 1일 전 알림 및 당일 알람 체크
     setInterval(() => {
         let diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
         const now = new Date();
@@ -991,7 +990,6 @@
         diaries.forEach(d => {
             const dDateStr = normalizeDateStr(d.date);
             
-            // 1. 1일 전 알림 (D-1일 때 하루에 한 번)
             if (d.isAlarm && !d.dayBeforeNotified) {
                 const targetObj = parseDateObj(dDateStr);
                 const todayObj = parseDateObj(todayStr);
@@ -1004,7 +1002,6 @@
                 }
             }
 
-            // 2. 당일 지정 시간 알람
             if (d.isAlarm && dDateStr === todayStr && d.time === currentTimeStr && !d.alarmChecked) {
                 d.alarmChecked = true;
                 updated = true;
@@ -1055,7 +1052,6 @@
 
             if (holidays.has(normalizedDateStr)) cell.classList.add('holiday');
             
-            // 오늘 일자에 색상 칠하기
             if (normalizedDateStr === todayStr) {
                 cell.classList.add('today-date');
             }
@@ -1095,7 +1091,6 @@
     function changeFilter(type) {
         currentFilter = type;
         selectedDateFilter = null;
-        localStorage.setItem('lastFilterState', type);
         renderCalendar();
         displayDiaries();
     }
@@ -1116,6 +1111,7 @@
         } else if (currentFilter === 'alarm') {
             btnAlarm.classList.add('active');
         }
+        // '3days'일 때는 어떤 필터 버튼도 불이 켜지지 않거나 기본 상태 유지 (버튼 3개 외의 상태)
     }
 
     function displayDiaries() {
@@ -1152,6 +1148,23 @@
                 return diffDays >= 0 && diffDays <= 2;
             }
         });
+
+        // 예약보기 모드일 때: 1일 전(D-1)인 항목이 가장 맨 위에 오도록 정렬
+        if (currentFilter === 'alarm') {
+            filtered.sort((a, b) => {
+                const dateA = parseDateObj(a.date);
+                const dateB = parseDateObj(b.date);
+                const diffA = Math.round((dateA - todayObj) / (1000 * 60 * 60 * 24));
+                const diffB = Math.round((dateB - todayObj) / (1000 * 60 * 60 * 24));
+
+                // 1일 전(diff === 1)인 항목을 최우선(-1)으로 정렬
+                if (diffA === 1 && diffB !== 1) return -1;
+                if (diffB === 1 && diffA !== 1) return 1;
+
+                // 나머지는 날짜가 가까운 순서대로 정렬
+                return dateA - dateB;
+            });
+        }
 
         if (filtered.length === 0) {
             diaryList.innerHTML = `<div style="text-align:center; color:#b5a595; padding:20px; font-size:14px;">저장된 다이어리가 없습니다.</div>`;
@@ -1215,7 +1228,6 @@
 
         if (field === 'date') {
             let cleanVal = value.replace('⏰ [예약]', '').trim();
-            // 요일 문자열(예: "(월)") 제거
             cleanVal = cleanVal.replace(/\([일월화수목금토]\)/g, '').trim();
             let parts = cleanVal.split(' ');
             target.date = normalizeDateStr(parts[0]);
