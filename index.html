@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>스마트 메모장</title>
+    <title>스마트 다이어리</title>
     <style>
         :root {
             --bg-color: #fdf6f0;
@@ -16,7 +16,6 @@
             --border-color: #eaddd3;
             --pill-success: #2eb82e;
             
-            /* 기본 글자 크기 변수 */
             --date-font-size: 13px;
             --text-font-size: 17px;
         }
@@ -227,6 +226,14 @@
             border: none;
             cursor: default;
         }
+        /* 오늘 일자 강조 색상 */
+        .cal-cell.today-date {
+            background-color: #fffae6 !important;
+            border: 2px solid #ffb800 !important;
+        }
+        .cal-cell.today-date span {
+            color: #b38600 !important;
+        }
         .cal-cell.selected-date {
             border: 2px solid var(--save-color);
             background-color: #f0f7ff;
@@ -406,18 +413,20 @@
         .filter-container {
             display: flex;
             justify-content: center;
-            gap: 8px;
+            gap: 6px;
             margin-bottom: 12px;
         }
         .filter-btn {
-            padding: 8px 16px;
-            font-size: 14px;
+            flex: 1;
+            padding: 8px 4px;
+            font-size: 13px;
             font-weight: bold;
             border: 1px solid var(--border-color);
             border-radius: 20px;
             background-color: white;
             color: #8c7664;
             cursor: pointer;
+            text-align: center;
         }
         .filter-btn.active {
             background-color: #8c7664;
@@ -439,7 +448,6 @@
             border: 1.5px solid #ffb3b3;
         }
 
-        /* 변수 적용된 글자 크기 */
         .diary-date {
             font-size: var(--date-font-size);
             color: #a09184;
@@ -488,7 +496,7 @@
 
 <div class="container">
     <div class="header-row">
-        <h1>📝 스마트 메모장</h1>
+        <h1>📖 스마트 다이어리</h1>
         <button class="setting-btn" onclick="toggleSettingMenu()">⚙️ 설정</button>
     </div>
     
@@ -539,7 +547,7 @@
     <div class="input-section">
         <div class="input-top-row">
             <span class="section-label">✏️ 새 메모 작성</span>
-            <button class="datetime-toggle-btn" id="datetime-toggle-btn" onclick="toggleDateTimeInput()">📅 예약일/알람 시간</button>
+            <button class="datetime-toggle-btn" id="datetime-toggle-btn" onclick="toggleDateTimeInput()">📅 예약일/알람 입력</button>
         </div>
 
         <div class="datetime-row" id="datetime-row">
@@ -569,10 +577,11 @@
     
     <hr style="border: 0; height: 1px; background: var(--border-color); margin-bottom: 15px;">
     
-    <!-- 필터 버튼 영역 -->
+    <!-- 필터 버튼 영역 (전체보기, 최근30일, 예약보기) -->
     <div class="filter-container">
         <button class="filter-btn" id="filter-all" onclick="changeFilter('all')">전체보기</button>
         <button class="filter-btn" id="filter-month" onclick="changeFilter('month')">최근 30일</button>
+        <button class="filter-btn" id="filter-alarm" onclick="changeFilter('alarm')">예약보기</button>
     </div>
 
     <div class="diary-list" id="diary-list"></div>
@@ -593,7 +602,7 @@
     let shouldRestart = true; 
     let accumulatedText = '';
     
-    let currentFilter = localStorage.getItem('lastFilterState') || 'all';
+    let currentFilter = localStorage.getItem('lastFilterState') || '3days'; // 기본값 3일 (최초 진입 시)
     let selectedDateFilter = null; 
     let currentPhotoBase64 = null;
     let isCustomDateTime = false;
@@ -618,7 +627,6 @@
         if (touchEndX > touchStartX + 50) changeMonth(-1);
     }
 
-    // 글자 크기 설정 적용 함수
     function applyFontSize(sizeType) {
         const root = document.documentElement;
         let dateSize = '13px';
@@ -665,13 +673,13 @@
         reservationTimeInput.value = `08:00`;
         isCustomDateTime = false;
         datetimeRow.style.display = 'none';
-        datetimeToggleBtn.innerText = '📅 예약일/알람 시간';
+        datetimeToggleBtn.innerText = '📅 예약일/알람 입력';
     }
 
     function toggleDateTimeInput() {
         if (datetimeRow.style.display === 'flex') {
             datetimeRow.style.display = 'none';
-            datetimeToggleBtn.innerText = '📅 예약일/알람 시간';
+            datetimeToggleBtn.innerText = '📅 예약일/알람 입력';
             isCustomDateTime = false;
             setDefaultDateTime();
         } else {
@@ -700,6 +708,12 @@
         const normalized = normalizeDateStr(dateStr);
         const [y, m, d] = normalized.split('-').map(Number);
         return new Date(y, m - 1, d);
+    }
+
+    function getDayOfWeekStr(dateStr) {
+        const days = ['일', '월', '화', '수', '목', '금', '토'];
+        const dObj = parseDateObj(dateStr);
+        return days[dObj.getDay()];
     }
 
     function getFixedHolidays(year) {
@@ -939,7 +953,8 @@
             text: cleanText,
             photo: currentPhotoBase64,
             isAlarm: isAlarmOn,
-            alarmChecked: false
+            alarmChecked: false,
+            dayBeforeNotified: false
         };
 
         let diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
@@ -960,9 +975,10 @@
         
         renderCalendar();
         displayDiaries();
-        alert('✨ 메모가 저장되었습니다!');
+        alert('✨ 다이어리가 저장되었습니다!');
     }
 
+    // 1일 전 알림 및 당일 알람 체크
     setInterval(() => {
         let diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
         const now = new Date();
@@ -973,11 +989,26 @@
 
         let updated = false;
         diaries.forEach(d => {
-            const dDate = normalizeDateStr(d.date);
-            if (d.isAlarm && dDate === todayStr && d.time === currentTimeStr && !d.alarmChecked) {
+            const dDateStr = normalizeDateStr(d.date);
+            
+            // 1. 1일 전 알림 (D-1일 때 하루에 한 번)
+            if (d.isAlarm && !d.dayBeforeNotified) {
+                const targetObj = parseDateObj(dDateStr);
+                const todayObj = parseDateObj(todayStr);
+                const diffDays = Math.round((targetObj - todayObj) / (1000 * 60 * 60 * 24));
+                
+                if (diffDays === 1) {
+                    d.dayBeforeNotified = true;
+                    updated = true;
+                    alert(`⏰ [예약 1일 전 알림]\n\n내일 (${dDateStr}) 예정된 메모가 있습니다!\n${d.text ? d.text.substring(0, 30) + '...' : '사진 메모'}`);
+                }
+            }
+
+            // 2. 당일 지정 시간 알람
+            if (d.isAlarm && dDateStr === todayStr && d.time === currentTimeStr && !d.alarmChecked) {
                 d.alarmChecked = true;
                 updated = true;
-                alert(`⏰ [예약 알람]\n\n${d.text ? d.text.substring(0, 30) + '...' : '사진 메모'}`);
+                alert(`⏰ [예약 당일 알람]\n\n${d.text ? d.text.substring(0, 30) + '...' : '사진 메모'}`);
             }
         });
 
@@ -995,6 +1026,7 @@
         const firstDayIndex = new Date(calYear, calMonth, 1).getDay();
         const totalDays = new Date(calYear, calMonth + 1, 0).getDate();
         const holidays = getKoreanHolidays(calYear);
+        const todayStr = getTodayStr();
 
         let diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
         let memoDates = new Set();
@@ -1022,6 +1054,12 @@
             else if (dayOfWeek === 6) cell.classList.add('saturday');
 
             if (holidays.has(normalizedDateStr)) cell.classList.add('holiday');
+            
+            // 오늘 일자에 색상 칠하기
+            if (normalizedDateStr === todayStr) {
+                cell.classList.add('today-date');
+            }
+
             if (selectedDateFilter === normalizedDateStr) cell.classList.add('selected-date');
 
             let hasMemo = memoDates.has(normalizedDateStr);
@@ -1065,14 +1103,18 @@
     function updateFilterButtonsUI() {
         const btnAll = document.getElementById('filter-all');
         const btnMonth = document.getElementById('filter-month');
+        const btnAlarm = document.getElementById('filter-alarm');
         
         btnAll.classList.remove('active');
         btnMonth.classList.remove('active');
+        btnAlarm.classList.remove('active');
 
-        if (currentFilter === 'month') {
-            btnMonth.classList.add('active');
-        } else {
+        if (currentFilter === 'all') {
             btnAll.classList.add('active');
+        } else if (currentFilter === 'month') {
+            btnMonth.classList.add('active');
+        } else if (currentFilter === 'alarm') {
+            btnAlarm.classList.add('active');
         }
     }
 
@@ -1081,23 +1123,38 @@
         let diaries = JSON.parse(localStorage.getItem('myDiaries') || '[]');
         diaryList.innerHTML = '';
 
+        const todayStr = getTodayStr();
+        const todayObj = parseDateObj(todayStr);
+
         let filtered = diaries.filter(d => {
             const dDateStr = normalizeDateStr(d.date);
+            const dDateObj = parseDateObj(dDateStr);
+
             if (selectedDateFilter) {
                 return dDateStr === selectedDateFilter;
             }
-            if (currentFilter === 'month') {
-                const now = new Date();
-                const dDateObj = parseDateObj(dDateStr);
-                const diffTime = now - dDateObj;
+
+            if (currentFilter === 'alarm') {
+                // 오늘 이후의 예약 메모만 필터링
+                const diffTime = dDateObj - todayObj;
+                const diffDays = diffTime / (1000 * 60 * 60 * 24);
+                return d.isAlarm && diffDays >= 0;
+            } else if (currentFilter === 'month') {
+                const diffTime = todayObj - dDateObj;
                 const diffDays = diffTime / (1000 * 60 * 60 * 24);
                 return diffDays >= 0 && diffDays <= 30;
+            } else if (currentFilter === 'all') {
+                return true;
+            } else {
+                // 기본값: 오늘 포함 최근 3일 (diffDays가 0, 1, 2인 경우)
+                const diffTime = todayObj - dDateObj;
+                const diffDays = diffTime / (1000 * 60 * 60 * 24);
+                return diffDays >= 0 && diffDays <= 2;
             }
-            return true;
         });
 
         if (filtered.length === 0) {
-            diaryList.innerHTML = `<div style="text-align:center; color:#b5a595; padding:20px; font-size:14px;">저장된 메모가 없습니다.</div>`;
+            diaryList.innerHTML = `<div style="text-align:center; color:#b5a595; padding:20px; font-size:14px;">저장된 다이어리가 없습니다.</div>`;
             return;
         }
 
@@ -1114,7 +1171,10 @@
             dateDiv.contentEditable = 'true';
             
             const prefix = d.isAlarm ? '⏰ [예약] ' : '';
-            dateDiv.innerText = `${prefix}${normalizeDateStr(d.date)} ${d.time || ''}`;
+            const dateStrFormatted = normalizeDateStr(d.date);
+            const dayOfWeek = getDayOfWeekStr(dateStrFormatted);
+            
+            dateDiv.innerText = `${prefix}${dateStrFormatted} (${dayOfWeek}) ${d.time || ''}`;
             
             dateDiv.onblur = () => {
                 updateDiaryField(d.id, 'date', dateDiv.innerText);
@@ -1155,6 +1215,8 @@
 
         if (field === 'date') {
             let cleanVal = value.replace('⏰ [예약]', '').trim();
+            // 요일 문자열(예: "(월)") 제거
+            cleanVal = cleanVal.replace(/\([일월화수목금토]\)/g, '').trim();
             let parts = cleanVal.split(' ');
             target.date = normalizeDateStr(parts[0]);
             if (parts[1]) target.time = parts[1];
