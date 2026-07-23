@@ -593,7 +593,7 @@
         const day = String(now.getDate()).padStart(2, '0');
         
         reservationDateInput.value = `${year}-${month}-${day}`;
-        reservationTimeInput.value = `08:00`; // 예약할 때 기본으로 보여줄 시간 (오전 8시)
+        reservationTimeInput.value = `08:00`;
         isCustomDateTime = false;
         datetimeRow.style.display = 'none';
         datetimeToggleBtn.innerText = '📅 예약일/알람 시간';
@@ -849,14 +849,18 @@
         const curHours = String(now.getHours()).padStart(2, '0');
         const curMinutes = String(now.getMinutes()).padStart(2, '0');
 
+        let isAlarmOn = false; // 기본은 일반 메모 (알람 없음)
+
         if (isCustomDateTime) {
-            // 예약/알람 모드가 켜져 있을 때만 지정된 예약 시간 반영
+            // 예약/알람 모드가 켜져 있을 때만 지정된 예약 시간 반영 및 알람 활성화
             dateVal = reservationDateInput.value || `${curY}-${curM}-${curD}`;
             timeVal = reservationTimeInput.value || `08:00`;
+            isAlarmOn = true; 
         } else {
             // 일반 메모일 때는 현재 저장 시점의 날짜와 시간 반영
             dateVal = `${curY}-${curM}-${curD}`;
             timeVal = `${curHours}:${curMinutes}`;
+            isAlarmOn = false; 
         }
 
         const timestamp = Date.now();
@@ -867,6 +871,7 @@
             time: timeVal,
             text: cleanText,
             photo: currentPhotoBase64,
+            isAlarm: isAlarmOn, // 알람 대상 여부 저장
             alarmChecked: false
         };
 
@@ -897,12 +902,13 @@
         const todayStr = getTodayStr();
         const currentHours = String(now.getHours()).padStart(2, '0');
         const currentMinutes = String(now.getMinutes()).padStart(2, '0');
-        const currentTimeStr = `${currentHours}:${currentMinutes}`;
+        const currentTimeStr = `${currentHours}:${currentTimeStr ? '' : ''}${currentMinutes}`;
 
         let updated = false;
         diaries.forEach(d => {
             const dDate = normalizeDateStr(d.date);
-            if (dDate === todayStr && d.time === currentTimeStr && !d.alarmChecked) {
+            // 예약 메모(isAlarm이 true)인 경우에만 시간이 맞을 때 알람 작동!
+            if (d.isAlarm && dDate === todayStr && d.time === currentTimeStr && !d.alarmChecked) {
                 d.alarmChecked = true;
                 updated = true;
                 alert(`⏰ [예약 알람]\n\n${d.text ? d.text.substring(0, 30) + '...' : '사진 메모'}`);
