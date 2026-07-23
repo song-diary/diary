@@ -411,6 +411,8 @@
             color: white;
             border-color: #8c7664;
         }
+        
+        /* 메모 아이템 스타일 */
         .diary-item {
             background: #fffdfb;
             border: 1px solid var(--border-color);
@@ -419,6 +421,12 @@
             margin-bottom: 12px;
             position: relative;
         }
+        /* 예약 메모일 때 강조 스타일 (배경색과 테두리 변경) */
+        .diary-item.alarm-memo {
+            background: #fff8f8;
+            border: 1.5px solid #ffb3b3;
+        }
+
         .diary-date {
             font-size: 13px;
             color: #a09184;
@@ -427,6 +435,11 @@
             display: inline-block;
             outline: none;
         }
+        /* 예약 메모일 때 날짜/시간 글자색 포인트 강조 */
+        .diary-item.alarm-memo .diary-date {
+            color: #e65c5c;
+        }
+
         .diary-text {
             font-size: 17px;
             line-height: 1.5;
@@ -849,15 +862,13 @@
         const curHours = String(now.getHours()).padStart(2, '0');
         const curMinutes = String(now.getMinutes()).padStart(2, '0');
 
-        let isAlarmOn = false; // 기본은 일반 메모 (알람 없음)
+        let isAlarmOn = false; 
 
         if (isCustomDateTime) {
-            // 예약/알람 모드가 켜져 있을 때만 지정된 예약 시간 반영 및 알람 활성화
             dateVal = reservationDateInput.value || `${curY}-${curM}-${curD}`;
             timeVal = reservationTimeInput.value || `08:00`;
             isAlarmOn = true; 
         } else {
-            // 일반 메모일 때는 현재 저장 시점의 날짜와 시간 반영
             dateVal = `${curY}-${curM}-${curD}`;
             timeVal = `${curHours}:${curMinutes}`;
             isAlarmOn = false; 
@@ -871,7 +882,7 @@
             time: timeVal,
             text: cleanText,
             photo: currentPhotoBase64,
-            isAlarm: isAlarmOn, // 알람 대상 여부 저장
+            isAlarm: isAlarmOn,
             alarmChecked: false
         };
 
@@ -902,12 +913,11 @@
         const todayStr = getTodayStr();
         const currentHours = String(now.getHours()).padStart(2, '0');
         const currentMinutes = String(now.getMinutes()).padStart(2, '0');
-        const currentTimeStr = `${currentHours}:${currentTimeStr ? '' : ''}${currentMinutes}`;
+        const currentTimeStr = `${currentHours}:${currentMinutes}`;
 
         let updated = false;
         diaries.forEach(d => {
             const dDate = normalizeDateStr(d.date);
-            // 예약 메모(isAlarm이 true)인 경우에만 시간이 맞을 때 알람 작동!
             if (d.isAlarm && dDate === todayStr && d.time === currentTimeStr && !d.alarmChecked) {
                 d.alarmChecked = true;
                 updated = true;
@@ -1038,11 +1048,20 @@
         filtered.forEach(d => {
             const item = document.createElement('div');
             item.className = 'diary-item';
+            
+            // 예약 메모인 경우 클래스 추가하여 배경 및 테두리 색상 강조
+            if (d.isAlarm) {
+                item.classList.add('alarm-memo');
+            }
 
             const dateDiv = document.createElement('div');
             dateDiv.className = 'diary-date';
             dateDiv.contentEditable = 'true';
-            dateDiv.innerText = `${normalizeDateStr(d.date)} ${d.time || ''}`;
+            
+            // 예약 메모일 경우 [예약] 뱃지 문구 추가
+            const prefix = d.isAlarm ? '⏰ [예약] ' : '';
+            dateDiv.innerText = `${prefix}${normalizeDateStr(d.date)} ${d.time || ''}`;
+            
             dateDiv.onblur = () => {
                 updateDiaryField(d.id, 'date', dateDiv.innerText);
             };
@@ -1081,7 +1100,9 @@
         if (!target) return;
 
         if (field === 'date') {
-            let parts = value.trim().split(' ');
+            // [예약] 글자나 공백 정리 후 날짜 파싱
+            let cleanVal = value.replace('⏰ [예약]', '').trim();
+            let parts = cleanVal.split(' ');
             target.date = normalizeDateStr(parts[0]);
             if (parts[1]) target.time = parts[1];
         } else if (field === 'text') {
