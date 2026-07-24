@@ -149,7 +149,7 @@
             border-radius: 8px;
             cursor: pointer;
             position: relative;
-            background: #f9fbfb; /* 상쾌한 기본 평일 칸 배경 */
+            background: #f9fbfb;
             border: 1px solid #edf2f1;
         }
 
@@ -164,14 +164,13 @@
             cursor: default;
         }
 
-        /* 요일별 칸 색상 지정 (상쾌한 파스텔톤 칸 배경 및 글자색) */
         .cal-cell.sunday {
-            background: #fcf4f4; /* 연한 붉은빛 칸 */
+            background: #fcf4f4;
             color: var(--sun-color);
         }
 
         .cal-cell.saturday {
-            background: #f0f7fb; /* 연한 하늘빛 칸 */
+            background: #f0f7fb;
             color: var(--sat-color);
         }
 
@@ -182,7 +181,6 @@
             color: var(--accent-today);
         }
 
-        /* 메모가 있는 일자선 (싱그러운 초록색 바) */
         .memo-line {
             width: 60%;
             height: 3px;
@@ -450,7 +448,9 @@
     let currentFilter = 'month'; 
     let selectedReservationDate = null;
     let currentPhotoBase64 = null;
-    let currentFontSize = 14;
+    
+    // 저장된 글자 크기 불러오기 (기본값 14)
+    let currentFontSize = parseInt(localStorage.getItem('smartDiaryFontSize')) || 14;
 
     let recognition = null;
     let isRecording = false;
@@ -522,7 +522,11 @@
     function adjustFontSize(step) {
         currentFontSize += step;
         if (currentFontSize < 11) currentFontSize = 11;
-        if (currentFontSize > 20) currentFontSize = 20;
+        if (currentFontSize > 24) currentFontSize = 24;
+
+        // 글자 크기 저장 고정
+        localStorage.setItem('smartDiaryFontSize', currentFontSize);
+
         document.querySelectorAll('.diary-text').forEach(el => {
             el.style.fontSize = currentFontSize + 'px';
         });
@@ -825,6 +829,7 @@
             }
             dateHtml += `</div>`;
 
+            // 저장된 고정 글자 크기 적용
             let textHtml = `<div class="diary-text" style="font-size: ${currentFontSize}px;" contenteditable="true" onblur="updateDiaryText(${item.id}, this)">${escapeHtml(item.text)}</div>`;
             
             let photoHtml = '';
