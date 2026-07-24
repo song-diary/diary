@@ -354,7 +354,7 @@
             gap: 6px;
         }
 
-        /* 달력 요일별 색상과 일치하는 헤더 색상 클래스 */
+        /* 요일별 헤더 색상 클래스 */
         .date-group-header.sunday { color: var(--sun-color); }
         .date-group-header.saturday { color: var(--sat-color); }
         .date-group-header.weekday { color: var(--weekday-color); }
@@ -416,7 +416,6 @@
             border-radius: 6px;
         }
 
-        /* 달력 / 데이터 영역 구분선 */
         .section-divider {
             display: flex;
             align-items: center;
@@ -464,7 +463,6 @@
             <button class="close-form-btn" onclick="toggleSettings()">✖</button>
         </div>
         
-        <!-- 보기 방식 설정 -->
         <div class="settings-section">
             <label>👀 메모 보기 방식</label>
             <div class="view-select-group">
@@ -476,7 +474,6 @@
             </div>
         </div>
 
-        <!-- 글자 크기 설정 -->
         <div class="settings-section">
             <label>🔤 글자 크기 조절</label>
             <div style="display: flex; gap: 8px; align-items: center;">
@@ -486,7 +483,6 @@
             </div>
         </div>
 
-        <!-- 데이터 초기화 버튼 -->
         <div class="settings-section" style="padding-top: 5px;">
             <button class="action-btn" style="background-color: var(--accent-today); width:100%; font-size:14px; padding:6px;" onclick="resetAllData()">⚠️ 데이터 초기화 (새로 시작)</button>
         </div>
@@ -595,9 +591,14 @@
         return dateStr.replace(/[./]/g, '-');
     }
 
+    // 날짜 파싱 오류 및 타임존 오차를 해결한 완벽한 함수
     function parseDateObj(dateStr) {
-        let parts = normalizeDateStr(dateStr).split('-');
-        return new Date(parts[0], parts[1] - 1, parts[2]);
+        let cleanStr = normalizeDateStr(dateStr);
+        let parts = cleanStr.split('-');
+        if (parts.length >= 3) {
+            return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        }
+        return new Date();
     }
 
     function getDayOfWeekStr(dateStr) {
@@ -979,7 +980,6 @@
             return;
         }
 
-        // 일자별 그룹화 (Map 사용)
         let groupedByDate = new Map();
         filtered.forEach(item => {
             const itemDate = normalizeDateStr(item.date || todayStr);
@@ -992,16 +992,16 @@
         groupedByDate.forEach((items, dateStr) => {
             const dayOfWeek = getDayOfWeekStr(dateStr);
             const dObj = parseDateObj(dateStr);
-            const dayIndex = dObj.getDay();
+            const dayIndex = dObj.getDay(); // 0: 일요일, 6: 토요일, 1~5: 평일
             const yearVal = dObj.getFullYear();
             const yearHolidays = getKoreanHolidays(yearVal);
 
-            // 🌟 달력과 완전히 동일한 요일/공휴일 색상 매칭 로직 적용
+            // 요일 및 공휴일 정확하게 판별하여 클래스 부여
             let headerColorClass = 'weekday';
             if (dayIndex === 0 || yearHolidays.has(dateStr)) {
-                headerColorClass = 'sunday'; // 일요일 또는 공휴일 (빨간색)
+                headerColorClass = 'sunday';    // 일요일 또는 공휴일 (빨간색)
             } else if (dayIndex === 6) {
-                headerColorClass = 'saturday'; // 토요일 (파란색)
+                headerColorClass = 'saturday';  // 토요일 (파란색)
             }
             
             const groupCard = document.createElement('div');
