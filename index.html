@@ -2,992 +2,111 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>스마트 다이어리</title>
+    <title>Calendar & Data Divider</title>
     <style>
-        :root {
-            --bg-color: #f7f4f4;
-            --card-bg: #ffffff;
-            --primary-color: #e06d6d;
-            --primary-hover: #cc5c5c;
-            --text-main: #2c3e50;
-            --text-sub: #7f8c8d;
-            --border-color: #e6d8d8;
-            --accent-today: #e74c3c;
-            --sun-color: #d93838;
-            --sat-color: #1b6ca8;
-            --weekday-color: #34495e;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Malgun Gothic', sans-serif;
-        }
-
+        /* 전체 배경 (차분하고 깊이감 있는 톤) */
         body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            padding: 15px;
-            max-width: 600px;
-            margin: 0 auto;
-            touch-action: manipulation;
-            font-size: 16px;
-        }
-
-        .app-container {
+            background-color: #0f111a;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: #ffffff;
             display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .card {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 15px;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.04);
-        }
-
-        .top-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 20px;
-            color: var(--primary-color);
-            font-weight: bold;
-        }
-
-        .action-btn {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 8px 14px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 15px;
-            font-weight: bold;
-        }
-
-        .action-btn:hover {
-            background: var(--primary-hover);
-        }
-
-        /* 설정 카드 */
-        #settings-card {
-            display: none;
-            background: #fff8f8;
-            border: 2px solid var(--primary-color);
-            animation: fadeIn 0.3s ease;
-        }
-
-        .settings-title {
-            font-size: 17px;
-            font-weight: bold;
-            color: var(--primary-color);
-            margin-bottom: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .settings-section {
-            margin-bottom: 12px;
-            padding-bottom: 10px;
-            border-bottom: 1px dashed var(--border-color);
-        }
-
-        .settings-section:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
-
-        .settings-section label {
-            display: block;
-            font-size: 14px;
-            font-weight: bold;
-            margin-bottom: 6px;
-            color: var(--weekday-color);
-        }
-
-        .view-select-group {
-            display: flex;
-            gap: 6px;
-        }
-
-        .view-select-btn {
-            flex: 1;
-            padding: 8px;
-            border: 1px solid var(--border-color);
-            background: #fff;
-            border-radius: 6px;
-            font-size: 14px;
-            cursor: pointer;
-            color: var(--text-sub);
-            font-weight: bold;
-        }
-
-        .view-select-btn.active {
-            background: var(--primary-color);
-            color: white;
-            border-color: var(--primary-color);
-        }
-
-        /* 달력 스타일 */
-        .calendar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-
-        .calendar-header h3 {
-            color: var(--primary-color);
-            font-size: 20px;
-        }
-
-        .calendar-header button {
-            background: #faf5f5;
-            border: 1px solid var(--border-color);
-            padding: 6px 14px;
-            border-radius: 6px;
-            cursor: pointer;
-            color: var(--text-main);
-            font-weight: bold;
-            font-size: 15px;
-        }
-
-        .calendar-header button:hover {
-            background: #f4e8e8;
-        }
-
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 4px;
-            text-align: center;
-        }
-
-        .cal-day-name {
-            font-size: 15px;
-            font-weight: bold;
-            padding-bottom: 6px;
-        }
-
-        .cal-day-name.sunday { color: var(--sun-color); }
-        .cal-day-name.saturday { color: var(--sat-color); }
-        .cal-day-name.weekday { color: var(--weekday-color); }
-
-        .cal-cell {
-            aspect-ratio: 1;
-            display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
-            font-size: 16px;
-            font-weight: 600;
-            border-radius: 8px;
-            cursor: pointer;
-            position: relative;
-            background: #fcfbfb;
-            border: 1px solid #f0e6e6;
-            color: var(--weekday-color);
+            height: 100vh;
+            margin: 0;
         }
 
-        .cal-cell:hover {
-            background: #faefef;
-            border-color: var(--primary-color);
+        /* 메인 컨테이너 */
+        .wrapper {
+            width: 380px;
+            background: #161925;
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
         }
 
-        .cal-cell.empty {
-            background: transparent;
-            border: none;
-            cursor: default;
-        }
-
-        .cal-cell.sunday {
-            background: #fcf3f3;
-            color: var(--sun-color);
-        }
-
-        .cal-cell.saturday {
-            background: #f0f6fb;
-            color: var(--sat-color);
-        }
-
-        .cal-cell.today-date {
-            border: 2px solid var(--accent-today) !important;
-            font-weight: bold;
-            background: #fff5f5 !important;
-            color: var(--accent-today);
-        }
-
-        .memo-line {
-            width: 65%;
-            height: 4px;
-            border-radius: 2px;
-            margin-top: 4px;
-        }
-        .memo-line.sun { background-color: var(--sun-color); }
-        .memo-line.mon { background-color: #e67e22; }
-        .memo-line.tue { background-color: #f1c40f; }
-        .memo-line.wed { background-color: #27ae60; }
-        .memo-line.thu { background-color: #3498db; }
-        .memo-line.fri { background-color: #9b59b6; }
-        .memo-line.sat { background-color: var(--sat-color); }
-
-        /* 메모 작성 폼 */
-        #memo-form-card {
-            display: none;
-            border: 2px solid var(--primary-color);
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .form-header-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            font-size: 17px;
-            font-weight: bold;
-            color: var(--primary-color);
-        }
-
-        .close-form-btn {
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-            color: var(--text-sub);
-        }
-
-        .reservation-box {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            margin-bottom: 10px;
-            font-size: 15px;
-            background: #fff0f0;
+        /* 1. 달력 영역 스타일 */
+        .calendar-section {
             padding: 10px;
-            border-radius: 8px;
-        }
-
-        .reservation-box input {
-            font-size: 15px;
-        }
-
-        .diary-textarea {
-            width: 100%;
-            min-height: 120px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 12px;
-            font-size: 16px;
-            resize: vertical;
-            outline: none;
-            background: #fff;
-            margin-bottom: 10px;
-        }
-
-        .diary-textarea:focus {
-            border-color: var(--primary-color);
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 8px;
-        }
-
-        .btn {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: var(--primary-hover);
-        }
-
-        .btn-secondary {
-            background-color: #f0e2e2;
-            color: var(--text-main);
-        }
-
-        .btn-secondary:hover {
-            background-color: #e5d2d2;
-        }
-
-        /* 메모 리스트 아이템 */
-        .diary-item {
-            background: #fff;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 14px;
-            margin-bottom: 10px;
-            position: relative;
-        }
-
-        .diary-item.alarm-memo {
-            border-left: 4px solid var(--primary-color);
-        }
-
-        .diary-date {
-            font-size: 15px;
-            color: var(--text-sub);
-            margin-bottom: 6px;
-            font-weight: bold;
-        }
-
-        .diary-text {
-            font-size: 16px;
-            line-height: 1.5;
-            white-space: pre-wrap;
-            word-break: break-all;
-        }
-
-        .diary-photo {
-            max-width: 100%;
-            border-radius: 6px;
-            margin-top: 8px;
-            display: block;
-        }
-
-        .delete-btn {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            background: none;
-            border: none;
+            text-align: center;
+            color: #8b9bb4;
             font-size: 14px;
-            color: #b0c4de;
-            cursor: pointer;
+        }
+        .calendar-placeholder {
+            font-size: 18px;
+            font-weight: 600;
+            color: #e2e8f0;
+            margin-bottom: 8px;
         }
 
-        .delete-btn:hover {
-            color: var(--accent-today);
+        /* 🌟 가장 공들인 멋진 경계선 (Gradient Divider) */
+        .stylish-divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 24px 0;
+        }
+        .stylish-divider::before,
+        .stylish-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            /* 은은하게 사라지는 그라데이션 효과 */
+            background: linear-gradient(to right, rgba(99, 102, 241, 0), rgba(99, 102, 241, 0.6), rgba(168, 85, 247, 0));
+        }
+        .divider-badge {
+            background: rgba(99, 102, 241, 0.1);
+            color: #a5b4fc;
+            padding: 4px 12px;
+            font-size: 11px;
+            font-weight: 500;
+            border-radius: 20px;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.15);
+            margin: 0 10px;
+            letter-spacing: 0.5px;
         }
 
-        #photo-preview-wrap {
-            display: none;
-            position: relative;
-            margin-bottom: 10px;
+        /* 2. 데이터 영역 스타일 (입체적인 카드 형태) */
+        .data-section {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            padding: 18px;
+            backdrop-filter: blur(10px);
         }
-
-        #image-preview {
-            max-height: 100px;
-            border-radius: 6px;
+        .data-title {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-bottom: 6px;
+        }
+        .data-content {
+            font-size: 15px;
+            font-weight: 500;
+            color: #f8fafc;
         }
     </style>
 </head>
 <body>
 
-<div class="app-container">
-    <!-- 상단 설정 바 -->
-    <div class="card top-bar">
-        <span>🌸 스마트 다이어리</span>
-        <button class="action-btn" onclick="toggleSettings()">⚙️ 설정</button>
-    </div>
-
-    <!-- 설정 카드 (글자크기 및 보기 방식 설정) -->
-    <div class="card" id="settings-card">
-        <div class="settings-title">
-            <span>🛠️ 환경 설정</span>
-            <button class="close-form-btn" onclick="toggleSettings()">✖</button>
-        </div>
-        
-        <!-- 보기 방식 설정 -->
-        <div class="settings-section">
-            <label>👀 메모 보기 방식</label>
-            <div class="view-select-group">
-                <button class="view-select-btn active" id="view-3days" onclick="changeViewMode('3days')">기본 3일</button>
-                <button class="view-select-btn" id="view-week" onclick="changeViewMode('week')">일주일</button>
-                <button class="view-select-btn" id="view-month" onclick="changeViewMode('month')">한달</button>
-                <button class="view-select-btn" id="view-alarm" onclick="changeViewMode('alarm')">예약보기</button>
-                <button class="view-select-btn" id="view-all" onclick="changeViewMode('all')">전체보기</button>
-            </div>
+    <div class="wrapper">
+        <!-- 달력 영역 -->
+        <div class="calendar-section">
+            <div class="calendar-placeholder">📅 2026년 7월 24일 (금)</div>
+            <span>캘린더 뷰가 위치하는 공간입니다.</span>
         </div>
 
-        <!-- 글자 크기 설정 -->
-        <div class="settings-section">
-            <label>🔤 글자 크기 조절</label>
-            <div style="display: flex; gap: 8px; align-items: center;">
-                <button class="action-btn" style="flex:1;" onclick="adjustFontSize(-1)">작게 (-)</button>
-                <span id="font-size-display" style="font-size: 16px; font-weight: bold; min-width: 45px; text-align: center;">16px</span>
-                <button class="action-btn" style="flex:1;" onclick="adjustFontSize(1)">크게 (+)</button>
-            </div>
+        <!-- 🌟 멋지게 구분된 경계선 -->
+        <div class="stylish-divider">
+            <span class="divider-badge">TODAY'S DATA</span>
         </div>
 
-        <!-- 데이터 초기화 버튼 (2중 확인 적용) -->
-        <div class="settings-section" style="padding-top: 5px;">
-            <button class="action-btn" style="background-color: var(--accent-today); width:100%; font-size:14px; padding:6px;" onclick="resetAllData()">⚠️ 데이터 초기화 (새로 시작)</button>
+        <!-- 데이터 영역 -->
+        <div class="data-section">
+            <div class="data-title">실시간 데이터 / 일정 요약</div>
+            <div class="data-content">✨ 프로젝트 마감일 조율 및 회의 예정</div>
         </div>
     </div>
 
-    <!-- 달력 카드 -->
-    <div class="card" id="calendar-card">
-        <div class="calendar-header">
-            <button onclick="changeMonth(-1)">◀ 이전</button>
-            <h3 id="cal-month-title">0000년 00월</h3>
-            <button onclick="changeMonth(1)">다음 ▶</button>
-        </div>
-        <div class="calendar-grid" id="cal-days-name-grid">
-            <div class="cal-day-name sunday">일</div>
-            <div class="cal-day-name weekday">월</div>
-            <div class="cal-day-name weekday">화</div>
-            <div class="cal-day-name weekday">수</div>
-            <div class="cal-day-name weekday">목</div>
-            <div class="cal-day-name weekday">금</div>
-            <div class="cal-day-name saturday">토</div>
-        </div>
-        <div class="calendar-grid" id="cal-days-grid" style="margin-top: 5px;"></div>
-    </div>
-
-    <!-- 새 메모 작성 폼 -->
-    <div class="card" id="memo-form-card">
-        <div class="form-header-info">
-            <span id="form-target-date-title">📅 0000년 00월 00일 메모 작성</span>
-            <button class="close-form-btn" onclick="closeDiaryForm()">✖</button>
-        </div>
-        
-        <div class="reservation-box">
-            <label>⏰ 알람/시간:</label>
-            <input type="time" id="reservation-time-input" style="padding: 4px; border:1px solid var(--border-color); border-radius:4px; background:#fff;">
-        </div>
-
-        <div id="photo-preview-wrap">
-            <img id="image-preview" src="" alt="미리보기">
-            <button class="action-btn" style="margin-top:5px;" onclick="removeImage()">사진 취소</button>
-        </div>
-
-        <div id="textOutput" class="diary-textarea" contenteditable="true" placeholder="이곳에 메모를 입력하거나 음성메모를 사용하세요..."></div>
-
-        <div class="btn-group">
-            <button class="btn btn-secondary" id="record-btn">🎤 음성메모</button>
-            <label class="btn btn-secondary" style="text-align:center; display:flex; align-items:center; justify-content:center; cursor:pointer;">
-                📷 사진
-                <input type="file" id="diary-photo-input" accept="image/*" style="display:none;" onchange="previewImage(event)">
-            </label>
-            <button class="btn btn-primary" onclick="manualSaveDiary()">저장</button>
-        </div>
-    </div>
-
-    <!-- 메모 리스트 카드 -->
-    <div class="card">
-        <div id="current-view-label" style="font-size: 14px; color: var(--text-sub); margin-bottom: 10px; font-weight: bold;">📋 기본 3일 메모</div>
-        <div id="diary-list"></div>
-    </div>
-</div>
-
-<script>
-    let calYear = new Date().getFullYear();
-    let calMonth = new Date().getMonth();
-    let currentViewMode = localStorage.getItem('smartDiaryViewMode') || '3days'; 
-    let selectedReservationDate = null;
-    let currentPhotoBase64 = null;
-    let currentFontSize = parseInt(localStorage.getItem('smartDiaryFontSize')) || 16;
-
-    let recognition = null;
-    let isRecording = false;
-    let shouldRestart = false;
-    let accumulatedText = '';
-
-    const textOutput = document.getElementById('textOutput');
-    const recordBtn = document.getElementById('record-btn');
-    const diaryList = document.getElementById('diary-list');
-    const reservationTimeInput = document.getElementById('reservation-time-input');
-    const memoFormCard = document.getElementById('memo-form-card');
-    const formTargetDateTitle = document.getElementById('form-target-date-title');
-    const settingsCard = document.getElementById('settings-card');
-    const fontSizeDisplay = document.getElementById('font-size-display');
-    const currentViewLabel = document.getElementById('current-view-label');
-
-    function getTodayStr() {
-        const d = new Date();
-        const y = d.getFullYear();
-        const m = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        return `${y}-${m}-${day}`;
-    }
-
-    function getCurrentTimeStr() {
-        const d = new Date();
-        const h = String(d.getHours()).padStart(2, '0');
-        const min = String(d.getMinutes()).padStart(2, '0');
-        return `${h}:${min}`;
-    }
-
-    function normalizeDateStr(dateStr) {
-        if (!dateStr) return getTodayStr();
-        return dateStr.replace(/[./]/g, '-');
-    }
-
-    function parseDateObj(dateStr) {
-        let parts = normalizeDateStr(dateStr).split('-');
-        return new Date(parts[0], parts[1] - 1, parts[2]);
-    }
-
-    function getDayOfWeekStr(dateStr) {
-        const days = ['일', '월', '화', '수', '목', '금', '토'];
-        const dObj = parseDateObj(dateStr);
-        return days[dObj.getDay()];
-    }
-
-    function getKoreanHolidays(year) {
-        let holidays = new Set([
-            `${year}-01-01`, `${year}-03-01`, `${year}-05-05`,
-            `${year}-06-06`, `${year}-08-15`, `${year}-10-03`,
-            `${year}-10-09`, `${year}-12-25`
-        ]);
-        const lunarHolidays = {
-            2024: ['2024-02-09', '2024-02-10', '2024-02-11', '2024-05-15', '2024-09-16', '2024-09-17', '2024-09-18'],
-            2025: ['2025-01-28', '2025-01-29', '2025-01-30', '2025-05-05', '2025-10-05', '2025-10-06', '2025-10-07'],
-            2026: ['2026-02-16', '2026-02-17', '2026-02-18', '2026-05-24', '2026-09-24', '2026-09-25', '2026-09-26'],
-            2027: ['2027-02-06', '2027-02-07', '2027-02-08', '2027-05-13', '2027-09-14', '2027-09-15', '2027-09-16'],
-            2028: ['2028-01-26', '2028-01-27', '2028-01-28', '2028-05-02', '2028-10-02', '2028-10-03', '2028-10-04'],
-            2029: ['2029-02-12', '2029-02-13', '2029-02-14', '2029-05-20', '2029-09-21', '2029-09-22', '2029-09-23'],
-            2030: ['2030-02-02', '2030-02-03', '2030-02-04', '2030-05-09', '2030-09-11', '2030-09-12', '2030-09-13']
-        };
-        if (lunarHolidays[year]) {
-            lunarHolidays[year].forEach(d => holidays.add(d));
-        }
-        return holidays;
-    }
-
-    function getAllDiaries() {
-        let combinedList = [];
-        let standardData = localStorage.getItem('smartDiaryList');
-        if (standardData) {
-            try { 
-                let parsed = JSON.parse(standardData);
-                if (Array.isArray(parsed)) combinedList = parsed;
-            } catch (e) {
-                combinedList = [];
-            }
-        }
-        return combinedList;
-    }
-
-    // 데이터 초기화 (2중 확인 로직 적용)
-    function resetAllData() {
-        const firstCheck = confirm('⚠️ [1차 경고] 모든 메모 데이터가 초기화됩니다. 정말로 삭제하시겠습니까?');
-        if (!firstCheck) return;
-
-        const secondCheck = confirm('🚨 [최종 경고] 이 작업은 절대로 되돌릴 수 없습니다. 기존의 모든 일정을 전부 지우고 새로 시작하시겠습니까?');
-        if (!secondCheck) return;
-
-        localStorage.removeItem('smartDiaryList');
-        renderCalendar();
-        loadDiaryList();
-        alert('모든 데이터가 깨끗하게 초기화되었습니다.');
-        toggleSettings();
-    }
-
-    function toggleSettings() {
-        if (settingsCard.style.display === 'block') {
-            settingsCard.style.display = 'none';
-        } else {
-            settingsCard.style.display = 'block';
-        }
-    }
-
-    function adjustFontSize(step) {
-        currentFontSize += step;
-        if (currentFontSize < 12) currentFontSize = 12;
-        if (currentFontSize > 26) currentFontSize = 26;
-        localStorage.setItem('smartDiaryFontSize', currentFontSize);
-        fontSizeDisplay.innerText = currentFontSize + 'px';
-        document.querySelectorAll('.diary-text').forEach(el => {
-            el.style.fontSize = currentFontSize + 'px';
-        });
-    }
-
-    function previewImage(event) {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                currentPhotoBase64 = e.target.result;
-                document.getElementById('image-preview').src = currentPhotoBase64;
-                document.getElementById('photo-preview-wrap').style.display = 'block';
-            };
-            reader.readAsDataURL(file);
-        }
-    }
-
-    function removeImage() {
-        currentPhotoBase64 = null;
-        document.getElementById('diary-photo-input').value = '';
-        document.getElementById('image-preview').src = '';
-        document.getElementById('photo-preview-wrap').style.display = 'none';
-    }
-
-    function initSpeechRecognition() {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) return;
-
-        recognition = new SpeechRecognition();
-        recognition.lang = 'ko-KR';
-        recognition.interimResults = true;
-        recognition.continuous = true;
-
-        recognition.onstart = () => {
-            isRecording = true;
-            recordBtn.innerText = '⏹️ 중지';
-        };
-
-        recognition.onresult = (event) => {
-            let interimTranscript = '';
-            let finalTranscript = '';
-
-            for (let i = event.resultIndex; i < event.results.length; ++i) {
-                if (event.results[i].isFinal) {
-                    finalTranscript += event.results[i][0].transcript;
-                } else {
-                    interimTranscript += event.results[i][0].transcript;
-                }
-            }
-
-            if (finalTranscript) {
-                accumulatedText += (accumulatedText ? ' ' : '') + finalTranscript;
-            }
-            
-            textOutput.innerText = accumulatedText + (interimTranscript ? ' ' + interimTranscript : '');
-        };
-
-        recognition.onend = () => {
-            if (shouldRestart && isRecording) {
-                try { recognition.start(); } catch (e) {}
-            } else {
-                isRecording = false;
-                recordBtn.innerText = '🎤 음성메모';
-                accumulatedText = textOutput.innerText;
-            }
-        };
-    }
-
-    if (recordBtn) {
-        recordBtn.onclick = () => {
-            if (!recognition) return;
-            if (isRecording) {
-                shouldRestart = false;
-                isRecording = false;
-                recognition.stop();
-                recordBtn.innerText = '🎤 음성메모';
-            } else {
-                shouldRestart = true;
-                accumulatedText = textOutput.innerText;
-                try { recognition.start(); } catch (e) {}
-            }
-        };
-    }
-
-    function openDiaryForm(dateStr) {
-        selectedReservationDate = dateStr;
-        const dayOfWeek = getDayOfWeekStr(dateStr);
-        formTargetDateTitle.innerText = `📅 ${dateStr} (${dayOfWeek}) 메모 작성`;
-        
-        const todayStr = getTodayStr();
-        if (dateStr >= todayStr) {
-            reservationTimeInput.value = "08:00";
-        } else {
-            reservationTimeInput.value = getCurrentTimeStr();
-        }
-
-        memoFormCard.style.display = 'block';
-        memoFormCard.scrollIntoView({ behavior: 'smooth' });
-    }
-
-    function closeDiaryForm() {
-        memoFormCard.style.display = 'none';
-        textOutput.innerText = '';
-        accumulatedText = '';
-        removeImage();
-    }
-
-    function manualSaveDiary() {
-        const text = textOutput.innerText.trim();
-        if (!text && !currentPhotoBase64) {
-            alert('내용이나 사진을 입력해주세요!');
-            return;
-        }
-
-        let diaryListObj = getAllDiaries();
-        let targetDateStr = selectedReservationDate || getTodayStr();
-        const todayStr = getTodayStr();
-        
-        let alarmTime = reservationTimeInput.value;
-        if (targetDateStr < todayStr && (!alarmTime || alarmTime === "08:00")) {
-            alarmTime = getCurrentTimeStr();
-        }
-
-        const newEntry = {
-            id: Date.now(),
-            date: targetDateStr,
-            time: alarmTime,
-            text: text,
-            photo: currentPhotoBase64
-        };
-
-        diaryListObj.push(newEntry);
-        localStorage.setItem('smartDiaryList', JSON.stringify(diaryListObj));
-
-        closeDiaryForm();
-        renderCalendar();
-        loadDiaryList();
-        alert('메모가 안전하게 저장되었습니다!');
-    }
-
-    function changeViewMode(mode) {
-        currentViewMode = mode;
-        localStorage.setItem('smartDiaryViewMode', mode);
-
-        ['3days', 'week', 'month', 'alarm', 'all'].forEach(type => {
-            const btn = document.getElementById(`view-${type}`);
-            if (btn) btn.classList.remove('active');
-        });
-
-        const activeBtn = document.getElementById(`view-${mode}`);
-        if (activeBtn) activeBtn.classList.add('active');
-
-        loadDiaryList();
-    }
-
-    function changeMonth(direction) {
-        calMonth += direction;
-        if (calMonth > 11) {
-            calMonth = 0;
-            calYear++;
-        } else if (calMonth < 0) {
-            calMonth = 11;
-            calYear--;
-        }
-        renderCalendar();
-    }
-
-    function renderCalendar() {
-        const grid = document.getElementById('cal-days-grid');
-        const title = document.getElementById('cal-month-title');
-        if (!grid || !title) return;
-
-        grid.innerHTML = '';
-        title.innerText = `${calYear}년 ${calMonth + 1}월`;
-
-        const firstDayIndex = new Date(calYear, calMonth, 1).getDay();
-        const totalDays = new Date(calYear, calMonth + 1, 0).getDate();
-        const todayStr = getTodayStr();
-        const holidays = getKoreanHolidays(calYear);
-
-        let diaryListObj = getAllDiaries();
-        let datesWithMemo = new Map();
-        diaryListObj.forEach(item => {
-            if (item.date) {
-                let normDate = normalizeDateStr(item.date);
-                let dObj = parseDateObj(normDate);
-                datesWithMemo.set(normDate, dObj.getDay());
-            }
-        });
-
-        for (let i = 0; i < firstDayIndex; i++) {
-            const emptyCell = document.createElement('div');
-            emptyCell.className = 'cal-cell empty';
-            grid.appendChild(emptyCell);
-        }
-
-        const dayClassMap = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-
-        for (let day = 1; day <= totalDays; day++) {
-            const cell = document.createElement('div');
-            cell.className = 'cal-cell';
-
-            const rawDateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            const normalizedDateStr = normalizeDateStr(rawDateStr);
-            const dObj = new Date(calYear, calMonth, day);
-            const dayOfWeek = dObj.getDay();
-
-            if (dayOfWeek === 0 || holidays.has(normalizedDateStr)) {
-                cell.classList.add('sunday');
-            } else if (dayOfWeek === 6) {
-                cell.classList.add('saturday');
-            }
-
-            if (normalizedDateStr === todayStr) {
-                cell.classList.add('today-date');
-            }
-
-            const span = document.createElement('span');
-            span.innerText = day;
-            cell.appendChild(span);
-
-            if (datesWithMemo.has(normalizedDateStr)) {
-                let memoDayOfWeek = datesWithMemo.get(normalizedDateStr);
-                const memoLine = document.createElement('div');
-                memoLine.className = `memo-line ${dayClassMap[memoDayOfWeek]}`;
-                cell.appendChild(memoLine);
-            }
-
-            cell.onclick = () => openDiaryForm(normalizedDateStr);
-            grid.appendChild(cell);
-        }
-    }
-
-    const calendarCard = document.getElementById('calendar-card');
-    let touchStartX = 0;
-    let touchEndX = 0;
-
-    calendarCard.addEventListener('touchstart', (e) => {
-        touchStartX = e.changedTouches[0].screenX;
-    }, {passive: true});
-
-    calendarCard.addEventListener('touchend', (e) => {
-        touchEndX = e.changedTouches[0].screenX;
-        if (touchEndX < touchStartX - 50) changeMonth(1);
-        if (touchEndX > touchStartX - 50) changeMonth(-1);
-    }, {passive: true});
-
-    function loadDiaryList() {
-        let diaryListObj = getAllDiaries();
-        if (!diaryList) return;
-        diaryList.innerHTML = '';
-
-        diaryListObj.sort((a, b) => {
-            let dateA = a.date || '';
-            let dateB = b.date || '';
-            if (dateA !== dateB) return dateB.localeCompare(dateA);
-            return b.id - a.id;
-        });
-
-        const todayStr = getTodayStr();
-        const currentTimeStr = getCurrentTimeStr();
-        const todayObj = parseDateObj(todayStr);
-
-        let labelText = '📋 기본 3일 메모';
-        let filtered = diaryListObj.filter(item => {
-            const itemDate = normalizeDateStr(item.date || todayStr);
-            const itemObj = parseDateObj(itemDate);
-
-            if (currentViewMode === 'all') {
-                labelText = '📋 전체보기 메모';
-                return true;
-            } else if (currentViewMode === 'alarm') {
-                labelText = '⏰ 예약보기 (미래 일정)';
-                const isFutureDate = itemDate > todayStr;
-                const isTodayFutureTime = (itemDate === todayStr && item.time && item.time >= currentTimeStr);
-                return (isFutureDate || isTodayFutureTime) && item.time && item.time.trim() !== '' && item.time.trim() !== '00:00';
-            } else if (currentViewMode === 'week') {
-                labelText = '📋 일주일 메모';
-                const diffTime = todayObj - itemObj;
-                const diffDays = diffTime / (1000 * 60 * 60 * 24);
-                return diffDays >= 0 && diffDays <= 6;
-            } else if (currentViewMode === 'month') {
-                labelText = '📋 한달 메모';
-                const diffTime = todayObj - itemObj;
-                const diffDays = diffTime / (1000 * 60 * 60 * 24);
-                return diffDays >= 0 && diffDays <= 30;
-            } else {
-                labelText = '📋 기본 3일 메모';
-                const diffTime = todayObj - itemObj;
-                const diffDays = diffTime / (1000 * 60 * 60 * 24);
-                return diffDays >= 0 && diffDays <= 2;
-            }
-        });
-
-        if (currentViewLabel) currentViewLabel.innerText = labelText;
-
-        ['3days', 'week', 'month', 'alarm', 'all'].forEach(type => {
-            const btn = document.getElementById(`view-${type}`);
-            if (btn) {
-                if (type === currentViewMode) btn.classList.add('active');
-                else btn.classList.remove('active');
-            }
-        });
-
-        if (filtered.length === 0) {
-            diaryList.innerHTML = `<div style="text-align:center; color:#95a5a6; padding:20px; font-size:15px;">조건에 일치하는 메모가 없습니다.</div>`;
-            return;
-        }
-
-        filtered.forEach(item => {
-            const itemDate = normalizeDateStr(item.date || todayStr);
-            const dayOfWeek = getDayOfWeekStr(itemDate);
-            
-            const isFutureDate = itemDate > todayStr;
-            const isTodayFutureTime = (itemDate === todayStr && item.time && item.time >= currentTimeStr);
-            const isFutureAlarm = (isFutureDate || isTodayFutureTime) && item.time && item.time.trim() !== '';
-
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'diary-item' + (isFutureAlarm ? ' alarm-memo' : '');
-
-            let dateHtml = `<div class="diary-date">📅 ${itemDate} (${dayOfWeek})`;
-            if (item.time) {
-                dateHtml += ` ⏰ ${item.time}`;
-            }
-            dateHtml += `</div>`;
-
-            let textHtml = `<div class="diary-text" style="font-size: ${currentFontSize}px;" contenteditable="true" onblur="updateDiaryText(${item.id}, this)">${escapeHtml(item.text)}</div>`;
-            
-            let photoHtml = '';
-            if (item.photo) {
-                photoHtml = `<img src="${item.photo}" class="diary-photo" alt="첨부 사진">`;
-            }
-
-            let deleteHtml = `<button class="delete-btn" onclick="deleteDiary(${item.id})">🗑️ 삭제</button>`;
-
-            itemDiv.innerHTML = dateHtml + textHtml + photoHtml + deleteHtml;
-            diaryList.appendChild(itemDiv);
-        });
-    }
-
-    function updateDiaryText(id, element) {
-        let diaryListObj = getAllDiaries();
-        const target = diaryListObj.find(item => item.id === id);
-        if (target) {
-            target.text = element.innerText;
-            localStorage.setItem('smartDiaryList', JSON.stringify(diaryListObj));
-        }
-    }
-
-    function deleteDiary(id) {
-        if (confirm('정말 이 메모를 삭제하시겠습니까?')) {
-            let diaryListObj = getAllDiaries();
-            diaryListObj = diaryListObj.filter(item => item.id !== id);
-            localStorage.setItem('smartDiaryList', JSON.stringify(diaryListObj));
-            renderCalendar();
-            loadDiaryList();
-        }
-    }
-
-    function escapeHtml(text) {
-        if (!text) return '';
-        return text
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
-
-    window.onload = () => {
-        initSpeechRecognition();
-        renderCalendar();
-        loadDiaryList();
-        if (fontSizeDisplay) fontSizeDisplay.innerText = currentFontSize + 'px';
-    };
-</script>
 </body>
 </html>
