@@ -932,7 +932,6 @@
         const todayStr = getTodayStr();
         const currentTimeStr = getCurrentTimeStr();
         const todayObj = parseDateObj(todayStr);
-        const holidays = getKoreanHolidays(parseDateObj(todayStr).getFullYear());
 
         let labelText = '📋 기본 3일 메모';
         let filtered = diaryListObj.filter(item => {
@@ -997,12 +996,12 @@
             const yearVal = dObj.getFullYear();
             const yearHolidays = getKoreanHolidays(yearVal);
 
-            // 달력과 동일한 요일/공휴일 클래스 결정
+            // 🌟 달력과 완전히 동일한 요일/공휴일 색상 매칭 로직 적용
             let headerColorClass = 'weekday';
             if (dayIndex === 0 || yearHolidays.has(dateStr)) {
-                headerColorClass = 'sunday';
+                headerColorClass = 'sunday'; // 일요일 또는 공휴일 (빨간색)
             } else if (dayIndex === 6) {
-                headerColorClass = 'saturday';
+                headerColorClass = 'saturday'; // 토요일 (파란색)
             }
             
             const groupCard = document.createElement('div');
