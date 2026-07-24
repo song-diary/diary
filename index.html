@@ -586,19 +586,25 @@
         return `${h}:${min}`;
     }
 
+    // 날짜 문자열을 확실하게 YYYY-MM-DD 형태로 정규화
     function normalizeDateStr(dateStr) {
         if (!dateStr) return getTodayStr();
-        return dateStr.replace(/[./]/g, '-');
+        let clean = String(dateStr).trim().replace(/[./]/g, '-');
+        let parts = clean.split('-');
+        if (parts.length === 3) {
+            let y = parts[0];
+            let m = parts[1].padStart(2, '0');
+            let d = parts[2].padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+        return getTodayStr();
     }
 
-    // 날짜 파싱 오류 및 타임존 오차를 해결한 완벽한 함수
+    // 완벽한 날짜 객체 생성 (로컬 타임존 반영)
     function parseDateObj(dateStr) {
         let cleanStr = normalizeDateStr(dateStr);
         let parts = cleanStr.split('-');
-        if (parts.length >= 3) {
-            return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-        }
-        return new Date();
+        return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
     }
 
     function getDayOfWeekStr(dateStr) {
@@ -756,12 +762,12 @@
     }
 
     function openDiaryForm(dateStr) {
-        selectedReservationDate = dateStr;
-        const dayOfWeek = getDayOfWeekStr(dateStr);
-        formTargetDateTitle.innerText = `📅 ${dateStr} (${dayOfWeek}) 메모 작성`;
+        selectedReservationDate = normalizeDateStr(dateStr);
+        const dayOfWeek = getDayOfWeekStr(selectedReservationDate);
+        formTargetDateTitle.innerText = `📅 ${selectedReservationDate} (${dayOfWeek}) 메모 작성`;
         
         const todayStr = getTodayStr();
-        if (dateStr >= todayStr) {
+        if (selectedReservationDate >= todayStr) {
             reservationTimeInput.value = "08:00";
         } else {
             reservationTimeInput.value = getCurrentTimeStr();
@@ -786,7 +792,7 @@
         }
 
         let diaryListObj = getAllDiaries();
-        let targetDateStr = selectedReservationDate || getTodayStr();
+        let targetDateStr = normalizeDateStr(selectedReservationDate || getTodayStr());
         const todayStr = getTodayStr();
         
         let alarmTime = reservationTimeInput.value;
@@ -875,7 +881,7 @@
 
             const rawDateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
             const normalizedDateStr = normalizeDateStr(rawDateStr);
-            const dObj = new Date(calYear, calMonth, day);
+            const dObj = parseDateObj(normalizedDateStr);
             const dayOfWeek = dObj.getDay();
 
             if (dayOfWeek === 0 || holidays.has(normalizedDateStr)) {
@@ -924,8 +930,8 @@
         diaryList.innerHTML = '';
 
         diaryListObj.sort((a, b) => {
-            let dateA = a.date || '';
-            let dateB = b.date || '';
+            let dateA = normalizeDateStr(a.date);
+            let dateB = normalizeDateStr(b.date);
             if (dateA !== dateB) return dateB.localeCompare(dateA);
             return b.id - a.id;
         });
@@ -990,18 +996,18 @@
         });
 
         groupedByDate.forEach((items, dateStr) => {
-            const dayOfWeek = getDayOfWeekStr(dateStr);
-            const dObj = parseDateObj(dateStr);
+            const normalizedDateStr = normalizeDateStr(dateStr);
+            const dayOfWeek = getDayOfWeekStr(normalizedDateStr);
+            const dObj = parseDateObj(normalizedDateStr);
             const dayIndex = dObj.getDay(); // 0: 일요일, 6: 토요일, 1~5: 평일
             const yearVal = dObj.getFullYear();
             const yearHolidays = getKoreanHolidays(yearVal);
 
-            // 요일 및 공휴일 정확하게 판별하여 클래스 부여
             let headerColorClass = 'weekday';
-            if (dayIndex === 0 || yearHolidays.has(dateStr)) {
-                headerColorClass = 'sunday';    // 일요일 또는 공휴일 (빨간색)
+            if (dayIndex === 0 || yearHolidays.has(normalizedDateStr)) {
+                headerColorClass = 'sunday';    // 일요일 또는 공휴일
             } else if (dayIndex === 6) {
-                headerColorClass = 'saturday';  // 토요일 (파란색)
+                headerColorClass = 'saturday';  // 토요일
             }
             
             const groupCard = document.createElement('div');
@@ -1009,7 +1015,7 @@
 
             const groupHeader = document.createElement('div');
             groupHeader.className = `date-group-header ${headerColorClass}`;
-            groupHeader.innerHTML = `📅 ${dateStr} (${dayOfWeek})`;
+            groupHeader.innerHTML = `📅 ${normalizedDateStr} (${dayOfWeek})`;
             groupCard.appendChild(groupHeader);
 
             items.forEach(item => {
