@@ -8,7 +8,7 @@
         :root {
             --bg-color: #f7f4f4;
             --card-bg: #ffffff;
-            --primary-color: #e06d6d; /* 일요일과 어울리는 부드러운 코랄 핑크 톤 */
+            --primary-color: #e06d6d;
             --primary-hover: #cc5c5c;
             --text-main: #2c3e50;
             --text-sub: #7f8c8d;
@@ -80,7 +80,7 @@
             background: var(--primary-hover);
         }
 
-        /* 설정 카드 (글자크기 + 약 복용 체크) */
+        /* 설정 카드 (글자크기 전용) */
         #settings-card {
             display: none;
             background: #fff8f8;
@@ -96,26 +96,6 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-        }
-
-        .pill-check-box {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: #fff;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            margin-top: 8px;
-            font-size: 14px;
-            font-weight: bold;
-        }
-
-        .pill-check-box input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            accent-color: var(--primary-color);
-            cursor: pointer;
         }
 
         /* 달력 스타일 */
@@ -408,23 +388,16 @@
         <button class="action-btn" onclick="toggleSettings()">⚙️ 설정</button>
     </div>
 
-    <!-- 설정 카드 (글자크기 및 약 복용 체크) -->
+    <!-- 설정 카드 (글자크기 조절 전용) -->
     <div class="card" id="settings-card">
         <div class="settings-title">
-            <span>🛠️ 환경 설정 및 건강 관리</span>
+            <span>🛠️ 환경 설정 (글자 크기)</span>
             <button class="close-form-btn" onclick="toggleSettings()">✖</button>
         </div>
-        <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 8px;">글자 크기 조절</div>
-        <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px;">
+        <div style="display: flex; gap: 8px; align-items: center;">
             <button class="action-btn" onclick="adjustFontSize(-1)">글자 작게 (-)</button>
             <span id="font-size-display" style="font-size: 13px; font-weight: bold;">14px</span>
             <button class="action-btn" onclick="adjustFontSize(1)">글자 크게 (+)</button>
-        </div>
-        
-        <div style="font-size: 13px; color: var(--text-sub);">오늘의 건강 관리</div>
-        <div class="pill-check-box">
-            <input type="checkbox" id="pill-checkbox" onchange="savePillStatus(this)">
-            <label for="pill-checkbox" id="pill-label-text" style="cursor:pointer; color: var(--text-main);">💊 오늘 약 복용 완료하기</label>
         </div>
     </div>
 
@@ -589,7 +562,6 @@
             settingsCard.style.display = 'none';
         } else {
             settingsCard.style.display = 'block';
-            checkPillStatus();
         }
     }
 
@@ -602,34 +574,6 @@
         document.querySelectorAll('.diary-text').forEach(el => {
             el.style.fontSize = currentFontSize + 'px';
         });
-    }
-
-    function savePillStatus(checkbox) {
-        const todayStr = getTodayStr();
-        localStorage.setItem('pillStatus_' + todayStr, checkbox.checked);
-        const label = document.getElementById('pill-label-text');
-        if (checkbox.checked) {
-            label.style.color = '#27ae60';
-            label.innerText = '💊 오늘의 약 복용 완료!';
-        } else {
-            label.style.color = 'var(--text-main)';
-            label.innerText = '💊 오늘 약 복용 완료하기';
-        }
-    }
-
-    function checkPillStatus() {
-        const todayStr = getTodayStr();
-        const isChecked = localStorage.getItem('pillStatus_' + todayStr) === 'true';
-        const checkbox = document.getElementById('pill-checkbox');
-        const label = document.getElementById('pill-label-text');
-        checkbox.checked = isChecked;
-        if (isChecked) {
-            label.style.color = '#27ae60';
-            label.innerText = '💊 오늘의 약 복용 완료!';
-        } else {
-            label.style.color = 'var(--text-main)';
-            label.innerText = '💊 오늘 약 복용 완료하기';
-        }
     }
 
     function previewImage(event) {
