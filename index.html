@@ -346,7 +346,6 @@
         .date-group-header {
             font-size: 16px;
             font-weight: bold;
-            color: var(--primary-color);
             padding-bottom: 8px;
             margin-bottom: 10px;
             border-bottom: 2px solid var(--bg-color);
@@ -354,6 +353,11 @@
             align-items: center;
             gap: 6px;
         }
+
+        /* 달력 요일별 색상과 일치하는 헤더 색상 클래스 */
+        .date-group-header.sunday { color: var(--sun-color); }
+        .date-group-header.saturday { color: var(--sat-color); }
+        .date-group-header.weekday { color: var(--weekday-color); }
 
         .sub-memo-item {
             background: #fcfcfc;
@@ -928,6 +932,7 @@
         const todayStr = getTodayStr();
         const currentTimeStr = getCurrentTimeStr();
         const todayObj = parseDateObj(todayStr);
+        const holidays = getKoreanHolidays(parseDateObj(todayStr).getFullYear());
 
         let labelText = '📋 기본 3일 메모';
         let filtered = diaryListObj.filter(item => {
@@ -987,12 +992,24 @@
 
         groupedByDate.forEach((items, dateStr) => {
             const dayOfWeek = getDayOfWeekStr(dateStr);
+            const dObj = parseDateObj(dateStr);
+            const dayIndex = dObj.getDay();
+            const yearVal = dObj.getFullYear();
+            const yearHolidays = getKoreanHolidays(yearVal);
+
+            // 달력과 동일한 요일/공휴일 클래스 결정
+            let headerColorClass = 'weekday';
+            if (dayIndex === 0 || yearHolidays.has(dateStr)) {
+                headerColorClass = 'sunday';
+            } else if (dayIndex === 6) {
+                headerColorClass = 'saturday';
+            }
             
             const groupCard = document.createElement('div');
             groupCard.className = 'date-group-card';
 
             const groupHeader = document.createElement('div');
-            groupHeader.className = 'date-group-header';
+            groupHeader.className = `date-group-header ${headerColorClass}`;
             groupHeader.innerHTML = `📅 ${dateStr} (${dayOfWeek})`;
             groupCard.appendChild(groupHeader);
 
