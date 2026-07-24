@@ -45,7 +45,7 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.03);
         }
 
-        /* 폰트 조절 바 */
+        /* 상단 바 및 글자크기/새메모 열기 버튼 */
         .top-bar {
             display: flex;
             justify-content: space-between;
@@ -54,23 +54,40 @@
             color: var(--text-sub);
         }
 
+        .top-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .action-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .action-btn:hover {
+            background: var(--primary-hover);
+        }
+
         .font-control-group {
             display: flex;
-            gap: 5px;
+            gap: 4px;
             align-items: center;
         }
 
         .font-btn {
             background: #fff;
             border: 1px solid var(--border-color);
-            padding: 2px 8px;
+            padding: 2px 6px;
             border-radius: 4px;
             cursor: pointer;
             font-size: 12px;
-        }
-
-        .font-btn:hover {
-            background: var(--bg-color);
         }
 
         /* 달력 스타일 */
@@ -327,11 +344,14 @@
 <div class="app-container">
     <!-- 상단 설정 바 -->
     <div class="top-bar card">
-        <span id="current-user-info">스마트 다이어리</span>
-        <div class="font-control-group">
-            <span>글자크기</span>
-            <button class="font-btn" onclick="adjustFontSize(-1)">-</button>
-            <button class="font-btn" onclick="adjustFontSize(1)">+</button>
+        <span style="font-weight:bold; color:var(--primary-color);">스마트 다이어리</span>
+        <div class="top-controls">
+            <button class="action-btn" onclick="openDiaryForm(getTodayStr())">➕ 새 메모 쓰기</button>
+            <div class="font-control-group">
+                <button class="font-btn" onclick="adjustFontSize(-1)">-</button>
+                <span style="font-size:11px;">글자</span>
+                <button class="font-btn" onclick="adjustFontSize(1)">+</button>
+            </div>
         </div>
     </div>
 
@@ -354,7 +374,7 @@
         <div class="calendar-grid" id="cal-days-grid" style="margin-top: 5px;"></div>
     </div>
 
-    <!-- 새 메모 작성 폼 (달력 날짜 클릭 시 나타남) -->
+    <!-- 새 메모 작성 폼 (달력 날짜 클릭 시 또는 상단 버튼 클릭 시 나타남) -->
     <div class="card" id="memo-form-card">
         <div class="form-header-info">
             <span id="form-target-date-title">📅 0000년 00월 00일 메모 작성</span>
@@ -362,7 +382,7 @@
         </div>
         
         <div class="reservation-box">
-            <label>⏰ 알람 설정:</label>
+            <label>⏰ 알람/예약 시간:</label>
             <input type="time" id="reservation-time-input" style="padding: 4px; border:1px solid var(--border-color); border-radius:4px;">
         </div>
 
@@ -397,12 +417,11 @@
 <script>
     let calYear = new Date().getFullYear();
     let calMonth = new Date().getMonth();
-    let currentFilter = 'month'; // 초기값은 기본 3일
+    let currentFilter = 'month'; 
     let selectedReservationDate = null;
     let currentPhotoBase64 = null;
     let currentFontSize = 14;
 
-    // 음성 인식 관련 변수
     let recognition = null;
     let isRecording = false;
     let shouldRestart = false;
@@ -539,7 +558,6 @@
         };
     }
 
-    // 달력 날짜 클릭 시 폼 열기
     function openDiaryForm(dateStr) {
         selectedReservationDate = dateStr;
         const dayOfWeek = getDayOfWeekStr(dateStr);
@@ -664,7 +682,6 @@
                 cell.appendChild(memoBar);
             }
 
-            // 달력 날짜 클릭 시 리스트 필터링 대신 '새 메모 작성 폼' 호출
             cell.onclick = () => {
                 openDiaryForm(normalizedDateStr);
             };
@@ -700,16 +717,16 @@
                 return true;
             } else if (currentFilter === 'alarm') {
                 return item.time && item.time.trim() !== '';
-            } else if (currentFilter === 'month') { // 기본 3일 필터
+            } else if (currentFilter === 'month') {
                 const diffTime = todayObj - itemObj;
                 const diffDays = diffTime / (1000 * 60 * 60 * 24);
-                return diffDays >= 0 && diffDays <= 2; // 오늘 포함 최근 3일
+                return diffDays >= 0 && diffDays <= 2;
             }
             return true;
         });
 
         if (filtered.length === 0) {
-            diaryList.innerHTML = `<div style="text-align:center; color:#a09184; padding:20px; font-size:14px;">표시할 메모가 없습니다.</div>`;
+            diaryList.innerHTML = `<div style="text-align:center; color:#a09184; padding:20px; font-size:14px;">저장된 메모가 없습니다. (상단의 '전체보기'를 눌러보세요)</div>`;
             return;
         }
 
