@@ -289,11 +289,11 @@
             border: 1px solid var(--border-color);
             border-radius: 8px;
             padding: 12px;
-            font-size: 16px;
             resize: vertical;
             outline: none;
             background: #fff;
             margin-bottom: 10px;
+            line-height: 1.5;
         }
 
         .diary-textarea:focus {
@@ -376,7 +376,6 @@
         }
 
         .diary-text {
-            font-size: 16px;
             line-height: 1.5;
             white-space: pre-wrap;
             word-break: break-all;
@@ -528,6 +527,7 @@
             <button class="action-btn" style="margin-top:5px;" onclick="removeImage()">사진 취소</button>
         </div>
 
+        <!-- 폰트 크기가 실시간 반영되는 작성 영역 -->
         <div id="textOutput" class="diary-textarea" contenteditable="true" placeholder="이곳에 메모를 입력하거나 음성메모를 사용하세요..."></div>
 
         <div class="btn-group">
@@ -598,7 +598,6 @@
         return getTodayStr();
     }
 
-    // 네이티브 Date 객체를 안전하게 활용하여 요일 오차를 원천 차단
     function parseDateObj(dateStr) {
         let cleanStr = normalizeDateStr(dateStr);
         let parts = cleanStr.split('-');
@@ -668,12 +667,19 @@
         }
     }
 
+    // 설정 변경 시 작성 칸과 목록의 폰트 크기를 즉시 동기화
     function adjustFontSize(step) {
         currentFontSize += step;
         if (currentFontSize < 12) currentFontSize = 12;
         if (currentFontSize > 26) currentFontSize = 26;
         localStorage.setItem('smartDiaryFontSize', currentFontSize);
-        fontSizeDisplay.innerText = currentFontSize + 'px';
+        
+        if (fontSizeDisplay) fontSizeDisplay.innerText = currentFontSize + 'px';
+        
+        // 작성 칸 폰트 크기 실시간 변경
+        if (textOutput) textOutput.style.fontSize = currentFontSize + 'px';
+
+        // 목록 메모들 폰트 크기 실시간 변경
         document.querySelectorAll('.diary-text').forEach(el => {
             el.style.fontSize = currentFontSize + 'px';
         });
@@ -764,8 +770,10 @@
         const dayOfWeek = getDayOfWeekStr(selectedReservationDate);
         formTargetDateTitle.innerText = `📅 ${selectedReservationDate} (${dayOfWeek}) 메모 작성`;
         
+        // 작성 창을 열 때 현재 설정된 폰트 크기 적용
+        if (textOutput) textOutput.style.fontSize = currentFontSize + 'px';
+
         const todayStr = getTodayStr();
-        // 오늘 날짜를 선택하면 현재 실제 시간을 기본값으로 설정
         if (selectedReservationDate === todayStr) {
             reservationTimeInput.value = getCurrentTimeStr();
         } else if (selectedReservationDate > todayStr) {
@@ -1059,6 +1067,9 @@
         loadDiaryList();
         if (fontSizeDisplay) {
             fontSizeDisplay.innerText = currentFontSize + 'px';
+        }
+        if (textOutput) {
+            textOutput.style.fontSize = currentFontSize + 'px';
         }
     };
 </script>
