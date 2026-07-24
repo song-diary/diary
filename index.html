@@ -29,6 +29,7 @@
             padding: 15px;
             max-width: 600px;
             margin: 0 auto;
+            touch-action: manipulation;
         }
 
         .app-container {
@@ -119,6 +120,9 @@
             padding-bottom: 5px;
         }
 
+        .cal-day-name.sunday { color: #e03131; }
+        .cal-day-name.saturday { color: #1971c2; }
+
         .cal-cell {
             aspect-ratio: 1;
             display: flex;
@@ -150,16 +154,18 @@
         }
 
         .cal-cell.today-date {
-            border: 1px solid var(--accent-today);
+            border: 2px solid var(--accent-today);
             font-weight: bold;
+            color: var(--accent-today);
         }
 
-        .memo-bar {
-            width: 4px;
-            height: 4px;
+        /* 점(Dot) 대신 일자선(Memo Line) 표시 */
+        .memo-line {
+            width: 60%;
+            height: 3px;
             background-color: var(--primary-color);
-            border-radius: 50%;
-            margin-top: 2px;
+            border-radius: 2px;
+            margin-top: 3px;
         }
 
         /* 새 메모 작성 폼 (기본 숨김) */
@@ -355,8 +361,8 @@
         </div>
     </div>
 
-    <!-- 달력 카드 -->
-    <div class="card">
+    <!-- 달력 카드 (스와이프 영역) -->
+    <div class="card" id="calendar-card">
         <div class="calendar-header">
             <button onclick="changeMonth(-1)">◀ 이전</button>
             <h3 id="cal-month-title">0000년 00월</h3>
@@ -383,7 +389,8 @@
         
         <div class="reservation-box">
             <label>⏰ 알람/예약 시간:</label>
-            <input type="time" id="reservation-time-input" style="padding: 4px; border:1px solid var(--border-color); border-radius:4px;">
+            <!-- 기본 아침 08:00 세팅 -->
+            <input type="time" id="reservation-time-input" value="08:00" style="padding: 4px; border:1px solid var(--border-color); border-radius:4px;">
         </div>
 
         <div id="photo-preview-wrap">
@@ -466,7 +473,6 @@
         ]);
     }
 
-    // 데이터 가져오기 (표준 키 및 구출용 탐색 통합)
     function getAllDiaries() {
         let combinedList = [];
         let standardData = localStorage.getItem('smartDiaryList');
@@ -583,6 +589,7 @@
         selectedReservationDate = dateStr;
         const dayOfWeek = getDayOfWeekStr(dateStr);
         formTargetDateTitle.innerText = `📅 ${dateStr} (${dayOfWeek}) 메모 작성`;
+        reservationTimeInput.value = "08:00"; // 기본 아침 8시 세팅
         memoFormCard.style.display = 'block';
         memoFormCard.scrollIntoView({ behavior: 'smooth' });
     }
@@ -592,7 +599,7 @@
         textOutput.innerText = '';
         accumulatedText = '';
         removeImage();
-        reservationTimeInput.value = '';
+        reservationTimeInput.value = "08:00";
     }
 
     function manualSaveDiary() {
@@ -604,7 +611,7 @@
 
         let diaryListObj = getAllDiaries();
         let targetDateStr = selectedReservationDate || getTodayStr();
-        let alarmTime = reservationTimeInput.value || null;
+        let alarmTime = reservationTimeInput.value || "08:00"; // 일반 메모도 기본 08:00 입력시간 저장
 
         const newEntry = {
             id: Date.now(),
@@ -697,14 +704,53 @@
             span.innerText = day;
             cell.appendChild(span);
 
+            // 점 대신 '일자선(memo-line)' 표시
             if (datesWithMemo.has(normalizedDateStr)) {
-                const memoBar = document.createElement('div');
-                memoBar.className = 'memo-bar';
-                cell.appendChild(memoBar);
+                const memoLine = document.createElement('div');
+                memoLine.className = 'memo-line';
+                cell.appendChild(memoLine);
             }
 
             cell.onclick = () => openDiaryForm(normalizedDateStr);
             grid.appendChild(cell);
+        }
+    }
+
+    // 달력 좌우 손가락 슬라이드(터치/드래그) 이벤트 구현
+    const calendarCard = document.getElementById('calendar-card');
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    calendarCard.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+    }, {passive: true});
+
+    calendarCard.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    }, {passive: true});
+
+    // 마우스 드래그 지원 (PC 화면용)
+    let mouseStartX = 0;
+    calendarCard.addEventListener('mousedown', (e) => {
+        mouseStartX = e.clientX;
+    });
+
+    calendarCard.addEventListener('mouseup', (e) => {
+        let mouseEndX = e.clientX;
+        if (mouseStartX - mouseEndX > 50) {
+            changeMonth(1); // 왼쪽으로 밀면 다음 달
+        } else if (mouseEndX - mouseStartX > 50) {
+            changeMonth(-1); // 오른쪽으로 밀면 이전 달
+        }
+    });
+
+    function handleSwipe() {
+        if (touchEndX < touchStartX - 50) {
+            changeMonth(1); // 왼쪽으로 쓸어넘기면 다음 달
+        }
+        if (touchEndX > touchStartX + 50) {
+            changeMonth(-1); // 오른쪽으로 쓸어넘기면 이전 달
         }
     }
 
@@ -753,7 +799,7 @@
             itemDiv.className = 'diary-item' + (isAlarm ? ' alarm-memo' : '');
 
             let dateHtml = `<div class="diary-date">📅 ${itemDate} (${dayOfWeek})`;
-            if (isAlarm) {
+            if (item.time) {
                 dateHtml += ` ⏰ ${item.time}`;
             }
             dateHtml += `</div>`;
