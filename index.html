@@ -333,25 +333,43 @@
             background-color: #e5d2d2;
         }
 
-        /* 메모 리스트 아이템 */
-        .diary-item {
-            background: #fff;
+        /* 일자별 그룹 박스 스타일 */
+        .date-group-card {
+            background: #ffffff;
             border: 1px solid var(--border-color);
-            border-radius: 8px;
+            border-radius: 10px;
             padding: 14px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+        }
+
+        .date-group-header {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--primary-color);
+            padding-bottom: 8px;
             margin-bottom: 10px;
+            border-bottom: 2px solid var(--bg-color);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .sub-memo-item {
+            background: #fcfcfc;
+            border: 1px solid #f0e6e6;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 8px;
             position: relative;
         }
 
-        .diary-item.alarm-memo {
-            border-left: 4px solid var(--primary-color);
+        .sub-memo-item:last-child {
+            margin-bottom: 0;
         }
 
-        .diary-date {
-            font-size: 15px;
-            color: var(--text-sub);
-            margin-bottom: 6px;
-            font-weight: bold;
+        .sub-memo-item.alarm-memo {
+            border-left: 4px solid var(--primary-color);
         }
 
         .diary-text {
@@ -370,11 +388,11 @@
 
         .delete-btn {
             position: absolute;
-            top: 12px;
-            right: 12px;
+            top: 10px;
+            right: 10px;
             background: none;
             border: none;
-            font-size: 14px;
+            font-size: 13px;
             color: #b0c4de;
             cursor: pointer;
         }
@@ -435,7 +453,7 @@
         <button class="action-btn" onclick="toggleSettings()">⚙️ 설정</button>
     </div>
 
-    <!-- 설정 카드 (글자크기 및 보기 방식 설정) -->
+    <!-- 설정 카드 -->
     <div class="card" id="settings-card">
         <div class="settings-title">
             <span>🛠️ 환경 설정</span>
@@ -464,7 +482,7 @@
             </div>
         </div>
 
-        <!-- 데이터 초기화 버튼 (2중 확인 적용) -->
+        <!-- 데이터 초기화 버튼 -->
         <div class="settings-section" style="padding-top: 5px;">
             <button class="action-btn" style="background-color: var(--accent-today); width:100%; font-size:14px; padding:6px;" onclick="resetAllData()">⚠️ 데이터 초기화 (새로 시작)</button>
         </div>
@@ -489,7 +507,7 @@
         <div class="calendar-grid" id="cal-days-grid" style="margin-top: 5px;"></div>
     </div>
 
-    <!-- 달력과 데이터 영역 구분선 -->
+    <!-- 구분선 -->
     <div class="section-divider">
         <span class="divider-label">📝 나의 기록</span>
     </div>
@@ -619,7 +637,6 @@
         return combinedList;
     }
 
-    // 데이터 초기화 (2중 확인 로직 적용)
     function resetAllData() {
         const firstCheck = confirm('⚠️ [1차 경고] 모든 메모 데이터가 초기화됩니다. 정말로 삭제하시겠습니까?');
         if (!firstCheck) return;
@@ -958,71 +975,68 @@
             return;
         }
 
+        // 일자별 그룹화 (Map 사용)
+        let groupedByDate = new Map();
         filtered.forEach(item => {
             const itemDate = normalizeDateStr(item.date || todayStr);
-            const dayOfWeek = getDayOfWeekStr(itemDate);
-            
-            const isFutureDate = itemDate > todayStr;
-            const isTodayFutureTime = (itemDate === todayStr && item.time && item.time >= currentTimeStr);
-            const isFutureAlarm = (isFutureDate || isTodayFutureTime) && item.time && item.time.trim() !== '';
-
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'diary-item' + (isFutureAlarm ? ' alarm-memo' : '');
-
-            let dateHtml = `<div class="diary-date">📅 ${itemDate} (${dayOfWeek})`;
-            if (item.time) {
-                dateHtml += ` ⏰ ${item.time}`;
+            if (!groupedByDate.has(itemDate)) {
+                groupedByDate.set(itemDate, []);
             }
-            dateHtml += `</div>`;
+            groupedByDate.get(itemDate).push(item);
+        });
 
-            let textHtml = `<div class="diary-text" style="font-size: ${currentFontSize}px;" contenteditable="true" onblur="updateDiaryText(${item.id}, this)">${escapeHtml(item.text)}</div>`;
+        groupedByDate.forEach((items, dateStr) => {
+            const dayOfWeek = getDayOfWeekStr(dateStr);
             
-            let photoHtml = '';
-            if (item.photo) {
-                photoHtml = `<img src="${item.photo}" class="diary-photo" alt="첨부 사진">`;
-            }
+            const groupCard = document.createElement('div');
+            groupCard.className = 'date-group-card';
 
-            let deleteHtml = `<button class="delete-btn" onclick="deleteDiary(${item.id})">🗑️ 삭제</button>`;
+            const groupHeader = document.createElement('div');
+            groupHeader.className = 'date-group-header';
+            groupHeader.innerHTML = `📅 ${dateStr} (${dayOfWeek})`;
+            groupCard.appendChild(groupHeader);
 
-            itemDiv.innerHTML = dateHtml + textHtml + photoHtml + deleteHtml;
-            diaryList.appendChild(itemDiv);
+            items.forEach(item => {
+                const itemDate = normalizeDateStr(item.date || todayStr);
+                const isFutureDate = itemDate > todayStr;
+                const isTodayFutureTime = (itemDate === todayStr && item.time && item.time >= currentTimeStr);
+                const isFutureAlarm = (isFutureDate || isTodayFutureTime) && item.time && item.time.trim() !== '';
+
+                const subItemDiv = document.createElement('div');
+                subItemDiv.className = isFutureAlarm ? 'sub-memo-item alarm-memo' : 'sub-memo-item';
+
+                let timeStrInfo = item.time ? `⏰ ${item.time}` : '';
+                let photoHtml = item.photo ? `<img src="${item.photo}" class="diary-photo" alt="메모 사진">` : '';
+
+                subItemDiv.innerHTML = `
+                    <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 4px; font-weight: bold;">${timeStrInfo}</div>
+                    <div class="diary-text" style="font-size: ${currentFontSize}px;">${item.text || ''}</div>
+                    ${photoHtml}
+                    <button class="delete-btn" onclick="deleteDiary(${item.id})">삭제</button>
+                `;
+                groupCard.appendChild(subItemDiv);
+            });
+
+            diaryList.appendChild(groupCard);
         });
     }
 
-    function updateDiaryText(id, element) {
-        let diaryListObj = getAllDiaries();
-        const target = diaryListObj.find(item => item.id === id);
-        if (target) {
-            target.text = element.innerText;
-            localStorage.setItem('smartDiaryList', JSON.stringify(diaryListObj));
-        }
-    }
-
     function deleteDiary(id) {
-        if (confirm('정말 이 메모를 삭제하시겠습니까?')) {
-            let diaryListObj = getAllDiaries();
-            diaryListObj = diaryListObj.filter(item => item.id !== id);
-            localStorage.setItem('smartDiaryList', JSON.stringify(diaryListObj));
-            renderCalendar();
-            loadDiaryList();
-        }
+        if (!confirm('이 메모를 정말 삭제하시겠습니까?')) return;
+        let diaryListObj = getAllDiaries();
+        diaryListObj = diaryListObj.filter(item => item.id !== id);
+        localStorage.setItem('smartDiaryList', JSON.stringify(diaryListObj));
+        renderCalendar();
+        loadDiaryList();
     }
 
-    function escapeHtml(text) {
-        if (!text) return '';
-        return text
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
-
-    window.onload = () => {
+    window.onload = function() {
         initSpeechRecognition();
         renderCalendar();
         loadDiaryList();
-        if (fontSizeDisplay) fontSizeDisplay.innerText = currentFontSize + 'px';
+        if (fontSizeDisplay) {
+            fontSizeDisplay.innerText = currentFontSize + 'px';
+        }
     };
 </script>
 </body>
