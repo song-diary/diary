@@ -393,6 +393,37 @@
             max-height: 100px;
             border-radius: 6px;
         }
+
+        /* 달력 / 데이터 영역 구분선 */
+        .section-divider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0 2px;
+        }
+
+        .section-divider::before,
+        .section-divider::after {
+            content: "";
+            flex: 1;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
+            opacity: 0.55;
+        }
+
+        .section-divider .divider-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--primary-color);
+            background: var(--bg-color);
+            padding: 4px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            white-space: nowrap;
+        }
     </style>
 </head>
 <body>
@@ -456,6 +487,11 @@
             <div class="cal-day-name saturday">토</div>
         </div>
         <div class="calendar-grid" id="cal-days-grid" style="margin-top: 5px;"></div>
+    </div>
+
+    <!-- 달력과 데이터 영역 구분선 -->
+    <div class="section-divider">
+        <span class="divider-label">📝 나의 기록</span>
     </div>
 
     <!-- 새 메모 작성 폼 -->
@@ -857,7 +893,7 @@
     calendarCard.addEventListener('touchend', (e) => {
         touchEndX = e.changedTouches[0].screenX;
         if (touchEndX < touchStartX - 50) changeMonth(1);
-        if (touchEndX > touchStartX - 50) changeMonth(-1);
+        else if (touchEndX > touchStartX + 50) changeMonth(-1);
     }, {passive: true});
 
     function loadDiaryList() {
