@@ -457,6 +457,7 @@
             padding: 16px;
             text-align: center;
             color: var(--weekday-color);
+            user-select: none;
         }
 
         .quote-header-tabs {
@@ -632,6 +633,7 @@
     let quoteMode = localStorage.getItem('smartDiaryQuoteMode') || 'random';
     let customQuoteText = localStorage.getItem('smartDiaryCustomQuote') || '오늘 흘린 땀방울은 내일의 기쁨이 된다.';
     let activeQuoteCategory = localStorage.getItem('smartDiaryQuoteCategory') || 'quote';
+    let currentItemIndex = 0; // 스와이프 공부용 인덱스
 
     const quotesList = [
         { text: "피할 수 없으면 즐겨라.", author: "- 로버트 엘리엇 -" },
@@ -785,6 +787,7 @@
     function setQuoteMode(mode) {
         quoteMode = mode;
         localStorage.setItem('smartDiaryQuoteMode', mode);
+        currentItemIndex = 0;
         
         if (mode === 'random') {
             document.getElementById('quote-mode-random').classList.add('active');
@@ -802,6 +805,7 @@
     function switchQuoteCategory(category) {
         activeQuoteCategory = category;
         localStorage.setItem('smartDiaryQuoteCategory', category);
+        currentItemIndex = 0;
 
         ['quote', 'idiom', 'tech'].forEach(cat => {
             const btn = document.getElementById(`tab-${cat}`);
@@ -836,35 +840,62 @@
     }
 
     function displayQuote() {
-        const todayStr = getTodayStr();
-        let hash = 0;
-        for (let i = 0; i < todayStr.length; i++) {
-            hash = todayStr.charCodeAt(i) + ((hash << 5) - hash);
-        }
+        let listArr = quotesList;
+        if (activeQuoteCategory === 'idiom') listArr = idiomsList;
+        else if (activeQuoteCategory === 'tech') listArr = techList;
 
-        if (activeQuoteCategory === 'idiom') {
-            let index = Math.abs(hash) % idiomsList.length;
-            quoteContent.innerText = `"${idiomsList[index].text}"`;
-            quoteAuthorText.innerText = `- 뜻: ${idiomsList[index].author} -`;
-        } else if (activeQuoteCategory === 'tech') {
-            let index = Math.abs(hash) % techList.length;
-            quoteContent.innerText = `[${techList[index].text}]`;
-            quoteAuthorText.innerText = `- 해설: ${techList[index].author} -`;
+        if (activeQuoteCategory === 'quote' && quoteMode === 'fixed') {
+            quoteContent.innerText = `"${customQuoteText}"`;
+            quoteAuthorText.innerText = "- 나의 좌우명 -";
         } else {
-            if (quoteMode === 'fixed') {
-                quoteContent.innerText = `"${customQuoteText}"`;
-                quoteAuthorText.innerText = "- 나의 좌우명 -";
+            if (currentItemIndex < 0) currentItemIndex = listArr.length - 1;
+            if (currentItemIndex >= listArr.length) currentItemIndex = 0;
+
+            const currentItem = listArr[currentItemIndex];
+            if (activeQuoteCategory === 'idiom') {
+                quoteContent.innerText = `"${currentItem.text}"`;
+                quoteAuthorText.innerText = `- 뜻: ${currentItem.author} (밀어서 다음 ➡️) -`;
+            } else if (activeQuoteCategory === 'tech') {
+                quoteContent.innerText = `[${currentItem.text}]`;
+                quoteAuthorText.innerText = `- 해설: ${currentItem.author} (밀어서 다음 ➡️) -`;
             } else {
-                let index = Math.abs(hash) % quotesList.length;
-                quoteContent.innerText = `"${quotesList[index].text}"`;
-                quoteAuthorText.innerText = quotesList[index].author;
+                quoteContent.innerText = `"${currentItem.text}"`;
+                quoteAuthorText.innerText = `${currentItem.author} (밀어서 다음 ➡️)`;
             }
         }
         
-        // 폰트 크기 유지 동기화
         if (quoteContent) quoteContent.style.fontSize = currentFontSize + 'px';
         if (quoteAuthorText) quoteAuthorText.style.fontSize = Math.max(12, currentFontSize - 2) + 'px';
     }
+
+    // 명언 카드 스와이프 기능 구현
+    let quoteTouchStartX = 0;
+    let quoteTouchEndX = 0;
+
+    quoteCard.addEventListener('touchstart', (e) => {
+        quoteTouchStartX = e.changedTouches[0].screenX;
+    }, {passive: true});
+
+    quoteCard.addEventListener('touchend', (e) => {
+        quoteTouchEndX = e.changedTouches[0].screenX;
+        let listArr = quotesList;
+        if (activeQuoteCategory === 'idiom') listArr = idiomsList;
+        else if (activeQuoteCategory === 'tech') listArr = techList;
+
+        if (activeQuoteCategory === 'quote' && quoteMode === 'fixed') return;
+
+        if (quoteTouchEndX < quoteTouchStartX - 40) {
+            // 왼쪽으로 밀었을 때 -> 다음 보기
+            currentItemIndex++;
+            if (currentItemIndex >= listArr.length) currentItemIndex = 0;
+            displayQuote();
+        } else if (quoteTouchEndX > quoteTouchStartX + 40) {
+            // 오른쪽으로 밀었을 때 -> 이전 보기
+            currentItemIndex--;
+            if (currentItemIndex < 0) currentItemIndex = listArr.length - 1;
+            displayQuote();
+        }
+    }, {passive: true});
 
     function toggleDiarySection() {
         isDiaryOpen = !isDiaryOpen;
@@ -889,7 +920,6 @@
         if (fontSizeDisplay) fontSizeDisplay.innerText = currentFontSize + 'px';
         if (textOutput) textOutput.style.fontSize = currentFontSize + 'px';
 
-        // 메인 화면 명언/용어 및 뜻·해설 폰트 크기 동기화 적용
         if (quoteContent) quoteContent.style.fontSize = currentFontSize + 'px';
         if (quoteAuthorText) quoteAuthorText.style.fontSize = Math.max(12, currentFontSize - 2) + 'px';
 
