@@ -358,7 +358,7 @@
             width: 65%;
             height: 3px;
             border-radius: 2px;
-            margin-top: 3px;
+            margin-top: 2px;
         }
         .memo-line.sun { background-color: var(--sun-color); }
         .memo-line.mon { background-color: #e67e22; }
@@ -368,11 +368,12 @@
         .memo-line.fri { background-color: #9b59b6; }
         .memo-line.sat { background-color: var(--sat-color); }
 
-        /* 가계부 지출/수입 달력 표시 점 */
+        /* 가계부 지출/수입 달력 표시 점 (위치 변경됨) */
         .money-dots {
             display: flex;
             gap: 3px;
             margin-top: 2px;
+            margin-bottom: 1px;
         }
         .dot {
             width: 6px;
@@ -417,7 +418,7 @@
             gap: 8px;
             align-items: center;
             margin-bottom: 10px;
-            font-size: 13px; /* 글자 크기 축소 */
+            font-size: 13px;
             background: #fff0f0;
             padding: 8px 10px;
             border-radius: 8px;
@@ -425,7 +426,7 @@
         }
 
         .reservation-box input {
-            font-size: 13px; /* 입력창 글자 크기 축소 */
+            font-size: 13px;
             padding: 3px 6px;
         }
 
@@ -752,6 +753,15 @@
             </div>
         </div>
 
+        <!-- 💬 명언/좌우명 표시 온/오프 설정 (신규 추가) -->
+        <div class="settings-section">
+            <label>💬 명언 및 좌우명 표시 설정</label>
+            <div style="display: flex; gap: 6px;">
+                <button class="view-select-btn active" id="quote-on-btn" onclick="setQuoteVisibility(true)">명언 켜기</button>
+                <button class="view-select-btn" id="quote-off-btn" onclick="setQuoteVisibility(false)">명언 끄기</button>
+            </div>
+        </div>
+
         <div class="settings-section">
             <label>💬 메인 화면 정보 설정</label>
             <div style="display: flex; gap: 6px; margin-bottom: 8px;">
@@ -912,8 +922,9 @@
     let currentFontSize = parseInt(localStorage.getItem('smartDiaryFontSize')) || 16;
     let isDiaryOpen = false;
 
-    // 날씨 표시 여부 상태 저장
+    // 날씨 및 명언 표시 여부 상태 저장
     let isWeatherVisible = localStorage.getItem('smartDiaryWeatherVisible') !== 'false';
+    let isQuoteVisible = localStorage.getItem('smartDiaryQuoteVisible') !== 'false';
 
     let currentMoneyType = 'expense';
 
@@ -952,7 +963,6 @@
         { text: "오픈소스 (Open Source)", author: "소프트웨어의 소스 코드를 공개하여 누구나 수정하고 배포할 수 있는 형태." }
     ];
 
-    // 계정과목 콤보박스 목록 정의
     const expenseCategories = ["식비", "교통/통신", "주거/생활", "쇼핑", "의료/건강", "문화/여가", "기타 지출"];
     const incomeCategories = ["용돈", "월급", "사업수입", "금융/투자", "기타 수입"];
 
@@ -994,6 +1004,28 @@
 
         const onBtn = document.getElementById('weather-on-btn');
         const offBtn = document.getElementById('weather-off-btn');
+        if (onBtn && offBtn) {
+            if (isVisible) {
+                onBtn.classList.add('active');
+                offBtn.classList.remove('active');
+            } else {
+                offBtn.classList.add('active');
+                onBtn.classList.remove('active');
+            }
+        }
+    }
+
+    // 명언 켜기/끄기 함수 (신규 추가)
+    function setQuoteVisibility(isVisible) {
+        isQuoteVisible = isVisible;
+        localStorage.setItem('smartDiaryQuoteVisible', isVisible);
+        
+        if (quoteCard) {
+            quoteCard.style.display = isVisible ? 'block' : 'none';
+        }
+
+        const onBtn = document.getElementById('quote-on-btn');
+        const offBtn = document.getElementById('quote-off-btn');
         if (onBtn && offBtn) {
             if (isVisible) {
                 onBtn.classList.add('active');
@@ -1368,7 +1400,6 @@
                 const daysMap = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
                 const lineClass = daysMap[dayOfWeek] || 'mon';
                 
-                // 수입과 지출 각각의 점 색상 다르게 표시
                 let hasExpense = dayDiaries.some(d => d.money && d.money.type === 'expense');
                 let hasIncome = dayDiaries.some(d => d.money && d.money.type === 'income');
                 
@@ -1380,7 +1411,8 @@
                     dotHTML = `<div class="money-dots">${dots.join('')}</div>`;
                 }
 
-                indicatorHTML = `<div class="memo-line ${lineClass}"></div>${dotHTML}`;
+                // 2번 요청 반영: 점(dotHTML)이 위로 오고, 일자바(memo-line)가 아래로 오도록 순서 변경
+                indicatorHTML = `${dotHTML}<div class="memo-line ${lineClass}"></div>`;
             }
 
             cell.innerHTML = `<span>${day}</span>${indicatorHTML}`;
@@ -1644,7 +1676,6 @@
                     </div>`;
                 }
 
-                // 시간 뱃지 글자 크기를 작게(12px) 조정
                 let timeBadge = item.time ? `<span style="color:var(--primary-color); font-weight:bold; margin-right:6px; font-size:12px;">⏰ ${item.time}</span>` : '';
                 let photoHTML = item.photo ? `<img src="${item.photo}" class="diary-photo" alt="첨부사진">` : '';
                 let textContentHTML = item.text ? `<div class="diary-text" style="font-size: ${currentFontSize}px;">${timeBadge}${item.text}</div>` : (item.time ? `<div class="diary-text" style="font-size: ${currentFontSize}px;">${timeBadge}</div>` : '');
@@ -1749,6 +1780,7 @@
     window.onload = () => {
         renderWeeklyWeather();
         setWeatherVisibility(isWeatherVisible);
+        setQuoteVisibility(isQuoteVisible); // 명언 가시성 초기화 반영
         renderCalendar();
         applyFontSize();
         setQuoteMode(quoteMode);
