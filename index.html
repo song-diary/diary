@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>스마트 다이어리</title>
+    <title>스마트 다이어리 & 용돈관리</title>
     <style>
         :root {
             --bg-color: #f7f4f4;
@@ -17,6 +17,8 @@
             --sun-color: #d93838;
             --sat-color: #1b6ca8;
             --weekday-color: #34495e;
+            --income-color: #27ae60;
+            --expense-color: #c0392b;
         }
 
         * {
@@ -134,6 +136,53 @@
             color: white;
             border-color: var(--primary-color);
         }
+
+        /* 💰 용돈관리 요약 카드 스타일 */
+        #money-summary-card {
+            background: linear-gradient(135deg, #f0fff4, #e6f9ed);
+            border: 1px solid #c2e8ce;
+            border-radius: 12px;
+            padding: 15px;
+        }
+
+        .money-summary-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #27ae60;
+            font-size: 16px;
+        }
+
+        .money-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            text-align: center;
+        }
+
+        .money-box {
+            background: #ffffff;
+            border: 1px solid #d2eedc;
+            border-radius: 8px;
+            padding: 8px 4px;
+        }
+
+        .money-box .m-label {
+            font-size: 12px;
+            color: var(--text-sub);
+            margin-bottom: 3px;
+        }
+
+        .money-box .m-value {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .money-box.income .m-value { color: var(--income-color); }
+        .money-box.expense .m-value { color: var(--expense-color); }
+        .money-box.balance .m-value { color: #2980b9; }
 
         /* 날씨 카드 스타일 */
         #weather-card {
@@ -319,7 +368,21 @@
         .memo-line.fri { background-color: #9b59b6; }
         .memo-line.sat { background-color: var(--sat-color); }
 
-        /* 메모 작성 폼 */
+        /* 가계부 지출/수입 달력 표시 점 */
+        .money-dots {
+            display: flex;
+            gap: 2px;
+            margin-top: 3px;
+        }
+        .dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+        }
+        .dot.expense { background-color: var(--expense-color); }
+        .dot.income { background-color: var(--income-color); }
+
+        /* 메모 및 가계부 작성 폼 */
         #memo-form-card {
             display: none;
             border: 2px solid var(--primary-color);
@@ -364,9 +427,61 @@
             font-size: 15px;
         }
 
+        /* 💵 가계부 입력 영역 스타일 */
+        .money-input-box {
+            background: #f0f9f4;
+            border: 1px solid #c2e8ce;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .money-input-row {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .money-type-btn {
+            flex: 1;
+            padding: 6px;
+            border: 1px solid var(--border-color);
+            background: #fff;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            color: var(--text-sub);
+        }
+
+        .money-type-btn.expense.active {
+            background: var(--expense-color);
+            color: white;
+            border-color: var(--expense-color);
+        }
+
+        .money-type-btn.income.active {
+            background: var(--income-color);
+            color: white;
+            border-color: var(--income-color);
+        }
+
+        .money-input-field {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 15px;
+            outline: none;
+            background: #fff;
+        }
+
         .diary-textarea {
             width: 100%;
-            min-height: 120px;
+            min-height: 100px;
             border: 1px solid var(--border-color);
             border-radius: 8px;
             padding: 12px;
@@ -456,6 +571,16 @@
 
         .sub-memo-item.alarm-memo {
             border-left: 4px solid var(--primary-color);
+        }
+
+        /* 가계부 내역 아이템 강조 스타일 */
+        .sub-memo-item.money-item-box {
+            border-left: 4px solid var(--income-color);
+            background: #fbfefc;
+        }
+        .sub-memo-item.money-item-box.is-expense {
+            border-left: 4px solid var(--expense-color);
+            background: #fffdfd;
         }
 
         .diary-text {
@@ -652,6 +777,28 @@
         </div>
     </div>
 
+    <!-- 💰 이번 달 용돈관리 요약 카드 -->
+    <div class="card" id="money-summary-card">
+        <div class="money-summary-header">
+            <span id="money-summary-title">💵 이번 달 용돈 현황</span>
+            <span style="font-size: 12px; color: #27ae60; font-weight: normal;">지출/수입 관리</span>
+        </div>
+        <div class="money-summary-grid">
+            <div class="money-box income">
+                <div class="m-label">총 수입</div>
+                <div class="m-value" id="summary-income">0원</div>
+            </div>
+            <div class="money-box expense">
+                <div class="m-label">총 지출</div>
+                <div class="m-value" id="summary-expense">0원</div>
+            </div>
+            <div class="money-box balance">
+                <div class="m-label">잔액</div>
+                <div class="m-value" id="summary-balance">0원</div>
+            </div>
+        </div>
+    </div>
+
     <!-- 🌤️ 날씨 카드 -->
     <div class="card" id="weather-card">
         <div class="weather-header">
@@ -703,7 +850,7 @@
         <div class="quote-author" id="quote-author-text" style="font-size: 14px;">- 성경 -</div>
     </div>
 
-    <!-- 새 메모 작성/수정 폼 -->
+    <!-- 새 메모 및 용돈 작성/수정 폼 -->
     <div class="card" id="memo-form-card">
         <div class="form-header-info">
             <span id="form-target-date-title">📅 0000년 00월 00일 메모 작성</span>
@@ -713,6 +860,19 @@
         <div class="reservation-box">
             <label>⏰ 알람/시간:</label>
             <input type="time" id="reservation-time-input" style="padding: 4px; border:1px solid var(--border-color); border-radius:4px; background:#fff;">
+        </div>
+
+        <!-- 💵 가계부 입력 영역 추가 -->
+        <div class="money-input-box">
+            <label style="font-size: 14px; font-weight: bold; color: #27ae60;">💰 용돈(가계부) 기록</label>
+            <div class="money-input-row">
+                <button type="button" class="money-type-btn expense active" id="type-expense-btn" onclick="setMoneyType('expense')">지출</button>
+                <button type="button" class="money-type-btn income" id="type-income-btn" onclick="setMoneyType('income')">수입</button>
+            </div>
+            <div style="display: flex; gap: 6px;">
+                <input type="text" id="money-category-input" class="money-input-field" placeholder="분류 (예: 식비, 교통)" style="flex: 1;">
+                <input type="number" id="money-amount-input" class="money-input-field" placeholder="금액 (원)" style="flex: 1.5;">
+            </div>
         </div>
 
         <div id="photo-preview-wrap">
@@ -748,6 +908,9 @@
     let currentPhotoBase64 = null;
     let currentFontSize = parseInt(localStorage.getItem('smartDiaryFontSize')) || 16;
     let isDiaryOpen = false;
+
+    // 가계부 입력 타입 ('expense' 또는 'income' 또는 '')
+    let currentMoneyType = 'expense';
 
     let quoteMode = localStorage.getItem('smartDiaryQuoteMode') || 'random';
     let customQuoteText = localStorage.getItem('smartDiaryCustomQuote') || '오늘 흘린 땀방울은 내일의 기쁨이 된다.';
@@ -805,6 +968,11 @@
     const quoteAuthorText = document.getElementById('quote-author-text');
     const customQuoteInput = document.getElementById('custom-quote-input');
     const fixedQuoteInputWrap = document.getElementById('fixed-quote-input-wrap');
+    
+    const moneyCategoryInput = document.getElementById('money-category-input');
+    const moneyAmountInput = document.getElementById('money-amount-input');
+    const typeExpenseBtn = document.getElementById('type-expense-btn');
+    const typeIncomeBtn = document.getElementById('type-income-btn');
 
     function renderWeeklyWeather() {
         const grid = document.getElementById('weekly-weather-grid');
@@ -912,8 +1080,58 @@
         return combinedList;
     }
 
+    // 💰 이번 달 가계부 요약 계산 및 반영
+    function updateMoneySummary() {
+        const diaries = getAllDiaries();
+        const prefix = `${calYear}-${String(calMonth + 1).padStart(2, '0')}`;
+        
+        let totalIncome = 0;
+        let totalExpense = 0;
+
+        diaries.forEach(item => {
+            if (normalizeDateStr(item.date).startsWith(prefix) && item.money && item.money.amount) {
+                let amt = Number(item.money.amount) || 0;
+                if (item.money.type === 'income') {
+                    totalIncome += amt;
+                } else if (item.money.type === 'expense') {
+                    totalExpense += amt;
+                }
+            }
+        });
+
+        let balance = totalIncome - totalExpense;
+
+        const summaryTitle = document.getElementById('money-summary-title');
+        const summaryIncome = document.getElementById('summary-income');
+        const summaryExpense = document.getElementById('summary-expense');
+        const summaryBalance = document.getElementById('summary-balance');
+
+        if (summaryTitle) summaryTitle.textContent = `💵 ${calYear}년 ${calMonth + 1}월 용돈 현황`;
+        if (summaryIncome) summaryIncome.textContent = totalIncome.toLocaleString() + '원';
+        if (summaryExpense) summaryExpense.textContent = totalExpense.toLocaleString() + '원';
+        if (summaryBalance) {
+            summaryBalance.textContent = balance.toLocaleString() + '원';
+            if (balance < 0) {
+                summaryBalance.style.color = 'var(--expense-color)';
+            } else {
+                summaryBalance.style.color = '#2980b9';
+            }
+        }
+    }
+
+    function setMoneyType(type) {
+        currentMoneyType = type;
+        if (type === 'expense') {
+            typeExpenseBtn.classList.add('active');
+            typeIncomeBtn.classList.remove('active');
+        } else {
+            typeIncomeBtn.classList.add('active');
+            typeExpenseBtn.classList.remove('active');
+        }
+    }
+
     function resetAllData() {
-        const firstCheck = confirm('⚠️ [1차 경고] 모든 메모 데이터가 초기화됩니다. 정말로 삭제하시겠습니까?');
+        const firstCheck = confirm('⚠️ [1차 경고] 모든 메모 및 가계부 데이터가 초기화됩니다. 정말로 삭제하시겠습니까?');
         if (!firstCheck) return;
 
         const secondCheck = confirm('🚨 [최종 경고] 이 작업은 절대로 되돌릴 수 없습니다. 기존의 모든 일정을 전부 지우고 새로 시작하시겠습니까?');
@@ -921,6 +1139,7 @@
 
         localStorage.removeItem('smartDiaryList');
         renderCalendar();
+        updateMoneySummary();
         loadDiaryList();
         alert('모든 데이터가 깨끗하게 초기화되었습니다.');
         toggleSettings();
@@ -964,320 +1183,171 @@
                 else btn.classList.remove('active');
             }
         });
-
-        if (category !== 'quote') {
-            quoteMode = 'random';
-            document.getElementById('quote-mode-random').classList.add('active');
-            document.getElementById('quote-mode-fixed').classList.remove('active');
-            fixedQuoteInputWrap.style.display = 'none';
-        }
-
         displayQuote();
     }
 
     function saveCustomQuote() {
         const val = customQuoteInput.value.trim();
         if (!val) {
-            alert('좌우명을 입력해주세요!');
+            alert('좌우명을 입력해주세요.');
             return;
         }
         customQuoteText = val;
         localStorage.setItem('smartDiaryCustomQuote', val);
-        setQuoteMode('fixed');
-        switchQuoteCategory('quote');
+        alert('좌우명이 저장되었습니다.');
         displayQuote();
-        alert('나만의 좌우명이 저장되었습니다!');
     }
 
     function displayQuote() {
-        let listArr = quotesList;
-        if (activeQuoteCategory === 'idiom') listArr = idiomsList;
-        else if (activeQuoteCategory === 'tech') listArr = techList;
-
-        if (activeQuoteCategory === 'quote' && quoteMode === 'fixed') {
-            quoteContent.innerText = `"${customQuoteText}"`;
-            quoteAuthorText.innerText = "- 나의 좌우명 -";
-        } else {
-            if (currentItemIndex < 0) currentItemIndex = listArr.length - 1;
-            if (currentItemIndex >= listArr.length) currentItemIndex = 0;
-
-            const currentItem = listArr[currentItemIndex];
-            if (activeQuoteCategory === 'idiom') {
-                quoteContent.innerText = `"${currentItem.text}"`;
-                quoteAuthorText.innerText = `- 뜻: ${currentItem.author} (탭해서 다음 ➡️) -`;
-            } else if (activeQuoteCategory === 'tech') {
-                quoteContent.innerText = `[${currentItem.text}]`;
-                quoteAuthorText.innerText = `- 해설: ${currentItem.author} (탭해서 다음 ➡️) -`;
-            } else {
-                quoteContent.innerText = `"${currentItem.text}"`;
-                quoteAuthorText.innerText = `${currentItem.author} (탭해서 다음 ➡️)`;
-            }
-        }
-        
-        if (quoteContent) quoteContent.style.fontSize = currentFontSize + 'px';
-        if (quoteAuthorText) quoteAuthorText.style.fontSize = Math.max(12, currentFontSize - 2) + 'px';
-    }
-
-    // 명언 영역은 탭(클릭)하면 다음 명언으로 넘어가도록 가볍게 구성
-    quoteCard.addEventListener('click', () => {
-        if (activeQuoteCategory === 'quote' && quoteMode === 'fixed') return;
-        let listArr = quotesList;
-        if (activeQuoteCategory === 'idiom') listArr = idiomsList;
-        else if (activeQuoteCategory === 'tech') listArr = techList;
-
-        currentItemIndex++;
-        if (currentItemIndex >= listArr.length) currentItemIndex = 0;
-        displayQuote();
-    });
-
-    function toggleDiarySection() {
-        isDiaryOpen = !isDiaryOpen;
-        if (isDiaryOpen) {
-            diaryListCard.style.display = 'block';
-            quoteCard.style.display = 'none';
-            dividerLabelText.innerText = '📝 나의 기록 접기 ▲';
-            loadDiaryList();
-        } else {
-            diaryListCard.style.display = 'none';
-            quoteCard.style.display = 'block';
-            dividerLabelText.innerText = '📝 나의 기록 펼치기 ▼';
-        }
-    }
-
-    function adjustFontSize(step) {
-        currentFontSize += step;
-        if (currentFontSize < 12) currentFontSize = 12;
-        if (currentFontSize > 26) currentFontSize = 26;
-        localStorage.setItem('smartDiaryFontSize', currentFontSize);
-        
-        if (fontSizeDisplay) fontSizeDisplay.innerText = currentFontSize + 'px';
-        if (textOutput) textOutput.style.fontSize = currentFontSize + 'px';
-
-        if (quoteContent) quoteContent.style.fontSize = currentFontSize + 'px';
-        if (quoteAuthorText) quoteAuthorText.style.fontSize = Math.max(12, currentFontSize - 2) + 'px';
-
-        document.querySelectorAll('.diary-text').forEach(el => {
-            el.style.fontSize = currentFontSize + 'px';
-        });
-    }
-
-    function previewImage(event) {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                currentPhotoBase64 = e.target.result;
-                document.getElementById('image-preview').src = currentPhotoBase64;
-                document.getElementById('photo-preview-wrap').style.display = 'block';
-            };
-            reader.readAsDataURL(file);
-        }
-    }
-
-    function removeImage() {
-        currentPhotoBase64 = null;
-        document.getElementById('diary-photo-input').value = '';
-        document.getElementById('image-preview').src = '';
-        document.getElementById('photo-preview-wrap').style.display = 'none';
-    }
-
-    function initSpeechRecognition() {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) return;
-
-        recognition = new SpeechRecognition();
-        recognition.lang = 'ko-KR';
-        recognition.interimResults = true;
-        recognition.continuous = true;
-
-        recognition.onstart = () => {
-            isRecording = true;
-            recordBtn.innerText = '⏹️ 중지';
-        };
-
-        recognition.onresult = (event) => {
-            let interimTranscript = '';
-            let finalTranscript = '';
-
-            for (let i = event.resultIndex; i < event.results.length; ++i) {
-                if (event.results[i].isFinal) {
-                    finalTranscript += event.results[i][0].transcript;
-                } else {
-                    interimTranscript += event.results[i][0].transcript;
-                }
-            }
-
-            if (finalTranscript) {
-                accumulatedText += (accumulatedText ? ' ' : '') + finalTranscript;
-            }
-            
-            textOutput.innerText = accumulatedText + (interimTranscript ? ' ' + interimTranscript : '');
-        };
-
-        recognition.onend = () => {
-            if (shouldRestart && isRecording) {
-                try { recognition.start(); } catch (e) {}
-            } else {
-                isRecording = false;
-                recordBtn.innerText = '🎤 음성메모';
-                accumulatedText = textOutput.innerText;
-            }
-        };
-    }
-
-    if (recordBtn) {
-        recordBtn.onclick = () => {
-            if (!recognition) return;
-            if (isRecording) {
-                shouldRestart = false;
-                isRecording = false;
-                recognition.stop();
-                recordBtn.innerText = '🎤 음성메모';
-            } else {
-                shouldRestart = true;
-                accumulatedText = textOutput.innerText;
-                try { recognition.start(); } catch (e) {}
-            }
-        };
-    }
-
-    function openDiaryForm(dateStr) {
-        editingDiaryId = null;
-        selectedReservationDate = normalizeDateStr(dateStr);
-        const dayOfWeek = getDayOfWeekStr(selectedReservationDate);
-        formTargetDateTitle.innerText = `📅 ${selectedReservationDate} (${dayOfWeek}) 메모 작성`;
-        
-        if (textOutput) {
-            textOutput.style.fontSize = currentFontSize + 'px';
-            textOutput.innerText = '';
-        }
-        accumulatedText = '';
-        removeImage();
-
-        const todayStr = getTodayStr();
-        if (selectedReservationDate === todayStr) {
-            reservationTimeInput.value = getCurrentTimeStr();
-        } else if (selectedReservationDate > todayStr) {
-            reservationTimeInput.value = "08:00";
-        } else {
-            reservationTimeInput.value = getCurrentTimeStr();
-        }
-
-        memoFormCard.style.display = 'block';
-        memoFormCard.scrollIntoView({ behavior: 'smooth' });
-
-        setTimeout(() => {
-            textOutput.focus();
-        }, 100);
-    }
-
-    function editDiary(id) {
-        let diaryListObj = getAllDiaries();
-        let targetItem = diaryListObj.find(item => item.id === id);
-        if (!targetItem) return;
-
-        editingDiaryId = id;
-        selectedReservationDate = normalizeDateStr(targetItem.date);
-        const dayOfWeek = getDayOfWeekStr(selectedReservationDate);
-        formTargetDateTitle.innerText = `✏️ ${selectedReservationDate} (${dayOfWeek}) 메모 수정`;
-
-        if (textOutput) {
-            textOutput.style.fontSize = currentFontSize + 'px';
-            textOutput.innerText = targetItem.text || '';
-        }
-        accumulatedText = targetItem.text || '';
-        reservationTimeInput.value = targetItem.time || getCurrentTimeStr();
-
-        if (targetItem.photo) {
-            currentPhotoBase64 = targetItem.photo;
-            document.getElementById('image-preview').src = currentPhotoBase64;
-            document.getElementById('photo-preview-wrap').style.display = 'block';
-        } else {
-            removeImage();
-        }
-
-        memoFormCard.style.display = 'block';
-        memoFormCard.scrollIntoView({ behavior: 'smooth' });
-
-        setTimeout(() => {
-            textOutput.focus();
-        }, 100);
-    }
-
-    function closeDiaryForm() {
-        memoFormCard.style.display = 'none';
-        textOutput.innerText = '';
-        accumulatedText = '';
-        editingDiaryId = null;
-        removeImage();
-    }
-
-    function manualSaveDiary() {
-        const text = textOutput.innerText.trim();
-        if (!text && !currentPhotoBase64) {
-            alert('내용이나 사진을 입력해주세요!');
+        if (quoteMode === 'fixed') {
+            if (quoteContent) quoteContent.textContent = `"${customQuoteText}"`;
+            if (quoteAuthorText) quoteAuthorText.textContent = '- 나의 좌우명 -';
             return;
         }
 
-        let diaryListObj = getAllDiaries();
-        let targetDateStr = normalizeDateStr(selectedReservationDate || getTodayStr());
-        const todayStr = getTodayStr();
+        let list = quotesList;
+        if (activeQuoteCategory === 'idiom') list = idiomsList;
+        else if (activeQuoteCategory === 'tech') list = techList;
+
+        const currentItem = list[currentItemIndex % list.length];
+        if (quoteContent) quoteContent.textContent = `"${currentItem.text}"`;
+        if (quoteAuthorText) quoteAuthorText.textContent = `- ${currentItem.author} -`;
+    }
+
+    if (quoteCard) {
+        quoteCard.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON' || e.target.closest('.quote-header-tabs')) return;
+            if (quoteMode === 'random') {
+                currentItemIndex++;
+                displayQuote();
+            }
+        });
+    }
+
+    function adjustFontSize(delta) {
+        currentFontSize += delta;
+        if (currentFontSize < 12) currentFontSize = 12;
+        if (currentFontSize > 26) currentFontSize = 26;
         
-        let alarmTime = reservationTimeInput.value;
-        if (targetDateStr === todayStr && (!alarmTime || alarmTime === "08:00")) {
-            alarmTime = getCurrentTimeStr();
-        }
+        localStorage.setItem('smartDiaryFontSize', currentFontSize);
+        applyFontSize();
+    }
 
-        if (editingDiaryId) {
-            diaryListObj = diaryListObj.map(item => {
-                if (item.id === editingDiaryId) {
-                    return {
-                        ...item,
-                        date: targetDateStr,
-                        time: alarmTime,
-                        text: text,
-                        photo: currentPhotoBase64
-                    };
-                }
-                return item;
-            });
-            alert('메모가 성공적으로 수정되었습니다!');
-        } else {
-            const newEntry = {
-                id: Date.now(),
-                date: targetDateStr,
-                time: alarmTime,
-                text: text,
-                photo: currentPhotoBase64
-            };
-            diaryListObj.push(newEntry);
-            alert('메모가 안전하게 저장되었습니다!');
-        }
+    function applyFontSize() {
+        if (fontSizeDisplay) fontSizeDisplay.textContent = `${currentFontSize}px`;
+        
+        if (quoteContent) quoteContent.style.fontSize = `${currentFontSize}px`;
+        if (quoteAuthorText) quoteAuthorText.style.fontSize = `${Math.max(12, currentFontSize - 2)}px`;
 
-        localStorage.setItem('smartDiaryList', JSON.stringify(diaryListObj));
-
-        closeDiaryForm();
-        renderCalendar();
-        if (isDiaryOpen) loadDiaryList();
+        document.querySelectorAll('.diary-text').forEach(el => {
+            el.style.fontSize = `${currentFontSize}px`;
+        });
+        document.querySelectorAll('.date-group-header').forEach(el => {
+            el.style.fontSize = `${Math.max(14, currentFontSize)}px`;
+        });
     }
 
     function changeViewMode(mode) {
         currentViewMode = mode;
         localStorage.setItem('smartDiaryViewMode', mode);
 
-        ['3days', 'week', 'month', 'alarm', 'all'].forEach(type => {
-            const btn = document.getElementById(`view-${type}`);
-            if (btn) btn.classList.remove('active');
+        ['3days', 'week', 'month', 'alarm', 'all'].forEach(m => {
+            const btn = document.getElementById(`view-${m}`);
+            if (btn) {
+                if (m === mode) btn.classList.add('active');
+                else btn.classList.remove('active');
+            }
         });
 
-        const activeBtn = document.getElementById(`view-${mode}`);
-        if (activeBtn) activeBtn.classList.add('active');
-
-        if (isDiaryOpen) loadDiaryList();
+        loadDiaryList();
+        toggleSettings();
     }
 
-    function changeMonth(direction) {
-        calMonth += direction;
+    function toggleDiarySection() {
+        isDiaryOpen = !isDiaryOpen;
+        if (isDiaryOpen) {
+            dividerLabelText.textContent = '📝 나의 기록 접기 ▲';
+            diaryListCard.style.display = 'block';
+            loadDiaryList();
+        } else {
+            dividerLabelText.textContent = '📝 나의 기록 펼치기 ▼';
+            diaryListCard.style.display = 'none';
+        }
+    }
+
+    function renderCalendar() {
+        const title = document.getElementById('cal-month-title');
+        const grid = document.getElementById('cal-days-grid');
+        if (!title || !grid) return;
+
+        title.textContent = `${calYear}년 ${calMonth + 1}월`;
+        grid.innerHTML = '';
+
+        const firstDay = new Date(calYear, calMonth, 1).getDay();
+        const lastDate = new Date(calYear, calMonth + 1, 0).getDate();
+        const holidays = getKoreanHolidays(calYear);
+        const diaries = getAllDiaries();
+
+        const todayStr = getTodayStr();
+
+        for (let i = 0; i < firstDay; i++) {
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'cal-cell empty';
+            grid.appendChild(emptyCell);
+        }
+
+        for (let day = 1; day <= lastDate; day++) {
+            const mStr = String(calMonth + 1).padStart(2, '0');
+            const dStr = String(day).padStart(2, '0');
+            const dateStr = `${calYear}-${mStr}-${dStr}`;
+
+            const cell = document.createElement('div');
+            cell.className = 'cal-cell';
+
+            const dObj = new Date(calYear, calMonth, day);
+            const dayOfWeek = dObj.getDay();
+
+            if (dateStr === todayStr) {
+                cell.classList.add('today-date');
+            }
+
+            if (dayOfWeek === 0 || holidays.has(dateStr)) {
+                cell.classList.add('sunday');
+            } else if (dayOfWeek === 6) {
+                cell.classList.add('saturday');
+            }
+
+            const dayDiaries = diaries.filter(d => normalizeDateStr(d.date) === dateStr);
+            let indicatorHTML = '';
+            if (dayDiaries.length > 0) {
+                const daysMap = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+                const lineClass = daysMap[dayOfWeek] || 'mon';
+                
+                // 가계부 내역이 포함되어 있는지 확인하여 점(dot) 추가 표시
+                let hasExpense = dayDiaries.some(d => d.money && d.money.type === 'expense');
+                let hasIncome = dayDiaries.some(d => d.money && d.money.type === 'income');
+                
+                let dotHTML = '';
+                if (hasExpense || hasIncome) {
+                    let dots = [];
+                    if (hasExpense) dots.push('<span class="dot expense"></span>');
+                    if (hasIncome) dots.push('<span class="dot income"></span>');
+                    dotHTML = `<div class="money-dots">${dots.join('')}</div>`;
+                }
+
+                indicatorHTML = `<div class="memo-line ${lineClass}"></div>${dotHTML}`;
+            }
+
+            cell.innerHTML = `<span>${day}</span>${indicatorHTML}`;
+            cell.onclick = () => openDiaryForm(dateStr);
+            grid.appendChild(cell);
+        }
+        
+        updateMoneySummary();
+    }
+
+    function changeMonth(delta) {
+        calMonth += delta;
         if (calMonth > 11) {
             calMonth = 0;
             calYear++;
@@ -1288,244 +1358,359 @@
         renderCalendar();
     }
 
-    function renderCalendar() {
-        const grid = document.getElementById('cal-days-grid');
-        const title = document.getElementById('cal-month-title');
-        if (!grid || !title) return;
+    function openDiaryForm(dateStr, existingItem = null) {
+        selectedReservationDate = normalizeDateStr(dateStr);
+        editingDiaryId = existingItem ? existingItem.id : null;
 
-        grid.innerHTML = '';
-        title.innerText = `${calYear}년 ${calMonth + 1}월`;
+        const dObj = parseDateObj(selectedReservationDate);
+        const dayName = getDayOfWeekStr(selectedReservationDate);
+        formTargetDateTitle.textContent = `📅 ${dObj.getFullYear()}년 ${dObj.getMonth() + 1}월 ${dObj.getDate()}일 (${dayName}) 메모`;
 
-        const firstDayIndex = new Date(calYear, calMonth, 1).getDay();
-        const totalDays = new Date(calYear, calMonth + 1, 0).getDate();
-        const todayStr = getTodayStr();
-        const holidays = getKoreanHolidays(calYear);
-
-        let diaryListObj = getAllDiaries();
-        let datesWithMemo = new Map();
-        diaryListObj.forEach(item => {
-            if (item.date) {
-                let normDate = normalizeDateStr(item.date);
-                let dObj = parseDateObj(normDate);
-                datesWithMemo.set(normDate, dObj.getDay());
+        if (existingItem) {
+            textOutput.innerHTML = existingItem.text || '';
+            reservationTimeInput.value = existingItem.time || '';
+            currentPhotoBase64 = existingItem.photo || null;
+            
+            if (existingItem.money) {
+                setMoneyType(existingItem.money.type || 'expense');
+                moneyCategoryInput.value = existingItem.money.category || '';
+                moneyAmountInput.value = existingItem.money.amount || '';
+            } else {
+                setMoneyType('expense');
+                moneyCategoryInput.value = '';
+                moneyAmountInput.value = '';
             }
-        });
-
-        for (let i = 0; i < firstDayIndex; i++) {
-            const emptyCell = document.createElement('div');
-            emptyCell.className = 'cal-cell empty';
-            grid.appendChild(emptyCell);
+        } else {
+            textOutput.innerHTML = '';
+            reservationTimeInput.value = getCurrentTimeStr();
+            currentPhotoBase64 = null;
+            setMoneyType('expense');
+            moneyCategoryInput.value = '';
+            moneyAmountInput.value = '';
         }
 
-        const dayClassMap = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+        updatePhotoPreview();
+        memoFormCard.style.display = 'block';
+        memoFormCard.scrollIntoView({ behavior: 'smooth' });
+    }
 
-        for (let day = 1; day <= totalDays; day++) {
-            const cell = document.createElement('div');
-            cell.className = 'cal-cell';
+    function closeDiaryForm() {
+        memoFormCard.style.display = 'none';
+        editingDiaryId = null;
+        currentPhotoBase64 = null;
+    }
 
-            const mStr = String(calMonth + 1).padStart(2, '0');
-            const dStr = String(day).padStart(2, '0');
-            const normalizedDateStr = `${calYear}-${mStr}-${dStr}`;
+    function previewImage(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            currentPhotoBase64 = e.target.result;
+            updatePhotoPreview();
+        };
+        reader.readAsDataURL(file);
+    }
 
-            const dObj = parseDateObj(normalizedDateStr);
-            const dayOfWeek = dObj.getDay();
-
-            if (dayOfWeek === 0 || holidays.has(normalizedDateStr)) {
-                cell.classList.add('sunday');
-            } else if (dayOfWeek === 6) {
-                cell.classList.add('saturday');
-            }
-
-            if (normalizedDateStr === todayStr) {
-                cell.classList.add('today-date');
-            }
-
-            const span = document.createElement('span');
-            span.innerText = day;
-            cell.appendChild(span);
-
-            if (datesWithMemo.has(normalizedDateStr)) {
-                let memoDayOfWeek = datesWithMemo.get(normalizedDateStr);
-                const memoLine = document.createElement('div');
-                memoLine.className = `memo-line ${dayClassMap[memoDayOfWeek]}`;
-                cell.appendChild(memoLine);
-            }
-
-            // 날짜 셀 클릭 시 메모 창 열기 (지연 없는 즉시 반응)
-            cell.addEventListener('click', (e) => {
-                e.stopPropagation();
-                openDiaryForm(normalizedDateStr);
-            });
-
-            grid.appendChild(cell);
+    function updatePhotoPreview() {
+        const wrap = document.getElementById('photo-preview-wrap');
+        const img = document.getElementById('image-preview');
+        if (currentPhotoBase64) {
+            img.src = currentPhotoBase64;
+            wrap.style.display = 'block';
+        } else {
+            img.src = '';
+            wrap.style.display = 'none';
         }
     }
 
-    function loadDiaryList() {
-        let diaryListObj = getAllDiaries();
-        if (!diaryList) return;
-        diaryList.innerHTML = '';
+    function removeImage() {
+        currentPhotoBase64 = null;
+        updatePhotoPreview();
+        const fileInput = document.getElementById('diary-photo-input');
+        if (fileInput) fileInput.value = '';
+    }
 
-        diaryListObj.sort((a, b) => {
-            let dateA = normalizeDateStr(a.date);
-            let dateB = normalizeDateStr(b.date);
-            if (dateA !== dateB) return dateB.localeCompare(dateA);
-            return b.id - a.id;
-        });
+    function manualSaveDiary() {
+        const content = textOutput.innerHTML.trim();
+        const timeVal = reservationTimeInput.value;
+        const moneyCategory = moneyCategoryInput.value.trim();
+        const moneyAmount = moneyAmountInput.value.trim();
 
-        const todayStr = getTodayStr();
-        const currentTimeStr = getCurrentTimeStr();
-        const todayObj = parseDateObj(todayStr);
+        let moneyObj = null;
+        if (moneyAmount !== '' && !isNaN(moneyAmount)) {
+            moneyObj = {
+                type: currentMoneyType,
+                category: moneyCategory || (currentMoneyType === 'expense' ? '지출' : '수입'),
+                amount: Number(moneyAmount)
+            };
+        }
 
-        let labelText = '📋 기본 3일 메모';
-        let filtered = diaryListObj.filter(item => {
-            const itemDate = normalizeDateStr(item.date || todayStr);
-            const itemObj = parseDateObj(itemDate);
-
-            if (currentViewMode === 'all') {
-                labelText = '📋 전체보기 메모';
-                return true;
-            } else if (currentViewMode === 'alarm') {
-                labelText = '⏰ 예약보기 (미래 일정)';
-                const isFutureDate = itemDate > todayStr;
-                const isTodayFutureTime = (itemDate === todayStr && item.time && item.time >= currentTimeStr);
-                return (isFutureDate || isTodayFutureTime) && item.time && item.time.trim() !== '' && item.time.trim() !== '00:00';
-            } else if (currentViewMode === 'week') {
-                labelText = '📋 일주일 메모';
-                const diffTime = todayObj - itemObj;
-                const diffDays = diffTime / (1000 * 60 * 60 * 24);
-                return diffDays >= 0 && diffDays <= 6;
-            } else if (currentViewMode === 'month') {
-                labelText = '📋 한달 메모';
-                const diffTime = todayObj - itemObj;
-                const diffDays = diffTime / (1000 * 60 * 60 * 24);
-                return diffDays >= 0 && diffDays <= 30;
-            } else {
-                labelText = '📋 기본 3일 메모';
-                const diffTime = todayObj - itemObj;
-                const diffDays = diffTime / (1000 * 60 * 60 * 24);
-                return diffDays >= 0 && diffDays <= 2;
-            }
-        });
-
-        if (currentViewLabel) currentViewLabel.innerText = labelText;
-
-        ['3days', 'week', 'month', 'alarm', 'all'].forEach(type => {
-            const btn = document.getElementById(`view-${type}`);
-            if (btn) {
-                if (type === currentViewMode) btn.classList.add('active');
-                else btn.classList.remove('active');
-            }
-        });
-
-        if (filtered.length === 0) {
-            diaryList.innerHTML = `<div style="text-align:center; color:#95a5a6; padding:20px; font-size:15px;">조건에 일치하는 메모가 없습니다.</div>`;
+        if (!content && !currentPhotoBase64 && !moneyObj) {
+            alert('내용, 사진, 또는 가계부 내역 중 하나 이상을 입력해주세요.');
             return;
         }
 
-        let groupedByDate = new Map();
-        filtered.forEach(item => {
-            const itemDate = normalizeDateStr(item.date || todayStr);
-            if (!groupedByDate.has(itemDate)) {
-                groupedByDate.set(itemDate, []);
+        let diaries = getAllDiaries();
+
+        if (editingDiaryId) {
+            diaries = diaries.map(item => {
+                if (item.id === editingDiaryId) {
+                    return {
+                        ...item,
+                        text: content,
+                        time: timeVal,
+                        photo: currentPhotoBase64,
+                        money: moneyObj
+                    };
+                }
+                return item;
+            });
+        } else {
+            const newItem = {
+                id: Date.now().toString(),
+                date: selectedReservationDate,
+                time: timeVal,
+                text: content,
+                photo: currentPhotoBase64,
+                money: moneyObj
+            };
+            diaries.push(newItem);
+        }
+
+        localStorage.setItem('smartDiaryList', JSON.stringify(diaries));
+        closeDiaryForm();
+        renderCalendar();
+        updateMoneySummary();
+        if (isDiaryOpen) loadDiaryList();
+    }
+
+    function deleteDiary(id) {
+        if (!confirm('이 항목을 정말 삭제하시겠습니까?')) return;
+        let diaries = getAllDiaries();
+        diaries = diaries.filter(d => d.id !== id);
+        localStorage.setItem('smartDiaryList', JSON.stringify(diaries));
+        renderCalendar();
+        updateMoneySummary();
+        if (isDiaryOpen) loadDiaryList();
+    }
+
+    function loadDiaryList() {
+        if (!diaryList) return;
+        diaryList.innerHTML = '';
+
+        let diaries = getAllDiaries();
+        if (diaries.length === 0) {
+            diaryList.innerHTML = '<div style="text-align:center; color:var(--text-sub); padding:15px;">등록된 메모가 없습니다. 달력 날짜를 터치해 기록을 남겨보세요!</div>';
+            if (currentViewLabel) currentViewLabel.textContent = '📋 메모 목록 (0개)';
+            return;
+        }
+
+        const todayStr = getTodayStr();
+        let filtered = [];
+        let labelText = '';
+
+        if (currentViewMode === '3days') {
+            labelText = '📋 기본 3일 기록 (오늘 기준 전후)';
+            const tObj = parseDateObj(todayStr);
+            let targetDates = [];
+            for (let i = -1; i <= 1; i++) {
+                let d = new Date(tObj);
+                d.setDate(tObj.getDate() + i);
+                let y = d.getFullYear();
+                let m = String(d.getMonth() + 1).padStart(2, '0');
+                let day = String(d.getDate()).padStart(2, '0');
+                targetDates.push(`${y}-${m}-${day}`);
             }
-            groupedByDate.get(itemDate).push(item);
+            filtered = diaries.filter(d => targetDates.includes(normalizeDateStr(d.date)));
+        } else if (currentViewMode === 'week') {
+            labelText = '📋 일주일 기록 (이번 주)';
+            const tObj = parseDateObj(todayStr);
+            let dayOfWeek = tObj.getDay();
+            let targetDates = [];
+            for (let i = 0; i < 7; i++) {
+                let d = new Date(tObj);
+                d.setDate(tObj.getDate() - dayOfWeek + i);
+                let y = d.getFullYear();
+                let m = String(d.getMonth() + 1).padStart(2, '0');
+                let day = String(d.getDate()).padStart(2, '0');
+                targetDates.push(`${y}-${m}-${day}`);
+            }
+            filtered = diaries.filter(d => targetDates.includes(normalizeDateStr(d.date)));
+        } else if (currentViewMode === 'month') {
+            labelText = `📋 한달 기록 (${calYear}년 ${calMonth + 1}월)`;
+            const prefix = `${calYear}-${String(calMonth + 1).padStart(2, '0')}`;
+            filtered = diaries.filter(d => normalizeDateStr(d.date).startsWith(prefix));
+        } else if (currentViewMode === 'alarm') {
+            labelText = '📋 예약/알람 설정된 메모';
+            filtered = diaries.filter(d => d.time && d.time.trim() !== '');
+        } else {
+            labelText = '📋 전체 기록 목록';
+            filtered = diaries;
+        }
+
+        if (currentViewLabel) currentViewLabel.textContent = labelText;
+
+        if (filtered.length === 0) {
+            diaryList.innerHTML = '<div style="text-align:center; color:var(--text-sub); padding:15px;">해당 조건에 일치하는 기록이 없습니다.</div>';
+            return;
+        }
+
+        filtered.sort((a, b) => normalizeDateStr(b.date).localeCompare(normalizeDateStr(a.date)));
+
+        let grouped = {};
+        filtered.forEach(item => {
+            let dStr = normalizeDateStr(item.date);
+            if (!grouped[dStr]) grouped[dStr] = [];
+            grouped[dStr].push(item);
         });
 
-        groupedByDate.forEach((items, dateStr) => {
-            const normalizedDateStr = normalizeDateStr(dateStr);
-            const dayOfWeek = getDayOfWeekStr(normalizedDateStr);
-            const dObj = parseDateObj(normalizedDateStr);
-            const dayIndex = dObj.getDay(); 
-            const yearVal = dObj.getFullYear();
-            const yearHolidays = getKoreanHolidays(yearVal);
-
-            let headerColorClass = 'weekday';
-            if (dayIndex === 0 || yearHolidays.has(normalizedDateStr)) {
-                headerColorClass = 'sunday';    
-            } else if (dayIndex === 6) {
-                headerColorClass = 'saturday';  
-            }
-            
+        Object.keys(grouped).sort((a, b) => b.localeCompare(a)).forEach(dateStr => {
             const groupCard = document.createElement('div');
             groupCard.className = 'date-group-card';
 
-            const groupHeader = document.createElement('div');
-            groupHeader.className = `date-group-header ${headerColorClass}`;
-            groupHeader.innerHTML = `📅 ${normalizedDateStr} (${dayOfWeek})`;
+            const dObj = parseDateObj(dateStr);
+            const dayOfWeek = dObj.getDay();
+            const dayName = getDayOfWeekStr(dateStr);
+            const holidays = getKoreanHolidays(dObj.getFullYear());
+
+            let headerClass = 'weekday';
+            if (dayOfWeek === 0 || holidays.has(dateStr)) headerClass = 'sunday';
+            else if (dayOfWeek === 6) headerClass = 'saturday';
+
+            let groupHeader = document.createElement('div');
+            groupHeader.className = `date-group-header ${headerClass}`;
+            groupHeader.innerHTML = `<span>📅 ${dObj.getFullYear()}년 ${dObj.getMonth() + 1}월 ${dObj.getDate()}일 (${dayName})</span>`;
             groupCard.appendChild(groupHeader);
 
-            items.forEach(item => {
-                const itemDate = normalizeDateStr(item.date || todayStr);
-                const isFutureDate = itemDate > todayStr;
-                const isTodayFutureTime = (itemDate === todayStr && item.time && item.time >= currentTimeStr);
-                const isFutureAlarm = (isFutureDate || isTodayFutureTime) && item.time && item.time.trim() !== '';
+            grouped[dateStr].forEach(item => {
+                const subItem = document.createElement('div');
+                subItem.className = 'sub-memo-item';
+                if (item.time) subItem.classList.add('alarm-memo');
 
-                const subItemDiv = document.createElement('div');
-                subItemDiv.className = isFutureAlarm ? 'sub-memo-item alarm-memo' : 'sub-memo-item';
+                let moneyHTML = '';
+                if (item.money) {
+                    let isExp = item.money.type === 'expense';
+                    subItem.classList.add('money-item-box');
+                    if (isExp) subItem.classList.add('is-expense');
 
-                let timeStrInfo = item.time ? `⏰ ${item.time}` : '';
-                let photoHtml = item.photo ? `<img src="${item.photo}" class="diary-photo" alt="메모 사진">` : '';
+                    let colorStyle = isExp ? 'color: var(--expense-color);' : 'color: var(--income-color);';
+                    let typeSign = isExp ? '-' : '+';
+                    let amountStr = Number(item.money.amount).toLocaleString() + '원';
+                    
+                    moneyHTML = `<div style="font-weight: bold; margin-bottom: 4px; ${colorStyle}">
+                        💰 [${item.money.type === 'expense' ? '지출' : '수입'}] ${item.money.category} : ${typeSign}${amountStr}
+                    </div>`;
+                }
 
-                subItemDiv.innerHTML = `
-                    <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 4px; font-weight: bold;">${timeStrInfo}</div>
-                    <div class="diary-text" style="font-size: ${currentFontSize}px;">${item.text || ''}</div>
-                    ${photoHtml}
+                let timeBadge = item.time ? `<span style="color:var(--primary-color); font-weight:bold; margin-right:6px;">⏰ ${item.time}</span>` : '';
+                let photoHTML = item.photo ? `<img src="${item.photo}" class="diary-photo" alt="첨부사진">` : '';
+                let textContentHTML = item.text ? `<div class="diary-text" style="font-size: ${currentFontSize}px;">${timeBadge}${item.text}</div>` : (item.time ? `<div class="diary-text" style="font-size: ${currentFontSize}px;">${timeBadge}</div>` : '');
+
+                subItem.innerHTML = `
                     <div class="memo-action-btns">
-                        <button class="edit-btn" onclick="editDiary(${item.id})">수정</button>
-                        <button class="delete-btn" onclick="deleteDiary(${item.id})">삭제</button>
+                        <button class="edit-btn" onclick='openDiaryForm("${dateStr}", ${JSON.stringify(item)})'>수정</button>
+                        <button class="delete-btn" onclick="deleteDiary('${item.id}')">삭제</button>
                     </div>
+                    ${moneyHTML}
+                    ${textContentHTML}
+                    ${photoHTML}
                 `;
-                groupCard.appendChild(subItemDiv);
+                groupCard.appendChild(subItem);
             });
 
             diaryList.appendChild(groupCard);
         });
     }
 
-    function deleteDiary(id) {
-        if (!confirm('이 메모를 정말 삭제하시겠습니까?')) return;
-        let diaryListObj = getAllDiaries();
-        diaryListObj = diaryListObj.filter(item => item.id !== id);
-        localStorage.setItem('smartDiaryList', JSON.stringify(diaryListObj));
-        renderCalendar();
-        loadDiaryList();
+    function initSpeechRecognition() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            if (recordBtn) recordBtn.style.display = 'none';
+            return;
+        }
+
+        recognition = new SpeechRecognition();
+        recognition.lang = 'ko-KR';
+        recognition.interimResults = true;
+        recognition.continuous = true;
+
+        recognition.onstart = () => {
+            isRecording = true;
+            if (recordBtn) {
+                recordBtn.style.background = '#e74c3c';
+                recordBtn.textContent = '⏹️ 녹음 중지';
+            }
+        };
+
+        recognition.onresult = (event) => {
+            let interimText = '';
+            let finalSegment = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    finalSegment += event.results[i][0].transcript;
+                } else {
+                    interimText += event.results[i][0].transcript;
+                }
+            }
+            if (finalSegment) {
+                accumulatedText += finalSegment + ' ';
+            }
+            if (textOutput) {
+                textOutput.innerHTML = accumulatedText + interimText;
+            }
+        };
+
+        recognition.onerror = (event) => {
+            console.error('Speech recognition error:', event.error);
+        };
+
+        recognition.onend = () => {
+            if (shouldRestart) {
+                try {
+                    recognition.start();
+                    return;
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+            isRecording = false;
+            shouldRestart = false;
+            if (recordBtn) {
+                recordBtn.style.background = '';
+                recordBtn.textContent = '🎤 음성메모';
+            }
+        };
+
+        if (recordBtn) {
+            recordBtn.onclick = () => {
+                if (!isRecording) {
+                    accumulatedText = textOutput.innerHTML.trim() ? textOutput.innerHTML + ' ' : '';
+                    shouldRestart = true;
+                    try {
+                        recognition.start();
+                    } catch (e) {
+                        console.error(e);
+                    }
+                } else {
+                    shouldRestart = false;
+                    try {
+                        recognition.stop();
+                    } catch (e) {
+                        console.error(e);
+                    }
+                }
+            };
+        }
     }
 
-    window.onload = function() {
-        initSpeechRecognition();
-        renderCalendar();
-        displayQuote();
+    window.onload = () => {
         renderWeeklyWeather();
-        
-        ['quote', 'idiom', 'tech'].forEach(cat => {
-            const btn = document.getElementById(`tab-${cat}`);
-            if (btn) {
-                if (cat === activeQuoteCategory) btn.classList.add('active');
-                else btn.classList.remove('active');
-            }
-        });
-
-        if (quoteMode === 'fixed') {
-            document.getElementById('quote-mode-fixed').classList.add('active');
-            document.getElementById('quote-mode-random').classList.remove('active');
-            fixedQuoteInputWrap.style.display = 'flex';
-            if (customQuoteInput) customQuoteInput.value = customQuoteText;
-        }
-
-        if (fontSizeDisplay) {
-            fontSizeDisplay.innerText = currentFontSize + 'px';
-        }
-        if (textOutput) {
-            textOutput.style.fontSize = currentFontSize + 'px';
-        }
-        if (quoteContent) {
-            quoteContent.style.fontSize = currentFontSize + 'px';
-        }
-        if (quoteAuthorText) {
-            quoteAuthorText.style.fontSize = Math.max(12, currentFontSize - 2) + 'px';
-        }
+        renderCalendar();
+        applyFontSize();
+        setQuoteMode(quoteMode);
+        initSpeechRecognition();
     };
 </script>
+
 </body>
 </html>
