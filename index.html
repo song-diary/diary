@@ -368,7 +368,6 @@
         .memo-line.fri { background-color: #9b59b6; }
         .memo-line.sat { background-color: var(--sat-color); }
 
-        /* 가계부 지출/수입 달력 표시 점 (점 위치 위로) */
         .money-dots {
             display: flex;
             gap: 3px;
@@ -722,7 +721,7 @@
 <div class="app-container">
     <!-- 상단 설정 바 -->
     <div class="card top-bar">
-        <span>🌸 스마트다이어리 & 용돈관리</span>
+        <span>🌸 스마트 다이어리 & 용돈관리</span>
         <button class="action-btn" onclick="toggleSettings()">⚙️ 설정</button>
     </div>
 
@@ -753,7 +752,7 @@
             </div>
         </div>
 
-        <!-- 💵 용돈현황 표시 온/오프 설정 (신규 추가) -->
+        <!-- 💵 용돈현황 표시 온/오프 설정 -->
         <div class="settings-section">
             <label>💵 용돈현황 요약 표시 설정</label>
             <div style="display: flex; gap: 6px;">
@@ -882,7 +881,7 @@
             <input type="time" id="reservation-time-input" style="border:1px solid var(--border-color); border-radius:4px; background:#fff;">
         </div>
 
-        <!-- 💵 가계부 입력 영역 (콤보박스 적용) -->
+        <!-- 💵 가계부 입력 영역 -->
         <div class="money-input-box">
             <label style="font-size: 14px; font-weight: bold; color: #27ae60;">💰 용돈(가계부) 기록</label>
             <div class="money-input-row">
@@ -893,7 +892,8 @@
                 <select id="money-category-select" class="money-input-field" style="flex: 1;">
                     <!-- 자바스크립트에서 수입/지출에 따라 목록 자동 변경 -->
                 </select>
-                <input type="number" id="money-amount-input" class="money-input-field" placeholder="금액 (원)" style="flex: 1.5;">
+                <!-- 금액 입력 필드 (자동 콤마 적용) -->
+                <input type="text" inputmode="numeric" id="money-amount-input" class="money-input-field" placeholder="금액 (원)" style="flex: 1.5;">
             </div>
         </div>
 
@@ -931,7 +931,6 @@
     let currentFontSize = parseInt(localStorage.getItem('smartDiaryFontSize')) || 16;
     let isDiaryOpen = false;
 
-    // 표시 여부 상태 저장
     let isWeatherVisible = localStorage.getItem('smartDiaryWeatherVisible') !== 'false';
     let isQuoteVisible = localStorage.getItem('smartDiaryQuoteVisible') !== 'false';
     let isMoneySummaryVisible = localStorage.getItem('smartDiaryMoneySummaryVisible') !== 'false';
@@ -1005,6 +1004,18 @@
     const weatherCard = document.getElementById('weather-card');
     const moneySummaryCard = document.getElementById('money-summary-card');
 
+    // 금액 입력 시 천 단위 콤마 자동 포맷팅 적용 리스너
+    if (moneyAmountInput) {
+        moneyAmountInput.addEventListener('input', function (e) {
+            let value = e.target.value.replace(/[^0-9]/g, ''); // 숫자 외 문자 제거
+            if (value) {
+                e.target.value = Number(value).toLocaleString(); // 콤마 추가
+            } else {
+                e.target.value = '';
+            }
+        });
+    }
+
     function setWeatherVisibility(isVisible) {
         isWeatherVisible = isVisible;
         localStorage.setItem('smartDiaryWeatherVisible', isVisible);
@@ -1026,7 +1037,6 @@
         }
     }
 
-    // 용돈현황 켜기/끄기 함수 (신규 추가)
     function setMoneySummaryVisibility(isVisible) {
         isMoneySummaryVisible = isVisible;
         localStorage.setItem('smartDiaryMoneySummaryVisible', isVisible);
@@ -1481,7 +1491,7 @@
             
             if (existingItem.money) {
                 setMoneyType(existingItem.money.type || 'expense', existingItem.money.category || '');
-                moneyAmountInput.value = existingItem.money.amount || '';
+                moneyAmountInput.value = Number(existingItem.money.amount || 0).toLocaleString();
             } else {
                 setMoneyType('expense', '');
                 moneyAmountInput.value = '';
@@ -1539,14 +1549,15 @@
         const content = textOutput.innerHTML.trim();
         const timeVal = reservationTimeInput.value;
         const moneyCategory = moneyCategorySelect.value;
-        const moneyAmount = moneyAmountInput.value.trim();
+        // 저장 시 콤마를 제거하고 순수 숫자값만 추출
+        const rawAmount = moneyAmountInput.value.replace(/[^0-9]/g, '').trim();
 
         let moneyObj = null;
-        if (moneyAmount !== '' && !isNaN(moneyAmount)) {
+        if (rawAmount !== '' && !isNaN(rawAmount)) {
             moneyObj = {
                 type: currentMoneyType,
                 category: moneyCategory,
-                amount: Number(moneyAmount)
+                amount: Number(rawAmount)
             };
         }
 
@@ -1812,7 +1823,7 @@
         renderWeeklyWeather();
         setWeatherVisibility(isWeatherVisible);
         setQuoteVisibility(isQuoteVisible);
-        setMoneySummaryVisibility(isMoneySummaryVisible); // 용돈현황 가시성 초기화 반영
+        setMoneySummaryVisibility(isMoneySummaryVisible);
         renderCalendar();
         applyFontSize();
         setQuoteMode(quoteMode);
