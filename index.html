@@ -193,7 +193,7 @@
             position: relative;
             background: #ffffff;
             border: 1px solid #e8dfdf;
-            color: var(--weekday-color); /* 글자색은 평일 색상으로 고정 */
+            color: var(--weekday-color);
         }
 
         .cal-cell:hover {
@@ -207,7 +207,6 @@
             cursor: default;
         }
 
-        /* 박스 전체 요일별 배경/테두리 색상 적용 (글자색은 유지) */
         .cal-cell.sunday {
             background: #fdf2f2;
             border-color: #f7d6d6;
@@ -414,11 +413,13 @@
             border-radius: 6px;
         }
 
+        /* 구분선 토글 버튼 스타일 */
         .section-divider {
             display: flex;
             align-items: center;
             gap: 10px;
             padding: 0 2px;
+            cursor: pointer;
         }
 
         .section-divider::before,
@@ -442,6 +443,33 @@
             border: 1px solid var(--border-color);
             border-radius: 999px;
             white-space: nowrap;
+        }
+
+        .section-divider:hover .divider-label {
+            background: #f0e2e2;
+        }
+
+        /* 명언 카드 스타일 */
+        #quote-card {
+            background: linear-gradient(135deg, #fff5f5, #fffcfc);
+            border: 1px dashed var(--primary-color);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+            color: var(--weekday-color);
+        }
+
+        .quote-text {
+            font-size: 15px;
+            font-weight: bold;
+            line-height: 1.5;
+            margin-bottom: 6px;
+            color: #c0392b;
+        }
+
+        .quote-author {
+            font-size: 13px;
+            color: var(--text-sub);
         }
     </style>
 </head>
@@ -469,6 +497,18 @@
                 <button class="view-select-btn" id="view-month" onclick="changeViewMode('month')">한달</button>
                 <button class="view-select-btn" id="view-alarm" onclick="changeViewMode('alarm')">예약보기</button>
                 <button class="view-select-btn" id="view-all" onclick="changeViewMode('all')">전체보기</button>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <label>💬 명언 / 좌우명 설정</label>
+            <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+                <button class="view-select-btn active" id="quote-mode-random" onclick="setQuoteMode('random')">매일 랜덤 명언</button>
+                <button class="view-select-btn" id="quote-mode-fixed" onclick="setQuoteMode('fixed')">나만의 좌우명 고정</button>
+            </div>
+            <div id="fixed-quote-input-wrap" style="display: none; gap: 6px; display: flex;">
+                <input type="text" id="custom-quote-input" placeholder="나만의 좌우명을 입력하세요" style="flex:1; padding: 6px 10px; border:1px solid var(--border-color); border-radius:6px; font-size:14px;">
+                <button class="action-btn" style="padding: 6px 12px; font-size:14px;" onclick="saveCustomQuote()">저장</button>
             </div>
         </div>
 
@@ -505,9 +545,15 @@
         <div class="calendar-grid" id="cal-days-grid" style="margin-top: 5px;"></div>
     </div>
 
-    <!-- 구분선 -->
-    <div class="section-divider">
-        <span class="divider-label">📝 나의 기록</span>
+    <!-- 구분선 (클릭 시 나의 기록 펼치기/접기 토글) -->
+    <div class="section-divider" onclick="toggleDiarySection()">
+        <span class="divider-label" id="divider-label-text">📝 나의 기록 펼치기 ▼</span>
+    </div>
+
+    <!-- 명언 또는 좌우명 박스 (기본 노출) -->
+    <div class="card" id="quote-card">
+        <div class="quote-text" id="quote-content">"작은 일에 성실한 사람은 큰 일에도 성실하다."</div>
+        <div class="quote-author" id="quote-author-text">- 성경 -</div>
     </div>
 
     <!-- 새 메모 작성 폼 -->
@@ -539,8 +585,8 @@
         </div>
     </div>
 
-    <!-- 메모 리스트 카드 -->
-    <div class="card">
+    <!-- 메모 리스트 카드 (기본 숨김) -->
+    <div class="card" id="diary-list-card" style="display: none;">
         <div id="current-view-label" style="font-size: 14px; color: var(--text-sub); margin-bottom: 10px; font-weight: bold;">📋 기본 3일 메모</div>
         <div id="diary-list"></div>
     </div>
@@ -553,6 +599,20 @@
     let selectedReservationDate = null;
     let currentPhotoBase64 = null;
     let currentFontSize = parseInt(localStorage.getItem('smartDiaryFontSize')) || 16;
+    let isDiaryOpen = false; // 나의 기록 펼침 여부
+
+    let quoteMode = localStorage.getItem('smartDiaryQuoteMode') || 'random';
+    let customQuoteText = localStorage.getItem('smartDiaryCustomQuote') || '오늘 흘린 땀방울은 내일의 기쁨이 된다.';
+
+    const quotesList = [
+        { text: "피할 수 없으면 즐겨라.", author: "- 로버트 엘리엇 -" },
+        { text: "절대 어제를 후회하지 마라. 인생은 오늘의 나 안에 있고, 내일은 스스로 만드는 것이다.", author: "- L.론 허바드 -" },
+        { text: "작은 기회를 자주 놓치는 것이 큰 기회를 놓치는 주된 원인이다.", author: "- 벤자민 프랭클린 -" },
+        { text: "행복은 습관이다, 몸에 지니도록 하라.", author: "- 허버드 -" },
+        { text: "오늘 할 일은 내일로 미루지 말자.", author: "- 벤자민 프랭클린 -" },
+        { text: "성공한 사람이 되려 하지 말고, 가치 있는 사람이 되려 하라.", author: "- 알베르트 아인슈타인 -" },
+        { text: "마음을 다해 노력하면 이루지 못할 것이 없다.", author: "- 명심보감 -" }
+    ];
 
     let recognition = null;
     let isRecording = false;
@@ -562,12 +622,19 @@
     const textOutput = document.getElementById('textOutput');
     const recordBtn = document.getElementById('record-btn');
     const diaryList = document.getElementById('diary-list');
+    const diaryListCard = document.getElementById('diary-list-card');
+    const quoteCard = document.getElementById('quote-card');
+    const dividerLabelText = document.getElementById('divider-label-text');
     const reservationTimeInput = document.getElementById('reservation-time-input');
     const memoFormCard = document.getElementById('memo-form-card');
     const formTargetDateTitle = document.getElementById('form-target-date-title');
     const settingsCard = document.getElementById('settings-card');
     const fontSizeDisplay = document.getElementById('font-size-display');
     const currentViewLabel = document.getElementById('current-view-label');
+    const quoteContent = document.getElementById('quote-content');
+    const quoteAuthorText = document.getElementById('quote-author-text');
+    const customQuoteInput = document.getElementById('custom-quote-input');
+    const fixedQuoteInputWrap = document.getElementById('fixed-quote-input-wrap');
 
     function getTodayStr() {
         const d = new Date();
@@ -663,6 +730,66 @@
             settingsCard.style.display = 'none';
         } else {
             settingsCard.style.display = 'block';
+        }
+    }
+
+    function setQuoteMode(mode) {
+        quoteMode = mode;
+        localStorage.setItem('smartDiaryQuoteMode', mode);
+        
+        if (mode === 'random') {
+            document.getElementById('quote-mode-random').classList.add('active');
+            document.getElementById('quote-mode-fixed').classList.remove('active');
+            fixedQuoteInputWrap.style.display = 'none';
+        } else {
+            document.getElementById('quote-mode-fixed').classList.add('active');
+            document.getElementById('quote-mode-random').classList.remove('active');
+            fixedQuoteInputWrap.style.display = 'flex';
+            if (customQuoteInput) customQuoteInput.value = customQuoteText;
+        }
+        displayQuote();
+    }
+
+    function saveCustomQuote() {
+        const val = customQuoteInput.value.trim();
+        if (!val) {
+            alert('좌우명을 입력해주세요!');
+            return;
+        }
+        customQuoteText = val;
+        localStorage.setItem('smartDiaryCustomQuote', val);
+        displayQuote();
+        alert('나만의 좌우명이 저장되었습니다!');
+    }
+
+    function displayQuote() {
+        if (quoteMode === 'fixed') {
+            quoteContent.innerText = `"${customQuoteText}"`;
+            quoteAuthorText.innerText = "- 나의 좌우명 -";
+        } else {
+            // 날짜 기반 랜덤 인덱스 계산 (하루 동안은 동일한 명언 유지)
+            const todayStr = getTodayStr();
+            let hash = 0;
+            for (let i = 0; i < todayStr.length; i++) {
+                hash = todayStr.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            let index = Math.abs(hash) % quotesList.length;
+            quoteContent.innerText = `"${quotesList[index].text}"`;
+            quoteAuthorText.innerText = quotesList[index].author;
+        }
+    }
+
+    function toggleDiarySection() {
+        isDiaryOpen = !isDiaryOpen;
+        if (isDiaryOpen) {
+            diaryListCard.style.display = 'block';
+            quoteCard.style.display = 'none';
+            dividerLabelText.innerText = '📝 나의 기록 접기 ▲';
+            loadDiaryList();
+        } else {
+            diaryListCard.style.display = 'none';
+            quoteCard.style.display = 'block';
+            dividerLabelText.innerText = '📝 나의 기록 펼치기 ▼';
         }
     }
 
@@ -816,7 +943,7 @@
 
         closeDiaryForm();
         renderCalendar();
-        loadDiaryList();
+        if (isDiaryOpen) loadDiaryList();
         alert('메모가 안전하게 저장되었습니다!');
     }
 
@@ -832,7 +959,7 @@
         const activeBtn = document.getElementById(`view-${mode}`);
         if (activeBtn) activeBtn.classList.add('active');
 
-        loadDiaryList();
+        if (isDiaryOpen) loadDiaryList();
     }
 
     function changeMonth(direction) {
@@ -1058,7 +1185,15 @@
     window.onload = function() {
         initSpeechRecognition();
         renderCalendar();
-        loadDiaryList();
+        displayQuote();
+        
+        if (quoteMode === 'fixed') {
+            document.getElementById('quote-mode-fixed').classList.add('active');
+            document.getElementById('quote-mode-random').classList.remove('active');
+            fixedQuoteInputWrap.style.display = 'flex';
+            if (customQuoteInput) customQuoteInput.value = customQuoteText;
+        }
+
         if (fontSizeDisplay) {
             fontSizeDisplay.innerText = currentFontSize + 'px';
         }
