@@ -444,7 +444,7 @@
             padding: 10px;
             margin-bottom: 8px;
             position: relative;
-            padding-right: 95px; /* 버튼 공간 확보 */
+            padding-right: 95px;
         }
 
         .sub-memo-item:last-child {
@@ -739,7 +739,7 @@
     let calMonth = new Date().getMonth();
     let currentViewMode = localStorage.getItem('smartDiaryViewMode') || '3days'; 
     let selectedReservationDate = null;
-    let editingDiaryId = null; // 🌟 수정 중인 메모 ID 추적 변수
+    let editingDiaryId = null;
     let currentPhotoBase64 = null;
     let currentFontSize = parseInt(localStorage.getItem('smartDiaryFontSize')) || 16;
     let isDiaryOpen = false;
@@ -1151,7 +1151,7 @@
     }
 
     function openDiaryForm(dateStr) {
-        editingDiaryId = null; // 신규 작성 모드
+        editingDiaryId = null;
         selectedReservationDate = normalizeDateStr(dateStr);
         const dayOfWeek = getDayOfWeekStr(selectedReservationDate);
         formTargetDateTitle.innerText = `📅 ${selectedReservationDate} (${dayOfWeek}) 메모 작성`;
@@ -1180,13 +1180,12 @@
         }, 100);
     }
 
-    // 🌟 기존 메모 수정 폼 열기 함수
     function editDiary(id) {
         let diaryListObj = getAllDiaries();
         let targetItem = diaryListObj.find(item => item.id === id);
         if (!targetItem) return;
 
-        editingDiaryId = id; // 수정 모드 진입
+        editingDiaryId = id;
         selectedReservationDate = normalizeDateStr(targetItem.date);
         const dayOfWeek = getDayOfWeekStr(selectedReservationDate);
         formTargetDateTitle.innerText = `✏️ ${selectedReservationDate} (${dayOfWeek}) 메모 수정`;
@@ -1239,7 +1238,6 @@
         }
 
         if (editingDiaryId) {
-            // 🌟 기존 메모 수정 저장
             diaryListObj = diaryListObj.map(item => {
                 if (item.id === editingDiaryId) {
                     return {
@@ -1254,7 +1252,6 @@
             });
             alert('메모가 성공적으로 수정되었습니다!');
         } else {
-            // 🌟 신규 메모 저장
             const newEntry = {
                 id: Date.now(),
                 date: targetDateStr,
@@ -1335,8 +1332,11 @@
             const cell = document.createElement('div');
             cell.className = 'cal-cell';
 
-            const rawDateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            const normalizedDateStr = normalizeDateStr(rawDateStr);
+            // 🌟 월/일 문자열이 밀리지 않도록 고정 형식 생성
+            const mStr = String(calMonth + 1).padStart(2, '0');
+            const dStr = String(day).padStart(2, '0');
+            const normalizedDateStr = `${calYear}-${mStr}-${dStr}`;
+
             const dObj = parseDateObj(normalizedDateStr);
             const dayOfWeek = dObj.getDay();
 
@@ -1366,18 +1366,31 @@
         }
     }
 
+    // 🌟 달력 스와이프 지연 및 오작동 방지 최적화
     const calendarCard = document.getElementById('calendar-card');
     let touchStartX = 0;
-    let touchEndX = 0;
+    let touchStartY = 0;
 
     calendarCard.addEventListener('touchstart', (e) => {
         touchStartX = e.changedTouches[0].screenX;
+        touchStartY = e.changedTouches[0].screenY;
     }, {passive: true});
 
     calendarCard.addEventListener('touchend', (e) => {
-        touchEndX = e.changedTouches[0].screenX;
-        if (touchEndX < touchStartX - 50) changeMonth(1);
-        else if (touchEndX > touchStartX - 50) changeMonth(-1);
+        let touchEndX = e.changedTouches[0].screenX;
+        let touchEndY = e.changedTouches[0].screenY;
+        
+        let diffX = touchEndX - touchStartX;
+        let diffY = touchEndY - touchStartY;
+
+        // 좌우 스와이프가 상하 스크롤보다 클 때만 월 전환 실행
+        if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 40) {
+            if (diffX < 0) {
+                changeMonth(1); // 다음 달
+            } else {
+                changeMonth(-1); // 이전 달
+            }
+        }
     }, {passive: true});
 
     function loadDiaryList() {
