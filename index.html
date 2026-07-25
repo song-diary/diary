@@ -793,7 +793,6 @@
         if (!grid) return;
         grid.innerHTML = '';
 
-        // 주간 날씨 예시 데이터 (토요일 기준 7일)
         const weeklyData = [
             { day: '토', icon: '🌧️', temp: '31°/27°' },
             { day: '일', icon: '🌧️', temp: '29°/25°' },
@@ -1156,6 +1155,11 @@
 
         memoFormCard.style.display = 'block';
         memoFormCard.scrollIntoView({ behavior: 'smooth' });
+
+        // 🌟 창이 열리자마자 텍스트 입력창에 포커스를 주어 커서가 깜빡이게 함
+        setTimeout(() => {
+            textOutput.focus();
+        }, 100);
     }
 
     function closeDiaryForm() {
@@ -1302,7 +1306,7 @@
     calendarCard.addEventListener('touchend', (e) => {
         touchEndX = e.changedTouches[0].screenX;
         if (touchEndX < touchStartX - 50) changeMonth(1);
-        else if (touchEndX > touchStartX + 50) changeMonth(-1);
+        else if (touchEndX > touchStartX - 50) changeMonth(-1);
     }, {passive: true});
 
     function loadDiaryList() {
@@ -1437,7 +1441,7 @@
         initSpeechRecognition();
         renderCalendar();
         displayQuote();
-        renderWeeklyWeather(); // 🌤️ 날씨 위젯 로드
+        renderWeeklyWeather();
         
         ['quote', 'idiom', 'tech'].forEach(cat => {
             const btn = document.getElementById(`tab-${cat}`);
