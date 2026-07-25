@@ -491,8 +491,8 @@
         }
 
         .quote-author {
-            font-size: 13px;
             color: var(--text-sub);
+            line-height: 1.4;
         }
     </style>
 </head>
@@ -536,7 +536,7 @@
         </div>
 
         <div class="settings-section">
-            <label>🔤 글자 크기 조절 (명언 & 메모 공통)</label>
+            <label>🔤 글자 크기 조절 (명언/해설 & 메모 공통)</label>
             <div style="display: flex; gap: 8px; align-items: center;">
                 <button class="action-btn" style="flex:1;" onclick="adjustFontSize(-1)">작게 (-)</button>
                 <span id="font-size-display" style="font-size: 16px; font-weight: bold; min-width: 45px; text-align: center;">16px</span>
@@ -581,7 +581,7 @@
             <button class="quote-tab-btn" id="tab-tech" onclick="switchQuoteCategory('tech')">🤖 IT / AI 용어</button>
         </div>
         <div class="quote-text" id="quote-content" style="font-size: 16px;">"작은 일에 성실한 사람은 큰 일에도 성실하다."</div>
-        <div class="quote-author" id="quote-author-text">- 성경 -</div>
+        <div class="quote-author" id="quote-author-text" style="font-size: 14px;">- 성경 -</div>
     </div>
 
     <!-- 새 메모 작성 폼 -->
@@ -811,7 +811,6 @@
             }
         });
 
-        // 좌우명 모드인데 다른 탭 누르면 자동으로 랜덤 명언 모드로 탭 매칭 동기화
         if (category !== 'quote') {
             quoteMode = 'random';
             document.getElementById('quote-mode-random').classList.add('active');
@@ -861,6 +860,10 @@
                 quoteAuthorText.innerText = quotesList[index].author;
             }
         }
+        
+        // 폰트 크기 유지 동기화
+        if (quoteContent) quoteContent.style.fontSize = currentFontSize + 'px';
+        if (quoteAuthorText) quoteAuthorText.style.fontSize = Math.max(12, currentFontSize - 2) + 'px';
     }
 
     function toggleDiarySection() {
@@ -886,8 +889,9 @@
         if (fontSizeDisplay) fontSizeDisplay.innerText = currentFontSize + 'px';
         if (textOutput) textOutput.style.fontSize = currentFontSize + 'px';
 
-        // 메인 화면 명언/용어 폰트 크기 동기화 적용
+        // 메인 화면 명언/용어 및 뜻·해설 폰트 크기 동기화 적용
         if (quoteContent) quoteContent.style.fontSize = currentFontSize + 'px';
+        if (quoteAuthorText) quoteAuthorText.style.fontSize = Math.max(12, currentFontSize - 2) + 'px';
 
         document.querySelectorAll('.diary-text').forEach(el => {
             el.style.fontSize = currentFontSize + 'px';
@@ -1274,7 +1278,6 @@
         renderCalendar();
         displayQuote();
         
-        // 탭 상태 및 모드 복원
         ['quote', 'idiom', 'tech'].forEach(cat => {
             const btn = document.getElementById(`tab-${cat}`);
             if (btn) {
@@ -1298,6 +1301,9 @@
         }
         if (quoteContent) {
             quoteContent.style.fontSize = currentFontSize + 'px';
+        }
+        if (quoteAuthorText) {
+            quoteAuthorText.style.fontSize = Math.max(12, currentFontSize - 2) + 'px';
         }
     };
 </script>
