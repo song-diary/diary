@@ -444,6 +444,7 @@
             padding: 10px;
             margin-bottom: 8px;
             position: relative;
+            padding-right: 95px; /* 버튼 공간 확보 */
         }
 
         .sub-memo-item:last-child {
@@ -467,19 +468,35 @@
             display: block;
         }
 
-        .delete-btn {
+        .memo-action-btns {
             position: absolute;
             top: 10px;
             right: 10px;
+            display: flex;
+            gap: 4px;
+        }
+
+        .edit-btn, .delete-btn {
             background: none;
             border: none;
             font-size: 13px;
-            color: #b0c4de;
             cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 4px;
         }
 
+        .edit-btn {
+            color: #3498db;
+        }
+        .edit-btn:hover {
+            background: #ebf5fb;
+        }
+
+        .delete-btn {
+            color: #e74c3c;
+        }
         .delete-btn:hover {
-            color: var(--accent-today);
+            background: #fdf2f2;
         }
 
         #photo-preview-wrap {
@@ -630,13 +647,12 @@
         </div>
     </div>
 
-    <!-- 🌤️ 날씨 카드 (오늘 및 일주일 날씨) -->
+    <!-- 🌤️ 날씨 카드 -->
     <div class="card" id="weather-card">
         <div class="weather-header">
             <span>📍 안양시 날씨 정보</span>
             <span style="font-size: 12px; color: #7f8c8d; font-weight: normal;">실시간 기상 예보</span>
         </div>
-        <!-- 오늘 날씨 요약 -->
         <div class="weather-today-box">
             <div class="weather-icon" id="today-weather-icon">⛅</div>
             <div class="weather-info-main">
@@ -644,10 +660,7 @@
                 <div class="weather-desc" id="today-desc-text">흐림 후 맑음 (주말 비 소식 주의)</div>
             </div>
         </div>
-        <!-- 일주일 주간 날씨 미니 그리드 -->
-        <div class="weekly-weather-grid" id="weekly-weather-grid">
-            <!-- 자바스크립트로 자동 생성 -->
-        </div>
+        <div class="weekly-weather-grid" id="weekly-weather-grid"></div>
     </div>
 
     <!-- 달력 카드 -->
@@ -669,12 +682,12 @@
         <div class="calendar-grid" id="cal-days-grid" style="margin-top: 5px;"></div>
     </div>
 
-    <!-- 구분선 (클릭 시 나의 기록 펼치기/접기 토글) -->
+    <!-- 구분선 -->
     <div class="section-divider" onclick="toggleDiarySection()">
         <span class="divider-label" id="divider-label-text">📝 나의 기록 펼치기 ▼</span>
     </div>
 
-    <!-- 명언 / 사자성어 / IT·AI 용어 카드 (기본 노출) -->
+    <!-- 명언 카드 -->
     <div class="card" id="quote-card">
         <div class="quote-header-tabs">
             <button class="quote-tab-btn active" id="tab-quote" onclick="switchQuoteCategory('quote')">💬 명언/좌우명</button>
@@ -685,7 +698,7 @@
         <div class="quote-author" id="quote-author-text" style="font-size: 14px;">- 성경 -</div>
     </div>
 
-    <!-- 새 메모 작성 폼 -->
+    <!-- 새 메모 작성/수정 폼 -->
     <div class="card" id="memo-form-card">
         <div class="form-header-info">
             <span id="form-target-date-title">📅 0000년 00월 00일 메모 작성</span>
@@ -714,7 +727,7 @@
         </div>
     </div>
 
-    <!-- 메모 리스트 카드 (기본 숨김) -->
+    <!-- 메모 리스트 카드 -->
     <div class="card" id="diary-list-card" style="display: none;">
         <div id="current-view-label" style="font-size: 14px; color: var(--text-sub); margin-bottom: 10px; font-weight: bold;">📋 기본 3일 메모</div>
         <div id="diary-list"></div>
@@ -726,6 +739,7 @@
     let calMonth = new Date().getMonth();
     let currentViewMode = localStorage.getItem('smartDiaryViewMode') || '3days'; 
     let selectedReservationDate = null;
+    let editingDiaryId = null; // 🌟 수정 중인 메모 ID 추적 변수
     let currentPhotoBase64 = null;
     let currentFontSize = parseInt(localStorage.getItem('smartDiaryFontSize')) || 16;
     let isDiaryOpen = false;
@@ -787,7 +801,6 @@
     const customQuoteInput = document.getElementById('custom-quote-input');
     const fixedQuoteInputWrap = document.getElementById('fixed-quote-input-wrap');
 
-    // 🌤️ 날씨 위젯 데이터 초기화 함수
     function renderWeeklyWeather() {
         const grid = document.getElementById('weekly-weather-grid');
         if (!grid) return;
@@ -1138,11 +1151,17 @@
     }
 
     function openDiaryForm(dateStr) {
+        editingDiaryId = null; // 신규 작성 모드
         selectedReservationDate = normalizeDateStr(dateStr);
         const dayOfWeek = getDayOfWeekStr(selectedReservationDate);
         formTargetDateTitle.innerText = `📅 ${selectedReservationDate} (${dayOfWeek}) 메모 작성`;
         
-        if (textOutput) textOutput.style.fontSize = currentFontSize + 'px';
+        if (textOutput) {
+            textOutput.style.fontSize = currentFontSize + 'px';
+            textOutput.innerText = '';
+        }
+        accumulatedText = '';
+        removeImage();
 
         const todayStr = getTodayStr();
         if (selectedReservationDate === todayStr) {
@@ -1156,7 +1175,40 @@
         memoFormCard.style.display = 'block';
         memoFormCard.scrollIntoView({ behavior: 'smooth' });
 
-        // 🌟 창이 열리자마자 텍스트 입력창에 포커스를 주어 커서가 깜빡이게 함
+        setTimeout(() => {
+            textOutput.focus();
+        }, 100);
+    }
+
+    // 🌟 기존 메모 수정 폼 열기 함수
+    function editDiary(id) {
+        let diaryListObj = getAllDiaries();
+        let targetItem = diaryListObj.find(item => item.id === id);
+        if (!targetItem) return;
+
+        editingDiaryId = id; // 수정 모드 진입
+        selectedReservationDate = normalizeDateStr(targetItem.date);
+        const dayOfWeek = getDayOfWeekStr(selectedReservationDate);
+        formTargetDateTitle.innerText = `✏️ ${selectedReservationDate} (${dayOfWeek}) 메모 수정`;
+
+        if (textOutput) {
+            textOutput.style.fontSize = currentFontSize + 'px';
+            textOutput.innerText = targetItem.text || '';
+        }
+        accumulatedText = targetItem.text || '';
+        reservationTimeInput.value = targetItem.time || getCurrentTimeStr();
+
+        if (targetItem.photo) {
+            currentPhotoBase64 = targetItem.photo;
+            document.getElementById('image-preview').src = currentPhotoBase64;
+            document.getElementById('photo-preview-wrap').style.display = 'block';
+        } else {
+            removeImage();
+        }
+
+        memoFormCard.style.display = 'block';
+        memoFormCard.scrollIntoView({ behavior: 'smooth' });
+
         setTimeout(() => {
             textOutput.focus();
         }, 100);
@@ -1166,6 +1218,7 @@
         memoFormCard.style.display = 'none';
         textOutput.innerText = '';
         accumulatedText = '';
+        editingDiaryId = null;
         removeImage();
     }
 
@@ -1185,21 +1238,39 @@
             alarmTime = getCurrentTimeStr();
         }
 
-        const newEntry = {
-            id: Date.now(),
-            date: targetDateStr,
-            time: alarmTime,
-            text: text,
-            photo: currentPhotoBase64
-        };
+        if (editingDiaryId) {
+            // 🌟 기존 메모 수정 저장
+            diaryListObj = diaryListObj.map(item => {
+                if (item.id === editingDiaryId) {
+                    return {
+                        ...item,
+                        date: targetDateStr,
+                        time: alarmTime,
+                        text: text,
+                        photo: currentPhotoBase64
+                    };
+                }
+                return item;
+            });
+            alert('메모가 성공적으로 수정되었습니다!');
+        } else {
+            // 🌟 신규 메모 저장
+            const newEntry = {
+                id: Date.now(),
+                date: targetDateStr,
+                time: alarmTime,
+                text: text,
+                photo: currentPhotoBase64
+            };
+            diaryListObj.push(newEntry);
+            alert('메모가 안전하게 저장되었습니다!');
+        }
 
-        diaryListObj.push(newEntry);
         localStorage.setItem('smartDiaryList', JSON.stringify(diaryListObj));
 
         closeDiaryForm();
         renderCalendar();
         if (isDiaryOpen) loadDiaryList();
-        alert('메모가 안전하게 저장되었습니다!');
     }
 
     function changeViewMode(mode) {
@@ -1419,7 +1490,10 @@
                     <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 4px; font-weight: bold;">${timeStrInfo}</div>
                     <div class="diary-text" style="font-size: ${currentFontSize}px;">${item.text || ''}</div>
                     ${photoHtml}
-                    <button class="delete-btn" onclick="deleteDiary(${item.id})">삭제</button>
+                    <div class="memo-action-btns">
+                        <button class="edit-btn" onclick="editDiary(${item.id})">수정</button>
+                        <button class="delete-btn" onclick="deleteDiary(${item.id})">삭제</button>
+                    </div>
                 `;
                 groupCard.appendChild(subItemDiv);
             });
