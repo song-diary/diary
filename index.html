@@ -231,12 +231,13 @@
         .calendar-header button {
             background: #faf5f5;
             border: 1px solid var(--border-color);
-            padding: 6px 14px;
+            padding: 8px 16px;
             border-radius: 6px;
             cursor: pointer;
             color: var(--text-main);
             font-weight: bold;
             font-size: 15px;
+            touch-action: manipulation;
         }
 
         .calendar-header button:hover {
@@ -274,6 +275,7 @@
             background: #ffffff;
             border: 1px solid #e8dfdf;
             color: var(--weekday-color);
+            touch-action: manipulation;
         }
 
         .cal-cell:hover {
@@ -392,6 +394,7 @@
             font-size: 16px;
             cursor: pointer;
             font-weight: bold;
+            touch-action: manipulation;
         }
 
         .btn-primary {
@@ -483,6 +486,7 @@
             cursor: pointer;
             padding: 2px 4px;
             border-radius: 4px;
+            touch-action: manipulation;
         }
 
         .edit-btn {
@@ -573,6 +577,7 @@
             font-weight: bold;
             color: var(--text-sub);
             cursor: pointer;
+            touch-action: manipulation;
         }
 
         .quote-tab-btn.active {
@@ -1332,7 +1337,6 @@
             const cell = document.createElement('div');
             cell.className = 'cal-cell';
 
-            // 🌟 월/일 문자열이 밀리지 않도록 고정 형식 생성
             const mStr = String(calMonth + 1).padStart(2, '0');
             const dStr = String(day).padStart(2, '0');
             const normalizedDateStr = `${calYear}-${mStr}-${dStr}`;
@@ -1361,30 +1365,46 @@
                 cell.appendChild(memoLine);
             }
 
-            cell.onclick = () => openDiaryForm(normalizedDateStr);
+            // 🌟 터치/클릭 반응 지연 방지를 위해 명시적 이벤트 바인딩
+            cell.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openDiaryForm(normalizedDateStr);
+            });
+
             grid.appendChild(cell);
         }
     }
 
-    // 🌟 달력 스와이프 지연 및 오작동 방지 최적화
+    // 🌟 달력 스와이프 감지 로직 안전화 (버튼 클릭 방해 최소화)
     const calendarCard = document.getElementById('calendar-card');
     let touchStartX = 0;
     let touchStartY = 0;
+    let isSwiping = false;
 
     calendarCard.addEventListener('touchstart', (e) => {
         touchStartX = e.changedTouches[0].screenX;
         touchStartY = e.changedTouches[0].screenY;
+        isSwiping = false;
+    }, {passive: true});
+
+    calendarCard.addEventListener('touchmove', (e) => {
+        let currentX = e.changedTouches[0].screenX;
+        let currentY = e.changedTouches[0].screenY;
+        if (Math.abs(currentX - touchStartX) > 20 || Math.abs(currentY - touchStartY) > 20) {
+            isSwiping = true;
+        }
     }, {passive: true});
 
     calendarCard.addEventListener('touchend', (e) => {
+        if (!isSwiping) return; // 단순 터치나 클릭은 스와이프로 오인하지 않도록 차단
+        
         let touchEndX = e.changedTouches[0].screenX;
         let touchEndY = e.changedTouches[0].screenY;
         
         let diffX = touchEndX - touchStartX;
         let diffY = touchEndY - touchStartY;
 
-        // 좌우 스와이프가 상하 스크롤보다 클 때만 월 전환 실행
-        if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 40) {
+        if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 60) {
             if (diffX < 0) {
                 changeMonth(1); // 다음 달
             } else {
