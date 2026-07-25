@@ -153,6 +153,25 @@
             font-size: 16px;
         }
 
+        .weather-location-btn {
+            background: #ffffff;
+            border: 1px solid #bce0fd;
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            color: #2980b9;
+            font-weight: bold;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            touch-action: manipulation;
+        }
+
+        .weather-location-btn:hover {
+            background: #e1f0ff;
+        }
+
         .weather-today-box {
             display: flex;
             align-items: center;
@@ -655,7 +674,9 @@
     <!-- 🌤️ 날씨 카드 -->
     <div class="card" id="weather-card">
         <div class="weather-header">
-            <span>📍 안양시 날씨 정보</span>
+            <button class="weather-location-btn" onclick="changeWeatherLocation()">
+                📍 <span id="weather-location-text">안양시</span> 날씨 정보 ✏️
+            </button>
             <span style="font-size: 12px; color: #7f8c8d; font-weight: normal;">실시간 기상 예보</span>
         </div>
         <div class="weather-today-box">
@@ -749,6 +770,8 @@
     let currentFontSize = parseInt(localStorage.getItem('smartDiaryFontSize')) || 16;
     let isDiaryOpen = false;
 
+    let weatherLocation = localStorage.getItem('smartDiaryWeatherLocation') || '안양시';
+
     let quoteMode = localStorage.getItem('smartDiaryQuoteMode') || 'random';
     let customQuoteText = localStorage.getItem('smartDiaryCustomQuote') || '오늘 흘린 땀방울은 내일의 기쁨이 된다.';
     let activeQuoteCategory = localStorage.getItem('smartDiaryQuoteCategory') || 'quote';
@@ -805,6 +828,18 @@
     const quoteAuthorText = document.getElementById('quote-author-text');
     const customQuoteInput = document.getElementById('custom-quote-input');
     const fixedQuoteInputWrap = document.getElementById('fixed-quote-input-wrap');
+    const weatherLocationText = document.getElementById('weather-location-text');
+
+    function changeWeatherLocation() {
+        const newLoc = prompt('날씨를 확인할 지역명을 입력하세요 (예: 서울시, 수원시, 평촌 등):', weatherLocation);
+        if (newLoc && newLoc.trim() !== '') {
+            weatherLocation = newLoc.trim();
+            localStorage.setItem('smartDiaryWeatherLocation', weatherLocation);
+            if (weatherLocationText) {
+                weatherLocationText.innerText = weatherLocation;
+            }
+        }
+    }
 
     function renderWeeklyWeather() {
         const grid = document.getElementById('weekly-weather-grid');
@@ -1018,7 +1053,6 @@
         if (quoteAuthorText) quoteAuthorText.style.fontSize = Math.max(12, currentFontSize - 2) + 'px';
     }
 
-    // 명언 영역은 탭(클릭)하면 다음 명언으로 넘어가도록 가볍게 구성
     quoteCard.addEventListener('click', () => {
         if (activeQuoteCategory === 'quote' && quoteMode === 'fixed') return;
         let listArr = quotesList;
@@ -1351,7 +1385,6 @@
                 cell.appendChild(memoLine);
             }
 
-            // 날짜 셀 클릭 시 메모 창 열기 (지연 없는 즉시 반응)
             cell.addEventListener('click', (e) => {
                 e.stopPropagation();
                 openDiaryForm(normalizedDateStr);
@@ -1498,6 +1531,10 @@
         displayQuote();
         renderWeeklyWeather();
         
+        if (weatherLocationText) {
+            weatherLocationText.innerText = weatherLocation;
+        }
+
         ['quote', 'idiom', 'tech'].forEach(cat => {
             const btn = document.getElementById(`tab-${cat}`);
             if (btn) {
