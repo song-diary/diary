@@ -1004,13 +1004,13 @@
             const currentItem = listArr[currentItemIndex];
             if (activeQuoteCategory === 'idiom') {
                 quoteContent.innerText = `"${currentItem.text}"`;
-                quoteAuthorText.innerText = `- 뜻: ${currentItem.author} (밀어서 다음 ➡️) -`;
+                quoteAuthorText.innerText = `- 뜻: ${currentItem.author} (탭해서 다음 ➡️) -`;
             } else if (activeQuoteCategory === 'tech') {
                 quoteContent.innerText = `[${currentItem.text}]`;
-                quoteAuthorText.innerText = `- 해설: ${currentItem.author} (밀어서 다음 ➡️) -`;
+                quoteAuthorText.innerText = `- 해설: ${currentItem.author} (탭해서 다음 ➡️) -`;
             } else {
                 quoteContent.innerText = `"${currentItem.text}"`;
-                quoteAuthorText.innerText = `${currentItem.author} (밀어서 다음 ➡️)`;
+                quoteAuthorText.innerText = `${currentItem.author} (탭해서 다음 ➡️)`;
             }
         }
         
@@ -1018,31 +1018,17 @@
         if (quoteAuthorText) quoteAuthorText.style.fontSize = Math.max(12, currentFontSize - 2) + 'px';
     }
 
-    let quoteTouchStartX = 0;
-    let quoteTouchEndX = 0;
-
-    quoteCard.addEventListener('touchstart', (e) => {
-        quoteTouchStartX = e.changedTouches[0].screenX;
-    }, {passive: true});
-
-    quoteCard.addEventListener('touchend', (e) => {
-        quoteTouchEndX = e.changedTouches[0].screenX;
+    // 명언 영역은 탭(클릭)하면 다음 명언으로 넘어가도록 가볍게 구성
+    quoteCard.addEventListener('click', () => {
+        if (activeQuoteCategory === 'quote' && quoteMode === 'fixed') return;
         let listArr = quotesList;
         if (activeQuoteCategory === 'idiom') listArr = idiomsList;
         else if (activeQuoteCategory === 'tech') listArr = techList;
 
-        if (activeQuoteCategory === 'quote' && quoteMode === 'fixed') return;
-
-        if (quoteTouchEndX < quoteTouchStartX - 40) {
-            currentItemIndex++;
-            if (currentItemIndex >= listArr.length) currentItemIndex = 0;
-            displayQuote();
-        } else if (quoteTouchEndX > quoteTouchStartX + 40) {
-            currentItemIndex--;
-            if (currentItemIndex < 0) currentItemIndex = listArr.length - 1;
-            displayQuote();
-        }
-    }, {passive: true});
+        currentItemIndex++;
+        if (currentItemIndex >= listArr.length) currentItemIndex = 0;
+        displayQuote();
+    });
 
     function toggleDiarySection() {
         isDiaryOpen = !isDiaryOpen;
@@ -1365,7 +1351,7 @@
                 cell.appendChild(memoLine);
             }
 
-            // 🌟 터치/클릭 반응 지연 방지를 위해 명시적 이벤트 바인딩
+            // 날짜 셀 클릭 시 메모 창 열기 (지연 없는 즉시 반응)
             cell.addEventListener('click', (e) => {
                 e.stopPropagation();
                 openDiaryForm(normalizedDateStr);
@@ -1374,44 +1360,6 @@
             grid.appendChild(cell);
         }
     }
-
-    // 🌟 달력 스와이프 감지 로직 안전화 (버튼 클릭 방해 최소화)
-    const calendarCard = document.getElementById('calendar-card');
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let isSwiping = false;
-
-    calendarCard.addEventListener('touchstart', (e) => {
-        touchStartX = e.changedTouches[0].screenX;
-        touchStartY = e.changedTouches[0].screenY;
-        isSwiping = false;
-    }, {passive: true});
-
-    calendarCard.addEventListener('touchmove', (e) => {
-        let currentX = e.changedTouches[0].screenX;
-        let currentY = e.changedTouches[0].screenY;
-        if (Math.abs(currentX - touchStartX) > 20 || Math.abs(currentY - touchStartY) > 20) {
-            isSwiping = true;
-        }
-    }, {passive: true});
-
-    calendarCard.addEventListener('touchend', (e) => {
-        if (!isSwiping) return; // 단순 터치나 클릭은 스와이프로 오인하지 않도록 차단
-        
-        let touchEndX = e.changedTouches[0].screenX;
-        let touchEndY = e.changedTouches[0].screenY;
-        
-        let diffX = touchEndX - touchStartX;
-        let diffY = touchEndY - touchStartY;
-
-        if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 60) {
-            if (diffX < 0) {
-                changeMonth(1); // 다음 달
-            } else {
-                changeMonth(-1); // 이전 달
-            }
-        }
-    }, {passive: true});
 
     function loadDiaryList() {
         let diaryListObj = getAllDiaries();
