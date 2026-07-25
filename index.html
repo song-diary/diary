@@ -135,6 +135,86 @@
             border-color: var(--primary-color);
         }
 
+        /* 날씨 카드 스타일 */
+        #weather-card {
+            background: linear-gradient(135deg, #f0f7ff, #e6f0fa);
+            border: 1px solid #bce0fd;
+            border-radius: 12px;
+            padding: 15px;
+        }
+
+        .weather-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #2980b9;
+            font-size: 16px;
+        }
+
+        .weather-today-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #ffffff;
+            padding: 10px 14px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #d0e7ff;
+        }
+
+        .weather-icon {
+            font-size: 32px;
+        }
+
+        .weather-info-main {
+            flex: 1;
+        }
+
+        .weather-temp {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .weather-desc {
+            font-size: 13px;
+            color: var(--text-sub);
+            margin-top: 2px;
+        }
+
+        .weekly-weather-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            text-align: center;
+        }
+
+        .weekly-cell {
+            background: #ffffff;
+            border: 1px solid #d0e7ff;
+            border-radius: 6px;
+            padding: 6px 2px;
+            font-size: 12px;
+        }
+
+        .weekly-cell .w-day {
+            font-weight: bold;
+            color: #34495e;
+            margin-bottom: 3px;
+        }
+
+        .weekly-cell .w-icon {
+            font-size: 16px;
+            margin-bottom: 2px;
+        }
+
+        .weekly-cell .w-temp {
+            font-size: 11px;
+            color: var(--text-sub);
+        }
+
         /* 달력 스타일 */
         .calendar-header {
             display: flex;
@@ -550,6 +630,26 @@
         </div>
     </div>
 
+    <!-- 🌤️ 날씨 카드 (오늘 및 일주일 날씨) -->
+    <div class="card" id="weather-card">
+        <div class="weather-header">
+            <span>📍 안양시 날씨 정보</span>
+            <span style="font-size: 12px; color: #7f8c8d; font-weight: normal;">실시간 기상 예보</span>
+        </div>
+        <!-- 오늘 날씨 요약 -->
+        <div class="weather-today-box">
+            <div class="weather-icon" id="today-weather-icon">⛅</div>
+            <div class="weather-info-main">
+                <div class="weather-temp" id="today-temp-text">오늘 최고 31°C / 최저 27°C</div>
+                <div class="weather-desc" id="today-desc-text">흐림 후 맑음 (주말 비 소식 주의)</div>
+            </div>
+        </div>
+        <!-- 일주일 주간 날씨 미니 그리드 -->
+        <div class="weekly-weather-grid" id="weekly-weather-grid">
+            <!-- 자바스크립트로 자동 생성 -->
+        </div>
+    </div>
+
     <!-- 달력 카드 -->
     <div class="card" id="calendar-card">
         <div class="calendar-header">
@@ -633,7 +733,7 @@
     let quoteMode = localStorage.getItem('smartDiaryQuoteMode') || 'random';
     let customQuoteText = localStorage.getItem('smartDiaryCustomQuote') || '오늘 흘린 땀방울은 내일의 기쁨이 된다.';
     let activeQuoteCategory = localStorage.getItem('smartDiaryQuoteCategory') || 'quote';
-    let currentItemIndex = 0; // 스와이프 공부용 인덱스
+    let currentItemIndex = 0; 
 
     const quotesList = [
         { text: "피할 수 없으면 즐겨라.", author: "- 로버트 엘리엇 -" },
@@ -686,6 +786,39 @@
     const quoteAuthorText = document.getElementById('quote-author-text');
     const customQuoteInput = document.getElementById('custom-quote-input');
     const fixedQuoteInputWrap = document.getElementById('fixed-quote-input-wrap');
+
+    // 🌤️ 날씨 위젯 데이터 초기화 함수
+    function renderWeeklyWeather() {
+        const grid = document.getElementById('weekly-weather-grid');
+        if (!grid) return;
+        grid.innerHTML = '';
+
+        // 주간 날씨 예시 데이터 (토요일 기준 7일)
+        const weeklyData = [
+            { day: '토', icon: '🌧️', temp: '31°/27°' },
+            { day: '일', icon: '🌧️', temp: '29°/25°' },
+            { day: '월', icon: '🌦️', temp: '30°/25°' },
+            { day: '화', icon: '⛅', temp: '32°/26°' },
+            { day: '수', icon: '☀️', temp: '33°/26°' },
+            { day: '목', icon: '☀️', temp: '34°/27°' },
+            { day: '금', icon: '⛅', temp: '33°/26°' }
+        ];
+
+        weeklyData.forEach((w, idx) => {
+            const cell = document.createElement('div');
+            cell.className = 'weekly-cell';
+            if (idx === 0) {
+                cell.style.borderColor = '#3498db';
+                cell.style.background = '#f4f9ff';
+            }
+            cell.innerHTML = `
+                <div class="w-day">${w.day}</div>
+                <div class="w-icon">${w.icon}</div>
+                <div class="w-temp">${w.temp}</div>
+            `;
+            grid.appendChild(cell);
+        });
+    }
 
     function getTodayStr() {
         const d = new Date();
@@ -868,7 +1001,6 @@
         if (quoteAuthorText) quoteAuthorText.style.fontSize = Math.max(12, currentFontSize - 2) + 'px';
     }
 
-    // 명언 카드 스와이프 기능 구현
     let quoteTouchStartX = 0;
     let quoteTouchEndX = 0;
 
@@ -885,12 +1017,10 @@
         if (activeQuoteCategory === 'quote' && quoteMode === 'fixed') return;
 
         if (quoteTouchEndX < quoteTouchStartX - 40) {
-            // 왼쪽으로 밀었을 때 -> 다음 보기
             currentItemIndex++;
             if (currentItemIndex >= listArr.length) currentItemIndex = 0;
             displayQuote();
         } else if (quoteTouchEndX > quoteTouchStartX + 40) {
-            // 오른쪽으로 밀었을 때 -> 이전 보기
             currentItemIndex--;
             if (currentItemIndex < 0) currentItemIndex = listArr.length - 1;
             displayQuote();
@@ -1307,6 +1437,7 @@
         initSpeechRecognition();
         renderCalendar();
         displayQuote();
+        renderWeeklyWeather(); // 🌤️ 날씨 위젯 로드
         
         ['quote', 'idiom', 'tech'].forEach(cat => {
             const btn = document.getElementById(`tab-${cat}`);
