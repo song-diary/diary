@@ -19,6 +19,7 @@
             --weekday-color: #34495e;
             --income-color: #27ae60;
             --expense-color: #c0392b;
+            --memo-color: #8e44ad;
         }
 
         * {
@@ -456,6 +457,7 @@
         }
         .dot.expense { background-color: var(--expense-color); }
         .dot.income { background-color: var(--income-color); }
+        .dot.memo { background-color: var(--memo-color); }
 
         /* 팝업 모달 스타일 */
         #memo-form-overlay {
@@ -659,6 +661,10 @@
         .sub-memo-item.money-item-box.is-expense {
             border-left: 4px solid var(--expense-color);
             background: #fffdfd;
+        }
+        .sub-memo-item.memo-only-box {
+            border-left: 4px solid var(--memo-color);
+            background: #fdfbff;
         }
 
         .diary-text {
@@ -949,7 +955,7 @@
         <div id="category-stats-body"></div>
     </div>
 
-    <!-- 🔍 검색 및 기간별 상세 내역 -->
+    <!-- 🔍 검색 및 기간별 상세 내역 (메모 모드 추가) -->
     <div class="section-divider" onclick="toggleSearchFilterSection()">
         <span class="divider-label" id="search-divider-label-text">🔍 내역 검색 및 기간 필터 펼치기 ▼</span>
     </div>
@@ -957,11 +963,19 @@
     <div class="card sub-feature-card" id="search-filter-card" style="display: none;">
         <div class="feature-title">
             <span>🔍 내역 검색 및 기간 필터</span>
-            <span style="font-size: 12px; color: var(--text-sub); font-weight: normal;" id="search-subtitle">(기본: 지출 중심 전후)</span>
+            <span style="font-size: 12px; color: var(--text-sub); font-weight: normal;" id="search-subtitle">(지출 내역 중심)</span>
         </div>
+        
+        <!-- 보기 모드 선택 탭 (지출 / 수입 / 메모) -->
+        <div class="view-select-group" style="margin-bottom: 8px;">
+            <button class="view-select-btn active" id="mode-tab-expense" onclick="toggleStatsMode('expense')">💸 지출 내역</button>
+            <button class="view-select-btn" id="mode-tab-income" onclick="toggleStatsMode('income')">💰 수입 내역</button>
+            <button class="view-select-btn" id="mode-tab-memo" onclick="toggleStatsMode('memo')">📝 메모(일기)</button>
+        </div>
+
         <div class="search-filter-box">
             <div class="search-row">
-                <input type="text" id="keyword-search-input" class="search-input" placeholder="키워드 입력 (예: 병원, 선물 등)" oninput="filterCustomList()">
+                <input type="text" id="keyword-search-input" class="search-input" placeholder="키워드 입력 (예: 병원, 일기 등)" oninput="filterCustomList()">
                 <button class="action-btn" style="padding: 6px 12px; font-size: 13px;" onclick="resetSearchFilter()">초기화</button>
             </div>
             <div class="view-select-group" style="margin-top: 4px;">
@@ -1017,14 +1031,14 @@
 
         <!-- 💵 가계부 입력 영역 -->
         <div class="money-input-box">
-            <label style="font-size: 14px; font-weight: bold; color: #27ae60;">💰 용돈(가계부) 기록</label>
+            <label style="font-size: 14px; font-weight: bold; color: #27ae60;">💰 용돈(가계부) 기록 (선택사항)</label>
             <div class="money-input-row">
                 <button type="button" class="money-type-btn expense active" id="type-expense-btn" onclick="setMoneyType('expense')">지출</button>
                 <button type="button" class="money-type-btn income" id="type-income-btn" onclick="setMoneyType('income')">수입</button>
             </div>
             <div style="display: flex; gap: 6px;">
                 <select id="money-category-select" class="money-input-field" style="flex: 1;"></select>
-                <input type="text" inputmode="numeric" id="money-amount-input" class="money-input-field" placeholder="금액 (원)" style="flex: 1.5;">
+                <input type="text" inputmode="numeric" id="money-amount-input" class="money-input-field" placeholder="금액 안 쓰면 순수 메모" style="flex: 1.5;">
             </div>
         </div>
 
@@ -1065,9 +1079,8 @@
 
     let currentMoneyType = 'expense';
     let currentPeriodFilter = 'today-around';
-    let currentStatsType = 'expense'; // 'expense' 또는 'income'[cite: 1]
+    let currentStatsType = 'expense'; // 'expense', 'income', 또는 'memo'[cite: 1]
 
-    // 계정 과목 데이터 불러오기 또는 기본값 설정[cite: 1]
     let expenseCategories = JSON.parse(localStorage.getItem('smartDiaryExpenseCats')) || ["식비", "교통/통신", "주거/생활", "쇼핑", "의료/건강", "문화/여가", "기타 지출"];
     let incomeCategories = JSON.parse(localStorage.getItem('smartDiaryIncomeCats')) || ["용돈", "월급", "사업수입", "금융/투자", "기타 수입"];
 
@@ -1193,7 +1206,6 @@
         }
     }
 
-    // 계정 과목 추가 및 삭제 기능[cite: 1]
     function renderCategorySettingsList() {
         const expListEl = document.getElementById('expense-cat-list');
         const incListEl = document.getElementById('income-cat-list');
@@ -1357,13 +1369,33 @@
         return combinedList;
     }
 
-    // 통계 모드 토글 (총지출 또는 총수입 버튼 클릭 시 호출)[cite: 1]
+    // 통계 및 검색 모드 토글 (지출, 수입, 메모 선택)[cite: 1]
     function toggleStatsMode(type) {
         currentStatsType = type;
-        renderCategoryStats();
-        if (searchSubtitle) {
-            searchSubtitle.textContent = currentStatsType === 'expense' ? '(지출 내역 중심)' : '(수입 내역 중심)';
+        
+        // 상단 통계 카드 영역은 지출/수입 모드일 때만 유효하므로 처리
+        if (type !== 'memo') {
+            if (categoryStatsCard) categoryStatsCard.style.display = isCategoryStatsVisible ? 'block' : 'none';
+            renderCategoryStats();
+        } else {
+            if (categoryStatsCard) categoryStatsCard.style.display = 'none'; // 메모 모드일 때는 카테고리 통계 숨김
         }
+
+        // 검색 필터 내부의 모드 버튼 Active 상태 동기화
+        ['expense', 'income', 'memo'].forEach(m => {
+            const btn = document.getElementById(`mode-tab-${m}`);
+            if (btn) {
+                if (m === type) btn.classList.add('active');
+                else btn.classList.remove('active');
+            }
+        });
+
+        if (searchSubtitle) {
+            if (type === 'expense') searchSubtitle.textContent = '(지출 내역 중심)';
+            else if (type === 'income') searchSubtitle.textContent = '(수입 내역 중심)';
+            else searchSubtitle.textContent = '(순수 메모/일기 중심)';
+        }
+
         if (isSearchFilterOpen) filterCustomList();
     }
 
@@ -1371,7 +1403,7 @@
         const statsBody = document.getElementById('category-stats-body');
         const statsCardTitle = document.getElementById('stats-card-title');
         const statsTotalAmount = document.getElementById('stats-total-amount');
-        if (!statsBody) return;
+        if (!statsBody || currentStatsType === 'memo') return;
 
         statsBody.innerHTML = '';
         const diaries = getAllDiaries();
@@ -1386,7 +1418,7 @@
             if (normalizeDateStr(item.date).startsWith(prefix) && item.money && item.money.type === currentStatsType) {
                 let cat = item.money.category;
                 let amt = Number(item.money.amount) || 0;
-                if (!categorySums[cat]) categorySums[cat] = 0; // 커스텀 과목 대응
+                if (!categorySums[cat]) categorySums[cat] = 0;
                 categorySums[cat] += amt;
                 totalAmt += amt;
             }
@@ -1474,8 +1506,16 @@
         const tObj = parseDateObj(todayStr);
 
         let filtered = diaries.filter(item => {
-            // 핵심 수정: 현재 선택된 통계 모드(currentStatsType: 'expense' 또는 'income')와 일치하는 가계부 내역만 허용 (메모나 타 유형 제외)
-            if (!item.money || item.money.type !== currentStatsType) return false;
+            // 모드별 필터링 조건 분기 (지출, 수입, 또는 순수 메모)
+            if (currentStatsType === 'expense') {
+                if (!item.money || item.money.type !== 'expense') return false;
+            } else if (currentStatsType === 'income') {
+                if (!item.money || item.money.type !== 'income') return false;
+            } else if (currentStatsType === 'memo') {
+                // 돈(수입/지출) 내역이 없고 텍스트나 사진이 있는 순수 메모만 대상
+                if (item.money && item.money.amount) return false;
+                if (!item.text && !item.photo) return false;
+            }
 
             let itemDateStr = normalizeDateStr(item.date);
             let itemDate = parseDateObj(itemDateStr);
@@ -1502,7 +1542,7 @@
         });
 
         if (filtered.length === 0) {
-            let typeName = currentStatsType === 'expense' ? '지출' : '수입';
+            let typeName = currentStatsType === 'expense' ? '지출' : (currentStatsType === 'income' ? '수입' : '메모(일기)');
             resultListContainer.innerHTML = `<div style="text-align:center; color:var(--text-sub); font-size:13px; padding:10px;">조건에 일치하는 ${typeName} 내역이 없습니다.</div>`;
             return;
         }
@@ -1514,7 +1554,7 @@
             subItem.className = 'sub-memo-item';
             let dateStr = normalizeDateStr(item.date);
 
-            let moneyHTML = '';
+            let headerHTML = '';
             if (item.money) {
                 let isExp = item.money.type === 'expense';
                 subItem.classList.add('money-item-box');
@@ -1524,8 +1564,13 @@
                 let typeSign = isExp ? '-' : '+';
                 let amountStr = Number(item.money.amount).toLocaleString() + '원';
                 
-                moneyHTML = `<div style="font-weight: bold; margin-bottom: 4px; ${colorStyle}">
+                headerHTML = `<div style="font-weight: bold; margin-bottom: 4px; ${colorStyle}">
                     💰 [${dateStr}] [${isExp ? '지출' : '수입'}] ${item.money.category} : ${typeSign}${amountStr}
+                </div>`;
+            } else {
+                subItem.classList.add('memo-only-box');
+                headerHTML = `<div style="font-weight: bold; margin-bottom: 4px; color: var(--memo-color);">
+                    📝 [${dateStr}] 순수 메모(일기)
                 </div>`;
             }
 
@@ -1538,7 +1583,7 @@
                     <button class="edit-btn" onclick='openDiaryForm("${dateStr}", ${JSON.stringify(item)})'>수정</button>
                     <button class="delete-btn" onclick="deleteDiary('${item.id}')">삭제</button>
                 </div>
-                ${moneyHTML}
+                ${headerHTML}
                 ${textContentHTML}
                 ${photoHTML}
             `;
@@ -1576,7 +1621,7 @@
             summaryBalance.style.color = balance < 0 ? 'var(--expense-color)' : '#2980b9';
         }
 
-        renderCategoryStats();
+        if (currentStatsType !== 'memo') renderCategoryStats();
         if (isSearchFilterOpen) filterCustomList();
     }
 
@@ -1752,12 +1797,14 @@
                 
                 let hasExpense = dayDiaries.some(d => d.money && d.money.type === 'expense');
                 let hasIncome = dayDiaries.some(d => d.money && d.money.type === 'income');
+                let hasMemoOnly = dayDiaries.some(d => (!d.money || !d.money.amount) && (d.text || d.photo));
                 
                 let dotHTML = '';
-                if (hasExpense || hasIncome) {
+                if (hasExpense || hasIncome || hasMemoOnly) {
                     let dots = [];
                     if (hasExpense) dots.push('<span class="dot expense" title="지출"></span>');
                     if (hasIncome) dots.push('<span class="dot income" title="수입"></span>');
+                    if (hasMemoOnly) dots.push('<span class="dot memo" title="순수 메모"></span>');
                     dotHTML = `<div class="money-dots">${dots.join('')}</div>`;
                 }
 
@@ -1790,7 +1837,7 @@
             textOutput.innerHTML = existingItem.text || '';
             reservationTimeInput.value = existingItem.time || '';
             currentPhotoBase64 = existingItem.photo || null;
-            if (existingItem.money) {
+            if (existingItem.money && existingItem.money.amount) {
                 setMoneyType(existingItem.money.type || 'expense', existingItem.money.category || '');
                 moneyAmountInput.value = Number(existingItem.money.amount || 0).toLocaleString();
             } else {
