@@ -957,7 +957,7 @@
     <div class="card sub-feature-card" id="search-filter-card" style="display: none;">
         <div class="feature-title">
             <span>🔍 내역 검색 및 기간 필터</span>
-            <span style="font-size: 12px; color: var(--text-sub); font-weight: normal;">(기본: 오늘 기준 전후)</span>
+            <span style="font-size: 12px; color: var(--text-sub); font-weight: normal;" id="search-subtitle">(기본: 지출 중심 전후)</span>
         </div>
         <div class="search-filter-box">
             <div class="search-row">
@@ -1050,7 +1050,7 @@
 
 <script>
     let calYear = 2026;
-    let calMonth = 6; // 7월 (0부터 시작하므로 6)
+    let calMonth = 6; // 7월 (0부터 시작하므로 6)[cite: 1]
     let selectedReservationDate = null;
     let editingDiaryId = null;
     let currentPhotoBase64 = null;
@@ -1065,9 +1065,9 @@
 
     let currentMoneyType = 'expense';
     let currentPeriodFilter = 'today-around';
-    let currentStatsType = 'expense'; // 'expense' 또는 'income'
+    let currentStatsType = 'expense'; // 'expense' 또는 'income'[cite: 1]
 
-    // 계정 과목 데이터 불러오기 또는 기본값 설정
+    // 계정 과목 데이터 불러오기 또는 기본값 설정[cite: 1]
     let expenseCategories = JSON.parse(localStorage.getItem('smartDiaryExpenseCats')) || ["식비", "교통/통신", "주거/생활", "쇼핑", "의료/건강", "문화/여가", "기타 지출"];
     let incomeCategories = JSON.parse(localStorage.getItem('smartDiaryIncomeCats')) || ["용돈", "월급", "사업수입", "금융/투자", "기타 수입"];
 
@@ -1134,6 +1134,7 @@
     const categoryStatsCard = document.getElementById('category-stats-card');
     const searchFilterCard = document.getElementById('search-filter-card');
     const keywordSearchInput = document.getElementById('keyword-search-input');
+    const searchSubtitle = document.getElementById('search-subtitle');
 
     if (moneyAmountInput) {
         moneyAmountInput.addEventListener('input', function (e) {
@@ -1192,7 +1193,7 @@
         }
     }
 
-    // 계정 과목 추가 및 삭제 기능
+    // 계정 과목 추가 및 삭제 기능[cite: 1]
     function renderCategorySettingsList() {
         const expListEl = document.getElementById('expense-cat-list');
         const incListEl = document.getElementById('income-cat-list');
@@ -1356,10 +1357,14 @@
         return combinedList;
     }
 
-    // 통계 모드 토글 (총지출 또는 총수입 버튼 클릭 시 호출)
+    // 통계 모드 토글 (총지출 또는 총수입 버튼 클릭 시 호출)[cite: 1]
     function toggleStatsMode(type) {
         currentStatsType = type;
         renderCategoryStats();
+        if (searchSubtitle) {
+            searchSubtitle.textContent = currentStatsType === 'expense' ? '(지출 내역 중심)' : '(수입 내역 중심)';
+        }
+        if (isSearchFilterOpen) filterCustomList();
     }
 
     function renderCategoryStats() {
@@ -1469,6 +1474,9 @@
         const tObj = parseDateObj(todayStr);
 
         let filtered = diaries.filter(item => {
+            // 핵심 수정: 현재 선택된 통계 모드(currentStatsType: 'expense' 또는 'income')와 일치하는 가계부 내역만 허용 (메모나 타 유형 제외)
+            if (!item.money || item.money.type !== currentStatsType) return false;
+
             let itemDateStr = normalizeDateStr(item.date);
             let itemDate = parseDateObj(itemDateStr);
             let diffTime = tObj - itemDate;
@@ -1494,7 +1502,8 @@
         });
 
         if (filtered.length === 0) {
-            resultListContainer.innerHTML = '<div style="text-align:center; color:var(--text-sub); font-size:13px; padding:10px;">조건에 일치하는 상세 내역이 없습니다.</div>';
+            let typeName = currentStatsType === 'expense' ? '지출' : '수입';
+            resultListContainer.innerHTML = `<div style="text-align:center; color:var(--text-sub); font-size:13px; padding:10px;">조건에 일치하는 ${typeName} 내역이 없습니다.</div>`;
             return;
         }
 
@@ -1518,8 +1527,6 @@
                 moneyHTML = `<div style="font-weight: bold; margin-bottom: 4px; ${colorStyle}">
                     💰 [${dateStr}] [${isExp ? '지출' : '수입'}] ${item.money.category} : ${typeSign}${amountStr}
                 </div>`;
-            } else {
-                moneyHTML = `<div style="font-weight: bold; margin-bottom: 4px; color:var(--text-sub);">📅 [${dateStr}] 메모</div>`;
             }
 
             let timeBadge = item.time ? `<span style="color:var(--primary-color); font-weight:bold; margin-right:6px; font-size:12px;">⏰ ${item.time}</span>` : '';
