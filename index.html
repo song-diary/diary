@@ -975,11 +975,6 @@
         <div class="weekly-weather-grid" id="weekly-weather-grid"></div>
     </div>
 
-    <!-- 구분선 -->
-    <div class="section-divider" onclick="toggleDiarySection()">
-        <span class="divider-label" id="divider-label-text">📝 나의 기록 펼치기 ▼</span>
-    </div>
-
     <!-- 명언 카드 -->
     <div class="card" id="quote-card">
         <div class="quote-header-tabs">
@@ -1035,23 +1030,15 @@
             <button class="btn btn-primary" onclick="manualSaveDiary()">저장</button>
         </div>
     </div>
-
-    <!-- 메모 리스트 카드 -->
-    <div class="card" id="diary-list-card" style="display: none;">
-        <div id="current-view-label" style="font-size: 14px; color: var(--text-sub); margin-bottom: 10px; font-weight: bold;">📋 기본 3일 메모</div>
-        <div id="diary-list"></div>
-    </div>
 </div>
 
 <script>
     let calYear = 2026;
     let calMonth = 6; // 7월 (0부터 시작하므로 6)
-    let currentViewMode = localStorage.getItem('smartDiaryViewMode') || '3days'; 
     let selectedReservationDate = null;
     let editingDiaryId = null;
     let currentPhotoBase64 = null;
     let currentFontSize = parseInt(localStorage.getItem('smartDiaryFontSize')) || 16;
-    let isDiaryOpen = false;
     let isSearchFilterOpen = false; // 검색 필터 접기/펼치기 상태
 
     // 온/오프 상태 변수
@@ -1109,17 +1096,13 @@
 
     const textOutput = document.getElementById('textOutput');
     const recordBtn = document.getElementById('record-btn');
-    const diaryList = document.getElementById('diary-list');
-    const diaryListCard = document.getElementById('diary-list-card');
     const quoteCard = document.getElementById('quote-card');
-    const dividerLabelText = document.getElementById('divider-label-text');
     const searchDividerLabelText = document.getElementById('search-divider-label-text');
     const reservationTimeInput = document.getElementById('reservation-time-input');
     const memoFormCard = document.getElementById('memo-form-card');
     const formTargetDateTitle = document.getElementById('form-target-date-title');
     const settingsCard = document.getElementById('settings-card');
     const fontSizeDisplay = document.getElementById('font-size-display');
-    const currentViewLabel = document.getElementById('current-view-label');
     const quoteContent = document.getElementById('quote-content');
     const quoteAuthorText = document.getElementById('quote-author-text');
     const customQuoteInput = document.getElementById('custom-quote-input');
@@ -1170,7 +1153,7 @@
     function setSearchFilterVisibility(isVisible) {
         isSearchFilterVisible = isVisible;
         localStorage.setItem('smartDiarySearchFilterVisible', isVisible);
-        const searchDivider = document.querySelector('.section-divider:nth-of-type(1)'); // 검색 토글 구분선
+        const searchDivider = document.querySelector('.section-divider'); 
         if (searchDivider) searchDivider.style.display = isVisible ? 'flex' : 'none';
         if (searchFilterCard) searchFilterCard.style.display = (isVisible && isSearchFilterOpen) ? 'block' : 'none';
         updateToggleButtons('search-filter', isVisible);
@@ -1397,9 +1380,7 @@
             let diffTime = tObj - itemDate;
             let diffDays = diffTime / (1000 * 60 * 60 * 24);
 
-            // 기간 필터 조건 처리 (기본은 오늘 기준 전후)
             if (currentPeriodFilter === 'today-around') {
-                // 오늘 기준 전후 1일 (어제, 오늘, 내일 범위)
                 if (diffDays < -1 || diffDays > 1) return false;
             } else if (currentPeriodFilter === 'week') {
                 if (diffDays < 0 || diffDays > 7) return false;
@@ -1447,7 +1428,8 @@
                 moneyHTML = `<div style="font-weight: bold; margin-bottom: 4px; color:var(--text-sub);">📅 [${dateStr}] 메모</div>`;
             }
 
-            let textContentHTML = item.text ? `<div class="diary-text" style="font-size: ${currentFontSize}px;">${item.text}</div>` : '';
+            let timeBadge = item.time ? `<span style="color:var(--primary-color); font-weight:bold; margin-right:6px; font-size:12px;">⏰ ${item.time}</span>` : '';
+            let textContentHTML = item.text ? `<div class="diary-text" style="font-size: ${currentFontSize}px;">${timeBadge}${item.text}</div>` : (item.time ? `<div class="diary-text" style="font-size: ${currentFontSize}px;">${timeBadge}</div>` : '');
             let photoHTML = item.photo ? `<img src="${item.photo}" class="diary-photo" alt="첨부사진">` : '';
 
             subItem.innerHTML = `
@@ -1529,7 +1511,6 @@
         localStorage.removeItem('smartDiaryList');
         renderCalendar();
         updateMoneySummary();
-        loadDiaryList();
         if (isSearchFilterOpen) filterCustomList();
         alert('모든 데이터가 초기화되었습니다.');
         toggleSettings();
@@ -1622,33 +1603,6 @@
         document.querySelectorAll('.diary-text').forEach(el => {
             el.style.fontSize = `${currentFontSize}px`;
         });
-    }
-
-    function changeViewMode(mode) {
-        currentViewMode = mode;
-        localStorage.setItem('smartDiaryViewMode', mode);
-
-        ['3days', 'week', 'month', 'alarm', 'all'].forEach(m => {
-            const btn = document.getElementById(`view-${m}`);
-            if (btn) {
-                if (m === mode) btn.classList.add('active');
-                else btn.classList.remove('active');
-            }
-        });
-        loadDiaryList();
-        toggleSettings();
-    }
-
-    function toggleDiarySection() {
-        isDiaryOpen = !isDiaryOpen;
-        if (isDiaryOpen) {
-            dividerLabelText.textContent = '📝 나의 기록 접기 ▲';
-            diaryListCard.style.display = 'block';
-            loadDiaryList();
-        } else {
-            dividerLabelText.textContent = '📝 나의 기록 펼치기 ▼';
-            diaryListCard.style.display = 'none';
-        }
     }
 
     function renderCalendar() {
@@ -1834,7 +1788,6 @@
         closeDiaryForm();
         renderCalendar();
         updateMoneySummary();
-        if (isDiaryOpen) loadDiaryList();
         if (isSearchFilterOpen) filterCustomList();
     }
 
@@ -1845,136 +1798,7 @@
         localStorage.setItem('smartDiaryList', JSON.stringify(diaries));
         renderCalendar();
         updateMoneySummary();
-        if (isDiaryOpen) loadDiaryList();
         if (isSearchFilterOpen) filterCustomList();
-    }
-
-    function loadDiaryList() {
-        if (!diaryList) return;
-        diaryList.innerHTML = '';
-
-        let diaries = getAllDiaries();
-        if (diaries.length === 0) {
-            diaryList.innerHTML = '<div style="text-align:center; color:var(--text-sub); padding:15px;">등록된 메모가 없습니다. 달력 날짜를 터치해 기록을 남겨보세요!</div>';
-            if (currentViewLabel) currentViewLabel.textContent = '📋 메모 목록 (0개)';
-            return;
-        }
-
-        const todayStr = getTodayStr();
-        let filtered = [];
-        let labelText = '';
-
-        if (currentViewMode === '3days') {
-            labelText = '📋 기본 3일 기록 (오늘 기준 전후)';
-            const tObj = parseDateObj(todayStr);
-            let targetDates = [];
-            for (let i = -1; i <= 1; i++) {
-                let d = new Date(tObj);
-                d.setDate(tObj.getDate() + i);
-                let y = d.getFullYear();
-                let m = String(d.getMonth() + 1).padStart(2, '0');
-                let day = String(d.getDate()).padStart(2, '0');
-                targetDates.push(`${y}-${m}-${day}`);
-            }
-            filtered = diaries.filter(d => targetDates.includes(normalizeDateStr(d.date)));
-        } else if (currentViewMode === 'week') {
-            labelText = '📋 일주일 기록 (이번 주)';
-            const tObj = parseDateObj(todayStr);
-            let dayOfWeek = tObj.getDay();
-            let targetDates = [];
-            for (let i = 0; i < 7; i++) {
-                let d = new Date(tObj);
-                d.setDate(tObj.getDate() - dayOfWeek + i);
-                let y = d.getFullYear();
-                let m = String(d.getMonth() + 1).padStart(2, '0');
-                let day = String(d.getDate()).padStart(2, '0');
-                targetDates.push(`${y}-${m}-${day}`);
-            }
-            filtered = diaries.filter(d => targetDates.includes(normalizeDateStr(d.date)));
-        } else if (currentViewMode === 'month') {
-            labelText = `📋 한달 기록 (${calYear}년 ${calMonth + 1}월)`;
-            let prefix = `${calYear}-${String(calMonth + 1).padStart(2, '0')}`;
-            filtered = diaries.filter(d => normalizeDateStr(d.date).startsWith(prefix));
-        } else if (currentViewMode === 'alarm') {
-            labelText = '📋 예약/알람 설정된 메모';
-            filtered = diaries.filter(d => d.time && d.time.trim() !== '');
-        } else {
-            labelText = '📋 전체 기록 목록';
-            filtered = diaries;
-        }
-
-        if (currentViewLabel) currentViewLabel.textContent = labelText;
-
-        if (filtered.length === 0) {
-            diaryList.innerHTML = '<div style="text-align:center; color:var(--text-sub); padding:15px;">해당 조건에 일치하는 기록이 없습니다.</div>';
-            return;
-        }
-
-        filtered.sort((a, b) => normalizeDateStr(b.date).localeCompare(normalizeDateStr(a.date)));
-
-        let grouped = {};
-        filtered.forEach(item => {
-            let dStr = normalizeDateStr(item.date);
-            if (!grouped[dStr]) grouped[dStr] = [];
-            grouped[dStr].push(item);
-        });
-
-        Object.keys(grouped).sort((a, b) => b.localeCompare(a)).forEach(dateStr => {
-            const groupCard = document.createElement('div');
-            groupCard.className = 'date-group-card';
-
-            const dObj = parseDateObj(dateStr);
-            const dayOfWeek = dObj.getDay();
-            const dayName = getDayOfWeekStr(dateStr);
-            const holidays = getKoreanHolidays(dObj.getFullYear());
-
-            let headerClass = 'weekday';
-            if (dayOfWeek === 0 || holidays.has(dateStr)) headerClass = 'sunday';
-            else if (dayOfWeek === 6) headerClass = 'saturday';
-
-            let groupHeader = document.createElement('div');
-            groupHeader.className = `date-group-header ${headerClass}`;
-            groupHeader.innerHTML = `<span>📅 ${dObj.getFullYear()}년 ${dObj.getMonth() + 1}월 ${dObj.getDate()}일 (${dayName})</span>`;
-            groupCard.appendChild(groupHeader);
-
-            grouped[dateStr].forEach(item => {
-                const subItem = document.createElement('div');
-                subItem.className = 'sub-memo-item';
-                if (item.time) subItem.classList.add('alarm-memo');
-
-                let moneyHTML = '';
-                if (item.money) {
-                    let isExp = item.money.type === 'expense';
-                    subItem.classList.add('money-item-box');
-                    if (isExp) subItem.classList.add('is-expense');
-
-                    let colorStyle = isExp ? 'color: var(--expense-color);' : 'color: var(--income-color);';
-                    let typeSign = isExp ? '-' : '+';
-                    let amountStr = Number(item.money.amount).toLocaleString() + '원';
-                    
-                    moneyHTML = `<div style="font-weight: bold; margin-bottom: 4px; ${colorStyle}">
-                        💰 [${isExp ? '지출' : '수입'}] ${item.money.category} : ${typeSign}${amountStr}
-                    </div>`;
-                }
-
-                let timeBadge = item.time ? `<span style="color:var(--primary-color); font-weight:bold; margin-right:6px; font-size:12px;">⏰ ${item.time}</span>` : '';
-                let photoHTML = item.photo ? `<img src="${item.photo}" class="diary-photo" alt="첨부사진">` : '';
-                let textContentHTML = item.text ? `<div class="diary-text" style="font-size: ${currentFontSize}px;">${timeBadge}${item.text}</div>` : (item.time ? `<div class="diary-text" style="font-size: ${currentFontSize}px;">${timeBadge}</div>` : '');
-
-                subItem.innerHTML = `
-                    <div class="memo-action-btns">
-                        <button class="edit-btn" onclick='openDiaryForm("${dateStr}", ${JSON.stringify(item)})'>수정</button>
-                        <button class="delete-btn" onclick="deleteDiary('${item.id}')">삭제</button>
-                    </div>
-                    ${moneyHTML}
-                    ${textContentHTML}
-                    ${photoHTML}
-                `;
-                groupCard.appendChild(subItem);
-            });
-
-            diaryList.appendChild(groupCard);
-        });
     }
 
     function initSpeechRecognition() {
