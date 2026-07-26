@@ -957,10 +957,10 @@
 
     <!-- 🔍 검색 및 기간별 상세 내역 (메모 모드 추가) -->
     <div class="section-divider" onclick="toggleSearchFilterSection()">
-        <span class="divider-label" id="search-divider-label-text">🔍 내역 검색 및 기간 필터 펼치기 ▼</span>
+        <span class="divider-label" id="search-divider-label-text">🔍 내역 검색 및 기간 필터 접기 ▲</span>
     </div>
 
-    <div class="card sub-feature-card" id="search-filter-card" style="display: none;">
+    <div class="card sub-feature-card" id="search-filter-card" style="display: block;">
         <div class="feature-title">
             <span>🔍 내역 검색 및 기간 필터</span>
             <span style="font-size: 12px; color: var(--text-sub); font-weight: normal;" id="search-subtitle">(지출 내역 중심)</span>
@@ -979,9 +979,9 @@
                 <button class="action-btn" style="padding: 6px 12px; font-size: 13px;" onclick="resetSearchFilter()">초기화</button>
             </div>
             <div class="view-select-group" style="margin-top: 4px;">
-                <button class="view-select-btn active" id="filter-period-today-around" onclick="setPeriodFilter('today-around')">오늘 기준 전후</button>
+                <button class="view-select-btn" id="filter-period-today-around" onclick="setPeriodFilter('today-around')">오늘 기준 전후</button>
                 <button class="view-select-btn" id="filter-period-week" onclick="setPeriodFilter('week')">지난 1주일</button>
-                <button class="view-select-btn" id="filter-period-month" onclick="setPeriodFilter('month')">이번 달</button>
+                <button class="view-select-btn active" id="filter-period-month" onclick="setPeriodFilter('month')">이번 달</button>
                 <button class="view-select-btn" id="filter-period-all" onclick="setPeriodFilter('all')">전체 기간</button>
             </div>
         </div>
@@ -1069,7 +1069,9 @@
     let editingDiaryId = null;
     let currentPhotoBase64 = null;
     let currentFontSize = parseInt(localStorage.getItem('smartDiaryFontSize')) || 16;
-    let isSearchFilterOpen = false;
+    
+    // 내역검사 및 기간필터 기본 온(True) 설정 적용
+    let isSearchFilterOpen = true;
 
     let isWeatherVisible = localStorage.getItem('smartDiaryWeatherVisible') !== 'false';
     let isQuoteVisible = localStorage.getItem('smartDiaryQuoteVisible') !== 'false';
@@ -1078,7 +1080,9 @@
     let isSearchFilterVisible = localStorage.getItem('smartDiarySearchFilterVisible') !== 'false';
 
     let currentMoneyType = 'expense';
-    let currentPeriodFilter = 'today-around';
+    
+    // 지출/수입내역 처음 업로드시 기준은 "이번달"('month')로 설정, 메모일기는 오늘 전후('today-around') 기준
+    let currentPeriodFilter = 'month'; 
     let currentStatsType = 'expense'; // 'expense', 'income', 또는 'memo'[cite: 1]
 
     let expenseCategories = JSON.parse(localStorage.getItem('smartDiaryExpenseCats')) || ["식비", "교통/통신", "주거/생활", "쇼핑", "의료/건강", "문화/여가", "기타 지출"];
@@ -1373,7 +1377,14 @@
     function toggleStatsMode(type) {
         currentStatsType = type;
         
-        // 상단 통계 카드 영역은 지출/수입 모드일 때만 유효하므로 처리
+        // 지출/수입 모드로 전환 시 처음 업로드 기본 기준인 '이번달'('month')로 필터 설정 전환
+        if (type !== 'memo') {
+            setPeriodFilter('month');
+        } else {
+            // 메모일기는 오늘 전후('today-around') 기준 적용
+            setPeriodFilter('today-around');
+        }
+        
         if (type !== 'memo') {
             if (categoryStatsCard) categoryStatsCard.style.display = isCategoryStatsVisible ? 'block' : 'none';
             renderCategoryStats();
@@ -1487,12 +1498,14 @@
                 else btn.classList.remove('active');
             }
         });
-        filterCustomList();
+        if (isSearchFilterOpen) filterCustomList();
     }
 
     function resetSearchFilter() {
         if (keywordSearchInput) keywordSearchInput.value = '';
-        setPeriodFilter('today-around');
+        // 초기화 시에도 지출/수입은 '이번달', 메모일기는 '오늘 전후' 기본값 반영
+        let defaultPeriod = (currentStatsType === 'memo') ? 'today-around' : 'month';
+        setPeriodFilter(defaultPeriod);
     }
 
     function filterCustomList() {
@@ -1553,6 +1566,10 @@
             const subItem = document.createElement('div');
             subItem.className = 'sub-memo-item';
             let dateStr = normalizeDateStr(item.date);
+            
+            // 데이터 리스트업 시 일자 + (요일) 표시 적용
+            let dayOfWeek = getDayOfWeekStr(dateStr);
+            let displayDateStr = `${dateStr}(${dayOfWeek})`;
 
             let headerHTML = '';
             if (item.money) {
@@ -1565,12 +1582,12 @@
                 let amountStr = Number(item.money.amount).toLocaleString() + '원';
                 
                 headerHTML = `<div style="font-weight: bold; margin-bottom: 4px; ${colorStyle}">
-                    💰 [${dateStr}] [${isExp ? '지출' : '수입'}] ${item.money.category} : ${typeSign}${amountStr}
+                    💰 [${displayDateStr}] [${isExp ? '지출' : '수입'}] ${item.money.category} : ${typeSign}${amountStr}
                 </div>`;
             } else {
                 subItem.classList.add('memo-only-box');
                 headerHTML = `<div style="font-weight: bold; margin-bottom: 4px; color: var(--memo-color);">
-                    📝 [${dateStr}] 순수 메모(일기)
+                    📝 [${displayDateStr}] 순수 메모(일기)
                 </div>`;
             }
 
@@ -2014,6 +2031,11 @@
         setQuoteMode(quoteMode);
         initSpeechRecognition();
         updateMoneySummary();
+        
+        // 업로드 시 내역검사 및 기간필터(이번달 기준) 기본 온 상태로 목록 렌더링 수행
+        if (isSearchFilterOpen) {
+            setPeriodFilter('month');
+        }
     };
 </script>
 
