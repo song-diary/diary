@@ -167,15 +167,14 @@
             border: 1px solid #d2eedc;
             border-radius: 8px;
             padding: 8px 4px;
-        }
-
-        /* 총수입 박스 클릭 가능하도록 시각적 효과 추가 */
-        .money-box.income {
             cursor: pointer;
-            transition: background 0.2s;
+            transition: background 0.2s, transform 0.1s;
         }
-        .money-box.income:hover {
+        .money-box:hover {
             background: #e1f5eb;
+        }
+        .money-box:active {
+            transform: scale(0.97);
         }
 
         .money-box .m-label {
@@ -233,10 +232,11 @@
 
         .stat-bar-fill {
             height: 100%;
-            background: var(--expense-color);
             border-radius: 4px;
             transition: width 0.4s ease;
         }
+        .stat-bar-fill.expense { background: var(--expense-color); }
+        .stat-bar-fill.income { background: var(--income-color); }
 
         /* 검색 필터 영역 */
         .search-filter-box {
@@ -457,7 +457,7 @@
         .dot.expense { background-color: var(--expense-color); }
         .dot.income { background-color: var(--income-color); }
 
-        /* 팝업 모달 스타일 (메모 및 가계부 작성 폼) */
+        /* 팝업 모달 스타일 */
         #memo-form-overlay {
             display: none;
             position: fixed;
@@ -638,21 +638,6 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.03);
         }
 
-        .date-group-header {
-            font-size: 16px;
-            font-weight: bold;
-            padding-bottom: 8px;
-            margin-bottom: 10px;
-            border-bottom: 2px solid var(--bg-color);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .date-group-header.sunday { color: var(--sun-color); }
-        .date-group-header.saturday { color: var(--sat-color); }
-        .date-group-header.weekday { color: var(--weekday-color); }
-
         .sub-memo-item {
             background: #fcfcfc;
             border: 1px solid #f0e6e6;
@@ -665,10 +650,6 @@
 
         .sub-memo-item:last-child {
             margin-bottom: 0;
-        }
-
-        .sub-memo-item.alarm-memo {
-            border-left: 4px solid var(--primary-color);
         }
 
         .sub-memo-item.money-item-box {
@@ -824,7 +805,7 @@
     <!-- 설정 카드 -->
     <div class="card" id="settings-card">
         <div class="settings-title">
-            <span>🛠️ 환경 설정 (온/오프)</span>
+            <span>🛠️ 환경 설정 (온/오프 및 과목 관리)</span>
             <button class="close-form-btn" onclick="toggleSettings()">✖</button>
         </div>
 
@@ -839,20 +820,39 @@
 
         <!-- 💵 용돈현황 요약 표시 온/오프 -->
         <div class="settings-section">
-            <label>💵 2026년 7월 용돈 현황 표시 설정</label>
+            <label>💵 용돈 현황 표시 설정</label>
             <div style="display: flex; gap: 6px;">
                 <button class="view-select-btn active" id="money-summary-on-btn" onclick="setMoneySummaryVisibility(true)">용돈현황 켜기</button>
                 <button class="view-select-btn" id="money-summary-off-btn" onclick="setMoneySummaryVisibility(false)">용돈현황 끄기</button>
             </div>
         </div>
 
-        <!-- 📊 카테고리별 지출 통계 온/오프 -->
+        <!-- 📊 지출/수입 통계 표시 온/오프 -->
         <div class="settings-section">
-            <label>📊 이번달 카테고리별 지출 통계 표시 설정</label>
+            <label>📊 카테고리별 통계 영역 표시 설정</label>
             <div style="display: flex; gap: 6px;">
                 <button class="view-select-btn active" id="category-stats-on-btn" onclick="setCategoryStatsVisibility(true)">통계 켜기</button>
                 <button class="view-select-btn" id="category-stats-off-btn" onclick="setCategoryStatsVisibility(false)">통계 끄기</button>
             </div>
+        </div>
+
+        <!-- 🏷️ 계정 과목(카테고리) 커스텀 설정 -->
+        <div class="settings-section">
+            <label>🏷️ 지출 계정 과목 관리</label>
+            <div style="display: flex; gap: 6px; margin-bottom: 6px;">
+                <input type="text" id="new-expense-cat" placeholder="추가할 지출 과목" style="flex:1; padding:6px; border:1px solid var(--border-color); border-radius:6px; font-size:13px;">
+                <button class="action-btn" style="padding:6px 10px; font-size:13px;" onclick="addCategory('expense')">추가</button>
+            </div>
+            <div id="expense-cat-list" style="display: flex; flex-wrap: wrap; gap: 4px; font-size: 12px;"></div>
+        </div>
+
+        <div class="settings-section">
+            <label>🏷️ 수입 계정 과목 관리</label>
+            <div style="display: flex; gap: 6px; margin-bottom: 6px;">
+                <input type="text" id="new-income-cat" placeholder="추가할 수입 과목" style="flex:1; padding:6px; border:1px solid var(--border-color); border-radius:6px; font-size:13px;">
+                <button class="action-btn" style="padding:6px 10px; font-size:13px;" onclick="addCategory('income')">추가</button>
+            </div>
+            <div id="income-cat-list" style="display: flex; flex-wrap: wrap; gap: 4px; font-size: 12px;"></div>
         </div>
 
         <!-- 🔍 내역 검색 및 기간 필터 온/오프 -->
@@ -886,7 +886,7 @@
         </div>
 
         <div class="settings-section">
-            <label>🔤 글자 크기 조절 (명언/해설 & 메모 공통)</label>
+            <label>🔤 글자 크기 조절</label>
             <div style="display: flex; gap: 8px; align-items: center;">
                 <button class="action-btn" style="flex:1;" onclick="adjustFontSize(-1)">작게 (-)</button>
                 <span id="font-size-display" style="font-size: 16px; font-weight: bold; min-width: 45px; text-align: center;">16px</span>
@@ -918,20 +918,19 @@
         <div class="calendar-grid" id="cal-days-grid" style="margin-top: 5px;"></div>
     </div>
 
-    <!-- 💰 이번 달 용돈관리 요약 카드 -->
+    <!-- 💰 이번 달 용돈관리 요약 카드 (총지출, 총수입 버튼화) -->
     <div class="card" id="money-summary-card">
         <div class="money-summary-header">
-            <span id="money-summary-title">💵 2026년 7월 용돈 현황</span>
-            <span style="font-size: 12px; color: #27ae60; font-weight: normal;">지출/수입 관리 (총수입 클릭 시 지출총액 반영)</span>
+            <span id="money-summary-title">💵 용돈 현황</span>
+            <span style="font-size: 11px; color: #27ae60; font-weight: normal;">클릭 시 해당 통계 펼치기/접기</span>
         </div>
         <div class="money-summary-grid">
-            <!-- 총수입 박스에 id 부여 및 클릭 이벤트 연결 -->
-            <div class="money-box income" id="money-box-income" onclick="uploadCategoryStatsToIncome()" title="클릭 시 이번달 지출 총액을 수입으로 반영">
+            <div class="money-box income" onclick="toggleStatsMode('income')">
                 <div class="m-label">총 수입 👆</div>
                 <div class="m-value" id="summary-income">0원</div>
             </div>
-            <div class="money-box expense">
-                <div class="m-label">총 지출</div>
+            <div class="money-box expense" onclick="toggleStatsMode('expense')">
+                <div class="m-label">총 지출 👆</div>
                 <div class="m-value" id="summary-expense">0원</div>
             </div>
             <div class="money-box balance">
@@ -941,16 +940,16 @@
         </div>
     </div>
 
-    <!-- 📊 카테고리별 지출/수입 통계 리스트 -->
+    <!-- 📊 카테고리별 지출/수입 통계 리스트 (클릭에 따라 동적 전환) -->
     <div class="card sub-feature-card" id="category-stats-card">
         <div class="feature-title">
-            <span>📊 이번 달 카테고리별 지출 통계</span>
-            <span id="stats-total-expense" style="font-size: 13px; color: var(--expense-color);">0원</span>
+            <span id="stats-card-title">📊 이번 달 카테고리별 지출 통계</span>
+            <span id="stats-total-amount" style="font-size: 13px; color: var(--expense-color);">0원</span>
         </div>
         <div id="category-stats-body"></div>
     </div>
 
-    <!-- 🔍 검색 및 기간별 상세 내역 (접기/펼치기 토글 적용) -->
+    <!-- 🔍 검색 및 기간별 상세 내역 -->
     <div class="section-divider" onclick="toggleSearchFilterSection()">
         <span class="divider-label" id="search-divider-label-text">🔍 내역 검색 및 기간 필터 펼치기 ▼</span>
     </div>
@@ -1003,7 +1002,7 @@
     </div>
 </div>
 
-<!-- 팝업 오버레이 (메모 및 용돈 작성/수정 폼) -->
+<!-- 팝업 오버레이 -->
 <div id="memo-form-overlay">
     <div id="memo-form-card">
         <div class="form-header-info">
@@ -1029,7 +1028,6 @@
             </div>
         </div>
 
-        <!-- 📝 상세내용 및 메모(일기)작성 안내 문구 추가 -->
         <div style="font-size: 14px; font-weight: bold; color: var(--weekday-color); margin-bottom: 6px;">📝 상세내용 및 메모(일기)작성</div>
 
         <div id="photo-preview-wrap">
@@ -1067,6 +1065,11 @@
 
     let currentMoneyType = 'expense';
     let currentPeriodFilter = 'today-around';
+    let currentStatsType = 'expense'; // 'expense' 또는 'income'
+
+    // 계정 과목 데이터 불러오기 또는 기본값 설정
+    let expenseCategories = JSON.parse(localStorage.getItem('smartDiaryExpenseCats')) || ["식비", "교통/통신", "주거/생활", "쇼핑", "의료/건강", "문화/여가", "기타 지출"];
+    let incomeCategories = JSON.parse(localStorage.getItem('smartDiaryIncomeCats')) || ["용돈", "월급", "사업수입", "금융/투자", "기타 수입"];
 
     let quoteMode = localStorage.getItem('smartDiaryQuoteMode') || 'random';
     let customQuoteText = localStorage.getItem('smartDiaryCustomQuote') || '오늘 흘린 땀방울은 내일의 기쁨이 된다.';
@@ -1102,9 +1105,6 @@
         { text: "빅데이터 (Big Data)", author: "기존 방법으로는 수집·분석하기 힘들 정도로 방대한 규모의 데이터." },
         { text: "오픈소스 (Open Source)", author: "소프트웨어의 소스 코드를 공개하여 누구나 수정하고 배포할 수 있는 형태." }
     ];
-
-    const expenseCategories = ["식비", "교통/통신", "주거/생활", "쇼핑", "의료/건강", "문화/여가", "기타 지출"];
-    const incomeCategories = ["용돈", "월급", "사업수입", "금융/투자", "기타 수입"];
 
     let recognition = null;
     let isRecording = false;
@@ -1190,6 +1190,66 @@
             if (isVisible) { onBtn.classList.add('active'); offBtn.classList.remove('active'); }
             else { offBtn.classList.add('active'); onBtn.classList.remove('active'); }
         }
+    }
+
+    // 계정 과목 추가 및 삭제 기능
+    function renderCategorySettingsList() {
+        const expListEl = document.getElementById('expense-cat-list');
+        const incListEl = document.getElementById('income-cat-list');
+        if (expListEl) {
+            expListEl.innerHTML = '';
+            expenseCategories.forEach(cat => {
+                const tag = document.createElement('span');
+                tag.style.cssText = 'background:#f0e2e2; padding:3px 8px; border-radius:4px; display:inline-flex; align-items:center; gap:4px;';
+                tag.innerHTML = `${cat} <button onclick="removeCategory('expense', '${cat}')" style="background:none; border:none; color:red; cursor:pointer; font-weight:bold;">×</button>`;
+                expListEl.appendChild(tag);
+            });
+        }
+        if (incListEl) {
+            incListEl.innerHTML = '';
+            incomeCategories.forEach(cat => {
+                const tag = document.createElement('span');
+                tag.style.cssText = 'background:#e2f0e6; padding:3px 8px; border-radius:4px; display:inline-flex; align-items:center; gap:4px;';
+                tag.innerHTML = `${cat} <button onclick="removeCategory('income', '${cat}')" style="background:none; border:none; color:red; cursor:pointer; font-weight:bold;">×</button>`;
+                incListEl.appendChild(tag);
+            });
+        }
+    }
+
+    function addCategory(type) {
+        const inputId = type === 'expense' ? 'new-expense-cat' : 'new-income-cat';
+        const inputEl = document.getElementById(inputId);
+        const val = inputEl ? inputEl.value.trim() : '';
+        if (!val) return;
+
+        if (type === 'expense') {
+            if (expenseCategories.includes(val)) { alert('이미 존재하는 지출 과목입니다.'); return; }
+            expenseCategories.push(val);
+            localStorage.setItem('smartDiaryExpenseCats', JSON.stringify(expenseCategories));
+        } else {
+            if (incomeCategories.includes(val)) { alert('이미 존재하는 수입 과목입니다.'); return; }
+            incomeCategories.push(val);
+            localStorage.setItem('smartDiaryIncomeCats', JSON.stringify(incomeCategories));
+        }
+        inputEl.value = '';
+        renderCategorySettingsList();
+        updateCategorySelectOptions();
+        renderCategoryStats();
+    }
+
+    function removeCategory(type, catName) {
+        if (type === 'expense') {
+            if (expenseCategories.length <= 1) { alert('최소 1개의 과목은 유지해야 합니다.'); return; }
+            expenseCategories = expenseCategories.filter(c => c !== catName);
+            localStorage.setItem('smartDiaryExpenseCats', JSON.stringify(expenseCategories));
+        } else {
+            if (incomeCategories.length <= 1) { alert('최소 1개의 과목은 유지해야 합니다.'); return; }
+            incomeCategories = incomeCategories.filter(c => c !== catName);
+            localStorage.setItem('smartDiaryIncomeCats', JSON.stringify(incomeCategories));
+        }
+        renderCategorySettingsList();
+        updateCategorySelectOptions();
+        renderCategoryStats();
     }
 
     function renderWeeklyWeather() {
@@ -1296,30 +1356,47 @@
         return combinedList;
     }
 
+    // 통계 모드 토글 (총지출 또는 총수입 버튼 클릭 시 호출)
+    function toggleStatsMode(type) {
+        currentStatsType = type;
+        renderCategoryStats();
+    }
+
     function renderCategoryStats() {
         const statsBody = document.getElementById('category-stats-body');
-        const statsTotalExpense = document.getElementById('stats-total-expense');
+        const statsCardTitle = document.getElementById('stats-card-title');
+        const statsTotalAmount = document.getElementById('stats-total-amount');
         if (!statsBody) return;
 
         statsBody.innerHTML = '';
         const diaries = getAllDiaries();
         const prefix = `${calYear}-${String(calMonth + 1).padStart(2, '0')}`;
 
+        let targetCategories = currentStatsType === 'expense' ? expenseCategories : incomeCategories;
         let categorySums = {};
-        expenseCategories.forEach(cat => categorySums[cat] = 0);
-        let totalExp = 0;
+        targetCategories.forEach(cat => categorySums[cat] = 0);
+        let totalAmt = 0;
 
         diaries.forEach(item => {
-            if (normalizeDateStr(item.date).startsWith(prefix) && item.money && item.money.type === 'expense') {
-                let cat = item.money.category || '기타 지출';
+            if (normalizeDateStr(item.date).startsWith(prefix) && item.money && item.money.type === currentStatsType) {
+                let cat = item.money.category;
                 let amt = Number(item.money.amount) || 0;
-                if (!categorySums[cat]) categorySums[cat] = 0;
+                if (!categorySums[cat]) categorySums[cat] = 0; // 커스텀 과목 대응
                 categorySums[cat] += amt;
-                totalExp += amt;
+                totalAmt += amt;
             }
         });
 
-        if (statsTotalExpense) statsTotalExpense.textContent = totalExp.toLocaleString() + '원';
+        if (statsCardTitle) {
+            statsCardTitle.textContent = currentStatsType === 'expense' 
+                ? `📊 이번 달 카테고리별 지출 통계` 
+                : `📊 이번 달 카테고리별 총수입 통계`;
+        }
+
+        if (statsTotalAmount) {
+            statsTotalAmount.textContent = totalAmt.toLocaleString() + '원';
+            statsTotalAmount.style.color = currentStatsType === 'expense' ? 'var(--expense-color)' : 'var(--income-color)';
+        }
 
         let sortedCats = Object.keys(categorySums).map(cat => ({
             category: cat,
@@ -1328,13 +1405,14 @@
 
         let hasData = sortedCats.some(item => item.amount > 0);
         if (!hasData) {
-            statsBody.innerHTML = '<div style="text-align:center; color:var(--text-sub); font-size:13px; padding:6px;">이번 달 지출 내역이 없습니다.</div>';
+            statsBody.innerHTML = `<div style="text-align:center; color:var(--text-sub); font-size:13px; padding:6px;">이번 달 ${currentStatsType === 'expense' ? '지출' : '수입'} 내역이 없습니다.</div>`;
             return;
         }
 
         sortedCats.forEach(item => {
             if (item.amount === 0) return;
-            let percent = totalExp > 0 ? ((item.amount / totalExp) * 100).toFixed(1) : 0;
+            let percent = totalAmt > 0 ? ((item.amount / totalAmt) * 100).toFixed(1) : 0;
+            let fillColorClass = currentStatsType === 'expense' ? 'expense' : 'income';
 
             const row = document.createElement('div');
             row.className = 'stat-bar-container';
@@ -1344,49 +1422,11 @@
                     <span>${item.amount.toLocaleString()}원 (<span style="color:var(--primary-color);">${percent}%</span>)</span>
                 </div>
                 <div class="stat-bar-bg">
-                    <div class="stat-bar-fill" style="width: ${percent}%;"></div>
+                    <div class="stat-bar-fill ${fillColorClass}" style="width: ${percent}%;"></div>
                 </div>
             `;
             statsBody.appendChild(row);
         });
-    }
-
-    // 💡 [추가된 기능]: 총수입 카드를 누르면 이번 달 총 지출 금액(또는 통계값)을 수입 내역(또는 입력창)에 연동/저장하는 함수
-    function uploadCategoryStatsToIncome() {
-        const statsTotalExpenseEl = document.getElementById('stats-total-expense');
-        if (!statsTotalExpenseEl) return;
-
-        let totalExpStr = statsTotalExpenseEl.textContent.replace(/[^0-9]/g, '');
-        let totalExpNum = Number(totalExpStr) || 0;
-
-        if (totalExpNum === 0) {
-            alert('반영할 이번 달 지출 통계 금액이 없습니다.');
-            return;
-        }
-
-        if (confirm(`이번 달 지출 총액(${totalExpNum.toLocaleString()}원)을 수입 항목(기타 수입)으로 자동 등록하시겠습니까?`)) {
-            let diaries = getAllDiaries();
-            const todayStr = getTodayStr();
-
-            const newItem = {
-                id: Date.now().toString(),
-                date: todayStr,
-                time: getCurrentTimeStr(),
-                text: `[자동반영] 이번달 지출 통계 총액 연동`,
-                photo: null,
-                money: {
-                    type: 'income',
-                    category: '기타 수입',
-                    amount: totalExpNum
-                }
-            };
-
-            diaries.push(newItem);
-            localStorage.setItem('smartDiaryList', JSON.stringify(diaries));
-            renderCalendar();
-            updateMoneySummary();
-            alert('이번 달 지출 통계 총액이 총수입으로 성공적으로 반영되었습니다!');
-        }
     }
 
     function toggleSearchFilterSection() {
@@ -1571,7 +1611,9 @@
     }
 
     function toggleSettings() {
-        settingsCard.style.display = settingsCard.style.display === 'block' ? 'none' : 'block';
+        const isOpening = settingsCard.style.display !== 'block';
+        settingsCard.style.display = isOpening ? 'block' : 'none';
+        if (isOpening) renderCategorySettingsList();
     }
 
     function setQuoteMode(mode) {
