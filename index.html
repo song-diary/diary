@@ -448,15 +448,36 @@
         .dot.expense { background-color: var(--expense-color); }
         .dot.income { background-color: var(--income-color); }
 
-        /* 메모 및 가계부 작성 폼 */
-        #memo-form-card {
+        /* 팝업 모달 스타일 (메모 및 가계부 작성 폼) */
+        #memo-form-overlay {
             display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+        }
+
+        #memo-form-card {
+            background: #ffffff;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
             border: 2px solid var(--primary-color);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
             animation: fadeIn 0.3s ease;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-5px); }
+            from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
@@ -791,22 +812,11 @@
         <button class="action-btn" onclick="toggleSettings()">⚙️ 설정</button>
     </div>
 
-    <!-- 설정 카드 (모든 온/오프 통합) -->
+    <!-- 설정 카드 (메모 보기 방식 설정 삭제됨) -->
     <div class="card" id="settings-card">
         <div class="settings-title">
             <span>🛠️ 환경 설정 (온/오프)</span>
             <button class="close-form-btn" onclick="toggleSettings()">✖</button>
-        </div>
-        
-        <div class="settings-section">
-            <label>👀 메모 보기 방식</label>
-            <div class="view-select-group">
-                <button class="view-select-btn active" id="view-3days" onclick="changeViewMode('3days')">기본 3일</button>
-                <button class="view-select-btn" id="view-week" onclick="changeViewMode('week')">일주일</button>
-                <button class="view-select-btn" id="view-month" onclick="changeViewMode('month')">한달</button>
-                <button class="view-select-btn" id="view-alarm" onclick="changeViewMode('alarm')">예약보기</button>
-                <button class="view-select-btn" id="view-all" onclick="changeViewMode('all')">전체보기</button>
-            </div>
         </div>
 
         <!-- 🌤️ 날씨 표시 온/오프 -->
@@ -985,9 +995,11 @@
         <div class="quote-text" id="quote-content" style="font-size: 16px;">"작은 일에 성실한 사람은 큰 일에도 성실하다."</div>
         <div class="quote-author" id="quote-author-text" style="font-size: 14px;">- 성경 -</div>
     </div>
+</div>
 
-    <!-- 새 메모 및 용돈 작성/수정 폼 -->
-    <div class="card" id="memo-form-card">
+<!-- 팝업 오버레이 (메모 및 용돈 작성/수정 폼) -->
+<div id="memo-form-overlay">
+    <div id="memo-form-card">
         <div class="form-header-info">
             <span id="form-target-date-title">📅 0000년 00월 00일 메모 작성</span>
             <button class="close-form-btn" onclick="closeDiaryForm()">✖</button>
@@ -1099,7 +1111,7 @@
     const quoteCard = document.getElementById('quote-card');
     const searchDividerLabelText = document.getElementById('search-divider-label-text');
     const reservationTimeInput = document.getElementById('reservation-time-input');
-    const memoFormCard = document.getElementById('memo-form-card');
+    const memoFormOverlay = document.getElementById('memo-form-overlay');
     const formTargetDateTitle = document.getElementById('form-target-date-title');
     const settingsCard = document.getElementById('settings-card');
     const fontSizeDisplay = document.getElementById('font-size-display');
@@ -1703,12 +1715,11 @@
         }
 
         updatePhotoPreview();
-        memoFormCard.style.display = 'block';
-        memoFormCard.scrollIntoView({ behavior: 'smooth' });
+        memoFormOverlay.style.display = 'flex';
     }
 
     function closeDiaryForm() {
-        memoFormCard.style.display = 'none';
+        memoFormOverlay.style.display = 'none';
         editingDiaryId = null;
         currentPhotoBase64 = null;
     }
