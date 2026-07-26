@@ -169,6 +169,15 @@
             padding: 8px 4px;
         }
 
+        /* 총수입 박스 클릭 가능하도록 시각적 효과 추가 */
+        .money-box.income {
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .money-box.income:hover {
+            background: #e1f5eb;
+        }
+
         .money-box .m-label {
             font-size: 12px;
             color: var(--text-sub);
@@ -913,11 +922,12 @@
     <div class="card" id="money-summary-card">
         <div class="money-summary-header">
             <span id="money-summary-title">💵 2026년 7월 용돈 현황</span>
-            <span style="font-size: 12px; color: #27ae60; font-weight: normal;">지출/수입 관리</span>
+            <span style="font-size: 12px; color: #27ae60; font-weight: normal;">지출/수입 관리 (총수입 클릭 시 지출총액 반영)</span>
         </div>
         <div class="money-summary-grid">
-            <div class="money-box income">
-                <div class="m-label">총 수입</div>
+            <!-- 총수입 박스에 id 부여 및 클릭 이벤트 연결 -->
+            <div class="money-box income" id="money-box-income" onclick="uploadCategoryStatsToIncome()" title="클릭 시 이번달 지출 총액을 수입으로 반영">
+                <div class="m-label">총 수입 👆</div>
                 <div class="m-value" id="summary-income">0원</div>
             </div>
             <div class="money-box expense">
@@ -1339,6 +1349,44 @@
             `;
             statsBody.appendChild(row);
         });
+    }
+
+    // 💡 [추가된 기능]: 총수입 카드를 누르면 이번 달 총 지출 금액(또는 통계값)을 수입 내역(또는 입력창)에 연동/저장하는 함수
+    function uploadCategoryStatsToIncome() {
+        const statsTotalExpenseEl = document.getElementById('stats-total-expense');
+        if (!statsTotalExpenseEl) return;
+
+        let totalExpStr = statsTotalExpenseEl.textContent.replace(/[^0-9]/g, '');
+        let totalExpNum = Number(totalExpStr) || 0;
+
+        if (totalExpNum === 0) {
+            alert('반영할 이번 달 지출 통계 금액이 없습니다.');
+            return;
+        }
+
+        if (confirm(`이번 달 지출 총액(${totalExpNum.toLocaleString()}원)을 수입 항목(기타 수입)으로 자동 등록하시겠습니까?`)) {
+            let diaries = getAllDiaries();
+            const todayStr = getTodayStr();
+
+            const newItem = {
+                id: Date.now().toString(),
+                date: todayStr,
+                time: getCurrentTimeStr(),
+                text: `[자동반영] 이번달 지출 통계 총액 연동`,
+                photo: null,
+                money: {
+                    type: 'income',
+                    category: '기타 수입',
+                    amount: totalExpNum
+                }
+            };
+
+            diaries.push(newItem);
+            localStorage.setItem('smartDiaryList', JSON.stringify(diaries));
+            renderCalendar();
+            updateMoneySummary();
+            alert('이번 달 지출 통계 총액이 총수입으로 성공적으로 반영되었습니다!');
+        }
     }
 
     function toggleSearchFilterSection() {
