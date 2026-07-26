@@ -812,7 +812,7 @@
         <button class="action-btn" onclick="toggleSettings()">⚙️ 설정</button>
     </div>
 
-    <!-- 설정 카드 (메모 보기 방식 설정 삭제됨) -->
+    <!-- 설정 카드 -->
     <div class="card" id="settings-card">
         <div class="settings-title">
             <span>🛠️ 환경 설정 (온/오프)</span>
@@ -890,7 +890,7 @@
         </div>
     </div>
 
-    <!-- 🔑 [키포인트] 기본이 되는 달력은 항상 맨 위에 자리 -->
+    <!-- 🔑 달력 카드 -->
     <div class="card" id="calendar-card">
         <div class="calendar-header">
             <button onclick="changeMonth(-1)">◀ 이전</button>
@@ -937,9 +937,7 @@
             <span>📊 이번 달 카테고리별 지출 통계</span>
             <span id="stats-total-expense" style="font-size: 13px; color: var(--expense-color);">0원</span>
         </div>
-        <div id="category-stats-body">
-            <!-- 자바스크립트로 동적 생성 -->
-        </div>
+        <div id="category-stats-body"></div>
     </div>
 
     <!-- 🔍 검색 및 기간별 상세 내역 (접기/펼치기 토글 적용) -->
@@ -964,9 +962,7 @@
                 <button class="view-select-btn" id="filter-period-all" onclick="setPeriodFilter('all')">전체 기간</button>
             </div>
         </div>
-        <div id="search-result-list" style="margin-top: 12px; border-top: 1px dashed var(--border-color); padding-top: 10px;">
-            <!-- 검색 결과 표시 영역 -->
-        </div>
+        <div id="search-result-list" style="margin-top: 12px; border-top: 1px dashed var(--border-color); padding-top: 10px;"></div>
     </div>
 
     <!-- 🌤️ 날씨 카드 -->
@@ -1001,7 +997,7 @@
 <div id="memo-form-overlay">
     <div id="memo-form-card">
         <div class="form-header-info">
-            <span id="form-target-date-title">📅 0000년 00월 00일 메모 작성</span>
+            <span id="form-target-date-title">📅 0000년 00월 00일 - 다이어리&용돈관리</span>
             <button class="close-form-btn" onclick="closeDiaryForm()">✖</button>
         </div>
         
@@ -1018,13 +1014,13 @@
                 <button type="button" class="money-type-btn income" id="type-income-btn" onclick="setMoneyType('income')">수입</button>
             </div>
             <div style="display: flex; gap: 6px;">
-                <select id="money-category-select" class="money-input-field" style="flex: 1;">
-                    <!-- 자바스크립트에서 수입/지출에 따라 목록 자동 변경 -->
-                </select>
-                <!-- 금액 입력 필드 (자동 콤마 적용) -->
+                <select id="money-category-select" class="money-input-field" style="flex: 1;"></select>
                 <input type="text" inputmode="numeric" id="money-amount-input" class="money-input-field" placeholder="금액 (원)" style="flex: 1.5;">
             </div>
         </div>
+
+        <!-- 📝 상세내용 및 메모(일기)작성 안내 문구 추가 -->
+        <div style="font-size: 14px; font-weight: bold; color: var(--weekday-color); margin-bottom: 6px;">📝 상세내용 및 메모(일기)작성</div>
 
         <div id="photo-preview-wrap">
             <img id="image-preview" src="" alt="미리보기">
@@ -1051,9 +1047,8 @@
     let editingDiaryId = null;
     let currentPhotoBase64 = null;
     let currentFontSize = parseInt(localStorage.getItem('smartDiaryFontSize')) || 16;
-    let isSearchFilterOpen = false; // 검색 필터 접기/펼치기 상태
+    let isSearchFilterOpen = false;
 
-    // 온/오프 상태 변수
     let isWeatherVisible = localStorage.getItem('smartDiaryWeatherVisible') !== 'false';
     let isQuoteVisible = localStorage.getItem('smartDiaryQuoteVisible') !== 'false';
     let isMoneySummaryVisible = localStorage.getItem('smartDiaryMoneySummaryVisible') !== 'false';
@@ -1061,7 +1056,7 @@
     let isSearchFilterVisible = localStorage.getItem('smartDiarySearchFilterVisible') !== 'false';
 
     let currentMoneyType = 'expense';
-    let currentPeriodFilter = 'today-around'; // 기본값 오늘 기준 전후
+    let currentPeriodFilter = 'today-around';
 
     let quoteMode = localStorage.getItem('smartDiaryQuoteMode') || 'random';
     let customQuoteText = localStorage.getItem('smartDiaryCustomQuote') || '오늘 흘린 땀방울은 내일의 기쁨이 된다.';
@@ -1346,13 +1341,12 @@
         });
     }
 
-    // 🔍 검색 필터 토글 함수 (접기/펼치기)
     function toggleSearchFilterSection() {
         isSearchFilterOpen = !isSearchFilterOpen;
         if (isSearchFilterOpen) {
             searchDividerLabelText.textContent = '🔍 내역 검색 및 기간 필터 접기 ▲';
             searchFilterCard.style.display = 'block';
-            filterCustomList(); // 펼칠 때 데이터 로드
+            filterCustomList();
         } else {
             searchDividerLabelText.textContent = '🔍 내역 검색 및 기간 필터 펼치기 ▼';
             searchFilterCard.style.display = 'none';
@@ -1693,7 +1687,7 @@
 
         const dObj = parseDateObj(selectedReservationDate);
         const dayName = getDayOfWeekStr(selectedReservationDate);
-        formTargetDateTitle.textContent = `📅 ${dObj.getFullYear()}년 ${dObj.getMonth() + 1}월 ${dObj.getDate()}일 (${dayName}) 메모`;
+        formTargetDateTitle.textContent = `📅 ${dObj.getFullYear()}년 ${dObj.getMonth() + 1}월 ${dObj.getDate()}일 (${dayName}) - 다이어리&용돈관리`;
 
         if (existingItem) {
             textOutput.innerHTML = existingItem.text || '';
