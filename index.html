@@ -21,6 +21,7 @@
             --expense-color: #c0392b;
             --memo-color: #8e44ad;
             --base-font-size: 16px;
+            --memo-font-size: 16px;
         }
 
         * {
@@ -591,7 +592,7 @@
             background: #fff;
             margin-bottom: 10px;
             line-height: 1.5;
-            font-size: var(--base-font-size);
+            font-size: var(--memo-font-size);
         }
 
         .diary-textarea:empty:before {
@@ -679,7 +680,7 @@
             line-height: 1.5;
             white-space: pre-wrap;
             word-break: break-all;
-            font-size: var(--base-font-size);
+            font-size: var(--memo-font-size);
         }
 
         .diary-photo {
@@ -903,7 +904,7 @@
         </div>
 
         <div class="settings-section">
-            <label>🔤 글자 크기 조절</label>
+            <label>🔤 메모(일기) 글자 크기 조절</label>
             <div style="display: flex; gap: 8px; align-items: center;">
                 <button class="action-btn" style="flex:1;" onclick="adjustFontSize(-1)">작게 (-)</button>
                 <span id="font-size-display" style="font-size: 16px; font-weight: bold; min-width: 45px; text-align: center;">16px</span>
@@ -1083,7 +1084,7 @@
     let selectedReservationDate = null;
     let editingDiaryId = null;
     let currentPhotoBase64 = null;
-    let currentFontSize = parseInt(localStorage.getItem('smartDiaryFontSize')) || 16;
+    let currentMemoFontSize = parseInt(localStorage.getItem('smartDiaryMemoFontSize')) || 16;
     
     let isSearchFilterOpen = true;
 
@@ -1096,7 +1097,7 @@
     let currentMoneyType = 'expense';
     
     let currentPeriodFilter = 'month'; 
-    let currentStatsType = 'income'; // 수입 내역이 기본 선택되도록 변경
+    let currentStatsType = 'income'; 
 
     let expenseCategories = JSON.parse(localStorage.getItem('smartDiaryExpenseCats')) || ["식비", "교통/통신", "주거/생활", "쇼핑", "의료/건강", "문화/여가", "기타 지출"];
     let incomeCategories = JSON.parse(localStorage.getItem('smartDiaryIncomeCats')) || ["용돈", "월급", "사업수입", "금융/투자", "기타 수입"];
@@ -1773,16 +1774,16 @@
     }
 
     function adjustFontSize(delta) {
-        currentFontSize += delta;
-        if (currentFontSize < 12) currentFontSize = 12;
-        if (currentFontSize > 26) currentFontSize = 26;
-        localStorage.setItem('smartDiaryFontSize', currentFontSize);
-        applyFontSize();
+        currentMemoFontSize += delta;
+        if (currentMemoFontSize < 12) currentMemoFontSize = 12;
+        if (currentMemoFontSize > 26) currentMemoFontSize = 26;
+        localStorage.setItem('smartDiaryMemoFontSize', currentMemoFontSize);
+        applyMemoFontSize();
     }
 
-    function applyFontSize() {
-        document.documentElement.style.setProperty('--base-font-size', currentFontSize + 'px');
-        if (fontSizeDisplay) fontSizeDisplay.textContent = `${currentFontSize}px`;
+    function applyMemoFontSize() {
+        document.documentElement.style.setProperty('--memo-font-size', currentMemoFontSize + 'px');
+        if (fontSizeDisplay) fontSizeDisplay.textContent = `${currentMemoFontSize}px`;
     }
 
     function renderCalendar() {
@@ -1888,7 +1889,6 @@
         renderPopupDayHistory(selectedReservationDate);
 
         memoFormOverlay.style.display = 'flex';
-        // 1번 요청 사항 반영: 일자 클릭 시 팝업창 메모 입력란에 커서가 포커스되지 않도록 제거함
     }
 
     function renderPopupDayHistory(dateStr) {
@@ -2083,7 +2083,7 @@
         setQuoteVisibility(isQuoteVisible);
         
         renderCalendar();
-        applyFontSize();
+        applyMemoFontSize();
         setQuoteMode(quoteMode);
         initSpeechRecognition();
         updateMoneySummary();
