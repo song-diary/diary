@@ -974,12 +974,12 @@
     <div class="card sub-feature-card" id="search-filter-card" style="display: block;">
         <div class="feature-title">
             <span>🔍 내역 검색 및 기간 필터</span>
-            <span style="font-size: 12px; color: var(--text-sub); font-weight: normal;" id="search-subtitle">(지출 내역 중심)</span>
+            <span style="font-size: 12px; color: var(--text-sub); font-weight: normal;" id="search-subtitle">(수입 내역 중심)</span>
         </div>
         
         <div class="view-select-group" style="margin-bottom: 8px;">
-            <button class="view-select-btn active" id="mode-tab-expense" onclick="toggleStatsMode('expense')">💸 지출 내역</button>
-            <button class="view-select-btn" id="mode-tab-income" onclick="toggleStatsMode('income')">💰 수입 내역</button>
+            <button class="view-select-btn active" id="mode-tab-income" onclick="toggleStatsMode('income')">💰 수입 내역</button>
+            <button class="view-select-btn" id="mode-tab-expense" onclick="toggleStatsMode('expense')">💸 지출 내역</button>
             <button class="view-select-btn" id="mode-tab-memo" onclick="toggleStatsMode('memo')">📝 메모(일기)</button>
         </div>
 
@@ -1079,7 +1079,7 @@
 
 <script>
     let calYear = 2026;
-    let calMonth = 6; // 7월[cite: 3]
+    let calMonth = 6; // 7월
     let selectedReservationDate = null;
     let editingDiaryId = null;
     let currentPhotoBase64 = null;
@@ -1096,7 +1096,7 @@
     let currentMoneyType = 'expense';
     
     let currentPeriodFilter = 'month'; 
-    let currentStatsType = 'expense'; 
+    let currentStatsType = 'income'; // 수입 내역이 기본 선택되도록 변경
 
     let expenseCategories = JSON.parse(localStorage.getItem('smartDiaryExpenseCats')) || ["식비", "교통/통신", "주거/생활", "쇼핑", "의료/건강", "문화/여가", "기타 지출"];
     let incomeCategories = JSON.parse(localStorage.getItem('smartDiaryIncomeCats')) || ["용돈", "월급", "사업수입", "금융/투자", "기타 수입"];
@@ -1408,7 +1408,7 @@
             if (categoryStatsCard) categoryStatsCard.style.display = 'none';
         }
 
-        ['expense', 'income', 'memo'].forEach(m => {
+        ['income', 'expense', 'memo'].forEach(m => {
             const btn = document.getElementById(`mode-tab-${m}`);
             if (btn) {
                 if (m === type) btn.classList.add('active');
@@ -1417,8 +1417,8 @@
         });
 
         if (searchSubtitle) {
-            if (type === 'expense') searchSubtitle.textContent = '(지출 내역 중심)';
-            else if (type === 'income') searchSubtitle.textContent = '(수입 내역 중심)';
+            if (type === 'income') searchSubtitle.textContent = '(수입 내역 중심)';
+            else if (type === 'expense') searchSubtitle.textContent = '(지출 내역 중심)';
             else searchSubtitle.textContent = '(순수 메모/일기 중심)';
         }
 
@@ -1888,10 +1888,7 @@
         renderPopupDayHistory(selectedReservationDate);
 
         memoFormOverlay.style.display = 'flex';
-
-        setTimeout(() => {
-            textOutput.focus();
-        }, 100);
+        // 1번 요청 사항 반영: 일자 클릭 시 팝업창 메모 입력란에 커서가 포커스되지 않도록 제거함
     }
 
     function renderPopupDayHistory(dateStr) {
