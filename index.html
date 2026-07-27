@@ -262,86 +262,6 @@
             outline: none;
         }
 
-        /* 날씨 카드 스타일 */
-        #weather-card {
-            background: linear-gradient(135deg, #f0f7ff, #e6f0fa);
-            border: 1px solid #bce0fd;
-            border-radius: 12px;
-            padding: 15px;
-        }
-
-        .weather-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            font-weight: bold;
-            color: #2980b9;
-            font-size: var(--base-font-size);
-        }
-
-        .weather-today-box {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: #ffffff;
-            padding: 10px 14px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            border: 1px solid #d0e7ff;
-        }
-
-        .weather-icon {
-            font-size: 32px;
-        }
-
-        .weather-info-main {
-            flex: 1;
-        }
-
-        .weather-temp {
-            font-size: calc(var(--base-font-size) + 2px);
-            font-weight: bold;
-            color: #2c3e50;
-        }
-
-        .weather-desc {
-            font-size: calc(var(--base-font-size) - 3px);
-            color: var(--text-sub);
-            margin-top: 2px;
-        }
-
-        .weekly-weather-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 4px;
-            text-align: center;
-        }
-
-        .weekly-cell {
-            background: #ffffff;
-            border: 1px solid #d0e7ff;
-            border-radius: 6px;
-            padding: 6px 2px;
-            font-size: calc(var(--base-font-size) - 4px);
-        }
-
-        .weekly-cell .w-day {
-            font-weight: bold;
-            color: #34495e;
-            margin-bottom: 3px;
-        }
-
-        .weekly-cell .w-icon {
-            font-size: 16px;
-            margin-bottom: 2px;
-        }
-
-        .weekly-cell .w-temp {
-            font-size: calc(var(--base-font-size) - 5px);
-            color: var(--text-sub);
-        }
-
         /* 달력 스타일 */
         .calendar-header {
             display: flex;
@@ -640,15 +560,6 @@
             background-color: #e5d2d2;
         }
 
-        .date-group-card {
-            background: #ffffff;
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 14px;
-            margin-bottom: 12px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
-        }
-
         .sub-memo-item {
             background: #fcfcfc;
             border: 1px solid #f0e6e6;
@@ -827,15 +738,6 @@
             <button class="close-form-btn" onclick="toggleSettings()">✖</button>
         </div>
 
-        <!-- 🌤️ 날씨 표시 온/오프 -->
-        <div class="settings-section">
-            <label>🌤️ 날씨 정보 표시 설정</label>
-            <div style="display: flex; gap: 6px;">
-                <button class="view-select-btn active" id="weather-on-btn" onclick="setWeatherVisibility(true)">날씨 켜기</button>
-                <button class="view-select-btn" id="weather-off-btn" onclick="setWeatherVisibility(false)">날씨 끄기</button>
-            </div>
-        </div>
-
         <!-- 💵 용돈현황 요약 표시 온/오프 -->
         <div class="settings-section">
             <label>💵 용돈 현황 표시 설정</label>
@@ -943,22 +845,22 @@
             <span style="font-size: 11px; color: #27ae60; font-weight: normal;">클릭 시 해당 통계 펼치기/접기</span>
         </div>
         <div class="money-summary-grid">
-            <div class="money-box income" onclick="toggleStatsMode('income')">
+            <div class="money-box income" onclick="handleSummaryClick('income')">
                 <div class="m-label">총 수입 👆</div>
                 <div class="m-value" id="summary-income">0원</div>
             </div>
-            <div class="money-box expense" onclick="toggleStatsMode('expense')">
+            <div class="money-box expense" onclick="handleSummaryClick('expense')">
                 <div class="m-label">총 지출 👆</div>
                 <div class="m-value" id="summary-expense">0원</div>
             </div>
-            <div class="money-box balance">
-                <div class="m-label">잔액</div>
+            <div class="money-box balance" onclick="handleSummaryClick('balance')">
+                <div class="m-label">잔액 👆</div>
                 <div class="m-value" id="summary-balance">0원</div>
             </div>
         </div>
     </div>
 
-    <!-- 📊 카테고리별 지출/수입 통계 리스트 -->
+    <!-- 📊 카테고리별 지출/수입 통계 리스트 / 잔액 클릭 시 명언 카드로 대체 -->
     <div class="card sub-feature-card" id="category-stats-card">
         <div class="feature-title">
             <span id="stats-card-title">📊 이번 달 카테고리별 지출 통계</span>
@@ -981,7 +883,7 @@
         <div class="view-select-group" style="margin-bottom: 8px;">
             <button class="view-select-btn active" id="mode-tab-income" onclick="toggleStatsMode('income')">💰 수입 내역</button>
             <button class="view-select-btn" id="mode-tab-expense" onclick="toggleStatsMode('expense')">💸 지출 내역</button>
-            <button class="view-select-btn" id="mode-tab-memo" onclick="toggleStatsMode('memo')">📝 메모(일기)</button>
+            <button class="view-select-btn" id="mode-tab-memo" onclick="toggleStatsMode('memo')">📝 메모(읽)</button>
         </div>
 
         <div class="search-filter-box">
@@ -997,22 +899,6 @@
             </div>
         </div>
         <div id="search-result-list" style="margin-top: 12px; border-top: 1px dashed var(--border-color); padding-top: 10px;"></div>
-    </div>
-
-    <!-- 🌤️ 날씨 카드 -->
-    <div class="card" id="weather-card">
-        <div class="weather-header">
-            <span>📍 안양시 날씨 정보</span>
-            <span style="font-size: 12px; color: #7f8c8d; font-weight: normal;">실시간 기상 예보</span>
-        </div>
-        <div class="weather-today-box">
-            <div class="weather-icon" id="today-weather-icon">⛅</div>
-            <div class="weather-info-main">
-                <div class="weather-temp" id="today-temp-text">오늘 최고 31°C / 최저 27°C</div>
-                <div class="weather-desc" id="today-desc-text">흐림 후 맑음 (주말 비 소식 주의)</div>
-            </div>
-        </div>
-        <div class="weekly-weather-grid" id="weekly-weather-grid"></div>
     </div>
 
     <!-- 명언 카드 -->
@@ -1088,7 +974,6 @@
     
     let isSearchFilterOpen = true;
 
-    let isWeatherVisible = localStorage.getItem('smartDiaryWeatherVisible') !== 'false';
     let isQuoteVisible = localStorage.getItem('smartDiaryQuoteVisible') !== 'false';
     let isMoneySummaryVisible = localStorage.getItem('smartDiaryMoneySummaryVisible') !== 'false';
     let isCategoryStatsVisible = localStorage.getItem('smartDiaryCategoryStatsVisible') !== 'false';
@@ -1160,7 +1045,6 @@
     const moneyAmountInput = document.getElementById('money-amount-input');
     const typeExpenseBtn = document.getElementById('type-expense-btn');
     const typeIncomeBtn = document.getElementById('type-income-btn');
-    const weatherCard = document.getElementById('weather-card');
     const moneySummaryCard = document.getElementById('money-summary-card');
     const categoryStatsCard = document.getElementById('category-stats-card');
     const searchFilterCard = document.getElementById('search-filter-card');
@@ -1184,13 +1068,6 @@
         }, 300);
     }
 
-    function setWeatherVisibility(isVisible) {
-        isWeatherVisible = isVisible;
-        localStorage.setItem('smartDiaryWeatherVisible', isVisible);
-        if (weatherCard) weatherCard.style.display = isVisible ? 'block' : 'none';
-        updateToggleButtons('weather', isVisible);
-    }
-
     function setMoneySummaryVisibility(isVisible) {
         isMoneySummaryVisible = isVisible;
         localStorage.setItem('smartDiaryMoneySummaryVisible', isVisible);
@@ -1201,7 +1078,7 @@
     function setCategoryStatsVisibility(isVisible) {
         isCategoryStatsVisible = isVisible;
         localStorage.setItem('smartDiaryCategoryStatsVisible', isVisible);
-        if (categoryStatsCard) categoryStatsCard.style.display = isVisible ? 'block' : 'none';
+        if (categoryStatsCard && currentStatsType !== 'memo') categoryStatsCard.style.display = isVisible ? 'block' : 'none';
         updateToggleButtons('category-stats', isVisible);
     }
 
@@ -1217,7 +1094,7 @@
     function setQuoteVisibility(isVisible) {
         isQuoteVisible = isVisible;
         localStorage.setItem('smartDiaryQuoteVisible', isVisible);
-        if (quoteCard) quoteCard.style.display = isVisible ? 'block' : 'none';
+        if (quoteCard && currentStatsType !== 'memo') quoteCard.style.display = isVisible ? 'block' : 'none';
         updateToggleButtons('quote', isVisible);
     }
 
@@ -1287,37 +1164,6 @@
         renderCategorySettingsList();
         updateCategorySelectOptions();
         renderCategoryStats();
-    }
-
-    function renderWeeklyWeather() {
-        const grid = document.getElementById('weekly-weather-grid');
-        if (!grid) return;
-        grid.innerHTML = '';
-
-        const weeklyData = [
-            { day: '토', icon: '🌧️', temp: '31°/27°' },
-            { day: '일', icon: '🌧️', temp: '29°/25°' },
-            { day: '월', icon: '🌦️', temp: '30°/25°' },
-            { day: '화', icon: '⛅', temp: '32°/26°' },
-            { day: '수', icon: '☀️', temp: '33°/26°' },
-            { day: '목', icon: '☀️', temp: '34°/27°' },
-            { day: '금', icon: '⛅', temp: '33°/26°' }
-        ];
-
-        weeklyData.forEach((w, idx) => {
-            const cell = document.createElement('div');
-            cell.className = 'weekly-cell';
-            if (idx === 0) {
-                cell.style.borderColor = '#3498db';
-                cell.style.background = '#f4f9ff';
-            }
-            cell.innerHTML = `
-                <div class="w-day">${w.day}</div>
-                <div class="w-icon">${w.icon}</div>
-                <div class="w-temp">${w.temp}</div>
-            `;
-            grid.appendChild(cell);
-        });
     }
 
     function getTodayStr() {
@@ -1393,6 +1239,16 @@
         return combinedList;
     }
 
+    function handleSummaryClick(type) {
+        if (type === 'income') {
+            toggleStatsMode('income');
+        } else if (type === 'expense') {
+            toggleStatsMode('expense');
+        } else if (type === 'balance') {
+            toggleStatsMode('memo');
+        }
+    }
+
     function toggleStatsMode(type) {
         currentStatsType = type;
         
@@ -1404,9 +1260,12 @@
         
         if (type !== 'memo') {
             if (categoryStatsCard) categoryStatsCard.style.display = isCategoryStatsVisible ? 'block' : 'none';
+            if (quoteCard) quoteCard.style.display = 'none';
             renderCategoryStats();
         } else {
+            // 메모(읽) 누를 시 카테고리 통계 대신 명언 좌우명 카드 표시
             if (categoryStatsCard) categoryStatsCard.style.display = 'none';
+            if (quoteCard) quoteCard.style.display = isQuoteVisible ? 'block' : 'none';
         }
 
         ['income', 'expense', 'memo'].forEach(m => {
@@ -1420,7 +1279,7 @@
         if (searchSubtitle) {
             if (type === 'income') searchSubtitle.textContent = '(수입 내역 중심)';
             else if (type === 'expense') searchSubtitle.textContent = '(지출 내역 중심)';
-            else searchSubtitle.textContent = '(순수 메모/일기 중심)';
+            else searchSubtitle.textContent = '(메모(일기) 중심)';
         }
 
         if (isSearchFilterOpen) filterCustomList();
@@ -1598,7 +1457,7 @@
             } else {
                 subItem.classList.add('memo-only-box');
                 headerHTML = `<div style="font-weight: bold; margin-bottom: 4px; color: var(--memo-color);">
-                    📝 [${displayDateStr}] 순수 메모(일기)
+                    📝 [${displayDateStr}] 메모(일기)
                 </div>`;
             }
 
@@ -1837,7 +1696,7 @@
                     let dots = [];
                     if (hasExpense) dots.push('<span class="dot expense" title="지출"></span>');
                     if (hasIncome) dots.push('<span class="dot income" title="수입"></span>');
-                    if (hasMemoOnly) dots.push('<span class="dot memo" title="순수 메모"></span>');
+                    if (hasMemoOnly) dots.push('<span class="dot memo" title="메모(일기)"></span>');
                     dotHTML = `<div class="money-dots">${dots.join('')}</div>`;
                 }
 
@@ -1915,7 +1774,7 @@
                 let color = isExp ? 'var(--expense-color)' : 'var(--income-color)';
                 infoSummary = `<span style="font-weight: bold; color: ${color};">[${isExp ? '지출' : '수입'}] ${item.money.category} (${sign}${Number(item.money.amount).toLocaleString()}원)</span>`;
             } else {
-                infoSummary = `<span style="font-weight: bold; color: var(--memo-color);">[메모] ${item.text ? item.text.substring(0, 15) + '...' : '사진 메모'}</span>`;
+                infoSummary = `<span style="font-weight: bold; color: var(--memo-color);">[메모(일기)] ${item.text ? item.text.substring(0, 15) + '...' : '사진 메모'}</span>`;
             }
 
             itemBox.innerHTML = `
@@ -2075,8 +1934,6 @@
     }
 
     window.onload = () => {
-        renderWeeklyWeather();
-        setWeatherVisibility(isWeatherVisible);
         setMoneySummaryVisibility(isMoneySummaryVisible);
         setCategoryStatsVisibility(isCategoryStatsVisible);
         setSearchFilterVisibility(isSearchFilterVisible);
