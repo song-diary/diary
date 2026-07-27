@@ -216,6 +216,17 @@
         /* 카테고리 통계 바 */
         .stat-bar-container {
             margin-bottom: 8px;
+            padding: 6px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .stat-bar-container:hover {
+            background: #fdf5f5;
+        }
+        .stat-bar-container.active-stat {
+            background: #faeaea;
+            border: 1px solid var(--primary-color);
         }
 
         .stat-info-row {
@@ -802,7 +813,7 @@
     <div class="card sub-feature-card" id="category-stats-card">
         <div class="feature-title">
             <span id="stats-card-title">📊 이번 달 카테고리별 지출 통계</span>
-            <span id="stats-total-amount" style="font-size: 13px; color: var(--expense-color);">0원</span>
+            <span style="font-size: 12px; color: var(--text-sub); font-weight: normal;">(과목 클릭 시 아래 리스트업)</span>
         </div>
         <div id="category-stats-body"></div>
     </div>
@@ -814,8 +825,8 @@
 
     <div class="card sub-feature-card" id="search-filter-card" style="display: block;">
         <div class="feature-title">
-            <span>🔍 내역 검색 및 기간 필터</span>
-            <span style="font-size: 12px; color: var(--text-sub); font-weight: normal;" id="search-subtitle">(수입 내역 중심)</span>
+            <span id="list-card-main-title">🔍 상세 내역 리스트</span>
+            <span style="font-size: 13px; color: var(--expense-color); font-weight: bold;" id="stats-total-amount">0원</span>
         </div>
         
         <div class="view-select-group" style="margin-bottom: 8px;">
@@ -826,8 +837,8 @@
 
         <div class="search-filter-box">
             <div class="search-row">
-                <input type="text" id="keyword-search-input" class="search-input" placeholder="키워드 입력 (예: 병원, 일기 등)" oninput="filterCustomList()">
-                <button class="action-btn" style="padding: 6px 12px; font-size: 13px;" onclick="resetSearchFilter()">초기화</button>
+                <input type="text" id="keyword-search-input" class="search-input" placeholder="키워드 직접 입력 또는 위 과목 클릭" oninput="onKeywordInputChanged()">
+                <button class="action-btn" style="padding: 6px 12px; font-size: 13px;" onclick="resetSearchFilter()">전체보기</button>
             </div>
             <div class="view-select-group" style="margin-top: 4px;">
                 <button class="view-select-btn" id="filter-period-today-around" onclick="setPeriodFilter('today-around')">오늘 기준 전후</button>
@@ -909,6 +920,7 @@
     
     let currentPeriodFilter = 'month'; 
     let currentStatsType = 'income'; 
+    let selectedCategoryFilter = ''; // 통계 카드에서 클릭한 과목명 보관
 
     let expenseCategories = JSON.parse(localStorage.getItem('smartDiaryExpenseCats')) || ["1. 식비", "2. 교통/통신", "3. 주거/생활", "4. 쇼핑", "5. 의료/건강", "6. 문화/여가", "7. 기타 지출"];
     let incomeCategories = JSON.parse(localStorage.getItem('smartDiaryIncomeCats')) || ["1. 용돈", "2. 월급", "3. 사업수입", "4. 금융/투자", "5. 기타 수입"];
@@ -935,7 +947,7 @@
     const categoryStatsCard = document.getElementById('category-stats-card');
     const searchFilterCard = document.getElementById('search-filter-card');
     const keywordSearchInput = document.getElementById('keyword-search-input');
-    const searchSubtitle = document.getElementById('search-subtitle');
+    const listCardMainTitle = document.getElementById('list-card-main-title');
 
     if (moneyAmountInput) {
         moneyAmountInput.addEventListener('input', function (e) {
@@ -986,7 +998,6 @@
         }
     }
 
-    // 번호(우선순위) 기준 정렬 함수
     function sortCategories(categories) {
         return categories.sort((a, b) => {
             let numA = parseInt(a);
@@ -1148,7 +1159,9 @@
 
     function toggleStatsMode(type) {
         currentStatsType = type;
-        
+        selectedCategoryFilter = ''; // 탭 전환 시 과목 선택 초기화
+        if (keywordSearchInput) keywordSearchInput.value = '';
+
         if (type !== 'memo') {
             setPeriodFilter('month');
         } else {
@@ -1170,19 +1183,12 @@
             }
         });
 
-        if (searchSubtitle) {
-            if (type === 'income') searchSubtitle.textContent = '(수입 내역 중심)';
-            else if (type === 'expense') searchSubtitle.textContent = '(지출 내역 중심)';
-            else searchSubtitle.textContent = '(메모(일기) 중심)';
-        }
-
         if (isSearchFilterOpen) filterCustomList();
     }
 
     function renderCategoryStats() {
         const statsBody = document.getElementById('category-stats-body');
         const statsCardTitle = document.getElementById('stats-card-title');
-        const statsTotalAmount = document.getElementById('stats-total-amount');
         if (!statsBody || currentStatsType === 'memo') return;
 
         statsBody.innerHTML = '';
@@ -1210,11 +1216,6 @@
                 : `📊 이번 달 카테고리별 총수입 통계`;
         }
 
-        if (statsTotalAmount) {
-            statsTotalAmount.textContent = totalAmt.toLocaleString() + '원';
-            statsTotalAmount.style.color = currentStatsType === 'expense' ? 'var(--expense-color)' : 'var(--income-color)';
-        }
-
         let sortedCats = Object.keys(categorySums).map(cat => ({
             category: cat,
             amount: categorySums[cat]
@@ -1230,12 +1231,14 @@
             if (item.amount === 0) return;
             let percent = totalAmt > 0 ? ((item.amount / totalAmt) * 100).toFixed(1) : 0;
             let fillColorClass = currentStatsType === 'expense' ? 'expense' : 'income';
+            let isSelected = selectedCategoryFilter === item.category;
 
             const row = document.createElement('div');
-            row.className = 'stat-bar-container';
+            row.className = `stat-bar-container ${isSelected ? 'active-stat' : ''}`;
+            row.onclick = () => selectCategoryFromStats(item.category);
             row.innerHTML = `
                 <div class="stat-info-row">
-                    <span style="font-weight:bold; color:var(--weekday-color);">${item.category}</span>
+                    <span style="font-weight:bold; color:var(--weekday-color);">👉 ${item.category}</span>
                     <span>${item.amount.toLocaleString()}원 (<span style="color:var(--primary-color);">${percent}%</span>)</span>
                 </div>
                 <div class="stat-bar-bg">
@@ -1244,6 +1247,24 @@
             `;
             statsBody.appendChild(row);
         });
+    }
+
+    // 통계 과목 클릭 시 호출되는 함수
+    function selectCategoryFromStats(catName) {
+        if (selectedCategoryFilter === catName) {
+            selectedCategoryFilter = ''; // 한 번 더 누르면 선택 해제 (전체 보기)
+        } else {
+            selectedCategoryFilter = catName;
+        }
+        if (keywordSearchInput) keywordSearchInput.value = selectedCategoryFilter;
+        renderCategoryStats(); // 선택 상태 강조 표시 갱신
+        if (isSearchFilterOpen) filterCustomList();
+    }
+
+    function onKeywordInputChanged() {
+        selectedCategoryFilter = keywordSearchInput ? keywordSearchInput.value.trim() : '';
+        renderCategoryStats();
+        if (isSearchFilterOpen) filterCustomList();
     }
 
     function toggleSearchFilterSection() {
@@ -1271,18 +1292,21 @@
     }
 
     function resetSearchFilter() {
+        selectedCategoryFilter = '';
         if (keywordSearchInput) keywordSearchInput.value = '';
+        renderCategoryStats();
         let defaultPeriod = (currentStatsType === 'memo') ? 'today-around' : 'month';
         setPeriodFilter(defaultPeriod);
     }
 
     function filterCustomList() {
         const resultListContainer = document.getElementById('search-result-list');
+        const statsTotalAmount = document.getElementById('stats-total-amount');
         if (!resultListContainer) return;
         resultListContainer.innerHTML = '';
 
         let diaries = getAllDiaries();
-        let keyword = keywordSearchInput ? keywordSearchInput.value.trim().toLowerCase() : '';
+        let keyword = selectedCategoryFilter.toLowerCase();
         const todayStr = getTodayStr();
         const tObj = parseDateObj(todayStr);
 
@@ -1319,6 +1343,22 @@
 
             return true;
         });
+
+        // 리스트 총 합계 계산
+        let listTotalAmt = filtered.reduce((sum, item) => {
+            return sum + (item.money ? (Number(item.money.amount) || 0) : 0);
+        }, 0);
+
+        if (statsTotalAmount) {
+            statsTotalAmount.textContent = listTotalAmt.toLocaleString() + '원';
+            statsTotalAmount.style.color = currentStatsType === 'expense' ? 'var(--expense-color)' : 'var(--income-color)';
+        }
+
+        if (listCardMainTitle) {
+            let modeName = currentStatsType === 'expense' ? '지출' : (currentStatsType === 'income' ? '수입' : '메모');
+            let catText = selectedCategoryFilter ? ` [${selectedCategoryFilter}]` : '';
+            listCardMainTitle.textContent = `🔍 ${modeName}${catText} 상세 내역 리스트`;
+        }
 
         if (filtered.length === 0) {
             let typeName = currentStatsType === 'expense' ? '지출' : (currentStatsType === 'income' ? '수입' : '메모(일기)');
@@ -1551,7 +1591,6 @@
         const dObj = parseDateObj(selectedReservationDate);
         const dayName = getDayOfWeekStr(selectedReservationDate);
         
-        // 팝업 타이틀 2줄 처리
         formTargetDateTitle.innerHTML = `📅 ${dObj.getFullYear()}년 ${dObj.getMonth() + 1}월 ${dObj.getDate()}일 (${dayName})<br>다이어리&가계부`;
 
         if (existingItem) {
