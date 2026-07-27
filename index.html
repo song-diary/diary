@@ -974,7 +974,7 @@
             <span style="font-size: 12px; color: var(--text-sub); font-weight: normal;" id="search-subtitle">(지출 내역 중심)</span>
         </div>
         
-        <!-- 1번 요청: 지출 내역과 수입 내역의 자리 변경 (지출 -> 수입 순서) -->
+        <!-- 1번 요청 반영: 지출 내역과 수입 내역의 자리 변경 (지출 -> 수입 순서) -->
         <div class="view-select-group" style="margin-bottom: 8px;">
             <button class="view-select-btn active" id="mode-tab-expense" onclick="toggleStatsMode('expense')">💸 지출 내역</button>
             <button class="view-select-btn" id="mode-tab-income" onclick="toggleStatsMode('income')">💰 수입 내역</button>
@@ -1057,8 +1057,8 @@
             <button class="action-btn" style="margin-top:5px;" onclick="removeImage()">사진 취소</button>
         </div>
 
-        <!-- 3번 요청: 희미한 플레이스홀더 텍스트 적용 -->
-        <div id="textOutput" class="diary-textarea" contenteditable="true" placeholder="여기를 메모(일기)를 입력하세요"></div>
+        <!-- 3번 요청 반영: 희미한 플레이스홀더 텍스트 적용 -->
+        <div id="textOutput" class="diary-textarea" contenteditable="true" placeholder="여기에 메모(일기)를 입력하세요"></div>
 
         <div class="btn-group" style="margin-bottom: 12px;">
             <button class="btn btn-secondary" id="record-btn">🎤 음성메모</button>
@@ -1671,7 +1671,6 @@
         updateCategorySelectOptions(selectedCat);
     }
 
-    // 4번 요청: 계정과목 변경 시 금액 입력란으로 자동 포커스 이동 및 깜박임(Focus 효과) 처리
     function onCategoryChanged() {
         if (moneyAmountInput) {
             moneyAmountInput.focus();
@@ -1885,19 +1884,16 @@
         }
 
         updatePhotoPreview();
-        
-        // 5번 요청: 해당 일자의 입력된 내역(수입, 비용, 메모)을 폼 하단에 동적 표시
         renderPopupDayHistory(selectedReservationDate);
 
         memoFormOverlay.style.display = 'flex';
 
-        // 2번 요청: 달력 일자 누를 시 팝업이 뜨고 커서가 상세내용 및 메모에 위치하도록 함
+        // 2번 요청 반영: 달력 일자 누를 시 팝업이 뜨고 커서가 상세내용 및 메모에 위치하도록 함
         setTimeout(() => {
             textOutput.focus();
         }, 100);
     }
 
-    // 5번 요청: 선택한 일자의 입력 내역 목록 렌더링 함수
     function renderPopupDayHistory(dateStr) {
         const historyListEl = document.getElementById('popup-day-history-list');
         if (!historyListEl) return;
