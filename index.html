@@ -612,7 +612,7 @@
         .edit-btn, .delete-btn {
             background: none;
             border: none;
-            font-size: calc(var(--base-font-size) - 3px);
+            font-size: calc(var(--memo-font-size) - 4px);
             cursor: pointer;
             padding: 2px 4px;
             border-radius: 4px;
@@ -735,7 +735,7 @@
         </div>
 
         <div class="settings-section">
-            <label>🔤 메모(일기) 글자 크기 조절</label>
+            <label>🔤 메모(일기) 및 당일 내역 글자 크기 조절</label>
             <div style="display: flex; gap: 8px; align-items: center;">
                 <button class="action-btn" style="flex:1;" onclick="adjustFontSize(-1)">작게 (-)</button>
                 <span id="font-size-display" style="font-size: 16px; font-weight: bold; min-width: 45px; text-align: center;">16px</span>
@@ -876,7 +876,7 @@
         </div>
 
         <div id="popup-day-history-section" style="border-top: 1px dashed var(--border-color); padding-top: 10px; margin-top: 5px;">
-            <div style="font-size: 13px; font-weight: bold; color: var(--primary-color); margin-bottom: 6px;">📋 당일 입력된 내역 확인</div>
+            <div style="font-size: calc(var(--memo-font-size) - 2px); font-weight: bold; color: var(--primary-color); margin-bottom: 6px;">📋 당일 입력된 내역 확인</div>
             <div id="popup-day-history-list" style="max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;"></div>
         </div>
     </div>
@@ -1559,13 +1559,13 @@
         const dayDiaries = diaries.filter(d => normalizeDateStr(d.date) === dateStr);
 
         if (dayDiaries.length === 0) {
-            historyListEl.innerHTML = `<div style="font-size: 12px; color: var(--text-sub); text-align: center; padding: 4px;">등록된 내역이 없습니다.</div>`;
+            historyListEl.innerHTML = `<div style="font-size: var(--memo-font-size); color: var(--text-sub); text-align: center; padding: 4px;">등록된 내역이 없습니다.</div>`;
             return;
         }
 
         dayDiaries.forEach(item => {
             const itemBox = document.createElement('div');
-            itemBox.style.cssText = 'background: #fdfbfb; border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 8px; font-size: 12px; display: flex; justify-content: space-between; align-items: center;';
+            itemBox.style.cssText = 'background: #fdfbfb; border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 10px; font-size: var(--memo-font-size); display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;';
             
             let infoSummary = '';
             if (item.money && item.money.amount) {
@@ -1578,10 +1578,10 @@
             }
 
             itemBox.innerHTML = `
-                <div>${item.time ? `⏰ ${item.time} | ` : ''}${infoSummary}</div>
-                <div>
-                    <button style="background:none; border:none; color:#3498db; cursor:pointer; font-size:11px; margin-right:4px;" onclick='openDiaryForm("${dateStr}", ${JSON.stringify(item)})'>수정</button>
-                    <button style="background:none; border:none; color:#e74c3c; cursor:pointer; font-size:11px;" onclick="deleteDiary('${item.id}'); openDiaryForm('${dateStr}');">삭제</button>
+                <div style="word-break: break-all; flex: 1; padding-right: 6px;">${item.time ? `⏰ ${item.time} | ` : ''}${infoSummary}</div>
+                <div style="display: flex; gap: 4px; white-space: nowrap;">
+                    <button class="edit-btn" style="font-size: var(--memo-font-size);" onclick='openDiaryForm("${dateStr}", ${JSON.stringify(item)})'>수정</button>
+                    <button class="delete-btn" style="font-size: var(--memo-font-size);" onclick="deleteDiary('${item.id}'); openDiaryForm('${dateStr}');">삭제</button>
                 </div>
             `;
             historyListEl.appendChild(itemBox);
