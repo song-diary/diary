@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>다이어리&용돈관리</title>
+    <title>다이어리&가계부</title>
     <style>
         :root {
             --bg-color: #f7f4f4;
@@ -417,11 +417,18 @@
         .form-header-info {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             margin-bottom: 10px;
             font-size: calc(var(--base-font-size) + 1px);
             font-weight: bold;
             color: var(--primary-color);
+            gap: 10px;
+        }
+
+        .form-header-info span {
+            line-height: 1.4;
+            flex: 1;
+            word-break: keep-all;
         }
 
         .close-form-btn {
@@ -430,6 +437,8 @@
             font-size: 20px;
             cursor: pointer;
             color: var(--text-sub);
+            flex-shrink: 0;
+            margin-top: -2px;
         }
 
         .reservation-box {
@@ -677,7 +686,7 @@
 <div class="app-container">
     <!-- 상단 설정 바 -->
     <div class="card top-bar">
-        <span>🌸 다이어리&용돈관리</span>
+        <span>🌸 다이어리&가계부</span>
         <button class="action-btn" onclick="toggleSettings()">⚙️ 설정</button>
     </div>
 
@@ -708,18 +717,18 @@
 
         <!-- 🏷️ 계정 과목(카테고리) 커스텀 설정 -->
         <div class="settings-section">
-            <label>🏷️ 지출 계정 과목 관리</label>
+            <label>🏷️ 지출 계정 과목 관리 (번호로 우선순위 지정)</label>
             <div style="display: flex; gap: 6px; margin-bottom: 6px;">
-                <input type="text" id="new-expense-cat" placeholder="추가할 지출 과목" style="flex:1; padding:6px; border:1px solid var(--border-color); border-radius:6px; font-size:13px;">
+                <input type="text" id="new-expense-cat" placeholder="예: 1. 식비" style="flex:1; padding:6px; border:1px solid var(--border-color); border-radius:6px; font-size:13px;">
                 <button class="action-btn" style="padding:6px 10px; font-size:13px;" onclick="addCategory('expense')">추가</button>
             </div>
             <div id="expense-cat-list" style="display: flex; flex-wrap: wrap; gap: 4px; font-size: 12px;"></div>
         </div>
 
         <div class="settings-section">
-            <label>🏷️ 수입 계정 과목 관리</label>
+            <label>🏷️ 수입 계정 과목 관리 (번호로 우선순위 지정)</label>
             <div style="display: flex; gap: 6px; margin-bottom: 6px;">
-                <input type="text" id="new-income-cat" placeholder="추가할 수입 과목" style="flex:1; padding:6px; border:1px solid var(--border-color); border-radius:6px; font-size:13px;">
+                <input type="text" id="new-income-cat" placeholder="예: 1. 월급" style="flex:1; padding:6px; border:1px solid var(--border-color); border-radius:6px; font-size:13px;">
                 <button class="action-btn" style="padding:6px 10px; font-size:13px;" onclick="addCategory('income')">추가</button>
             </div>
             <div id="income-cat-list" style="display: flex; flex-wrap: wrap; gap: 4px; font-size: 12px;"></div>
@@ -771,7 +780,7 @@
     <div class="card" id="money-summary-card">
         <div class="money-summary-header">
             <span id="money-summary-title">💵 용돈 현황</span>
-            <span style="font-size: 11px; color: #27ae60; font-weight: normal;">클릭 시 해당 통계 펼치기/접기</span>
+            <span style="font-size: 13px; color: #27ae60; font-weight: bold;">클릭 시 해당 통계 펼치기/접기</span>
         </div>
         <div class="money-summary-grid">
             <div class="money-box income" onclick="handleSummaryClick('income')">
@@ -835,7 +844,7 @@
 <div id="memo-form-overlay">
     <div id="memo-form-card">
         <div class="form-header-info">
-            <span id="form-target-date-title">📅 0000년 00월 00일 - 다이어리&용돈관리</span>
+            <span id="form-target-date-title">📅 0000년 00월 00일<br>다이어리&가계부</span>
             <button class="close-form-btn" onclick="closeDiaryForm()">✖</button>
         </div>
         
@@ -901,8 +910,8 @@
     let currentPeriodFilter = 'month'; 
     let currentStatsType = 'income'; 
 
-    let expenseCategories = JSON.parse(localStorage.getItem('smartDiaryExpenseCats')) || ["식비", "교통/통신", "주거/생활", "쇼핑", "의료/건강", "문화/여가", "기타 지출"];
-    let incomeCategories = JSON.parse(localStorage.getItem('smartDiaryIncomeCats')) || ["용돈", "월급", "사업수입", "금융/투자", "기타 수입"];
+    let expenseCategories = JSON.parse(localStorage.getItem('smartDiaryExpenseCats')) || ["1. 식비", "2. 교통/통신", "3. 주거/생활", "4. 쇼핑", "5. 의료/건강", "6. 문화/여가", "7. 기타 지출"];
+    let incomeCategories = JSON.parse(localStorage.getItem('smartDiaryIncomeCats')) || ["1. 용돈", "2. 월급", "3. 사업수입", "4. 금융/투자", "5. 기타 수입"];
 
     let recognition = null;
     let isRecording = false;
@@ -977,9 +986,25 @@
         }
     }
 
+    // 번호(우선순위) 기준 정렬 함수
+    function sortCategories(categories) {
+        return categories.sort((a, b) => {
+            let numA = parseInt(a);
+            let numB = parseInt(b);
+            if (!isNaN(numA) && !isNaN(numB)) {
+                return numA - numB;
+            }
+            return a.localeCompare(b, 'ko');
+        });
+    }
+
     function renderCategorySettingsList() {
         const expListEl = document.getElementById('expense-cat-list');
         const incListEl = document.getElementById('income-cat-list');
+        
+        expenseCategories = sortCategories(expenseCategories);
+        incomeCategories = sortCategories(incomeCategories);
+
         if (expListEl) {
             expListEl.innerHTML = '';
             expenseCategories.forEach(cat => {
@@ -1009,10 +1034,12 @@
         if (type === 'expense') {
             if (expenseCategories.includes(val)) { alert('이미 존재하는 지출 과목입니다.'); return; }
             expenseCategories.push(val);
+            expenseCategories = sortCategories(expenseCategories);
             localStorage.setItem('smartDiaryExpenseCats', JSON.stringify(expenseCategories));
         } else {
             if (incomeCategories.includes(val)) { alert('이미 존재하는 수입 과목입니다.'); return; }
             incomeCategories.push(val);
+            incomeCategories = sortCategories(incomeCategories);
             localStorage.setItem('smartDiaryIncomeCats', JSON.stringify(incomeCategories));
         }
         inputEl.value = '';
@@ -1523,7 +1550,9 @@
 
         const dObj = parseDateObj(selectedReservationDate);
         const dayName = getDayOfWeekStr(selectedReservationDate);
-        formTargetDateTitle.textContent = `📅 ${dObj.getFullYear()}년 ${dObj.getMonth() + 1}월 ${dObj.getDate()}일 (${dayName}) - 다이어리&용돈관리`;
+        
+        // 팝업 타이틀 2줄 처리
+        formTargetDateTitle.innerHTML = `📅 ${dObj.getFullYear()}년 ${dObj.getMonth() + 1}월 ${dObj.getDate()}일 (${dayName})<br>다이어리&가계부`;
 
         if (existingItem) {
             textOutput.innerHTML = existingItem.text || '';
