@@ -670,56 +670,6 @@
         .section-divider:hover .divider-label {
             background: #f0e2e2;
         }
-
-        /* 명언 카드 스타일 */
-        #quote-card {
-            background: linear-gradient(135deg, #fff5f5, #fffcfc);
-            border: 1px dashed var(--primary-color);
-            border-radius: 10px;
-            padding: 16px;
-            text-align: center;
-            color: var(--weekday-color);
-            user-select: none;
-        }
-
-        .quote-header-tabs {
-            display: flex;
-            justify-content: center;
-            gap: 6px;
-            margin-bottom: 10px;
-        }
-
-        .quote-tab-btn {
-            background: #ffffff;
-            border: 1px solid var(--border-color);
-            padding: 4px 10px;
-            border-radius: 15px;
-            font-size: calc(var(--base-font-size) - 4px);
-            font-weight: bold;
-            color: var(--text-sub);
-            cursor: pointer;
-            touch-action: manipulation;
-        }
-
-        .quote-tab-btn.active {
-            background: var(--primary-color);
-            color: white;
-            border-color: var(--primary-color);
-        }
-
-        .quote-text {
-            font-weight: bold;
-            line-height: 1.5;
-            margin-bottom: 6px;
-            color: #c0392b;
-            font-size: var(--base-font-size);
-        }
-
-        .quote-author {
-            color: var(--text-sub);
-            line-height: 1.4;
-            font-size: calc(var(--base-font-size) - 2px);
-        }
     </style>
 </head>
 <body>
@@ -784,27 +734,6 @@
             </div>
         </div>
 
-        <!-- 💬 명언/좌우명 표시 온/오프 -->
-        <div class="settings-section">
-            <label>💬 명언 및 좌우명 표시 설정</label>
-            <div style="display: flex; gap: 6px;">
-                <button class="view-select-btn active" id="quote-on-btn" onclick="setQuoteVisibility(true)">명언 켜기</button>
-                <button class="view-select-btn" id="quote-off-btn" onclick="setQuoteVisibility(false)">명언 끄기</button>
-            </div>
-        </div>
-
-        <div class="settings-section">
-            <label>💬 메인 화면 정보 설정</label>
-            <div style="display: flex; gap: 6px; margin-bottom: 8px;">
-                <button class="view-select-btn active" id="quote-mode-random" onclick="setQuoteMode('random')">매일 명언</button>
-                <button class="view-select-btn" id="quote-mode-fixed" onclick="setQuoteMode('fixed')">나만의 좌우명</button>
-            </div>
-            <div id="fixed-quote-input-wrap" style="display: none; gap: 6px;">
-                <input type="text" id="custom-quote-input" placeholder="나만의 좌우명을 입력하세요" style="flex:1; padding: 6px 10px; border:1px solid var(--border-color); border-radius:6px; font-size:14px;">
-                <button class="action-btn" style="padding: 6px 12px; font-size:14px;" onclick="saveCustomQuote()">저장</button>
-            </div>
-        </div>
-
         <div class="settings-section">
             <label>🔤 메모(일기) 글자 크기 조절</label>
             <div style="display: flex; gap: 8px; align-items: center;">
@@ -860,7 +789,7 @@
         </div>
     </div>
 
-    <!-- 📊 카테고리별 지출/수입 통계 리스트 / 잔액 클릭 시 명언 카드로 대체 -->
+    <!-- 📊 카테고리별 지출/수입 통계 리스트 -->
     <div class="card sub-feature-card" id="category-stats-card">
         <div class="feature-title">
             <span id="stats-card-title">📊 이번 달 카테고리별 지출 통계</span>
@@ -883,7 +812,7 @@
         <div class="view-select-group" style="margin-bottom: 8px;">
             <button class="view-select-btn active" id="mode-tab-income" onclick="toggleStatsMode('income')">💰 수입 내역</button>
             <button class="view-select-btn" id="mode-tab-expense" onclick="toggleStatsMode('expense')">💸 지출 내역</button>
-            <button class="view-select-btn" id="mode-tab-memo" onclick="toggleStatsMode('memo')">📝 메모(읽)</button>
+            <button class="view-select-btn" id="mode-tab-memo" onclick="toggleStatsMode('memo')">📝 메모(일기)</button>
         </div>
 
         <div class="search-filter-box">
@@ -899,17 +828,6 @@
             </div>
         </div>
         <div id="search-result-list" style="margin-top: 12px; border-top: 1px dashed var(--border-color); padding-top: 10px;"></div>
-    </div>
-
-    <!-- 명언 카드 -->
-    <div class="card" id="quote-card">
-        <div class="quote-header-tabs">
-            <button class="quote-tab-btn active" id="tab-quote" onclick="switchQuoteCategory('quote')">💬 명언/좌우명</button>
-            <button class="quote-tab-btn" id="tab-idiom" onclick="switchQuoteCategory('idiom')">📖 사자성어</button>
-            <button class="quote-tab-btn" id="tab-tech" onclick="switchQuoteCategory('tech')">🤖 IT / AI 용어</button>
-        </div>
-        <div class="quote-text" id="quote-content">"작은 일에 성실한 사람은 큰 일에도 성실하다."</div>
-        <div class="quote-author" id="quote-author-text">- 성경 -</div>
     </div>
 </div>
 
@@ -939,7 +857,7 @@
             </div>
         </div>
 
-        <div style="font-size: 14px; font-weight: bold; color: var(--weekday-color); margin-bottom: 6px;">📝 상세내용 및 메모(일기)작성</div>
+        <div style="font-size: 14px; font-weight: bold; color: var(--weekday-color); margin-bottom: 6px;">📝 상세내용 및 메모(일기) 작성</div>
 
         <div id="photo-preview-wrap">
             <img id="image-preview" src="" alt="미리보기">
@@ -974,7 +892,6 @@
     
     let isSearchFilterOpen = true;
 
-    let isQuoteVisible = localStorage.getItem('smartDiaryQuoteVisible') !== 'false';
     let isMoneySummaryVisible = localStorage.getItem('smartDiaryMoneySummaryVisible') !== 'false';
     let isCategoryStatsVisible = localStorage.getItem('smartDiaryCategoryStatsVisible') !== 'false';
     let isSearchFilterVisible = localStorage.getItem('smartDiarySearchFilterVisible') !== 'false';
@@ -987,41 +904,6 @@
     let expenseCategories = JSON.parse(localStorage.getItem('smartDiaryExpenseCats')) || ["식비", "교통/통신", "주거/생활", "쇼핑", "의료/건강", "문화/여가", "기타 지출"];
     let incomeCategories = JSON.parse(localStorage.getItem('smartDiaryIncomeCats')) || ["용돈", "월급", "사업수입", "금융/투자", "기타 수입"];
 
-    let quoteMode = localStorage.getItem('smartDiaryQuoteMode') || 'random';
-    let customQuoteText = localStorage.getItem('smartDiaryCustomQuote') || '오늘 흘린 땀방울은 내일의 기쁨이 된다.';
-    let activeQuoteCategory = localStorage.getItem('smartDiaryQuoteCategory') || 'quote';
-    let currentItemIndex = 0; 
-
-    const quotesList = [
-        { text: "피할 수 없으면 즐겨라.", author: "- 로버트 엘리엇 -" },
-        { text: "절대 어제를 후회하지 마라. 인생은 오늘의 나 안에 있고, 내일은 스스로 만드는 것이다.", author: "- L.론 허바드 -" },
-        { text: "작은 기회를 자주 놓치는 것이 큰 기회를 놓치는 주된 원인이다.", author: "- 벤자민 프랭클린 -" },
-        { text: "행복은 습관이다, 몸에 지니도록 하라.", author: "- 허버드 -" },
-        { text: "오늘 할 일은 내일로 미루지 말자.", author: "- 벤자민 프랭클린 -" },
-        { text: "성공한 사람이 되려 하지 말고, 가치 있는 사람이 되려 하라.", author: "- 알베르트 아인슈타인 -" },
-        { text: "마음을 다해 노력하면 이루지 못할 것이 없다.", author: "- 명심보감 -" }
-    ];
-
-    const idiomsList = [
-        { text: "교학상장 (敎學相長)", author: "가르치고 배우면서 서로 자란다." },
-        { text: "마부작침 (磨斧作針)", author: "도끼를 갈아 바늘을 만든다. 끊임없는 노력." },
-        { text: "유비무환 (有備無患)", author: "미리 준비가 되어 있으면 근심이 없다." },
-        { text: "고진감래 (苦盡甘來)", author: "고생 끝에 낙이 온다." },
-        { text: "일취월장 (日就月將)", author: "날마다 나아가고 달마다 발전함." },
-        { text: "청출어람 (靑出於藍)", author: "제자가 스승보다 나은 것을 이르는 말." },
-        { text: "초심불망 (初心不忘)", author: "처음 먹었던 마음을 잊지 않는다." }
-    ];
-
-    const techList = [
-        { text: "생성형 AI (Generative AI)", author: "텍스트, 이미지, 오디오 등 새로운 콘텐츠를 창출하는 인공지능 기술." },
-        { text: "프롬프트 엔지니어링 (Prompt Engineering)", author: "AI로부터 원하는 최적의 답변을 이끌어내기 위해 명령어를 설계하는 기술." },
-        { text: "클라우드 컴퓨팅 (Cloud Computing)", author: "인터넷을 통해 데이터 저장소와 서버를 빌려 쓰는 서비스." },
-        { text: "사물인터넷 (IoT)", author: "모든 사물이 인터넷으로 서로 연결되어 정보를 교환하는 기술." },
-        { text: "머신러닝 (Machine Learning)", author: "컴퓨터가 데이터를 통해 스스로 학습하고 패턴을 찾아내는 인공지능의 분야." },
-        { text: "빅데이터 (Big Data)", author: "기존 방법으로는 수집·분석하기 힘들 정도로 방대한 규모의 데이터." },
-        { text: "오픈소스 (Open Source)", author: "소프트웨어의 소스 코드를 공개하여 누구나 수정하고 배포할 수 있는 형태." }
-    ];
-
     let recognition = null;
     let isRecording = false;
     let shouldRestart = false;
@@ -1029,17 +911,12 @@
 
     const textOutput = document.getElementById('textOutput');
     const recordBtn = document.getElementById('record-btn');
-    const quoteCard = document.getElementById('quote-card');
     const searchDividerLabelText = document.getElementById('search-divider-label-text');
     const reservationTimeInput = document.getElementById('reservation-time-input');
     const memoFormOverlay = document.getElementById('memo-form-overlay');
     const formTargetDateTitle = document.getElementById('form-target-date-title');
     const settingsCard = document.getElementById('settings-card');
     const fontSizeDisplay = document.getElementById('font-size-display');
-    const quoteContent = document.getElementById('quote-content');
-    const quoteAuthorText = document.getElementById('quote-author-text');
-    const customQuoteInput = document.getElementById('custom-quote-input');
-    const fixedQuoteInputWrap = document.getElementById('fixed-quote-input-wrap');
     
     const moneyCategorySelect = document.getElementById('money-category-select');
     const moneyAmountInput = document.getElementById('money-amount-input');
@@ -1089,13 +966,6 @@
         if (searchDivider) searchDivider.style.display = isVisible ? 'flex' : 'none';
         if (searchFilterCard) searchFilterCard.style.display = (isVisible && isSearchFilterOpen) ? 'block' : 'none';
         updateToggleButtons('search-filter', isVisible);
-    }
-
-    function setQuoteVisibility(isVisible) {
-        isQuoteVisible = isVisible;
-        localStorage.setItem('smartDiaryQuoteVisible', isVisible);
-        if (quoteCard && currentStatsType !== 'memo') quoteCard.style.display = isVisible ? 'block' : 'none';
-        updateToggleButtons('quote', isVisible);
     }
 
     function updateToggleButtons(name, isVisible) {
@@ -1260,12 +1130,9 @@
         
         if (type !== 'memo') {
             if (categoryStatsCard) categoryStatsCard.style.display = isCategoryStatsVisible ? 'block' : 'none';
-            if (quoteCard) quoteCard.style.display = 'none';
             renderCategoryStats();
         } else {
-            // 메모(읽) 누를 시 카테고리 통계 대신 명언 좌우명 카드 표시
             if (categoryStatsCard) categoryStatsCard.style.display = 'none';
-            if (quoteCard) quoteCard.style.display = isQuoteVisible ? 'block' : 'none';
         }
 
         ['income', 'expense', 'memo'].forEach(m => {
@@ -1563,73 +1430,6 @@
         const isOpening = settingsCard.style.display !== 'block';
         settingsCard.style.display = isOpening ? 'block' : 'none';
         if (isOpening) renderCategorySettingsList();
-    }
-
-    function setQuoteMode(mode) {
-        quoteMode = mode;
-        localStorage.setItem('smartDiaryQuoteMode', mode);
-        currentItemIndex = 0;
-        
-        if (mode === 'random') {
-            document.getElementById('quote-mode-random').classList.add('active');
-            document.getElementById('quote-mode-fixed').classList.remove('active');
-            fixedQuoteInputWrap.style.display = 'none';
-        } else {
-            document.getElementById('quote-mode-fixed').classList.add('active');
-            document.getElementById('quote-mode-random').classList.remove('active');
-            fixedQuoteInputWrap.style.display = 'flex';
-            if (customQuoteInput) customQuoteInput.value = customQuoteText;
-        }
-        displayQuote();
-    }
-
-    function switchQuoteCategory(category) {
-        activeQuoteCategory = category;
-        localStorage.setItem('smartDiaryQuoteCategory', category);
-        currentItemIndex = 0;
-
-        ['quote', 'idiom', 'tech'].forEach(cat => {
-            const btn = document.getElementById(`tab-${cat}`);
-            if (btn) {
-                if (cat === category) btn.classList.add('active');
-                else btn.classList.remove('active');
-            }
-        });
-        displayQuote();
-    }
-
-    function saveCustomQuote() {
-        const val = customQuoteInput.value.trim();
-        if (!val) { alert('좌우명을 입력해주세요.'); return; }
-        customQuoteText = val;
-        localStorage.setItem('smartDiaryCustomQuote', val);
-        alert('좌우명이 저장되었습니다.');
-        displayQuote();
-    }
-
-    function displayQuote() {
-        if (quoteMode === 'fixed') {
-            if (quoteContent) quoteContent.textContent = `"${customQuoteText}"`;
-            if (quoteAuthorText) quoteAuthorText.textContent = '- 나의 좌우명 -';
-            return;
-        }
-        let list = quotesList;
-        if (activeQuoteCategory === 'idiom') list = idiomsList;
-        else if (activeQuoteCategory === 'tech') list = techList;
-
-        const currentItem = list[currentItemIndex % list.length];
-        if (quoteContent) quoteContent.textContent = `"${currentItem.text}"`;
-        if (quoteAuthorText) quoteAuthorText.textContent = `- ${currentItem.author} -`;
-    }
-
-    if (quoteCard) {
-        quoteCard.addEventListener('click', (e) => {
-            if (e.target.tagName === 'BUTTON' || e.target.closest('.quote-header-tabs')) return;
-            if (quoteMode === 'random') {
-                currentItemIndex++;
-                displayQuote();
-            }
-        });
     }
 
     function adjustFontSize(delta) {
@@ -1937,11 +1737,9 @@
         setMoneySummaryVisibility(isMoneySummaryVisible);
         setCategoryStatsVisibility(isCategoryStatsVisible);
         setSearchFilterVisibility(isSearchFilterVisible);
-        setQuoteVisibility(isQuoteVisible);
         
         renderCalendar();
         applyMemoFontSize();
-        setQuoteMode(quoteMode);
         initSpeechRecognition();
         updateMoneySummary();
         
