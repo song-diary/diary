@@ -579,6 +579,7 @@
             background: #fff;
         }
 
+        /* 3번 요청: 희미한 placeholder 스타일 적용 */
         .diary-textarea {
             width: 100%;
             min-height: 100px;
@@ -590,6 +591,13 @@
             background: #fff;
             margin-bottom: 10px;
             line-height: 1.5;
+        }
+
+        .diary-textarea:empty:before {
+            content: attr(placeholder);
+            color: #b2bec3;
+            pointer-events: none;
+            display: block;
         }
 
         .diary-textarea:focus {
@@ -966,7 +974,7 @@
             <span style="font-size: 12px; color: var(--text-sub); font-weight: normal;" id="search-subtitle">(지출 내역 중심)</span>
         </div>
         
-        <!-- 보기 모드 선택 탭 (지출 / 수입 / 메모) -->
+        <!-- 1번 요청: 지출 내역과 수입 내역의 자리 변경 (지출 -> 수입 순서) -->
         <div class="view-select-group" style="margin-bottom: 8px;">
             <button class="view-select-btn active" id="mode-tab-expense" onclick="toggleStatsMode('expense')">💸 지출 내역</button>
             <button class="view-select-btn" id="mode-tab-income" onclick="toggleStatsMode('income')">💰 수입 내역</button>
@@ -1037,7 +1045,7 @@
                 <button type="button" class="money-type-btn income" id="type-income-btn" onclick="setMoneyType('income')">수입</button>
             </div>
             <div style="display: flex; gap: 6px;">
-                <select id="money-category-select" class="money-input-field" style="flex: 1;"></select>
+                <select id="money-category-select" class="money-input-field" style="flex: 1;" onchange="onCategoryChanged()"></select>
                 <input type="text" inputmode="numeric" id="money-amount-input" class="money-input-field" placeholder="금액 안 쓰면 순수 메모" style="flex: 1.5;">
             </div>
         </div>
@@ -1049,15 +1057,22 @@
             <button class="action-btn" style="margin-top:5px;" onclick="removeImage()">사진 취소</button>
         </div>
 
-        <div id="textOutput" class="diary-textarea" contenteditable="true" placeholder="이곳에 메모를 입력하거나 음성메모를 사용하세요..."></div>
+        <!-- 3번 요청: 희미한 플레이스홀더 텍스트 적용 -->
+        <div id="textOutput" class="diary-textarea" contenteditable="true" placeholder="여기를 메모(일기)를 입력하세요"></div>
 
-        <div class="btn-group">
+        <div class="btn-group" style="margin-bottom: 12px;">
             <button class="btn btn-secondary" id="record-btn">🎤 음성메모</button>
             <label class="btn btn-secondary" style="text-align:center; display:flex; align-items:center; justify-content:center; cursor:pointer;">
                 📷 사진
                 <input type="file" id="diary-photo-input" accept="image/*" style="display:none;" onchange="previewImage(event)">
             </label>
             <button class="btn btn-primary" onclick="manualSaveDiary()">저장</button>
+        </div>
+
+        <!-- 5번 요청: 선택한 일자의 입력된 내역 확인 영역 -->
+        <div id="popup-day-history-section" style="border-top: 1px dashed var(--border-color); padding-top: 10px; margin-top: 5px;">
+            <div style="font-size: 13px; font-weight: bold; color: var(--primary-color); margin-bottom: 6px;">📋 당일 입력된 내역 확인</div>
+            <div id="popup-day-history-list" style="max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;"></div>
         </div>
     </div>
 </div>
@@ -1070,7 +1085,6 @@
     let currentPhotoBase64 = null;
     let currentFontSize = parseInt(localStorage.getItem('smartDiaryFontSize')) || 16;
     
-    // 내역검사 및 기간필터 기본 온(True) 설정 적용
     let isSearchFilterOpen = true;
 
     let isWeatherVisible = localStorage.getItem('smartDiaryWeatherVisible') !== 'false';
@@ -1081,9 +1095,8 @@
 
     let currentMoneyType = 'expense';
     
-    // 지출/수입내역 처음 업로드시 기준은 "이번달"('month')로 설정, 메모일기는 오늘 전후('today-around') 기준
     let currentPeriodFilter = 'month'; 
-    let currentStatsType = 'expense'; // 'expense', 'income', 또는 'memo'[cite: 1]
+    let currentStatsType = 'expense'; 
 
     let expenseCategories = JSON.parse(localStorage.getItem('smartDiaryExpenseCats')) || ["식비", "교통/통신", "주거/생활", "쇼핑", "의료/건강", "문화/여가", "기타 지출"];
     let incomeCategories = JSON.parse(localStorage.getItem('smartDiaryIncomeCats')) || ["용돈", "월급", "사업수입", "금융/투자", "기타 수입"];
@@ -1373,15 +1386,12 @@
         return combinedList;
     }
 
-    // 통계 및 검색 모드 토글 (지출, 수입, 메모 선택)[cite: 1]
     function toggleStatsMode(type) {
         currentStatsType = type;
         
-        // 지출/수입 모드로 전환 시 처음 업로드 기본 기준인 '이번달'('month')로 필터 설정 전환
         if (type !== 'memo') {
             setPeriodFilter('month');
         } else {
-            // 메모일기는 오늘 전후('today-around') 기준 적용
             setPeriodFilter('today-around');
         }
         
@@ -1389,10 +1399,9 @@
             if (categoryStatsCard) categoryStatsCard.style.display = isCategoryStatsVisible ? 'block' : 'none';
             renderCategoryStats();
         } else {
-            if (categoryStatsCard) categoryStatsCard.style.display = 'none'; // 메모 모드일 때는 카테고리 통계 숨김
+            if (categoryStatsCard) categoryStatsCard.style.display = 'none';
         }
 
-        // 검색 필터 내부의 모드 버튼 Active 상태 동기화
         ['expense', 'income', 'memo'].forEach(m => {
             const btn = document.getElementById(`mode-tab-${m}`);
             if (btn) {
@@ -1503,7 +1512,6 @@
 
     function resetSearchFilter() {
         if (keywordSearchInput) keywordSearchInput.value = '';
-        // 초기화 시에도 지출/수입은 '이번달', 메모일기는 '오늘 전후' 기본값 반영
         let defaultPeriod = (currentStatsType === 'memo') ? 'today-around' : 'month';
         setPeriodFilter(defaultPeriod);
     }
@@ -1519,13 +1527,11 @@
         const tObj = parseDateObj(todayStr);
 
         let filtered = diaries.filter(item => {
-            // 모드별 필터링 조건 분기 (지출, 수입, 또는 순수 메모)
             if (currentStatsType === 'expense') {
                 if (!item.money || item.money.type !== 'expense') return false;
             } else if (currentStatsType === 'income') {
                 if (!item.money || item.money.type !== 'income') return false;
             } else if (currentStatsType === 'memo') {
-                // 돈(수입/지출) 내역이 없고 텍스트나 사진이 있는 순수 메모만 대상
                 if (item.money && item.money.amount) return false;
                 if (!item.text && !item.photo) return false;
             }
@@ -1566,8 +1572,6 @@
             const subItem = document.createElement('div');
             subItem.className = 'sub-memo-item';
             let dateStr = normalizeDateStr(item.date);
-            
-            // 데이터 리스트업 시 일자 + (요일) 표시 적용
             let dayOfWeek = getDayOfWeekStr(dateStr);
             let displayDateStr = `${dateStr}(${dayOfWeek})`;
 
@@ -1665,6 +1669,17 @@
             typeExpenseBtn.classList.remove('active');
         }
         updateCategorySelectOptions(selectedCat);
+    }
+
+    // 4번 요청: 계정과목 변경 시 금액 입력란으로 자동 포커스 이동 및 깜박임(Focus 효과) 처리
+    function onCategoryChanged() {
+        if (moneyAmountInput) {
+            moneyAmountInput.focus();
+            moneyAmountInput.style.borderColor = 'var(--primary-color)';
+            setTimeout(() => {
+                moneyAmountInput.style.borderColor = 'var(--border-color)';
+            }, 500);
+        }
     }
 
     function resetAllData() {
@@ -1870,7 +1885,55 @@
         }
 
         updatePhotoPreview();
+        
+        // 5번 요청: 해당 일자의 입력된 내역(수입, 비용, 메모)을 폼 하단에 동적 표시
+        renderPopupDayHistory(selectedReservationDate);
+
         memoFormOverlay.style.display = 'flex';
+
+        // 2번 요청: 달력 일자 누를 시 팝업이 뜨고 커서가 상세내용 및 메모에 위치하도록 함
+        setTimeout(() => {
+            textOutput.focus();
+        }, 100);
+    }
+
+    // 5번 요청: 선택한 일자의 입력 내역 목록 렌더링 함수
+    function renderPopupDayHistory(dateStr) {
+        const historyListEl = document.getElementById('popup-day-history-list');
+        if (!historyListEl) return;
+        historyListEl.innerHTML = '';
+
+        const diaries = getAllDiaries();
+        const dayDiaries = diaries.filter(d => normalizeDateStr(d.date) === dateStr);
+
+        if (dayDiaries.length === 0) {
+            historyListEl.innerHTML = `<div style="font-size: 12px; color: var(--text-sub); text-align: center; padding: 4px;">등록된 내역이 없습니다.</div>`;
+            return;
+        }
+
+        dayDiaries.forEach(item => {
+            const itemBox = document.createElement('div');
+            itemBox.style.cssText = 'background: #fdfbfb; border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 8px; font-size: 12px; display: flex; justify-content: space-between; align-items: center;';
+            
+            let infoSummary = '';
+            if (item.money && item.money.amount) {
+                let isExp = item.money.type === 'expense';
+                let sign = isExp ? '-' : '+';
+                let color = isExp ? 'var(--expense-color)' : 'var(--income-color)';
+                infoSummary = `<span style="font-weight: bold; color: ${color};">[${isExp ? '지출' : '수입'}] ${item.money.category} (${sign}${Number(item.money.amount).toLocaleString()}원)</span>`;
+            } else {
+                infoSummary = `<span style="font-weight: bold; color: var(--memo-color);">[메모] ${item.text ? item.text.substring(0, 15) + '...' : '사진 메모'}</span>`;
+            }
+
+            itemBox.innerHTML = `
+                <div>${item.time ? `⏰ ${item.time} | ` : ''}${infoSummary}</div>
+                <div>
+                    <button style="background:none; border:none; color:#3498db; cursor:pointer; font-size:11px; margin-right:4px;" onclick='openDiaryForm("${dateStr}", ${JSON.stringify(item)})'>수정</button>
+                    <button style="background:none; border:none; color:#e74c3c; cursor:pointer; font-size:11px;" onclick="deleteDiary('${item.id}'); openDiaryForm('${dateStr}');">삭제</button>
+                </div>
+            `;
+            historyListEl.appendChild(itemBox);
+        });
     }
 
     function closeDiaryForm() {
@@ -2032,7 +2095,6 @@
         initSpeechRecognition();
         updateMoneySummary();
         
-        // 업로드 시 내역검사 및 기간필터(이번달 기준) 기본 온 상태로 목록 렌더링 수행
         if (isSearchFilterOpen) {
             setPeriodFilter('month');
         }
