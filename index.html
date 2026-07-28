@@ -170,6 +170,7 @@
             border: 1px solid #d2eedc;
             border-radius: 8px;
             padding: 8px 4px;
+            /* 클릭 및 손가락 표시 제거 완료 */
             cursor: default; 
             transition: none;
         }
@@ -804,7 +805,7 @@
         <div class="calendar-grid" id="cal-days-grid" style="margin-top: 5px;"></div>
     </div>
 
-    <!-- 💵 이번 달 가계부 요약 카드 -->
+    <!-- 💵 이번 달 가계부 요약 카드 (클릭/손가락 기능 제거됨) -->
     <div class="card" id="money-summary-card">
         <div class="money-summary-header">
             <span id="money-summary-title">💵 가계부 현황</span>
@@ -1146,6 +1147,11 @@
         return days[dObj.getDay()];
     }
 
+    // 오늘 이후(미래) 일자에 작성된 데이터인지 여부 -> true면 '예약' 표시
+    function isFutureDate(dateStr) {
+        return normalizeDateStr(dateStr) > getTodayStr();
+    }
+
     function getKoreanHolidays(year) {
         let holidays = new Set([
             `${year}-01-01`, `${year}-03-01`, `${year}-05-05`,
@@ -1385,16 +1391,15 @@
             const subItem = document.createElement('div');
             subItem.className = 'sub-memo-item';
             
-            let isReserved = item.time && item.time.trim() !== '';
+            let dateStr = normalizeDateStr(item.date);
+            let isReserved = isFutureDate(dateStr);
             if (isReserved) {
                 subItem.classList.add('is-reserved');
             }
 
-            let dateStr = normalizeDateStr(item.date);
             let dayOfWeek = getDayOfWeekStr(dateStr);
             let displayDateStr = `${dateStr}(${dayOfWeek})`;
 
-            // 시간이 있을 때만 [예약] 뱃지가 표시되도록 수정
             let reservedBadge = isReserved ? `<span style="background:var(--primary-color); color:white; padding:1px 5px; border-radius:4px; font-size:11px; margin-right:4px; font-weight:bold;">[예약]</span>` : '';
 
             let headerHTML = '';
@@ -1726,7 +1731,7 @@
         dayDiaries.forEach(item => {
             const itemBox = document.createElement('div');
             
-            let isReserved = item.time && item.time.trim() !== '';
+            let isReserved = isFutureDate(normalizeDateStr(item.date));
             let reservedBadge = isReserved ? `<span style="background:var(--primary-color); color:white; padding:1px 4px; border-radius:3px; font-size:10px; margin-right:4px; font-weight:bold;">[예약]</span>` : '';
             
             itemBox.style.cssText = `background: ${isReserved ? '#fff5f5' : '#fdfbfb'}; border: 1px solid ${isReserved ? '#f7d6d6' : 'var(--border-color)'}; border-radius: 6px; padding: 8px 10px; font-size: var(--memo-font-size); display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;`;
