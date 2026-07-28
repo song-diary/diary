@@ -830,7 +830,7 @@
                 <div class="m-label">총 지출</div>
                 <div class="m-value" id="summary-expense">0원</div>
             </div>
-            <div class="money-box balance clickable" onclick="goToMonthlyStats('expense')">
+            <div class="money-box balance clickable" onclick="goToMonthlyStats('memo')">
                 <div class="m-label">잔액/메모</div>
                 <div class="m-value" id="summary-balance">0원</div>
             </div>
@@ -995,24 +995,33 @@
         }, 300);
     }
 
-    // 가계부현황(총수입/총지출/잔액) 박스 클릭 시 이번 달 통계 카드로 연결
+    // 가계부현황(총수입/총지출/잔액·메모) 박스 클릭 시
+    // -> 해당 이번 달 통계 갱신 + 검색필터를 이번달/해당타입으로 세팅 -> 상세내역리스트로 스크롤 이동
     function goToMonthlyStats(type) {
         if (!isMoneySummaryVisible) return;
 
-        if (type === 'income' || type === 'expense') {
-            currentStatsType = type;
+        currentStatsType = type; // 'income' | 'expense' | 'memo'
+        selectedCategoryFilter = '';
+        if (keywordSearchInput) keywordSearchInput.value = '';
+
+        if (type === 'memo') {
+            if (isCategoryStatsVisible) setCategoryStatsVisibility(false);
         } else {
-            currentStatsType = 'expense';
+            if (!isCategoryStatsVisible) setCategoryStatsVisibility(true);
+            renderCategoryStats();
         }
 
-        if (!isCategoryStatsVisible) {
-            setCategoryStatsVisibility(true);
+        if (!isSearchFilterOpen) {
+            isSearchFilterOpen = true;
+            if (searchDividerLabelText) searchDividerLabelText.textContent = '🔍 내역 검색 및 기간 필터 접기 ▲';
+            if (searchFilterCard) searchFilterCard.style.display = 'block';
         }
-        renderCategoryStats();
 
-        if (categoryStatsCard) {
-            categoryStatsCard.style.display = 'block';
-            scrollToInput(categoryStatsCard);
+        setPeriodFilter('month'); // isSearchFilterOpen이 true이므로 내부에서 filterCustomList() 자동 호출
+
+        const resultListContainer = document.getElementById('search-result-list');
+        if (resultListContainer) {
+            scrollToInput(resultListContainer);
         }
     }
 
@@ -1539,7 +1548,7 @@
                     <div class="m-label">총 지출</div>
                     <div class="m-value" id="summary-expense">0원</div>
                 </div>
-                <div class="money-box balance clickable" onclick="goToMonthlyStats('expense')">
+                <div class="money-box balance clickable" onclick="goToMonthlyStats('memo')">
                     <div class="m-label">잔액/메모</div>
                     <div class="m-value" id="summary-balance">0원</div>
                 </div>
