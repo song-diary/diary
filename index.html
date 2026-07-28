@@ -1002,9 +1002,9 @@
         });
     }
 
-    function scrollToInput(element) {
+    function scrollToInput(element, block = 'center') {
         setTimeout(() => {
-            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            element.scrollIntoView({ behavior: 'smooth', block: block });
         }, 300);
     }
 
@@ -1032,9 +1032,9 @@
 
         setPeriodFilter('month'); // isSearchFilterOpen이 true이므로 내부에서 filterCustomList() 자동 호출
 
-        const resultListContainer = document.getElementById('search-result-list');
-        if (resultListContainer) {
-            scrollToInput(resultListContainer);
+        // 현황 폼이 화면 맨 위(달력 바로 아래)에 오도록 스크롤 -> 그 아래로 통계 폼, 리스트가 순서대로 보임
+        if (moneySummaryCard) {
+            scrollToInput(moneySummaryCard, 'start');
         }
     }
 
