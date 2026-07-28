@@ -140,7 +140,7 @@
             border-color: var(--primary-color);
         }
 
-        /* 💵 가계부 요약 카드 */
+        /* 💵 가계부 / 📝 메모 요약 카드 통합 스타일 */
         #money-summary-card {
             background: linear-gradient(135deg, #f0fff4, #e6f9ed);
             border: 1px solid #c2e8ce;
@@ -194,6 +194,7 @@
         .money-box.income .m-value { color: var(--income-color); }
         .money-box.expense .m-value { color: var(--expense-color); }
         .money-box.balance .m-value { color: #2980b9; }
+        .money-box.memo-stat .m-value { color: var(--memo-color); }
 
         /* 📊 통계 및 검색 카드 스타일 */
         .sub-feature-card {
@@ -728,7 +729,7 @@
 
         <!-- 💵 가계부현황 요약 표시 온/오프 -->
         <div class="settings-section">
-            <label>💵 가계부 현황 표시 설정</label>
+            <label>💵 가계부 현황 표시 설정 (끄면 메모 현황으로 전환)</label>
             <div style="display: flex; gap: 6px;">
                 <button class="view-select-btn active" id="money-summary-on-btn" onclick="setMoneySummaryVisibility(true)">가계부현황 켜기</button>
                 <button class="view-select-btn" id="money-summary-off-btn" onclick="setMoneySummaryVisibility(false)">가계부현황 끄기</button>
@@ -805,13 +806,13 @@
         <div class="calendar-grid" id="cal-days-grid" style="margin-top: 5px;"></div>
     </div>
 
-    <!-- 💵 이번 달 가계부 요약 카드 -->
+    <!-- 💵 이번 달 가계부 요약 카드 (가계부 끄면 메모(일기) 현황 카드로 자동 전환) -->
     <div class="card" id="money-summary-card">
         <div class="money-summary-header">
             <span id="money-summary-title">💵 2026년 7월 가계부 현황</span>
-            <span style="font-size: 13px; color: #27ae60; font-weight: bold;">클릭 시 해당 통계 펼치기/접기</span>
+            <span style="font-size: 13px; color: #27ae60; font-weight: bold;" id="summary-sub-hint">클릭 시 해당 통계 펼치기/접기</span>
         </div>
-        <div class="money-summary-grid">
+        <div class="money-summary-grid" id="money-summary-grid-box">
             <div class="money-box income" onclick="handleSummaryClick('income')">
                 <div class="m-label">총 수입 👆</div>
                 <div class="m-value" id="summary-income">0원</div>
@@ -988,14 +989,28 @@
     function setMoneySummaryVisibility(isVisible) {
         isMoneySummaryVisible = isVisible;
         localStorage.setItem('smartDiaryMoneySummaryVisible', isVisible);
-        if (moneySummaryCard) moneySummaryCard.style.display = isVisible ? 'block' : 'none';
+        
+        // 가계부 현황을 끄면 통계 카드도 같이 꺼지며, 요약 카드 자리에 메모(일기) 현황판이 나타남
+        if (!isVisible) {
+            setCategoryStatsVisibility(false);
+        }
+
+        updateMoneySummary();
         updateToggleButtons('money-summary', isVisible);
+        // 통계 켜기/끄기 버튼 상태도 동기화 갱신
+        updateToggleButtons('category-stats', isCategoryStatsVisible);
     }
 
     function setCategoryStatsVisibility(isVisible) {
+        // 가계부 현황이 꺼져있을 때는 통계를 강제로 켤 수 없음 (앞뒤 맞춤)
+        if (!isMoneySummaryVisible && isVisible) {
+            return;
+        }
         isCategoryStatsVisible = isVisible;
         localStorage.setItem('smartDiaryCategoryStatsVisible', isVisible);
-        if (categoryStatsCard && currentStatsType !== 'memo') categoryStatsCard.style.display = isVisible ? 'block' : 'none';
+        if (categoryStatsCard && currentStatsType !== 'memo') {
+            categoryStatsCard.style.display = (isVisible && isMoneySummaryVisible) ? 'block' : 'none';
+        }
         updateToggleButtons('category-stats', isVisible);
     }
 
@@ -1171,7 +1186,7 @@
             toggleStatsMode('income');
         } else if (type === 'expense') {
             toggleStatsMode('expense');
-        } else if (type === 'balance') {
+        } else if (type === 'balance' || type === 'memo-stat') {
             toggleStatsMode('memo');
         }
     }
@@ -1187,7 +1202,7 @@
             setPeriodFilter('today-around');
         }
         
-        if (type !== 'memo') {
+        if (type !== 'memo' && isMoneySummaryVisible) {
             if (categoryStatsCard) categoryStatsCard.style.display = isCategoryStatsVisible ? 'block' : 'none';
             renderCategoryStats();
         } else {
@@ -1200,7 +1215,7 @@
     function renderCategoryStats() {
         const statsBody = document.getElementById('category-stats-body');
         const statsCardTitle = document.getElementById('stats-card-title');
-        if (!statsBody || currentStatsType === 'memo') return;
+        if (!statsBody || currentStatsType === 'memo' || !isMoneySummaryVisible) return;
 
         statsBody.innerHTML = '';
         const diaries = getAllDiaries();
@@ -1417,7 +1432,6 @@
                 let typeSign = isExp ? '-' : '+';
                 let amountStr = Number(item.money.amount).toLocaleString() + '원';
                 
-                // 💡 [수정 포인트] 상단에 이미 계정 과목명이 선택되어 있거나 필터링 중이므로, 리스트 행마다 반복되던 과목명을 과감히 생략하고 날짜와 금액 중심으로 심플하게 구성
                 headerHTML = `<div style="font-weight: bold; margin-bottom: 4px; ${colorStyle}">
                     💰 [${displayDateStr}] : ${typeSign}${amountStr}
                 </div>`;
@@ -1449,6 +1463,79 @@
         const diaries = getAllDiaries();
         const prefix = `${calYear}-${String(calMonth + 1).padStart(2, '0')}`;
         
+        const summaryTitle = document.getElementById('money-summary-title');
+        const summaryGridBox = document.getElementById('money-summary-grid-box');
+        const summarySubHint = document.getElementById('summary-sub-hint');
+        const summaryCard = document.getElementById('money-summary-card');
+
+        if (!summaryCard) return;
+
+        // 가계부 현황이 꺼져있을 때 -> 메모(일기) 현황판으로 카드 내용 변경
+        if (!isMoneySummaryVisible) {
+            summaryCard.style.display = 'block';
+            if (summaryTitle) summaryTitle.textContent = `📝 ${calYear}년 ${calMonth + 1}월 메모(일기) 현황`;
+            if (summarySubHint) summarySubHint.textContent = '클릭 시 아래 리스트업';
+
+            let memoCount = 0;
+            let photoOnlyCount = 0;
+            let totalEntries = 0;
+
+            diaries.forEach(item => {
+                if (normalizeDateStr(item.date).startsWith(prefix)) {
+                    let isMemoOnly = (!item.money || !item.money.amount) && (item.text || item.photo);
+                    if (isMemoOnly) {
+                        totalEntries++;
+                        if (item.text) memoCount++;
+                        if (item.photo) photoOnlyCount++;
+                    }
+                }
+            });
+
+            if (summaryGridBox) {
+                summaryGridBox.innerHTML = `
+                    <div class="money-box memo-stat" onclick="toggleStatsMode('memo')">
+                        <div class="m-label">전체 메모 👆</div>
+                        <div class="m-value">${totalEntries}건</div>
+                    </div>
+                    <div class="money-box memo-stat" onclick="toggleStatsMode('memo')">
+                        <div class="m-label">글 작성 👆</div>
+                        <div class="m-value">${memoCount}건</div>
+                    </div>
+                    <div class="money-box memo-stat" onclick="toggleStatsMode('memo')">
+                        <div class="m-label">사진 첨부 👆</div>
+                        <div class="m-value">${photoOnlyCount}건</div>
+                    </div>
+                `;
+            }
+
+            if (currentStatsType !== 'memo') {
+                toggleStatsMode('memo');
+            }
+            return;
+        }
+
+        // 가계부 현황이 켜져있을 때 -> 기존 가계부 요약판으로 복원
+        summaryCard.style.display = 'block';
+        if (summaryTitle) summaryTitle.textContent = `💵 ${calYear}년 ${calMonth + 1}월 가계부 현황`;
+        if (summarySubHint) summarySubHint.textContent = '클릭 시 해당 통계 펼치기/접기';
+
+        if (summaryGridBox && !summaryGridBox.querySelector('.money-box.income')) {
+            summaryGridBox.innerHTML = `
+                <div class="money-box income" onclick="handleSummaryClick('income')">
+                    <div class="m-label">총 수입 👆</div>
+                    <div class="m-value" id="summary-income">0원</div>
+                </div>
+                <div class="money-box expense" onclick="handleSummaryClick('expense')">
+                    <div class="m-label">총 지출 👆</div>
+                    <div class="m-value" id="summary-expense">0원</div>
+                </div>
+                <div class="money-box balance" onclick="handleSummaryClick('balance')">
+                    <div class="m-label">잔액/메모(일기) 👆</div>
+                    <div class="m-value" id="summary-balance">0원</div>
+                </div>
+            `;
+        }
+
         let totalIncome = 0;
         let totalExpense = 0;
 
@@ -1462,12 +1549,10 @@
 
         let balance = totalIncome - totalExpense;
 
-        const summaryTitle = document.getElementById('money-summary-title');
         const summaryIncome = document.getElementById('summary-income');
         const summaryExpense = document.getElementById('summary-expense');
         const summaryBalance = document.getElementById('summary-balance');
 
-        if (summaryTitle) summaryTitle.textContent = `💵 ${calYear}년 ${calMonth + 1}월 가계부 현황`;
         if (summaryIncome) summaryIncome.textContent = totalIncome.toLocaleString() + '원';
         if (summaryExpense) summaryExpense.textContent = totalExpense.toLocaleString() + '원';
         if (summaryBalance) {
@@ -1845,7 +1930,7 @@
         updateMoneySummary();
         
         if (isSearchFilterOpen) {
-            setPeriodFilter('month');
+            setPeriodFilter(isMoneySummaryVisible ? 'month' : 'today-around');
         }
     };
 </script>
