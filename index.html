@@ -3,498 +3,1851 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>다이어리 & 가계부</title>
+    <title>다이어리&가계부</title>
     <style>
         :root {
-            --primary-color: #4a90e2;
-            --secondary-color: #f5f6fa;
-            --text-color: #333;
-            --border-color: #dcdde1;
+            --bg-color: #f7f4f4;
+            --card-bg: #ffffff;
+            --primary-color: #e06d6d;
+            --primary-hover: #cc5c5c;
+            --text-main: #2c3e50;
+            --text-sub: #7f8c8d;
+            --border-color: #e6d8d8;
+            --accent-today: #e74c3c;
+            --sun-color: #d93838;
+            --sat-color: #1b6ca8;
+            --weekday-color: #34495e;
             --income-color: #27ae60;
-            --expense-color: #e74c3c;
+            --expense-color: #c0392b;
+            --memo-color: #8e44ad;
+            --base-font-size: 16px;
+            --memo-font-size: 16px;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Malgun Gothic', sans-serif;
         }
 
         body {
-            background-color: var(--secondary-color);
-            color: var(--text-color);
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-        }
-
-        .container {
-            width: 100%;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 15px;
             max-width: 600px;
-            background: #fff;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            margin: 0 auto;
+            touch-action: manipulation;
+            font-size: var(--base-font-size);
         }
 
-        h2 {
-            text-align: center;
-            margin-bottom: 20px;
-            color: #2c3e50;
-        }
-
-        .tab-menu {
+        .app-container {
             display: flex;
-            justify-content: space-around;
-            margin-bottom: 20px;
-            border-bottom: 2px solid var(--border-color);
-            padding-bottom: 10px;
+            flex-direction: column;
+            gap: 15px;
         }
 
-        .tab-btn {
-            background: none;
-            border: none;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            color: #7f8c8d;
-            padding: 5px 15px;
-        }
-
-        .tab-btn.active {
-            color: var(--primary-color);
-            border-bottom: 3px solid var(--primary-color);
-        }
-
-        .section {
-            display: none;
-        }
-
-        .section.active {
-            display: block;
-        }
-
-        /* 폼 스타일 */
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        input, select, textarea {
-            width: 100%;
-            padding: 10px;
+        .card {
+            background-color: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 6px;
-            font-size: 14px;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.04);
         }
 
-        textarea {
-            resize: vertical;
-            height: 80px;
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: calc(var(--base-font-size) + 4px);
+            color: var(--primary-color);
+            font-weight: bold;
         }
 
-        button.submit-btn {
-            width: 100%;
-            background-color: var(--primary-color);
+        .action-btn {
+            background: var(--primary-color);
             color: white;
             border: none;
-            padding: 12px;
+            padding: 8px 14px;
             border-radius: 6px;
-            font-size: 16px;
-            font-weight: bold;
             cursor: pointer;
-            transition: background 0.2s;
+            font-size: calc(var(--base-font-size) - 1px);
+            font-weight: bold;
         }
 
-        button.submit-btn:hover {
-            background-color: #357abd;
+        .action-btn:hover {
+            background: var(--primary-hover);
         }
 
-        /* 리스트 스타일 */
-        .list-container {
-            margin-top: 20px;
+        /* 설정 카드 */
+        #settings-card {
+            display: none;
+            background: #fff8f8;
+            border: 2px solid var(--primary-color);
+            animation: fadeIn 0.3s ease;
         }
 
-        .item-card {
-            background: #fff;
+        .settings-title {
+            font-size: calc(var(--base-font-size) + 1px);
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .settings-section {
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .settings-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .settings-section label {
+            display: block;
+            font-size: calc(var(--base-font-size) - 2px);
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: var(--weekday-color);
+        }
+
+        .view-select-group {
+            display: flex;
+            gap: 6px;
+        }
+
+        .view-select-btn {
+            flex: 1;
+            padding: 8px;
             border: 1px solid var(--border-color);
-            padding: 12px 15px;
+            background: #fff;
+            border-radius: 6px;
+            font-size: calc(var(--base-font-size) - 2px);
+            cursor: pointer;
+            color: var(--text-sub);
+            font-weight: bold;
+        }
+
+        .view-select-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* 💵 가계부 요약 카드 */
+        #money-summary-card {
+            background: linear-gradient(135deg, #f0fff4, #e6f9ed);
+            border: 1px solid #c2e8ce;
+            border-radius: 12px;
+            padding: 15px;
+        }
+
+        .money-summary-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #27ae60;
+            font-size: var(--base-font-size);
+        }
+
+        .money-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            text-align: center;
+        }
+
+        .money-box {
+            background: #ffffff;
+            border: 1px solid #d2eedc;
             border-radius: 8px;
+            padding: 8px 4px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+        .money-box:hover {
+            background: #e1f5eb;
+        }
+        .money-box:active {
+            transform: scale(0.97);
+        }
+
+        .money-box .m-label {
+            font-size: calc(var(--base-font-size) - 4px);
+            color: var(--text-sub);
+            margin-bottom: 3px;
+        }
+
+        .money-box .m-value {
+            font-size: calc(var(--base-font-size) - 2px);
+            font-weight: bold;
+        }
+
+        .money-box.income .m-value { color: var(--income-color); }
+        .money-box.expense .m-value { color: var(--expense-color); }
+        .money-box.balance .m-value { color: #2980b9; }
+
+        /* 📊 통계 및 검색 카드 스타일 */
+        .sub-feature-card {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+        }
+
+        .feature-title {
+            font-size: var(--base-font-size);
+            font-weight: bold;
+            color: var(--text-main);
             margin-bottom: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .item-info {
+        /* 카테고리 통계 바 */
+        .stat-bar-container {
+            margin-bottom: 8px;
+            padding: 6px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .stat-bar-container:hover {
+            background: #fdf5f5;
+        }
+        .stat-bar-container.active-stat {
+            background: #faeaea;
+            border: 1px solid var(--primary-color);
+        }
+
+        .stat-info-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: calc(var(--base-font-size) - 3px);
+            margin-bottom: 3px;
+        }
+
+        .stat-bar-bg {
+            width: 100%;
+            height: 8px;
+            background: #f1f2f6;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .stat-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.4s ease;
+        }
+        .stat-bar-fill.expense { background: var(--expense-color); }
+        .stat-bar-fill.income { background: var(--income-color); }
+
+        /* 검색 필터 영역 */
+        .search-filter-box {
             display: flex;
             flex-direction: column;
-            gap: 3px;
+            gap: 8px;
         }
 
-        .item-date {
-            font-size: 12px;
-            color: #7f8c8d;
+        .search-row {
+            display: flex;
+            gap: 6px;
         }
 
-        .item-category {
-            font-size: 13px;
+        .search-input {
+            flex: 1;
+            padding: 8px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: calc(var(--base-font-size) - 2px);
+            outline: none;
+        }
+
+        /* 기간별 조회 서브 박스 스타일 */
+        #custom-period-box {
+            display: none;
+            background: #faf5f5;
+            border: 1px dashed var(--primary-color);
+            padding: 8px;
+            border-radius: 6px;
+            gap: 6px;
+            align-items: center;
+            margin-top: 4px;
+        }
+        #custom-period-box input {
+            font-size: calc(var(--base-font-size) - 2px);
+            padding: 4px 6px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+
+        /* 달력 스타일 */
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .calendar-header h3 {
+            color: var(--primary-color);
+            font-size: calc(var(--base-font-size) + 4px);
+        }
+
+        .calendar-header button {
+            background: #faf5f5;
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            color: var(--text-main);
             font-weight: bold;
-            color: #2980b9;
+            font-size: calc(var(--base-font-size) - 1px);
+            touch-action: manipulation;
         }
 
-        .item-memo {
-            font-size: 14px;
-            color: #2c3e50;
+        .calendar-header button:hover {
+            background: #f4e8e8;
         }
 
-        .item-amount {
-            font-size: 16px;
-            font-weight: bold;
-        }
-
-        .amount-income {
-            color: var(--income-color);
-        }
-
-        .amount-expense {
-            color: var(--expense-color);
-        }
-
-        /* 통계 화면 스타일 */
-        .stat-summary {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
             text-align: center;
         }
 
-        .stat-category-item {
+        .cal-day-name {
+            font-size: calc(var(--base-font-size) - 1px);
+            font-weight: bold;
+            padding-bottom: 6px;
+        }
+
+        .cal-day-name.sunday { color: var(--sun-color); }
+        .cal-day-name.saturday { color: var(--sat-color); }
+        .cal-day-name.weekday { color: var(--weekday-color); }
+
+        .cal-cell {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: var(--base-font-size);
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            position: relative;
+            background: #ffffff;
+            border: 1px solid #e8dfdf;
+            color: var(--weekday-color);
+            touch-action: manipulation;
+        }
+
+        .cal-cell:hover {
+            opacity: 0.85;
+            border-color: var(--primary-color);
+        }
+
+        .cal-cell.empty {
+            background: transparent;
+            border: none;
+            cursor: default;
+        }
+
+        .cal-cell.sunday {
+            background: #fdf2f2;
+            border-color: #f7d6d6;
+        }
+
+        .cal-cell.saturday {
+            background: #f0f6fb;
+            border-color: #d1e3f3;
+        }
+
+        .cal-cell.today-date {
+            border: 2px solid var(--accent-today) !important;
+            font-weight: bold;
+            background: #fff5f5 !important;
+        }
+
+        .memo-line {
+            width: 65%;
+            height: 3px;
+            border-radius: 2px;
+            margin-top: 2px;
+        }
+        .memo-line.sun { background-color: var(--sun-color); }
+        .memo-line.mon { background-color: #e67e22; }
+        .memo-line.tue { background-color: #f1c40f; }
+        .memo-line.wed { background-color: #27ae60; }
+        .memo-line.thu { background-color: #3498db; }
+        .memo-line.fri { background-color: #9b59b6; }
+        .memo-line.sat { background-color: var(--sat-color); }
+
+        .money-dots {
+            display: flex;
+            gap: 3px;
+            margin-top: 2px;
+            margin-bottom: 1px;
+        }
+        .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+        .dot.expense { background-color: var(--expense-color); }
+        .dot.income { background-color: var(--income-color); }
+        .dot.memo { background-color: var(--memo-color); }
+
+        /* 팝업 모달 스타일 */
+        #memo-form-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+        }
+
+        #memo-form-card {
+            background: #ffffff;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 2px solid var(--primary-color);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-header-info {
             display: flex;
             justify-content: space-between;
-            padding: 10px 12px;
-            border-bottom: 1px solid var(--border-color);
-            cursor: pointer;
-            transition: background 0.1s;
-        }
-
-        .stat-category-item:hover {
-            background: #f1f2f6;
-        }
-
-        .back-btn {
-            background: #7f8c8d;
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
+            align-items: flex-start;
             margin-bottom: 10px;
+            font-size: calc(var(--base-font-size) + 1px);
+            font-weight: bold;
+            color: var(--primary-color);
+            gap: 10px;
+        }
+
+        .form-header-info span {
+            line-height: 1.4;
+            flex: 1;
+            word-break: keep-all;
+        }
+
+        .close-form-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--text-sub);
+            flex-shrink: 0;
+            margin-top: -2px;
+        }
+
+        .reservation-box {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: calc(var(--base-font-size) - 3px);
+            background: #fff0f0;
+            padding: 8px 10px;
+            border-radius: 8px;
+            color: var(--text-sub);
+        }
+
+        .reservation-box input {
+            font-size: calc(var(--base-font-size) - 3px);
+            padding: 3px 6px;
+        }
+
+        /* 💵 가계부 입력 영역 스타일 */
+        .money-input-box {
+            background: #f0f9f4;
+            border: 1px solid #c2e8ce;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .money-input-row {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .money-type-btn {
+            flex: 1;
+            padding: 6px;
+            border: 1px solid var(--border-color);
+            background: #fff;
+            border-radius: 6px;
+            font-size: calc(var(--base-font-size) - 2px);
+            font-weight: bold;
+            cursor: pointer;
+            color: var(--text-sub);
+        }
+
+        .money-type-btn.expense.active {
+            background: var(--expense-color);
+            color: white;
+            border-color: var(--expense-color);
+        }
+
+        .money-type-btn.income.active {
+            background: var(--income-color);
+            color: white;
+            border-color: var(--income-color);
+        }
+
+        .money-input-field {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: calc(var(--base-font-size) - 1px);
+            outline: none;
+            background: #fff;
+        }
+
+        .diary-textarea {
+            width: 100%;
+            min-height: 100px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            resize: vertical;
+            outline: none;
+            background: #fff;
+            margin-bottom: 10px;
+            line-height: 1.5;
+            font-size: var(--memo-font-size);
+        }
+
+        .diary-textarea:empty:before {
+            content: attr(placeholder);
+            color: #b2bec3;
+            pointer-events: none;
+            display: block;
+        }
+
+        .diary-textarea:focus {
+            border-color: var(--primary-color);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: var(--base-font-size);
+            cursor: pointer;
+            font-weight: bold;
+            touch-action: manipulation;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background-color: #f0e2e2;
+            color: var(--text-main);
+        }
+
+        .btn-secondary:hover {
+            background-color: #e5d2d2;
+        }
+
+        .sub-memo-item {
+            background: #fcfcfc;
+            border: 1px solid #f0e6e6;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 8px;
+            position: relative;
+            padding-right: 95px;
+        }
+
+        .sub-memo-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .sub-memo-item.money-item-box {
+            border-left: 4px solid var(--income-color);
+            background: #fbfefc;
+        }
+        .sub-memo-item.money-item-box.is-expense {
+            border-left: 4px solid var(--expense-color);
+            background: #fffdfd;
+        }
+        .sub-memo-item.memo-only-box {
+            border-left: 4px solid var(--memo-color);
+            background: #fdfbff;
+        }
+
+        .diary-text {
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-all;
+            font-size: var(--memo-font-size);
+        }
+
+        .diary-photo {
+            max-width: 100%;
+            border-radius: 6px;
+            margin-top: 8px;
+            display: block;
+        }
+
+        .memo-action-btns {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 4px;
+        }
+
+        .edit-btn, .delete-btn {
+            background: none;
+            border: none;
+            font-size: calc(var(--memo-font-size) - 4px);
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 4px;
+            touch-action: manipulation;
+        }
+
+        .edit-btn { color: #3498db; }
+        .edit-btn:hover { background: #ebf5fb; }
+
+        .delete-btn { color: #e74c3c; }
+        .delete-btn:hover { background: #fdf2f2; }
+
+        #photo-preview-wrap {
+            display: none;
+            position: relative;
+            margin-bottom: 10px;
+        }
+
+        #image-preview {
+            max-height: 100px;
+            border-radius: 6px;
+        }
+
+        .section-divider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0 2px;
+            cursor: pointer;
+        }
+
+        .section-divider::before,
+        .section-divider::after {
+            content: "";
+            flex: 1;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
+            opacity: 0.55;
+        }
+
+        .section-divider .divider-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: calc(var(--base-font-size) - 3px);
+            font-weight: bold;
+            color: var(--primary-color);
+            background: var(--bg-color);
+            padding: 4px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            white-space: nowrap;
+        }
+
+        .section-divider:hover .divider-label {
+            background: #f0e2e2;
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>다이어리 & 가계부</h2>
-
-    <!-- 탭 메뉴 -->
-    <div class="tab-menu">
-        <button class="tab-btn active" onclick="switchTab('diary')">일기</button>
-        <button class="tab-btn" onclick="switchTab('account')">가계부 입력</button>
-        <button class="tab-btn" onclick="switchTab('stats')">통계</button>
+<div class="app-container">
+    <!-- 상단 설정 바 -->
+    <div class="card top-bar">
+        <span>🌸 다이어리&가계부</span>
+        <button class="action-btn" onclick="toggleSettings()">⚙️ 설정</button>
     </div>
 
-    <!-- 1. 일기 섹션 -->
-    <div id="diary-section" class="section active">
-        <div class="form-group">
-            <label>날짜</label>
-            <input type="date" id="diary-date">
+    <!-- 설정 카드 -->
+    <div class="card" id="settings-card">
+        <div class="settings-title">
+            <span>🛠️ 환경 설정 (온/오프 및 과목 관리)</span>
+            <button class="close-form-btn" onclick="toggleSettings()">✖</button>
         </div>
-        <div class="form-group">
-            <label>내용</label>
-            <textarea id="diary-content" placeholder="오늘의 기록을 남겨보세요."></textarea>
+
+        <!-- 💵 가계부현황 요약 표시 온/오프 -->
+        <div class="settings-section">
+            <label>💵 가계부 현황 표시 설정</label>
+            <div style="display: flex; gap: 6px;">
+                <button class="view-select-btn active" id="money-summary-on-btn" onclick="setMoneySummaryVisibility(true)">가계부현황 켜기</button>
+                <button class="view-select-btn" id="money-summary-off-btn" onclick="setMoneySummaryVisibility(false)">가계부현황 끄기</button>
+            </div>
         </div>
-        <button class="submit-btn" onclick="saveDiary()">일기 저장</button>
+
+        <!-- 📊 지출/수입 통계 표시 온/오프 -->
+        <div class="settings-section">
+            <label>📊 카테고리별 통계 영역 표시 설정</label>
+            <div style="display: flex; gap: 6px;">
+                <button class="view-select-btn active" id="category-stats-on-btn" onclick="setCategoryStatsVisibility(true)">통계 켜기</button>
+                <button class="view-select-btn" id="category-stats-off-btn" onclick="setCategoryStatsVisibility(false)">통계 끄기</button>
+            </div>
+        </div>
+
+        <!-- 🏷️ 계정 과목(카테고리) 커스텀 설정 -->
+        <div class="settings-section">
+            <label>🏷️ 지출 계정 과목 관리</label>
+            <div style="display: flex; gap: 6px; margin-bottom: 6px;">
+                <input type="text" id="new-expense-cat" placeholder="예: 식비" style="flex:1; padding:6px; border:1px solid var(--border-color); border-radius:6px; font-size:13px;">
+                <button class="action-btn" style="padding:6px 10px; font-size:13px;" onclick="addCategory('expense')">추가</button>
+            </div>
+            <div id="expense-cat-list" style="display: flex; flex-wrap: wrap; gap: 4px; font-size: 12px;"></div>
+        </div>
+
+        <div class="settings-section">
+            <label>🏷️ 수입 계정 과목 관리</label>
+            <div style="display: flex; gap: 6px; margin-bottom: 6px;">
+                <input type="text" id="new-income-cat" placeholder="예: 월급" style="flex:1; padding:6px; border:1px solid var(--border-color); border-radius:6px; font-size:13px;">
+                <button class="action-btn" style="padding:6px 10px; font-size:13px;" onclick="addCategory('income')">추가</button>
+            </div>
+            <div id="income-cat-list" style="display: flex; flex-wrap: wrap; gap: 4px; font-size: 12px;"></div>
+        </div>
+
+        <!-- 🔍 내역 검색 및 기간 필터 온/오프 -->
+        <div class="settings-section">
+            <label>🔍 내역 검색 및 기간 필터 표시 설정</label>
+            <div style="display: flex; gap: 6px;">
+                <button class="view-select-btn active" id="search-filter-on-btn" onclick="setSearchFilterVisibility(true)">검색필터 켜기</button>
+                <button class="view-select-btn" id="search-filter-off-btn" onclick="setSearchFilterVisibility(false)">검색필터 끄기</button>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <label>🔤 메모(일기) 및 당일 내역 글자 크기 조절</label>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <button class="action-btn" style="flex:1;" onclick="adjustFontSize(-1)">작게 (-)</button>
+                <span id="font-size-display" style="font-size: 16px; font-weight: bold; min-width: 45px; text-align: center;">16px</span>
+                <button class="action-btn" style="flex:1;" onclick="adjustFontSize(1)">크게 (+)</button>
+            </div>
+        </div>
+
+        <div class="settings-section" style="padding-top: 5px;">
+            <button class="action-btn" style="background-color: var(--accent-today); width:100%; font-size:14px; padding:6px;" onclick="resetAllData()">⚠️ 데이터 초기화 (새로 시작)</button>
+        </div>
+    </div>
+
+    <!-- 🔑 달력 카드 -->
+    <div class="card" id="calendar-card">
+        <div class="calendar-header">
+            <button onclick="changeMonth(-1)">◀ 이전</button>
+            <h3 id="cal-month-title">0000년 00월</h3>
+            <button onclick="changeMonth(1)">다음 ▶</button>
+        </div>
+        <div class="calendar-grid" id="cal-days-name-grid">
+            <div class="cal-day-name sunday">일</div>
+            <div class="cal-day-name weekday">월</div>
+            <div class="cal-day-name weekday">화</div>
+            <div class="cal-day-name weekday">수</div>
+            <div class="cal-day-name weekday">목</div>
+            <div class="cal-day-name weekday">금</div>
+            <div class="cal-day-name saturday">토</div>
+        </div>
+        <div class="calendar-grid" id="cal-days-grid" style="margin-top: 5px;"></div>
+    </div>
+
+    <!-- 💵 이번 달 가계부 요약 카드 -->
+    <div class="card" id="money-summary-card">
+        <div class="money-summary-header">
+            <span id="money-summary-title">💵 2026년 7월 가계부 현황</span>
+            <span style="font-size: 13px; color: #27ae60; font-weight: bold;">클릭 시 해당 통계 펼치기/접기</span>
+        </div>
+        <div class="money-summary-grid">
+            <div class="money-box income" onclick="handleSummaryClick('income')">
+                <div class="m-label">총 수입 👆</div>
+                <div class="m-value" id="summary-income">0원</div>
+            </div>
+            <div class="money-box expense" onclick="handleSummaryClick('expense')">
+                <div class="m-label">총 지출 👆</div>
+                <div class="m-value" id="summary-expense">0원</div>
+            </div>
+            <div class="money-box balance" onclick="handleSummaryClick('balance')">
+                <div class="m-label">잔액/메모(일기) 👆</div>
+                <div class="m-value" id="summary-balance">0원</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 📊 카테고리별 지출/수입 통계 리스트 -->
+    <div class="card sub-feature-card" id="category-stats-card">
+        <div class="feature-title">
+            <span id="stats-card-title">📊 이번 달 지출 통계</span>
+            <span style="font-size: 12px; color: var(--text-sub); font-weight: normal;">(과목 클릭 시 아래 리스트업)</span>
+        </div>
+        <div id="category-stats-body"></div>
+    </div>
+
+    <!-- 🔍 검색 및 기간별 상세 내역 -->
+    <div class="section-divider" onclick="toggleSearchFilterSection()">
+        <span class="divider-label" id="search-divider-label-text">🔍 내역 검색 및 기간 필터 접기 ▲</span>
+    </div>
+
+    <div class="card sub-feature-card" id="search-filter-card" style="display: block;">
+        <div class="feature-title">
+            <span id="list-card-main-title">🔍 상세 내역 리스트</span>
+            <span style="font-size: 13px; color: var(--expense-color); font-weight: bold;" id="stats-total-amount">0원</span>
+        </div>
+
+        <div class="search-filter-box">
+            <div class="search-row">
+                <input type="text" id="keyword-search-input" class="search-input" placeholder="키워드 직접 입력 또는 위 과목 클릭" oninput="onKeywordInputChanged()">
+                <button class="action-btn" style="padding: 6px 12px; font-size: 13px;" onclick="resetSearchFilter()">전체보기</button>
+            </div>
+            <div class="view-select-group" style="margin-top: 4px;">
+                <button class="view-select-btn" id="filter-period-today-around" onclick="setPeriodFilter('today-around')">오늘 기준 전후</button>
+                <button class="view-select-btn" id="filter-period-week" onclick="setPeriodFilter('week')">지난 1주일</button>
+                <button class="view-select-btn active" id="filter-period-month" onclick="setPeriodFilter('month')">이번 달</button>
+                <button class="view-select-btn" id="filter-period-all" onclick="setPeriodFilter('all')">기간별 조회</button>
+            </div>
+            
+            <div id="custom-period-box" class="search-row">
+                <input type="date" id="custom-start-date" style="flex:1;" onchange="filterCustomList()">
+                <span style="font-size:12px; font-weight:bold; color:var(--text-sub);">~</span>
+                <input type="date" id="custom-end-date" style="flex:1;" onchange="filterCustomList()">
+                <button class="action-btn" style="padding:4px 10px; font-size:12px;" onclick="filterCustomList()">조회</button>
+            </div>
+        </div>
+        <div id="search-result-list" style="margin-top: 12px; border-top: 1px dashed var(--border-color); padding-top: 10px;"></div>
+    </div>
+</div>
+
+<!-- 팝업 오버레이 -->
+<div id="memo-form-overlay">
+    <div id="memo-form-card">
+        <div class="form-header-info">
+            <span id="form-target-date-title">📅 0000년 00월 00일<br>다이어리&가계부</span>
+            <button class="close-form-btn" onclick="closeDiaryForm()">✖</button>
+        </div>
         
-        <div class="list-container" id="diary-list"></div>
-    </div>
+        <div class="reservation-box">
+            <span style="font-size: 12px;">⏰ 시간:</span>
+            <input type="time" id="reservation-time-input" style="border:1px solid var(--border-color); border-radius:4px; background:#fff;">
+        </div>
 
-    <!-- 2. 가계부 입력 섹션 -->
-    <div id="account-section" class="section">
-        <div class="form-group">
-            <label>분류</label>
-            <select id="acc-type" onchange="updateCategories()">
-                <option value="income">수입</option>
-                <option value="expense">지출</option>
-            </select>
+        <!-- 💵 가계부 입력 영역 -->
+        <div class="money-input-box">
+            <label style="font-size: 14px; font-weight: bold; color: #27ae60;">💰 가계부 기록 (선택사항)</label>
+            <div class="money-input-row">
+                <button type="button" class="money-type-btn expense active" id="type-expense-btn" onclick="setMoneyType('expense')">지출</button>
+                <button type="button" class="money-type-btn income" id="type-income-btn" onclick="setMoneyType('income')">수입</button>
+            </div>
+            <div style="display: flex; gap: 6px;">
+                <select id="money-category-select" class="money-input-field" style="flex: 1;" onchange="onCategoryChanged()"></select>
+                <input type="text" inputmode="numeric" id="money-amount-input" class="money-input-field" placeholder="금액 안 쓰면 순수 메모" style="flex: 1.5;" onfocus="scrollToInput(this)">
+            </div>
         </div>
-        <div class="form-group">
-            <label>날짜</label>
-            <input type="date" id="acc-date">
-        </div>
-        <div class="form-group">
-            <label>계정과목</label>
-            <select id="acc-category"></select>
-        </div>
-        <div class="form-group">
-            <label>금액 (원)</label>
-            <input type="number" id="acc-amount" placeholder="금액을 입력하세요">
-        </div>
-        <div class="form-group">
-            <label>내용 / 메모</label>
-            <input type="text" id="acc-memo" placeholder="사용처 또는 적요">
-        </div>
-        <button class="submit-btn" onclick="saveAccount()">가계부 저장</button>
 
-        <div class="list-container" id="account-list"></div>
-    </div>
+        <div style="font-size: 14px; font-weight: bold; color: var(--weekday-color); margin-bottom: 6px;">📝 상세내용 및 메모(일기) 작성</div>
 
-    <!-- 3. 통계 섹션 -->
-    <div id="stats-section" class="section">
-        <div class="tab-menu" style="margin-bottom: 10px;">
-            <button class="tab-btn active" id="stat-tab-income" onclick="switchStatType('income')">수입 통계</button>
-            <button class="tab-btn" id="stat-tab-expense" onclick="switchStatType('expense')">지출 통계</button>
+        <div id="photo-preview-wrap">
+            <img id="image-preview" src="" alt="미리보기">
+            <button class="action-btn" style="margin-top:5px;" onclick="removeImage()">사진 취소</button>
         </div>
-        
-        <div id="stat-content">
-            <!-- 동적 통계 및 상세 리스트 영역 -->
+
+        <div id="textOutput" class="diary-textarea" contenteditable="true" placeholder="여기에 메모(일기)를 입력하세요" onfocus="scrollToInput(this)"></div>
+
+        <div class="btn-group" style="margin-bottom: 12px;">
+            <button class="btn btn-secondary" id="record-btn">🎤 음성메모</button>
+            <label class="btn btn-secondary" style="text-align:center; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+                📷 사진
+                <input type="file" id="diary-photo-input" accept="image/*" style="display:none;" onchange="previewImage(event)">
+            </label>
+            <button class="btn btn-primary" onclick="manualSaveDiary()">저장</button>
+        </div>
+
+        <div id="popup-day-history-section" style="border-top: 1px dashed var(--border-color); padding-top: 10px; margin-top: 5px;">
+            <div style="font-size: calc(var(--memo-font-size) - 2px); font-weight: bold; color: var(--primary-color); margin-bottom: 6px;">📋 당일 입력된 내역 확인</div>
+            <div id="popup-day-history-list" style="max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;"></div>
         </div>
     </div>
 </div>
 
 <script>
-    // 데이터 저장용 배열
-    let diaries = JSON.parse(localStorage.getItem('diaries')) || [];
-    let accounts = JSON.parse(localStorage.getItem('accounts')) || [];
+    let calYear = 2026;
+    let calMonth = 6; // 7월
+    let selectedReservationDate = null;
+    let editingDiaryId = null;
+    let currentPhotoBase64 = null;
+    let currentMemoFontSize = parseInt(localStorage.getItem('smartDiaryMemoFontSize')) || 16;
+    
+    let isSearchFilterOpen = true;
 
-    // 카테고리 정의
-    const categories = {
-        income: ['급여', '용돈', '사업수입', '금융/투자', '기타수입'],
-        expense: ['식비', '교통비', '주거/통신', '쇼핑', '문화/여가', '기타지출']
-    };
+    let isMoneySummaryVisible = localStorage.getItem('smartDiaryMoneySummaryVisible') !== 'false';
+    let isCategoryStatsVisible = localStorage.getItem('smartDiaryCategoryStatsVisible') !== 'false';
+    let isSearchFilterVisible = localStorage.getItem('smartDiarySearchFilterVisible') !== 'false';
 
-    let currentStatType = 'income';
-    let selectedCategoryFilter = null;
+    let currentMoneyType = 'expense';
+    
+    let currentPeriodFilter = 'month'; 
+    let currentStatsType = 'expense'; // 기본 지출 통계
+    let selectedCategoryFilter = ''; // 통계 카드에서 클릭한 과목명 보관
 
-    // 초기 실행
-    window.onload = function() {
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('diary-date').value = today;
-        document.getElementById('acc-date').value = today;
-        updateCategories();
-        renderDiaries();
-        renderAccounts();
-        renderStats();
-    };
+    let expenseCategories = JSON.parse(localStorage.getItem('smartDiaryExpenseCats')) || ["1. 식비", "2. 교통/통신", "3. 주거/생활", "4. 쇼핑", "5. 의료/건강", "6. 문화/여가", "7. 기타 지출"];
+    let incomeCategories = JSON.parse(localStorage.getItem('smartDiaryIncomeCats')) || ["1. 용돈", "2. 월급", "3. 사업수입", "4. 금융/투자", "5. 기타 수입"];
 
-    // 탭 전환
-    function switchTab(tabName) {
-        document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    let recognition = null;
+    let isRecording = false;
+    let shouldRestart = false;
+    let accumulatedText = '';
 
-        if(tabName === 'diary') {
-            document.getElementById('diary-section').classList.add('active');
-            event.target.classList.add('active');
-        } else if(tabName === 'account') {
-            document.getElementById('account-section').classList.add('active');
-            event.target.classList.add('active');
-            renderAccounts();
-        } else if(tabName === 'stats') {
-            document.getElementById('stats-section').classList.add('active');
-            event.target.classList.add('active');
-            selectedCategoryFilter = null; // 통계 탭 올 때 필터 초기화
-            renderStats();
+    const textOutput = document.getElementById('textOutput');
+    const recordBtn = document.getElementById('record-btn');
+    const searchDividerLabelText = document.getElementById('search-divider-label-text');
+    const reservationTimeInput = document.getElementById('reservation-time-input');
+    const memoFormOverlay = document.getElementById('memo-form-overlay');
+    const formTargetDateTitle = document.getElementById('form-target-date-title');
+    const settingsCard = document.getElementById('settings-card');
+    const fontSizeDisplay = document.getElementById('font-size-display');
+    
+    const moneyCategorySelect = document.getElementById('money-category-select');
+    const moneyAmountInput = document.getElementById('money-amount-input');
+    const typeExpenseBtn = document.getElementById('type-expense-btn');
+    const typeIncomeBtn = document.getElementById('type-income-btn');
+    const moneySummaryCard = document.getElementById('money-summary-card');
+    const categoryStatsCard = document.getElementById('category-stats-card');
+    const searchFilterCard = document.getElementById('search-filter-card');
+    const keywordSearchInput = document.getElementById('keyword-search-input');
+    const listCardMainTitle = document.getElementById('list-card-main-title');
+
+    if (moneyAmountInput) {
+        moneyAmountInput.addEventListener('input', function (e) {
+            let value = e.target.value.replace(/[^0-9]/g, '');
+            if (value) {
+                e.target.value = Number(value).toLocaleString();
+            } else {
+                e.target.value = '';
+            }
+        });
+    }
+
+    function scrollToInput(element) {
+        setTimeout(() => {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 300);
+    }
+
+    function setMoneySummaryVisibility(isVisible) {
+        isMoneySummaryVisible = isVisible;
+        localStorage.setItem('smartDiaryMoneySummaryVisible', isVisible);
+        if (moneySummaryCard) moneySummaryCard.style.display = isVisible ? 'block' : 'none';
+        updateToggleButtons('money-summary', isVisible);
+    }
+
+    function setCategoryStatsVisibility(isVisible) {
+        isCategoryStatsVisible = isVisible;
+        localStorage.setItem('smartDiaryCategoryStatsVisible', isVisible);
+        if (categoryStatsCard && currentStatsType !== 'memo') categoryStatsCard.style.display = isVisible ? 'block' : 'none';
+        updateToggleButtons('category-stats', isVisible);
+    }
+
+    function setSearchFilterVisibility(isVisible) {
+        isSearchFilterVisible = isVisible;
+        localStorage.setItem('smartDiarySearchFilterVisible', isVisible);
+        const searchDivider = document.querySelector('.section-divider'); 
+        if (searchDivider) searchDivider.style.display = isVisible ? 'flex' : 'none';
+        if (searchFilterCard) searchFilterCard.style.display = (isVisible && isSearchFilterOpen) ? 'block' : 'none';
+        updateToggleButtons('search-filter', isVisible);
+    }
+
+    function updateToggleButtons(name, isVisible) {
+        const onBtn = document.getElementById(`${name}-on-btn`);
+        const offBtn = document.getElementById(`${name}-off-btn`);
+        if (onBtn && offBtn) {
+            if (isVisible) { onBtn.classList.add('active'); offBtn.classList.remove('active'); }
+            else { offBtn.classList.add('active'); onBtn.classList.remove('active'); }
         }
     }
 
-    // 가계부 타입 변경에 따른 계정과목 셀렉트박스 업데이트
-    function updateCategories() {
-        const type = document.getElementById('acc-type').value;
-        const catSelect = document.getElementById('acc-category');
-        catSelect.innerHTML = '';
+    function sortCategories(categories) {
+        return categories.sort((a, b) => {
+            let numA = parseInt(a);
+            let numB = parseInt(b);
+            if (!isNaN(numA) && !isNaN(numB)) {
+                return numA - numB;
+            }
+            return a.localeCompare(b, 'ko');
+        });
+    }
+
+    function renderCategorySettingsList() {
+        const expListEl = document.getElementById('expense-cat-list');
+        const incListEl = document.getElementById('income-cat-list');
         
-        categories[type].forEach(cat => {
+        expenseCategories = sortCategories(expenseCategories);
+        incomeCategories = sortCategories(incomeCategories);
+
+        if (expListEl) {
+            expListEl.innerHTML = '';
+            expenseCategories.forEach(cat => {
+                const tag = document.createElement('span');
+                tag.style.cssText = 'background:#f0e2e2; padding:3px 8px; border-radius:4px; display:inline-flex; align-items:center; gap:4px;';
+                tag.innerHTML = `${cat} <button onclick="removeCategory('expense', '${cat}')" style="background:none; border:none; color:red; cursor:pointer; font-weight:bold;">×</button>`;
+                expListEl.appendChild(tag);
+            });
+        }
+        if (incListEl) {
+            incListEl.innerHTML = '';
+            incomeCategories.forEach(cat => {
+                const tag = document.createElement('span');
+                tag.style.cssText = 'background:#e2f0e6; padding:3px 8px; border-radius:4px; display:inline-flex; align-items:center; gap:4px;';
+                tag.innerHTML = `${cat} <button onclick="removeCategory('income', '${cat}')" style="background:none; border:none; color:red; cursor:pointer; font-weight:bold;">×</button>`;
+                incListEl.appendChild(tag);
+            });
+        }
+    }
+
+    function addCategory(type) {
+        const inputId = type === 'expense' ? 'new-expense-cat' : 'new-income-cat';
+        const inputEl = document.getElementById(inputId);
+        const val = inputEl ? inputEl.value.trim() : '';
+        if (!val) return;
+
+        if (type === 'expense') {
+            if (expenseCategories.includes(val)) { alert('이미 존재하는 지출 과목입니다.'); return; }
+            expenseCategories.push(val);
+            expenseCategories = sortCategories(expenseCategories);
+            localStorage.setItem('smartDiaryExpenseCats', JSON.stringify(expenseCategories));
+        } else {
+            if (incomeCategories.includes(val)) { alert('이미 존재하는 수입 과목입니다.'); return; }
+            incomeCategories.push(val);
+            incomeCategories = sortCategories(incomeCategories);
+            localStorage.setItem('smartDiaryIncomeCats', JSON.stringify(incomeCategories));
+        }
+        inputEl.value = '';
+        renderCategorySettingsList();
+        updateCategorySelectOptions();
+        renderCategoryStats();
+    }
+
+    function removeCategory(type, catName) {
+        if (type === 'expense') {
+            if (expenseCategories.length <= 1) { alert('최소 1개의 과목은 유지해야 합니다.'); return; }
+            expenseCategories = expenseCategories.filter(c => c !== catName);
+            localStorage.setItem('smartDiaryExpenseCats', JSON.stringify(expenseCategories));
+        } else {
+            if (incomeCategories.length <= 1) { alert('최소 1개의 과목은 유지해야 합니다.'); return; }
+            incomeCategories = incomeCategories.filter(c => c !== catName);
+            localStorage.setItem('smartDiaryIncomeCats', JSON.stringify(incomeCategories));
+        }
+        renderCategorySettingsList();
+        updateCategorySelectOptions();
+        renderCategoryStats();
+    }
+
+    function getTodayStr() {
+        const d = new Date();
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    }
+
+    function getCurrentTimeStr() {
+        const d = new Date();
+        const h = String(d.getHours()).padStart(2, '0');
+        const min = String(d.getMinutes()).padStart(2, '0');
+        return `${h}:${min}`;
+    }
+
+    function normalizeDateStr(dateStr) {
+        if (!dateStr) return getTodayStr();
+        let clean = String(dateStr).trim().replace(/[./]/g, '-');
+        let parts = clean.split('-');
+        if (parts.length === 3) {
+            let y = parts[0];
+            let m = parts[1].padStart(2, '0');
+            let d = parts[2].padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+        return getTodayStr();
+    }
+
+    function parseDateObj(dateStr) {
+        let cleanStr = normalizeDateStr(dateStr);
+        let parts = cleanStr.split('-');
+        return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    }
+
+    function getDayOfWeekStr(dateStr) {
+        const days = ['일', '월', '화', '수', '목', '금', '토'];
+        const dObj = parseDateObj(dateStr);
+        return days[dObj.getDay()];
+    }
+
+    function getKoreanHolidays(year) {
+        let holidays = new Set([
+            `${year}-01-01`, `${year}-03-01`, `${year}-05-05`,
+            `${year}-06-06`, `${year}-08-15`, `${year}-10-03`,
+            `${year}-10-09`, `${year}-12-25`
+        ]);
+        const lunarHolidays = {
+            2024: ['2024-02-09', '2024-02-10', '2024-02-11', '2024-05-15', '2024-09-16', '2024-09-17', '2024-09-18'],
+            2025: ['2025-01-28', '2025-01-29', '2025-01-30', '2025-05-05', '2025-10-05', '2025-10-06', '2025-10-07'],
+            2026: ['2026-02-16', '2026-02-17', '2026-02-18', '2026-05-24', '2026-09-24', '2026-09-25', '2026-09-26'],
+            2027: ['2027-02-06', '2027-02-07', '2027-02-08', '2027-05-13', '2027-09-14', '2027-09-15', '2027-09-16'],
+            2028: ['2028-01-26', '2028-01-27', '2028-01-28', '2028-05-02', '2028-10-02', '2028-10-03', '2028-10-04'],
+            2029: ['2029-02-12', '2029-02-13', '2029-02-14', '2029-05-20', '2029-09-21', '2029-09-22', '2029-09-23'],
+            2030: ['2030-02-02', '2030-02-03', '2030-02-04', '2030-05-09', '2030-09-11', '2030-09-12', '2030-09-13']
+        };
+        if (lunarHolidays[year]) lunarHolidays[year].forEach(d => holidays.add(d));
+        return holidays;
+    }
+
+    function getAllDiaries() {
+        let combinedList = [];
+        let standardData = localStorage.getItem('smartDiaryList');
+        if (standardData) {
+            try { 
+                let parsed = JSON.parse(standardData);
+                if (Array.isArray(parsed)) combinedList = parsed;
+            } catch (e) {
+                combinedList = [];
+            }
+        }
+        return combinedList;
+    }
+
+    function handleSummaryClick(type) {
+        if (type === 'income') {
+            toggleStatsMode('income');
+        } else if (type === 'expense') {
+            toggleStatsMode('expense');
+        } else if (type === 'balance') {
+            toggleStatsMode('memo');
+        }
+    }
+
+    function toggleStatsMode(type) {
+        currentStatsType = type;
+        selectedCategoryFilter = ''; 
+        if (keywordSearchInput) keywordSearchInput.value = '';
+
+        if (type !== 'memo') {
+            setPeriodFilter('month');
+        } else {
+            setPeriodFilter('today-around');
+        }
+        
+        if (type !== 'memo') {
+            if (categoryStatsCard) categoryStatsCard.style.display = isCategoryStatsVisible ? 'block' : 'none';
+            renderCategoryStats();
+        } else {
+            if (categoryStatsCard) categoryStatsCard.style.display = 'none';
+        }
+
+        if (isSearchFilterOpen) filterCustomList();
+    }
+
+    function renderCategoryStats() {
+        const statsBody = document.getElementById('category-stats-body');
+        const statsCardTitle = document.getElementById('stats-card-title');
+        if (!statsBody || currentStatsType === 'memo') return;
+
+        statsBody.innerHTML = '';
+        const diaries = getAllDiaries();
+        const prefix = `${calYear}-${String(calMonth + 1).padStart(2, '0')}`;
+
+        let targetCategories = currentStatsType === 'expense' ? expenseCategories : incomeCategories;
+        let categorySums = {};
+        targetCategories.forEach(cat => categorySums[cat] = 0);
+        let totalAmt = 0;
+
+        diaries.forEach(item => {
+            if (normalizeDateStr(item.date).startsWith(prefix) && item.money && item.money.type === currentStatsType) {
+                let cat = item.money.category;
+                let amt = Number(item.money.amount) || 0;
+                if (!categorySums[cat]) categorySums[cat] = 0;
+                categorySums[cat] += amt;
+                totalAmt += amt;
+            }
+        });
+
+        if (statsCardTitle) {
+            statsCardTitle.textContent = currentStatsType === 'expense' 
+                ? `📊 이번 달 지출 통계` 
+                : `📊 이번 달 수입 통계`;
+        }
+
+        let sortedCats = Object.keys(categorySums).map(cat => ({
+            category: cat,
+            amount: categorySums[cat]
+        })).sort((a, b) => b.amount - a.amount);
+
+        let hasData = sortedCats.some(item => item.amount > 0);
+        if (!hasData) {
+            statsBody.innerHTML = `<div style="text-align:center; color:var(--text-sub); font-size:13px; padding:6px;">이번 달 ${currentStatsType === 'expense' ? '지출' : '수입'} 내역이 없습니다.</div>`;
+            return;
+        }
+
+        sortedCats.forEach(item => {
+            if (item.amount === 0) return;
+            let percent = totalAmt > 0 ? ((item.amount / totalAmt) * 100).toFixed(1) : 0;
+            let fillColorClass = currentStatsType === 'expense' ? 'expense' : 'income';
+            let isSelected = selectedCategoryFilter === item.category;
+
+            const row = document.createElement('div');
+            row.className = `stat-bar-container ${isSelected ? 'active-stat' : ''}`;
+            row.onclick = () => selectCategoryFromStats(item.category);
+            row.innerHTML = `
+                <div class="stat-info-row">
+                    <span style="font-weight:bold; color:var(--weekday-color);">👉 ${item.category}</span>
+                    <span>${item.amount.toLocaleString()}원 (<span style="color:var(--primary-color);">${percent}%</span>)</span>
+                </div>
+                <div class="stat-bar-bg">
+                    <div class="stat-bar-fill ${fillColorClass}" style="width: ${percent}%;"></div>
+                </div>
+            `;
+            statsBody.appendChild(row);
+        });
+    }
+
+    function selectCategoryFromStats(catName) {
+        if (selectedCategoryFilter === catName) {
+            selectedCategoryFilter = ''; 
+        } else {
+            selectedCategoryFilter = catName;
+        }
+        if (keywordSearchInput) keywordSearchInput.value = selectedCategoryFilter;
+        renderCategoryStats(); 
+        if (isSearchFilterOpen) filterCustomList();
+    }
+
+    function onKeywordInputChanged() {
+        selectedCategoryFilter = keywordSearchInput ? keywordSearchInput.value.trim() : '';
+        renderCategoryStats();
+        if (isSearchFilterOpen) filterCustomList();
+    }
+
+    function toggleSearchFilterSection() {
+        isSearchFilterOpen = !isSearchFilterOpen;
+        if (isSearchFilterOpen) {
+            searchDividerLabelText.textContent = '🔍 내역 검색 및 기간 필터 접기 ▲';
+            searchFilterCard.style.display = 'block';
+            filterCustomList();
+        } else {
+            searchDividerLabelText.textContent = '🔍 내역 검색 및 기간 필터 펼치기 ▼';
+            searchFilterCard.style.display = 'none';
+        }
+    }
+
+    function setPeriodFilter(period) {
+        currentPeriodFilter = period;
+        ['today-around', 'week', 'month', 'all'].forEach(p => {
+            const btn = document.getElementById(`filter-period-${p}`);
+            if (btn) {
+                if (p === period) btn.classList.add('active');
+                else btn.classList.remove('active');
+            }
+        });
+
+        const customBox = document.getElementById('custom-period-box');
+        if (period === 'all') {
+            if (customBox) customBox.style.display = 'flex';
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            const lastDay = new Date(y, now.getMonth() + 1, 0).getDate();
+            
+            const startInput = document.getElementById('custom-start-date');
+            const endInput = document.getElementById('custom-end-date');
+            if (startInput && !startInput.value) startInput.value = `${y}-${m}-01`;
+            if (endInput && !endInput.value) endInput.value = `${y}-${m}-${lastDay}`;
+        } else {
+            if (customBox) customBox.style.display = 'none';
+        }
+
+        if (isSearchFilterOpen) filterCustomList();
+    }
+
+    function resetSearchFilter() {
+        selectedCategoryFilter = '';
+        if (keywordSearchInput) keywordSearchInput.value = '';
+        renderCategoryStats();
+        let defaultPeriod = (currentStatsType === 'memo') ? 'today-around' : 'month';
+        setPeriodFilter(defaultPeriod);
+    }
+
+    function filterCustomList() {
+        const resultListContainer = document.getElementById('search-result-list');
+        const statsTotalAmount = document.getElementById('stats-total-amount');
+        if (!resultListContainer) return;
+        resultListContainer.innerHTML = '';
+
+        let diaries = getAllDiaries();
+        let keyword = selectedCategoryFilter.toLowerCase();
+        const todayStr = getTodayStr();
+        const tObj = parseDateObj(todayStr);
+
+        let customStart = document.getElementById('custom-start-date')?.value || '';
+        let customEnd = document.getElementById('custom-end-date')?.value || '';
+
+        let filtered = diaries.filter(item => {
+            if (currentStatsType === 'expense') {
+                if (!item.money || item.money.type !== 'expense') return false;
+            } else if (currentStatsType === 'income') {
+                if (!item.money || item.money.type !== 'income') return false;
+            } else if (currentStatsType === 'memo') {
+                if (item.money && item.money.amount) return false;
+                if (!item.text && !item.photo) return false;
+            }
+
+            let itemDateStr = normalizeDateStr(item.date);
+            let itemDate = parseDateObj(itemDateStr);
+            let diffTime = tObj - itemDate;
+            let diffDays = diffTime / (1000 * 60 * 60 * 24);
+
+            if (currentPeriodFilter === 'today-around') {
+                if (diffDays < -1 || diffDays > 1) return false;
+            } else if (currentPeriodFilter === 'week') {
+                if (diffDays < 0 || diffDays > 7) return false;
+            } else if (currentPeriodFilter === 'month') {
+                let prefix = `${calYear}-${String(calMonth + 1).padStart(2, '0')}`;
+                if (!itemDateStr.startsWith(prefix)) return false;
+            } else if (currentPeriodFilter === 'all') {
+                if (customStart && itemDateStr < customStart) return false;
+                if (customEnd && itemDateStr > customEnd) return false;
+            }
+
+            if (keyword !== '') {
+                let textMatch = item.text && item.text.toLowerCase().includes(keyword);
+                let catMatch = item.money && item.money.category && item.money.category.toLowerCase().includes(keyword);
+                let amtMatch = item.money && String(item.money.amount).includes(keyword);
+                if (!textMatch && !catMatch && !amtMatch) return false;
+            }
+
+            return true;
+        });
+
+        let listTotalAmt = filtered.reduce((sum, item) => {
+            return sum + (item.money ? (Number(item.money.amount) || 0) : 0);
+        }, 0);
+
+        if (statsTotalAmount) {
+            statsTotalAmount.textContent = currentStatsType === 'memo' ? `${filtered.length}건` : listTotalAmt.toLocaleString() + '원';
+            statsTotalAmount.style.color = currentStatsType === 'expense' ? 'var(--expense-color)' : (currentStatsType === 'income' ? 'var(--income-color)' : 'var(--memo-color)');
+        }
+
+        if (listCardMainTitle) {
+            let modeName = currentStatsType === 'expense' ? '지출' : (currentStatsType === 'income' ? '수입' : '메모(일기)');
+            let catText = selectedCategoryFilter ? ` [${selectedCategoryFilter}]` : '';
+            listCardMainTitle.textContent = `🔍 ${modeName}${catText} 상세 내역 리스트`;
+        }
+
+        if (filtered.length === 0) {
+            let typeName = currentStatsType === 'expense' ? '지출' : (currentStatsType === 'income' ? '수입' : '메모(일기)');
+            resultListContainer.innerHTML = `<div style="text-align:center; color:var(--text-sub); font-size:13px; padding:10px;">조건에 일치하는 ${typeName} 내역이 없습니다.</div>`;
+            return;
+        }
+
+        filtered.sort((a, b) => normalizeDateStr(b.date).localeCompare(normalizeDateStr(a.date)));
+
+        filtered.forEach(item => {
+            const subItem = document.createElement('div');
+            subItem.className = 'sub-memo-item';
+            let dateStr = normalizeDateStr(item.date);
+            let dayOfWeek = getDayOfWeekStr(dateStr);
+            let displayDateStr = `${dateStr}(${dayOfWeek})`;
+
+            let headerHTML = '';
+            if (item.money) {
+                let isExp = item.money.type === 'expense';
+                subItem.classList.add('money-item-box');
+                if (isExp) subItem.classList.add('is-expense');
+
+                let colorStyle = isExp ? 'color: var(--expense-color);' : 'color: var(--income-color);';
+                let typeSign = isExp ? '-' : '+';
+                let amountStr = Number(item.money.amount).toLocaleString() + '원';
+                
+                headerHTML = `<div style="font-weight: bold; margin-bottom: 4px; ${colorStyle}">
+                    💰 [${displayDateStr}] ${item.money.category} : ${typeSign}${amountStr}
+                </div>`;
+            } else {
+                // 메모(일기) 전용 리스트업: 불필요한 [메모(일기)] 타이틀 문구를 제거하고 [일자(요일)] 기반으로 깔끔하게 정돈
+                subItem.classList.add('memo-only-box');
+                headerHTML = `<div style="font-weight: bold; margin-bottom: 4px; color: var(--memo-color);">
+                    📅 [${displayDateStr}]
+                </div>`;
+            }
+
+            let timeBadge = item.time ? `<span style="color:var(--primary-color); font-weight:bold; margin-right:6px; font-size:12px;">⏰ ${item.time}</span>` : '';
+            let textContentHTML = item.text ? `<div class="diary-text">${timeBadge}${item.text}</div>` : (item.time ? `<div class="diary-text">${timeBadge}</div>` : '');
+            let photoHTML = item.photo ? `<img src="${item.photo}" class="diary-photo" alt="첨부사진">` : '';
+
+            subItem.innerHTML = `
+                <div class="memo-action-btns">
+                    <button class="edit-btn" onclick='openDiaryForm("${dateStr}", ${JSON.stringify(item)})'>수정</button>
+                    <button class="delete-btn" onclick="deleteDiary('${item.id}')">삭제</button>
+                </div>
+                ${headerHTML}
+                ${textContentHTML}
+                ${photoHTML}
+            `;
+            resultListContainer.appendChild(subItem);
+        });
+    }
+
+    function updateMoneySummary() {
+        const diaries = getAllDiaries();
+        const prefix = `${calYear}-${String(calMonth + 1).padStart(2, '0')}`;
+        
+        let totalIncome = 0;
+        let totalExpense = 0;
+
+        diaries.forEach(item => {
+            if (normalizeDateStr(item.date).startsWith(prefix) && item.money && item.money.amount) {
+                let amt = Number(item.money.amount) || 0;
+                if (item.money.type === 'income') totalIncome += amt;
+                else if (item.money.type === 'expense') totalExpense += amt;
+            }
+        });
+
+        let balance = totalIncome - totalExpense;
+
+        const summaryTitle = document.getElementById('money-summary-title');
+        const summaryIncome = document.getElementById('summary-income');
+        const summaryExpense = document.getElementById('summary-expense');
+        const summaryBalance = document.getElementById('summary-balance');
+
+        if (summaryTitle) summaryTitle.textContent = `💵 ${calYear}년 ${calMonth + 1}월 가계부 현황`;
+        if (summaryIncome) summaryIncome.textContent = totalIncome.toLocaleString() + '원';
+        if (summaryExpense) summaryExpense.textContent = totalExpense.toLocaleString() + '원';
+        if (summaryBalance) {
+            summaryBalance.textContent = balance.toLocaleString() + '원';
+            summaryBalance.style.color = balance < 0 ? 'var(--expense-color)' : '#2980b9';
+        }
+
+        if (currentStatsType !== 'memo') renderCategoryStats();
+        if (isSearchFilterOpen) filterCustomList();
+    }
+
+    function updateCategorySelectOptions(selectedVal = '') {
+        if (!moneyCategorySelect) return;
+        moneyCategorySelect.innerHTML = '';
+        let list = (currentMoneyType === 'expense') ? expenseCategories : incomeCategories;
+        list.forEach(cat => {
             const opt = document.createElement('option');
             opt.value = cat;
             opt.textContent = cat;
-            catSelect.appendChild(opt);
+            if (cat === selectedVal) opt.selected = true;
+            moneyCategorySelect.appendChild(opt);
         });
     }
 
-    // 일기 저장
-    function saveDiary() {
-        const date = document.getElementById('diary-date').value;
-        const content = document.getElementById('diary-content').value;
+    function setMoneyType(type, selectedCat = '') {
+        currentMoneyType = type;
+        if (type === 'expense') {
+            typeExpenseBtn.classList.add('active');
+            typeIncomeBtn.classList.remove('active');
+        } else {
+            typeIncomeBtn.classList.add('active');
+            typeExpenseBtn.classList.remove('active');
+        }
+        updateCategorySelectOptions(selectedCat);
+    }
 
-        if(!content.trim()) {
-            alert('내용을 입력해주세요.');
+    function onCategoryChanged() {
+        if (moneyAmountInput) {
+            moneyAmountInput.focus();
+            moneyAmountInput.style.borderColor = 'var(--primary-color)';
+            setTimeout(() => {
+                moneyAmountInput.style.borderColor = 'var(--border-color)';
+            }, 500);
+        }
+    }
+
+    function resetAllData() {
+        if (!confirm('⚠️ [1차 경고] 모든 메모 및 가계부 데이터가 초기화됩니다. 정말로 삭제하시겠습니까?')) return;
+        if (!confirm('🚨 [최종 경고] 이 작업은 되돌릴 수 없습니다. 모든 데이터를 지우고 새로 시작하시겠습니까?')) return;
+
+        localStorage.removeItem('smartDiaryList');
+        renderCalendar();
+        updateMoneySummary();
+        if (isSearchFilterOpen) filterCustomList();
+        alert('모든 데이터가 초기화되었습니다.');
+        toggleSettings();
+    }
+
+    function toggleSettings() {
+        const isOpening = settingsCard.style.display !== 'block';
+        settingsCard.style.display = isOpening ? 'block' : 'none';
+        if (isOpening) renderCategorySettingsList();
+    }
+
+    function adjustFontSize(delta) {
+        currentMemoFontSize += delta;
+        if (currentMemoFontSize < 12) currentMemoFontSize = 12;
+        if (currentMemoFontSize > 26) currentMemoFontSize = 26;
+        localStorage.setItem('smartDiaryMemoFontSize', currentMemoFontSize);
+        applyMemoFontSize();
+    }
+
+    function applyMemoFontSize() {
+        document.documentElement.style.setProperty('--memo-font-size', currentMemoFontSize + 'px');
+        if (fontSizeDisplay) fontSizeDisplay.textContent = `${currentMemoFontSize}px`;
+    }
+
+    function renderCalendar() {
+        const title = document.getElementById('cal-month-title');
+        const grid = document.getElementById('cal-days-grid');
+        if (!title || !grid) return;
+
+        title.textContent = `${calYear}년 ${calMonth + 1}월`;
+        grid.innerHTML = '';
+
+        const firstDay = new Date(calYear, calMonth, 1).getDay();
+        const lastDate = new Date(calYear, calMonth + 1, 0).getDate();
+        const holidays = getKoreanHolidays(calYear);
+        const diaries = getAllDiaries();
+        const todayStr = getTodayStr();
+
+        for (let i = 0; i < firstDay; i++) {
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'cal-cell empty';
+            grid.appendChild(emptyCell);
+        }
+
+        for (let day = 1; day <= lastDate; day++) {
+            const mStr = String(calMonth + 1).padStart(2, '0');
+            const dStr = String(day).padStart(2, '0');
+            const dateStr = `${calYear}-${mStr}-${dStr}`;
+
+            const cell = document.createElement('div');
+            cell.className = 'cal-cell';
+
+            const dObj = new Date(calYear, calMonth, day);
+            const dayOfWeek = dObj.getDay();
+
+            if (dateStr === todayStr) cell.classList.add('today-date');
+
+            if (dayOfWeek === 0 || holidays.has(dateStr)) cell.classList.add('sunday');
+            else if (dayOfWeek === 6) cell.classList.add('saturday');
+
+            const dayDiaries = diaries.filter(d => normalizeDateStr(d.date) === dateStr);
+            let indicatorHTML = '';
+            if (dayDiaries.length > 0) {
+                const daysMap = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+                const lineClass = daysMap[dayOfWeek] || 'mon';
+                
+                let hasExpense = dayDiaries.some(d => d.money && d.money.type === 'expense');
+                let hasIncome = dayDiaries.some(d => d.money && d.money.type === 'income');
+                let hasMemoOnly = dayDiaries.some(d => (!d.money || !d.money.amount) && (d.text || d.photo));
+                
+                let dotHTML = '';
+                if (hasExpense || hasIncome || hasMemoOnly) {
+                    let dots = [];
+                    if (hasExpense) dots.push('<span class="dot expense" title="지출"></span>');
+                    if (hasIncome) dots.push('<span class="dot income" title="수입"></span>');
+                    if (hasMemoOnly) dots.push('<span class="dot memo" title="메모(일기)"></span>');
+                    dotHTML = `<div class="money-dots">${dots.join('')}</div>`;
+                }
+
+                indicatorHTML = `${dotHTML}<div class="memo-line ${lineClass}"></div>`;
+            }
+
+            cell.innerHTML = `<span>${day}</span>${indicatorHTML}`;
+            cell.onclick = () => openDiaryForm(dateStr);
+            grid.appendChild(cell);
+        }
+        updateMoneySummary();
+    }
+
+    function changeMonth(delta) {
+        calMonth += delta;
+        if (calMonth > 11) { calMonth = 0; calYear++; }
+        else if (calMonth < 0) { calMonth = 11; calYear--; }
+        renderCalendar();
+    }
+
+    function openDiaryForm(dateStr, existingItem = null) {
+        selectedReservationDate = normalizeDateStr(dateStr);
+        editingDiaryId = existingItem ? existingItem.id : null;
+
+        const dObj = parseDateObj(selectedReservationDate);
+        const dayName = getDayOfWeekStr(selectedReservationDate);
+        
+        formTargetDateTitle.innerHTML = `📅 ${dObj.getFullYear()}년 ${dObj.getMonth() + 1}월 ${dObj.getDate()}일 (${dayName})<br>다이어리&가계부`;
+
+        if (existingItem) {
+            textOutput.innerHTML = existingItem.text || '';
+            reservationTimeInput.value = existingItem.time || '';
+            currentPhotoBase64 = existingItem.photo || null;
+            if (existingItem.money && existingItem.money.amount) {
+                setMoneyType(existingItem.money.type || 'expense', existingItem.money.category || '');
+                moneyAmountInput.value = Number(existingItem.money.amount || 0).toLocaleString();
+            } else {
+                setMoneyType('expense', '');
+                moneyAmountInput.value = '';
+            }
+        } else {
+            textOutput.innerHTML = '';
+            reservationTimeInput.value = getCurrentTimeStr();
+            currentPhotoBase64 = null;
+            setMoneyType('expense', '');
+            moneyAmountInput.value = '';
+        }
+
+        updatePhotoPreview();
+        renderPopupDayHistory(selectedReservationDate);
+
+        memoFormOverlay.style.display = 'flex';
+    }
+
+    function renderPopupDayHistory(dateStr) {
+        const historyListEl = document.getElementById('popup-day-history-list');
+        if (!historyListEl) return;
+        historyListEl.innerHTML = '';
+
+        const diaries = getAllDiaries();
+        const dayDiaries = diaries.filter(d => normalizeDateStr(d.date) === dateStr);
+
+        if (dayDiaries.length === 0) {
+            historyListEl.innerHTML = `<div style="font-size: var(--memo-font-size); color: var(--text-sub); text-align: center; padding: 4px;">등록된 내역이 없습니다.</div>`;
             return;
         }
 
-        diaries.push({ id: Date.now(), date, content });
-        localStorage.setItem('diaries', JSON.stringify(diaries));
-        document.getElementById('diary-content').value = '';
-        renderDiaries();
-    }
-
-    // 일기 렌더링
-    function renderDiaries() {
-        const list = document.getElementById('diary-list');
-        list.innerHTML = '';
-        
-        diaries.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(item => {
-            list.innerHTML += `
-                <div class="item-card">
-                    <div class="item-info">
-                        <span class="item-date">${item.date}</span>
-                        <span class="item-memo">${item.content}</span>
-                    </div>
-                </div>
-            `;
-        });
-    }
-
-    // 가계부 저장
-    function saveAccount() {
-        const type = document.getElementById('acc-type').value;
-        const date = document.getElementById('acc-date').value;
-        const category = document.getElementById('acc-category').value;
-        const amount = Number(document.getElementById('acc-amount').value);
-        const memo = document.getElementById('acc-memo').value;
-
-        if(!amount) {
-            alert('금액을 입력해주세요.');
-            return;
-        }
-
-        accounts.push({ id: Date.now(), type, date, category, amount, memo });
-        localStorage.setItem('accounts', JSON.stringify(accounts));
-        
-        document.getElementById('acc-amount').value = '';
-        document.getElementById('acc-memo').value = '';
-        renderAccounts();
-    }
-
-    // 가계부 내역 렌더링
-    function renderAccounts() {
-        const list = document.getElementById('account-list');
-        list.innerHTML = '';
-
-        accounts.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(item => {
-            const amountClass = item.type === 'income' ? 'amount-income' : 'amount-expense';
-            const sign = item.type === 'income' ? '+' : '-';
+        dayDiaries.forEach(item => {
+            const itemBox = document.createElement('div');
+            itemBox.style.cssText = 'background: #fdfbfb; border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 10px; font-size: var(--memo-font-size); display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;';
             
-            list.innerHTML += `
-                <div class="item-card">
-                    <div class="item-info">
-                        <span class="item-date">${item.date}</span>
-                        <span class="item-category">[${item.category}] ${item.memo || ''}</span>
-                    </div>
-                    <div class="item-amount ${amountClass}">${sign}${item.amount.toLocaleString()}원</div>
+            let infoSummary = '';
+            if (item.money && item.money.amount) {
+                let isExp = item.money.type === 'expense';
+                let sign = isExp ? '-' : '+';
+                let color = isExp ? 'var(--expense-color)' : 'var(--income-color)';
+                infoSummary = `<span style="font-weight: bold; color: ${color};">[${isExp ? '지출' : '수입'}] ${item.money.category} (${sign}${Number(item.money.amount).toLocaleString()}원)</span>`;
+            } else {
+                infoSummary = `<span style="font-weight: bold; color: var(--memo-color);">[메모(일기)] ${item.text ? item.text.substring(0, 15) + '...' : '사진 메모'}</span>`;
+            }
+
+            itemBox.innerHTML = `
+                <div style="word-break: break-all; flex: 1; padding-right: 6px;">${item.time ? `⏰ ${item.time} | ` : ''}${infoSummary}</div>
+                <div style="display: flex; gap: 4px; white-space: nowrap;">
+                    <button class="edit-btn" style="font-size: var(--memo-font-size);" onclick='openDiaryForm("${dateStr}", ${JSON.stringify(item)})'>수정</button>
+                    <button class="delete-btn" style="font-size: var(--memo-font-size);" onclick="deleteDiary('${item.id}'); openDiaryForm('${dateStr}');">삭제</button>
                 </div>
             `;
+            historyListEl.appendChild(itemBox);
         });
     }
 
-    // 통계 타입 전환 (수입/지출)
-    function switchStatType(type) {
-        currentStatType = type;
-        selectedCategoryFilter = null; // 타입 바꾸면 필터 초기화
-        document.getElementById('stat-tab-income').classList.toggle('active', type === 'income');
-        document.getElementById('stat-tab-expense').classList.toggle('active', type === 'expense');
-        renderStats();
+    function closeDiaryForm() {
+        memoFormOverlay.style.display = 'none';
+        editingDiaryId = null;
+        currentPhotoBase64 = null;
     }
 
-    // 통계 화면 렌더링 (계정과목 클릭 시 과목명 반복 제거 적용)
-    function renderStats() {
-        const container = document.getElementById('stat-content');
-        container.innerHTML = '';
+    function previewImage(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            currentPhotoBase64 = e.target.result;
+            updatePhotoPreview();
+        };
+        reader.readAsDataURL(file);
+    }
 
-        // 필터링된 상태 (특정 계정과목을 누른 경우)
-        if (selectedCategoryFilter) {
-            const filteredItems = accounts.filter(item => item.type === currentStatType && item.category === selectedCategoryFilter);
-            const totalAmount = filteredItems.reduce((sum, item) => sum + item.amount, 0);
-            const typeLabel = currentStatType === 'income' ? '수입' : '지출';
+    function updatePhotoPreview() {
+        const wrap = document.getElementById('photo-preview-wrap');
+        const img = document.getElementById('image-preview');
+        if (currentPhotoBase64) {
+            img.src = currentPhotoBase64;
+            wrap.style.display = 'block';
+        } else {
+            img.src = '';
+            wrap.style.display = 'none';
+        }
+    }
 
-            let html = `
-                <button class="back-btn" onclick="selectedCategoryFilter = null; renderStats();">← 통계 목록으로</button>
-                <div class="stat-summary">
-                    <h3>${selectedCategoryFilter} 상세 내역</h3>
-                    <p style="font-size: 18px; font-weight: bold; margin-top: 5px; color: ${currentStatType === 'income' ? 'var(--income-color)' : 'var(--expense-color)'};">
-                        총 ${totalAmount.toLocaleString()}원
-                    </p>
-                </div>
-                <div class="list-container">
-            `;
+    function removeImage() {
+        currentPhotoBase64 = null;
+        updatePhotoPreview();
+        const fileInput = document.getElementById('diary-photo-input');
+        if (fileInput) fileInput.value = '';
+    }
 
-            if (filteredItems.length === 0) {
-                html += `<p style="text-align:center; color:#7f8c8d; padding:20px;">해당 내역이 없습니다.</p>`;
-            } else {
-                filteredItems.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(item => {
-                    const amountClass = item.type === 'income' ? 'amount-income' : 'amount-expense';
-                    const sign = item.type === 'income' ? '+' : '-';
-                    
-                    // 핵심 수정 부분: 이미 상단에 과목명이 명시되어 있으므로 개별 리스트에서는 과목명을 반복 출력하지 않고 날짜와 메모/내용 위주로 깔끔하게 출력
-                    html += `
-                        <div class="item-card">
-                            <div class="item-info">
-                                <span class="item-date">${item.date}</span>
-                                <span class="item-memo" style="font-weight: 500;">${item.memo || '내용 없음'}</span>
-                            </div>
-                            <div class="item-amount ${amountClass}">${sign}${item.amount.toLocaleString()}원</div>
-                        </div>
-                    `;
-                });
-            }
-            html += `</div>`;
-            container.innerHTML = html;
+    function manualSaveDiary() {
+        const content = textOutput.innerHTML.trim();
+        const timeVal = reservationTimeInput.value;
+        const moneyCategory = moneyCategorySelect.value;
+        const rawAmount = moneyAmountInput.value.replace(/[^0-9]/g, '').trim();
+
+        let moneyObj = null;
+        if (rawAmount !== '' && !isNaN(rawAmount)) {
+            moneyObj = {
+                type: currentMoneyType,
+                category: moneyCategory,
+                amount: Number(rawAmount)
+            };
+        }
+
+        if (!content && !currentPhotoBase64 && !moneyObj) {
+            alert('내용, 사진, 또는 가계부 내역 중 하나 이상을 입력해주세요.');
             return;
         }
 
-        // 기본 통계 목록 화면 (계정과목별 집계)
-        const targetAccounts = accounts.filter(item => item.type === currentStatType);
-        const grandTotal = targetAccounts.reduce((sum, item) => sum + item.amount, 0);
+        let diaries = getAllDiaries();
 
-        // 과목별 합계 계산
-        const summary = {};
-        categories[currentStatType].forEach(cat => summary[cat] = 0);
-        targetAccounts.forEach(item => {
-            if (summary[item.category] !== undefined) {
-                summary[item.category] += item.amount;
-            } else {
-                summary[item.category] = item.amount;
-            }
-        });
-
-        let html = `
-            <div class="stat-summary">
-                <h3>전체 ${currentStatType === 'income' ? '수입' : '지출'} 현황</h3>
-                <p style="font-size: 20px; font-weight: bold; margin-top: 5px; color: #2c3e50;">${grandTotal.toLocaleString()}원</p>
-            </div>
-            <div style="background: #fff; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;">
-        `;
-
-        for (const [cat, amt] of Object.entries(summary)) {
-            html += `
-                <div class="stat-category-item" onclick="selectedCategoryFilter = '${cat}'; renderStats();">
-                    <span style="font-weight: 600; color: #2980b9;">${cat}</span>
-                    <span style="font-weight: bold;">${amt.toLocaleString()}원 &gt;</span>
-                </div>
-            `;
+        if (editingDiaryId) {
+            diaries = diaries.map(item => {
+                if (item.id === editingDiaryId) {
+                    return { ...item, text: content, time: timeVal, photo: currentPhotoBase64, money: moneyObj };
+                }
+                return item;
+            });
+        } else {
+            const newItem = {
+                id: Date.now().toString(),
+                date: selectedReservationDate,
+                time: timeVal,
+                text: content,
+                photo: currentPhotoBase64,
+                money: moneyObj
+            };
+            diaries.push(newItem);
         }
-        html += `</div>`;
-        container.innerHTML = html;
+
+        localStorage.setItem('smartDiaryList', JSON.stringify(diaries));
+        closeDiaryForm();
+        renderCalendar();
+        updateMoneySummary();
+        if (isSearchFilterOpen) filterCustomList();
     }
+
+    function deleteDiary(id) {
+        if (!confirm('이 항목을 정말 삭제하시겠습니까?')) return;
+        let diaries = getAllDiaries();
+        diaries = diaries.filter(d => d.id !== id);
+        localStorage.setItem('smartDiaryList', JSON.stringify(diaries));
+        renderCalendar();
+        updateMoneySummary();
+        if (isSearchFilterOpen) filterCustomList();
+    }
+
+    function initSpeechRecognition() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            if (recordBtn) recordBtn.style.display = 'none';
+            return;
+        }
+
+        recognition = new SpeechRecognition();
+        recognition.lang = 'ko-KR';
+        recognition.interimResults = true;
+        recognition.continuous = true;
+
+        recognition.onstart = () => {
+            isRecording = true;
+            if (recordBtn) { recordBtn.style.background = '#e74c3c'; recordBtn.textContent = '⏹️ 녹음 중지'; }
+        };
+
+        recognition.onresult = (event) => {
+            let interimText = '';
+            let finalSegment = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) finalSegment += event.results[i][0].transcript;
+                else interimText += event.results[i][0].transcript;
+            }
+            if (finalSegment) accumulatedText += finalSegment + ' ';
+            if (textOutput) textOutput.innerHTML = accumulatedText + interimText;
+        };
+
+        recognition.onend = () => {
+            if (shouldRestart) {
+                try { recognition.start(); return; } catch (e) { console.error(e); }
+            }
+            isRecording = false;
+            shouldRestart = false;
+            if (recordBtn) { recordBtn.style.background = ''; recordBtn.textContent = '🎤 음성메모'; }
+        };
+
+        if (recordBtn) {
+            recordBtn.onclick = () => {
+                if (!isRecording) {
+                    accumulatedText = textOutput.innerHTML.trim() ? textOutput.innerHTML + ' ' : '';
+                    shouldRestart = true;
+                    try { recognition.start(); } catch (e) { console.error(e); }
+                } else {
+                    shouldRestart = false;
+                    try { recognition.stop(); } catch (e) { console.error(e); }
+                }
+            };
+        }
+    }
+
+    window.onload = () => {
+        setMoneySummaryVisibility(isMoneySummaryVisible);
+        setCategoryStatsVisibility(isCategoryStatsVisible);
+        setSearchFilterVisibility(isSearchFilterVisible);
+        
+        renderCalendar();
+        applyMemoFontSize();
+        initSpeechRecognition();
+        updateMoneySummary();
+        
+        if (isSearchFilterOpen) {
+            setPeriodFilter('month');
+        }
+    };
 </script>
 
 </body>
