@@ -170,14 +170,9 @@
             border: 1px solid #d2eedc;
             border-radius: 8px;
             padding: 8px 4px;
-            cursor: pointer;
-            transition: background 0.2s, transform 0.1s;
-        }
-        .money-box:hover {
-            background: #e1f5eb;
-        }
-        .money-box:active {
-            transform: scale(0.97);
+            /* 클릭 및 손가락 표시 제거 완료 */
+            cursor: default; 
+            transition: none;
         }
 
         .money-box .m-label {
@@ -609,7 +604,6 @@
             padding-right: 95px;
         }
 
-        /* 예약(시간 지정)된 항목일 경우 스타일 구분을 위한 클래스 */
         .sub-memo-item.is-reserved {
             background: #fff8f8;
             border: 1px solid #f7d6d6;
@@ -631,7 +625,6 @@
             border-left: 4px solid var(--memo-color);
             background: #fdfbff;
         }
-        /* 예약이면서 메모 전용인 경우 */
         .sub-memo-item.memo-only-box.is-reserved {
             background: #fff5f5;
         }
@@ -737,7 +730,6 @@
             <button class="close-form-btn" onclick="toggleSettings()">✖</button>
         </div>
 
-        <!-- 💵 가계부현황 요약 표시 온/오프 -->
         <div class="settings-section">
             <label>💵 가계부 현황 표시 설정 (끄면 메모 현황으로 전환)</label>
             <div style="display: flex; gap: 6px;">
@@ -746,7 +738,6 @@
             </div>
         </div>
 
-        <!-- 📊 지출/수입 통계 표시 온/오프 -->
         <div class="settings-section">
             <label>📊 카테고리별 통계 영역 표시 설정</label>
             <div style="display: flex; gap: 6px;">
@@ -755,7 +746,6 @@
             </div>
         </div>
 
-        <!-- 🏷️ 계정 과목(카테고리) 커스텀 설정 -->
         <div class="settings-section">
             <label>🏷️ 지출 계정 과목 관리</label>
             <div style="display: flex; gap: 6px; margin-bottom: 6px;">
@@ -774,7 +764,6 @@
             <div id="income-cat-list" style="display: flex; flex-wrap: wrap; gap: 4px; font-size: 12px;"></div>
         </div>
 
-        <!-- 🔍 내역 검색 및 기간 필터 온/오프 -->
         <div class="settings-section">
             <label>🔍 내역 검색 및 기간 필터 표시 설정</label>
             <div style="display: flex; gap: 6px;">
@@ -816,23 +805,23 @@
         <div class="calendar-grid" id="cal-days-grid" style="margin-top: 5px;"></div>
     </div>
 
-    <!-- 💵 이번 달 가계부 요약 카드 (가계부 끄면 메모(일기) 현황 카드로 자동 전환) -->
+    <!-- 💵 이번 달 가계부 요약 카드 (클릭/손가락 기능 제거됨) -->
     <div class="card" id="money-summary-card">
         <div class="money-summary-header">
-            <span id="money-summary-title">💵 2026년 7월 가계부 현황</span>
-            <span style="font-size: 13px; color: #27ae60; font-weight: bold;" id="summary-sub-hint">클릭 시 해당 통계 펼치기/접기</span>
+            <span id="money-summary-title">💵 가계부 현황</span>
+            <span style="font-size: 13px; color: #27ae60; font-weight: bold;" id="summary-sub-hint">현황 정보</span>
         </div>
         <div class="money-summary-grid" id="money-summary-grid-box">
-            <div class="money-box income" onclick="handleSummaryClick('income')">
-                <div class="m-label">총 수입 👆</div>
+            <div class="money-box income">
+                <div class="m-label">총 수입</div>
                 <div class="m-value" id="summary-income">0원</div>
             </div>
-            <div class="money-box expense" onclick="handleSummaryClick('expense')">
-                <div class="m-label">총 지출 👆</div>
+            <div class="money-box expense">
+                <div class="m-label">총 지출</div>
                 <div class="m-value" id="summary-expense">0원</div>
             </div>
-            <div class="money-box balance" onclick="handleSummaryClick('balance')">
-                <div class="m-label">잔액/메모(일기) 👆</div>
+            <div class="money-box balance">
+                <div class="m-label">잔액/메모</div>
                 <div class="m-value" id="summary-balance">0원</div>
             </div>
         </div>
@@ -949,8 +938,8 @@
     let currentMoneyType = 'expense';
     
     let currentPeriodFilter = 'month'; 
-    let currentStatsType = 'expense'; // 기본 지출 통계
-    let selectedCategoryFilter = ''; // 통계 카드에서 클릭한 과목명 보관
+    let currentStatsType = 'expense'; 
+    let selectedCategoryFilter = ''; 
 
     let expenseCategories = JSON.parse(localStorage.getItem('smartDiaryExpenseCats')) || ["1. 식비", "2. 교통/통신", "3. 주거/생활", "4. 쇼핑", "5. 의료/건강", "6. 문화/여가", "7. 기타 지출"];
     let incomeCategories = JSON.parse(localStorage.getItem('smartDiaryIncomeCats')) || ["1. 용돈", "2. 월급", "3. 사업수입", "4. 금융/투자", "5. 기타 수입"];
@@ -1191,43 +1180,6 @@
         return combinedList;
     }
 
-    function handleSummaryClick(type) {
-        if (type === 'income') {
-            toggleStatsMode('income');
-        } else if (type === 'expense') {
-            toggleStatsMode('expense');
-        } else if (type === 'balance') {
-            toggleStatsMode('memo');
-        } else if (type.startsWith('memo-stat')) {
-            // 메모 상태 카드 클릭 시 (전체, 글작성, 사진첨부 등 필터링 연동)
-            currentStatsType = 'memo';
-            if (keywordSearchInput) {
-                if (type === 'memo-stat-text') keywordSearchInput.value = '글'; // 필요시 키워드 설정
-                else keywordSearchInput.value = '';
-            }
-            selectedCategoryFilter = '';
-            setPeriodFilter('month');
-            if (isSearchFilterOpen) filterCustomList();
-        }
-    }
-
-    function toggleStatsMode(type) {
-        currentStatsType = type;
-        selectedCategoryFilter = ''; 
-        if (keywordSearchInput) keywordSearchInput.value = '';
-
-        setPeriodFilter('month');
-        
-        if (type !== 'memo' && isMoneySummaryVisible) {
-            if (categoryStatsCard) categoryStatsCard.style.display = isCategoryStatsVisible ? 'block' : 'none';
-            renderCategoryStats();
-        } else {
-            if (categoryStatsCard) categoryStatsCard.style.display = 'none';
-        }
-
-        if (isSearchFilterOpen) filterCustomList();
-    }
-
     function renderCategoryStats() {
         const statsBody = document.getElementById('category-stats-body');
         const statsCardTitle = document.getElementById('stats-card-title');
@@ -1434,7 +1386,6 @@
             const subItem = document.createElement('div');
             subItem.className = 'sub-memo-item';
             
-            // 시간이 지정되어 있는 경우 예약(is-reserved) 클래스 추가
             let isReserved = item.time && item.time.trim() !== '';
             if (isReserved) {
                 subItem.classList.add('is-reserved');
@@ -1497,7 +1448,7 @@
         if (!isMoneySummaryVisible) {
             summaryCard.style.display = 'block';
             if (summaryTitle) summaryTitle.textContent = `📝 ${calYear}년 ${calMonth + 1}월 메모(일기) 현황`;
-            if (summarySubHint) summarySubHint.textContent = '클릭 시 해당 리스트업';
+            if (summarySubHint) summarySubHint.textContent = '현황 정보';
 
             let memoCount = 0;
             let photoOnlyCount = 0;
@@ -1516,16 +1467,16 @@
 
             if (summaryGridBox) {
                 summaryGridBox.innerHTML = `
-                    <div class="money-box memo-stat" onclick="handleSummaryClick('memo-stat-all')">
-                        <div class="m-label">전체 메모 👆</div>
+                    <div class="money-box memo-stat">
+                        <div class="m-label">전체 메모</div>
                         <div class="m-value">${totalEntries}건</div>
                     </div>
-                    <div class="money-box memo-stat" onclick="handleSummaryClick('memo-stat-text')">
-                        <div class="m-label">글 작성 👆</div>
+                    <div class="money-box memo-stat">
+                        <div class="m-label">글 작성</div>
                         <div class="m-value">${memoCount}건</div>
                     </div>
-                    <div class="money-box memo-stat" onclick="handleSummaryClick('memo-stat-photo')">
-                        <div class="m-label">사진 첨부 👆</div>
+                    <div class="money-box memo-stat">
+                        <div class="m-label">사진 첨부</div>
                         <div class="m-value">${photoOnlyCount}건</div>
                     </div>
                 `;
@@ -1540,20 +1491,20 @@
 
         summaryCard.style.display = 'block';
         if (summaryTitle) summaryTitle.textContent = `💵 ${calYear}년 ${calMonth + 1}월 가계부 현황`;
-        if (summarySubHint) summarySubHint.textContent = '클릭 시 해당 통계 펼치기/접기';
+        if (summarySubHint) summarySubHint.textContent = '현황 정보';
 
         if (summaryGridBox && !summaryGridBox.querySelector('.money-box.income')) {
             summaryGridBox.innerHTML = `
-                <div class="money-box income" onclick="handleSummaryClick('income')">
-                    <div class="m-label">총 수입 👆</div>
+                <div class="money-box income">
+                    <div class="m-label">총 수입</div>
                     <div class="m-value" id="summary-income">0원</div>
                 </div>
-                <div class="money-box expense" onclick="handleSummaryClick('expense')">
-                    <div class="m-label">총 지출 👆</div>
+                <div class="money-box expense">
+                    <div class="m-label">총 지출</div>
                     <div class="m-value" id="summary-expense">0원</div>
                 </div>
-                <div class="money-box balance" onclick="handleSummaryClick('balance')">
-                    <div class="m-label">잔액/메모(일기) 👆</div>
+                <div class="money-box balance">
+                    <div class="m-label">잔액/메모</div>
                     <div class="m-value" id="summary-balance">0원</div>
                 </div>
             `;
@@ -1964,4 +1915,3 @@
 
 </body>
 </html>
-```[cite: 3]
