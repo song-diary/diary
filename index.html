@@ -923,7 +923,10 @@
 
         <div id="photo-preview-wrap">
             <img id="image-preview" src="" alt="미리보기">
-            <button class="action-btn" style="margin-top:5px;" onclick="removeImage()">사진 취소</button>
+            <div style="display:flex; gap:6px; margin-top:5px;">
+                <button class="action-btn" style="flex:1;" onclick="downloadCurrentPhoto()">📥 사진 다운로드</button>
+                <button class="action-btn" style="flex:1;" onclick="removeImage()">사진 취소</button>
+            </div>
         </div>
 
         <div id="textOutput" class="diary-textarea" contenteditable="true" placeholder="여기에 메모(일기)를 입력하세요" onfocus="scrollToInput(this)"></div>
@@ -1478,7 +1481,7 @@
 
             let timeBadge = item.time ? `<span style="color:var(--primary-color); font-weight:bold; margin-right:6px; font-size:12px;">⏰ ${item.time}</span>` : '';
             let textContentHTML = item.text ? `<div class="diary-text">${timeBadge}${item.text}</div>` : (item.time ? `<div class="diary-text">${timeBadge}</div>` : '');
-            let photoHTML = item.photo ? `<img src="${item.photo}" class="diary-photo" alt="첨부사진">` : '';
+            let photoHTML = item.photo ? `<img src="${item.photo}" class="diary-photo" alt="첨부사진"><button class="action-btn" style="margin-top:5px;" onclick="downloadPhotoById('${item.id}')">📥 사진 다운로드</button>` : '';
 
             subItem.innerHTML = `
                 <div class="memo-action-btns">
@@ -1893,6 +1896,31 @@
         updatePhotoPreview();
         const fileInput = document.getElementById('diary-photo-input');
         if (fileInput) fileInput.value = '';
+    }
+
+    // 웹페이지는 보안상 사진첩에 직접 자동 저장할 수 없어서,
+    // 사용자가 버튼을 눌러 다운로드하면(안드로이드는 보통 '다운로드' 폴더에
+    // 저장되고 사진첩/갤러리 앱에도 함께 나타나는 경우가 많음) 저장할 수 있게 한다.
+    function downloadPhotoDataUrl(dataUrl, dateStr) {
+        if (!dataUrl) return;
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        const safeDate = (dateStr || '').replace(/[^0-9]/g, '') || 'photo';
+        a.download = `다이어리사진_${safeDate}_${Date.now()}.jpg`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+
+    function downloadCurrentPhoto() {
+        downloadPhotoDataUrl(currentPhotoBase64, selectedReservationDate);
+    }
+
+    function downloadPhotoById(id) {
+        const diaries = getAllDiaries();
+        const item = diaries.find(d => d.id === id);
+        if (!item || !item.photo) return;
+        downloadPhotoDataUrl(item.photo, item.date);
     }
 
     function manualSaveDiary() {
