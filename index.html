@@ -859,7 +859,6 @@
                 <button class="view-select-btn" id="filter-period-all" onclick="setPeriodFilter('all')">기간별 조회</button>
             </div>
             
-            <!-- 요구사항 2: 기간별 조회 클릭 시 나타나는 날짜 지정 및 조회 칸 -->
             <div id="custom-period-box" class="search-row">
                 <input type="date" id="custom-start-date" style="flex:1;" onchange="filterCustomList()">
                 <span style="font-size:12px; font-weight:bold; color:var(--text-sub);">~</span>
@@ -1303,7 +1302,6 @@
         const customBox = document.getElementById('custom-period-box');
         if (period === 'all') {
             if (customBox) customBox.style.display = 'flex';
-            // 기본값으로 이번 달 1일 ~ 말일 설정
             const now = new Date();
             const y = now.getFullYear();
             const m = String(now.getMonth() + 1).padStart(2, '0');
@@ -1384,12 +1382,12 @@
         }, 0);
 
         if (statsTotalAmount) {
-            statsTotalAmount.textContent = listTotalAmt.toLocaleString() + '원';
-            statsTotalAmount.style.color = currentStatsType === 'expense' ? 'var(--expense-color)' : 'var(--income-color)';
+            statsTotalAmount.textContent = currentStatsType === 'memo' ? `${filtered.length}건` : listTotalAmt.toLocaleString() + '원';
+            statsTotalAmount.style.color = currentStatsType === 'expense' ? 'var(--expense-color)' : (currentStatsType === 'income' ? 'var(--income-color)' : 'var(--memo-color)');
         }
 
         if (listCardMainTitle) {
-            let modeName = currentStatsType === 'expense' ? '지출' : (currentStatsType === 'income' ? '수입' : '메모');
+            let modeName = currentStatsType === 'expense' ? '지출' : (currentStatsType === 'income' ? '수입' : '메모(일기)');
             let catText = selectedCategoryFilter ? ` [${selectedCategoryFilter}]` : '';
             listCardMainTitle.textContent = `🔍 ${modeName}${catText} 상세 내역 리스트`;
         }
@@ -1419,14 +1417,14 @@
                 let typeSign = isExp ? '-' : '+';
                 let amountStr = Number(item.money.amount).toLocaleString() + '원';
                 
-                // 요구사항 1: 중복되는 계정과목 표시 제거 -> 일자(요일), 금액, 내용 형태 구축
                 headerHTML = `<div style="font-weight: bold; margin-bottom: 4px; ${colorStyle}">
                     💰 [${displayDateStr}] ${item.money.category} : ${typeSign}${amountStr}
                 </div>`;
             } else {
+                // 메모(일기) 전용 리스트업: 불필요한 [메모(일기)] 타이틀 문구를 제거하고 [일자(요일)] 기반으로 깔끔하게 정돈
                 subItem.classList.add('memo-only-box');
                 headerHTML = `<div style="font-weight: bold; margin-bottom: 4px; color: var(--memo-color);">
-                    📝 [${displayDateStr}] 메모(일기)
+                    📅 [${displayDateStr}]
                 </div>`;
             }
 
