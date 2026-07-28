@@ -170,7 +170,6 @@
             border: 1px solid #d2eedc;
             border-radius: 8px;
             padding: 8px 4px;
-            /* 클릭 및 손가락 표시 제거 완료 */
             cursor: default; 
             transition: none;
         }
@@ -805,7 +804,7 @@
         <div class="calendar-grid" id="cal-days-grid" style="margin-top: 5px;"></div>
     </div>
 
-    <!-- 💵 이번 달 가계부 요약 카드 (클릭/손가락 기능 제거됨) -->
+    <!-- 💵 이번 달 가계부 요약 카드 -->
     <div class="card" id="money-summary-card">
         <div class="money-summary-header">
             <span id="money-summary-title">💵 가계부 현황</span>
@@ -1395,6 +1394,7 @@
             let dayOfWeek = getDayOfWeekStr(dateStr);
             let displayDateStr = `${dateStr}(${dayOfWeek})`;
 
+            // [예약] 표시 전용 변수 (시간이 존재할 때만 표시)
             let reservedBadge = isReserved ? `<span style="background:var(--primary-color); color:white; padding:1px 5px; border-radius:4px; font-size:11px; margin-right:4px; font-weight:bold;">[예약]</span>` : '';
 
             let headerHTML = '';
@@ -1727,6 +1727,7 @@
             const itemBox = document.createElement('div');
             
             let isReserved = item.time && item.time.trim() !== '';
+            // 팝업 내부 당일 내역 리스트에서도 [예약] 표시가 깔끔하게 출력되도록 수정
             let reservedBadge = isReserved ? `<span style="background:var(--primary-color); color:white; padding:1px 4px; border-radius:3px; font-size:10px; margin-right:4px; font-weight:bold;">[예약]</span>` : '';
             
             itemBox.style.cssText = `background: ${isReserved ? '#fff5f5' : '#fdfbfb'}; border: 1px solid ${isReserved ? '#f7d6d6' : 'var(--border-color)'}; border-radius: 6px; padding: 8px 10px; font-size: var(--memo-font-size); display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;`;
