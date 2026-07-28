@@ -990,19 +990,19 @@
         isMoneySummaryVisible = isVisible;
         localStorage.setItem('smartDiaryMoneySummaryVisible', isVisible);
         
-        // 가계부 현황을 끄면 통계 카드도 같이 꺼지며, 요약 카드 자리에 메모(일기) 현황판이 나타남
         if (!isVisible) {
             setCategoryStatsVisibility(false);
+            currentStatsType = 'memo';
+        } else {
+            currentStatsType = 'expense';
         }
 
         updateMoneySummary();
         updateToggleButtons('money-summary', isVisible);
-        // 통계 켜기/끄기 버튼 상태도 동기화 갱신
         updateToggleButtons('category-stats', isCategoryStatsVisible);
     }
 
     function setCategoryStatsVisibility(isVisible) {
-        // 가계부 현황이 꺼져있을 때는 통계를 강제로 켤 수 없음 (앞뒤 맞춤)
         if (!isMoneySummaryVisible && isVisible) {
             return;
         }
@@ -1196,11 +1196,7 @@
         selectedCategoryFilter = ''; 
         if (keywordSearchInput) keywordSearchInput.value = '';
 
-        if (type !== 'memo') {
-            setPeriodFilter('month');
-        } else {
-            setPeriodFilter('today-around');
-        }
+        setPeriodFilter('month');
         
         if (type !== 'memo' && isMoneySummaryVisible) {
             if (categoryStatsCard) categoryStatsCard.style.display = isCategoryStatsVisible ? 'block' : 'none';
@@ -1337,8 +1333,7 @@
         selectedCategoryFilter = '';
         if (keywordSearchInput) keywordSearchInput.value = '';
         renderCategoryStats();
-        let defaultPeriod = (currentStatsType === 'memo') ? 'today-around' : 'month';
-        setPeriodFilter(defaultPeriod);
+        setPeriodFilter('month');
     }
 
     function filterCustomList() {
@@ -1470,11 +1465,10 @@
 
         if (!summaryCard) return;
 
-        // 가계부 현황이 꺼져있을 때 -> 메모(일기) 현황판으로 카드 내용 변경
         if (!isMoneySummaryVisible) {
             summaryCard.style.display = 'block';
             if (summaryTitle) summaryTitle.textContent = `📝 ${calYear}년 ${calMonth + 1}월 메모(일기) 현황`;
-            if (summarySubHint) summarySubHint.textContent = '클릭 시 아래 리스트업';
+            if (summarySubHint) summarySubHint.textContent = '클릭 시 해당 리스트업';
 
             let memoCount = 0;
             let photoOnlyCount = 0;
@@ -1493,15 +1487,15 @@
 
             if (summaryGridBox) {
                 summaryGridBox.innerHTML = `
-                    <div class="money-box memo-stat" onclick="toggleStatsMode('memo')">
+                    <div class="money-box memo-stat" onclick="handleSummaryClick('memo-stat')">
                         <div class="m-label">전체 메모 👆</div>
                         <div class="m-value">${totalEntries}건</div>
                     </div>
-                    <div class="money-box memo-stat" onclick="toggleStatsMode('memo')">
+                    <div class="money-box memo-stat" onclick="handleSummaryClick('memo-stat')">
                         <div class="m-label">글 작성 👆</div>
                         <div class="m-value">${memoCount}건</div>
                     </div>
-                    <div class="money-box memo-stat" onclick="toggleStatsMode('memo')">
+                    <div class="money-box memo-stat" onclick="handleSummaryClick('memo-stat')">
                         <div class="m-label">사진 첨부 👆</div>
                         <div class="m-value">${photoOnlyCount}건</div>
                     </div>
@@ -1509,12 +1503,12 @@
             }
 
             if (currentStatsType !== 'memo') {
-                toggleStatsMode('memo');
+                currentStatsType = 'memo';
             }
+            if (isSearchFilterOpen) filterCustomList();
             return;
         }
 
-        // 가계부 현황이 켜져있을 때 -> 기존 가계부 요약판으로 복원
         summaryCard.style.display = 'block';
         if (summaryTitle) summaryTitle.textContent = `💵 ${calYear}년 ${calMonth + 1}월 가계부 현황`;
         if (summarySubHint) summarySubHint.textContent = '클릭 시 해당 통계 펼치기/접기';
@@ -1930,7 +1924,7 @@
         updateMoneySummary();
         
         if (isSearchFilterOpen) {
-            setPeriodFilter(isMoneySummaryVisible ? 'month' : 'today-around');
+            setPeriodFilter('month');
         }
     };
 </script>
