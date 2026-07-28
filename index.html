@@ -170,9 +170,19 @@
             border: 1px solid #d2eedc;
             border-radius: 8px;
             padding: 8px 4px;
-            /* 클릭 및 손가락 표시 제거 완료 */
-            cursor: default; 
-            transition: none;
+            transition: background 0.15s, transform 0.1s;
+        }
+
+        .money-box.clickable {
+            cursor: pointer;
+        }
+
+        .money-box.clickable:hover {
+            background: #f3fdf6;
+        }
+
+        .money-box.clickable:active {
+            transform: scale(0.97);
         }
 
         .money-box .m-label {
@@ -812,15 +822,15 @@
             <span style="font-size: 13px; color: #27ae60; font-weight: bold;" id="summary-sub-hint">현황 정보</span>
         </div>
         <div class="money-summary-grid" id="money-summary-grid-box">
-            <div class="money-box income">
+            <div class="money-box income clickable" onclick="goToMonthlyStats('income')">
                 <div class="m-label">총 수입</div>
                 <div class="m-value" id="summary-income">0원</div>
             </div>
-            <div class="money-box expense">
+            <div class="money-box expense clickable" onclick="goToMonthlyStats('expense')">
                 <div class="m-label">총 지출</div>
                 <div class="m-value" id="summary-expense">0원</div>
             </div>
-            <div class="money-box balance">
+            <div class="money-box balance clickable" onclick="goToMonthlyStats('expense')">
                 <div class="m-label">잔액/메모</div>
                 <div class="m-value" id="summary-balance">0원</div>
             </div>
@@ -983,6 +993,27 @@
         setTimeout(() => {
             element.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }, 300);
+    }
+
+    // 가계부현황(총수입/총지출/잔액) 박스 클릭 시 이번 달 통계 카드로 연결
+    function goToMonthlyStats(type) {
+        if (!isMoneySummaryVisible) return;
+
+        if (type === 'income' || type === 'expense') {
+            currentStatsType = type;
+        } else {
+            currentStatsType = 'expense';
+        }
+
+        if (!isCategoryStatsVisible) {
+            setCategoryStatsVisibility(true);
+        }
+        renderCategoryStats();
+
+        if (categoryStatsCard) {
+            categoryStatsCard.style.display = 'block';
+            scrollToInput(categoryStatsCard);
+        }
     }
 
     function setMoneySummaryVisibility(isVisible) {
@@ -1500,15 +1531,15 @@
 
         if (summaryGridBox && !summaryGridBox.querySelector('.money-box.income')) {
             summaryGridBox.innerHTML = `
-                <div class="money-box income">
+                <div class="money-box income clickable" onclick="goToMonthlyStats('income')">
                     <div class="m-label">총 수입</div>
                     <div class="m-value" id="summary-income">0원</div>
                 </div>
-                <div class="money-box expense">
+                <div class="money-box expense clickable" onclick="goToMonthlyStats('expense')">
                     <div class="m-label">총 지출</div>
                     <div class="m-value" id="summary-expense">0원</div>
                 </div>
-                <div class="money-box balance">
+                <div class="money-box balance clickable" onclick="goToMonthlyStats('expense')">
                     <div class="m-label">잔액/메모</div>
                     <div class="m-value" id="summary-balance">0원</div>
                 </div>
