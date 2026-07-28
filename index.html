@@ -175,6 +175,16 @@
 
         .money-box.clickable {
             cursor: pointer;
+            position: relative;
+        }
+
+        .money-box.clickable .tap-icon {
+            position: absolute;
+            top: 2px;
+            right: 4px;
+            font-size: 10px;
+            opacity: 0.55;
+            line-height: 1;
         }
 
         .money-box.clickable:hover {
@@ -815,22 +825,25 @@
         <div class="calendar-grid" id="cal-days-grid" style="margin-top: 5px;"></div>
     </div>
 
-    <!-- 💵 이번 달 가계부 요약 카드 (클릭/손가락 기능 제거됨) -->
+    <!-- 💵 이번 달 가계부 요약 카드 (클릭 시 이번달 상세내역으로 연결) -->
     <div class="card" id="money-summary-card">
         <div class="money-summary-header">
             <span id="money-summary-title">💵 가계부 현황</span>
-            <span style="font-size: 13px; color: #27ae60; font-weight: bold;" id="summary-sub-hint">현황 정보</span>
+            <span style="font-size: 13px; color: #27ae60; font-weight: bold;" id="summary-sub-hint">👆 클릭시 이번달 상세내역</span>
         </div>
         <div class="money-summary-grid" id="money-summary-grid-box">
             <div class="money-box income clickable" onclick="goToMonthlyStats('income')">
+                <span class="tap-icon">👆</span>
                 <div class="m-label">총 수입</div>
                 <div class="m-value" id="summary-income">0원</div>
             </div>
             <div class="money-box expense clickable" onclick="goToMonthlyStats('expense')">
+                <span class="tap-icon">👆</span>
                 <div class="m-label">총 지출</div>
                 <div class="m-value" id="summary-expense">0원</div>
             </div>
             <div class="money-box balance clickable" onclick="goToMonthlyStats('memo')">
+                <span class="tap-icon">👆</span>
                 <div class="m-label">잔액/메모</div>
                 <div class="m-value" id="summary-balance">0원</div>
             </div>
@@ -1005,9 +1018,9 @@
         if (keywordSearchInput) keywordSearchInput.value = '';
 
         if (type === 'memo') {
-            if (isCategoryStatsVisible) setCategoryStatsVisibility(false);
+            setCategoryStatsVisibility(false);
         } else {
-            if (!isCategoryStatsVisible) setCategoryStatsVisibility(true);
+            setCategoryStatsVisibility(true);
             renderCategoryStats();
         }
 
@@ -1047,8 +1060,9 @@
         }
         isCategoryStatsVisible = isVisible;
         localStorage.setItem('smartDiaryCategoryStatsVisible', isVisible);
-        if (categoryStatsCard && currentStatsType !== 'memo') {
-            categoryStatsCard.style.display = (isVisible && isMoneySummaryVisible) ? 'block' : 'none';
+        if (categoryStatsCard) {
+            const shouldShow = isVisible && isMoneySummaryVisible && currentStatsType !== 'memo';
+            categoryStatsCard.style.display = shouldShow ? 'block' : 'none';
         }
         updateToggleButtons('category-stats', isVisible);
     }
@@ -1536,19 +1550,22 @@
 
         summaryCard.style.display = 'block';
         if (summaryTitle) summaryTitle.textContent = `💵 ${calYear}년 ${calMonth + 1}월 가계부 현황`;
-        if (summarySubHint) summarySubHint.textContent = '현황 정보';
+        if (summarySubHint) summarySubHint.textContent = '👆 클릭시 이번달 상세내역';
 
         if (summaryGridBox && !summaryGridBox.querySelector('.money-box.income')) {
             summaryGridBox.innerHTML = `
                 <div class="money-box income clickable" onclick="goToMonthlyStats('income')">
+                    <span class="tap-icon">👆</span>
                     <div class="m-label">총 수입</div>
                     <div class="m-value" id="summary-income">0원</div>
                 </div>
                 <div class="money-box expense clickable" onclick="goToMonthlyStats('expense')">
+                    <span class="tap-icon">👆</span>
                     <div class="m-label">총 지출</div>
                     <div class="m-value" id="summary-expense">0원</div>
                 </div>
                 <div class="money-box balance clickable" onclick="goToMonthlyStats('memo')">
+                    <span class="tap-icon">👆</span>
                     <div class="m-label">잔액/메모</div>
                     <div class="m-value" id="summary-balance">0원</div>
                 </div>
