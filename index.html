@@ -1815,9 +1815,19 @@
     }
 
     function closeDiaryForm() {
+        stopRecording();
         memoFormOverlay.style.display = 'none';
         editingDiaryId = null;
         currentPhotoBase64 = null;
+    }
+
+    // 저장/닫기 시 음성 녹음이 백그라운드에서 계속 재시작되는 문제를 막기 위해
+    // shouldRestart를 먼저 false로 내린 뒤 recognition을 정지시킨다.
+    function stopRecording() {
+        shouldRestart = false;
+        if (isRecording && recognition) {
+            try { recognition.stop(); } catch (e) { console.error(e); }
+        }
     }
 
     function previewImage(event) {
@@ -1825,10 +1835,45 @@
         if (!file) return;
         const reader = new FileReader();
         reader.onload = function(e) {
-            currentPhotoBase64 = e.target.result;
-            updatePhotoPreview();
+            compressImage(e.target.result, 1280, 0.7, function(compressedDataUrl) {
+                currentPhotoBase64 = compressedDataUrl;
+                updatePhotoPreview();
+            });
         };
         reader.readAsDataURL(file);
+    }
+
+    // 카메라 원본 사진(수 MB)을 그대로 저장하면 localStorage 용량(약 5~10MB)을
+    // 쉽게 초과해서 저장이 실패하므로, 저장 전에 크기를 줄이고 JPEG로 압축한다.
+    function compressImage(dataUrl, maxDimension, quality, callback) {
+        const img = new Image();
+        img.onload = function() {
+            let { width, height } = img;
+            if (width > maxDimension || height > maxDimension) {
+                if (width >= height) {
+                    height = Math.round(height * (maxDimension / width));
+                    width = maxDimension;
+                } else {
+                    width = Math.round(width * (maxDimension / height));
+                    height = maxDimension;
+                }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            try {
+                callback(canvas.toDataURL('image/jpeg', quality));
+            } catch (e) {
+                console.error('이미지 압축 실패:', e);
+                callback(dataUrl);
+            }
+        };
+        img.onerror = function() {
+            callback(dataUrl);
+        };
+        img.src = dataUrl;
     }
 
     function updatePhotoPreview() {
@@ -1891,7 +1936,13 @@
             diaries.push(newItem);
         }
 
-        localStorage.setItem('smartDiaryList', JSON.stringify(diaries));
+        try {
+            localStorage.setItem('smartDiaryList', JSON.stringify(diaries));
+        } catch (e) {
+            console.error('저장 실패:', e);
+            alert('저장 공간이 부족해서 저장하지 못했습니다.\n사진 용량이 너무 크거나 저장된 항목이 너무 많습니다.\n기존 사진이 첨부된 오래된 메모를 정리한 뒤 다시 시도해주세요.');
+            return;
+        }
         closeDiaryForm();
         renderCalendar();
         updateMoneySummary();
