@@ -609,6 +609,12 @@
             padding-right: 95px;
         }
 
+        /* 예약(시간 지정)된 항목일 경우 스타일 구분을 위한 클래스 */
+        .sub-memo-item.is-reserved {
+            background: #fff8f8;
+            border: 1px solid #f7d6d6;
+        }
+
         .sub-memo-item:last-child {
             margin-bottom: 0;
         }
@@ -624,6 +630,10 @@
         .sub-memo-item.memo-only-box {
             border-left: 4px solid var(--memo-color);
             background: #fdfbff;
+        }
+        /* 예약이면서 메모 전용인 경우 */
+        .sub-memo-item.memo-only-box.is-reserved {
+            background: #fff5f5;
         }
 
         .diary-text {
@@ -1186,8 +1196,18 @@
             toggleStatsMode('income');
         } else if (type === 'expense') {
             toggleStatsMode('expense');
-        } else if (type === 'balance' || type === 'memo-stat') {
+        } else if (type === 'balance') {
             toggleStatsMode('memo');
+        } else if (type.startsWith('memo-stat')) {
+            // 메모 상태 카드 클릭 시 (전체, 글작성, 사진첨부 등 필터링 연동)
+            currentStatsType = 'memo';
+            if (keywordSearchInput) {
+                if (type === 'memo-stat-text') keywordSearchInput.value = '글'; // 필요시 키워드 설정
+                else keywordSearchInput.value = '';
+            }
+            selectedCategoryFilter = '';
+            setPeriodFilter('month');
+            if (isSearchFilterOpen) filterCustomList();
         }
     }
 
@@ -1413,9 +1433,18 @@
         filtered.forEach(item => {
             const subItem = document.createElement('div');
             subItem.className = 'sub-memo-item';
+            
+            // 시간이 지정되어 있는 경우 예약(is-reserved) 클래스 추가
+            let isReserved = item.time && item.time.trim() !== '';
+            if (isReserved) {
+                subItem.classList.add('is-reserved');
+            }
+
             let dateStr = normalizeDateStr(item.date);
             let dayOfWeek = getDayOfWeekStr(dateStr);
             let displayDateStr = `${dateStr}(${dayOfWeek})`;
+
+            let reservedBadge = isReserved ? `<span style="background:var(--primary-color); color:white; padding:1px 5px; border-radius:4px; font-size:11px; margin-right:4px; font-weight:bold;">[예약]</span>` : '';
 
             let headerHTML = '';
             if (item.money) {
@@ -1428,12 +1457,12 @@
                 let amountStr = Number(item.money.amount).toLocaleString() + '원';
                 
                 headerHTML = `<div style="font-weight: bold; margin-bottom: 4px; ${colorStyle}">
-                    💰 [${displayDateStr}] : ${typeSign}${amountStr}
+                    ${reservedBadge}💰 [${displayDateStr}] : ${typeSign}${amountStr}
                 </div>`;
             } else {
                 subItem.classList.add('memo-only-box');
                 headerHTML = `<div style="font-weight: bold; margin-bottom: 4px; color: var(--memo-color);">
-                    📅 [${displayDateStr}]
+                    ${reservedBadge}📅 [${displayDateStr}]
                 </div>`;
             }
 
@@ -1487,15 +1516,15 @@
 
             if (summaryGridBox) {
                 summaryGridBox.innerHTML = `
-                    <div class="money-box memo-stat" onclick="handleSummaryClick('memo-stat')">
+                    <div class="money-box memo-stat" onclick="handleSummaryClick('memo-stat-all')">
                         <div class="m-label">전체 메모 👆</div>
                         <div class="m-value">${totalEntries}건</div>
                     </div>
-                    <div class="money-box memo-stat" onclick="handleSummaryClick('memo-stat')">
+                    <div class="money-box memo-stat" onclick="handleSummaryClick('memo-stat-text')">
                         <div class="m-label">글 작성 👆</div>
                         <div class="m-value">${memoCount}건</div>
                     </div>
-                    <div class="money-box memo-stat" onclick="handleSummaryClick('memo-stat')">
+                    <div class="money-box memo-stat" onclick="handleSummaryClick('memo-stat-photo')">
                         <div class="m-label">사진 첨부 👆</div>
                         <div class="m-value">${photoOnlyCount}건</div>
                     </div>
@@ -1745,16 +1774,20 @@
 
         dayDiaries.forEach(item => {
             const itemBox = document.createElement('div');
-            itemBox.style.cssText = 'background: #fdfbfb; border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 10px; font-size: var(--memo-font-size); display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;';
+            
+            let isReserved = item.time && item.time.trim() !== '';
+            let reservedBadge = isReserved ? `<span style="background:var(--primary-color); color:white; padding:1px 4px; border-radius:3px; font-size:10px; margin-right:4px; font-weight:bold;">[예약]</span>` : '';
+            
+            itemBox.style.cssText = `background: ${isReserved ? '#fff5f5' : '#fdfbfb'}; border: 1px solid ${isReserved ? '#f7d6d6' : 'var(--border-color)'}; border-radius: 6px; padding: 8px 10px; font-size: var(--memo-font-size); display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;`;
             
             let infoSummary = '';
             if (item.money && item.money.amount) {
                 let isExp = item.money.type === 'expense';
                 let sign = isExp ? '-' : '+';
                 let color = isExp ? 'var(--expense-color)' : 'var(--income-color)';
-                infoSummary = `<span style="font-weight: bold; color: ${color};">[${isExp ? '지출' : '수입'}] ${item.money.category} (${sign}${Number(item.money.amount).toLocaleString()}원)</span>`;
+                infoSummary = `<span style="font-weight: bold; color: ${color};">${reservedBadge}[${isExp ? '지출' : '수입'}] ${item.money.category} (${sign}${Number(item.money.amount).toLocaleString()}원)</span>`;
             } else {
-                infoSummary = `<span style="font-weight: bold; color: var(--memo-color);">[메모(일기)] ${item.text ? item.text.substring(0, 15) + '...' : '사진 메모'}</span>`;
+                infoSummary = `<span style="font-weight: bold; color: var(--memo-color);">${reservedBadge}[메모(일기)] ${item.text ? item.text.substring(0, 15) + '...' : '사진 메모'}</span>`;
             }
 
             itemBox.innerHTML = `
@@ -1931,3 +1964,4 @@
 
 </body>
 </html>
+```[cite: 3]
