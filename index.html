@@ -923,6 +923,7 @@
 
         <div id="photo-preview-wrap">
             <img id="image-preview" src="" alt="미리보기">
+            <div style="font-size:11px; color:var(--text-sub); margin-top:4px;">💡 다운로드가 안 되면 사진을 손가락으로 길게 눌러 "이미지 다운로드"를 선택하세요</div>
             <div style="display:flex; gap:6px; margin-top:5px;">
                 <button class="action-btn" style="flex:1;" onclick="downloadCurrentPhoto()">📥 사진 다운로드</button>
                 <button class="action-btn" style="flex:1;" onclick="removeImage()">사진 취소</button>
@@ -1901,15 +1902,39 @@
     // 웹페이지는 보안상 사진첩에 직접 자동 저장할 수 없어서,
     // 사용자가 버튼을 눌러 다운로드하면(안드로이드는 보통 '다운로드' 폴더에
     // 저장되고 사진첩/갤러리 앱에도 함께 나타나는 경우가 많음) 저장할 수 있게 한다.
+    // 데이터 URL(base64)을 실제 이진 파일(Blob)로 변환한다.
+    // file://로 페이지를 열어둔 경우 큰 데이터 URL을 그대로 다운로드하면
+    // 브라우저가 조용히 실패하는 경우가 많아, Blob으로 바꿔서 다운로드한다.
+    function dataURLtoBlob(dataUrl) {
+        const arr = dataUrl.split(',');
+        const mimeMatch = arr[0].match(/:(.*?);/);
+        const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+        const bstr = atob(arr[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while (n--) {
+            u8arr[n] = bstr.charCodeAt(n);
+        }
+        return new Blob([u8arr], { type: mime });
+    }
+
     function downloadPhotoDataUrl(dataUrl, dateStr) {
         if (!dataUrl) return;
-        const a = document.createElement('a');
-        a.href = dataUrl;
-        const safeDate = (dateStr || '').replace(/[^0-9]/g, '') || 'photo';
-        a.download = `다이어리사진_${safeDate}_${Date.now()}.jpg`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        try {
+            const blob = dataURLtoBlob(dataUrl);
+            const blobUrl = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            const safeDate = (dateStr || '').replace(/[^0-9]/g, '') || 'photo';
+            a.download = `다이어리사진_${safeDate}_${Date.now()}.jpg`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+        } catch (e) {
+            console.error('사진 다운로드 실패:', e);
+            alert('자동 다운로드에 실패했습니다.\n대신 사진을 손가락으로 길게 눌러서 나오는 메뉴에서 "이미지 다운로드"를 선택해보세요.');
+        }
     }
 
     function downloadCurrentPhoto() {
