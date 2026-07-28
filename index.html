@@ -273,6 +273,24 @@
             outline: none;
         }
 
+        /* 기간별 조회 서브 박스 스타일 */
+        #custom-period-box {
+            display: none;
+            background: #faf5f5;
+            border: 1px dashed var(--primary-color);
+            padding: 8px;
+            border-radius: 6px;
+            gap: 6px;
+            align-items: center;
+            margin-top: 4px;
+        }
+        #custom-period-box input {
+            font-size: calc(var(--base-font-size) - 2px);
+            padding: 4px 6px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+
         /* 달력 스타일 */
         .calendar-header {
             display: flex;
@@ -803,7 +821,7 @@
                 <div class="m-value" id="summary-expense">0원</div>
             </div>
             <div class="money-box balance" onclick="handleSummaryClick('balance')">
-                <div class="m-label">잔액 👆</div>
+                <div class="m-label">잔액/메모(일기) 👆</div>
                 <div class="m-value" id="summary-balance">0원</div>
             </div>
         </div>
@@ -838,7 +856,15 @@
                 <button class="view-select-btn" id="filter-period-today-around" onclick="setPeriodFilter('today-around')">오늘 기준 전후</button>
                 <button class="view-select-btn" id="filter-period-week" onclick="setPeriodFilter('week')">지난 1주일</button>
                 <button class="view-select-btn active" id="filter-period-month" onclick="setPeriodFilter('month')">이번 달</button>
-                <button class="view-select-btn" id="filter-period-all" onclick="setPeriodFilter('all')">전체 기간</button>
+                <button class="view-select-btn" id="filter-period-all" onclick="setPeriodFilter('all')">기간별 조회</button>
+            </div>
+            
+            <!-- 요구사항 2: 기간별 조회 클릭 시 나타나는 날짜 지정 및 조회 칸 -->
+            <div id="custom-period-box" class="search-row">
+                <input type="date" id="custom-start-date" style="flex:1;" onchange="filterCustomList()">
+                <span style="font-size:12px; font-weight:bold; color:var(--text-sub);">~</span>
+                <input type="date" id="custom-end-date" style="flex:1;" onchange="filterCustomList()">
+                <button class="action-btn" style="padding:4px 10px; font-size:12px;" onclick="filterCustomList()">조회</button>
             </div>
         </div>
         <div id="search-result-list" style="margin-top: 12px; border-top: 1px dashed var(--border-color); padding-top: 10px;"></div>
@@ -1153,7 +1179,7 @@
 
     function toggleStatsMode(type) {
         currentStatsType = type;
-        selectedCategoryFilter = ''; // 통계 전환 시 과목 선택 초기화
+        selectedCategoryFilter = ''; 
         if (keywordSearchInput) keywordSearchInput.value = '';
 
         if (type !== 'memo') {
@@ -1273,6 +1299,24 @@
                 else btn.classList.remove('active');
             }
         });
+
+        const customBox = document.getElementById('custom-period-box');
+        if (period === 'all') {
+            if (customBox) customBox.style.display = 'flex';
+            // 기본값으로 이번 달 1일 ~ 말일 설정
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            const lastDay = new Date(y, now.getMonth() + 1, 0).getDate();
+            
+            const startInput = document.getElementById('custom-start-date');
+            const endInput = document.getElementById('custom-end-date');
+            if (startInput && !startInput.value) startInput.value = `${y}-${m}-01`;
+            if (endInput && !endInput.value) endInput.value = `${y}-${m}-${lastDay}`;
+        } else {
+            if (customBox) customBox.style.display = 'none';
+        }
+
         if (isSearchFilterOpen) filterCustomList();
     }
 
@@ -1294,6 +1338,9 @@
         let keyword = selectedCategoryFilter.toLowerCase();
         const todayStr = getTodayStr();
         const tObj = parseDateObj(todayStr);
+
+        let customStart = document.getElementById('custom-start-date')?.value || '';
+        let customEnd = document.getElementById('custom-end-date')?.value || '';
 
         let filtered = diaries.filter(item => {
             if (currentStatsType === 'expense') {
@@ -1317,6 +1364,9 @@
             } else if (currentPeriodFilter === 'month') {
                 let prefix = `${calYear}-${String(calMonth + 1).padStart(2, '0')}`;
                 if (!itemDateStr.startsWith(prefix)) return false;
+            } else if (currentPeriodFilter === 'all') {
+                if (customStart && itemDateStr < customStart) return false;
+                if (customEnd && itemDateStr > customEnd) return false;
             }
 
             if (keyword !== '') {
@@ -1369,8 +1419,9 @@
                 let typeSign = isExp ? '-' : '+';
                 let amountStr = Number(item.money.amount).toLocaleString() + '원';
                 
+                // 요구사항 1: 중복되는 계정과목 표시 제거 -> 일자(요일), 금액, 내용 형태 구축
                 headerHTML = `<div style="font-weight: bold; margin-bottom: 4px; ${colorStyle}">
-                    💰 [${displayDateStr}] [${isExp ? '지출' : '수입'}] ${item.money.category} : ${typeSign}${amountStr}
+                    💰 [${displayDateStr}] ${item.money.category} : ${typeSign}${amountStr}
                 </div>`;
             } else {
                 subItem.classList.add('memo-only-box');
