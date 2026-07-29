@@ -289,6 +289,57 @@
             outline: none;
         }
 
+        /* 💰 잔액 분배(지갑/은행별 보관 현황) 영역 */
+        .balance-alloc-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+
+        .balance-alloc-name-input {
+            flex: 1.1;
+            padding: 7px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: calc(var(--base-font-size) - 3px);
+            outline: none;
+        }
+
+        .balance-alloc-amount-input {
+            flex: 1;
+            padding: 7px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: calc(var(--base-font-size) - 3px);
+            text-align: right;
+            outline: none;
+        }
+
+        .balance-alloc-delete-btn {
+            background: none;
+            border: none;
+            color: #e74c3c;
+            font-size: 17px;
+            cursor: pointer;
+            padding: 2px 4px;
+            line-height: 1;
+        }
+
+        .balance-alloc-summary-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: calc(var(--base-font-size) - 2px);
+            padding: 3px 0;
+        }
+
+        .balance-alloc-summary-row.total {
+            margin-top: 6px;
+            padding-top: 8px;
+            border-top: 1px dashed var(--border-color);
+            font-weight: bold;
+        }
+
         /* 기간별 조회 서브 박스 스타일 */
         #custom-period-box {
             display: none;
@@ -859,6 +910,28 @@
         <div id="category-stats-body"></div>
     </div>
 
+    <!-- 💰 잔액 어디에 있나 (지갑/은행별 분배) 카드 -->
+    <div class="card sub-feature-card" id="balance-allocation-card" style="display:none;">
+        <div class="feature-title">
+            <span>💰 잔액 어디에 있나 (지갑/은행 분배)</span>
+        </div>
+        <div id="balance-allocation-list"></div>
+        <button class="action-btn" style="width:100%; margin-top:4px; font-size:13px; padding:6px;" onclick="addBalanceAllocationRow()">+ 보관처 추가</button>
+
+        <div class="balance-alloc-summary-row total">
+            <span>이번 달 잔액</span>
+            <span id="balance-alloc-total-balance">0원</span>
+        </div>
+        <div class="balance-alloc-summary-row">
+            <span>보관처 배분 합계</span>
+            <span id="balance-alloc-sum">0원</span>
+        </div>
+        <div class="balance-alloc-summary-row">
+            <span id="balance-alloc-diff-label">아직 안 나눈 금액</span>
+            <span id="balance-alloc-diff">0원</span>
+        </div>
+    </div>
+
     <!-- 🔍 검색 및 기간별 상세 내역 -->
     <div class="section-divider" onclick="toggleSearchFilterSection()">
         <span class="divider-label" id="search-divider-label-text">🔍 내역 검색 및 기간 필터 접기 ▲</span>
@@ -968,6 +1041,12 @@
     let currentStatsType = 'expense'; 
     let selectedCategoryFilter = ''; 
 
+    // 💰 잔액 분배(지갑/은행별 보관 현황) - 항목은 자유롭게 추가/삭제/이름수정 가능
+    let balanceAllocations = JSON.parse(localStorage.getItem('smartDiaryBalanceAllocations')) || [
+        { id: 'wallet', name: '지갑', amount: 0 },
+        { id: 'bankA', name: 'A은행', amount: 0 }
+    ];
+
     let expenseCategories = JSON.parse(localStorage.getItem('smartDiaryExpenseCats')) || ["1. 식비", "2. 교통/통신", "3. 주거/생활", "4. 쇼핑", "5. 의료/건강", "6. 문화/여가", "7. 기타 지출"];
     let incomeCategories = JSON.parse(localStorage.getItem('smartDiaryIncomeCats')) || ["1. 용돈", "2. 월급", "3. 사업수입", "4. 금융/투자", "5. 기타 수입"];
 
@@ -1035,6 +1114,9 @@
         }
 
         setPeriodFilter('month'); // isSearchFilterOpen이 true이므로 내부에서 filterCustomList() 자동 호출
+
+        // '잔액/메모' 탭을 눌렀을 때만 잔액 분배 카드를 보여준다
+        setBalanceAllocationVisibility(type === 'memo' && isMoneySummaryVisible);
 
         // 현황 폼이 화면 맨 위(달력 바로 아래)에 오도록 스크롤 -> 그 아래로 통계 폼, 리스트가 순서대로 보임
         if (moneySummaryCard) {
@@ -1548,6 +1630,7 @@
             if (currentStatsType !== 'memo') {
                 currentStatsType = 'memo';
             }
+            setBalanceAllocationVisibility(false); // 가계부 잔액이 없는 메모 전용 모드에서는 숨김
             if (isSearchFilterOpen) filterCustomList();
             return;
         }
@@ -1602,6 +1685,121 @@
 
         if (currentStatsType !== 'memo') renderCategoryStats();
         if (isSearchFilterOpen) filterCustomList();
+
+        // 잔액 분배 카드가 열려 있는 상태라면(잔액/메모 탭) 최신 잔액으로 숫자만 갱신
+        const balanceAllocCard = document.getElementById('balance-allocation-card');
+        if (balanceAllocCard && balanceAllocCard.style.display !== 'none') {
+            renderBalanceAllocation();
+        }
+    }
+
+    // ── 💰 잔액 분배(지갑/은행별 보관 현황) ──────────────────────────
+    function saveBalanceAllocations() {
+        localStorage.setItem('smartDiaryBalanceAllocations', JSON.stringify(balanceAllocations));
+    }
+
+    function getCurrentMonthBalance() {
+        const diaries = getAllDiaries();
+        const prefix = `${calYear}-${String(calMonth + 1).padStart(2, '0')}`;
+        let totalIncome = 0;
+        let totalExpense = 0;
+        diaries.forEach(item => {
+            if (normalizeDateStr(item.date).startsWith(prefix) && item.money && item.money.amount) {
+                let amt = Number(item.money.amount) || 0;
+                if (item.money.type === 'income') totalIncome += amt;
+                else if (item.money.type === 'expense') totalExpense += amt;
+            }
+        });
+        return totalIncome - totalExpense;
+    }
+
+    function setBalanceAllocationVisibility(show) {
+        const card = document.getElementById('balance-allocation-card');
+        if (!card) return;
+        card.style.display = show ? 'block' : 'none';
+        if (show) renderBalanceAllocation();
+    }
+
+    function formatBalanceAllocAmountInput(el) {
+        let value = el.value.replace(/[^0-9]/g, '');
+        el.value = value ? Number(value).toLocaleString() : '';
+    }
+
+    function updateBalanceAllocationName(id, value) {
+        const row = balanceAllocations.find(r => r.id === id);
+        if (!row) return;
+        row.name = value.trim() || row.name;
+        saveBalanceAllocations();
+    }
+
+    function updateBalanceAllocationAmount(id, value) {
+        const row = balanceAllocations.find(r => r.id === id);
+        if (!row) return;
+        row.amount = Number(String(value).replace(/[^0-9]/g, '')) || 0;
+        saveBalanceAllocations();
+        renderBalanceAllocation();
+    }
+
+    function addBalanceAllocationRow() {
+        balanceAllocations.push({ id: 'acc' + Date.now(), name: '새 보관처', amount: 0 });
+        saveBalanceAllocations();
+        renderBalanceAllocation();
+    }
+
+    function deleteBalanceAllocationRow(id) {
+        if (!confirm('이 보관처를 삭제하시겠습니까?')) return;
+        balanceAllocations = balanceAllocations.filter(r => r.id !== id);
+        saveBalanceAllocations();
+        renderBalanceAllocation();
+    }
+
+    function renderBalanceAllocation() {
+        const listBox = document.getElementById('balance-allocation-list');
+        if (!listBox) return;
+
+        listBox.innerHTML = '';
+        balanceAllocations.forEach(row => {
+            const rowEl = document.createElement('div');
+            rowEl.className = 'balance-alloc-row';
+            rowEl.innerHTML = `
+                <input type="text" class="balance-alloc-name-input" value="${row.name}"
+                    onchange="updateBalanceAllocationName('${row.id}', this.value)" placeholder="보관처 이름">
+                <input type="text" class="balance-alloc-amount-input" value="${row.amount ? Number(row.amount).toLocaleString() : ''}"
+                    placeholder="0" inputmode="numeric"
+                    oninput="formatBalanceAllocAmountInput(this)"
+                    onchange="updateBalanceAllocationAmount('${row.id}', this.value)">
+                <button class="balance-alloc-delete-btn" onclick="deleteBalanceAllocationRow('${row.id}')">✕</button>
+            `;
+            listBox.appendChild(rowEl);
+        });
+
+        const balance = getCurrentMonthBalance();
+        const sum = balanceAllocations.reduce((acc, r) => acc + (Number(r.amount) || 0), 0);
+        const diff = balance - sum;
+
+        const totalBalanceEl = document.getElementById('balance-alloc-total-balance');
+        const sumEl = document.getElementById('balance-alloc-sum');
+        const diffEl = document.getElementById('balance-alloc-diff');
+        const diffLabelEl = document.getElementById('balance-alloc-diff-label');
+
+        if (totalBalanceEl) totalBalanceEl.textContent = balance.toLocaleString() + '원';
+        if (sumEl) sumEl.textContent = sum.toLocaleString() + '원';
+
+        if (diffEl && diffLabelEl) {
+            if (diff > 0) {
+                diffLabelEl.textContent = '아직 안 나눈 금액';
+                diffEl.textContent = diff.toLocaleString() + '원';
+                diffEl.style.color = 'var(--text-sub)';
+            } else if (diff < 0) {
+                diffLabelEl.textContent = '초과 입력됨';
+                diffEl.textContent = Math.abs(diff).toLocaleString() + '원';
+                diffEl.style.color = 'var(--expense-color)';
+            } else {
+                diffLabelEl.textContent = '배분 완료 ✅';
+                diffEl.textContent = '0원';
+                diffEl.style.color = 'var(--income-color)';
+            }
+        }
     }
 
     function updateCategorySelectOptions(selectedVal = '') {
