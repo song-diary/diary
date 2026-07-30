@@ -58,34 +58,35 @@
         /* 메인 탭 바 (설정/다이어리/가계부) */
         .main-tab-bar {
             display: flex;
-            gap: 8px;
-            padding: 8px;
+            gap: 6px;
+            padding: 6px 8px;
         }
 
         .main-tab-btn {
             flex: 1;
             background: var(--card-bg);
-            border: 2px solid var(--border-color);
-            border-radius: 10px;
-            padding: 10px 6px;
-            font-size: calc(var(--base-font-size) - 1px);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 6px 4px;
+            font-size: calc(var(--base-font-size) - 3px);
             font-weight: bold;
             color: var(--text-sub);
             cursor: pointer;
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             align-items: center;
-            gap: 2px;
+            justify-content: center;
+            gap: 3px;
             transition: all 0.15s ease;
         }
 
         .main-tab-btn .tab-icon {
-            font-size: calc(var(--base-font-size) + 6px);
+            font-size: calc(var(--base-font-size) - 1px);
             line-height: 1;
         }
 
         .main-tab-btn.settings-tab-btn {
-            flex: 0 0 56px;
+            flex: 0 0 40px;
         }
 
         .main-tab-btn.active {
@@ -262,12 +263,20 @@
 
         .money-box {
             background: #ffffff;
-            border: 1px solid #d2eedc;
+            border: 2px solid #d2eedc;
             border-radius: 8px;
             padding: 8px 4px;
-            /* 클릭 및 손가락 표시 제거 완료 */
-            cursor: default; 
-            transition: none;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .money-box:active {
+            transform: scale(0.97);
+        }
+
+        .money-box.stat-selected {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 1px var(--primary-color);
         }
 
         .money-box .m-label {
@@ -830,10 +839,21 @@
 
     <!-- ===================== 📔 다이어리 패널 ===================== -->
     <div class="tab-panel" id="diary-panel">
-        <div id="memo-form-card">
+
+        <!-- 📔 오늘 기준 전후 다이어리 리스트 (기본 표시) -->
+        <div class="card sub-feature-card" id="diary-around-today-card">
+            <div class="feature-title">
+                <span>📔 다이어리 (오늘 기준 전후)</span>
+                <span style="font-size: 12px; color: var(--text-sub); font-weight: normal;">달력에서 날짜 클릭 시 입력</span>
+            </div>
+            <div id="diary-around-today-list"></div>
+        </div>
+
+        <!-- 📝 입력 폼: 달력에서 날짜 클릭 시에만 표시 -->
+        <div id="memo-form-card" style="display: none;">
             <div class="form-header-info">
                 <span id="form-target-date-title">📅 0000년 00월 00일<br>다이어리&가계부</span>
-                <button class="close-form-btn" onclick="resetDiaryFormToNew()" title="새 입력으로 초기화">✖</button>
+                <button class="close-form-btn" onclick="closeDiaryFormPanel()" title="입력창 닫기">✖</button>
             </div>
 
             <div class="reservation-box">
@@ -889,15 +909,15 @@
                 <span style="font-size: 13px; color: #27ae60; font-weight: bold;" id="summary-sub-hint">현황 정보</span>
             </div>
             <div class="money-summary-grid" id="money-summary-grid-box">
-                <div class="money-box income">
+                <div class="money-box income" onclick="selectMoneySummaryStat('income')">
                     <div class="m-label">총 수입</div>
                     <div class="m-value" id="summary-income">0원</div>
                 </div>
-                <div class="money-box expense">
+                <div class="money-box expense" onclick="selectMoneySummaryStat('expense')">
                     <div class="m-label">총 지출</div>
                     <div class="m-value" id="summary-expense">0원</div>
                 </div>
-                <div class="money-box balance">
+                <div class="money-box balance" onclick="selectMoneySummaryStat('memo')">
                     <div class="m-label">잔액/메모</div>
                     <div class="m-value" id="summary-balance">0원</div>
                 </div>
@@ -1305,7 +1325,16 @@
     function renderCategoryStats() {
         const statsBody = document.getElementById('category-stats-body');
         const statsCardTitle = document.getElementById('stats-card-title');
-        if (!statsBody || currentStatsType === 'memo' || !isMoneySummaryVisible) return;
+        if (!statsBody) return;
+
+        if (currentStatsType === 'memo') {
+            if (statsCardTitle) statsCardTitle.textContent = `📊 이번 달 메모(일기) 통계`;
+            if (isMoneySummaryVisible) {
+                statsBody.innerHTML = `<div style="text-align:center; color:var(--text-sub); font-size:13px; padding:6px;">메모(일기) 항목은 계정별 통계가 없습니다.<br>아래 상세 내역에서 확인해주세요.</div>`;
+            }
+            return;
+        }
+        if (!isMoneySummaryVisible) return;
 
         statsBody.innerHTML = '';
         const diaries = getAllDiaries();
@@ -1363,6 +1392,28 @@
             `;
             statsBody.appendChild(row);
         });
+    }
+
+    // 💵 가계부현황 박스(총수입/총지출/잔액-메모) 클릭 → 계정별 통계 전환
+    function selectMoneySummaryStat(type) {
+        if (!isMoneySummaryVisible) return; // 메모현황 모드에서는 전환 불필요
+        currentStatsType = type;
+        selectedCategoryFilter = '';
+        if (keywordSearchInput) keywordSearchInput.value = '';
+        highlightMoneySummaryBox(type);
+        renderCategoryStats();
+        if (isSearchFilterOpen) filterCustomList();
+    }
+
+    function highlightMoneySummaryBox(type) {
+        document.querySelectorAll('#money-summary-grid-box .money-box').forEach(box => {
+            box.classList.remove('stat-selected');
+        });
+        let target = null;
+        if (type === 'income') target = document.querySelector('#money-summary-grid-box .money-box.income');
+        else if (type === 'expense') target = document.querySelector('#money-summary-grid-box .money-box.expense');
+        else if (type === 'memo') target = document.querySelector('#money-summary-grid-box .money-box.balance');
+        if (target) target.classList.add('stat-selected');
     }
 
     function selectCategoryFromStats(catName) {
@@ -1617,15 +1668,15 @@
 
         if (summaryGridBox && !summaryGridBox.querySelector('.money-box.income')) {
             summaryGridBox.innerHTML = `
-                <div class="money-box income">
+                <div class="money-box income" onclick="selectMoneySummaryStat('income')">
                     <div class="m-label">총 수입</div>
                     <div class="m-value" id="summary-income">0원</div>
                 </div>
-                <div class="money-box expense">
+                <div class="money-box expense" onclick="selectMoneySummaryStat('expense')">
                     <div class="m-label">총 지출</div>
                     <div class="m-value" id="summary-expense">0원</div>
                 </div>
-                <div class="money-box balance">
+                <div class="money-box balance" onclick="selectMoneySummaryStat('memo')">
                     <div class="m-label">잔액/메모</div>
                     <div class="m-value" id="summary-balance">0원</div>
                 </div>
@@ -1658,6 +1709,7 @@
 
         if (currentStatsType !== 'memo') renderCategoryStats();
         if (isSearchFilterOpen) filterCustomList();
+        highlightMoneySummaryBox(currentStatsType);
     }
 
     function updateCategorySelectOptions(selectedVal = '') {
@@ -1724,6 +1776,9 @@
         }
         if (tabName === 'money') {
             updateMoneySummary();
+        }
+        if (tabName === 'diary') {
+            renderDiaryAroundToday();
         }
     }
 
@@ -1844,15 +1899,82 @@
         renderPopupDayHistory(selectedReservationDate);
 
         switchMainTab('diary');
-        setTimeout(() => {
-            const card = document.getElementById('memo-form-card');
-            if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 50);
+        const formCard = document.getElementById('memo-form-card');
+        if (formCard) {
+            formCard.style.display = 'block';
+            setTimeout(() => {
+                formCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 50);
+        }
     }
 
-    // ✖ 버튼: 팝업을 닫는 대신, 선택된 날짜의 새 입력 상태로 초기화
-    function resetDiaryFormToNew() {
-        openDiaryForm(selectedReservationDate || getTodayStr());
+    // ✖ 버튼: 입력 폼을 닫고, 오늘 기준 전후 리스트로 돌아감
+    function closeDiaryFormPanel() {
+        const formCard = document.getElementById('memo-form-card');
+        if (formCard) formCard.style.display = 'none';
+        editingDiaryId = null;
+        currentPhotoBase64 = null;
+        selectedReservationDate = null;
+        renderDiaryAroundToday();
+    }
+
+    // 📔 다이어리 탭 기본 화면: 오늘 기준 전후(-1일 ~ +1일) 내역 리스트
+    function renderDiaryAroundToday() {
+        const listEl = document.getElementById('diary-around-today-list');
+        if (!listEl) return;
+        listEl.innerHTML = '';
+
+        const diaries = getAllDiaries();
+        const todayStr = getTodayStr();
+        const tObj = parseDateObj(todayStr);
+
+        let filtered = diaries.filter(item => {
+            const itemDateStr = normalizeDateStr(item.date);
+            const itemDate = parseDateObj(itemDateStr);
+            const diffDays = (tObj - itemDate) / (1000 * 60 * 60 * 24);
+            return diffDays >= -1 && diffDays <= 1;
+        });
+
+        filtered.sort((a, b) => {
+            const da = normalizeDateStr(a.date) + (a.time || '');
+            const db = normalizeDateStr(b.date) + (b.time || '');
+            return da.localeCompare(db);
+        });
+
+        if (filtered.length === 0) {
+            listEl.innerHTML = `<div style="font-size: var(--memo-font-size); color: var(--text-sub); text-align: center; padding: 10px;">오늘 기준 전후로 등록된 내역이 없습니다.<br>달력에서 날짜를 클릭해 입력해보세요.</div>`;
+            return;
+        }
+
+        filtered.forEach(item => {
+            const itemDateStr = normalizeDateStr(item.date);
+            const dObj = parseDateObj(itemDateStr);
+            const dayName = getDayOfWeekStr(itemDateStr);
+            const dateLabel = `${dObj.getMonth() + 1}/${dObj.getDate()}(${dayName})`;
+            const isReserved = isFutureDate(itemDateStr);
+            const reservedBadge = isReserved ? `<span style="background:var(--primary-color); color:white; padding:1px 4px; border-radius:3px; font-size:10px; margin-right:4px; font-weight:bold;">[예약]</span>` : '';
+
+            let infoSummary = '';
+            if (item.money && item.money.amount) {
+                const isExp = item.money.type === 'expense';
+                const sign = isExp ? '-' : '+';
+                const color = isExp ? 'var(--expense-color)' : 'var(--income-color)';
+                infoSummary = `<span style="font-weight: bold; color: ${color};">${reservedBadge}[${isExp ? '지출' : '수입'}] ${item.money.category} (${sign}${Number(item.money.amount).toLocaleString()}원)</span>`;
+            } else {
+                infoSummary = `<span style="font-weight: bold; color: var(--memo-color);">${reservedBadge}[메모(일기)] ${item.text ? item.text.substring(0, 15) + '...' : '사진 메모'}</span>`;
+            }
+
+            const itemBox = document.createElement('div');
+            itemBox.style.cssText = `background: ${isReserved ? '#fff5f5' : '#fdfbfb'}; border: 1px solid ${isReserved ? '#f7d6d6' : 'var(--border-color)'}; border-radius: 6px; padding: 8px 10px; font-size: var(--memo-font-size); display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;`;
+            itemBox.innerHTML = `
+                <div style="word-break: break-all; flex: 1; padding-right: 6px;">📅 ${dateLabel} ${item.time ? `⏰ ${item.time} | ` : '| '}${infoSummary}</div>
+                <div style="display: flex; gap: 4px; white-space: nowrap;">
+                    <button class="edit-btn" style="font-size: var(--memo-font-size);" onclick='openDiaryForm("${itemDateStr}", ${JSON.stringify(item)})'>수정</button>
+                    <button class="delete-btn" style="font-size: var(--memo-font-size);" onclick="deleteDiary('${item.id}');">삭제</button>
+                </div>
+            `;
+            listEl.appendChild(itemBox);
+        });
     }
 
     function renderPopupDayHistory(dateStr) {
@@ -1978,6 +2100,7 @@
         renderCalendar();
         updateMoneySummary();
         if (isSearchFilterOpen) filterCustomList();
+        renderDiaryAroundToday();
         openDiaryForm(selectedReservationDate);
     }
 
@@ -1989,6 +2112,8 @@
         renderCalendar();
         updateMoneySummary();
         if (isSearchFilterOpen) filterCustomList();
+        renderDiaryAroundToday();
+        if (selectedReservationDate) renderPopupDayHistory(selectedReservationDate);
     }
 
     function initSpeechRecognition() {
@@ -2056,9 +2181,8 @@
             setPeriodFilter('month');
         }
 
-        // 기본 탭: 다이어리 (오늘 날짜 입력 폼 준비)
+        // 기본 탭: 다이어리 (오늘 기준 전후 리스트만 표시, 입력폼은 날짜 클릭 시 표시)
         switchMainTab('diary');
-        openDiaryForm(getTodayStr());
 
         // 카드명세 입력 기본 행 1개 생성
         addCardStatementRow();
