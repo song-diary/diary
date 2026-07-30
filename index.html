@@ -510,14 +510,36 @@
         .dot.income { background-color: var(--income-color); }
         .dot.memo { background-color: var(--memo-color); }
 
-        /* 다이어리 입력 폼 */
+        /* 팝업 모달 스타일 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        /* 다이어리 입력 폼 (팝업창 버전) */
         #memo-form-card {
             background: #ffffff;
             width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
             border: 2px solid var(--primary-color);
             border-radius: 12px;
             padding: 20px;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.04);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
             animation: fadeIn 0.3s ease;
         }
 
@@ -848,50 +870,6 @@
             </div>
             <div id="diary-around-today-list"></div>
         </div>
-
-        <!-- 📝 입력 폼: 달력에서 날짜 클릭 시에만 표시 -->
-        <div id="memo-form-card" style="display: none;">
-            <div class="form-header-info">
-                <span id="form-target-date-title">📅 0000년 00월 00일<br>다이어리&가계부</span>
-                <button class="close-form-btn" onclick="closeDiaryFormPanel()" title="입력창 닫기">✖</button>
-            </div>
-
-            <div class="reservation-box">
-                <span style="font-size: 12px;">⏰ 시간:</span>
-                <input type="time" id="reservation-time-input" style="border:1px solid var(--border-color); border-radius:4px; background:#fff;">
-            </div>
-
-            <!-- 💵 가계부 입력 영역 -->
-            <div class="money-input-box">
-                <label style="font-size: 14px; font-weight: bold; color: #27ae60;">💰 가계부 기록 (선택사항)</label>
-                <div class="money-input-row">
-                    <button type="button" class="money-type-btn expense active" id="type-expense-btn" onclick="setMoneyType('expense')">지출</button>
-                    <button type="button" class="money-type-btn income" id="type-income-btn" onclick="setMoneyType('income')">수입</button>
-                </div>
-                <div style="display: flex; gap: 6px;">
-                    <select id="money-category-select" class="money-input-field" style="flex: 1;" onchange="onCategoryChanged()"></select>
-                    <input type="text" inputmode="numeric" id="money-amount-input" class="money-input-field" placeholder="금액 안 쓰면 순수 메모" style="flex: 1.5;" onfocus="scrollToInput(this)">
-                </div>
-            </div>
-
-            <div style="font-size: 14px; font-weight: bold; color: var(--weekday-color); margin-bottom: 6px;">📝 상세내용 및 메모(일기) 작성</div>
-
-            <div id="photo-preview-wrap">
-                <img id="image-preview" src="" alt="미리보기">
-                <button class="action-btn" style="margin-top:5px;" onclick="removeImage()">사진 취소</button>
-            </div>
-
-            <div id="textOutput" class="diary-textarea" contenteditable="true" placeholder="여기에 메모(일기)를 입력하세요" onfocus="scrollToInput(this)"></div>
-
-            <div class="btn-group" style="margin-bottom: 0;">
-                <button class="btn btn-secondary" id="record-btn">🎤 음성메모</button>
-                <label class="btn btn-secondary" style="text-align:center; display:flex; align-items:center; justify-content:center; cursor:pointer;">
-                    📷 사진
-                    <input type="file" id="diary-photo-input" accept="image/*" style="display:none;" onchange="previewImage(event)">
-                </label>
-                <button class="btn btn-primary" onclick="manualSaveDiary()">저장</button>
-            </div>
-        </div>
     </div>
 
     <!-- ===================== 💰 가계부 패널 ===================== -->
@@ -1044,6 +1022,52 @@
 
 </div>
 
+<!-- 📝 입력 폼 모달 팝업 -->
+<div class="modal-overlay" id="memo-modal-overlay" onclick="handleModalBackgroundClick(event)">
+    <div id="memo-form-card">
+        <div class="form-header-info">
+            <span id="form-target-date-title">📅 0000년 00월 00일<br>다이어리&가계부</span>
+            <button class="close-form-btn" onclick="closeDiaryFormPanel()" title="입력창 닫기">✖</button>
+        </div>
+
+        <div class="reservation-box">
+            <span style="font-size: 12px;">⏰ 시간:</span>
+            <input type="time" id="reservation-time-input" style="border:1px solid var(--border-color); border-radius:4px; background:#fff;">
+        </div>
+
+        <!-- 💵 가계부 입력 영역 -->
+        <div class="money-input-box">
+            <label style="font-size: 14px; font-weight: bold; color: #27ae60;">💰 가계부 기록 (선택사항)</label>
+            <div class="money-input-row">
+                <button type="button" class="money-type-btn expense active" id="type-expense-btn" onclick="setMoneyType('expense')">지출</button>
+                <button type="button" class="money-type-btn income" id="type-income-btn" onclick="setMoneyType('income')">수입</button>
+            </div>
+            <div style="display: flex; gap: 6px;">
+                <select id="money-category-select" class="money-input-field" style="flex: 1;" onchange="onCategoryChanged()"></select>
+                <input type="text" inputmode="numeric" id="money-amount-input" class="money-input-field" placeholder="금액 안 쓰면 순수 메모" style="flex: 1.5;" onfocus="scrollToInput(this)">
+            </div>
+        </div>
+
+        <div style="font-size: 14px; font-weight: bold; color: var(--weekday-color); margin-bottom: 6px;">📝 상세내용 및 메모(일기) 작성</div>
+
+        <div id="photo-preview-wrap">
+            <img id="image-preview" src="" alt="미리보기">
+            <button class="action-btn" style="margin-top:5px;" onclick="removeImage()">사진 취소</button>
+        </div>
+
+        <div id="textOutput" class="diary-textarea" contenteditable="true" placeholder="여기에 메모(일기)를 입력하세요" onfocus="scrollToInput(this)"></div>
+
+        <div class="btn-group" style="margin-bottom: 0;">
+            <button class="btn btn-secondary" id="record-btn">🎤 음성메모</button>
+            <label class="btn btn-secondary" style="text-align:center; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+                📷 사진
+                <input type="file" id="diary-photo-input" accept="image/*" style="display:none;" onchange="previewImage(event)">
+            </label>
+            <button class="btn btn-primary" onclick="manualSaveDiary()">저장</button>
+        </div>
+    </div>
+</div>
+
 <script>
     let calYear = 2026;
     let calMonth = 6; // 7월
@@ -1079,6 +1103,7 @@
     const formTargetDateTitle = document.getElementById('form-target-date-title');
     const settingsCard = document.getElementById('settings-card');
     const fontSizeDisplay = document.getElementById('font-size-display');
+    const memoModalOverlay = document.getElementById('memo-modal-overlay');
 
     // 메인 탭 (설정/다이어리/가계부) 참조
     const diaryPanel = document.getElementById('diary-panel');
@@ -1889,23 +1914,27 @@
 
         updatePhotoPreview();
 
-        switchMainTab('diary');
-        const formCard = document.getElementById('memo-form-card');
-        if (formCard) {
-            formCard.style.display = 'block';
-            setTimeout(() => {
-                formCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 50);
+        // 팝업창 활성화
+        if (memoModalOverlay) {
+            memoModalOverlay.classList.add('active');
         }
     }
 
     function closeDiaryFormPanel() {
-        const formCard = document.getElementById('memo-form-card');
-        if (formCard) formCard.style.display = 'none';
+        if (memoModalOverlay) {
+            memoModalOverlay.classList.remove('active');
+        }
         editingDiaryId = null;
         currentPhotoBase64 = null;
         selectedReservationDate = null;
         renderDiaryAroundToday();
+    }
+
+    function handleModalBackgroundClick(event) {
+        // 모달 배경 어두운 부분을 클릭했을 때만 닫히도록 설정
+        if (event.target === memoModalOverlay) {
+            closeDiaryFormPanel();
+        }
     }
 
     // 메인 화면(오늘 기준 전후) 리스트: 같은 일자끼리 묶고, 내림차순 정렬, 예약만 시간 및 아이콘 표시
@@ -2066,7 +2095,7 @@
         updateMoneySummary();
         if (isSearchFilterOpen) filterCustomList();
         renderDiaryAroundToday();
-        openDiaryForm(selectedReservationDate);
+        closeDiaryFormPanel(); // 저장 후 팝업창 닫기
     }
 
     function deleteDiary(id) {
