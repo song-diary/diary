@@ -1914,7 +1914,7 @@
         renderDiaryAroundToday();
     }
 
-    // [수정 1, 2, 3 적용됨] 메인 화면(오늘 기준 전후) 리스트: 수입/지출 제외, 메모 아이콘 변경(📝), [메모(일기)] 글자 제거
+    // 메인 화면(오늘 기준 전후) 리스트: 같은 일자끼리 묶고, 내림차순 정렬, 예약만 시간 및 아이콘 표시
     function renderDiaryAroundToday() {
         const listEl = document.getElementById('diary-around-today-list');
         if (!listEl) return;
@@ -1925,7 +1925,6 @@
         const tObj = parseDateObj(todayStr);
 
         let filtered = diaries.filter(item => {
-            // 수입·지출 내역은 메인 화면 리스트업에서 제외 (오직 순수 메모/일기 데이터만 허용)
             if (item.money && item.money.amount) return false;
             if (!item.text && !item.photo) return false;
 
@@ -1935,10 +1934,11 @@
             return diffDays >= -1 && diffDays <= 1;
         });
 
+        // 내림차순 정렬 (최신 날짜가 위로)
         filtered.sort((a, b) => {
             const da = normalizeDateStr(a.date) + (a.time || '');
             const db = normalizeDateStr(b.date) + (b.time || '');
-            return da.localeCompare(db);
+            return db.localeCompare(da);
         });
 
         if (filtered.length === 0) {
@@ -1946,45 +1946,66 @@
             return;
         }
 
+        // 같은 일자끼리 그룹화 처리
+        let grouped = {};
         filtered.forEach(item => {
-            const itemDateStr = normalizeDateStr(item.date);
-            const dObj = parseDateObj(itemDateStr);
-            const dayName = getDayOfWeekStr(itemDateStr);
+            let dStr = normalizeDateStr(item.date);
+            if (!grouped[dStr]) grouped[dStr] = [];
+            grouped[dStr].push(item);
+        });
+
+        let sortedDates = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
+
+        sortedDates.forEach(dateStr => {
+            let dayGroup = grouped[dateStr];
+            // 각 날짜 그룹 내에서도 시간 내림차순 정렬
+            dayGroup.sort((a, b) => (b.time || '').localeCompare(a.time || ''));
+
+            const dObj = parseDateObj(dateStr);
+            const dayName = getDayOfWeekStr(dateStr);
             const dateLabel = `${dObj.getMonth() + 1}/${dObj.getDate()}(${dayName})`;
-            const isReserved = isFutureDate(itemDateStr);
-            const reservedBadge = isReserved ? `<span style="background:var(--primary-color); color:white; padding:1px 4px; border-radius:3px; font-size:10px; margin-right:4px; font-weight:bold;">[예약]</span>` : '';
 
-            // [메모(일기)] 글자를 빼고 원하는 형태의 요약 텍스트 구성
-            let infoSummary = `<span style="font-weight: bold; color: var(--memo-color);">${reservedBadge}${item.text ? item.text.substring(0, 18) + (item.text.length > 18 ? '...' : '') : '사진 메모'}</span>`;
+            dayGroup.forEach(item => {
+                const itemDateStr = normalizeDateStr(item.date);
+                const isReserved = isFutureDate(itemDateStr);
+                const reservedBadge = isReserved ? `<span style="background:var(--primary-color); color:white; padding:1px 4px; border-radius:3px; font-size:10px; margin-right:4px; font-weight:bold;">[예약]</span>` : '';
 
-            const itemBox = document.createElement('div');
-            itemBox.style.cssText = `background: ${isReserved ? '#fff5f5' : '#fdfbfb'}; border: 1px solid ${isReserved ? '#f7d6d6' : 'var(--border-color)'}; border-radius: 6px; padding: 8px 10px; font-size: var(--memo-font-size); display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;`;
-            // 아이콘 변경: 기존 📅 대신 📝 아이콘 사용
-            itemBox.innerHTML = `
-                <div style="word-break: break-all; flex: 1; padding-right: 6px;">📝 ${dateLabel} ${item.time ? `⏰ ${item.time} | ` : '| '}${infoSummary}</div>
-                <div style="display: flex; gap: 4px; white-space: nowrap;">
-                    <button class="edit-btn" style="font-size: var(--memo-font-size);" onclick='openDiaryForm("${itemDateStr}", ${JSON.stringify(item)})'>수정</button>
-                    <button class="delete-btn" style="font-size: var(--memo-font-size);" onclick="deleteDiary('${item.id}');">삭제</button>
-                </div>
-            `;
-            listEl.appendChild(itemBox);
+                let infoSummary = `<span style="font-weight: bold; color: var(--memo-color);">${reservedBadge}${item.text ? item.text.substring(0, 18) + (item.text.length > 18 ? '...' : '') : '사진 메모'}</span>`;
+
+                // 일반 일자는 시계 아이콘과 시간 삭제, 예약만 시간 나타남
+                let timeDisplay = (isReserved && item.time) ? `⏰ ${item.time} | ` : '';
+
+                const itemBox = document.createElement('div');
+                itemBox.style.cssText = `background: ${isReserved ? '#fff5f5' : '#fdfbfb'}; border: 1px solid ${isReserved ? '#f7d6d6' : 'var(--border-color)'}; border-radius: 6px; padding: 8px 10px; font-size: var(--memo-font-size); display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;`;
+                
+                itemBox.innerHTML = `
+                    <div style="word-break: break-all; flex: 1; padding-right: 6px;">📝 ${dateLabel} | ${timeDisplay}${infoSummary}</div>
+                    <div style="display: flex; gap: 4px; white-space: nowrap;">
+                        <button class="edit-btn" style="font-size: var(--memo-font-size);" onclick='openDiaryForm("${itemDateStr}", ${JSON.stringify(item)})'>수정</button>
+                        <button class="delete-btn" style="font-size: var(--memo-font-size);" onclick="deleteDiary('${item.id}');">삭제</button>
+                    </div>
+                `;
+                listEl.appendChild(itemBox);
+            });
         });
     }
 
-    // [수정 1, 2, 3 적용됨] 날짜 클릭 시 나타나는 팝업/당일 입력 내역 리스트에서도 수입·지출 제외, 아이콘 변경(📝), [메모(일기)] 제거
+    // 날짜 클릭 시 나타나는 팝업/당일 입력 내역 리스트
     function renderPopupDayHistory(dateStr) {
         const historyListEl = document.getElementById('popup-day-history-list');
         if (!historyListEl) return;
         historyListEl.innerHTML = '';
 
         const diaries = getAllDiaries();
-        // 당일 입력된 내역 중 수입·지출은 제외하고 순수 메모(일기)만 필터링
         const dayDiaries = diaries.filter(d => {
             if (normalizeDateStr(d.date) !== dateStr) return false;
             if (d.money && d.money.amount) return false;
             if (!d.text && !d.photo) return false;
             return true;
         });
+
+        // 내림차순 정렬
+        dayDiaries.sort((a, b) => (b.time || '').localeCompare(a.time || ''));
 
         if (dayDiaries.length === 0) {
             historyListEl.innerHTML = `<div style="font-size: var(--memo-font-size); color: var(--text-sub); text-align: center; padding: 4px;">등록된 메모(일기) 내역이 없습니다.</div>`;
@@ -1999,12 +2020,11 @@
             
             itemBox.style.cssText = `background: ${isReserved ? '#fff5f5' : '#fdfbfb'}; border: 1px solid ${isReserved ? '#f7d6d6' : 'var(--border-color)'}; border-radius: 6px; padding: 8px 10px; font-size: var(--memo-font-size); display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;`;
             
-            // [메모(일기)] 글자 제거
             let infoSummary = `<span style="font-weight: bold; color: var(--memo-color);">${reservedBadge}${item.text ? item.text.substring(0, 18) + (item.text.length > 18 ? '...' : '') : '사진 메모'}</span>`;
+            let timeDisplay = (isReserved && item.time) ? `⏰ ${item.time} | ` : '';
 
-            // 아이콘 변경: 📝 사용
             itemBox.innerHTML = `
-                <div style="word-break: break-all; flex: 1; padding-right: 6px;">📝 ${item.time ? `⏰ ${item.time} | ` : ''}${infoSummary}</div>
+                <div style="word-break: break-all; flex: 1; padding-right: 6px;">📝 ${timeDisplay}${infoSummary}</div>
                 <div style="display: flex; gap: 4px; white-space: nowrap;">
                     <button class="edit-btn" style="font-size: var(--memo-font-size);" onclick='openDiaryForm("${dateStr}", ${JSON.stringify(item)})'>수정</button>
                     <button class="delete-btn" style="font-size: var(--memo-font-size);" onclick="deleteDiary('${item.id}'); openDiaryForm('${dateStr}');">삭제</button>
