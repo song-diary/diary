@@ -510,7 +510,7 @@
         .dot.income { background-color: var(--income-color); }
         .dot.memo { background-color: var(--memo-color); }
 
-        /* 다이어리 입력 폼 (이전 팝업 → 인라인 카드) */
+        /* 다이어리 입력 폼 */
         #memo-form-card {
             background: #ffffff;
             width: 100%;
@@ -883,18 +883,13 @@
 
             <div id="textOutput" class="diary-textarea" contenteditable="true" placeholder="여기에 메모(일기)를 입력하세요" onfocus="scrollToInput(this)"></div>
 
-            <div class="btn-group" style="margin-bottom: 12px;">
+            <div class="btn-group" style="margin-bottom: 0;">
                 <button class="btn btn-secondary" id="record-btn">🎤 음성메모</button>
                 <label class="btn btn-secondary" style="text-align:center; display:flex; align-items:center; justify-content:center; cursor:pointer;">
                     📷 사진
                     <input type="file" id="diary-photo-input" accept="image/*" style="display:none;" onchange="previewImage(event)">
                 </label>
                 <button class="btn btn-primary" onclick="manualSaveDiary()">저장</button>
-            </div>
-
-            <div id="popup-day-history-section" style="border-top: 1px dashed var(--border-color); padding-top: 10px; margin-top: 5px;">
-                <div style="font-size: calc(var(--memo-font-size) - 2px); font-weight: bold; color: var(--primary-color); margin-bottom: 6px;">📋 당일 입력된 내역 확인</div>
-                <div id="popup-day-history-list" style="max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;"></div>
             </div>
         </div>
     </div>
@@ -1893,7 +1888,6 @@
         }
 
         updatePhotoPreview();
-        renderPopupDayHistory(selectedReservationDate);
 
         switchMainTab('diary');
         const formCard = document.getElementById('memo-form-card');
@@ -1987,50 +1981,6 @@
                 `;
                 listEl.appendChild(itemBox);
             });
-        });
-    }
-
-    // 날짜 클릭 시 나타나는 팝업/당일 입력 내역 리스트
-    function renderPopupDayHistory(dateStr) {
-        const historyListEl = document.getElementById('popup-day-history-list');
-        if (!historyListEl) return;
-        historyListEl.innerHTML = '';
-
-        const diaries = getAllDiaries();
-        const dayDiaries = diaries.filter(d => {
-            if (normalizeDateStr(d.date) !== dateStr) return false;
-            if (d.money && d.money.amount) return false;
-            if (!d.text && !d.photo) return false;
-            return true;
-        });
-
-        // 내림차순 정렬
-        dayDiaries.sort((a, b) => (b.time || '').localeCompare(a.time || ''));
-
-        if (dayDiaries.length === 0) {
-            historyListEl.innerHTML = `<div style="font-size: var(--memo-font-size); color: var(--text-sub); text-align: center; padding: 4px;">등록된 메모(일기) 내역이 없습니다.</div>`;
-            return;
-        }
-
-        dayDiaries.forEach(item => {
-            const itemBox = document.createElement('div');
-            
-            let isReserved = isFutureDate(normalizeDateStr(item.date));
-            let reservedBadge = isReserved ? `<span style="background:var(--primary-color); color:white; padding:1px 4px; border-radius:3px; font-size:10px; margin-right:4px; font-weight:bold;">[예약]</span>` : '';
-            
-            itemBox.style.cssText = `background: ${isReserved ? '#fff5f5' : '#fdfbfb'}; border: 1px solid ${isReserved ? '#f7d6d6' : 'var(--border-color)'}; border-radius: 6px; padding: 8px 10px; font-size: var(--memo-font-size); display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;`;
-            
-            let infoSummary = `<span style="font-weight: bold; color: var(--memo-color);">${reservedBadge}${item.text ? item.text.substring(0, 18) + (item.text.length > 18 ? '...' : '') : '사진 메모'}</span>`;
-            let timeDisplay = (isReserved && item.time) ? `⏰ ${item.time} | ` : '';
-
-            itemBox.innerHTML = `
-                <div style="word-break: break-all; flex: 1; padding-right: 6px;">📝 ${timeDisplay}${infoSummary}</div>
-                <div style="display: flex; gap: 4px; white-space: nowrap;">
-                    <button class="edit-btn" style="font-size: var(--memo-font-size);" onclick='openDiaryForm("${dateStr}", ${JSON.stringify(item)})'>수정</button>
-                    <button class="delete-btn" style="font-size: var(--memo-font-size);" onclick="deleteDiary('${item.id}'); openDiaryForm('${dateStr}');">삭제</button>
-                </div>
-            `;
-            historyListEl.appendChild(itemBox);
         });
     }
 
@@ -2128,7 +2078,6 @@
         updateMoneySummary();
         if (isSearchFilterOpen) filterCustomList();
         renderDiaryAroundToday();
-        if (selectedReservationDate) renderPopupDayHistory(selectedReservationDate);
     }
 
     function initSpeechRecognition() {
