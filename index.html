@@ -268,6 +268,17 @@
             padding: 8px 4px;
             cursor: pointer;
             transition: all 0.15s ease;
+            position: relative;
+        }
+
+        .money-box .tap-hint {
+            position: absolute;
+            top: 2px;
+            right: 4px;
+            font-size: 11px;
+            line-height: 1;
+            opacity: 0.6;
+            pointer-events: none;
         }
 
         .money-box:active {
@@ -916,15 +927,18 @@
             </div>
             <div class="money-summary-grid" id="money-summary-grid-box">
                 <div class="money-box income" onclick="selectMoneySummaryStat('income')">
+                    <span class="tap-hint">👆</span>
                     <div class="m-label">총 수입</div>
                     <div class="m-value" id="summary-income">0원</div>
                 </div>
                 <div class="money-box expense" onclick="selectMoneySummaryStat('expense')">
+                    <span class="tap-hint">👆</span>
                     <div class="m-label">총 지출</div>
                     <div class="m-value" id="summary-expense">0원</div>
                 </div>
-                <div class="money-box balance" onclick="selectMoneySummaryStat('memo')">
-                    <div class="m-label">잔액/메모</div>
+                <div class="money-box balance" onclick="selectMoneySummaryStat('balance')">
+                    <span class="tap-hint">👆</span>
+                    <div class="m-label">잔액</div>
                     <div class="m-value" id="summary-balance">0원</div>
                 </div>
             </div>
@@ -934,7 +948,7 @@
         <div class="card sub-feature-card" id="category-stats-card">
             <div class="feature-title">
                 <span id="stats-card-title">📊 이번 달 지출 통계</span>
-                <span style="font-size: 12px; color: var(--text-sub); font-weight: normal;">(과목 클릭 시 아래 리스트업)</span>
+                <span style="font-size: 12px; color: var(--text-sub); font-weight: normal;" id="stats-card-hint">(과목 클릭 시 아래 리스트업)</span>
             </div>
             <div id="category-stats-body"></div>
         </div>
@@ -1383,31 +1397,25 @@
         return combinedList;
     }
 
-    function renderCategoryStats() {
-        const statsBody = document.getElementById('category-stats-body');
-        const statsCardTitle = document.getElementById('stats-card-title');
-        if (!statsBody) return;
-
-        if (currentStatsType === 'memo') {
-            if (statsCardTitle) statsCardTitle.textContent = `📊 이번 달 메모(일기) 통계`;
-            if (isMoneySummaryVisible) {
-                statsBody.innerHTML = `<div style="text-align:center; color:var(--text-sub); font-size:13px; padding:6px;">메모(일기) 항목은 계정별 통계가 없습니다.<br>아래 상세 내역에서 확인해주세요.</div>`;
-            }
-            return;
+    function buildCategoryStatsGroup(moneyType, groupTitle, clickable) {
+        const wrapper = document.createElement('div');
+        if (groupTitle) {
+            const titleEl = document.createElement('div');
+            titleEl.style.cssText = 'font-weight:bold; font-size:13px; color:var(--weekday-color); margin: 8px 0 4px;';
+            titleEl.textContent = groupTitle;
+            wrapper.appendChild(titleEl);
         }
-        if (!isMoneySummaryVisible) return;
 
-        statsBody.innerHTML = '';
         const diaries = getAllDiaries();
         const prefix = `${calYear}-${String(calMonth + 1).padStart(2, '0')}`;
 
-        let targetCategories = currentStatsType === 'expense' ? expenseCategories : incomeCategories;
+        let targetCategories = moneyType === 'expense' ? expenseCategories : incomeCategories;
         let categorySums = {};
         targetCategories.forEach(cat => categorySums[cat] = 0);
         let totalAmt = 0;
 
         diaries.forEach(item => {
-            if (normalizeDateStr(item.date).startsWith(prefix) && item.money && item.money.type === currentStatsType) {
+            if (normalizeDateStr(item.date).startsWith(prefix) && item.money && item.money.type === moneyType) {
                 let cat = item.money.category;
                 let amt = Number(item.money.amount) || 0;
                 if (!categorySums[cat]) categorySums[cat] = 0;
@@ -1416,12 +1424,6 @@
             }
         });
 
-        if (statsCardTitle) {
-            statsCardTitle.textContent = currentStatsType === 'expense' 
-                ? `📊 이번 달 지출 통계` 
-                : `📊 이번 달 수입 통계`;
-        }
-
         let sortedCats = Object.keys(categorySums).map(cat => ({
             category: cat,
             amount: categorySums[cat]
@@ -1429,19 +1431,26 @@
 
         let hasData = sortedCats.some(item => item.amount > 0);
         if (!hasData) {
-            statsBody.innerHTML = `<div style="text-align:center; color:var(--text-sub); font-size:13px; padding:6px;">이번 달 ${currentStatsType === 'expense' ? '지출' : '수입'} 내역이 없습니다.</div>`;
-            return;
+            const emptyEl = document.createElement('div');
+            emptyEl.style.cssText = 'text-align:center; color:var(--text-sub); font-size:13px; padding:6px;';
+            emptyEl.textContent = `이번 달 ${moneyType === 'expense' ? '지출' : '수입'} 내역이 없습니다.`;
+            wrapper.appendChild(emptyEl);
+            return wrapper;
         }
 
         sortedCats.forEach(item => {
             if (item.amount === 0) return;
             let percent = totalAmt > 0 ? ((item.amount / totalAmt) * 100).toFixed(1) : 0;
-            let fillColorClass = currentStatsType === 'expense' ? 'expense' : 'income';
-            let isSelected = selectedCategoryFilter === item.category;
+            let fillColorClass = moneyType === 'expense' ? 'expense' : 'income';
+            let isSelected = clickable && selectedCategoryFilter === item.category;
 
             const row = document.createElement('div');
             row.className = `stat-bar-container ${isSelected ? 'active-stat' : ''}`;
-            row.onclick = () => selectCategoryFromStats(item.category);
+            if (clickable) {
+                row.onclick = () => selectCategoryFromStats(item.category);
+            } else {
+                row.style.cursor = 'default';
+            }
             row.innerHTML = `
                 <div class="stat-info-row">
                     <span style="font-weight:bold; color:var(--weekday-color);">👉 ${item.category}</span>
@@ -1451,8 +1460,40 @@
                     <div class="stat-bar-fill ${fillColorClass}" style="width: ${percent}%;"></div>
                 </div>
             `;
-            statsBody.appendChild(row);
+            wrapper.appendChild(row);
         });
+
+        return wrapper;
+    }
+
+    function renderCategoryStats() {
+        const statsBody = document.getElementById('category-stats-body');
+        const statsCardTitle = document.getElementById('stats-card-title');
+        const statsCardHint = document.getElementById('stats-card-hint');
+        if (!statsBody) return;
+        if (!isMoneySummaryVisible) return;
+
+        // 설정에서 가계부 현황을 끈 경우(메모 전용 모드)는 이 카드 자체가 숨겨지므로 여기서 종료
+        if (currentStatsType === 'memo') return;
+
+        statsBody.innerHTML = '';
+
+        if (currentStatsType === 'balance') {
+            if (statsCardTitle) statsCardTitle.textContent = `📊 이번 달 잔액 분류`;
+            if (statsCardHint) statsCardHint.textContent = '(수입/지출 항목별 구성)';
+            statsBody.appendChild(buildCategoryStatsGroup('income', '💰 총 수입 분류', false));
+            statsBody.appendChild(buildCategoryStatsGroup('expense', '💸 총 지출 분류', false));
+            return;
+        }
+
+        if (statsCardTitle) {
+            statsCardTitle.textContent = currentStatsType === 'expense'
+                ? `📊 이번 달 지출 통계`
+                : `📊 이번 달 수입 통계`;
+        }
+        if (statsCardHint) statsCardHint.textContent = '(과목 클릭 시 아래 리스트업)';
+
+        statsBody.appendChild(buildCategoryStatsGroup(currentStatsType, null, true));
     }
 
     function selectMoneySummaryStat(type) {
@@ -1462,7 +1503,14 @@
         if (keywordSearchInput) keywordSearchInput.value = '';
         highlightMoneySummaryBox(type);
         renderCategoryStats();
-        if (isSearchFilterOpen) filterCustomList();
+
+        if (type === 'balance') {
+            // 잔액 클릭 시: 위 분류(통계)만 보여주고, 아래 상세 내역 리스트는 숨김 (다이어리 탭에 별도로 존재)
+            if (searchFilterCard) searchFilterCard.style.display = 'none';
+        } else {
+            if (searchFilterCard && isSearchFilterOpen) searchFilterCard.style.display = 'block';
+            if (isSearchFilterOpen) filterCustomList();
+        }
     }
 
     function highlightMoneySummaryBox(type) {
@@ -1472,7 +1520,7 @@
         let target = null;
         if (type === 'income') target = document.querySelector('#money-summary-grid-box .money-box.income');
         else if (type === 'expense') target = document.querySelector('#money-summary-grid-box .money-box.expense');
-        else if (type === 'memo') target = document.querySelector('#money-summary-grid-box .money-box.balance');
+        else if (type === 'balance') target = document.querySelector('#money-summary-grid-box .money-box.balance');
         if (target) target.classList.add('stat-selected');
     }
 
@@ -1546,6 +1594,12 @@
         const statsTotalAmount = document.getElementById('stats-total-amount');
         if (!resultListContainer) return;
         resultListContainer.innerHTML = '';
+
+        // 잔액 통계는 위쪽 분류만 제공하고, 하단 상세 내역 리스트는 표시하지 않음 (다이어리 탭에 별도 존재)
+        if (currentStatsType === 'balance') {
+            if (searchFilterCard) searchFilterCard.style.display = 'none';
+            return;
+        }
 
         let diaries = getAllDiaries();
         let keyword = selectedCategoryFilter.toLowerCase();
@@ -1877,15 +1931,18 @@
         if (summaryGridBox && !summaryGridBox.querySelector('.money-box.income')) {
             summaryGridBox.innerHTML = `
                 <div class="money-box income" onclick="selectMoneySummaryStat('income')">
+                    <span class="tap-hint">👆</span>
                     <div class="m-label">총 수입</div>
                     <div class="m-value" id="summary-income">0원</div>
                 </div>
                 <div class="money-box expense" onclick="selectMoneySummaryStat('expense')">
+                    <span class="tap-hint">👆</span>
                     <div class="m-label">총 지출</div>
                     <div class="m-value" id="summary-expense">0원</div>
                 </div>
-                <div class="money-box balance" onclick="selectMoneySummaryStat('memo')">
-                    <div class="m-label">잔액/메모</div>
+                <div class="money-box balance" onclick="selectMoneySummaryStat('balance')">
+                    <span class="tap-hint">👆</span>
+                    <div class="m-label">잔액</div>
                     <div class="m-value" id="summary-balance">0원</div>
                 </div>
             `;
@@ -1916,7 +1973,13 @@
         }
 
         if (currentStatsType !== 'memo') renderCategoryStats();
-        if (isSearchFilterOpen) filterCustomList();
+
+        if (currentStatsType === 'balance') {
+            if (searchFilterCard) searchFilterCard.style.display = 'none';
+        } else {
+            if (searchFilterCard && isSearchFilterOpen) searchFilterCard.style.display = 'block';
+            if (isSearchFilterOpen) filterCustomList();
+        }
         highlightMoneySummaryBox(currentStatsType);
     }
 
