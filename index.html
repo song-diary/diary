@@ -1284,7 +1284,6 @@
         return days[dObj.getDay()];
     }
 
-    // 오늘 이후(미래) 일자에 작성된 데이터인지 여부 -> true면 '예약' 표시
     function isFutureDate(dateStr) {
         return normalizeDateStr(dateStr) > getTodayStr();
     }
@@ -1394,9 +1393,8 @@
         });
     }
 
-    // 💵 가계부현황 박스(총수입/총지출/잔액-메모) 클릭 → 계정별 통계 전환
     function selectMoneySummaryStat(type) {
-        if (!isMoneySummaryVisible) return; // 메모현황 모드에서는 전환 불필요
+        if (!isMoneySummaryVisible) return;
         currentStatsType = type;
         selectedCategoryFilter = '';
         if (keywordSearchInput) keywordSearchInput.value = '';
@@ -1586,7 +1584,7 @@
             } else {
                 subItem.classList.add('memo-only-box');
                 headerHTML = `<div style="font-weight: bold; margin-bottom: 4px; color: var(--memo-color);">
-                    ${reservedBadge}📅 [${displayDateStr}]
+                    ${reservedBadge}📝 [${displayDateStr}]
                 </div>`;
             }
 
@@ -1759,7 +1757,6 @@
         switchMainTab('diary');
     }
 
-    // 📔/💰/⚙️ 메인 탭 전환
     function switchMainTab(tabName) {
         const panels = { diary: diaryPanel, money: moneyPanel, settings: settingsPanel };
         const buttons = { diary: tabDiaryBtn, money: tabMoneyBtn, settings: tabSettingsBtn };
@@ -1908,7 +1905,6 @@
         }
     }
 
-    // ✖ 버튼: 입력 폼을 닫고, 오늘 기준 전후 리스트로 돌아감
     function closeDiaryFormPanel() {
         const formCard = document.getElementById('memo-form-card');
         if (formCard) formCard.style.display = 'none';
@@ -1918,7 +1914,7 @@
         renderDiaryAroundToday();
     }
 
-    // 📔 다이어리 탭 기본 화면: 오늘 기준 전후(-1일 ~ +1일) 내역 리스트
+    // [수정 1, 2, 3 적용됨] 메인 화면(오늘 기준 전후) 리스트: 수입/지출 제외, 메모 아이콘 변경(📝), [메모(일기)] 글자 제거
     function renderDiaryAroundToday() {
         const listEl = document.getElementById('diary-around-today-list');
         if (!listEl) return;
@@ -1929,6 +1925,10 @@
         const tObj = parseDateObj(todayStr);
 
         let filtered = diaries.filter(item => {
+            // 수입·지출 내역은 메인 화면 리스트업에서 제외 (오직 순수 메모/일기 데이터만 허용)
+            if (item.money && item.money.amount) return false;
+            if (!item.text && !item.photo) return false;
+
             const itemDateStr = normalizeDateStr(item.date);
             const itemDate = parseDateObj(itemDateStr);
             const diffDays = (tObj - itemDate) / (1000 * 60 * 60 * 24);
@@ -1942,7 +1942,7 @@
         });
 
         if (filtered.length === 0) {
-            listEl.innerHTML = `<div style="font-size: var(--memo-font-size); color: var(--text-sub); text-align: center; padding: 10px;">오늘 기준 전후로 등록된 내역이 없습니다.<br>달력에서 날짜를 클릭해 입력해보세요.</div>`;
+            listEl.innerHTML = `<div style="font-size: var(--memo-font-size); color: var(--text-sub); text-align: center; padding: 10px;">오늘 기준 전후로 등록된 메모(일기) 내역이 없습니다.<br>달력에서 날짜를 클릭해 입력해보세요.</div>`;
             return;
         }
 
@@ -1954,20 +1954,14 @@
             const isReserved = isFutureDate(itemDateStr);
             const reservedBadge = isReserved ? `<span style="background:var(--primary-color); color:white; padding:1px 4px; border-radius:3px; font-size:10px; margin-right:4px; font-weight:bold;">[예약]</span>` : '';
 
-            let infoSummary = '';
-            if (item.money && item.money.amount) {
-                const isExp = item.money.type === 'expense';
-                const sign = isExp ? '-' : '+';
-                const color = isExp ? 'var(--expense-color)' : 'var(--income-color)';
-                infoSummary = `<span style="font-weight: bold; color: ${color};">${reservedBadge}[${isExp ? '지출' : '수입'}] ${item.money.category} (${sign}${Number(item.money.amount).toLocaleString()}원)</span>`;
-            } else {
-                infoSummary = `<span style="font-weight: bold; color: var(--memo-color);">${reservedBadge}[메모(일기)] ${item.text ? item.text.substring(0, 15) + '...' : '사진 메모'}</span>`;
-            }
+            // [메모(일기)] 글자를 빼고 원하는 형태의 요약 텍스트 구성
+            let infoSummary = `<span style="font-weight: bold; color: var(--memo-color);">${reservedBadge}${item.text ? item.text.substring(0, 18) + (item.text.length > 18 ? '...' : '') : '사진 메모'}</span>`;
 
             const itemBox = document.createElement('div');
             itemBox.style.cssText = `background: ${isReserved ? '#fff5f5' : '#fdfbfb'}; border: 1px solid ${isReserved ? '#f7d6d6' : 'var(--border-color)'}; border-radius: 6px; padding: 8px 10px; font-size: var(--memo-font-size); display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;`;
+            // 아이콘 변경: 기존 📅 대신 📝 아이콘 사용
             itemBox.innerHTML = `
-                <div style="word-break: break-all; flex: 1; padding-right: 6px;">📅 ${dateLabel} ${item.time ? `⏰ ${item.time} | ` : '| '}${infoSummary}</div>
+                <div style="word-break: break-all; flex: 1; padding-right: 6px;">📝 ${dateLabel} ${item.time ? `⏰ ${item.time} | ` : '| '}${infoSummary}</div>
                 <div style="display: flex; gap: 4px; white-space: nowrap;">
                     <button class="edit-btn" style="font-size: var(--memo-font-size);" onclick='openDiaryForm("${itemDateStr}", ${JSON.stringify(item)})'>수정</button>
                     <button class="delete-btn" style="font-size: var(--memo-font-size);" onclick="deleteDiary('${item.id}');">삭제</button>
@@ -1977,16 +1971,23 @@
         });
     }
 
+    // [수정 1, 2, 3 적용됨] 날짜 클릭 시 나타나는 팝업/당일 입력 내역 리스트에서도 수입·지출 제외, 아이콘 변경(📝), [메모(일기)] 제거
     function renderPopupDayHistory(dateStr) {
         const historyListEl = document.getElementById('popup-day-history-list');
         if (!historyListEl) return;
         historyListEl.innerHTML = '';
 
         const diaries = getAllDiaries();
-        const dayDiaries = diaries.filter(d => normalizeDateStr(d.date) === dateStr);
+        // 당일 입력된 내역 중 수입·지출은 제외하고 순수 메모(일기)만 필터링
+        const dayDiaries = diaries.filter(d => {
+            if (normalizeDateStr(d.date) !== dateStr) return false;
+            if (d.money && d.money.amount) return false;
+            if (!d.text && !d.photo) return false;
+            return true;
+        });
 
         if (dayDiaries.length === 0) {
-            historyListEl.innerHTML = `<div style="font-size: var(--memo-font-size); color: var(--text-sub); text-align: center; padding: 4px;">등록된 내역이 없습니다.</div>`;
+            historyListEl.innerHTML = `<div style="font-size: var(--memo-font-size); color: var(--text-sub); text-align: center; padding: 4px;">등록된 메모(일기) 내역이 없습니다.</div>`;
             return;
         }
 
@@ -1998,18 +1999,12 @@
             
             itemBox.style.cssText = `background: ${isReserved ? '#fff5f5' : '#fdfbfb'}; border: 1px solid ${isReserved ? '#f7d6d6' : 'var(--border-color)'}; border-radius: 6px; padding: 8px 10px; font-size: var(--memo-font-size); display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;`;
             
-            let infoSummary = '';
-            if (item.money && item.money.amount) {
-                let isExp = item.money.type === 'expense';
-                let sign = isExp ? '-' : '+';
-                let color = isExp ? 'var(--expense-color)' : 'var(--income-color)';
-                infoSummary = `<span style="font-weight: bold; color: ${color};">${reservedBadge}[${isExp ? '지출' : '수입'}] ${item.money.category} (${sign}${Number(item.money.amount).toLocaleString()}원)</span>`;
-            } else {
-                infoSummary = `<span style="font-weight: bold; color: var(--memo-color);">${reservedBadge}[메모(일기)] ${item.text ? item.text.substring(0, 15) + '...' : '사진 메모'}</span>`;
-            }
+            // [메모(일기)] 글자 제거
+            let infoSummary = `<span style="font-weight: bold; color: var(--memo-color);">${reservedBadge}${item.text ? item.text.substring(0, 18) + (item.text.length > 18 ? '...' : '') : '사진 메모'}</span>`;
 
+            // 아이콘 변경: 📝 사용
             itemBox.innerHTML = `
-                <div style="word-break: break-all; flex: 1; padding-right: 6px;">${item.time ? `⏰ ${item.time} | ` : ''}${infoSummary}</div>
+                <div style="word-break: break-all; flex: 1; padding-right: 6px;">📝 ${item.time ? `⏰ ${item.time} | ` : ''}${infoSummary}</div>
                 <div style="display: flex; gap: 4px; white-space: nowrap;">
                     <button class="edit-btn" style="font-size: var(--memo-font-size);" onclick='openDiaryForm("${dateStr}", ${JSON.stringify(item)})'>수정</button>
                     <button class="delete-btn" style="font-size: var(--memo-font-size);" onclick="deleteDiary('${item.id}'); openDiaryForm('${dateStr}');">삭제</button>
@@ -2181,14 +2176,10 @@
             setPeriodFilter('month');
         }
 
-        // 기본 탭: 다이어리 (오늘 기준 전후 리스트만 표시, 입력폼은 날짜 클릭 시 표시)
         switchMainTab('diary');
-
-        // 카드명세 입력 기본 행 1개 생성
         addCardStatementRow();
     };
 
-    // ===================== 💳 카드명세 일괄 입력 =====================
     let csRowSeq = 0;
 
     function populateCsCategorySelect(selectEl) {
@@ -2256,7 +2247,7 @@
             const rawAmount = row.querySelector('.cs-amount').value.replace(/[^0-9]/g, '').trim();
 
             if (!dateVal || rawAmount === '' || isNaN(rawAmount) || Number(rawAmount) <= 0) {
-                return; // 날짜/금액이 없는 행은 건너뜀
+                return;
             }
 
             const textParts = [];
