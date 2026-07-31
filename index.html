@@ -144,6 +144,20 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
 
+        /* 카드명세 일괄입력 카드 (팝업 폼) */
+        #card-statement-card {
+            background: #fff;
+            border: 2px solid var(--primary-color);
+            animation: fadeIn 0.3s ease;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
         /* 카드명세 일괄입력 */
         .card-statement-row {
             display: flex;
@@ -273,6 +287,49 @@
             text-align: center;
         }
 
+        .carry-over-row {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+            padding: 8px 10px;
+            background: #ffffff;
+            border: 1px dashed #9dd6b1;
+            border-radius: 8px;
+        }
+
+        .carry-over-label {
+            font-size: 13px;
+            font-weight: bold;
+            color: #27ae60;
+            white-space: nowrap;
+        }
+
+        .carry-over-input {
+            flex: 0 1 110px;
+            width: 110px;
+            max-width: 110px;
+            box-sizing: border-box;
+            text-align: right;
+            padding: 5px 6px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .carry-over-unit {
+            font-size: 13px;
+            color: var(--text-sub);
+        }
+
+        .carry-over-btn {
+            margin-left: auto;
+            padding: 6px 10px;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
         .money-box {
             background: #ffffff;
             border: 2px solid #d2eedc;
@@ -391,19 +448,24 @@
         .balance-loc-row {
             display: flex;
             align-items: center;
+            flex-wrap: wrap;
             gap: 6px;
             padding: 4px 0;
         }
 
         .balance-loc-name {
-            flex: 1;
+            flex: 1 1 auto;
+            min-width: 70px;
             font-weight: bold;
             color: var(--weekday-color);
             font-size: 13px;
         }
 
         .balance-loc-amount-input {
-            width: 90px;
+            flex: 0 1 110px;
+            width: 110px;
+            max-width: 110px;
+            box-sizing: border-box;
             text-align: right;
             padding: 5px 6px;
             border: 1px solid var(--border-color);
@@ -998,6 +1060,12 @@
                     <div class="m-value" id="summary-balance">0원</div>
                 </div>
             </div>
+            <div class="carry-over-row" id="carry-over-row">
+                <span class="carry-over-label">📌 전월 이월액</span>
+                <input type="text" inputmode="numeric" id="carry-over-input" class="carry-over-input" placeholder="0" onchange="updateCarryOverAmount(this.value)">
+                <span class="carry-over-unit">원</span>
+                <button class="action-btn carry-over-btn" onclick="carryOverToNextMonth()">다음달로 이월 ➡️</button>
+            </div>
         </div>
 
         <!-- 📊 카테고리별 지출/수입 통계 리스트 -->
@@ -1010,18 +1078,23 @@
         </div>
 
         <!-- 💳 카드명세 일괄 입력 -->
-        <div class="card sub-feature-card" id="card-statement-card" style="display: none;">
-            <div class="feature-title">
-                <span>💳 카드명세 일괄 입력</span>
-                <span style="font-size: 12px; color: var(--text-sub); font-weight: normal;">받은 카드명세서를 보며 한번에 입력</span>
-            </div>
-            <div style="display: flex; gap: 6px; margin-bottom: 8px;">
-                <input type="text" id="cs-card-name" placeholder="카드명/계정 (예: 국민카드)" style="flex:1; padding:6px; border:1px solid var(--border-color); border-radius:6px; font-size:16px;">
-            </div>
-            <div id="card-statement-rows"></div>
-            <div class="btn-group" style="margin-top: 8px; margin-bottom: 0;">
-                <button class="btn btn-secondary" onclick="addCardStatementRow()">➕ 행 추가</button>
-                <button class="btn btn-primary" onclick="saveCardStatementRows()">💾 전체 저장</button>
+        <button class="action-btn" id="card-statement-open-btn" style="display:none; width:100%; margin-bottom:10px; padding:10px;" onclick="openCardStatementModal()">💳 카드명세 일괄 입력 열기</button>
+
+        <div class="modal-overlay" id="card-statement-modal-overlay" onclick="handleCardStatementModalBackgroundClick(event)">
+            <div class="card" id="card-statement-card">
+                <div class="settings-title">
+                    <span>💳 카드명세 일괄 입력</span>
+                    <button class="close-form-btn" onclick="closeCardStatementModal()" title="닫기">✖</button>
+                </div>
+                <div style="font-size: 12px; color: var(--text-sub); margin-bottom: 8px;">받은 카드명세서를 보며 한번에 입력</div>
+                <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+                    <input type="text" id="cs-card-name" placeholder="카드명/계정 (예: 국민카드)" style="flex:1; padding:6px; border:1px solid var(--border-color); border-radius:6px; font-size:16px;">
+                </div>
+                <div id="card-statement-rows"></div>
+                <div class="btn-group" style="margin-top: 8px; margin-bottom: 0;">
+                    <button class="btn btn-secondary" onclick="addCardStatementRow()">➕ 행 추가</button>
+                    <button class="btn btn-primary" onclick="saveCardStatementRows()">💾 전체 저장</button>
+                </div>
             </div>
         </div>
 
@@ -1238,11 +1311,26 @@
     const keywordSearchInput = document.getElementById('keyword-search-input');
     const listCardMainTitle = document.getElementById('list-card-main-title');
     const cardStatementRowsBox = document.getElementById('card-statement-rows');
-    const cardStatementCard = document.getElementById('card-statement-card');
+    const cardStatementOpenBtn = document.getElementById('card-statement-open-btn');
+    const cardStatementModalOverlay = document.getElementById('card-statement-modal-overlay');
 
     function updateCardStatementVisibility() {
-        if (cardStatementCard) {
-            cardStatementCard.style.display = (isMoneySummaryVisible && currentStatsType === 'balance') ? 'block' : 'none';
+        if (cardStatementOpenBtn) {
+            cardStatementOpenBtn.style.display = (isMoneySummaryVisible && currentStatsType === 'balance') ? 'block' : 'none';
+        }
+    }
+
+    function openCardStatementModal() {
+        if (cardStatementModalOverlay) cardStatementModalOverlay.classList.add('active');
+    }
+
+    function closeCardStatementModal() {
+        if (cardStatementModalOverlay) cardStatementModalOverlay.classList.remove('active');
+    }
+
+    function handleCardStatementModalBackgroundClick(event) {
+        if (event.target === cardStatementModalOverlay) {
+            closeCardStatementModal();
         }
     }
 
@@ -1554,6 +1642,57 @@
         }
 
         return wrapper;
+    }
+
+    // ===================== 📌 전월 이월액 (다음달로 잔액 연결) =====================
+    function getCarryOverMap() {
+        let map = null;
+        try {
+            map = JSON.parse(localStorage.getItem('smartDiaryCarryOver') || 'null');
+        } catch (e) {
+            map = null;
+        }
+        if (!map || typeof map !== 'object') map = {};
+        return map;
+    }
+
+    function carryOverKey(year, month) {
+        return `${year}-${String(month + 1).padStart(2, '0')}`;
+    }
+
+    function getCarryOverAmount(year, month) {
+        const map = getCarryOverMap();
+        return Number(map[carryOverKey(year, month)]) || 0;
+    }
+
+    function setCarryOverAmount(year, month, amount) {
+        const map = getCarryOverMap();
+        map[carryOverKey(year, month)] = Number(amount) || 0;
+        localStorage.setItem('smartDiaryCarryOver', JSON.stringify(map));
+    }
+
+    function updateCarryOverAmount(value) {
+        const rawAmount = String(value).replace(/[^0-9-]/g, '').trim();
+        setCarryOverAmount(calYear, calMonth, rawAmount);
+        updateMoneySummary();
+    }
+
+    function carryOverToNextMonth() {
+        const summaryBalance = document.getElementById('summary-balance');
+        const currentBalanceText = summaryBalance ? summaryBalance.textContent.replace(/[^0-9-]/g, '') : '0';
+        const currentBalance = Number(currentBalanceText) || 0;
+
+        let nextYear = calYear;
+        let nextMonth = calMonth + 1;
+        if (nextMonth > 11) { nextMonth = 0; nextYear++; }
+
+        if (!confirm(`이번 달(${calYear}년 ${calMonth + 1}월) 잔액 ${currentBalance.toLocaleString()}원을 다음 달(${nextYear}년 ${nextMonth + 1}월) 이월액으로 연결하시겠습니까?`)) return;
+
+        setCarryOverAmount(nextYear, nextMonth, currentBalance);
+        alert(`✅ ${nextYear}년 ${nextMonth + 1}월로 ${currentBalance.toLocaleString()}원이 이월되었습니다.`);
+        calYear = nextYear;
+        calMonth = nextMonth;
+        renderCalendar();
     }
 
     // ===================== 💼 잔액 보관처별 분류 (지갑/은행 등 직접 입력) =====================
@@ -2110,6 +2249,8 @@
             summaryCard.style.display = 'block';
             if (summaryTitle) summaryTitle.textContent = `📝 ${calYear}년 ${calMonth + 1}월 메모(일기) 현황`;
             if (summarySubHint) summarySubHint.textContent = '현황 정보';
+            const carryOverRowHidden = document.getElementById('carry-over-row');
+            if (carryOverRowHidden) carryOverRowHidden.style.display = 'none';
 
             let memoCount = 0;
             let photoOnlyCount = 0;
@@ -2186,11 +2327,19 @@
             }
         });
 
-        let balance = totalIncome - totalExpense;
+        const carryOverAmount = getCarryOverAmount(calYear, calMonth);
+        let balance = carryOverAmount + totalIncome - totalExpense;
 
         const summaryIncome = document.getElementById('summary-income');
         const summaryExpense = document.getElementById('summary-expense');
         const summaryBalance = document.getElementById('summary-balance');
+        const carryOverRow = document.getElementById('carry-over-row');
+        const carryOverInput = document.getElementById('carry-over-input');
+
+        if (carryOverRow) carryOverRow.style.display = 'flex';
+        if (carryOverInput && document.activeElement !== carryOverInput) {
+            carryOverInput.value = carryOverAmount ? carryOverAmount.toLocaleString() : '';
+        }
 
         if (summaryIncome) summaryIncome.textContent = totalIncome.toLocaleString() + '원';
         if (summaryExpense) summaryExpense.textContent = totalExpense.toLocaleString() + '원';
@@ -2844,6 +2993,7 @@
         if (isSearchFilterOpen) filterCustomList();
 
         alert(`${savedCount}건이 가계부에 저장되었습니다.`);
+        closeCardStatementModal();
     }
 </script>
 
