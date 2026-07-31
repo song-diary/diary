@@ -619,6 +619,17 @@
             background: #fff5f5 !important;
         }
 
+        .cal-cell.selected-date {
+            border: 2px solid #2980b9 !important;
+            box-shadow: inset 0 0 0 1px #2980b9;
+            background: #eaf3fb !important;
+        }
+
+        .cal-cell.selected-date.today-date {
+            border: 2px solid var(--accent-today) !important;
+            box-shadow: inset 0 0 0 2px #2980b9;
+        }
+
         .memo-line {
             width: 65%;
             height: 3px;
@@ -1017,11 +1028,11 @@
     <!-- ===================== 📔 다이어리 패널 ===================== -->
     <div class="tab-panel" id="diary-panel">
 
-        <!-- 📔 오늘 기준 전후 다이어리 리스트 (기본 표시) -->
+        <!-- 📔 선택한 날짜(기본값: 오늘)의 다이어리 리스트 -->
         <div class="card sub-feature-card" id="diary-around-today-card">
             <div class="feature-title">
-                <span>📔 다이어리 (오늘 기준 전후)</span>
-                <span style="font-size: 12px; color: var(--text-sub); font-weight: normal;">달력에서 날짜 클릭 시 입력</span>
+                <span id="selected-date-title">📔 다이어리</span>
+                <button class="action-btn" style="padding:5px 10px; font-size:12px;" onclick="openDiaryForm(selectedViewDate)">✏️ 입력</button>
             </div>
             <div id="diary-around-today-list"></div>
         </div>
@@ -1277,6 +1288,7 @@
     let calYear = 2026;
     let calMonth = 6; // 7월
     let selectedReservationDate = null;
+    let selectedViewDate = null; // 📅 달력에서 선택(클릭)한 날짜 - 아래 다이어리 리스트에 표시됨
     let editingDiaryId = null;
     let currentPhotoBase64 = null;
     let currentMemoFontSize = parseInt(localStorage.getItem('smartDiaryMemoFontSize')) || 16;
@@ -2541,6 +2553,7 @@
             const dayOfWeek = dObj.getDay();
 
             if (dateStr === todayStr) cell.classList.add('today-date');
+            if (selectedViewDate && dateStr === selectedViewDate) cell.classList.add('selected-date');
 
             if (dayOfWeek === 0 || holidays.has(dateStr)) cell.classList.add('sunday');
             else if (dayOfWeek === 6) cell.classList.add('saturday');
@@ -2568,10 +2581,19 @@
             }
 
             cell.innerHTML = `<span>${day}</span>${indicatorHTML}`;
-            cell.onclick = () => openDiaryForm(dateStr);
+            cell.onclick = () => selectDiaryDate(dateStr);
             grid.appendChild(cell);
         }
         updateMoneySummary();
+    }
+
+    // 📅 달력에서 날짜를 클릭하면 팝업을 바로 열지 않고, 그 날짜의 다이어리 내용을 아래에 표시
+    function selectDiaryDate(dateStr) {
+        selectedViewDate = normalizeDateStr(dateStr);
+        if (currentMainTab !== 'diary') switchMainTab('diary');
+        renderCalendar();
+        renderDiaryAroundToday();
+        if (isDiarySearchFilterOpen) filterDiaryCustomList();
     }
 
     function changeMonth(delta) {
@@ -2643,85 +2665,60 @@
         }
     }
 
-    // 메인 화면(오늘 기준 전후) 리스트: 같은 일자끼리 묶고, 내림차순 정렬, 예약만 시간 및 아이콘 표시
+    // 📔 선택한 날짜(기본값: 오늘)의 다이어리 내용만 표시
     function renderDiaryAroundToday() {
         const listEl = document.getElementById('diary-around-today-list');
+        const titleEl = document.getElementById('selected-date-title');
         if (!listEl) return;
         listEl.innerHTML = '';
 
-        const diaries = getAllDiaries();
-        const todayStr = getTodayStr();
-        const tObj = parseDateObj(todayStr);
+        if (!selectedViewDate) selectedViewDate = getTodayStr();
+        const dateStr = normalizeDateStr(selectedViewDate);
+        const dObj = parseDateObj(dateStr);
+        const dayName = getDayOfWeekStr(dateStr);
+        const isReservedDate = isFutureDate(dateStr);
+        const isTodayDate = dateStr === getTodayStr();
+        const dateLabel = `${dObj.getMonth() + 1}월 ${dObj.getDate()}일(${dayName})`;
 
+        if (titleEl) {
+            const badge = isReservedDate ? `<span style="background:var(--primary-color); color:white; padding:1px 5px; border-radius:4px; font-size:11px; margin-right:4px; font-weight:bold;">예약</span>` : '';
+            const todayTag = isTodayDate ? ' (오늘)' : '';
+            titleEl.innerHTML = `📔 ${badge}${dateLabel}${todayTag}`;
+        }
+
+        const diaries = getAllDiaries();
         let filtered = diaries.filter(item => {
             if (item.money && item.money.amount) return false;
             if (!item.text && !item.photo) return false;
-
-            const itemDateStr = normalizeDateStr(item.date);
-            const itemDate = parseDateObj(itemDateStr);
-            const diffDays = (tObj - itemDate) / (1000 * 60 * 60 * 24);
-            return diffDays >= -1 && diffDays <= 1;
+            return normalizeDateStr(item.date) === dateStr;
         });
 
-        // 내림차순 정렬 (최신 날짜가 위로)
-        filtered.sort((a, b) => {
-            const da = normalizeDateStr(a.date) + (a.time || '');
-            const db = normalizeDateStr(b.date) + (b.time || '');
-            return db.localeCompare(da);
-        });
+        // 시간 내림차순 정렬
+        filtered.sort((a, b) => (b.time || '').localeCompare(a.time || ''));
 
         if (filtered.length === 0) {
-            listEl.innerHTML = `<div style="font-size: var(--memo-font-size); color: var(--text-sub); text-align: center; padding: 10px;">오늘 기준 전후로 등록된 메모(일기) 내역이 없습니다.<br>달력에서 날짜를 클릭해 입력해보세요.</div>`;
+            listEl.innerHTML = `<div style="font-size: var(--memo-font-size); color: var(--text-sub); text-align: center; padding: 10px;">이 날짜에 등록된 다이어리 내용이 없습니다.<br>위의 '✏️ 입력' 버튼을 눌러 작성해보세요.</div>`;
             return;
         }
 
-        // 같은 일자끼리 그룹화 처리
-        let grouped = {};
         filtered.forEach(item => {
-            let dStr = normalizeDateStr(item.date);
-            if (!grouped[dStr]) grouped[dStr] = [];
-            grouped[dStr].push(item);
-        });
+            const timeBadge = item.time ? `<span style="color:var(--primary-color); font-weight:bold; margin-right:6px; font-size:12px;">⏰ ${item.time}</span>` : '';
+            const textContentHTML = item.text ? `<div class="diary-text">${timeBadge}${item.text}</div>` : (item.time ? `<div class="diary-text">${timeBadge}</div>` : '');
+            const photoHTML = item.photo ? `<img src="${item.photo}" class="diary-photo" alt="첨부사진">` : '';
 
-        let sortedDates = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
+            const itemBox = document.createElement('div');
+            itemBox.className = 'sub-memo-item memo-only-box';
+            if (isReservedDate) itemBox.classList.add('is-reserved');
 
-        sortedDates.forEach(dateStr => {
-            let dayGroup = grouped[dateStr];
-            // 각 날짜 그룹 내에서도 시간 내림차순 정렬
-            dayGroup.sort((a, b) => (b.time || '').localeCompare(a.time || ''));
-
-            const dObj = parseDateObj(dateStr);
-            const dayName = getDayOfWeekStr(dateStr);
-            const dateLabel = `${dObj.getMonth() + 1}/${dObj.getDate()}(${dayName})`;
-
-            // 📅 같은 일자 그룹당 대표 날짜 헤더 하나만 표시
-            const groupHeader = document.createElement('div');
-            groupHeader.className = 'date-group-header';
-            groupHeader.innerHTML = `📅 ${dateLabel}`;
-            listEl.appendChild(groupHeader);
-
-            dayGroup.forEach(item => {
-                const itemDateStr = normalizeDateStr(item.date);
-                const isReserved = isFutureDate(itemDateStr);
-                const reservedBadge = isReserved ? `<span style="background:var(--primary-color); color:white; padding:1px 4px; border-radius:3px; font-size:10px; margin-right:4px; font-weight:bold;">[예약]</span>` : '';
-
-                let infoSummary = `<span style="font-weight: bold; color: var(--memo-color);">${reservedBadge}${item.text ? item.text.substring(0, 18) + (item.text.length > 18 ? '...' : '') : '사진 메모'}</span>`;
-
-                // 일반 일자는 시계 아이콘과 시간 삭제, 예약만 시간 나타남
-                let timeDisplay = (isReserved && item.time) ? `⏰ ${item.time} | ` : '';
-
-                const itemBox = document.createElement('div');
-                itemBox.style.cssText = `background: ${isReserved ? '#fff5f5' : '#fdfbfb'}; border: 1px solid ${isReserved ? '#f7d6d6' : 'var(--border-color)'}; border-radius: 6px; padding: 8px 10px; font-size: var(--memo-font-size); display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;`;
-                
-                itemBox.innerHTML = `
-                    <div style="word-break: break-all; flex: 1; padding-right: 6px;">${timeDisplay}${infoSummary}</div>
-                    <div style="display: flex; gap: 4px; white-space: nowrap;">
-                        <button class="edit-btn" style="font-size: var(--memo-font-size);" onclick='openDiaryForm("${itemDateStr}", ${JSON.stringify(item)})'>수정</button>
-                        <button class="delete-btn" style="font-size: var(--memo-font-size);" onclick="deleteDiary('${item.id}');">삭제</button>
-                    </div>
-                `;
-                listEl.appendChild(itemBox);
-            });
+            itemBox.innerHTML = `
+                <div class="memo-action-btns">
+                    <button class="edit-btn" onclick='openDiaryForm("${dateStr}", ${JSON.stringify(item)})'>수정</button>
+                    <button class="delete-btn" onclick="deleteDiary('${item.id}')">삭제</button>
+                </div>
+                ${textContentHTML}
+                ${photoHTML}
+            `;
+            listEl.appendChild(itemBox);
         });
     }
 
@@ -2960,6 +2957,7 @@
         setCategoryStatsVisibility(isCategoryStatsVisible);
         setSearchFilterVisibility(isSearchFilterVisible);
         
+        selectedViewDate = getTodayStr();
         renderCalendar();
         applyMemoFontSize();
         initSpeechRecognition();
