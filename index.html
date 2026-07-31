@@ -31,6 +31,10 @@
             font-family: 'Malgun Gothic', sans-serif;
         }
 
+        html {
+            overscroll-behavior-y: contain;
+        }
+
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
@@ -39,6 +43,7 @@
             margin: 0 auto;
             touch-action: manipulation;
             font-size: var(--base-font-size);
+            overscroll-behavior-y: contain;
         }
 
         .app-container {
@@ -125,11 +130,18 @@
             background: var(--primary-hover);
         }
 
-        /* 설정 카드 */
+        /* 설정 카드 (팝업 폼) */
         #settings-card {
             background: #fff8f8;
             border: 2px solid var(--primary-color);
             animation: fadeIn 0.3s ease;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
 
         /* 카드명세 일괄입력 */
@@ -903,7 +915,7 @@
 
     <!-- 🧭 메인 탭 바: 설정 / 다이어리 / 가계부 -->
     <div class="card main-tab-bar">
-        <button class="main-tab-btn settings-tab-btn" id="tab-settings-btn" onclick="switchMainTab('settings')" title="설정">
+        <button class="main-tab-btn settings-tab-btn" id="tab-settings-btn" onclick="openSettingsModal()" title="설정">
             <span class="tab-icon">☰</span>
         </button>
         <button class="main-tab-btn" id="tab-diary-btn" onclick="switchMainTab('diary')">
@@ -928,10 +940,10 @@
 
         <!-- 🔍 다이어리 검색 및 기간별 상세 내역 (가계부 상세내역 리스트와 동일한 형태) -->
         <div class="section-divider" onclick="toggleDiarySearchFilterSection()">
-            <span class="divider-label" id="diary-search-divider-label-text">🔍 다이어리 검색 및 기간 필터 접기 ▲</span>
+            <span class="divider-label" id="diary-search-divider-label-text">🔍 다이어리 검색 및 기간 필터 펼치기 ▼</span>
         </div>
 
-        <div class="card sub-feature-card" id="diary-search-filter-card" style="display: block;">
+        <div class="card sub-feature-card" id="diary-search-filter-card" style="display: none;">
             <div class="feature-title">
                 <span id="diary-list-card-main-title">🔍 다이어리 상세 내역 리스트</span>
                 <span style="font-size: 13px; color: var(--memo-color); font-weight: bold;" id="diary-stats-total-amount">0건</span>
@@ -943,9 +955,9 @@
                     <button class="action-btn" style="padding: 6px 12px; font-size: 13px;" onclick="resetDiarySearchFilter()">전체보기</button>
                 </div>
                 <div class="view-select-group" style="margin-top: 4px;">
-                    <button class="view-select-btn" id="diary-filter-period-today-around" onclick="setDiaryPeriodFilter('today-around')">오늘 기준 전후</button>
+                    <button class="view-select-btn active" id="diary-filter-period-today-around" onclick="setDiaryPeriodFilter('today-around')">오늘 기준 전후</button>
                     <button class="view-select-btn" id="diary-filter-period-week" onclick="setDiaryPeriodFilter('week')">지난 1주일</button>
-                    <button class="view-select-btn active" id="diary-filter-period-month" onclick="setDiaryPeriodFilter('month')">이번 달</button>
+                    <button class="view-select-btn" id="diary-filter-period-month" onclick="setDiaryPeriodFilter('month')">이번 달</button>
                     <button class="view-select-btn" id="diary-filter-period-all" onclick="setDiaryPeriodFilter('all')">기간별 조회</button>
                 </div>
 
@@ -998,7 +1010,7 @@
         </div>
 
         <!-- 💳 카드명세 일괄 입력 -->
-        <div class="card sub-feature-card" id="card-statement-card">
+        <div class="card sub-feature-card" id="card-statement-card" style="display: none;">
             <div class="feature-title">
                 <span>💳 카드명세 일괄 입력</span>
                 <span style="font-size: 12px; color: var(--text-sub); font-weight: normal;">받은 카드명세서를 보며 한번에 입력</span>
@@ -1015,10 +1027,10 @@
 
         <!-- 🔍 검색 및 기간별 상세 내역 -->
         <div class="section-divider" onclick="toggleSearchFilterSection()">
-            <span class="divider-label" id="search-divider-label-text">🔍 내역 검색 및 기간 필터 접기 ▲</span>
+            <span class="divider-label" id="search-divider-label-text">🔍 내역 검색 및 기간 필터 펼치기 ▼</span>
         </div>
 
-        <div class="card sub-feature-card" id="search-filter-card" style="display: block;">
+        <div class="card sub-feature-card" id="search-filter-card" style="display: none;">
             <div class="feature-title">
                 <span id="list-card-main-title">🔍 상세 내역 리스트</span>
                 <span style="font-size: 13px; color: var(--expense-color); font-weight: bold;" id="stats-total-amount">0원</span>
@@ -1030,9 +1042,9 @@
                     <button class="action-btn" style="padding: 6px 12px; font-size: 13px;" onclick="resetSearchFilter()">전체보기</button>
                 </div>
                 <div class="view-select-group" style="margin-top: 4px;">
-                    <button class="view-select-btn" id="filter-period-today-around" onclick="setPeriodFilter('today-around')">오늘 기준 전후</button>
+                    <button class="view-select-btn active" id="filter-period-today-around" onclick="setPeriodFilter('today-around')">오늘 기준 전후</button>
                     <button class="view-select-btn" id="filter-period-week" onclick="setPeriodFilter('week')">지난 1주일</button>
-                    <button class="view-select-btn active" id="filter-period-month" onclick="setPeriodFilter('month')">이번 달</button>
+                    <button class="view-select-btn" id="filter-period-month" onclick="setPeriodFilter('month')">이번 달</button>
                     <button class="view-select-btn" id="filter-period-all" onclick="setPeriodFilter('all')">기간별 조회</button>
                 </div>
 
@@ -1048,10 +1060,11 @@
     </div>
 
     <!-- ===================== ⚙️ 설정 패널 ===================== -->
-    <div class="tab-panel" id="settings-panel">
+    <div class="modal-overlay" id="settings-modal-overlay" onclick="handleSettingsModalBackgroundClick(event)">
         <div class="card" id="settings-card">
             <div class="settings-title">
                 <span>🛠️ 환경 설정 (온/오프 및 과목 관리)</span>
+                <button class="close-form-btn" onclick="closeSettingsModal()" title="설정 닫기">✖</button>
             </div>
 
             <div class="settings-section">
@@ -1167,11 +1180,11 @@
     let currentPhotoBase64 = null;
     let currentMemoFontSize = parseInt(localStorage.getItem('smartDiaryMemoFontSize')) || 16;
     
-    let isSearchFilterOpen = true;
+    let isSearchFilterOpen = false;
 
     // 📔 다이어리 탭 전용 검색/기간 필터 상태 (가계부 상세내역 리스트와 동일한 방식)
-    let isDiarySearchFilterOpen = true;
-    let currentDiaryPeriodFilter = 'month';
+    let isDiarySearchFilterOpen = false;
+    let currentDiaryPeriodFilter = 'today-around';
     let diaryKeywordFilter = '';
 
     let isMoneySummaryVisible = localStorage.getItem('smartDiaryMoneySummaryVisible') !== 'false';
@@ -1180,7 +1193,7 @@
 
     let currentMoneyType = 'expense';
     
-    let currentPeriodFilter = 'month'; 
+    let currentPeriodFilter = 'today-around'; 
     let currentStatsType = 'expense'; 
     let selectedCategoryFilter = ''; 
 
@@ -1208,7 +1221,7 @@
     // 메인 탭 (설정/다이어리/가계부) 참조
     const diaryPanel = document.getElementById('diary-panel');
     const moneyPanel = document.getElementById('money-panel');
-    const settingsPanel = document.getElementById('settings-panel');
+    const settingsModalOverlay = document.getElementById('settings-modal-overlay');
     const tabDiaryBtn = document.getElementById('tab-diary-btn');
     const tabMoneyBtn = document.getElementById('tab-money-btn');
     const tabSettingsBtn = document.getElementById('tab-settings-btn');
@@ -1224,6 +1237,13 @@
     const keywordSearchInput = document.getElementById('keyword-search-input');
     const listCardMainTitle = document.getElementById('list-card-main-title');
     const cardStatementRowsBox = document.getElementById('card-statement-rows');
+    const cardStatementCard = document.getElementById('card-statement-card');
+
+    function updateCardStatementVisibility() {
+        if (cardStatementCard) {
+            cardStatementCard.style.display = (isMoneySummaryVisible && currentStatsType === 'balance') ? 'block' : 'none';
+        }
+    }
 
     if (moneyAmountInput) {
         moneyAmountInput.addEventListener('input', function (e) {
@@ -1471,9 +1491,9 @@
         let sortedCats = Object.keys(categorySums).map(cat => ({
             category: cat,
             amount: categorySums[cat]
-        })).sort((a, b) => b.amount - a.amount);
+        })).sort((a, b) => b.amount - a.amount).filter(item => item.amount > 0);
 
-        let hasData = sortedCats.some(item => item.amount > 0);
+        let hasData = sortedCats.length > 0;
         if (!hasData) {
             const emptyEl = document.createElement('div');
             emptyEl.style.cssText = 'text-align:center; color:var(--text-sub); font-size:13px; padding:6px;';
@@ -1482,14 +1502,20 @@
             return wrapper;
         }
 
-        sortedCats.forEach(item => {
-            if (item.amount === 0) return;
+        const topN = 5;
+        const extraCount = Math.max(0, sortedCats.length - topN);
+
+        sortedCats.forEach((item, idx) => {
             let percent = totalAmt > 0 ? ((item.amount / totalAmt) * 100).toFixed(1) : 0;
             let fillColorClass = moneyType === 'expense' ? 'expense' : 'income';
             let isSelected = clickable && selectedCategoryFilter === item.category;
 
             const row = document.createElement('div');
             row.className = `stat-bar-container ${isSelected ? 'active-stat' : ''}`;
+            if (idx >= topN) {
+                row.classList.add('stat-extra-row');
+                row.style.display = 'none';
+            }
             if (clickable) {
                 row.onclick = () => selectCategoryFromStats(item.category);
             } else {
@@ -1506,6 +1532,20 @@
             `;
             wrapper.appendChild(row);
         });
+
+        if (extraCount > 0) {
+            const moreBtn = document.createElement('div');
+            moreBtn.className = 'stat-more-btn';
+            moreBtn.style.cssText = 'text-align:center; padding:8px; margin-top:2px; color:var(--primary-color); font-weight:bold; font-size:13px; cursor:pointer; border-top:1px dashed var(--border-color);';
+            moreBtn.textContent = `▼ 더보기 (${extraCount}개 더)`;
+            moreBtn.onclick = () => {
+                const extraRows = wrapper.querySelectorAll('.stat-extra-row');
+                const isHidden = extraRows.length > 0 && extraRows[0].style.display === 'none';
+                extraRows.forEach(r => { r.style.display = isHidden ? '' : 'none'; });
+                moreBtn.textContent = isHidden ? '▲ 접기' : `▼ 더보기 (${extraCount}개 더)`;
+            };
+            wrapper.appendChild(moreBtn);
+        }
 
         return wrapper;
     }
@@ -1540,10 +1580,30 @@
         let locations = getBalanceLocations();
         let total = locations.reduce((sum, loc) => sum + (Number(loc.amount) || 0), 0);
 
+        // 전체 기간 누적 수입-지출로 계산한 실제 잔액 (보관처별 합계와 대조하기 위함)
+        let calcIncome = 0;
+        let calcExpense = 0;
+        getAllDiaries().forEach(item => {
+            if (item.money && item.money.amount) {
+                let amt = Number(item.money.amount) || 0;
+                if (item.money.type === 'income') calcIncome += amt;
+                else if (item.money.type === 'expense') calcExpense += amt;
+            }
+        });
+        let calculatedBalance = calcIncome - calcExpense;
+        let diff = total - calculatedBalance;
+        let diffColor = diff === 0 ? '#2980b9' : (diff > 0 ? 'var(--income-color)' : 'var(--expense-color)');
+        let diffText = diff === 0 ? '일치' : (diff > 0 ? `+${diff.toLocaleString()}원` : `${diff.toLocaleString()}원`);
+
         const totalRow = document.createElement('div');
         totalRow.className = 'balance-loc-total-row';
-        totalRow.innerHTML = `<span>💼 보관처별 합계</span><span style="color:#2980b9;">${total.toLocaleString()}원</span>`;
+        totalRow.innerHTML = `<span>💼 보관처별 합계(차액)</span><span style="color:#2980b9;">${total.toLocaleString()}원</span>`;
         statsBody.appendChild(totalRow);
+
+        const diffRow = document.createElement('div');
+        diffRow.style.cssText = 'display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--text-sub); padding:2px 2px 8px;';
+        diffRow.innerHTML = `<span>가계부 계산상 잔액 ${calculatedBalance.toLocaleString()}원 대비</span><span style="font-weight:bold; color:${diffColor};">차액 ${diffText}</span>`;
+        statsBody.appendChild(diffRow);
 
         if (locations.length === 0) {
             const emptyEl = document.createElement('div');
@@ -1630,6 +1690,7 @@
         const statsCardTitle = document.getElementById('stats-card-title');
         const statsCardHint = document.getElementById('stats-card-hint');
         if (!statsBody) return;
+        updateCardStatementVisibility();
         if (!isMoneySummaryVisible) return;
 
         // 설정에서 가계부 현황을 끈 경우(메모 전용 모드)는 이 카드 자체가 숨겨지므로 여기서 종료
@@ -1744,7 +1805,7 @@
         selectedCategoryFilter = '';
         if (keywordSearchInput) keywordSearchInput.value = '';
         renderCategoryStats();
-        setPeriodFilter('month');
+        setPeriodFilter('today-around');
     }
 
     function filterCustomList() {
@@ -1924,7 +1985,7 @@
     function resetDiarySearchFilter() {
         diaryKeywordFilter = '';
         if (diaryKeywordSearchInput) diaryKeywordSearchInput.value = '';
-        setDiaryPeriodFilter('month');
+        setDiaryPeriodFilter('today-around');
     }
 
     function onDiaryKeywordInputChanged() {
@@ -2078,6 +2139,7 @@
             if (currentStatsType !== 'memo') {
                 currentStatsType = 'memo';
             }
+            updateCardStatementVisibility();
             if (isSearchFilterOpen) filterCustomList();
             return;
         }
@@ -2185,12 +2247,13 @@
         updateMoneySummary();
         if (isSearchFilterOpen) filterCustomList();
         alert('모든 데이터가 초기화되었습니다.');
+        closeSettingsModal();
         switchMainTab('diary');
     }
 
     function switchMainTab(tabName) {
-        const panels = { diary: diaryPanel, money: moneyPanel, settings: settingsPanel };
-        const buttons = { diary: tabDiaryBtn, money: tabMoneyBtn, settings: tabSettingsBtn };
+        const panels = { diary: diaryPanel, money: moneyPanel };
+        const buttons = { diary: tabDiaryBtn, money: tabMoneyBtn };
 
         Object.keys(panels).forEach(key => {
             if (panels[key]) panels[key].classList.toggle('active', key === tabName);
@@ -2199,15 +2262,28 @@
 
         currentMainTab = tabName;
 
-        if (tabName === 'settings') {
-            renderCategorySettingsList();
-        }
         if (tabName === 'money') {
             updateMoneySummary();
         }
         if (tabName === 'diary') {
             renderDiaryAroundToday();
             if (isDiarySearchFilterOpen) filterDiaryCustomList();
+        }
+    }
+
+    // ===================== ⚙️ 설정 팝업 폼 =====================
+    function openSettingsModal() {
+        renderCategorySettingsList();
+        if (settingsModalOverlay) settingsModalOverlay.classList.add('active');
+    }
+
+    function closeSettingsModal() {
+        if (settingsModalOverlay) settingsModalOverlay.classList.remove('active');
+    }
+
+    function handleSettingsModalBackgroundClick(event) {
+        if (event.target === settingsModalOverlay) {
+            closeSettingsModal();
         }
     }
 
@@ -2297,6 +2373,7 @@
     }
 
     function openDiaryForm(dateStr, existingItem = null) {
+        stopVoiceRecording();
         selectedReservationDate = normalizeDateStr(dateStr);
         editingDiaryId = existingItem ? existingItem.id : null;
 
@@ -2333,6 +2410,7 @@
     }
 
     function closeDiaryFormPanel() {
+        stopVoiceRecording();
         if (memoModalOverlay) {
             memoModalOverlay.classList.remove('active');
         }
@@ -2436,10 +2514,47 @@
         if (!file) return;
         const reader = new FileReader();
         reader.onload = function(e) {
-            currentPhotoBase64 = e.target.result;
-            updatePhotoPreview();
+            compressImageForStorage(e.target.result, function(compressedDataUrl) {
+                currentPhotoBase64 = compressedDataUrl;
+                updatePhotoPreview();
+            });
         };
         reader.readAsDataURL(file);
+    }
+
+    // 📷 사진 첨부 시 용량을 줄여 localStorage 메모리 문제를 방지 (최대 폭/높이 제한 + JPEG 압축)
+    function compressImageForStorage(dataUrl, callback) {
+        const MAX_DIMENSION = 1280;
+        const JPEG_QUALITY = 0.7;
+        const img = new Image();
+        img.onload = function() {
+            let { width, height } = img;
+            if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+                if (width >= height) {
+                    height = Math.round(height * (MAX_DIMENSION / width));
+                    width = MAX_DIMENSION;
+                } else {
+                    width = Math.round(width * (MAX_DIMENSION / height));
+                    height = MAX_DIMENSION;
+                }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            try {
+                const compressed = canvas.toDataURL('image/jpeg', JPEG_QUALITY);
+                callback(compressed);
+            } catch (e) {
+                console.error(e);
+                callback(dataUrl);
+            }
+        };
+        img.onerror = function() {
+            callback(dataUrl);
+        };
+        img.src = dataUrl;
     }
 
     function updatePhotoPreview() {
@@ -2466,6 +2581,8 @@
         const timeVal = reservationTimeInput.value;
         const moneyCategory = moneyCategorySelect.value;
         const rawAmount = moneyAmountInput.value.replace(/[^0-9]/g, '').trim();
+
+        stopVoiceRecording();
 
         let moneyObj = null;
         if (rawAmount !== '' && !isNaN(rawAmount)) {
@@ -2575,6 +2692,31 @@
         }
     }
 
+    // 🎤 음성메모 녹음을 확실히 중지하고 상태를 초기화 (저장/닫기 시 이중입력·녹음 지속 방지)
+    function stopVoiceRecording() {
+        shouldRestart = false;
+        if (recognition && isRecording) {
+            try { recognition.stop(); } catch (e) { console.error(e); }
+        }
+        isRecording = false;
+        accumulatedText = '';
+        if (recordBtn) { recordBtn.style.background = ''; recordBtn.textContent = '🎤 음성메모'; }
+    }
+
+    // ===================== 📵 아래로 당겨서 새로고침(초기화) 방지 =====================
+    let ptrTouchStartY = 0;
+    document.addEventListener('touchstart', (e) => {
+        ptrTouchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    document.addEventListener('touchmove', (e) => {
+        const touchY = e.touches[0].clientY;
+        const scrollTop = window.scrollY || document.documentElement.scrollTop;
+        if (scrollTop <= 0 && touchY > ptrTouchStartY) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
     window.onload = () => {
         setMoneySummaryVisibility(isMoneySummaryVisible);
         setCategoryStatsVisibility(isCategoryStatsVisible);
@@ -2586,7 +2728,7 @@
         updateMoneySummary();
         
         if (isSearchFilterOpen) {
-            setPeriodFilter('month');
+            setPeriodFilter('today-around');
         }
 
         switchMainTab('diary');
