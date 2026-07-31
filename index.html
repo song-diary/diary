@@ -635,14 +635,17 @@
 
         .money-dots {
             display: flex;
-            gap: 3px;
+            width: 65%;
+            height: 3px;
+            gap: 1px;
             margin-top: 2px;
             margin-bottom: 1px;
+            border-radius: 2px;
+            overflow: hidden;
         }
         .dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
+            flex: 1;
+            height: 100%;
         }
         .dot.expense { background-color: var(--expense-color); }
         .dot.income { background-color: var(--income-color); }
@@ -849,6 +852,20 @@
             margin-bottom: 8px;
             position: relative;
             padding-right: 95px;
+        }
+
+        /* 📅 같은 일자 항목들을 묶어줄 대표 날짜 헤더 */
+        .date-group-header {
+            font-weight: bold;
+            font-size: calc(var(--memo-font-size, 16px) - 1px);
+            color: var(--weekday-color);
+            padding: 4px 2px;
+            margin-top: 10px;
+            margin-bottom: 4px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .date-group-header:first-child {
+            margin-top: 0;
         }
 
         .sub-memo-item.is-reserved {
@@ -1099,7 +1116,7 @@
                 </div>
                 <div style="font-size: 12px; color: var(--text-sub); margin-bottom: 8px;">받은 카드명세서를 보며 한번에 입력</div>
                 <div style="display: flex; gap: 6px; margin-bottom: 8px;">
-                    <input type="text" id="cs-card-name" placeholder="카드명/계정 (예: 국민카드)" style="flex:1; padding:6px; border:1px solid var(--border-color); border-radius:6px; font-size:16px;">
+                    <input type="text" id="cs-card-name" placeholder="카드명/계정 (예: 국민카드)" style="width:60%; max-width:220px; padding:6px; border:1px solid var(--border-color); border-radius:6px; font-size:16px;">
                 </div>
                 <div id="card-statement-rows"></div>
                 <div class="btn-group" style="margin-top: 8px; margin-bottom: 0;">
@@ -1214,11 +1231,11 @@
 <div class="modal-overlay" id="memo-modal-overlay" onclick="handleModalBackgroundClick(event)">
     <div id="memo-form-card">
         <div class="form-header-info">
-            <span id="form-target-date-title">📅 0000년 00월 00일<br>다이어리&가계부</span>
+            <span id="form-target-date-title">📅 0000년 00월 00일</span>
             <button class="close-form-btn" onclick="closeDiaryFormPanel()" title="입력창 닫기">✖</button>
         </div>
 
-        <div class="reservation-box">
+        <div class="reservation-box" id="reservation-box" style="display:none;">
             <span style="font-size: 12px;">⏰ 시간:</span>
             <input type="time" id="reservation-time-input" style="border:1px solid var(--border-color); border-radius:4px; background:#fff;">
         </div>
@@ -1248,7 +1265,7 @@
         <div class="btn-group" style="margin-bottom: 0;">
             <button class="btn btn-secondary" id="record-btn">🎤 음성메모</button>
             <label class="btn btn-secondary" style="text-align:center; display:flex; align-items:center; justify-content:center; cursor:pointer;">
-                📷 사진
+                📎 사진 첨부
                 <input type="file" id="diary-photo-input" accept="image/*" style="display:none;" onchange="previewImage(event)">
             </label>
             <button class="btn btn-primary" onclick="manualSaveDiary()">저장</button>
@@ -2049,20 +2066,30 @@
 
         filtered.sort((a, b) => normalizeDateStr(b.date).localeCompare(normalizeDateStr(a.date)));
 
+        let lastGroupDate = null;
+
         filtered.forEach(item => {
+            let dateStr = normalizeDateStr(item.date);
+            let isReserved = isFutureDate(dateStr);
+
+            // 📅 같은 일자끼리는 대표 날짜 헤더 하나만 표시
+            if (dateStr !== lastGroupDate) {
+                let dayOfWeek = getDayOfWeekStr(dateStr);
+                let displayDateStr = `${dateStr}(${dayOfWeek})`;
+                let groupReservedBadge = isReserved ? `<span style="background:var(--primary-color); color:white; padding:1px 5px; border-radius:4px; font-size:11px; margin-right:4px; font-weight:bold;">[예약]</span>` : '';
+                const groupHeader = document.createElement('div');
+                groupHeader.className = 'date-group-header';
+                groupHeader.innerHTML = `📅 ${groupReservedBadge}${displayDateStr}`;
+                resultListContainer.appendChild(groupHeader);
+                lastGroupDate = dateStr;
+            }
+
             const subItem = document.createElement('div');
             subItem.className = 'sub-memo-item';
             
-            let dateStr = normalizeDateStr(item.date);
-            let isReserved = isFutureDate(dateStr);
             if (isReserved) {
                 subItem.classList.add('is-reserved');
             }
-
-            let dayOfWeek = getDayOfWeekStr(dateStr);
-            let displayDateStr = `${dateStr}(${dayOfWeek})`;
-
-            let reservedBadge = isReserved ? `<span style="background:var(--primary-color); color:white; padding:1px 5px; border-radius:4px; font-size:11px; margin-right:4px; font-weight:bold;">[예약]</span>` : '';
 
             let headerHTML = '';
             if (item.money) {
@@ -2075,12 +2102,12 @@
                 let amountStr = Number(item.money.amount).toLocaleString() + '원';
                 
                 headerHTML = `<div style="font-weight: bold; margin-bottom: 4px; ${colorStyle}">
-                    ${reservedBadge}💰 [${displayDateStr}] : ${typeSign}${amountStr}
+                    💰 ${typeSign}${amountStr}
                 </div>`;
             } else {
                 subItem.classList.add('memo-only-box');
                 headerHTML = `<div style="font-weight: bold; margin-bottom: 4px; color: var(--memo-color);">
-                    ${reservedBadge}📝 [${displayDateStr}]
+                    📝 메모
                 </div>`;
             }
 
@@ -2213,23 +2240,33 @@
 
         filtered.sort((a, b) => normalizeDateStr(b.date).localeCompare(normalizeDateStr(a.date)));
 
+        let lastDiaryGroupDate = null;
+
         filtered.forEach(item => {
+            let dateStr = normalizeDateStr(item.date);
+            let isReserved = isFutureDate(dateStr);
+
+            // 📅 같은 일자끼리는 대표 날짜 헤더 하나만 표시
+            if (dateStr !== lastDiaryGroupDate) {
+                let dayOfWeek = getDayOfWeekStr(dateStr);
+                let displayDateStr = `${dateStr}(${dayOfWeek})`;
+                let groupReservedBadge = isReserved ? `<span style="background:var(--primary-color); color:white; padding:1px 5px; border-radius:4px; font-size:11px; margin-right:4px; font-weight:bold;">[예약]</span>` : '';
+                const groupHeader = document.createElement('div');
+                groupHeader.className = 'date-group-header';
+                groupHeader.innerHTML = `📅 ${groupReservedBadge}${displayDateStr}`;
+                resultListContainer.appendChild(groupHeader);
+                lastDiaryGroupDate = dateStr;
+            }
+
             const subItem = document.createElement('div');
             subItem.className = 'sub-memo-item memo-only-box';
 
-            let dateStr = normalizeDateStr(item.date);
-            let isReserved = isFutureDate(dateStr);
             if (isReserved) {
                 subItem.classList.add('is-reserved');
             }
 
-            let dayOfWeek = getDayOfWeekStr(dateStr);
-            let displayDateStr = `${dateStr}(${dayOfWeek})`;
-
-            let reservedBadge = isReserved ? `<span style="background:var(--primary-color); color:white; padding:1px 5px; border-radius:4px; font-size:11px; margin-right:4px; font-weight:bold;">[예약]</span>` : '';
-
             let headerHTML = `<div style="font-weight: bold; margin-bottom: 4px; color: var(--memo-color);">
-                ${reservedBadge}📝 [${displayDateStr}]
+                📝 메모
             </div>`;
 
             let timeBadge = item.time ? `<span style="color:var(--primary-color); font-weight:bold; margin-right:6px; font-size:12px;">⏰ ${item.time}</span>` : '';
@@ -2552,7 +2589,13 @@
         const dObj = parseDateObj(selectedReservationDate);
         const dayName = getDayOfWeekStr(selectedReservationDate);
         
-        formTargetDateTitle.innerHTML = `📅 ${dObj.getFullYear()}년 ${dObj.getMonth() + 1}월 ${dObj.getDate()}일 (${dayName})<br>다이어리&가계부`;
+        formTargetDateTitle.innerHTML = `📅 ${dObj.getFullYear()}년 ${dObj.getMonth() + 1}월 ${dObj.getDate()}일 (${dayName})`;
+
+        // ⏰ 예약(미래 날짜)일 때만 시간 입력란을 표시
+        const reservationBoxEl = document.getElementById('reservation-box');
+        if (reservationBoxEl) {
+            reservationBoxEl.style.display = isFutureDate(selectedReservationDate) ? 'flex' : 'none';
+        }
 
         if (existingItem) {
             textOutput.innerHTML = existingItem.text || '';
@@ -2651,6 +2694,12 @@
             const dayName = getDayOfWeekStr(dateStr);
             const dateLabel = `${dObj.getMonth() + 1}/${dObj.getDate()}(${dayName})`;
 
+            // 📅 같은 일자 그룹당 대표 날짜 헤더 하나만 표시
+            const groupHeader = document.createElement('div');
+            groupHeader.className = 'date-group-header';
+            groupHeader.innerHTML = `📅 ${dateLabel}`;
+            listEl.appendChild(groupHeader);
+
             dayGroup.forEach(item => {
                 const itemDateStr = normalizeDateStr(item.date);
                 const isReserved = isFutureDate(itemDateStr);
@@ -2665,7 +2714,7 @@
                 itemBox.style.cssText = `background: ${isReserved ? '#fff5f5' : '#fdfbfb'}; border: 1px solid ${isReserved ? '#f7d6d6' : 'var(--border-color)'}; border-radius: 6px; padding: 8px 10px; font-size: var(--memo-font-size); display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;`;
                 
                 itemBox.innerHTML = `
-                    <div style="word-break: break-all; flex: 1; padding-right: 6px;">📝 ${dateLabel} | ${timeDisplay}${infoSummary}</div>
+                    <div style="word-break: break-all; flex: 1; padding-right: 6px;">${timeDisplay}${infoSummary}</div>
                     <div style="display: flex; gap: 4px; white-space: nowrap;">
                         <button class="edit-btn" style="font-size: var(--memo-font-size);" onclick='openDiaryForm("${itemDateStr}", ${JSON.stringify(item)})'>수정</button>
                         <button class="delete-btn" style="font-size: var(--memo-font-size);" onclick="deleteDiary('${item.id}');">삭제</button>
