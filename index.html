@@ -160,36 +160,35 @@
 
         /* 카드명세 일괄입력 */
         .card-statement-row {
-            display: flex;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 4px;
-            align-items: center;
             margin-bottom: 6px;
-            flex-wrap: wrap;
             background: #fbfbfb;
             border: 1px solid var(--border-color);
             border-radius: 8px;
             padding: 6px;
         }
 
-        .card-statement-row input[type="date"] {
-            flex: 1.2;
-            min-width: 118px;
+        .card-statement-row .cs-date {
+            grid-column: 1 / 2;
         }
 
-        .card-statement-row input[type="text"] {
-            flex: 1.4;
-            min-width: 90px;
+        .card-statement-row .cs-category {
+            grid-column: 2 / 3;
         }
 
-        .card-statement-row select {
-            flex: 1.2;
-            min-width: 100px;
+        .card-statement-row .cs-memo {
+            grid-column: 1 / 3;
         }
 
-        .card-statement-row input[type="text"].cs-amount {
-            flex: 1;
-            min-width: 80px;
+        .card-statement-row .cs-amount {
+            grid-column: 1 / 2;
             text-align: right;
+        }
+
+        .card-statement-row .cs-del-btn {
+            grid-column: 2 / 3;
         }
 
         .card-statement-row input, .card-statement-row select {
@@ -197,6 +196,8 @@
             border: 1px solid var(--border-color);
             border-radius: 6px;
             font-size: 16px;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .cs-del-btn {
@@ -292,7 +293,8 @@
             align-items: center;
             flex-wrap: wrap;
             gap: 6px;
-            margin-top: 10px;
+            margin-top: 0;
+            margin-bottom: 10px;
             padding: 8px 10px;
             background: #ffffff;
             border: 1px dashed #9dd6b1;
@@ -1060,21 +1062,23 @@
                     <div class="m-value" id="summary-balance">0원</div>
                 </div>
             </div>
-            <div class="carry-over-row" id="carry-over-row">
-                <span class="carry-over-label">📌 전월 이월액</span>
-                <input type="text" inputmode="numeric" id="carry-over-input" class="carry-over-input" placeholder="0" onchange="updateCarryOverAmount(this.value)">
-                <span class="carry-over-unit">원</span>
-                <button class="action-btn carry-over-btn" onclick="carryOverToNextMonth()">다음달로 이월 ➡️</button>
-            </div>
         </div>
 
-        <!-- 📊 카테고리별 지출/수입 통계 리스트 -->
+        <!-- 📊 카테고리별 지출/수입 통계 리스트 (잔액 선택 시 보관처별 분류 표시) -->
         <div class="card sub-feature-card" id="category-stats-card">
             <div class="feature-title">
                 <span id="stats-card-title">📊 이번 달 지출 통계</span>
                 <span style="font-size: 12px; color: var(--text-sub); font-weight: normal;" id="stats-card-hint">(과목 클릭 시 아래 리스트업)</span>
             </div>
             <div id="category-stats-body"></div>
+        </div>
+
+        <!-- 📌 전월 이월액 (잔액 보관처별 분류 바로 아래) -->
+        <div class="carry-over-row" id="carry-over-row">
+            <span class="carry-over-label">📌 전월 이월액</span>
+            <input type="text" inputmode="numeric" id="carry-over-input" class="carry-over-input" placeholder="0" onchange="updateCarryOverAmount(this.value)">
+            <span class="carry-over-unit">원</span>
+            <button class="action-btn carry-over-btn" onclick="carryOverToNextMonth()">다음달로 이월 ➡️</button>
         </div>
 
         <!-- 💳 카드명세 일괄 입력 -->
