@@ -1280,7 +1280,8 @@
     let recognition = null;
     let isRecording = false;
     let shouldRestart = false;
-    let accumulatedText = '';
+    let recordingBaseText = '';
+    let sessionFinalText = '';
 
     const textOutput = document.getElementById('textOutput');
     const recordBtn = document.getElementById('record-btn');
@@ -2823,18 +2824,25 @@
         };
 
         recognition.onresult = (event) => {
+            if (!isRecording) return; // 강제 종료 이후 뒤늦게 도착하는 이벤트는 무시 (이중입력 방지)
             let interimText = '';
-            let finalSegment = '';
-            for (let i = event.resultIndex; i < event.results.length; ++i) {
-                if (event.results[i].isFinal) finalSegment += event.results[i][0].transcript;
-                else interimText += event.results[i][0].transcript;
+            let finalText = '';
+            for (let i = 0; i < event.results.length; i++) {
+                const transcript = event.results[i][0].transcript;
+                if (event.results[i].isFinal) finalText += transcript;
+                else interimText += transcript;
             }
-            if (finalSegment) accumulatedText += finalSegment + ' ';
-            if (textOutput) textOutput.innerHTML = accumulatedText + interimText;
+            // 매번 전체 결과를 새로 조립(누적 더하기 X)하여, 브라우저가 이미 확정된 구간을
+            // 다시 전달하는 경우에도 텍스트가 중복되지 않도록 함
+            sessionFinalText = finalText;
+            if (textOutput) textOutput.innerHTML = recordingBaseText + finalText + interimText;
         };
 
         recognition.onend = () => {
             if (shouldRestart) {
+                // 재시작 시, 확정된(final) 내용만 새 기준점으로 접어넣고 미확정(interim) 내용은 버림
+                recordingBaseText = recordingBaseText + sessionFinalText;
+                sessionFinalText = '';
                 try { recognition.start(); return; } catch (e) { console.error(e); }
             }
             isRecording = false;
@@ -2845,7 +2853,8 @@
         if (recordBtn) {
             recordBtn.onclick = () => {
                 if (!isRecording) {
-                    accumulatedText = textOutput.innerHTML.trim() ? textOutput.innerHTML + ' ' : '';
+                    recordingBaseText = textOutput.innerHTML.trim() ? textOutput.innerHTML + ' ' : '';
+                    sessionFinalText = '';
                     shouldRestart = true;
                     try { recognition.start(); } catch (e) { console.error(e); }
                 } else {
@@ -2863,7 +2872,8 @@
             try { recognition.stop(); } catch (e) { console.error(e); }
         }
         isRecording = false;
-        accumulatedText = '';
+        recordingBaseText = '';
+        sessionFinalText = '';
         if (recordBtn) { recordBtn.style.background = ''; recordBtn.textContent = '🎤 음성메모'; }
     }
 
