@@ -2551,6 +2551,7 @@
 
         let targetCategories = moneyType === 'expense' ? expenseCategories : incomeCategories;
         let categorySums = {};
+        let categoryEntries = {};
         targetCategories.forEach(cat => categorySums[cat] = 0);
         let totalAmt = 0;
 
@@ -2561,6 +2562,8 @@
                 if (!categorySums[cat]) categorySums[cat] = 0;
                 categorySums[cat] += amt;
                 totalAmt += amt;
+                if (!categoryEntries[cat]) categoryEntries[cat] = [];
+                categoryEntries[cat].push({ date: item.date, text: item.text || '', amount: amt });
             }
         });
 
@@ -2585,6 +2588,8 @@
             let percent = totalAmt > 0 ? ((item.amount / totalAmt) * 100).toFixed(1) : 0;
             let fillColorClass = moneyType === 'expense' ? 'expense' : 'income';
             let isSelected = clickable && selectedCategoryFilter === item.category;
+            let entries = (categoryEntries[item.category] || []).slice().sort((a, b) => (a.date < b.date ? 1 : -1));
+            let count = entries.length;
 
             const row = document.createElement('div');
             row.className = `stat-bar-container ${isSelected ? 'active-stat' : ''}`;
@@ -2592,14 +2597,9 @@
                 row.classList.add('stat-extra-row');
                 row.style.display = 'none';
             }
-            if (clickable) {
-                row.onclick = () => selectCategoryFromStats(item.category);
-            } else {
-                row.style.cursor = 'default';
-            }
             row.innerHTML = `
                 <div class="stat-info-row">
-                    <span style="font-weight:bold; color:var(--weekday-color);">👉 ${item.category}</span>
+                    <span style="font-weight:bold; color:var(--weekday-color);">👉 ${item.category}${count > 0 ? `(${count})` : ''}</span>
                     <span>${item.amount.toLocaleString()}원 (<span style="color:var(--primary-color);">${percent}%</span>)</span>
                 </div>
                 <div class="stat-bar-bg">
@@ -2607,6 +2607,33 @@
                 </div>
             `;
             wrapper.appendChild(row);
+
+            if (clickable && count > 0) {
+                const detailBox = document.createElement('div');
+                detailBox.className = `stat-detail-list ${idx >= topN ? 'stat-extra-row' : ''}`;
+                detailBox.style.cssText = `display:${isSelected ? 'block' : 'none'}; margin:2px 0 8px; padding:6px 8px; background:rgba(127,127,127,0.08); border-radius:6px;`;
+                entries.forEach(en => {
+                    let shortDate = normalizeDateStr(en.date).slice(5).replace('-', '/');
+                    let contentText = en.text ? String(en.text).replace(/\n/g, ' ').trim() : '(내용 없음)';
+                    if (contentText.length > 24) contentText = contentText.slice(0, 24) + '…';
+                    const dRow = document.createElement('div');
+                    dRow.style.cssText = 'display:flex; align-items:center; font-size:12.5px; padding:4px 2px; border-bottom:1px dashed var(--border-color);';
+                    dRow.innerHTML = `
+                        <span style="flex:0 0 auto; color:var(--text-sub); margin-right:8px;">${shortDate}</span>
+                        <span style="flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-right:8px;">${contentText}</span>
+                        <span style="flex:0 0 auto; font-weight:bold;">${en.amount.toLocaleString()}원</span>
+                    `;
+                    detailBox.appendChild(dRow);
+                });
+                wrapper.appendChild(detailBox);
+            }
+
+            if (clickable) {
+                row.style.cursor = 'pointer';
+                row.onclick = () => selectCategoryFromStats(item.category);
+            } else {
+                row.style.cursor = 'default';
+            }
         });
 
         if (extraCount > 0) {
