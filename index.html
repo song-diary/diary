@@ -2169,6 +2169,7 @@
     let selectedViewDate = null; // 📅 달력에서 선택(클릭)한 날짜 - 아래 다이어리 리스트에 표시됨
     let editingDiaryId = null;
     let currentPhotoBase64 = null;
+    let photoCache = {}; // 📷 IndexedDB에서 불러온 사진(base64)을 담아두는 메모리 캐시: { photoKey: dataUrl }
     let currentMemoFontSize = parseInt(localStorage.getItem('smartDiaryMemoFontSize')) || 16;
     
     let isSearchFilterOpen = false;
@@ -3167,7 +3168,7 @@
 
             let timeBadge = item.time ? `<span style="color:var(--primary-color); font-weight:bold; margin-right:6px; font-size:12px;">⏰ ${item.time}</span>` : '';
             let textContentHTML = item.text ? `<div class="diary-text">${timeBadge}${item.text}</div>` : (item.time ? `<div class="diary-text">${timeBadge}</div>` : '');
-            let photoHTML = item.photo ? `<img src="${item.photo}" class="diary-photo" alt="첨부사진">` : '';
+            let photoHTML = item.photo ? `<img src="${getPhotoSrc(item.photo)}" class="diary-photo" alt="첨부사진">` : '';
 
             subItem.innerHTML = `
                 <div class="memo-action-btns">
@@ -3325,7 +3326,7 @@
 
             let timeBadge = item.time ? `<span style="color:var(--primary-color); font-weight:bold; margin-right:6px; font-size:12px;">⏰ ${item.time}</span>` : '';
             let textContentHTML = item.text ? `<div class="diary-text">${timeBadge}${item.text}</div>` : (item.time ? `<div class="diary-text">${timeBadge}</div>` : '');
-            let photoHTML = item.photo ? `<img src="${item.photo}" class="diary-photo" alt="첨부사진">` : '';
+            let photoHTML = item.photo ? `<img src="${getPhotoSrc(item.photo)}" class="diary-photo" alt="첨부사진">` : '';
 
             subItem.innerHTML = `
                 <div class="memo-action-btns">
@@ -3741,7 +3742,7 @@
         if (existingItem) {
             textOutput.innerHTML = existingItem.text || '';
             reservationTimeInput.value = existingItem.time || '';
-            currentPhotoBase64 = existingItem.photo || null;
+            currentPhotoBase64 = existingItem.photo ? (getPhotoSrc(existingItem.photo) || null) : null;
             if (existingItem.money && existingItem.money.amount) {
                 setMoneyType(existingItem.money.type || 'expense', existingItem.money.category || '');
                 moneyAmountInput.value = Number(existingItem.money.amount || 0).toLocaleString();
@@ -3833,7 +3834,7 @@
         filtered.forEach(item => {
             const timeBadge = item.time ? `<span style="color:var(--primary-color); font-weight:bold; margin-right:6px; font-size:12px;">⏰ ${item.time}</span>` : '';
             const textContentHTML = item.text ? `<div class="diary-text">${timeBadge}${item.text}</div>` : (item.time ? `<div class="diary-text">${timeBadge}</div>` : '');
-            const photoHTML = item.photo ? `<img src="${item.photo}" class="diary-photo" alt="첨부사진">` : '';
+            const photoHTML = item.photo ? `<img src="${getPhotoSrc(item.photo)}" class="diary-photo" alt="첨부사진">` : '';
 
             const itemBox = document.createElement('div');
             itemBox.className = 'sub-memo-item memo-only-box';
@@ -3854,6 +3855,122 @@
     function closeDiaryForm() {
         editingDiaryId = null;
         currentPhotoBase64 = null;
+    }
+
+    // ===================== 📷 사진 저장소: IndexedDB (localStorage 5MB 한계 회피) =====================
+    // 다이어리 항목(item.photo)에는 실제 이미지 데이터 대신 "사진 키(key)" 문자열만 저장하고,
+    // 실제 base64 이미지 데이터는 IndexedDB에 저장합니다. photoCache는 빠른 동기 렌더링을 위한 메모리 캐시입니다.
+    const PHOTO_DB_NAME = 'SmartDiaryPhotoDB';
+    const PHOTO_STORE_NAME = 'photos';
+    let __photoDbPromise = null;
+
+    function openPhotoDB() {
+        if (__photoDbPromise) return __photoDbPromise;
+        __photoDbPromise = new Promise((resolve, reject) => {
+            if (!window.indexedDB) { reject(new Error('IndexedDB 미지원 브라우저')); return; }
+            const req = indexedDB.open(PHOTO_DB_NAME, 1);
+            req.onupgradeneeded = () => {
+                const db = req.result;
+                if (!db.objectStoreNames.contains(PHOTO_STORE_NAME)) {
+                    db.createObjectStore(PHOTO_STORE_NAME, { keyPath: 'id' });
+                }
+            };
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+        return __photoDbPromise;
+    }
+
+    function generatePhotoKey(diaryId) {
+        return `photo_${diaryId}_${Date.now()}`;
+    }
+
+    async function savePhotoToDB(key, dataUrl) {
+        try {
+            const db = await openPhotoDB();
+            await new Promise((resolve, reject) => {
+                const tx = db.transaction(PHOTO_STORE_NAME, 'readwrite');
+                tx.objectStore(PHOTO_STORE_NAME).put({ id: key, data: dataUrl });
+                tx.oncomplete = resolve;
+                tx.onerror = () => reject(tx.error);
+            });
+        } catch (e) {
+            console.error('사진 저장(IndexedDB) 실패:', e);
+        }
+    }
+
+    async function deletePhotoFromDB(key) {
+        if (!key) return;
+        delete photoCache[key];
+        try {
+            const db = await openPhotoDB();
+            await new Promise((resolve, reject) => {
+                const tx = db.transaction(PHOTO_STORE_NAME, 'readwrite');
+                tx.objectStore(PHOTO_STORE_NAME).delete(key);
+                tx.oncomplete = resolve;
+                tx.onerror = () => reject(tx.error);
+            });
+        } catch (e) {
+            console.error('사진 삭제(IndexedDB) 실패:', e);
+        }
+    }
+
+    // 렌더링에서 사용: item.photo(키 문자열)를 실제 이미지 데이터(base64)로 변환
+    function getPhotoSrc(photoKeyOrData) {
+        if (!photoKeyOrData) return '';
+        // 혹시 아직 마이그레이션되지 않은 옛날 데이터(원본 base64가 그대로 남아있는 경우) 호환 처리
+        if (photoKeyOrData.indexOf('data:image') === 0) return photoKeyOrData;
+        return photoCache[photoKeyOrData] || '';
+    }
+
+    // 현재 편집 중인 사진(currentPhotoBase64)을 저장/삭제하고, 다이어리 항목에 넣을 "키"를 반환
+    // - DB 저장/삭제는 비동기로 백그라운드에서 진행하되(await 하지 않음), 캐시는 즉시 동기 반영하여 화면이 바로 갱신되도록 함
+    function persistCurrentPhoto(diaryId, oldPhotoKey) {
+        if (currentPhotoBase64) {
+            const key = oldPhotoKey || generatePhotoKey(diaryId);
+            photoCache[key] = currentPhotoBase64;
+            savePhotoToDB(key, currentPhotoBase64);
+            return key;
+        }
+        if (oldPhotoKey) {
+            deletePhotoFromDB(oldPhotoKey);
+        }
+        return null;
+    }
+
+    // 앱 시작 시 1회 실행: 과거 방식(사진 원본이 diary.photo에 직접 저장된 경우) → IndexedDB로 이전,
+    // 그리고 IndexedDB에 있는 모든 사진을 photoCache로 미리 로드
+    async function migrateAndLoadPhotosFromDB() {
+        try {
+            const db = await openPhotoDB();
+            let diaries = getAllDiaries();
+            let migrated = false;
+
+            for (const item of diaries) {
+                if (item.photo && typeof item.photo === 'string' && item.photo.indexOf('data:image') === 0) {
+                    const key = generatePhotoKey(item.id);
+                    await savePhotoToDB(key, item.photo);
+                    photoCache[key] = item.photo;
+                    item.photo = key;
+                    migrated = true;
+                }
+            }
+            if (migrated) {
+                localStorage.setItem('smartDiaryList', JSON.stringify(diaries));
+            }
+
+            await new Promise((resolve, reject) => {
+                const tx = db.transaction(PHOTO_STORE_NAME, 'readonly');
+                const req = tx.objectStore(PHOTO_STORE_NAME).getAll();
+                req.onsuccess = () => {
+                    (req.result || []).forEach(rec => { photoCache[rec.id] = rec.data; });
+                    resolve();
+                };
+                req.onerror = () => reject(req.error);
+            });
+        } catch (e) {
+            console.error('사진 DB 초기화/마이그레이션 실패:', e);
+        }
     }
 
     function previewImage(event) {
@@ -3946,21 +4063,28 @@
         }
 
         let diaries = getAllDiaries();
+        let oldPhotoKey = null;
+        if (editingDiaryId) {
+            const oldItem = diaries.find(d => d.id === editingDiaryId);
+            oldPhotoKey = oldItem ? (oldItem.photo || null) : null;
+        }
+        const diaryId = editingDiaryId || Date.now().toString();
+        const photoKey = persistCurrentPhoto(diaryId, oldPhotoKey);
 
         if (editingDiaryId) {
             diaries = diaries.map(item => {
                 if (item.id === editingDiaryId) {
-                    return { ...item, text: content, time: timeVal, photo: currentPhotoBase64, money: moneyObj };
+                    return { ...item, text: content, time: timeVal, photo: photoKey, money: moneyObj };
                 }
                 return item;
             });
         } else {
             const newItem = {
-                id: Date.now().toString(),
+                id: diaryId,
                 date: selectedReservationDate,
                 time: timeVal,
                 text: content,
-                photo: currentPhotoBase64,
+                photo: photoKey,
                 money: moneyObj
             };
             diaries.push(newItem);
@@ -3979,6 +4103,8 @@
     function deleteDiary(id) {
         if (!confirm('이 항목을 정말 삭제하시겠습니까?')) return;
         let diaries = getAllDiaries();
+        const target = diaries.find(d => d.id === id);
+        if (target && target.photo) deletePhotoFromDB(target.photo);
         diaries = diaries.filter(d => d.id !== id);
         localStorage.setItem('smartDiaryList', JSON.stringify(diaries));
         renderCalendar();
@@ -4084,7 +4210,9 @@
         }
     }, { passive: false });
 
-    window.onload = () => {
+    window.onload = async () => {
+        await migrateAndLoadPhotosFromDB();
+
         setMoneySummaryVisibility(isMoneySummaryVisible);
         setCategoryStatsVisibility(isCategoryStatsVisible);
         setSearchFilterVisibility(isSearchFilterVisible);
