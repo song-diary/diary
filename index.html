@@ -999,6 +999,30 @@
         .section-divider:hover .divider-label {
             background: #f0e2e2;
         }
+
+        /* 📌 일자 데이터가 적을 때(0~2개) 검색/필터 펼치기를 화면 맨 아래로 고정 */
+        .section-divider.floating-bottom {
+            position: fixed;
+            left: 50%;
+            bottom: 14px;
+            transform: translateX(-50%);
+            width: calc(100% - 30px);
+            max-width: 570px;
+            z-index: 450;
+            justify-content: center;
+            padding: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .section-divider.floating-bottom::before,
+        .section-divider.floating-bottom::after {
+            display: none;
+        }
+
+        .section-divider.floating-bottom .divider-label {
+            box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+            background: var(--card-bg);
+        }
     </style>
 </head>
 <body>
@@ -1021,7 +1045,7 @@
             <div class="cal-day-name weekday">금</div>
             <div class="cal-day-name saturday">토</div>
         </div>
-        <div class="calendar-grid" id="cal-days-grid" style="margin-top: 5px;"></div>
+        <div class="calendar-grid" id="cal-days-grid" style="margin-top: 5px; transition: transform 0.16s ease, opacity 0.16s ease;"></div>
     </div>
 
     <!-- 🧭 메인 탭 바: 설정 / 다이어리 / 가계부 / 입력 -->
@@ -1299,8 +1323,9 @@
 </div>
 
 <script>
-    let calYear = 2026;
-    let calMonth = 6; // 7월
+    const __initToday = new Date();
+    let calYear = __initToday.getFullYear();
+    let calMonth = __initToday.getMonth(); // 오늘 날짜 기준 당월로 자동 설정
     let selectedReservationDate = null;
     let selectedViewDate = null; // 📅 달력에서 선택(클릭)한 날짜 - 아래 다이어리 리스트에 표시됨
     let editingDiaryId = null;
@@ -2619,11 +2644,90 @@
     }
 
     function changeMonth(delta) {
-        calMonth += delta;
-        if (calMonth > 11) { calMonth = 0; calYear++; }
-        else if (calMonth < 0) { calMonth = 11; calYear--; }
-        renderCalendar();
+        const grid = document.getElementById('cal-days-grid');
+        if (!grid) {
+            calMonth += delta;
+            if (calMonth > 11) { calMonth = 0; calYear++; }
+            else if (calMonth < 0) { calMonth = 11; calYear--; }
+            renderCalendar();
+            return;
+        }
+
+        // 🎞️ 이동 방향에 맞춰 살짝 밀려나가는 느낌으로 페이드 아웃
+        const outDir = delta > 0 ? -18 : 18;
+        grid.style.transition = 'transform 0.14s ease, opacity 0.14s ease';
+        grid.style.transform = `translateX(${outDir}px)`;
+        grid.style.opacity = '0';
+
+        setTimeout(() => {
+            calMonth += delta;
+            if (calMonth > 11) { calMonth = 0; calYear++; }
+            else if (calMonth < 0) { calMonth = 11; calYear--; }
+            renderCalendar();
+
+            // 반대편에서 등장할 위치로 즉시 이동(애니메이션 없이)
+            grid.style.transition = 'none';
+            grid.style.transform = `translateX(${-outDir}px)`;
+            grid.style.opacity = '0';
+            void grid.offsetWidth; // 강제 리플로우로 스타일 적용 확정
+
+            // 제자리로 부드럽게 슬라이드 인
+            grid.style.transition = 'transform 0.16s ease, opacity 0.16s ease';
+            grid.style.transform = 'translateX(0)';
+            grid.style.opacity = '1';
+        }, 140);
     }
+
+    // 👆 달력을 손가락으로 좌우로 넘겨서 이전/다음 달로 이동
+    (function setupCalendarSwipe() {
+        const card = document.getElementById('calendar-card');
+        if (!card) return;
+
+        let startX = 0, startY = 0, tracking = false, decided = false, isHorizontal = false;
+
+        card.addEventListener('touchstart', (e) => {
+            if (e.touches.length !== 1) return;
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            tracking = true;
+            decided = false;
+            isHorizontal = false;
+        }, { passive: true });
+
+        card.addEventListener('touchmove', (e) => {
+            if (!tracking) return;
+            const dx = e.touches[0].clientX - startX;
+            const dy = e.touches[0].clientY - startY;
+
+            if (!decided) {
+                if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+                    decided = true;
+                    isHorizontal = Math.abs(dx) > Math.abs(dy);
+                }
+            }
+
+            if (isHorizontal) {
+                // 가로 스와이프로 판단되면 세로 스크롤/당겨서 새로고침 동작을 막아 반응이 빠르고 매끄럽게 느껴지도록 처리
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        function finishSwipe(e) {
+            if (!tracking) return;
+            tracking = false;
+            const touch = e.changedTouches[0];
+            const dx = touch.clientX - startX;
+            const dy = touch.clientY - startY;
+
+            if (isHorizontal && Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+                if (dx < 0) changeMonth(1);   // 왼쪽으로 스와이프 → 다음 달
+                else changeMonth(-1);          // 오른쪽으로 스와이프 → 이전 달
+            }
+        }
+
+        card.addEventListener('touchend', finishSwipe, { passive: true });
+        card.addEventListener('touchcancel', () => { tracking = false; }, { passive: true });
+    })();
 
     function openDiaryForm(dateStr, existingItem = null) {
         stopVoiceRecording();
@@ -2718,8 +2822,16 @@
         // 시간 내림차순 정렬
         filtered.sort((a, b) => (b.time || '').localeCompare(a.time || ''));
 
+        // 📌 해당 날짜의 데이터가 0~2개로 적으면 '검색 및 기간 필터 펼치기'를 화면 맨 아래로,
+        // 데이터가 많으면(3개 이상) 원래 위치(리스트 바로 아래)로 표시
+        const searchDividerEl = document.getElementById('diary-search-divider');
+        if (searchDividerEl) {
+            if (filtered.length <= 2) searchDividerEl.classList.add('floating-bottom');
+            else searchDividerEl.classList.remove('floating-bottom');
+        }
+
         if (filtered.length === 0) {
-            listEl.innerHTML = `<div style="font-size: var(--memo-font-size); color: var(--text-sub); text-align: center; padding: 10px;">이 날짜에 등록된 다이어리 내용이 없습니다.<br>위의 '✏️ 입력' 버튼을 눌러 작성해보세요.</div>`;
+            listEl.innerHTML = `<div style="font-size: var(--memo-font-size); color: var(--text-sub); text-align: center; padding: 22px 10px;">✏️ 입력 버튼을 눌러 작성해보세요</div>`;
             return;
         }
 
