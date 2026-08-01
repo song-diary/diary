@@ -1280,7 +1280,7 @@
         </div>
 
         <div class="reservation-box" id="reservation-box" style="display:none;">
-            <span style="font-size: 12px;">⏰ 시간:</span>
+            <span style="font-size: 12px;">⏰ 알림 받을 시간:</span>
             <input type="time" id="reservation-time-input" style="border:1px solid var(--border-color); border-radius:4px; background:#fff;">
         </div>
 
@@ -2663,21 +2663,15 @@
             return wrapper;
         }
 
-        const topN = 5;
-        const extraCount = Math.max(0, sortedCats.length - topN);
-
         sortedCats.forEach((item, idx) => {
             let percent = totalAmt > 0 ? ((item.amount / totalAmt) * 100).toFixed(1) : 0;
             let fillColorClass = moneyType === 'expense' ? 'expense' : 'income';
             let isSelected = clickable && selectedCategoryFilter === item.category;
             let entries = (categoryEntries[item.category] || []).slice().sort((a, b) => (a.date < b.date ? 1 : -1));
             let count = entries.length;
-            let isExtra = idx >= topN;
 
             const catBlock = document.createElement('div');
-            catBlock.className = isExtra ? 'stat-extra-row' : '';
             catBlock.dataset.category = item.category;
-            if (isExtra) catBlock.style.display = 'none';
 
             const row = document.createElement('div');
             row.className = `stat-bar-container ${isSelected ? 'active-stat' : ''}`;
@@ -2721,34 +2715,6 @@
 
             wrapper.appendChild(catBlock);
         });
-
-        if (extraCount > 0) {
-            const moreBtn = document.createElement('div');
-            moreBtn.className = 'stat-more-btn';
-            moreBtn.style.cssText = 'text-align:center; padding:8px; margin-top:2px; color:var(--primary-color); font-weight:bold; font-size:13px; cursor:pointer; border-top:1px dashed var(--border-color);';
-            moreBtn.textContent = `▼ 더보기 (${extraCount}개 더)`;
-            moreBtn.onclick = () => {
-                const extraBlocks = wrapper.querySelectorAll('.stat-extra-row');
-                const isHidden = extraBlocks.length > 0 && extraBlocks[0].style.display === 'none';
-                extraBlocks.forEach(block => {
-                    block.style.display = isHidden ? '' : 'none';
-                    if (!isHidden) {
-                        // 접기: 펼쳐져 있던 상세 리스트는 모두 닫고 선택 상태도 초기화
-                        const detail = block.querySelector('.stat-detail-list');
-                        if (detail) detail.style.display = 'none';
-                        const barRow = block.querySelector('.stat-bar-container');
-                        if (barRow) barRow.classList.remove('active-stat');
-                        if (selectedCategoryFilter === block.dataset.category) {
-                            selectedCategoryFilter = '';
-                            if (keywordSearchInput) keywordSearchInput.value = '';
-                            if (isSearchFilterOpen) filterCustomList();
-                        }
-                    }
-                });
-                moreBtn.textContent = isHidden ? '▲ 접기' : `▼ 더보기 (${extraCount}개 더)`;
-            };
-            wrapper.appendChild(moreBtn);
-        }
 
         return wrapper;
     }
