@@ -656,24 +656,6 @@
         .memo-line.fri { background-color: #9b59b6; }
         .memo-line.sat { background-color: var(--sat-color); }
 
-        .money-dots {
-            display: flex;
-            width: 65%;
-            height: 3px;
-            gap: 1px;
-            margin-top: 2px;
-            margin-bottom: 1px;
-            border-radius: 2px;
-            overflow: hidden;
-        }
-        .dot {
-            flex: 1;
-            height: 100%;
-        }
-        .dot.expense { background-color: var(--expense-color); }
-        .dot.income { background-color: var(--income-color); }
-        .dot.memo { background-color: var(--memo-color); }
-
         /* 팝업 모달 스타일 */
         .modal-overlay {
             display: none;
@@ -3522,21 +3504,7 @@
             if (dayDiaries.length > 0) {
                 const daysMap = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
                 const lineClass = daysMap[dayOfWeek] || 'mon';
-                
-                let hasExpense = dayDiaries.some(d => d.money && d.money.type === 'expense');
-                let hasIncome = dayDiaries.some(d => d.money && d.money.type === 'income');
-                let hasMemoOnly = dayDiaries.some(d => (!d.money || !d.money.amount) && (d.text || d.photo));
-                
-                let dotHTML = '';
-                if (hasExpense || hasIncome || hasMemoOnly) {
-                    let dots = [];
-                    if (hasExpense) dots.push('<span class="dot expense" title="지출"></span>');
-                    if (hasIncome) dots.push('<span class="dot income" title="수입"></span>');
-                    if (hasMemoOnly) dots.push('<span class="dot memo" title="메모(일기)"></span>');
-                    dotHTML = `<div class="money-dots">${dots.join('')}</div>`;
-                }
-
-                indicatorHTML = `${dotHTML}<div class="memo-line ${lineClass}"></div>`;
+                indicatorHTML = `<div class="memo-line ${lineClass}"></div>`;
             }
 
             cell.innerHTML = `<span>${day}</span>${indicatorHTML}`;
