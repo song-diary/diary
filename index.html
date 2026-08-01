@@ -1125,6 +1125,19 @@
                 <span id="stats-card-title">📊 이번 달 지출 통계</span>
                 <span style="font-size: 12px; color: var(--text-sub); font-weight: normal;" id="stats-card-hint">(과목 클릭 시 아래 리스트업)</span>
             </div>
+            <div class="view-select-group" id="stats-period-group" style="display:none; margin-bottom:8px; flex-wrap:wrap;">
+                <button class="view-select-btn active" id="stats-period-month" onclick="setStatsPeriod('month')">이번 달</button>
+                <button class="view-select-btn" id="stats-period-lastmonth" onclick="setStatsPeriod('lastmonth')">지난 달</button>
+                <button class="view-select-btn" id="stats-period-year" onclick="setStatsPeriod('year')">올해</button>
+                <button class="view-select-btn" id="stats-period-all" onclick="setStatsPeriod('all')">전체</button>
+                <button class="view-select-btn" id="stats-period-custom" onclick="setStatsPeriod('custom')">기간 설정</button>
+            </div>
+            <div id="stats-custom-period-box" class="search-row" style="display:none; margin-bottom:8px;">
+                <input type="date" id="stats-custom-start-date" style="flex:1;" onchange="applyStatsCustomPeriod()">
+                <span style="font-size:12px; font-weight:bold; color:var(--text-sub);">~</span>
+                <input type="date" id="stats-custom-end-date" style="flex:1;" onchange="applyStatsCustomPeriod()">
+                <button class="action-btn" style="padding:4px 10px; font-size:12px;" onclick="applyStatsCustomPeriod()">조회</button>
+            </div>
             <div id="category-stats-body"></div>
         </div>
 
@@ -2174,6 +2187,9 @@
     let currentPeriodFilter = 'today-around'; 
     let currentStatsType = 'expense'; 
     let selectedCategoryFilter = ''; 
+    let statsPeriodMode = 'month'; // 'month' | 'lastmonth' | 'year' | 'all' | 'custom'
+    let statsCustomStart = '';
+    let statsCustomEnd = '';
 
     let expenseCategories = JSON.parse(localStorage.getItem('smartDiaryExpenseCats')) || ["1. 식비", "2. 교통/통신", "3. 주거/생활", "4. 쇼핑", "5. 의료/건강", "6. 문화/여가", "7. 기타 지출"];
     let incomeCategories = JSON.parse(localStorage.getItem('smartDiaryIncomeCats')) || ["1. 용돈", "2. 월급", "3. 사업수입", "4. 금융/투자", "5. 기타 수입"];
@@ -2537,6 +2553,70 @@
         return combinedList;
     }
 
+    // ===================== 📅 지출/수입 통계 기간 필터 =====================
+    function getStatsPeriodRange() {
+        let pad = n => String(n).padStart(2, '0');
+        if (statsPeriodMode === 'lastmonth') {
+            let y = calYear, m = calMonth - 1;
+            if (m < 0) { m = 11; y -= 1; }
+            let lastDay = new Date(y, m + 1, 0).getDate();
+            return { start: `${y}-${pad(m + 1)}-01`, end: `${y}-${pad(m + 1)}-${pad(lastDay)}` };
+        }
+        if (statsPeriodMode === 'year') {
+            return { start: `${calYear}-01-01`, end: `${calYear}-12-31` };
+        }
+        if (statsPeriodMode === 'all') {
+            return { start: null, end: null };
+        }
+        if (statsPeriodMode === 'custom') {
+            return { start: statsCustomStart || null, end: statsCustomEnd || null };
+        }
+        // 기본: 이번 달 (달력에서 보고 있는 년/월 기준)
+        let lastDay = new Date(calYear, calMonth + 1, 0).getDate();
+        return { start: `${calYear}-${pad(calMonth + 1)}-01`, end: `${calYear}-${pad(calMonth + 1)}-${pad(lastDay)}` };
+    }
+
+    function getStatsPeriodLabel() {
+        if (statsPeriodMode === 'lastmonth') {
+            let y = calYear, m = calMonth - 1;
+            if (m < 0) { m = 11; y -= 1; }
+            return `${y}년 ${m + 1}월`;
+        }
+        if (statsPeriodMode === 'year') return `${calYear}년 전체`;
+        if (statsPeriodMode === 'all') return `전체 기간`;
+        if (statsPeriodMode === 'custom') {
+            if (statsCustomStart && statsCustomEnd) return `${statsCustomStart} ~ ${statsCustomEnd}`;
+            if (statsCustomStart) return `${statsCustomStart} 이후`;
+            if (statsCustomEnd) return `${statsCustomEnd} 이전`;
+            return `기간 설정`;
+        }
+        return `이번 달`;
+    }
+
+    function syncStatsPeriodUI() {
+        document.querySelectorAll('#stats-period-group .view-select-btn').forEach(b => b.classList.remove('active'));
+        let activeBtn = document.getElementById('stats-period-' + statsPeriodMode);
+        if (activeBtn) activeBtn.classList.add('active');
+        const customBox = document.getElementById('stats-custom-period-box');
+        if (customBox) customBox.style.display = (statsPeriodMode === 'custom') ? 'flex' : 'none';
+    }
+
+    function setStatsPeriod(mode) {
+        statsPeriodMode = mode;
+        syncStatsPeriodUI();
+        renderCategoryStats();
+    }
+
+    function applyStatsCustomPeriod() {
+        const s = document.getElementById('stats-custom-start-date');
+        const e = document.getElementById('stats-custom-end-date');
+        statsCustomStart = s ? s.value : '';
+        statsCustomEnd = e ? e.value : '';
+        statsPeriodMode = 'custom';
+        syncStatsPeriodUI();
+        renderCategoryStats();
+    }
+
     function buildCategoryStatsGroup(moneyType, groupTitle, clickable) {
         const wrapper = document.createElement('div');
         if (groupTitle) {
@@ -2547,7 +2627,7 @@
         }
 
         const diaries = getAllDiaries();
-        const prefix = `${calYear}-${String(calMonth + 1).padStart(2, '0')}`;
+        const range = getStatsPeriodRange();
 
         let targetCategories = moneyType === 'expense' ? expenseCategories : incomeCategories;
         let categorySums = {};
@@ -2556,7 +2636,9 @@
         let totalAmt = 0;
 
         diaries.forEach(item => {
-            if (normalizeDateStr(item.date).startsWith(prefix) && item.money && item.money.type === moneyType) {
+            let d = normalizeDateStr(item.date);
+            let inRange = (!range.start || d >= range.start) && (!range.end || d <= range.end);
+            if (inRange && item.money && item.money.type === moneyType) {
                 let cat = item.money.category;
                 let amt = Number(item.money.amount) || 0;
                 if (!categorySums[cat]) categorySums[cat] = 0;
@@ -2576,7 +2658,7 @@
         if (!hasData) {
             const emptyEl = document.createElement('div');
             emptyEl.style.cssText = 'text-align:center; color:var(--text-sub); font-size:13px; padding:6px;';
-            emptyEl.textContent = `이번 달 ${moneyType === 'expense' ? '지출' : '수입'} 내역이 없습니다.`;
+            emptyEl.textContent = `${getStatsPeriodLabel()} ${moneyType === 'expense' ? '지출' : '수입'} 내역이 없습니다.`;
             wrapper.appendChild(emptyEl);
             return wrapper;
         }
@@ -2590,13 +2672,15 @@
             let isSelected = clickable && selectedCategoryFilter === item.category;
             let entries = (categoryEntries[item.category] || []).slice().sort((a, b) => (a.date < b.date ? 1 : -1));
             let count = entries.length;
+            let isExtra = idx >= topN;
+
+            const catBlock = document.createElement('div');
+            catBlock.className = isExtra ? 'stat-extra-row' : '';
+            catBlock.dataset.category = item.category;
+            if (isExtra) catBlock.style.display = 'none';
 
             const row = document.createElement('div');
             row.className = `stat-bar-container ${isSelected ? 'active-stat' : ''}`;
-            if (idx >= topN) {
-                row.classList.add('stat-extra-row');
-                row.style.display = 'none';
-            }
             row.innerHTML = `
                 <div class="stat-info-row">
                     <span style="font-weight:bold; color:var(--weekday-color);">👉 ${item.category}${count > 0 ? `(${count})` : ''}</span>
@@ -2606,11 +2690,11 @@
                     <div class="stat-bar-fill ${fillColorClass}" style="width: ${percent}%;"></div>
                 </div>
             `;
-            wrapper.appendChild(row);
+            catBlock.appendChild(row);
 
             if (clickable && count > 0) {
                 const detailBox = document.createElement('div');
-                detailBox.className = `stat-detail-list ${idx >= topN ? 'stat-extra-row' : ''}`;
+                detailBox.className = 'stat-detail-list';
                 detailBox.style.cssText = `display:${isSelected ? 'block' : 'none'}; margin:2px 0 8px; padding:6px 8px; background:rgba(127,127,127,0.08); border-radius:6px;`;
                 entries.forEach(en => {
                     let shortDate = normalizeDateStr(en.date).slice(5).replace('-', '/');
@@ -2625,7 +2709,7 @@
                     `;
                     detailBox.appendChild(dRow);
                 });
-                wrapper.appendChild(detailBox);
+                catBlock.appendChild(detailBox);
             }
 
             if (clickable) {
@@ -2634,6 +2718,8 @@
             } else {
                 row.style.cursor = 'default';
             }
+
+            wrapper.appendChild(catBlock);
         });
 
         if (extraCount > 0) {
@@ -2642,9 +2728,23 @@
             moreBtn.style.cssText = 'text-align:center; padding:8px; margin-top:2px; color:var(--primary-color); font-weight:bold; font-size:13px; cursor:pointer; border-top:1px dashed var(--border-color);';
             moreBtn.textContent = `▼ 더보기 (${extraCount}개 더)`;
             moreBtn.onclick = () => {
-                const extraRows = wrapper.querySelectorAll('.stat-extra-row');
-                const isHidden = extraRows.length > 0 && extraRows[0].style.display === 'none';
-                extraRows.forEach(r => { r.style.display = isHidden ? '' : 'none'; });
+                const extraBlocks = wrapper.querySelectorAll('.stat-extra-row');
+                const isHidden = extraBlocks.length > 0 && extraBlocks[0].style.display === 'none';
+                extraBlocks.forEach(block => {
+                    block.style.display = isHidden ? '' : 'none';
+                    if (!isHidden) {
+                        // 접기: 펼쳐져 있던 상세 리스트는 모두 닫고 선택 상태도 초기화
+                        const detail = block.querySelector('.stat-detail-list');
+                        if (detail) detail.style.display = 'none';
+                        const barRow = block.querySelector('.stat-bar-container');
+                        if (barRow) barRow.classList.remove('active-stat');
+                        if (selectedCategoryFilter === block.dataset.category) {
+                            selectedCategoryFilter = '';
+                            if (keywordSearchInput) keywordSearchInput.value = '';
+                            if (isSearchFilterOpen) filterCustomList();
+                        }
+                    }
+                });
                 moreBtn.textContent = isHidden ? '▲ 접기' : `▼ 더보기 (${extraCount}개 더)`;
             };
             wrapper.appendChild(moreBtn);
@@ -2652,6 +2752,7 @@
 
         return wrapper;
     }
+
 
     // ===================== 📌 전월 이월액 (다음달로 잔액 연결) =====================
     function getCarryOverMap() {
@@ -2843,6 +2944,8 @@
         const statsBody = document.getElementById('category-stats-body');
         const statsCardTitle = document.getElementById('stats-card-title');
         const statsCardHint = document.getElementById('stats-card-hint');
+        const statsPeriodGroup = document.getElementById('stats-period-group');
+        const statsCustomBox = document.getElementById('stats-custom-period-box');
         if (!statsBody) return;
         updateCardStatementVisibility();
         if (!isMoneySummaryVisible) return;
@@ -2855,14 +2958,19 @@
         if (currentStatsType === 'balance') {
             if (statsCardTitle) statsCardTitle.textContent = `💼 잔액 보관처별 분류`;
             if (statsCardHint) statsCardHint.textContent = '(지갑/은행 등 보관처별 금액 입력)';
+            if (statsPeriodGroup) statsPeriodGroup.style.display = 'none';
+            if (statsCustomBox) statsCustomBox.style.display = 'none';
             renderBalanceLocationsUI();
             return;
         }
 
+        if (statsPeriodGroup) statsPeriodGroup.style.display = 'flex';
+        syncStatsPeriodUI();
+
         if (statsCardTitle) {
             statsCardTitle.textContent = currentStatsType === 'expense'
-                ? `📊 이번 달 지출 통계`
-                : `📊 이번 달 수입 통계`;
+                ? `📊 ${getStatsPeriodLabel()} 지출 통계`
+                : `📊 ${getStatsPeriodLabel()} 수입 통계`;
         }
         if (statsCardHint) statsCardHint.textContent = '(과목 클릭 시 아래 리스트업)';
 
