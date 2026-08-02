@@ -762,6 +762,18 @@
 
         .modal-overlay.active {
             display: flex;
+            /* 배경(어두운 영역)에서는 어떤 제스처도 브라우저 기본 동작(당겨서 새로고침 등)으로 이어지지 않도록 차단 */
+            touch-action: none;
+        }
+
+        /* 팝업 폼 내부는 세로 스크롤만 브라우저 기본 동작으로 허용하고,
+           그 외(당겨서 새로고침 등)는 차단하여 입력 중이던 내용이 사라지는 것을 방지 */
+        #memo-form-card,
+        #card-statement-card,
+        #card-pending-card,
+        #balance-location-card,
+        #settings-card {
+            touch-action: pan-y;
         }
 
         /* 다이어리 입력 폼 (팝업창 버전) */
@@ -1005,7 +1017,7 @@
         }
 
         .diary-photo {
-            max-width: 100%;
+            max-width: 50%;
             border-radius: 6px;
             margin-top: 8px;
             display: block;
@@ -3162,10 +3174,11 @@
         let total = locations.reduce((sum, loc) => sum + (Number(loc.amount) || 0), 0);
 
         // 전체 기간 누적 수입-지출로 계산한 실제 잔액 (보관처별 합계와 대조하기 위함)
+        // ⏳ 카드 대기(미정산) 지출은 아직 실제로 계좌/지갑에서 빠져나간 게 아니므로 여기서도 제외해야 차액이 맞음
         let calcIncome = 0;
         let calcExpense = 0;
         getAllDiaries().forEach(item => {
-            if (item.money && item.money.amount) {
+            if (item.money && item.money.amount && !item.money.cardPending) {
                 let amt = Number(item.money.amount) || 0;
                 if (item.money.type === 'income') calcIncome += amt;
                 else if (item.money.type === 'expense') calcExpense += amt;
@@ -4423,10 +4436,7 @@
         const JPEG_QUALITY = 0.7;
         const img = new Image();
         img.onload = function() {
-            // 📷 요청사항: 사진 용량/화면 차지를 줄이기 위해 기본적으로 원본의 1/2 크기로 축소
-            let width = Math.max(1, Math.round(img.width / 2));
-            let height = Math.max(1, Math.round(img.height / 2));
-            // 그래도 너무 큰 사진(고화질 카메라 등)은 추가로 최대 크기 이내로 제한
+            let { width, height } = img;
             if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
                 if (width >= height) {
                     height = Math.round(height * (MAX_DIMENSION / width));
