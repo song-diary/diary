@@ -171,6 +171,51 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
 
+        /* ⏳ 카드 대기 지출 정산 카드 (팝업 폼) */
+        #card-pending-card {
+            background: #fff;
+            border: 2px solid #f39c12;
+            animation: fadeIn 0.3s ease;
+            width: min(500px, 92vw);
+            max-height: min(600px, 85vh);
+            overflow-y: auto;
+            overflow-x: hidden;
+            border-radius: 12px;
+            padding: 16px;
+            box-sizing: border-box;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            overscroll-behavior: contain;
+        }
+
+        .card-pending-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            background: #fffaf1;
+            border: 1px solid #f5d9a8;
+            border-radius: 8px;
+            padding: 8px;
+            margin-bottom: 6px;
+        }
+
+        .card-pending-row input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        .card-pending-row .cp-info {
+            flex: 1;
+            min-width: 0;
+            font-size: 13px;
+        }
+
+        .card-pending-row .cp-amount {
+            font-weight: bold;
+            color: var(--expense-color);
+        }
+
         /* 카드명세 일괄입력 */
         .card-statement-row {
             display: grid;
@@ -237,6 +282,18 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            /* 내용이 길어져 스크롤되어도 닫기(✖) 버튼이 항상 보이도록 상단 고정 */
+            position: sticky;
+            top: -1px;
+            background: #fff;
+            z-index: 5;
+            padding-top: 4px;
+        }
+
+        /* 팝업 내부를 끝까지 스크롤해도 뒤쪽 페이지가 같이 스크롤되지 않도록 방지 */
+        #card-statement-card,
+        #settings-card {
+            overscroll-behavior: contain;
         }
 
         .settings-section {
@@ -703,6 +760,16 @@
             font-weight: bold;
             color: var(--primary-color);
             gap: 10px;
+            /* 내용이 길어져 스크롤되어도 닫기(✖) 버튼이 항상 보이도록 상단 고정 */
+            position: sticky;
+            top: -1px;
+            background: #fff;
+            z-index: 5;
+            padding-top: 4px;
+        }
+
+        #memo-form-card {
+            overscroll-behavior: contain;
         }
 
         .form-header-info span {
@@ -1152,6 +1219,9 @@
         <!-- 💳 카드명세 일괄 입력 -->
         <button class="action-btn" id="card-statement-open-btn" style="display:none; width:100%; margin-bottom:10px; padding:10px;" onclick="openCardStatementModal()">💳 카드명세 일괄 입력 열기</button>
 
+        <!-- ⏳ 카드 대기(미정산) 지출 -->
+        <button class="action-btn" id="card-pending-open-btn" style="display:none; width:100%; margin-bottom:10px; padding:10px; background-color:#f39c12;" onclick="openCardPendingModal()">⏳ 카드 대기 지출 확인/정산</button>
+
         <div class="modal-overlay" id="card-statement-modal-overlay" onclick="handleCardStatementModalBackgroundClick(event)">
             <div class="card" id="card-statement-card">
                 <div class="settings-title">
@@ -1169,6 +1239,29 @@
                 </div>
             </div>
         </div>
+
+        <!-- ⏳ 카드 대기(미정산) 지출 정산 모달 -->
+        <div class="modal-overlay" id="card-pending-modal-overlay" onclick="handleCardPendingModalBackgroundClick(event)">
+            <div class="card" id="card-pending-card">
+                <div class="settings-title">
+                    <span>⏳ 카드 대기 지출</span>
+                    <button class="close-form-btn" onclick="closeCardPendingModal()" title="닫기">✖</button>
+                </div>
+                <div style="font-size: 12px; color: var(--text-sub); margin-bottom: 8px;">아직 카드 결제일에 정산되지 않은 지출 목록입니다. 실제 잔액에는 반영되지 않고 있어요. 결제일이 되면 항목을 선택해서 '정산하기'를 눌러주세요. (정산일 기준으로 잔액에 반영됩니다)</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <label style="font-size:13px; display:flex; align-items:center; gap:4px; cursor:pointer;">
+                        <input type="checkbox" id="card-pending-select-all" checked onchange="toggleCardPendingSelectAll()"> 전체 선택
+                    </label>
+                    <span style="font-size:13px; color:var(--text-sub);">대기 합계: <b id="card-pending-total-all" style="color:#f39c12;">0원</b></span>
+                </div>
+                <div id="card-pending-list"></div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding-top:8px; border-top:1px dashed var(--border-color);">
+                    <span style="font-size:14px; font-weight:bold;">선택 합계: <span id="card-pending-selected-total">0원</span></span>
+                    <button class="btn btn-primary" onclick="settleSelectedCardPending()">✅ 선택 항목 정산하기</button>
+                </div>
+            </div>
+        </div>
+
 
         <!-- 🔍 검색 및 기간별 상세 내역 -->
         <div class="section-divider" id="money-search-divider" onclick="toggleSearchFilterSection()">
@@ -1294,6 +1387,13 @@
             <div style="display: flex; gap: 6px;">
                 <select id="money-category-select" class="money-input-field" style="flex: 1;" onchange="onCategoryChanged()"></select>
                 <input type="text" inputmode="numeric" id="money-amount-input" class="money-input-field" placeholder="금액 안 쓰면 순수 메모" style="flex: 1.5;" onfocus="scrollToInput(this)">
+            </div>
+            <div id="card-pending-input-row" style="margin-top:8px;">
+                <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--text-sub); cursor:pointer;">
+                    <input type="checkbox" id="card-pending-checkbox" onchange="onCardPendingToggle()" style="width:16px; height:16px;">
+                    💳 카드결제 (대기중 - 결제일에 따로 정산)
+                </label>
+                <input type="text" id="card-pending-name-input" placeholder="카드명 (예: 국민카드)" style="display:none; width:100%; margin-top:6px; padding:6px; border:1px solid var(--border-color); border-radius:6px; font-size:16px; box-sizing:border-box;">
             </div>
         </div>
 
@@ -2184,7 +2284,33 @@
     let isSearchFilterVisible = localStorage.getItem('smartDiarySearchFilterVisible') !== 'false';
 
     let currentMoneyType = 'expense';
-    
+
+    // 🔒 모달(팝업) 열림 시 배경 페이지가 같이 스크롤되는 문제 방지용 body 스크롤 잠금
+    let modalLockCount = 0;
+    let modalLockedScrollY = 0;
+    function lockBodyScroll() {
+        if (modalLockCount === 0) {
+            modalLockedScrollY = window.scrollY || document.documentElement.scrollTop || 0;
+            document.body.style.position = 'fixed';
+            document.body.style.top = `-${modalLockedScrollY}px`;
+            document.body.style.left = '0';
+            document.body.style.right = '0';
+            document.body.style.width = '100%';
+        }
+        modalLockCount++;
+    }
+    function unlockBodyScroll() {
+        modalLockCount = Math.max(0, modalLockCount - 1);
+        if (modalLockCount === 0) {
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.left = '';
+            document.body.style.right = '';
+            document.body.style.width = '';
+            window.scrollTo(0, modalLockedScrollY);
+        }
+    }
+
     let currentPeriodFilter = 'today-around'; 
     let currentStatsType = 'expense'; 
     let selectedCategoryFilter = ''; 
@@ -2227,6 +2353,9 @@
 
     const moneyCategorySelect = document.getElementById('money-category-select');
     const moneyAmountInput = document.getElementById('money-amount-input');
+    const cardPendingCheckbox = document.getElementById('card-pending-checkbox');
+    const cardPendingNameInput = document.getElementById('card-pending-name-input');
+    const cardPendingInputRow = document.getElementById('card-pending-input-row');
     const typeExpenseBtn = document.getElementById('type-expense-btn');
     const typeIncomeBtn = document.getElementById('type-income-btn');
     const moneySummaryCard = document.getElementById('money-summary-card');
@@ -2237,24 +2366,158 @@
     const cardStatementRowsBox = document.getElementById('card-statement-rows');
     const cardStatementOpenBtn = document.getElementById('card-statement-open-btn');
     const cardStatementModalOverlay = document.getElementById('card-statement-modal-overlay');
+    const cardPendingOpenBtn = document.getElementById('card-pending-open-btn');
+    const cardPendingModalOverlay = document.getElementById('card-pending-modal-overlay');
+    const cardPendingListBox = document.getElementById('card-pending-list');
+
+    function getCardPendingItems() {
+        return getAllDiaries().filter(item => item.money && item.money.type === 'expense' && item.money.cardPending)
+            .sort((a, b) => normalizeDateStr(a.date).localeCompare(normalizeDateStr(b.date)));
+    }
 
     function updateCardStatementVisibility() {
         if (cardStatementOpenBtn) {
             cardStatementOpenBtn.style.display = (isMoneySummaryVisible && currentStatsType === 'balance') ? 'block' : 'none';
         }
+        if (cardPendingOpenBtn) {
+            const pendingItems = getCardPendingItems();
+            const pendingTotal = pendingItems.reduce((sum, it) => sum + (Number(it.money.amount) || 0), 0);
+            const shouldShow = (isMoneySummaryVisible && currentStatsType === 'balance' && pendingItems.length > 0);
+            cardPendingOpenBtn.style.display = shouldShow ? 'block' : 'none';
+            cardPendingOpenBtn.textContent = `⏳ 카드 대기 지출 확인/정산 (${pendingTotal.toLocaleString()}원, ${pendingItems.length}건)`;
+        }
     }
 
     function openCardStatementModal() {
         if (cardStatementModalOverlay) cardStatementModalOverlay.classList.add('active');
+        lockBodyScroll();
     }
 
     function closeCardStatementModal() {
         if (cardStatementModalOverlay) cardStatementModalOverlay.classList.remove('active');
+        unlockBodyScroll();
     }
 
     function handleCardStatementModalBackgroundClick(event) {
         if (event.target === cardStatementModalOverlay) {
             closeCardStatementModal();
+        }
+    }
+
+    // ⏳ 카드 대기 지출 정산 모달
+    function openCardPendingModal() {
+        renderCardPendingList();
+        if (cardPendingModalOverlay) cardPendingModalOverlay.classList.add('active');
+        lockBodyScroll();
+    }
+
+    function closeCardPendingModal() {
+        if (cardPendingModalOverlay) cardPendingModalOverlay.classList.remove('active');
+        unlockBodyScroll();
+    }
+
+    function handleCardPendingModalBackgroundClick(event) {
+        if (event.target === cardPendingModalOverlay) {
+            closeCardPendingModal();
+        }
+    }
+
+    function renderCardPendingList() {
+        if (!cardPendingListBox) return;
+        const items = getCardPendingItems();
+        cardPendingListBox.innerHTML = '';
+
+        const totalAllEl = document.getElementById('card-pending-total-all');
+        const totalAll = items.reduce((sum, it) => sum + (Number(it.money.amount) || 0), 0);
+        if (totalAllEl) totalAllEl.textContent = totalAll.toLocaleString() + '원';
+
+        const selectAllBox = document.getElementById('card-pending-select-all');
+        if (selectAllBox) selectAllBox.checked = true;
+
+        if (items.length === 0) {
+            cardPendingListBox.innerHTML = '<div style="text-align:center; color:var(--text-sub); font-size:13px; padding:12px;">현재 대기중인 카드 지출이 없습니다.</div>';
+            updateCardPendingSelectedTotal();
+            return;
+        }
+
+        items.forEach(item => {
+            const row = document.createElement('div');
+            row.className = 'card-pending-row';
+            const dateStr = normalizeDateStr(item.date);
+            const amountStr = Number(item.money.amount).toLocaleString() + '원';
+            const cardNameStr = item.money.cardName ? `[${item.money.cardName}] ` : '';
+            const memoStr = item.text ? item.text.replace(/<[^>]*>/g, '').slice(0, 30) : '';
+            row.innerHTML = `
+                <input type="checkbox" class="cp-checkbox" data-id="${item.id}" data-amount="${Number(item.money.amount) || 0}" checked onchange="updateCardPendingSelectedTotal()">
+                <div class="cp-info">
+                    <div>${dateStr} · ${item.money.category || ''}</div>
+                    <div>${cardNameStr}${memoStr}</div>
+                    <div class="cp-amount">${amountStr}</div>
+                </div>
+            `;
+            cardPendingListBox.appendChild(row);
+        });
+
+        updateCardPendingSelectedTotal();
+    }
+
+    function toggleCardPendingSelectAll() {
+        const selectAllBox = document.getElementById('card-pending-select-all');
+        const checked = selectAllBox ? selectAllBox.checked : true;
+        document.querySelectorAll('#card-pending-list .cp-checkbox').forEach(cb => { cb.checked = checked; });
+        updateCardPendingSelectedTotal();
+    }
+
+    function updateCardPendingSelectedTotal() {
+        const checkboxes = document.querySelectorAll('#card-pending-list .cp-checkbox:checked');
+        let total = 0;
+        checkboxes.forEach(cb => { total += Number(cb.dataset.amount) || 0; });
+        const totalEl = document.getElementById('card-pending-selected-total');
+        if (totalEl) totalEl.textContent = total.toLocaleString() + '원';
+    }
+
+    function settleSelectedCardPending() {
+        const checkboxes = document.querySelectorAll('#card-pending-list .cp-checkbox:checked');
+        if (checkboxes.length === 0) {
+            alert('정산할 항목을 선택해주세요.');
+            return;
+        }
+        if (!confirm(`선택한 ${checkboxes.length}건을 오늘(${getTodayStr()}) 날짜로 정산 처리하시겠습니까?\n정산 후에는 잔액 계산에 반영됩니다.`)) return;
+
+        const idsToSettle = new Set(Array.from(checkboxes).map(cb => cb.dataset.id));
+        const todayStr = getTodayStr();
+        let diaries = getAllDiaries();
+
+        diaries = diaries.map(item => {
+            if (idsToSettle.has(item.id) && item.money && item.money.cardPending) {
+                return {
+                    ...item,
+                    date: todayStr,
+                    money: {
+                        ...item.money,
+                        cardPending: false,
+                        cardUseDate: item.date
+                    }
+                };
+            }
+            return item;
+        });
+
+        localStorage.setItem('smartDiaryList', JSON.stringify(diaries));
+
+        renderCalendar();
+        updateMoneySummary();
+        if (isSearchFilterOpen) filterCustomList();
+        renderDiaryAroundToday();
+        if (isDiarySearchFilterOpen) filterDiaryCustomList();
+
+        renderCardPendingList();
+        updateCardStatementVisibility();
+
+        alert(`${idsToSettle.size}건이 정산되어 오늘 날짜(${todayStr}) 지출로 반영되었습니다.`);
+
+        if (getCardPendingItems().length === 0) {
+            closeCardPendingModal();
         }
     }
 
@@ -2639,7 +2902,7 @@
         diaries.forEach(item => {
             let d = normalizeDateStr(item.date);
             let inRange = (!range.start || d >= range.start) && (!range.end || d <= range.end);
-            if (inRange && item.money && item.money.type === moneyType) {
+            if (inRange && item.money && item.money.type === moneyType && !item.money.cardPending) {
                 let cat = item.money.category;
                 let amt = Number(item.money.amount) || 0;
                 if (!categorySums[cat]) categorySums[cat] = 0;
@@ -3099,6 +3362,7 @@
         });
 
         let listTotalAmt = filtered.reduce((sum, item) => {
+            if (item.money && item.money.cardPending) return sum;
             return sum + (item.money ? (Number(item.money.amount) || 0) : 0);
         }, 0);
 
@@ -3155,9 +3419,12 @@
                 let colorStyle = isExp ? 'color: var(--expense-color);' : 'color: var(--income-color);';
                 let typeSign = isExp ? '-' : '+';
                 let amountStr = Number(item.money.amount).toLocaleString() + '원';
-                
+                let pendingBadge = item.money.cardPending
+                    ? `<span style="background:#f39c12; color:#fff; padding:1px 5px; border-radius:4px; font-size:11px; margin-left:6px; font-weight:bold; vertical-align:middle;">⏳ 카드대기${item.money.cardName ? ' · ' + item.money.cardName : ''}</span>`
+                    : '';
+
                 headerHTML = `<div style="font-weight: bold; margin-bottom: 4px; ${colorStyle}">
-                    💰 ${typeSign}${amountStr}
+                    💰 ${typeSign}${amountStr}${pendingBadge}
                 </div>`;
             } else {
                 subItem.classList.add('memo-only-box');
@@ -3427,7 +3694,7 @@
         let totalExpense = 0;
 
         diaries.forEach(item => {
-            if (normalizeDateStr(item.date).startsWith(prefix) && item.money && item.money.amount) {
+            if (normalizeDateStr(item.date).startsWith(prefix) && item.money && item.money.amount && !item.money.cardPending) {
                 let amt = Number(item.money.amount) || 0;
                 if (item.money.type === 'income') totalIncome += amt;
                 else if (item.money.type === 'expense') totalExpense += amt;
@@ -3490,6 +3757,20 @@
             typeExpenseBtn.classList.remove('active');
         }
         updateCategorySelectOptions(selectedCat);
+
+        // 💳 카드결제(대기)는 지출일 때만 의미가 있으므로 수입 선택 시 숨기고 초기화
+        if (cardPendingInputRow) {
+            cardPendingInputRow.style.display = (type === 'expense') ? 'block' : 'none';
+        }
+        if (type !== 'expense' && cardPendingCheckbox) {
+            cardPendingCheckbox.checked = false;
+            onCardPendingToggle();
+        }
+    }
+
+    function onCardPendingToggle() {
+        if (!cardPendingCheckbox || !cardPendingNameInput) return;
+        cardPendingNameInput.style.display = cardPendingCheckbox.checked ? 'block' : 'none';
     }
 
     function onCategoryChanged() {
@@ -3539,10 +3820,12 @@
     function openSettingsModal() {
         renderCategorySettingsList();
         if (settingsModalOverlay) settingsModalOverlay.classList.add('active');
+        lockBodyScroll();
     }
 
     function closeSettingsModal() {
         if (settingsModalOverlay) settingsModalOverlay.classList.remove('active');
+        unlockBodyScroll();
     }
 
     function handleSettingsModalBackgroundClick(event) {
@@ -3746,9 +4029,18 @@
             if (existingItem.money && existingItem.money.amount) {
                 setMoneyType(existingItem.money.type || 'expense', existingItem.money.category || '');
                 moneyAmountInput.value = Number(existingItem.money.amount || 0).toLocaleString();
+                if (cardPendingCheckbox) {
+                    cardPendingCheckbox.checked = !!(existingItem.money.type === 'expense' && existingItem.money.cardPending);
+                    onCardPendingToggle();
+                }
+                if (cardPendingNameInput) {
+                    cardPendingNameInput.value = existingItem.money.cardName || '';
+                }
             } else {
                 setMoneyType('expense', '');
                 moneyAmountInput.value = '';
+                if (cardPendingCheckbox) { cardPendingCheckbox.checked = false; onCardPendingToggle(); }
+                if (cardPendingNameInput) cardPendingNameInput.value = '';
             }
         } else {
             textOutput.innerHTML = '';
@@ -3756,6 +4048,8 @@
             currentPhotoBase64 = null;
             setMoneyType('expense', '');
             moneyAmountInput.value = '';
+            if (cardPendingCheckbox) { cardPendingCheckbox.checked = false; onCardPendingToggle(); }
+            if (cardPendingNameInput) cardPendingNameInput.value = '';
         }
 
         updatePhotoPreview();
@@ -3764,6 +4058,7 @@
         if (memoModalOverlay) {
             memoModalOverlay.classList.add('active');
         }
+        lockBodyScroll();
     }
 
     function closeDiaryFormPanel() {
@@ -3771,6 +4066,7 @@
         if (memoModalOverlay) {
             memoModalOverlay.classList.remove('active');
         }
+        unlockBodyScroll();
         editingDiaryId = null;
         currentPhotoBase64 = null;
         selectedReservationDate = null;
@@ -4045,6 +4341,8 @@
         const timeVal = reservationTimeInput.value;
         const moneyCategory = moneyCategorySelect.value;
         const rawAmount = moneyAmountInput.value.replace(/[^0-9]/g, '').trim();
+        const isCardPending = !!(currentMoneyType === 'expense' && cardPendingCheckbox && cardPendingCheckbox.checked);
+        const cardNameVal = (cardPendingNameInput ? cardPendingNameInput.value : '').trim();
 
         stopVoiceRecording();
 
@@ -4053,7 +4351,9 @@
             moneyObj = {
                 type: currentMoneyType,
                 category: moneyCategory,
-                amount: Number(rawAmount)
+                amount: Number(rawAmount),
+                cardPending: isCardPending,
+                cardName: isCardPending ? cardNameVal : ''
             };
         }
 
