@@ -1011,6 +1011,25 @@
             display: block;
         }
 
+        .diary-photo-wrap {
+            position: relative;
+            display: inline-block;
+            max-width: 100%;
+        }
+
+        .photo-download-btn {
+            position: absolute;
+            right: 6px;
+            bottom: 6px;
+            background: rgba(0,0,0,0.55);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
         .memo-action-btns {
             position: absolute;
             top: 10px;
@@ -1449,7 +1468,10 @@
 
         <div id="photo-preview-wrap">
             <img id="image-preview" src="" alt="미리보기">
-            <button class="action-btn" style="margin-top:5px;" onclick="removeImage()">사진 취소</button>
+            <div class="btn-group" style="margin-top:5px; margin-bottom:0;">
+                <button class="action-btn" style="background-color:#2980b9;" onclick="downloadCurrentPreviewPhoto()">💾 사진 저장</button>
+                <button class="action-btn" onclick="removeImage()">사진 취소</button>
+            </div>
         </div>
 
         <div id="textOutput" class="diary-textarea" contenteditable="true" placeholder="여기에 메모(일기)를 입력하세요" onfocus="scrollToInput(this)"></div>
@@ -3509,7 +3531,7 @@
 
             let timeBadge = item.time ? `<span style="color:var(--primary-color); font-weight:bold; margin-right:6px; font-size:12px;">⏰ ${item.time}</span>` : '';
             let textContentHTML = item.text ? `<div class="diary-text">${timeBadge}${item.text}</div>` : (item.time ? `<div class="diary-text">${timeBadge}</div>` : '');
-            let photoHTML = item.photo ? `<img src="${getPhotoSrc(item.photo)}" class="diary-photo" alt="첨부사진">` : '';
+            let photoHTML = renderPhotoHTML(item);
 
             subItem.innerHTML = `
                 <div class="memo-action-btns">
@@ -3667,7 +3689,7 @@
 
             let timeBadge = item.time ? `<span style="color:var(--primary-color); font-weight:bold; margin-right:6px; font-size:12px;">⏰ ${item.time}</span>` : '';
             let textContentHTML = item.text ? `<div class="diary-text">${timeBadge}${item.text}</div>` : (item.time ? `<div class="diary-text">${timeBadge}</div>` : '');
-            let photoHTML = item.photo ? `<img src="${getPhotoSrc(item.photo)}" class="diary-photo" alt="첨부사진">` : '';
+            let photoHTML = renderPhotoHTML(item);
 
             subItem.innerHTML = `
                 <div class="memo-action-btns">
@@ -4202,7 +4224,7 @@
         filtered.forEach(item => {
             const timeBadge = item.time ? `<span style="color:var(--primary-color); font-weight:bold; margin-right:6px; font-size:12px;">⏰ ${item.time}</span>` : '';
             const textContentHTML = item.text ? `<div class="diary-text">${timeBadge}${item.text}</div>` : (item.time ? `<div class="diary-text">${timeBadge}</div>` : '');
-            const photoHTML = item.photo ? `<img src="${getPhotoSrc(item.photo)}" class="diary-photo" alt="첨부사진">` : '';
+            const photoHTML = renderPhotoHTML(item);
 
             const itemBox = document.createElement('div');
             itemBox.className = 'sub-memo-item memo-only-box';
@@ -4291,6 +4313,47 @@
         return photoCache[photoKeyOrData] || '';
     }
 
+    // 📷 사진 + "💾 저장" 버튼을 함께 렌더링 (사진은 앱 내부(브라우저 저장소)에만 있어서,
+    // 다른 곳에 쓰려면 이 버튼으로 휴대폰 실제 파일(주로 다운로드 폴더)로 저장해야 함)
+    function renderPhotoHTML(item) {
+        if (!item.photo) return '';
+        const dateStr = normalizeDateStr(item.date || '') || getTodayStr();
+        const safeKey = String(item.photo).replace(/'/g, "\\'");
+        return `<div class="diary-photo-wrap">
+            <img src="${getPhotoSrc(item.photo)}" class="diary-photo" alt="첨부사진">
+            <button type="button" class="photo-download-btn" onclick="event.stopPropagation(); downloadPhotoByKey('${safeKey}', '${dateStr}')" title="이 사진을 휴대폰에 파일로 저장">💾 저장</button>
+        </div>`;
+    }
+
+    // 사진을 실제 파일로 다운로드(주로 휴대폰의 '다운로드' 폴더에 저장됨) - 나중에 사진이 필요할 때 찾아 쓸 수 있도록
+    function downloadDataUrl(dataUrl, filename) {
+        if (!dataUrl) {
+            alert('사진 데이터를 찾을 수 없습니다.');
+            return;
+        }
+        try {
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (e) {
+            console.error('사진 저장 실패:', e);
+            alert('사진 저장에 실패했습니다. 사진을 길게 눌러서 저장해보세요.');
+        }
+    }
+
+    function downloadPhotoByKey(photoKeyOrData, dateStr) {
+        const src = getPhotoSrc(photoKeyOrData);
+        downloadDataUrl(src, `스마트다이어리_사진_${(dateStr || getTodayStr()).replace(/-/g, '')}.jpg`);
+    }
+
+    // 현재 편집 중인 사진(저장 전 미리보기)을 다운로드
+    function downloadCurrentPreviewPhoto() {
+        downloadDataUrl(currentPhotoBase64, `스마트다이어리_사진_${getTodayStr().replace(/-/g, '')}.jpg`);
+    }
+
     // 현재 편집 중인 사진(currentPhotoBase64)을 저장/삭제하고, 다이어리 항목에 넣을 "키"를 반환
     // - DB 저장/삭제는 비동기로 백그라운드에서 진행하되(await 하지 않음), 캐시는 즉시 동기 반영하여 화면이 바로 갱신되도록 함
     function persistCurrentPhoto(diaryId, oldPhotoKey) {
@@ -4360,7 +4423,10 @@
         const JPEG_QUALITY = 0.7;
         const img = new Image();
         img.onload = function() {
-            let { width, height } = img;
+            // 📷 요청사항: 사진 용량/화면 차지를 줄이기 위해 기본적으로 원본의 1/2 크기로 축소
+            let width = Math.max(1, Math.round(img.width / 2));
+            let height = Math.max(1, Math.round(img.height / 2));
+            // 그래도 너무 큰 사진(고화질 카메라 등)은 추가로 최대 크기 이내로 제한
             if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
                 if (width >= height) {
                     height = Math.round(height * (MAX_DIMENSION / width));
@@ -4571,20 +4637,32 @@
         ptrTouchStartY = e.touches[0].clientY;
     }, { passive: true });
 
+    function findScrollableAncestor(el) {
+        while (el && el !== document.body && el.nodeType === 1) {
+            const style = window.getComputedStyle(el);
+            if (/(auto|scroll)/.test(style.overflowY) && el.scrollHeight > el.clientHeight + 1) {
+                return el;
+            }
+            el = el.parentElement;
+        }
+        return null;
+    }
+
     document.addEventListener('touchmove', (e) => {
         const touchY = e.touches[0].clientY;
 
         // 🔧 설정/입력 팝업 등 모달이 열려있을 때: 모달 내부 스크롤은 허용하되,
-        // 스크롤이 맨 위에 있는 상태에서 계속 아래로 당기면(=당겨서 새로고침 제스처) 막아서
-        // 입력 중이던 폼이 새로고침으로 초기화되는 것을 방지한다.
-        const modalCardEl = e.target.closest('.modal-overlay.active #memo-form-card, .modal-overlay.active #card-statement-card, .modal-overlay.active #card-pending-card, .modal-overlay.active #balance-location-card, .modal-overlay.active #settings-card');
-        if (modalCardEl) {
-            if (modalCardEl.scrollTop <= 0 && touchY > ptrTouchStartY) {
-                e.preventDefault();
+        // 스크롤 가능한 영역이 맨 위(또는 스크롤할 내용 자체가 없음)인 상태에서 계속 아래로 당기면
+        // (=당겨서 새로고침 제스처) 막아서 입력 중이던 폼이 새로고침으로 초기화되는 것을 방지한다.
+        if (e.target.closest('.modal-overlay.active')) {
+            const scrollable = findScrollableAncestor(e.target);
+            if (touchY > ptrTouchStartY) {
+                if (!scrollable || scrollable.scrollTop <= 0) {
+                    e.preventDefault();
+                }
             }
             return;
         }
-        if (e.target.closest('.modal-overlay.active')) return;
 
         const scrollTop = window.scrollY || document.documentElement.scrollTop;
         if (scrollTop <= 0 && touchY > ptrTouchStartY) {
