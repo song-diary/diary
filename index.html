@@ -187,6 +187,22 @@
             overscroll-behavior: contain;
         }
 
+        /* 💼 잔액 보관처별 분류 / 이월액 카드 (팝업 폼) */
+        #balance-location-card {
+            background: #fff;
+            border: 2px solid #2980b9;
+            animation: fadeIn 0.3s ease;
+            width: min(500px, 92vw);
+            max-height: min(600px, 85vh);
+            overflow-y: auto;
+            overflow-x: hidden;
+            border-radius: 12px;
+            padding: 16px;
+            box-sizing: border-box;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            overscroll-behavior: contain;
+        }
+
         .card-pending-row {
             display: flex;
             align-items: flex-start;
@@ -219,7 +235,7 @@
         /* 카드명세 일괄입력 */
         .card-statement-row {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
             gap: 4px;
             margin-bottom: 6px;
             background: #fbfbfb;
@@ -238,19 +254,19 @@
             min-width: 0;
         }
 
+        .card-statement-row .cs-amount {
+            grid-column: 3 / 4;
+            min-width: 0;
+            text-align: right;
+        }
+
         .card-statement-row .cs-memo {
             grid-column: 1 / 3;
             min-width: 0;
         }
 
-        .card-statement-row .cs-amount {
-            grid-column: 1 / 2;
-            min-width: 0;
-            text-align: right;
-        }
-
         .card-statement-row .cs-del-btn {
-            grid-column: 2 / 3;
+            grid-column: 3 / 4;
             min-width: 0;
         }
 
@@ -272,6 +288,21 @@
             padding: 6px 9px;
             font-size: 12px;
             cursor: pointer;
+        }
+
+        .card-statement-header-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+            gap: 4px;
+            padding: 0 6px;
+            margin-bottom: 4px;
+        }
+
+        .card-statement-header-row span {
+            font-size: 11px;
+            font-weight: bold;
+            color: var(--text-sub);
+            text-align: center;
         }
 
         .settings-title {
@@ -1208,19 +1239,33 @@
             <div id="category-stats-body"></div>
         </div>
 
-        <!-- 📌 전월 이월액 (잔액 보관처별 분류 바로 아래) -->
-        <div class="carry-over-row" id="carry-over-row">
-            <span class="carry-over-label">📌 전월 이월액</span>
-            <input type="text" inputmode="numeric" id="carry-over-input" class="carry-over-input" placeholder="0" onchange="updateCarryOverAmount(this.value)">
-            <span class="carry-over-unit">원</span>
-            <button class="action-btn carry-over-btn" onclick="carryOverToNextMonth()">다음달로 이월 ➡️</button>
-        </div>
+        <!-- 💼 잔액 보관처별 분류 / 전월 이월액 -->
+        <button class="action-btn" id="balance-location-open-btn" style="display:none; width:100%; margin-bottom:10px; padding:10px; background-color:#2980b9;" onclick="openBalanceLocationModal()">💼 잔액 보관처별 분류 / 이월액 관리</button>
 
         <!-- 💳 카드명세 일괄 입력 -->
         <button class="action-btn" id="card-statement-open-btn" style="display:none; width:100%; margin-bottom:10px; padding:10px;" onclick="openCardStatementModal()">💳 카드명세 일괄 입력 열기</button>
 
         <!-- ⏳ 카드 대기(미정산) 지출 -->
         <button class="action-btn" id="card-pending-open-btn" style="display:none; width:100%; margin-bottom:10px; padding:10px; background-color:#f39c12;" onclick="openCardPendingModal()">⏳ 카드 대기 지출 확인/정산</button>
+
+        <!-- 💼 잔액 보관처별 분류 / 이월액 관리 모달 -->
+        <div class="modal-overlay" id="balance-location-modal-overlay" onclick="handleBalanceLocationModalBackgroundClick(event)">
+            <div class="card" id="balance-location-card">
+                <div class="settings-title">
+                    <span>💼 잔액 보관처별 분류 / 이월액</span>
+                    <button class="close-form-btn" onclick="closeBalanceLocationModal()" title="닫기">✖</button>
+                </div>
+                <div id="balance-location-body"></div>
+
+                <!-- 📌 전월 이월액 -->
+                <div class="carry-over-row" id="carry-over-row">
+                    <span class="carry-over-label">📌 전월 이월액</span>
+                    <input type="text" inputmode="numeric" id="carry-over-input" class="carry-over-input" placeholder="0" onchange="updateCarryOverAmount(this.value)">
+                    <span class="carry-over-unit">원</span>
+                    <button class="action-btn carry-over-btn" onclick="carryOverToNextMonth()">다음달로 이월 ➡️</button>
+                </div>
+            </div>
+        </div>
 
         <div class="modal-overlay" id="card-statement-modal-overlay" onclick="handleCardStatementModalBackgroundClick(event)">
             <div class="card" id="card-statement-card">
@@ -1229,8 +1274,12 @@
                     <button class="close-form-btn" onclick="closeCardStatementModal()" title="닫기">✖</button>
                 </div>
                 <div style="font-size: 12px; color: var(--text-sub); margin-bottom: 8px;">받은 카드명세서를 보며 한번에 입력</div>
-                <div style="display: flex; gap: 6px; margin-bottom: 8px;">
-                    <input type="text" id="cs-card-name" placeholder="카드명/계정 (예: 국민카드)" style="width:60%; max-width:220px; padding:6px; border:1px solid var(--border-color); border-radius:6px; font-size:16px;">
+                <div style="margin-bottom: 8px;">
+                    <div style="font-size: 12px; font-weight: bold; color: var(--text-sub); margin-bottom: 3px;">카드명</div>
+                    <input type="text" id="cs-card-name" placeholder="카드명/계정 (예: 국민카드)" style="width:100%; padding:6px; border:1px solid var(--border-color); border-radius:6px; font-size:16px; box-sizing:border-box;">
+                </div>
+                <div class="card-statement-header-row">
+                    <span>일자</span><span>계정과목</span><span>금액</span>
                 </div>
                 <div id="card-statement-rows"></div>
                 <div class="btn-group" style="margin-top: 8px; margin-bottom: 0;">
@@ -2366,6 +2415,8 @@
     const cardStatementRowsBox = document.getElementById('card-statement-rows');
     const cardStatementOpenBtn = document.getElementById('card-statement-open-btn');
     const cardStatementModalOverlay = document.getElementById('card-statement-modal-overlay');
+    const balanceLocationOpenBtn = document.getElementById('balance-location-open-btn');
+    const balanceLocationModalOverlay = document.getElementById('balance-location-modal-overlay');
     const cardPendingOpenBtn = document.getElementById('card-pending-open-btn');
     const cardPendingModalOverlay = document.getElementById('card-pending-modal-overlay');
     const cardPendingListBox = document.getElementById('card-pending-list');
@@ -2385,6 +2436,30 @@
             const shouldShow = (isMoneySummaryVisible && currentStatsType === 'balance' && pendingItems.length > 0);
             cardPendingOpenBtn.style.display = shouldShow ? 'block' : 'none';
             cardPendingOpenBtn.textContent = `⏳ 카드 대기 지출 확인/정산 (${pendingTotal.toLocaleString()}원, ${pendingItems.length}건)`;
+        }
+        updateBalanceLocationVisibility();
+    }
+
+    function updateBalanceLocationVisibility() {
+        if (balanceLocationOpenBtn) {
+            balanceLocationOpenBtn.style.display = (isMoneySummaryVisible && currentStatsType === 'balance') ? 'block' : 'none';
+        }
+    }
+
+    function openBalanceLocationModal() {
+        renderBalanceLocationsUI();
+        if (balanceLocationModalOverlay) balanceLocationModalOverlay.classList.add('active');
+        lockBodyScroll();
+    }
+
+    function closeBalanceLocationModal() {
+        if (balanceLocationModalOverlay) balanceLocationModalOverlay.classList.remove('active');
+        unlockBodyScroll();
+    }
+
+    function handleBalanceLocationModalBackgroundClick(event) {
+        if (event.target === balanceLocationModalOverlay) {
+            closeBalanceLocationModal();
         }
     }
 
@@ -3058,7 +3133,7 @@
     }
 
     function renderBalanceLocationsUI() {
-        const statsBody = document.getElementById('category-stats-body');
+        const statsBody = document.getElementById('balance-location-body');
         if (!statsBody) return;
         statsBody.innerHTML = '';
 
@@ -3186,13 +3261,16 @@
         statsBody.innerHTML = '';
 
         if (currentStatsType === 'balance') {
-            if (statsCardTitle) statsCardTitle.textContent = `💼 잔액 보관처별 분류`;
-            if (statsCardHint) statsCardHint.textContent = '(지갑/은행 등 보관처별 금액 입력)';
-            if (statsPeriodGroup) statsPeriodGroup.style.display = 'none';
-            if (statsCustomBox) statsCustomBox.style.display = 'none';
-            renderBalanceLocationsUI();
+            // 💼 보관처별 분류 / 이월액은 별도 팝업으로 이동 → 화면을 깔끔하게 유지하기 위해 카드 자체를 숨김
+            if (categoryStatsCard) categoryStatsCard.style.display = 'none';
+            updateBalanceLocationVisibility();
             return;
         }
+
+        if (categoryStatsCard) {
+            categoryStatsCard.style.display = (isCategoryStatsVisible && isMoneySummaryVisible) ? 'block' : 'none';
+        }
+        if (balanceLocationOpenBtn) balanceLocationOpenBtn.style.display = 'none';
 
         if (statsPeriodGroup) statsPeriodGroup.style.display = 'flex';
         syncStatsPeriodUI();
@@ -3215,9 +3293,6 @@
         highlightMoneySummaryBox(type);
         renderCategoryStats();
         updateMoneySearchDividerVisibility();
-
-        const carryOverRow = document.getElementById('carry-over-row');
-        if (carryOverRow) carryOverRow.style.display = (type === 'balance') ? 'flex' : 'none';
 
         if (type === 'balance') {
             // 잔액 클릭 시: 위 분류(통계)만 보여주고, 아래 상세 내역 리스트/필터 펼치기는 의미가 없으므로 숨김 (다이어리 탭에 별도로 존재)
@@ -3707,10 +3782,8 @@
         const summaryIncome = document.getElementById('summary-income');
         const summaryExpense = document.getElementById('summary-expense');
         const summaryBalance = document.getElementById('summary-balance');
-        const carryOverRow = document.getElementById('carry-over-row');
         const carryOverInput = document.getElementById('carry-over-input');
 
-        if (carryOverRow) carryOverRow.style.display = (currentStatsType === 'balance') ? 'flex' : 'none';
         if (carryOverInput && document.activeElement !== carryOverInput) {
             carryOverInput.value = carryOverAmount ? carryOverAmount.toLocaleString() : '';
         }
@@ -3915,8 +3988,7 @@
             calMonth += delta;
             if (calMonth > 11) { calMonth = 0; calYear++; }
             else if (calMonth < 0) { calMonth = 11; calYear--; }
-            // 📌 달이 바뀌면 선택 커서를 그 달의 1일로 이동
-            selectedViewDate = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-01`;
+            // 📌 달만 이동할 뿐 특정 날짜를 자동 선택(하이라이트)하지 않음 (이전에는 1일이 계속 선택 표시되어 지저분해 보이는 문제가 있었음)
         };
 
         const refreshDiaryPanel = () => {
@@ -4044,7 +4116,8 @@
             }
         } else {
             textOutput.innerHTML = '';
-            reservationTimeInput.value = getCurrentTimeStr();
+            // ⏰ 예약(미래 날짜)일 때는 '지금 입력하는 시간'이 아니라 기본값 오전 8시로 설정
+            reservationTimeInput.value = isFutureDate(selectedReservationDate) ? '08:00' : getCurrentTimeStr();
             currentPhotoBase64 = null;
             setMoneyType('expense', '');
             moneyAmountInput.value = '';
@@ -4500,10 +4573,20 @@
     }, { passive: true });
 
     document.addEventListener('touchmove', (e) => {
-        // 🔧 설정/입력 팝업 등 모달이 열려있을 때는 모달 내부 스크롤을 막지 않음
+        const touchY = e.touches[0].clientY;
+
+        // 🔧 설정/입력 팝업 등 모달이 열려있을 때: 모달 내부 스크롤은 허용하되,
+        // 스크롤이 맨 위에 있는 상태에서 계속 아래로 당기면(=당겨서 새로고침 제스처) 막아서
+        // 입력 중이던 폼이 새로고침으로 초기화되는 것을 방지한다.
+        const modalCardEl = e.target.closest('.modal-overlay.active #memo-form-card, .modal-overlay.active #card-statement-card, .modal-overlay.active #card-pending-card, .modal-overlay.active #balance-location-card, .modal-overlay.active #settings-card');
+        if (modalCardEl) {
+            if (modalCardEl.scrollTop <= 0 && touchY > ptrTouchStartY) {
+                e.preventDefault();
+            }
+            return;
+        }
         if (e.target.closest('.modal-overlay.active')) return;
 
-        const touchY = e.touches[0].clientY;
         const scrollTop = window.scrollY || document.documentElement.scrollTop;
         if (scrollTop <= 0 && touchY > ptrTouchStartY) {
             e.preventDefault();
@@ -4555,9 +4638,9 @@
 
         row.innerHTML = `
             <input type="date" class="cs-date" value="${getTodayStr()}">
-            <input type="text" class="cs-memo" placeholder="내용(가맹점)">
             <select class="cs-category"></select>
             <input type="text" inputmode="numeric" class="cs-amount" placeholder="금액">
+            <input type="text" class="cs-memo" placeholder="내용(가맹점)">
             <button type="button" class="cs-del-btn" onclick="removeCardStatementRow(this)">삭제</button>
         `;
 
