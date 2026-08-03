@@ -4385,7 +4385,7 @@
         const safeKey = String(item.photo).replace(/'/g, "\\'");
         return `<div class="diary-photo-wrap">
             <img src="${getPhotoSrc(item.photo)}" class="diary-photo" alt="첨부사진" onclick="event.stopPropagation(); openPhotoLightbox('${safeKey}')">
-            <button type="button" class="photo-download-btn" onclick="event.stopPropagation(); downloadPhotoByKey('${safeKey}', '${dateStr}')" title="이 사진을 휴대폰에 파일로 저장">💾 저장</button>
+            <button type="button" class="photo-download-btn" onclick="event.stopPropagation(); downloadPhotoByKey('${safeKey}', '${dateStr}')" title="이 사진을 휴대폰에 저장 (공유창에서 갤러리 선택 가능)">💾 저장</button>
         </div>`;
     }
 
@@ -4432,12 +4432,38 @@
 
     function downloadPhotoByKey(photoKeyOrData, dateStr) {
         const src = getPhotoSrc(photoKeyOrData);
-        downloadDataUrl(src, `스마트다이어리_사진_${(dateStr || getTodayStr()).replace(/-/g, '')}.jpg`);
+        const filename = `스마트다이어리_사진_${(dateStr || getTodayStr()).replace(/-/g, '')}.jpg`;
+        savePhotoSmart(src, filename);
     }
 
-    // 현재 편집 중인 사진(저장 전 미리보기)을 다운로드
+    // 📷 갤러리(사진 앱)로 바로 저장: 휴대폰의 공유 시트를 띄워서 "사진에 저장"을 직접 고를 수 있게 함
+    // (웹 앱은 보안상 저장 폴더를 강제로 지정할 수 없어서, 공유창에서 사용자가 직접 선택하는 방식을 씀)
+    async function savePhotoSmart(dataUrl, filename) {
+        if (!dataUrl) {
+            alert('사진 데이터를 찾을 수 없습니다.');
+            return;
+        }
+        try {
+            if (navigator.share && navigator.canShare) {
+                const res = await fetch(dataUrl);
+                const blob = await res.blob();
+                const file = new File([blob], filename, { type: blob.type || 'image/jpeg' });
+                if (navigator.canShare({ files: [file] })) {
+                    await navigator.share({ files: [file], title: filename });
+                    return; // 사용자가 공유창에서 "사진에 저장" 등 원하는 위치를 직접 선택함
+                }
+            }
+        } catch (e) {
+            if (e && e.name === 'AbortError') return; // 사용자가 공유창을 그냥 닫은 경우 - 추가 동작 없이 종료
+            console.warn('공유 저장 실패, 기본 다운로드로 대체합니다:', e);
+        }
+        // 공유 기능이 없는 환경(PC 브라우저 등)에서는 기존 다운로드 방식 사용
+        downloadDataUrl(dataUrl, filename);
+    }
+
+    // 현재 편집 중인 사진(저장 전 미리보기)을 갤러리로 저장(가능하면) 또는 다운로드
     function downloadCurrentPreviewPhoto() {
-        downloadDataUrl(currentPhotoBase64, `스마트다이어리_사진_${getTodayStr().replace(/-/g, '')}.jpg`);
+        savePhotoSmart(currentPhotoBase64, `스마트다이어리_사진_${getTodayStr().replace(/-/g, '')}.jpg`);
     }
 
     // 현재 편집 중인 사진(currentPhotoBase64)을 저장/삭제하고, 다이어리 항목에 넣을 "키"를 반환
