@@ -1559,6 +1559,7 @@
                 <select id="money-category-select" class="money-input-field" style="flex: 1;" onchange="onCategoryChanged()"></select>
                 <input type="text" inputmode="numeric" id="money-amount-input" class="money-input-field" placeholder="금액 입력" style="flex: 1.5;" onfocus="scrollToInput(this)">
             </div>
+            <input type="text" id="money-note-input" class="money-input-field" placeholder="내용 (선택사항, 예: 병원 진료비)" style="width:100%; margin-top:8px; box-sizing:border-box;" onfocus="scrollToInput(this)">
             <div id="card-pending-input-row" style="margin-top:8px;">
                 <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--text-sub); cursor:pointer;">
                     <input type="checkbox" id="card-pending-checkbox" onchange="onCardPendingToggle()" style="width:16px; height:16px;">
@@ -2531,6 +2532,7 @@
 
     const moneyCategorySelect = document.getElementById('money-category-select');
     const moneyAmountInput = document.getElementById('money-amount-input');
+    const moneyNoteInput = document.getElementById('money-note-input');
     const cardPendingCheckbox = document.getElementById('card-pending-checkbox');
     const cardPendingNameInput = document.getElementById('card-pending-name-input');
     const cardPendingInputRow = document.getElementById('card-pending-input-row');
@@ -4271,6 +4273,7 @@
 
         if (existingItem) {
             textOutput.innerHTML = existingItem.text || '';
+            if (moneyNoteInput) moneyNoteInput.value = existingItem.text || '';
             reservationTimeInput.value = existingItem.time || '';
             currentPhotoBase64 = existingItem.photo ? (getPhotoSrc(existingItem.photo) || null) : null;
             if (existingItem.money && existingItem.money.amount) {
@@ -4291,6 +4294,7 @@
             }
         } else {
             textOutput.innerHTML = '';
+            if (moneyNoteInput) moneyNoteInput.value = '';
             // ⏰ 예약(미래 날짜)일 때는 '지금 입력하는 시간'이 아니라 기본값 오전 8시로 설정
             reservationTimeInput.value = isFutureDate(selectedReservationDate) ? '08:00' : getCurrentTimeStr();
             currentPhotoBase64 = null;
@@ -4697,7 +4701,9 @@
     }
 
     function manualSaveDiary() {
-        const content = textOutput.innerHTML.trim();
+        const content = (currentFormMode === 'money')
+            ? (moneyNoteInput ? moneyNoteInput.value.trim() : '')
+            : textOutput.innerHTML.trim();
         const timeVal = reservationTimeInput.value;
         const moneyCategory = moneyCategorySelect.value;
         const rawAmount = moneyAmountInput.value.replace(/[^0-9]/g, '').trim();
