@@ -832,6 +832,28 @@
             margin-top: -2px;
         }
 
+        /* 📷 선택한 날짜 줄 오른쪽의 "바로 사진 찍기" 아이콘 버튼 */
+        .quick-photo-btn {
+            background: var(--primary-color, #8e6b6b);
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            min-width: 30px;
+            font-size: 15px;
+            line-height: 1;
+            cursor: pointer;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+        }
+        .quick-photo-btn:active {
+            transform: scale(0.94);
+        }
+
         .reservation-box {
             display: flex;
             gap: 8px;
@@ -1247,6 +1269,8 @@
         <div class="card sub-feature-card" id="diary-around-today-card">
             <div class="feature-title">
                 <span id="selected-date-title">📔 다이어리</span>
+                <button type="button" class="quick-photo-btn" id="quick-photo-btn" onclick="triggerQuickPhoto()" title="바로 사진 찍기">📷</button>
+                <input type="file" id="quick-photo-input" accept="image/*" capture="environment" style="display:none;" onchange="handleQuickPhotoCapture(event)">
             </div>
             <div id="diary-around-today-list"></div>
         </div>
@@ -4573,6 +4597,29 @@
         } catch (e) {
             console.error('사진 DB 초기화/마이그레이션 실패:', e);
         }
+    }
+
+    // 📷 "바로 사진 찍기": 카메라를 즉시 열고, 찍은 사진을 다이어리 입력폼에 바로 채워서 보여줌
+    // (사용자는 그 화면에서 메모를 추가하거나, 바로 "저장"만 눌러 사진만 저장할 수도 있음)
+    function triggerQuickPhoto() {
+        const input = document.getElementById('quick-photo-input');
+        if (input) input.click();
+    }
+
+    function handleQuickPhotoCapture(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const targetDate = selectedViewDate || getTodayStr();
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            compressImageForStorage(e.target.result, function(compressedDataUrl) {
+                openDiaryForm(targetDate, null, 'diary'); // 다이어리 입력폼을 새 항목 모드로 열기
+                currentPhotoBase64 = compressedDataUrl;
+                updatePhotoPreview();
+            });
+        };
+        reader.readAsDataURL(file);
+        event.target.value = ''; // 같은 사진을 연달아 찍어도 change 이벤트가 다시 발생하도록 초기화
     }
 
     function previewImage(event) {
