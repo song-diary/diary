@@ -1525,16 +1525,16 @@
             <input type="time" id="reservation-time-input" style="border:1px solid var(--border-color); border-radius:4px; background:#fff;">
         </div>
 
-        <!-- 💵 가계부 입력 영역 -->
-        <div class="money-input-box">
-            <label style="font-size: 14px; font-weight: bold; color: #27ae60;">💰 가계부 기록 (선택사항)</label>
+        <!-- 💵 가계부 입력 영역: 가계부_입력폼 모드에서만 표시 -->
+        <div class="money-input-box" id="money-input-section">
+            <label style="font-size: 14px; font-weight: bold; color: #27ae60;" id="money-input-label">💰 가계부 입력</label>
             <div class="money-input-row">
                 <button type="button" class="money-type-btn expense active" id="type-expense-btn" onclick="setMoneyType('expense')">지출</button>
                 <button type="button" class="money-type-btn income" id="type-income-btn" onclick="setMoneyType('income')">수입</button>
             </div>
             <div style="display: flex; gap: 6px;">
                 <select id="money-category-select" class="money-input-field" style="flex: 1;" onchange="onCategoryChanged()"></select>
-                <input type="text" inputmode="numeric" id="money-amount-input" class="money-input-field" placeholder="금액 안 쓰면 순수 메모" style="flex: 1.5;" onfocus="scrollToInput(this)">
+                <input type="text" inputmode="numeric" id="money-amount-input" class="money-input-field" placeholder="금액 입력" style="flex: 1.5;" onfocus="scrollToInput(this)">
             </div>
             <div id="card-pending-input-row" style="margin-top:8px;">
                 <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--text-sub); cursor:pointer;">
@@ -1545,21 +1545,24 @@
             </div>
         </div>
 
-        <div style="font-size: 14px; font-weight: bold; color: var(--weekday-color); margin-bottom: 6px;">📝 상세내용 및 메모(일기) 작성</div>
+        <!-- 📔 다이어리(메모/사진) 입력 영역: 다이어리_입력폼 모드에서만 표시 -->
+        <div id="diary-content-section">
+            <div style="font-size: 14px; font-weight: bold; color: var(--weekday-color); margin-bottom: 6px;">📝 상세내용 및 메모(일기) 작성</div>
 
-        <div id="photo-preview-wrap">
-            <img id="image-preview" src="" alt="미리보기">
-            <div class="btn-group" style="margin-top:5px; margin-bottom:0;">
-                <button class="action-btn" style="background-color:#2980b9;" onclick="downloadCurrentPreviewPhoto()">💾 사진 저장</button>
-                <button class="action-btn" onclick="removeImage()">사진 취소</button>
+            <div id="photo-preview-wrap">
+                <img id="image-preview" src="" alt="미리보기">
+                <div class="btn-group" style="margin-top:5px; margin-bottom:0;">
+                    <button class="action-btn" style="background-color:#2980b9;" onclick="downloadCurrentPreviewPhoto()">💾 사진 저장</button>
+                    <button class="action-btn" onclick="removeImage()">사진 취소</button>
+                </div>
             </div>
-        </div>
 
-        <div id="textOutput" class="diary-textarea" contenteditable="true" placeholder="여기에 메모(일기)를 입력하세요" onfocus="scrollToInput(this)"></div>
+            <div id="textOutput" class="diary-textarea" contenteditable="true" placeholder="여기에 메모(일기)를 입력하세요" onfocus="scrollToInput(this)"></div>
+        </div>
 
         <div class="btn-group" style="margin-bottom: 0;">
             <button class="btn btn-secondary" id="record-btn">🎤 음성메모</button>
-            <label class="btn btn-secondary" style="text-align:center; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+            <label class="btn btn-secondary" id="photo-attach-label" style="text-align:center; display:flex; align-items:center; justify-content:center; cursor:pointer;">
                 📎 사진 첨부
                 <input type="file" id="diary-photo-input" accept="image/*" style="display:none;" onchange="previewImage(event)">
             </label>
@@ -2419,6 +2422,7 @@
     let selectedReservationDate = null;
     let selectedViewDate = null; // 📅 달력에서 선택(클릭)한 날짜 - 아래 다이어리 리스트에 표시됨
     let editingDiaryId = null;
+    let currentFormMode = 'diary'; // '입력' 폼이 다이어리용인지 가계부용인지 구분 ('diary' | 'money')
     let currentPhotoBase64 = null;
     let photoCache = {}; // 📷 IndexedDB에서 불러온 사진(base64)을 담아두는 메모리 캐시: { photoKey: dataUrl }
     let currentMemoFontSize = parseInt(localStorage.getItem('smartDiaryMemoFontSize')) || 16;
@@ -4181,15 +4185,52 @@
         card.addEventListener('touchcancel', () => { tracking = false; }, { passive: true });
     })();
 
-    function openDiaryForm(dateStr, existingItem = null) {
+    // 📔/💰 입력폼을 다이어리 전용 또는 가계부 전용 화면으로 전환 (서로 헷갈리지 않도록 필요한 항목만 표시)
+    function applyFormMode(mode) {
+        currentFormMode = mode;
+        const moneySection = document.getElementById('money-input-section');
+        const diarySection = document.getElementById('diary-content-section');
+        const recordBtnEl = document.getElementById('record-btn');
+        const photoAttachLabel = document.getElementById('photo-attach-label');
+        const moneyLabel = document.getElementById('money-input-label');
+
+        if (mode === 'money') {
+            if (moneySection) moneySection.style.display = '';
+            if (diarySection) diarySection.style.display = 'none';
+            if (recordBtnEl) recordBtnEl.style.display = 'none';
+            if (photoAttachLabel) photoAttachLabel.style.display = 'none';
+            if (moneyLabel) moneyLabel.textContent = '💰 가계부 입력';
+        } else {
+            if (moneySection) moneySection.style.display = 'none';
+            if (diarySection) diarySection.style.display = '';
+            if (recordBtnEl) recordBtnEl.style.display = '';
+            if (photoAttachLabel) photoAttachLabel.style.display = '';
+            if (moneyLabel) moneyLabel.textContent = '💰 가계부 기록 (선택사항)';
+        }
+    }
+
+    // mode: 'diary'(다이어리 입력폼) 또는 'money'(가계부 입력폼). 명시적으로 안 넘기면
+    // 수정(기존 항목)일 때는 항목 종류로, 새 입력일 때는 현재 보고 있는 탭(다이어리/가계부)으로 자동 판단
+    function openDiaryForm(dateStr, existingItem = null, mode = null) {
         stopVoiceRecording();
         selectedReservationDate = normalizeDateStr(dateStr);
         editingDiaryId = existingItem ? existingItem.id : null;
 
+        let effectiveMode = mode;
+        if (!effectiveMode) {
+            if (existingItem) {
+                effectiveMode = (existingItem.money && existingItem.money.amount) ? 'money' : 'diary';
+            } else {
+                effectiveMode = (currentMainTab === 'money') ? 'money' : 'diary';
+            }
+        }
+        applyFormMode(effectiveMode);
+
         const dObj = parseDateObj(selectedReservationDate);
         const dayName = getDayOfWeekStr(selectedReservationDate);
-        
-        formTargetDateTitle.innerHTML = `📅 ${dObj.getFullYear()}년 ${dObj.getMonth() + 1}월 ${dObj.getDate()}일 (${dayName})`;
+        const modeLabel = effectiveMode === 'money' ? '💰 가계부' : '📔 다이어리';
+
+        formTargetDateTitle.innerHTML = `${modeLabel} · ${dObj.getFullYear()}년 ${dObj.getMonth() + 1}월 ${dObj.getDate()}일 (${dayName})`;
 
         // ⏰ 예약(미래 날짜)일 때만 시간 입력란을 표시
         const reservationBoxEl = document.getElementById('reservation-box');
@@ -4623,7 +4664,11 @@
         }
 
         if (!content && !currentPhotoBase64 && !moneyObj) {
-            alert('내용, 사진, 또는 가계부 내역 중 하나 이상을 입력해주세요.');
+            if (currentFormMode === 'money') {
+                alert('가계부 금액을 입력해주세요.');
+            } else {
+                alert('메모(일기) 내용이나 사진을 입력해주세요.');
+            }
             return;
         }
 
