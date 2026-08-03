@@ -960,6 +960,22 @@
             background-color: #e5d2d2;
         }
 
+        #diary-around-today-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        /* 📷 사진이 있는 항목: 같은 날짜 화면에서 2개씩 가로로 나란히 배치되어 공간 낭비를 줄임 */
+        #diary-around-today-list .sub-memo-item.has-photo {
+            grid-column: span 1;
+        }
+
+        /* 📝 텍스트만 있는 항목: 읽기 편하도록 한 줄 전체 너비를 그대로 사용 */
+        #diary-around-today-list .sub-memo-item.no-photo {
+            grid-column: 1 / -1;
+        }
+
         .sub-memo-item {
             background: #fcfcfc;
             border: 1px solid #f0e6e6;
@@ -967,7 +983,7 @@
             padding: 10px;
             margin-bottom: 8px;
             position: relative;
-            padding-right: 95px;
+            padding-right: 60px;
         }
 
         /* 📅 같은 일자 항목들을 묶어줄 대표 날짜 헤더 */
@@ -1017,7 +1033,7 @@
         }
 
         .diary-photo {
-            max-width: 50%;
+            max-width: 100%;
             border-radius: 6px;
             margin-top: 8px;
             display: block;
@@ -1090,20 +1106,22 @@
 
         .memo-action-btns {
             position: absolute;
-            top: 10px;
-            right: 10px;
+            top: 8px;
+            right: 6px;
             display: flex;
-            gap: 4px;
+            flex-direction: column;
+            gap: 2px;
         }
 
         .edit-btn, .delete-btn {
             background: none;
-            border: none;
-            font-size: calc(var(--memo-font-size) - 4px);
+            border: 1px solid transparent;
+            font-size: calc(var(--memo-font-size) - 5px);
             cursor: pointer;
-            padding: 2px 4px;
+            padding: 2px 5px;
             border-radius: 4px;
             touch-action: manipulation;
+            white-space: nowrap;
         }
 
         .edit-btn { color: #3498db; }
@@ -4291,7 +4309,7 @@
             const photoHTML = renderPhotoHTML(item);
 
             const itemBox = document.createElement('div');
-            itemBox.className = 'sub-memo-item memo-only-box';
+            itemBox.className = 'sub-memo-item memo-only-box' + (item.photo ? ' has-photo' : ' no-photo');
             if (isReservedDate) itemBox.classList.add('is-reserved');
 
             itemBox.innerHTML = `
