@@ -982,31 +982,49 @@
             background-color: #e5d2d2;
         }
 
-        #diary-around-today-list {
+        #diary-around-today-list,
+        #search-result-list,
+        #diary-search-result-list {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 8px;
             align-items: stretch;
         }
 
+        /* 📅 날짜 구분 헤더는 항상 한 줄 전체를 차지 (검색결과 리스트는 여러 날짜가 섞여서 나오므로) */
+        #search-result-list .date-group-header,
+        #diary-search-result-list .date-group-header {
+            grid-column: 1 / -1;
+        }
+
         /* 📷 사진이 있는 항목: 같은 날짜 화면에서 2개씩 가로로 나란히 배치되어 공간 낭비를 줄임 */
-        #diary-around-today-list .sub-memo-item.has-photo {
+        #diary-around-today-list .sub-memo-item.has-photo,
+        #search-result-list .sub-memo-item.has-photo,
+        #diary-search-result-list .sub-memo-item.has-photo {
             grid-column: span 1;
         }
 
         /* 🖼️ 2단 그리드에서는 사진마다 원본 비율이 달라도 정사각형 틀에 꽉 채워서
            왼쪽/오른쪽 칸 높이가 항상 똑같이 맞춰지도록 함 (사진첩 그리드 방식) */
         #diary-around-today-list .sub-memo-item.has-photo .diary-photo,
-        #diary-around-today-list .sub-memo-item.has-photo .diary-photo-wrap {
+        #diary-around-today-list .sub-memo-item.has-photo .diary-photo-wrap,
+        #search-result-list .sub-memo-item.has-photo .diary-photo,
+        #search-result-list .sub-memo-item.has-photo .diary-photo-wrap,
+        #diary-search-result-list .sub-memo-item.has-photo .diary-photo,
+        #diary-search-result-list .sub-memo-item.has-photo .diary-photo-wrap {
             width: 100%;
         }
-        #diary-around-today-list .sub-memo-item.has-photo .diary-photo {
+        #diary-around-today-list .sub-memo-item.has-photo .diary-photo,
+        #search-result-list .sub-memo-item.has-photo .diary-photo,
+        #diary-search-result-list .sub-memo-item.has-photo .diary-photo {
             aspect-ratio: 1 / 1;
             object-fit: cover;
         }
 
         /* 📝 텍스트만 있는 항목: 읽기 편하도록 한 줄 전체 너비를 그대로 사용 */
-        #diary-around-today-list .sub-memo-item.no-photo {
+        #diary-around-today-list .sub-memo-item.no-photo,
+        #search-result-list .sub-memo-item.no-photo,
+        #diary-search-result-list .sub-memo-item.no-photo {
             grid-column: 1 / -1;
         }
 
@@ -1306,9 +1324,9 @@
                     <button class="action-btn" style="padding: 6px 12px; font-size: 13px;" onclick="resetDiarySearchFilter()">전체보기</button>
                 </div>
                 <div class="view-select-group" style="margin-top: 4px;">
-                    <button class="view-select-btn active" id="diary-filter-period-today-around" onclick="setDiaryPeriodFilter('today-around')">오늘 기준 전후</button>
+                    <button class="view-select-btn" id="diary-filter-period-today-around" onclick="setDiaryPeriodFilter('today-around')">오늘 기준 전후</button>
                     <button class="view-select-btn" id="diary-filter-period-week" onclick="setDiaryPeriodFilter('week')">지난 1주일</button>
-                    <button class="view-select-btn" id="diary-filter-period-month" onclick="setDiaryPeriodFilter('month')">이번 달</button>
+                    <button class="view-select-btn active" id="diary-filter-period-month" onclick="setDiaryPeriodFilter('month')">이번 달</button>
                     <button class="view-select-btn" id="diary-filter-period-all" onclick="setDiaryPeriodFilter('all')">기간별 조회</button>
                 </div>
 
@@ -1461,9 +1479,9 @@
                     <button class="action-btn" style="padding: 6px 12px; font-size: 13px;" onclick="resetSearchFilter()">전체보기</button>
                 </div>
                 <div class="view-select-group" style="margin-top: 4px;">
-                    <button class="view-select-btn active" id="filter-period-today-around" onclick="setPeriodFilter('today-around')">오늘 기준 전후</button>
+                    <button class="view-select-btn" id="filter-period-today-around" onclick="setPeriodFilter('today-around')">오늘 기준 전후</button>
                     <button class="view-select-btn" id="filter-period-week" onclick="setPeriodFilter('week')">지난 1주일</button>
-                    <button class="view-select-btn" id="filter-period-month" onclick="setPeriodFilter('month')">이번 달</button>
+                    <button class="view-select-btn active" id="filter-period-month" onclick="setPeriodFilter('month')">이번 달</button>
                     <button class="view-select-btn" id="filter-period-all" onclick="setPeriodFilter('all')">기간별 조회</button>
                 </div>
 
@@ -2469,7 +2487,7 @@
 
     // 📔 다이어리 탭 전용 검색/기간 필터 상태 (가계부 상세내역 리스트와 동일한 방식)
     let isDiarySearchFilterOpen = false;
-    let currentDiaryPeriodFilter = 'today-around';
+    let currentDiaryPeriodFilter = 'month';
     let diaryKeywordFilter = '';
 
     let isMoneySummaryVisible = localStorage.getItem('smartDiaryMoneySummaryVisible') !== 'false';
@@ -2504,7 +2522,7 @@
         }
     }
 
-    let currentPeriodFilter = 'today-around'; 
+    let currentPeriodFilter = 'month'; 
     let currentStatsType = 'expense'; 
     let selectedCategoryFilter = ''; 
     let statsPeriodMode = 'month'; // 'month' | 'lastmonth' | 'year' | 'all' | 'custom'
@@ -3521,7 +3539,7 @@
         selectedCategoryFilter = '';
         if (keywordSearchInput) keywordSearchInput.value = '';
         renderCategoryStats();
-        setPeriodFilter('today-around');
+        setPeriodFilter('month');
     }
 
     function filterCustomList() {
@@ -3655,9 +3673,10 @@
                 </div>`;
             }
 
-            let timeBadge = item.time ? `<span style="color:var(--primary-color); font-weight:bold; margin-right:6px; font-size:12px;">⏰ ${item.time}</span>` : '';
+            let timeBadge = item.time ? `<div style="color:var(--primary-color); font-weight:bold; font-size:12px; margin-bottom:3px;">⏰ ${item.time}</div>` : '';
             let textContentHTML = item.text ? `<div class="diary-text">${timeBadge}${item.text}</div>` : (item.time ? `<div class="diary-text">${timeBadge}</div>` : '');
             let photoHTML = renderPhotoHTML(item);
+            subItem.classList.add(item.photo ? 'has-photo' : 'no-photo');
 
             subItem.innerHTML = `
                 <div class="memo-action-btns">
@@ -3717,7 +3736,7 @@
     function resetDiarySearchFilter() {
         diaryKeywordFilter = '';
         if (diaryKeywordSearchInput) diaryKeywordSearchInput.value = '';
-        setDiaryPeriodFilter('today-around');
+        setDiaryPeriodFilter('month');
     }
 
     function onDiaryKeywordInputChanged() {
@@ -3817,9 +3836,10 @@
                 📝 메모
             </div>`;
 
-            let timeBadge = item.time ? `<span style="color:var(--primary-color); font-weight:bold; margin-right:6px; font-size:12px;">⏰ ${item.time}</span>` : '';
+            let timeBadge = item.time ? `<div style="color:var(--primary-color); font-weight:bold; font-size:12px; margin-bottom:3px;">⏰ ${item.time}</div>` : '';
             let textContentHTML = item.text ? `<div class="diary-text">${timeBadge}${item.text}</div>` : (item.time ? `<div class="diary-text">${timeBadge}</div>` : '');
             let photoHTML = renderPhotoHTML(item);
+            subItem.classList.add(item.photo ? 'has-photo' : 'no-photo');
 
             subItem.innerHTML = `
                 <div class="memo-action-btns">
@@ -4389,7 +4409,7 @@
         }
 
         filtered.forEach(item => {
-            const timeBadge = item.time ? `<span style="color:var(--primary-color); font-weight:bold; margin-right:6px; font-size:12px;">⏰ ${item.time}</span>` : '';
+            const timeBadge = item.time ? `<div style="color:var(--primary-color); font-weight:bold; font-size:12px; margin-bottom:3px;">⏰ ${item.time}</div>` : '';
             const textContentHTML = item.text ? `<div class="diary-text">${timeBadge}${item.text}</div>` : (item.time ? `<div class="diary-text">${timeBadge}</div>` : '');
             const photoHTML = renderPhotoHTML(item);
 
