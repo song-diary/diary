@@ -986,11 +986,23 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 8px;
+            align-items: stretch;
         }
 
         /* 📷 사진이 있는 항목: 같은 날짜 화면에서 2개씩 가로로 나란히 배치되어 공간 낭비를 줄임 */
         #diary-around-today-list .sub-memo-item.has-photo {
             grid-column: span 1;
+        }
+
+        /* 🖼️ 2단 그리드에서는 사진마다 원본 비율이 달라도 정사각형 틀에 꽉 채워서
+           왼쪽/오른쪽 칸 높이가 항상 똑같이 맞춰지도록 함 (사진첩 그리드 방식) */
+        #diary-around-today-list .sub-memo-item.has-photo .diary-photo,
+        #diary-around-today-list .sub-memo-item.has-photo .diary-photo-wrap {
+            width: 100%;
+        }
+        #diary-around-today-list .sub-memo-item.has-photo .diary-photo {
+            aspect-ratio: 1 / 1;
+            object-fit: cover;
         }
 
         /* 📝 텍스트만 있는 항목: 읽기 편하도록 한 줄 전체 너비를 그대로 사용 */
@@ -1006,6 +1018,8 @@
             margin-bottom: 8px;
             position: relative;
             padding-right: 60px;
+            min-height: 58px; /* 한 줄짜리 짧은 메모여도 오른쪽 위 수정/삭제 버튼(2단)이 박스 밖으로 넘치지 않도록 */
+            box-sizing: border-box;
         }
 
         /* 📅 같은 일자 항목들을 묶어줄 대표 날짜 헤더 */
@@ -3589,9 +3603,11 @@
             return;
         }
 
-        filtered.sort((a, b) => normalizeDateStr(b.date).localeCompare(normalizeDateStr(a.date)));
-
-        let lastGroupDate = null;
+        filtered.sort((a, b) => {
+            const dateCompare = normalizeDateStr(b.date).localeCompare(normalizeDateStr(a.date));
+            if (dateCompare !== 0) return dateCompare;
+            return (b.time || '').localeCompare(a.time || ''); // 같은 날짜 안에서는 시간 늦은 순으로 정렬
+        });
 
         filtered.forEach(item => {
             let dateStr = normalizeDateStr(item.date);
@@ -3766,7 +3782,11 @@
             return;
         }
 
-        filtered.sort((a, b) => normalizeDateStr(b.date).localeCompare(normalizeDateStr(a.date)));
+        filtered.sort((a, b) => {
+            const dateCompare = normalizeDateStr(b.date).localeCompare(normalizeDateStr(a.date));
+            if (dateCompare !== 0) return dateCompare;
+            return (b.time || '').localeCompare(a.time || ''); // 같은 날짜 안에서는 시간 늦은 순으로 정렬
+        });
 
         let lastDiaryGroupDate = null;
 
