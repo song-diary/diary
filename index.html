@@ -983,6 +983,7 @@
         }
 
         #diary-around-today-list,
+        #money-around-today-list,
         #search-result-list,
         #diary-search-result-list {
             display: grid;
@@ -999,6 +1000,7 @@
 
         /* 📷 사진이 있는 항목: 같은 날짜 화면에서 2개씩 가로로 나란히 배치되어 공간 낭비를 줄임 */
         #diary-around-today-list .sub-memo-item.has-photo,
+        #money-around-today-list .sub-memo-item.has-photo,
         #search-result-list .sub-memo-item.has-photo,
         #diary-search-result-list .sub-memo-item.has-photo {
             grid-column: span 1;
@@ -1008,6 +1010,8 @@
            왼쪽/오른쪽 칸 높이가 항상 똑같이 맞춰지도록 함 (사진첩 그리드 방식) */
         #diary-around-today-list .sub-memo-item.has-photo .diary-photo,
         #diary-around-today-list .sub-memo-item.has-photo .diary-photo-wrap,
+        #money-around-today-list .sub-memo-item.has-photo .diary-photo,
+        #money-around-today-list .sub-memo-item.has-photo .diary-photo-wrap,
         #search-result-list .sub-memo-item.has-photo .diary-photo,
         #search-result-list .sub-memo-item.has-photo .diary-photo-wrap,
         #diary-search-result-list .sub-memo-item.has-photo .diary-photo,
@@ -1015,6 +1019,7 @@
             width: 100%;
         }
         #diary-around-today-list .sub-memo-item.has-photo .diary-photo,
+        #money-around-today-list .sub-memo-item.has-photo .diary-photo,
         #search-result-list .sub-memo-item.has-photo .diary-photo,
         #diary-search-result-list .sub-memo-item.has-photo .diary-photo {
             aspect-ratio: 1 / 1;
@@ -1023,6 +1028,7 @@
 
         /* 📝 텍스트만 있는 항목: 읽기 편하도록 한 줄 전체 너비를 그대로 사용 */
         #diary-around-today-list .sub-memo-item.no-photo,
+        #money-around-today-list .sub-memo-item.no-photo,
         #search-result-list .sub-memo-item.no-photo,
         #diary-search-result-list .sub-memo-item.no-photo {
             grid-column: 1 / -1;
@@ -1399,6 +1405,14 @@
                 <button class="action-btn" style="padding:4px 10px; font-size:12px;" onclick="applyStatsCustomPeriod()">조회</button>
             </div>
             <div id="category-stats-body"></div>
+        </div>
+
+        <!-- 💰 선택한 날짜(기본값: 오늘)의 가계부 내역 - 수정/삭제 가능 -->
+        <div class="card sub-feature-card" id="money-around-today-card">
+            <div class="feature-title">
+                <span id="money-selected-date-title">💰 가계부 내역</span>
+            </div>
+            <div id="money-around-today-list"></div>
         </div>
 
         <!-- 💼 잔액 보관처별 분류 / 💳 카드명세 일괄 입력 / ⏳ 카드 대기 지출 버튼 모음 -->
@@ -2725,6 +2739,7 @@
         updateMoneySummary();
         if (isSearchFilterOpen) filterCustomList();
         renderDiaryAroundToday();
+        renderMoneyAroundToday();
         if (isDiarySearchFilterOpen) filterDiaryCustomList();
 
         renderCardPendingList();
@@ -4032,6 +4047,7 @@
 
         if (tabName === 'money') {
             updateMoneySummary();
+            renderMoneyAroundToday();
         }
         if (tabName === 'diary') {
             renderDiaryAroundToday();
@@ -4122,12 +4138,13 @@
         updateMoneySummary();
     }
 
-    // 📅 달력에서 날짜를 클릭하면 팝업을 바로 열지 않고, 그 날짜의 다이어리 내용을 아래에 표시
+    // 📅 달력에서 날짜를 클릭하면 팝업을 바로 열지 않고, 지금 보고 있는 탭(다이어리/가계부)의 내용을 아래에 표시
+    // (예전엔 무조건 다이어리 탭으로 이동해서, 가계부 탭에서 날짜를 눌러도 다이어리로 튕기는 문제가 있었음)
     function selectDiaryDate(dateStr) {
         selectedViewDate = normalizeDateStr(dateStr);
-        if (currentMainTab !== 'diary') switchMainTab('diary');
         renderCalendar();
         renderDiaryAroundToday();
+        renderMoneyAroundToday();
         if (isDiarySearchFilterOpen) filterDiaryCustomList();
     }
 
@@ -4143,6 +4160,7 @@
 
         const refreshDiaryPanel = () => {
             renderDiaryAroundToday();
+            renderMoneyAroundToday();
             if (isDiarySearchFilterOpen) filterDiaryCustomList();
         };
 
@@ -4333,6 +4351,7 @@
         currentPhotoBase64 = null;
         selectedReservationDate = null;
         renderDiaryAroundToday();
+        renderMoneyAroundToday();
         if (isDiarySearchFilterOpen) filterDiaryCustomList();
     }
 
@@ -4403,6 +4422,73 @@
                     <button class="edit-btn" onclick='openDiaryForm("${dateStr}", ${JSON.stringify(item)})'>수정</button>
                     <button class="delete-btn" onclick="deleteDiary('${item.id}')">삭제</button>
                 </div>
+                ${textContentHTML}
+                ${photoHTML}
+            `;
+            listEl.appendChild(itemBox);
+        });
+    }
+
+    function renderMoneyAroundToday() {
+        const listEl = document.getElementById('money-around-today-list');
+        const titleEl = document.getElementById('money-selected-date-title');
+        if (!listEl) return;
+        listEl.innerHTML = '';
+
+        if (!selectedViewDate) selectedViewDate = getTodayStr();
+        const dateStr = normalizeDateStr(selectedViewDate);
+        const dObj = parseDateObj(dateStr);
+        const dayName = getDayOfWeekStr(dateStr);
+        const isReservedDate = isFutureDate(dateStr);
+        const isTodayDate = dateStr === getTodayStr();
+        const dateLabel = `${dObj.getMonth() + 1}월 ${dObj.getDate()}일(${dayName})`;
+
+        if (titleEl) {
+            const badge = isReservedDate ? `<span style="background:var(--primary-color); color:white; padding:1px 5px; border-radius:4px; font-size:11px; margin-right:4px; font-weight:bold;">예약</span>` : '';
+            const todayTag = isTodayDate ? ' (오늘)' : '';
+            titleEl.innerHTML = `💰 ${badge}${dateLabel}${todayTag}`;
+        }
+
+        const diaries = getAllDiaries();
+        let filtered = diaries.filter(item => {
+            if (!item.money || !item.money.amount) return false;
+            return normalizeDateStr(item.date) === dateStr;
+        });
+
+        // 시간 내림차순 정렬
+        filtered.sort((a, b) => (b.time || '').localeCompare(a.time || ''));
+
+        if (filtered.length === 0) {
+            listEl.innerHTML = `<div style="font-size: var(--memo-font-size); color: var(--text-sub); text-align: center; padding: 22px 10px;">💰 입력 버튼을 눌러 가계부 내역을 작성해보세요</div>`;
+            return;
+        }
+
+        filtered.forEach(item => {
+            const isExp = item.money.type === 'expense';
+            const colorStyle = isExp ? 'color: var(--expense-color);' : 'color: var(--income-color);';
+            const typeSign = isExp ? '-' : '+';
+            const amountStr = Number(item.money.amount).toLocaleString() + '원';
+            const catStr = item.money.category ? ` · ${item.money.category}` : '';
+            const pendingBadge = item.money.cardPending
+                ? `<span style="background:#f39c12; color:#fff; padding:1px 5px; border-radius:4px; font-size:11px; margin-left:6px; font-weight:bold; vertical-align:middle;">⏳ 카드대기${item.money.cardName ? ' · ' + item.money.cardName : ''}</span>`
+                : '';
+            const headerHTML = `<div style="font-weight: bold; margin-bottom: 4px; ${colorStyle}">
+                💰 ${typeSign}${amountStr}${catStr}${pendingBadge}
+            </div>`;
+            const timeBadge = item.time ? `<div style="color:var(--primary-color); font-weight:bold; font-size:12px; margin-bottom:3px;">⏰ ${item.time}</div>` : '';
+            const textContentHTML = item.text ? `<div class="diary-text">${timeBadge}${item.text}</div>` : (item.time ? `<div class="diary-text">${timeBadge}</div>` : '');
+            const photoHTML = renderPhotoHTML(item);
+
+            const itemBox = document.createElement('div');
+            itemBox.className = 'sub-memo-item money-item-box' + (isExp ? ' is-expense' : '') + (item.photo ? ' has-photo' : ' no-photo');
+            if (isReservedDate) itemBox.classList.add('is-reserved');
+
+            itemBox.innerHTML = `
+                <div class="memo-action-btns">
+                    <button class="edit-btn" onclick='openDiaryForm("${dateStr}", ${JSON.stringify(item)})'>수정</button>
+                    <button class="delete-btn" onclick="deleteDiary('${item.id}')">삭제</button>
+                </div>
+                ${headerHTML}
                 ${textContentHTML}
                 ${photoHTML}
             `;
@@ -4773,6 +4859,7 @@
         updateMoneySummary();
         if (isSearchFilterOpen) filterCustomList();
         renderDiaryAroundToday();
+        renderMoneyAroundToday();
         if (isDiarySearchFilterOpen) filterDiaryCustomList();
         closeDiaryFormPanel(); // 저장 후 팝업창 닫기
     }
@@ -4788,6 +4875,7 @@
         updateMoneySummary();
         if (isSearchFilterOpen) filterCustomList();
         renderDiaryAroundToday();
+        renderMoneyAroundToday();
         if (isDiarySearchFilterOpen) filterDiaryCustomList();
     }
 
@@ -5029,6 +5117,7 @@
         renderCalendar();
         updateMoneySummary();
         if (isSearchFilterOpen) filterCustomList();
+        renderMoneyAroundToday();
 
         alert(`${savedCount}건이 가계부에 저장되었습니다.`);
         closeCardStatementModal();
