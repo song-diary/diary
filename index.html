@@ -1092,6 +1092,9 @@
             margin-top: 8px;
             display: block;
             cursor: pointer;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         /* 📷 사진 확대보기(라이트박스): 사진을 터치하면 항상 같은 크기 규칙(화면의 90%/85%)으로 확대되어 보임 */
@@ -1122,6 +1125,9 @@
             border-radius: 8px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.5);
             object-fit: contain;
+            -webkit-touch-callout: none; /* 길게 눌러도 브라우저 기본 "이미지 저장" 메뉴가 뜨지 않도록 */
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         .photo-lightbox-close {
@@ -1140,15 +1146,14 @@
         }
 
         .diary-photo-wrap {
-            position: relative;
-            display: inline-block;
+            display: flex;
+            flex-direction: column;
             max-width: 100%;
+            gap: 4px;
         }
 
         .photo-download-btn {
-            position: absolute;
-            right: 6px;
-            bottom: 6px;
+            align-self: flex-end;
             background: rgba(0,0,0,0.55);
             color: #fff;
             border: none;
@@ -1533,7 +1538,7 @@
 <!-- 📝 입력 폼 모달 팝업 -->
 <div class="photo-lightbox-overlay" id="photo-lightbox-overlay" onclick="closePhotoLightbox(event)">
     <button type="button" class="photo-lightbox-close" onclick="closePhotoLightbox(event)" title="닫기">✖</button>
-    <img id="photo-lightbox-img" class="photo-lightbox-img" src="" alt="사진 확대보기" onclick="event.stopPropagation()">
+    <img id="photo-lightbox-img" class="photo-lightbox-img" src="" alt="사진 확대보기" onclick="event.stopPropagation()" oncontextmenu="return false;" ondragstart="return false;">
 </div>
 
 <div class="modal-overlay" id="memo-modal-overlay" onclick="handleModalBackgroundClick(event)">
@@ -4478,7 +4483,7 @@
         const dateStr = normalizeDateStr(item.date || '') || getTodayStr();
         const safeKey = String(item.photo).replace(/'/g, "\\'");
         return `<div class="diary-photo-wrap">
-            <img src="${getPhotoSrc(item.photo)}" class="diary-photo" alt="첨부사진" onclick="event.stopPropagation(); openPhotoLightbox('${safeKey}')">
+            <img src="${getPhotoSrc(item.photo)}" class="diary-photo" alt="첨부사진" onclick="event.stopPropagation(); openPhotoLightbox('${safeKey}')" oncontextmenu="return false;" ondragstart="return false;">
             <button type="button" class="photo-download-btn" onclick="event.stopPropagation(); downloadPhotoByKey('${safeKey}', '${dateStr}')" title="이 사진을 휴대폰에 저장 (공유창에서 갤러리 선택 가능)">💾 저장</button>
         </div>`;
     }
