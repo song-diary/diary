@@ -1040,6 +1040,11 @@
             box-sizing: border-box;
         }
 
+        /* 📷 사진이 있으면 수정/삭제/저장 3단 버튼이 들어가야 하므로 최소 높이를 조금 더 확보 */
+        .sub-memo-item.has-photo {
+            min-height: 82px;
+        }
+
         /* 📅 같은 일자 항목들을 묶어줄 대표 날짜 헤더 */
         .date-group-header {
             font-weight: bold;
@@ -1118,13 +1123,14 @@
         }
 
         .photo-lightbox-img {
-            max-width: 90vw;
-            max-height: 85vh;
-            width: auto;
-            height: auto;
-            border-radius: 8px;
+            width: 80vmin;
+            height: 80vmin;
+            max-width: 92vw;
+            max-height: 78vh;
+            border-radius: 12px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.5);
             object-fit: contain;
+            background: rgba(255,255,255,0.06);
             -webkit-touch-callout: none; /* 길게 눌러도 브라우저 기본 "이미지 저장" 메뉴가 뜨지 않도록 */
             -webkit-user-select: none;
             user-select: none;
@@ -1149,18 +1155,19 @@
             display: flex;
             flex-direction: column;
             max-width: 100%;
-            gap: 4px;
         }
 
+        /* 💾 사진 저장 버튼: 사진 위가 아니라 수정/삭제 버튼 밑에 같은 세로줄로 위치 (사진을 가리지 않고, 화면도 아래로 늘어나지 않음) */
         .photo-download-btn {
-            align-self: flex-end;
-            background: rgba(0,0,0,0.55);
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            padding: 4px 8px;
-            font-size: 11px;
+            background: none;
+            border: 1px solid transparent;
+            color: #2980b9;
+            font-size: calc(var(--memo-font-size) - 5px);
             cursor: pointer;
+            padding: 2px 5px;
+            border-radius: 4px;
+            touch-action: manipulation;
+            white-space: nowrap;
         }
 
         .memo-action-btns {
@@ -3656,6 +3663,7 @@
                 <div class="memo-action-btns">
                     <button class="edit-btn" onclick='openDiaryForm("${dateStr}", ${JSON.stringify(item)})'>수정</button>
                     <button class="delete-btn" onclick="deleteDiary('${item.id}')">삭제</button>
+                    ${renderDownloadBtnHTML(item)}
                 </div>
                 ${headerHTML}
                 ${textContentHTML}
@@ -3819,6 +3827,7 @@
                 <div class="memo-action-btns">
                     <button class="edit-btn" onclick='openDiaryForm("${dateStr}", ${JSON.stringify(item)})'>수정</button>
                     <button class="delete-btn" onclick="deleteDiary('${item.id}')">삭제</button>
+                    ${renderDownloadBtnHTML(item)}
                 </div>
                 ${headerHTML}
                 ${textContentHTML}
@@ -4397,6 +4406,7 @@
                 <div class="memo-action-btns">
                     <button class="edit-btn" onclick='openDiaryForm("${dateStr}", ${JSON.stringify(item)})'>수정</button>
                     <button class="delete-btn" onclick="deleteDiary('${item.id}')">삭제</button>
+                    ${renderDownloadBtnHTML(item)}
                 </div>
                 ${textContentHTML}
                 ${photoHTML}
@@ -4480,12 +4490,18 @@
     // 다른 곳에 쓰려면 이 버튼으로 휴대폰 실제 파일(주로 다운로드 폴더)로 저장해야 함)
     function renderPhotoHTML(item) {
         if (!item.photo) return '';
-        const dateStr = normalizeDateStr(item.date || '') || getTodayStr();
         const safeKey = String(item.photo).replace(/'/g, "\\'");
         return `<div class="diary-photo-wrap">
             <img src="${getPhotoSrc(item.photo)}" class="diary-photo" alt="첨부사진" onclick="event.stopPropagation(); openPhotoLightbox('${safeKey}')" oncontextmenu="return false;" ondragstart="return false;">
-            <button type="button" class="photo-download-btn" onclick="event.stopPropagation(); downloadPhotoByKey('${safeKey}', '${dateStr}')" title="이 사진을 휴대폰에 저장 (공유창에서 갤러리 선택 가능)">💾 저장</button>
         </div>`;
+    }
+
+    // 💾 사진 저장 버튼(수정/삭제 버튼 아래에 함께 세로로 배치됨) - 사진이 있을 때만 생성
+    function renderDownloadBtnHTML(item) {
+        if (!item.photo) return '';
+        const dateStr = normalizeDateStr(item.date || '') || getTodayStr();
+        const safeKey = String(item.photo).replace(/'/g, "\\'");
+        return `<button type="button" class="photo-download-btn" onclick="event.stopPropagation(); downloadPhotoByKey('${safeKey}', '${dateStr}')" title="이 사진을 휴대폰에 저장 (공유창에서 갤러리 선택 가능)">💾 저장</button>`;
     }
 
     // 📷 사진 확대보기(라이트박스) 열기/닫기 - 항상 동일한 크기 규칙(화면의 90%/85%)으로 표시됨
