@@ -1041,9 +1041,8 @@
             padding: 10px;
             margin-bottom: 8px;
             position: relative;
-            padding-right: 60px;
-            min-height: 58px; /* 한 줄짜리 짧은 메모여도 오른쪽 위 수정/삭제 버튼(2단)이 박스 밖으로 넘치지 않도록 */
             box-sizing: border-box;
+            cursor: pointer; /* 박스 어디를 눌러도 수정 화면이 열림 */
         }
 
         /* 📅 같은 일자 항목들을 묶어줄 대표 날짜 헤더 */
@@ -1124,10 +1123,10 @@
         }
 
         .photo-lightbox-img {
-            width: 80vmin;
-            height: 80vmin;
-            max-width: 92vw;
-            max-height: 78vh;
+            width: 88vmin;
+            height: 88vmin;
+            max-width: 94vw;
+            max-height: 84vh;
             border-radius: 12px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.5);
             object-fit: contain;
@@ -1153,34 +1152,44 @@
         }
 
         .diary-photo-wrap {
-            display: block;
+            display: flex;
+            flex-direction: column;
             max-width: 100%;
+            gap: 4px;
         }
 
-        /* 💾 사진 저장 버튼: 사진 오른쪽의 빈 여백(수정/삭제와 같은 세로줄) 맨 아래에 위치.
-           박스 높이를 늘리지 않고, 수정/삭제(위)와도 겹치지 않음 */
+        /* 💾 사진 저장 버튼: 사진 바로 아래, 오른쪽 끝에 위치 (사진을 가리지 않고, 수정/삭제와도 겹치지 않음) */
         .photo-download-btn {
-            position: absolute;
-            bottom: 8px;
-            right: 6px;
-            background: none;
-            border: 1px solid transparent;
-            color: #2980b9;
-            font-size: calc(var(--memo-font-size) - 5px);
+            align-self: flex-end;
+            background: rgba(0,0,0,0.55);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 11px;
             cursor: pointer;
-            padding: 2px 5px;
-            border-radius: 4px;
-            touch-action: manipulation;
-            white-space: nowrap;
+        }
+
+        /* ⏰ 시간 + [수정][삭제]를 한 줄에 배치 - 오른쪽 여백을 따로 예약해둘 필요가 없어져서 글/사진 영역이 더 넓어짐 */
+        .item-top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+            min-height: 22px;
+        }
+
+        .time-badge-inline {
+            color: var(--primary-color);
+            font-weight: bold;
+            font-size: 12px;
         }
 
         .memo-action-btns {
-            position: absolute;
-            top: 8px;
-            right: 6px;
             display: flex;
-            flex-direction: column;
-            gap: 2px;
+            gap: 8px;
+            flex-shrink: 0;
         }
 
         .edit-btn, .delete-btn {
@@ -1600,7 +1609,6 @@
             <div id="photo-preview-wrap">
                 <img id="image-preview" src="" alt="미리보기">
                 <div class="btn-group" style="margin-top:5px; margin-bottom:0;">
-                    <button class="action-btn" style="background-color:#2980b9;" onclick="downloadCurrentPreviewPhoto()">💾 사진 저장</button>
                     <button class="action-btn" onclick="removeImage()">사진 취소</button>
                 </div>
             </div>
@@ -3667,20 +3675,24 @@
                 </div>`;
             }
 
-            let timeBadge = item.time ? `<div style="color:var(--primary-color); font-weight:bold; font-size:12px; margin-bottom:3px;">⏰ ${item.time}</div>` : '';
-            let textContentHTML = item.text ? `<div class="diary-text">${timeBadge}${item.text}</div>` : (item.time ? `<div class="diary-text">${timeBadge}</div>` : '');
+            let timeBadgeInline = item.time ? `⏰ ${item.time}` : '';
+            let textContentHTML = item.text ? `<div class="diary-text">${item.text}</div>` : '';
             let photoHTML = renderPhotoHTML(item);
             subItem.classList.add(item.photo ? 'has-photo' : 'no-photo');
 
             subItem.innerHTML = `
-                <div class="memo-action-btns">
-                    <button class="edit-btn" onclick='openDiaryForm("${dateStr}", ${JSON.stringify(item)})'>수정</button>
-                    <button class="delete-btn" onclick="deleteDiary('${item.id}')">삭제</button>
+                <div class="item-top-row">
+                    <span class="time-badge-inline">${timeBadgeInline}</span>
+                    <div class="memo-action-btns">
+                        <button class="edit-btn" onclick='event.stopPropagation(); openDiaryForm("${dateStr}", ${JSON.stringify(item)})'>수정</button>
+                        <button class="delete-btn" onclick="event.stopPropagation(); deleteDiary('${item.id}')">삭제</button>
+                    </div>
                 </div>
                 ${headerHTML}
                 ${textContentHTML}
                 ${photoHTML}
             `;
+            subItem.addEventListener('click', () => openDiaryForm(dateStr, item));
             resultListContainer.appendChild(subItem);
         });
     }
@@ -3830,20 +3842,24 @@
                 📝 메모
             </div>`;
 
-            let timeBadge = item.time ? `<div style="color:var(--primary-color); font-weight:bold; font-size:12px; margin-bottom:3px;">⏰ ${item.time}</div>` : '';
-            let textContentHTML = item.text ? `<div class="diary-text">${timeBadge}${item.text}</div>` : (item.time ? `<div class="diary-text">${timeBadge}</div>` : '');
+            let timeBadgeInline = item.time ? `⏰ ${item.time}` : '';
+            let textContentHTML = item.text ? `<div class="diary-text">${item.text}</div>` : '';
             let photoHTML = renderPhotoHTML(item);
             subItem.classList.add(item.photo ? 'has-photo' : 'no-photo');
 
             subItem.innerHTML = `
-                <div class="memo-action-btns">
-                    <button class="edit-btn" onclick='openDiaryForm("${dateStr}", ${JSON.stringify(item)})'>수정</button>
-                    <button class="delete-btn" onclick="deleteDiary('${item.id}')">삭제</button>
+                <div class="item-top-row">
+                    <span class="time-badge-inline">${timeBadgeInline}</span>
+                    <div class="memo-action-btns">
+                        <button class="edit-btn" onclick='event.stopPropagation(); openDiaryForm("${dateStr}", ${JSON.stringify(item)})'>수정</button>
+                        <button class="delete-btn" onclick="event.stopPropagation(); deleteDiary('${item.id}')">삭제</button>
+                    </div>
                 </div>
                 ${headerHTML}
                 ${textContentHTML}
                 ${photoHTML}
             `;
+            subItem.addEventListener('click', () => openDiaryForm(dateStr, item));
             resultListContainer.appendChild(subItem);
         });
     }
@@ -4409,8 +4425,8 @@
         }
 
         filtered.forEach(item => {
-            const timeBadge = item.time ? `<div style="color:var(--primary-color); font-weight:bold; font-size:12px; margin-bottom:3px;">⏰ ${item.time}</div>` : '';
-            const textContentHTML = item.text ? `<div class="diary-text">${timeBadge}${item.text}</div>` : (item.time ? `<div class="diary-text">${timeBadge}</div>` : '');
+            const timeBadgeInline = item.time ? `⏰ ${item.time}` : '';
+            const textContentHTML = item.text ? `<div class="diary-text">${item.text}</div>` : '';
             const photoHTML = renderPhotoHTML(item);
 
             const itemBox = document.createElement('div');
@@ -4418,13 +4434,17 @@
             if (isReservedDate) itemBox.classList.add('is-reserved');
 
             itemBox.innerHTML = `
-                <div class="memo-action-btns">
-                    <button class="edit-btn" onclick='openDiaryForm("${dateStr}", ${JSON.stringify(item)})'>수정</button>
-                    <button class="delete-btn" onclick="deleteDiary('${item.id}')">삭제</button>
+                <div class="item-top-row">
+                    <span class="time-badge-inline">${timeBadgeInline}</span>
+                    <div class="memo-action-btns">
+                        <button class="edit-btn" onclick='event.stopPropagation(); openDiaryForm("${dateStr}", ${JSON.stringify(item)})'>수정</button>
+                        <button class="delete-btn" onclick="event.stopPropagation(); deleteDiary('${item.id}')">삭제</button>
+                    </div>
                 </div>
                 ${textContentHTML}
                 ${photoHTML}
             `;
+            itemBox.addEventListener('click', () => openDiaryForm(dateStr, item));
             listEl.appendChild(itemBox);
         });
     }
@@ -4475,8 +4495,8 @@
             const headerHTML = `<div style="font-weight: bold; margin-bottom: 4px; ${colorStyle}">
                 💰 ${typeSign}${amountStr}${catStr}${pendingBadge}
             </div>`;
-            const timeBadge = item.time ? `<div style="color:var(--primary-color); font-weight:bold; font-size:12px; margin-bottom:3px;">⏰ ${item.time}</div>` : '';
-            const textContentHTML = item.text ? `<div class="diary-text">${timeBadge}${item.text}</div>` : (item.time ? `<div class="diary-text">${timeBadge}</div>` : '');
+            const timeBadgeInline = item.time ? `⏰ ${item.time}` : '';
+            const textContentHTML = item.text ? `<div class="diary-text">${item.text}</div>` : '';
             const photoHTML = renderPhotoHTML(item);
 
             const itemBox = document.createElement('div');
@@ -4484,14 +4504,18 @@
             if (isReservedDate) itemBox.classList.add('is-reserved');
 
             itemBox.innerHTML = `
-                <div class="memo-action-btns">
-                    <button class="edit-btn" onclick='openDiaryForm("${dateStr}", ${JSON.stringify(item)})'>수정</button>
-                    <button class="delete-btn" onclick="deleteDiary('${item.id}')">삭제</button>
+                <div class="item-top-row">
+                    <span class="time-badge-inline">${timeBadgeInline}</span>
+                    <div class="memo-action-btns">
+                        <button class="edit-btn" onclick='event.stopPropagation(); openDiaryForm("${dateStr}", ${JSON.stringify(item)})'>수정</button>
+                        <button class="delete-btn" onclick="event.stopPropagation(); deleteDiary('${item.id}')">삭제</button>
+                    </div>
                 </div>
                 ${headerHTML}
                 ${textContentHTML}
                 ${photoHTML}
             `;
+            itemBox.addEventListener('click', () => openDiaryForm(dateStr, item));
             listEl.appendChild(itemBox);
         });
     }
@@ -4648,11 +4672,6 @@
         downloadDataUrl(dataUrl, filename);
     }
 
-    // 현재 편집 중인 사진(저장 전 미리보기)을 갤러리로 저장(가능하면) 또는 다운로드
-    function downloadCurrentPreviewPhoto() {
-        savePhotoSmart(currentPhotoBase64, `스마트다이어리_사진_${getTodayStr().replace(/-/g, '')}.jpg`);
-    }
-
     // 현재 편집 중인 사진(currentPhotoBase64)을 저장/삭제하고, 다이어리 항목에 넣을 "키"를 반환
     // - DB 저장/삭제는 비동기로 백그라운드에서 진행하되(await 하지 않음), 캐시는 즉시 동기 반영하여 화면이 바로 갱신되도록 함
     function persistCurrentPhoto(diaryId, oldPhotoKey) {
@@ -4780,8 +4799,18 @@
         if (currentPhotoBase64) {
             img.src = currentPhotoBase64;
             wrap.style.display = 'block';
+            // ✏️ 기존 항목을 "수정" 중일 때만 사진을 눌러 크게 볼 수 있음.
+            // 새로 작성 중인 사진은 저장 후 목록에서 확인/확대할 수 있으므로 여기서는 확대 기능을 넣지 않음.
+            if (editingDiaryId) {
+                img.style.cursor = 'pointer';
+                img.onclick = () => openPhotoLightbox(currentPhotoBase64);
+            } else {
+                img.style.cursor = 'default';
+                img.onclick = null;
+            }
         } else {
             img.src = '';
+            img.onclick = null;
             wrap.style.display = 'none';
         }
     }
