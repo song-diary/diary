@@ -1609,6 +1609,7 @@
             <div id="photo-preview-wrap">
                 <img id="image-preview" src="" alt="미리보기">
                 <div class="btn-group" style="margin-top:5px; margin-bottom:0;">
+                    <button class="action-btn" id="form-photo-save-btn" style="background-color:#2980b9; display:none;" onclick="downloadCurrentPreviewPhoto()">💾 사진 저장</button>
                     <button class="action-btn" onclick="removeImage()">사진 취소</button>
                 </div>
             </div>
@@ -4591,15 +4592,11 @@
         return photoCache[photoKeyOrData] || '';
     }
 
-    // 📷 사진 + "💾 저장" 버튼을 함께 렌더링 (사진은 앱 내부(브라우저 저장소)에만 있어서,
-    // 다른 곳에 쓰려면 이 버튼으로 휴대폰 실제 파일(주로 다운로드 폴더)로 저장해야 함)
+    // 📷 사진만 표시 (확대보기/저장 기능은 수정폼으로 옮김 - 메인 목록에서는 항목을 터치하면 바로 수정폼이 열림)
     function renderPhotoHTML(item) {
         if (!item.photo) return '';
-        const dateStr = normalizeDateStr(item.date || '') || getTodayStr();
-        const safeKey = String(item.photo).replace(/'/g, "\\'");
         return `<div class="diary-photo-wrap">
-            <img src="${getPhotoSrc(item.photo)}" class="diary-photo" alt="첨부사진" onclick="event.stopPropagation(); openPhotoLightbox('${safeKey}')" oncontextmenu="return false;" ondragstart="return false;">
-            <button type="button" class="photo-download-btn" onclick="event.stopPropagation(); downloadPhotoByKey('${safeKey}', '${dateStr}')" title="이 사진을 휴대폰에 저장 (공유창에서 갤러리 선택 가능)">💾 저장</button>
+            <img src="${getPhotoSrc(item.photo)}" class="diary-photo" alt="첨부사진" oncontextmenu="return false;" ondragstart="return false;">
         </div>`;
     }
 
@@ -4639,12 +4636,6 @@
             console.error('사진 저장 실패:', e);
             alert('사진 저장에 실패했습니다. 사진을 길게 눌러서 저장해보세요.');
         }
-    }
-
-    function downloadPhotoByKey(photoKeyOrData, dateStr) {
-        const src = getPhotoSrc(photoKeyOrData);
-        const filename = `스마트다이어리_사진_${(dateStr || getTodayStr()).replace(/-/g, '')}.jpg`;
-        savePhotoSmart(src, filename);
     }
 
     // 📷 갤러리(사진 앱)로 바로 저장: 휴대폰의 공유 시트를 띄워서 "사진에 저장"을 직접 고를 수 있게 함
@@ -4796,23 +4787,31 @@
     function updatePhotoPreview() {
         const wrap = document.getElementById('photo-preview-wrap');
         const img = document.getElementById('image-preview');
+        const saveBtn = document.getElementById('form-photo-save-btn');
         if (currentPhotoBase64) {
             img.src = currentPhotoBase64;
             wrap.style.display = 'block';
-            // ✏️ 기존 항목을 "수정" 중일 때만 사진을 눌러 크게 볼 수 있음.
-            // 새로 작성 중인 사진은 저장 후 목록에서 확인/확대할 수 있으므로 여기서는 확대 기능을 넣지 않음.
+            // ✏️ 기존 항목을 "수정" 중일 때만 사진을 눌러 크게 볼 수 있고, 갤러리 저장 버튼도 보임.
+            // 새로 작성 중인 사진은 저장(등록) 후 목록에서 열어 확인/확대/저장할 수 있으므로 여기서는 넣지 않음.
             if (editingDiaryId) {
                 img.style.cursor = 'pointer';
                 img.onclick = () => openPhotoLightbox(currentPhotoBase64);
+                if (saveBtn) saveBtn.style.display = '';
             } else {
                 img.style.cursor = 'default';
                 img.onclick = null;
+                if (saveBtn) saveBtn.style.display = 'none';
             }
         } else {
             img.src = '';
             img.onclick = null;
             wrap.style.display = 'none';
         }
+    }
+
+    // 💾 수정 중인 사진을 갤러리로 저장(가능하면) 또는 다운로드 - 수정폼에서만 보이는 버튼
+    function downloadCurrentPreviewPhoto() {
+        savePhotoSmart(currentPhotoBase64, `스마트다이어리_사진_${getTodayStr().replace(/-/g, '')}.jpg`);
     }
 
     function removeImage() {
