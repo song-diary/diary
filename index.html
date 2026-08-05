@@ -3460,12 +3460,16 @@
         renderCategoryStats();
         updateMoneySearchDividerVisibility();
 
+        const moneyTodayCard = document.getElementById('money-around-today-card');
         if (type === 'balance') {
-            // 잔액 클릭 시: 위 분류(통계)만 보여주고, 아래 상세 내역 리스트/필터 펼치기는 의미가 없으므로 숨김 (다이어리 탭에 별도로 존재)
+            // 잔액 클릭 시: 위 분류(통계)만 보여주고, 아래 상세 내역 리스트(수정폼으로 연결됨)는
+            // 이 화면 맥락과 안 맞으므로 숨김 (다이어리 탭에 별도로 존재)
             if (searchFilterCard) searchFilterCard.style.display = 'none';
+            if (moneyTodayCard) moneyTodayCard.style.display = 'none';
         } else {
             if (searchFilterCard && isSearchFilterOpen) searchFilterCard.style.display = 'block';
             if (isSearchFilterOpen) filterCustomList();
+            if (moneyTodayCard) moneyTodayCard.style.display = '';
         }
     }
 
@@ -4453,7 +4457,13 @@
     function renderMoneyAroundToday() {
         const listEl = document.getElementById('money-around-today-list');
         const titleEl = document.getElementById('money-selected-date-title');
+        const cardEl = document.getElementById('money-around-today-card');
         if (!listEl) return;
+
+        // 💼 "잔액/카드" 통계를 보고 있을 때는 개별 내역 수정으로 이어지는 이 리스트를 숨김 (맥락에 안 맞음)
+        if (cardEl) cardEl.style.display = (currentStatsType === 'balance') ? 'none' : '';
+        if (currentStatsType === 'balance') return;
+
         listEl.innerHTML = '';
 
         if (!selectedViewDate) selectedViewDate = getTodayStr();
