@@ -745,8 +745,85 @@
         .memo-line.fri { background-color: #9b59b6; }
         .memo-line.sat { background-color: var(--sat-color); }
 
-        /* 팝업 모달 스타일 */
-        .modal-overlay {
+        /* ===================== 🔮 오늘의 운세 (사주 기반) ===================== */
+        .fortune-teaser {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 13px 16px;
+            border-radius: 14px;
+            margin-bottom: 12px;
+            background: linear-gradient(120deg, #2C2F5B, #4A3B77 55%, #2C2F5B);
+            color: #F4F0FF;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(44,47,91,0.28);
+        }
+        .fortune-teaser .ft-icon { font-size: 20px; }
+        .fortune-teaser .ft-text { flex: 1; font-size: 14px; font-weight: 600; letter-spacing: -0.01em; }
+        .fortune-teaser .ft-sub { font-size: 11.5px; color: rgba(244,240,255,0.6); margin-top: 1px; }
+        .fortune-teaser .ft-arrow { font-size: 16px; opacity: 0.7; }
+
+        #fortune-popup-overlay, #saju-detail-modal-overlay { z-index: 1100; }
+
+        .fortune-popup-card {
+            width: 100%; max-width: 420px; max-height: 92vh; overflow-y: auto;
+            border-radius: 22px; padding: 26px 22px 22px;
+            background: linear-gradient(165deg, #23264A 0%, #171933 60%, #14152B 100%);
+            color: #F2EFFF;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.45);
+            position: relative;
+            animation: fadeIn 0.25s ease;
+            touch-action: pan-y;
+        }
+        .fortune-popup-close {
+            position: absolute; top: 14px; right: 14px; background: rgba(255,255,255,0.1);
+            border: none; color: #F2EFFF; width: 30px; height: 30px; border-radius: 50%;
+            font-size: 14px; cursor: pointer;
+        }
+        .fp-eyebrow { font-size: 11.5px; letter-spacing: 0.14em; color: #C7B8FF; text-align: center; font-weight: 700; }
+        .fp-mood { font-size: 26px; font-weight: 800; text-align: center; margin-top: 10px; letter-spacing: -0.01em; }
+        .fp-date { text-align: center; font-size: 12px; color: rgba(242,239,255,0.5); margin-top: 4px; }
+        .fp-score-wrap { text-align: center; margin: 18px 0 6px; }
+        .fp-score { font-size: 52px; font-weight: 800; background: linear-gradient(120deg, #FFD98E, #FF9AC2); -webkit-background-clip: text; background-clip: text; color: transparent; line-height: 1; }
+        .fp-score-label { font-size: 11.5px; color: rgba(242,239,255,0.5); margin-top: 4px; }
+        .fp-cards { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+        .fp-card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 13px 14px; }
+        .fp-card .fpc-label { font-size: 11.5px; font-weight: 700; color: #C7B8FF; margin-bottom: 5px; }
+        .fp-card .fpc-text { font-size: 13px; line-height: 1.6; color: rgba(242,239,255,0.88); }
+        .fp-lucky-row { display: flex; gap: 10px; margin-top: 18px; }
+        .fp-lucky-box { flex: 1; background: rgba(255,255,255,0.05); border-radius: 14px; padding: 12px; text-align: center; }
+        .fp-lk-label { font-size: 10.5px; color: rgba(242,239,255,0.5); margin-bottom: 7px; letter-spacing: 0.04em; }
+        .fp-swatch { width: 20px; height: 20px; border-radius: 50%; margin: 0 auto 6px; border: 1px solid rgba(255,255,255,0.25); }
+        .fp-number { font-size: 18px; font-weight: 700; margin-top: 5px; }
+        .fp-cta {
+            width: 100%; margin-top: 20px; padding: 14px; border: none; border-radius: 12px;
+            background: linear-gradient(120deg, #FFD98E, #FF9AC2); color: #23163A; font-weight: 800; font-size: 14.5px; cursor: pointer;
+        }
+        .fp-my-saju-link { text-align: center; margin-top: 13px; font-size: 12.5px; color: rgba(242,239,255,0.6); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+        .fp-setup-msg { font-size: 13px; line-height: 1.7; text-align: center; color: rgba(242,239,255,0.75); margin: 16px 0 4px; }
+
+        /* 내 사주 상세 모달 */
+        .saju-detail-card {
+            width: 100%; max-width: 420px; max-height: 90vh; overflow-y: auto;
+            border-radius: 20px; padding: 22px 20px; background: #FBF8F1; color: #2A241C;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.35); position: relative; animation: fadeIn 0.25s ease;
+            touch-action: pan-y;
+        }
+        .saju-detail-card .sd-title { font-size: 15px; font-weight: 800; margin-bottom: 14px; }
+        .sd-pillars { display: grid; grid-template-columns: repeat(4,1fr); gap: 7px; margin-bottom: 18px; }
+        .sd-pillar { background: rgba(0,0,0,0.04); border-radius: 12px; padding: 10px 4px; text-align: center; }
+        .sd-pillar .sdp-label { font-size: 10px; color: #8A8071; margin-bottom: 6px; }
+        .sd-pillar .sdp-char { font-size: 20px; font-weight: 700; padding: 5px 0; border-radius: 7px; margin-bottom: 3px; }
+        .sd-pillar.na { opacity: 0.35; }
+        .sd-dm-box { background: rgba(0,0,0,0.04); border-radius: 14px; padding: 15px; margin-bottom: 16px; display: flex; gap: 12px; align-items: center; }
+        .sd-dm-char { width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; flex-shrink: 0; }
+        .sd-dm-desc { font-size: 12.5px; line-height: 1.6; color: #5B5346; }
+        .sd-bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+        .sd-bar-row .sdb-name { width: 26px; font-size: 12px; color: #6B6357; }
+        .sd-bar-track { flex: 1; height: 7px; border-radius: 4px; background: rgba(0,0,0,0.06); overflow: hidden; }
+        .sd-bar-fill { height: 100%; border-radius: 4px; }
+        .sd-bar-row .sdb-count { width: 14px; text-align: right; font-size: 11.5px; color: #8A8071; }
+
             display: none;
             position: fixed;
             top: 0;
@@ -1272,6 +1349,16 @@
 
 <div class="app-container">
 
+    <!-- 🔮 오늘의 운세 티저 배너 -->
+    <div class="fortune-teaser" id="fortune-teaser" onclick="openFortunePopup()">
+        <span class="ft-icon">🔮</span>
+        <div style="flex:1;">
+            <div class="ft-text" id="fortune-teaser-text">오늘의 운세 보기</div>
+            <div class="ft-sub" id="fortune-teaser-sub"></div>
+        </div>
+        <span class="ft-arrow">›</span>
+    </div>
+
     <!-- 🔑 달력 카드 -->
     <div class="card" id="calendar-card">
         <div class="calendar-header">
@@ -1543,12 +1630,49 @@
                 </div>
             </div>
 
+            <div class="settings-section">
+                <label>🔮 오늘의 운세 (사주팔자 설정)</label>
+                <div style="display: flex; gap: 6px; margin-bottom: 6px;">
+                    <input type="date" id="saju-birth-date" style="flex:1; padding:6px; border:1px solid var(--border-color); border-radius:6px; font-size:13px;">
+                    <input type="time" id="saju-birth-time" disabled style="flex:1; padding:6px; border:1px solid var(--border-color); border-radius:6px; font-size:13px;">
+                </div>
+                <div style="display: flex; align-items:center; gap:6px; margin-bottom:8px;">
+                    <input type="checkbox" id="saju-time-unknown" checked onchange="onSajuTimeUnknownToggle()" style="width:15px; height:15px;">
+                    <label for="saju-time-unknown" style="font-size:12px; font-weight:normal; color: var(--text-sub);">태어난 시각을 몰라요</label>
+                </div>
+                <button class="action-btn" style="width:100%;" onclick="saveSajuBirthInfo()">저장하고 오늘의 운세 보기</button>
+                <div id="saju-saved-info" style="font-size:11.5px; color: var(--text-sub); margin-top:6px;"></div>
+            </div>
+
             <div class="settings-section" style="padding-top: 5px;">
                 <button class="action-btn" style="background-color: var(--accent-today); width:100%; font-size:14px; padding:6px;" onclick="resetAllData()">⚠️ 데이터 초기화 (새로 시작)</button>
             </div>
         </div>
     </div>
 
+</div>
+
+<!-- 🔮 오늘의 운세 팝업 -->
+<div class="modal-overlay" id="fortune-popup-overlay" onclick="handleFortunePopupBackgroundClick(event)">
+    <div class="fortune-popup-card" id="fortune-popup-card" onclick="event.stopPropagation()">
+        <button class="fortune-popup-close" onclick="closeFortunePopup()">✖</button>
+        <div id="fortune-popup-body"><!-- JS로 채워짐 --></div>
+    </div>
+</div>
+
+<!-- 🈺 내 사주 상세 모달 -->
+<div class="modal-overlay" id="saju-detail-modal-overlay" onclick="handleSajuDetailModalBackgroundClick(event)">
+    <div class="saju-detail-card" id="saju-detail-card" onclick="event.stopPropagation()">
+        <button class="close-form-btn" style="position:absolute; top:14px; right:14px;" onclick="closeSajuDetailModal()">✖</button>
+        <div class="sd-title">🈺 내 사주 명식</div>
+        <div class="sd-pillars" id="sd-pillars"></div>
+        <div class="sd-dm-box">
+            <div class="sd-dm-char" id="sd-dm-char">-</div>
+            <div class="sd-dm-desc" id="sd-dm-desc">-</div>
+        </div>
+        <div style="font-size:12px; color:#8A8071; margin-bottom:8px; font-weight:700;">오행 분포</div>
+        <div id="sd-bars"></div>
+    </div>
 </div>
 
 <!-- 📝 입력 폼 모달 팝업 -->
@@ -2468,6 +2592,48 @@
     let editingDiaryId = null;
     let currentFormMode = 'diary'; // '입력' 폼이 다이어리용인지 가계부용인지 구분 ('diary' | 'money')
     let currentPhotoBase64 = null;
+
+    // ===================== 🔮 오늘의 운세 (사주팔자 기반) =====================
+    const SAJU_ELEM_GAN = {'甲':'목','乙':'목','丙':'화','丁':'화','戊':'토','己':'토','庚':'금','辛':'금','壬':'수','癸':'수'};
+    const SAJU_ELEM_ZHI = {'寅':'목','卯':'목','巳':'화','午':'화','辰':'토','戌':'토','丑':'토','未':'토','申':'금','酉':'금','亥':'수','子':'수'};
+    const SAJU_ELEM_COLOR = { 목:'#4C9A73', 화:'#E0685C', 토:'#E3B24A', 금:'#9CA3AF', 수:'#5B7FD1' };
+    const SAJU_ELEM_COLOR_NAME = { 목:'싱그러운 그린', 화:'강렬한 레드', 토:'따뜻한 옐로우', 금:'시크한 그레이', 수:'차분한 블루' };
+    const SAJU_ELEM_NUMBER = { 목:'3 · 8', 화:'2 · 7', 토:'5 · 10', 금:'4 · 9', 수:'1 · 6' };
+    const SAJU_GENERATES = { 목:'화', 화:'토', 토:'금', 금:'수', 수:'목' };
+    const SAJU_CONTROLS  = { 목:'토', 토:'수', 수:'화', 화:'금', 금:'목' };
+    const SAJU_DM_DESC = {
+        목: '뻗어나가려는 힘이 강하고, 새로운 걸 시작하는 데 겁이 없는 타입이에요.',
+        화: '따뜻하고 표현이 풍부해서, 주변 분위기를 밝게 만드는 타입이에요.',
+        토: '묵직하고 신뢰가 가는, 꾸준히 쌓아가는 힘이 있는 타입이에요.',
+        금: '결단력 있고 원칙이 뚜렷한, 맺고 끊음이 분명한 타입이에요.',
+        수: '유연하고 사려 깊은, 상황 파악이 빠른 지혜로운 타입이에요.'
+    };
+    // 관계(십성 단순화)별 오늘의 무드 · 지수 · 카피 - 옛스러운 명리학 용어 대신 현대적인 톤으로
+    const SAJU_FORTUNE = {
+        비겁: { mood: '직진 모드 🚀', score: 68,
+            total: '오늘은 내 목소리에 힘이 실리는 날이에요. 하고 싶은 대로 밀어붙여도 좋지만, 가끔은 브레이크도 필요해요.',
+            money: '충동구매 주의보! 장바구니에 담기 전에 하루만 묵혀두면 돈이 굳어요.',
+            love: '고집부리다 삐끗하기 쉬운 날이에요. 먼저 웃어주는 쪽이 오늘의 승자예요.' },
+        식상: { mood: '텐션 업 ✨', score: 82,
+            total: '말도 잘 통하고 아이디어도 술술 풀리는 날이에요. 미뤄뒀던 이야기, 오늘 꺼내보세요.',
+            money: '기분 좋은 소비가 이어질 수 있어요. 나를 위한 작은 선물 정도는 괜찮아요.',
+            love: '마음이 술술 잘 전해지는 날이에요. 문자 한 통이 관계를 확 풀어줄 수도 있어요.' },
+        재성: { mood: '대박 예감 💰', score: 90,
+            total: '미뤄뒀던 일을 마무리 짓기 딱 좋은 날이에요. 결과가 눈에 보이기 시작해요.',
+            money: '오늘의 주인공은 재물운이에요! 반가운 소식이나 뜻밖의 수입이 있을 수 있어요.',
+            love: '마음 한 번 더 써주면 관계가 확 깊어지는 날이에요.' },
+        관성: { mood: '숨 고르기 🧘', score: 58,
+            total: '오늘은 페이스 조절이 관건이에요. 정해진 루틴대로만 움직이면 무탈하게 지나가요.',
+            money: '지갑은 오늘 하루 잠가두세요. 계획에 없던 큰 결제는 다음으로 미뤄도 좋아요.',
+            love: '말 한마디, 표정 하나가 크게 느껴지는 날이에요. 평소보다 한 톤 부드럽게.' },
+        인성: { mood: '차분함 🌿', score: 75,
+            total: '배우고 정리하기 좋은 하루예요. 새로운 걸 익히기에 딱인 컨디션이에요.',
+            money: '무리하지 않고 지키는 게 이득인 날이에요. 저축이나 가계부 정리 추천!',
+            love: '편안하고 익숙한 만남이 좋은 날이에요. 오래된 인연에게 연락 한 번 해보세요.' }
+    };
+    let sajuBirthInfo = JSON.parse(localStorage.getItem('smartDiarySajuBirth') || 'null'); // { date, time|null }
+    let sajuPillars = null;   // { year:{gan,zhi}, month:{...}, day:{...}, hour:{...}|null }
+    let sajuDayMasterElem = null;
     let photoCache = {}; // 📷 IndexedDB에서 불러온 사진(base64)을 담아두는 메모리 캐시: { photoKey: dataUrl }
     let currentMemoFontSize = parseInt(localStorage.getItem('smartDiaryMemoFontSize')) || 16;
     
@@ -2545,6 +2711,8 @@
     const diaryPanel = document.getElementById('diary-panel');
     const moneyPanel = document.getElementById('money-panel');
     const settingsModalOverlay = document.getElementById('settings-modal-overlay');
+    const fortunePopupOverlay = document.getElementById('fortune-popup-overlay');
+    const sajuDetailModalOverlay = document.getElementById('saju-detail-modal-overlay');
     const tabDiaryBtn = document.getElementById('tab-diary-btn');
     const tabMoneyBtn = document.getElementById('tab-money-btn');
     const tabSettingsBtn = document.getElementById('tab-settings-btn');
@@ -4066,6 +4234,7 @@
     // ===================== ⚙️ 설정 팝업 폼 =====================
     function openSettingsModal() {
         renderCategorySettingsList();
+        populateSajuSettingsFields();
         if (settingsModalOverlay) settingsModalOverlay.classList.add('active');
         lockBodyScroll();
     }
@@ -4079,6 +4248,283 @@
         if (event.target === settingsModalOverlay) {
             closeSettingsModal();
         }
+    }
+
+    // ===================== 🔮 오늘의 운세 (사주팔자) 로직 =====================
+
+    function sajuGetLib() {
+        return window.solarLunar.default || window.solarLunar;
+    }
+
+    function sajuElementOfGan(ch) { return SAJU_ELEM_GAN[ch]; }
+    function sajuElementOfZhi(ch) { return SAJU_ELEM_ZHI[ch]; }
+
+    // 일간(day) 오행 기준으로 today 오행과의 관계(십성 단순화)를 반환
+    function sajuRelationOf(day, today) {
+        if (today === day) return '비겁';
+        if (SAJU_GENERATES[day] === today) return '식상';
+        if (SAJU_CONTROLS[day] === today) return '재성';
+        if (SAJU_CONTROLS[today] === day) return '관성';
+        if (SAJU_GENERATES[today] === day) return '인성';
+        return '비겁';
+    }
+
+    function sajuComputePillars(info) {
+        const [y, m, d] = info.date.split('-').map(Number);
+        const lib = sajuGetLib();
+        const lunar = lib.solar2lunar(y, m, d);
+        const yearGz = lunar.gzYear, monthGz = lunar.gzMonth, dayGz = lunar.gzDay;
+
+        let hourGz = null;
+        if (info.time) {
+            const hour = parseInt(info.time.split(':')[0], 10);
+            const dayGanIndex = lib.gan.indexOf(dayGz[0]);
+            hourGz = lib.getShiChen(hour, dayGanIndex);
+        }
+        return {
+            year:  { gan: yearGz[0],  zhi: yearGz[1] },
+            month: { gan: monthGz[0], zhi: monthGz[1] },
+            day:   { gan: dayGz[0],   zhi: dayGz[1] },
+            hour:  hourGz ? { gan: hourGz[0], zhi: hourGz[1] } : null
+        };
+    }
+
+    function sajuComputeElemCounts(pillars) {
+        const counts = { 목:0, 화:0, 토:0, 금:0, 수:0 };
+        const list = [pillars.year, pillars.month, pillars.day];
+        if (pillars.hour) list.push(pillars.hour);
+        list.forEach(p => {
+            counts[sajuElementOfGan(p.gan)]++;
+            counts[sajuElementOfZhi(p.zhi)]++;
+        });
+        return counts;
+    }
+
+    // localStorage에 저장된 생년월일시로부터 사주 계산을 다시 세팅 (앱 시작 시 1회 호출)
+    function sajuRecomputeFromBirthInfo() {
+        if (!sajuBirthInfo || !sajuBirthInfo.date) {
+            sajuPillars = null;
+            sajuDayMasterElem = null;
+            return;
+        }
+        try {
+            sajuPillars = sajuComputePillars(sajuBirthInfo);
+            sajuDayMasterElem = sajuElementOfGan(sajuPillars.day.gan);
+        } catch (e) {
+            console.error('사주 계산 실패:', e);
+            sajuPillars = null;
+            sajuDayMasterElem = null;
+        }
+    }
+
+    // 설정 모달을 열 때 저장된 생년월일시를 입력창에 미리 채워줌
+    function populateSajuSettingsFields() {
+        const dateInput = document.getElementById('saju-birth-date');
+        const timeInput = document.getElementById('saju-birth-time');
+        const unknownChk = document.getElementById('saju-time-unknown');
+        const savedInfoEl = document.getElementById('saju-saved-info');
+        if (!dateInput) return;
+
+        if (sajuBirthInfo && sajuBirthInfo.date) {
+            dateInput.value = sajuBirthInfo.date;
+            if (sajuBirthInfo.time) {
+                unknownChk.checked = false;
+                timeInput.disabled = false;
+                timeInput.value = sajuBirthInfo.time;
+            } else {
+                unknownChk.checked = true;
+                timeInput.disabled = true;
+                timeInput.value = '';
+            }
+            savedInfoEl.textContent = `저장됨: ${sajuBirthInfo.date}${sajuBirthInfo.time ? ' ' + sajuBirthInfo.time : ' (시간 모름)'}`;
+        } else {
+            savedInfoEl.textContent = '아직 설정되지 않았어요. 입력하면 매일 오늘의 운세를 볼 수 있어요.';
+        }
+    }
+
+    function onSajuTimeUnknownToggle() {
+        const unknown = document.getElementById('saju-time-unknown').checked;
+        document.getElementById('saju-birth-time').disabled = unknown;
+    }
+
+    function saveSajuBirthInfo() {
+        const dateVal = document.getElementById('saju-birth-date').value;
+        if (!dateVal) { alert('태어난 날짜를 입력해주세요.'); return; }
+        const timeUnknown = document.getElementById('saju-time-unknown').checked;
+        const timeVal = timeUnknown ? null : (document.getElementById('saju-birth-time').value || null);
+
+        sajuBirthInfo = { date: dateVal, time: timeVal };
+        localStorage.setItem('smartDiarySajuBirth', JSON.stringify(sajuBirthInfo));
+        sajuRecomputeFromBirthInfo();
+        populateSajuSettingsFields();
+        updateFortuneTeaser();
+
+        closeSettingsModal();
+        openFortunePopup();
+    }
+
+    // 상단 티저 배너 텍스트를 현재 상태에 맞게 갱신
+    function updateFortuneTeaser() {
+        const textEl = document.getElementById('fortune-teaser-text');
+        const subEl = document.getElementById('fortune-teaser-sub');
+        if (!textEl) return;
+        if (sajuBirthInfo && sajuBirthInfo.date) {
+            textEl.textContent = '오늘의 운세 보기';
+            subEl.textContent = '오늘 하루, 나에게 맞는 기운 확인하기';
+        } else {
+            textEl.textContent = '오늘의 운세 시작하기';
+            subEl.textContent = '생년월일 입력하고 매일 아침 운세 받아보기';
+        }
+    }
+
+    // 오늘 날짜의 干支(일진) 및 오행을 계산
+    function sajuGetTodayInfo() {
+        const lib = sajuGetLib();
+        const today = new Date();
+        const lunar = lib.solar2lunar(today.getFullYear(), today.getMonth() + 1, today.getDate());
+        const todayGz = lunar.gzDay;
+        return { gz: todayGz, elem: sajuElementOfGan(todayGz[0]), dateObj: today };
+    }
+
+    function openFortunePopup() {
+        const bodyEl = document.getElementById('fortune-popup-body');
+        if (!bodyEl) return;
+
+        if (!sajuBirthInfo || !sajuBirthInfo.date || !sajuDayMasterElem) {
+            // 아직 생년월일이 없는 경우: 설정 유도 화면
+            bodyEl.innerHTML = `
+                <div class="fp-eyebrow">오늘 하루 브리핑</div>
+                <div class="fp-mood">🔮 오늘의 운세, 아직이에요</div>
+                <div class="fp-setup-msg">생년월일을 한 번만 입력해두면<br>매일 다른, 나만의 오늘의 운세를 볼 수 있어요.</div>
+                <button class="fp-cta" onclick="closeFortunePopup(); openSettingsModal();">생년월일 입력하러 가기</button>
+            `;
+            fortunePopupOverlay.classList.add('active');
+            lockBodyScroll();
+            return;
+        }
+
+        const todayInfo = sajuGetTodayInfo();
+        const relation = sajuRelationOf(sajuDayMasterElem, todayInfo.elem);
+        const f = SAJU_FORTUNE[relation];
+        const weekday = ['일','월','화','수','목','금','토'][todayInfo.dateObj.getDay()];
+        const dateLabel = `${todayInfo.dateObj.getMonth()+1}월 ${todayInfo.dateObj.getDate()}일 (${weekday})`;
+
+        bodyEl.innerHTML = `
+            <div class="fp-eyebrow">오늘 하루 브리핑</div>
+            <div class="fp-date">${dateLabel}</div>
+            <div class="fp-mood">${f.mood}</div>
+            <div class="fp-score-wrap">
+                <div class="fp-score">${f.score}</div>
+                <div class="fp-score-label">오늘의 기운 지수</div>
+            </div>
+            <div class="fp-cards">
+                <div class="fp-card"><div class="fpc-label">✅ 총운</div><div class="fpc-text">${f.total}</div></div>
+                <div class="fp-card"><div class="fpc-label">💰 재물운</div><div class="fpc-text">${f.money}</div></div>
+                <div class="fp-card"><div class="fpc-label">💗 애정운</div><div class="fpc-text">${f.love}</div></div>
+            </div>
+            <div class="fp-lucky-row">
+                <div class="fp-lucky-box">
+                    <div class="fp-lk-label">행운의 컬러</div>
+                    <div class="fp-swatch" style="background:${SAJU_ELEM_COLOR[todayInfo.elem]}"></div>
+                    <div>${SAJU_ELEM_COLOR_NAME[todayInfo.elem]}</div>
+                </div>
+                <div class="fp-lucky-box">
+                    <div class="fp-lk-label">행운의 숫자</div>
+                    <div class="fp-number">${SAJU_ELEM_NUMBER[todayInfo.elem]}</div>
+                </div>
+            </div>
+            <button class="fp-cta" onclick="closeFortunePopup()">오늘 하루도 힘내볼게요</button>
+            <div class="fp-my-saju-link" onclick="closeFortunePopup(); openSajuDetailModal();">내 사주 자세히 보기 →</div>
+        `;
+
+        fortunePopupOverlay.classList.add('active');
+        lockBodyScroll();
+
+        // 오늘 하루 한 번 더 자동으로 뜨지 않도록 표시 기록
+        localStorage.setItem('smartDiarySajuLastShown', getTodayStr());
+    }
+
+    function closeFortunePopup() {
+        if (fortunePopupOverlay) fortunePopupOverlay.classList.remove('active');
+        unlockBodyScroll();
+    }
+
+    function handleFortunePopupBackgroundClick(event) {
+        if (event.target === fortunePopupOverlay) closeFortunePopup();
+    }
+
+    // 앱을 하루 중 처음 열었을 때만 자동으로 팝업을 띄움 (생년월일이 설정된 경우에만)
+    function maybeAutoShowFortunePopup() {
+        if (!sajuBirthInfo || !sajuBirthInfo.date || !sajuDayMasterElem) return;
+        const lastShown = localStorage.getItem('smartDiarySajuLastShown');
+        if (lastShown === getTodayStr()) return; // 오늘 이미 봤음
+        openFortunePopup();
+    }
+
+    // ----- 내 사주 상세 모달 -----
+    function openSajuDetailModal() {
+        if (!sajuBirthInfo || !sajuBirthInfo.date || !sajuPillars) {
+            openFortunePopup(); // 생년월일 없으면 설정 유도 화면으로
+            return;
+        }
+        const pillarsGrid = document.getElementById('sd-pillars');
+        pillarsGrid.innerHTML = '';
+        const order = [ { key:'year', label:'년주' }, { key:'month', label:'월주' }, { key:'day', label:'일주' }, { key:'hour', label:'시주' } ];
+        order.forEach(o => {
+            const p = sajuPillars[o.key];
+            const div = document.createElement('div');
+            if (!p) {
+                div.className = 'sd-pillar na';
+                div.innerHTML = `<div class="sdp-label">${o.label}</div><div class="sdp-char">-</div><div class="sdp-char">-</div>`;
+            } else {
+                const ge = sajuElementOfGan(p.gan), ze = sajuElementOfZhi(p.zhi);
+                div.className = 'sd-pillar';
+                div.innerHTML = `
+                    <div class="sdp-label">${o.label}</div>
+                    <div class="sdp-char" style="background:${SAJU_ELEM_COLOR[ge]}22; color:${SAJU_ELEM_COLOR[ge]}">${p.gan}</div>
+                    <div class="sdp-char" style="background:${SAJU_ELEM_COLOR[ze]}22; color:${SAJU_ELEM_COLOR[ze]}">${p.zhi}</div>
+                `;
+            }
+            pillarsGrid.appendChild(div);
+        });
+        if (!sajuPillars.hour) {
+            const note = document.createElement('div');
+            note.style.cssText = 'grid-column:1/-1; font-size:10.5px; color:#B0A692; text-align:center; margin-top:-4px;';
+            note.textContent = '시주는 태어난 시각을 몰라 표시하지 않았어요';
+            pillarsGrid.appendChild(note);
+        }
+
+        document.getElementById('sd-dm-char').textContent = sajuPillars.day.gan;
+        document.getElementById('sd-dm-char').style.background = SAJU_ELEM_COLOR[sajuDayMasterElem] + '33';
+        document.getElementById('sd-dm-char').style.color = SAJU_ELEM_COLOR[sajuDayMasterElem];
+        document.getElementById('sd-dm-desc').textContent = `나의 일간은 ${sajuDayMasterElem} 기운이에요. ${SAJU_DM_DESC[sajuDayMasterElem]}`;
+
+        const counts = sajuComputeElemCounts(sajuPillars);
+        const maxCount = Math.max(1, ...Object.values(counts));
+        const barsEl = document.getElementById('sd-bars');
+        barsEl.innerHTML = '';
+        ['목','화','토','금','수'].forEach(e => {
+            const row = document.createElement('div');
+            row.className = 'sd-bar-row';
+            row.innerHTML = `
+                <div class="sdb-name">${e}</div>
+                <div class="sd-bar-track"><div class="sd-bar-fill" style="width:${(counts[e]/maxCount*100)||0}%; background:${SAJU_ELEM_COLOR[e]}"></div></div>
+                <div class="sdb-count">${counts[e]}</div>
+            `;
+            barsEl.appendChild(row);
+        });
+
+        sajuDetailModalOverlay.classList.add('active');
+        lockBodyScroll();
+    }
+
+    function closeSajuDetailModal() {
+        if (sajuDetailModalOverlay) sajuDetailModalOverlay.classList.remove('active');
+        unlockBodyScroll();
+    }
+
+    function handleSajuDetailModalBackgroundClick(event) {
+        if (event.target === sajuDetailModalOverlay) closeSajuDetailModal();
     }
 
     function adjustFontSize(delta) {
@@ -4988,6 +5434,11 @@
 
         switchMainTab('diary');
         addCardStatementRow();
+
+        // 🔮 오늘의 운세: 저장된 생년월일시로 사주 계산 후, 오늘 처음 켠 경우에만 자동으로 팝업
+        sajuRecomputeFromBirthInfo();
+        updateFortuneTeaser();
+        maybeAutoShowFortunePopup();
     };
 
     let csRowSeq = 0;
