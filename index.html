@@ -773,7 +773,7 @@
             box-shadow: 0 20px 50px rgba(0,0,0,0.45);
             position: relative;
             animation: fadeIn 0.25s ease;
-            touch-action: pan-y;
+            touch-action: pan-y pinch-zoom;
         }
         .fortune-popup-close {
             position: absolute; top: 14px; right: 14px; background: rgba(255,255,255,0.1);
@@ -900,6 +900,12 @@
             display: flex;
             /* 배경(어두운 영역)에서는 어떤 제스처도 브라우저 기본 동작(당겨서 새로고침 등)으로 이어지지 않도록 차단 */
             touch-action: none;
+        }
+
+        /* 오늘의 운세 / 로또추첨기 팝업은 손가락으로 확대(핀치줌)할 수 있게 예외 허용 */
+        #fortune-popup-overlay.active,
+        #lotto-draw-modal-overlay.active {
+            touch-action: pan-y pinch-zoom;
         }
 
         /* 팝업 폼 내부는 세로 스크롤만 브라우저 기본 동작으로 허용하고,
