@@ -880,6 +880,11 @@
         .sd-bar-track { flex: 1; height: 7px; border-radius: 4px; background: rgba(0,0,0,0.06); overflow: hidden; }
         .sd-bar-fill { height: 100%; border-radius: 4px; }
         .sd-bar-row .sdb-count { width: 16px; text-align: right; font-size: 13.5px; color: #8A8071; }
+        .sd-life-card { border-radius: 14px; padding: 14px 15px; margin-bottom: 10px; }
+        .sd-life-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+        .sd-life-badge { font-size: 12px; font-weight: 800; padding: 3px 10px; border-radius: 999px; }
+        .sd-life-age { font-size: 11.5px; color: #A99D89; }
+        .sd-life-text { font-size: 14.5px; line-height: 1.65; color: #5B5346; }
 
         /* 팝업 모달 스타일 */
         .modal-overlay {
@@ -1725,18 +1730,17 @@
     </div>
 </div>
 
-<!-- 🈺 내 사주 상세 모달 -->
+<!-- 📜 나의 사주 풀이 모달 -->
 <div class="modal-overlay" id="saju-detail-modal-overlay" onclick="handleSajuDetailModalBackgroundClick(event)">
     <div class="saju-detail-card" id="saju-detail-card" onclick="event.stopPropagation()">
         <button class="close-form-btn" style="position:absolute; top:14px; right:14px;" onclick="closeSajuDetailModal()">✖</button>
-        <div class="sd-title">🈺 내 사주 명식</div>
+        <div class="sd-title">📜 나의 사주 풀이</div>
         <div class="sd-pillars" id="sd-pillars"></div>
         <div class="sd-dm-box">
             <div class="sd-dm-char" id="sd-dm-char">-</div>
             <div class="sd-dm-desc" id="sd-dm-desc">-</div>
         </div>
-        <div style="font-size:12px; color:#8A8071; margin-bottom:8px; font-weight:700;">오행 분포</div>
-        <div id="sd-bars"></div>
+        <div id="sd-life-stages"></div>
     </div>
 </div>
 
@@ -2705,6 +2709,31 @@
         '卯': { name: '토끼', emoji: '🐰' }, '辰': { name: '용', emoji: '🐲' }, '巳': { name: '뱀', emoji: '🐍' },
         '午': { name: '말', emoji: '🐴' }, '未': { name: '양', emoji: '🐑' }, '申': { name: '원숭이', emoji: '🐵' },
         '酉': { name: '닭', emoji: '🐔' }, '戌': { name: '개', emoji: '🐶' }, '亥': { name: '돼지', emoji: '🐷' }
+    };
+
+    // 초년운(년주) / 중년운(일주) / 말년운(시주 또는 월주 대체) - 오행별 인생 서사 풀이
+    const SAJU_LIFE_STAGE = {
+        초년: {
+            목: '어릴 때부터 호기심이 많고 배우는 속도가 빨랐을 거예요. 나무처럼 쭉쭉 뻗어나가는 기운이라, 다양한 경험을 하며 시야를 넓혀간 시기였어요.',
+            화: '어릴 때부터 에너지가 넘치고 표현력이 좋아서 주변에서 눈에 띄는 아이였을 거예요. 하고 싶은 게 많고 시작도 빨랐던 시기예요.',
+            토: '어릴 때부터 차분하고 믿음직한 성격으로 어른들의 예쁨을 많이 받았을 거예요. 큰 굴곡 없이 안정적으로 뿌리를 내린 시기였어요.',
+            금: '어릴 때부터 야무지고 자기 할 일은 스스로 해내는 편이었을 거예요. 옳고 그름에 대한 기준이 또렷해서 어른스럽다는 말을 자주 들었던 시기예요.',
+            수: '어릴 때부터 생각이 깊고 감수성이 풍부해서, 또래보다 조숙하다는 이야기를 들었을 거예요. 조용히 관찰하며 내공을 쌓은 시기였어요.'
+        },
+        중년: {
+            목: '지금은 새로운 도전을 밀어붙이는 힘이 강한 시기예요. 하고 싶은 일이 있으면 일단 시작하고 보는 추진력이 주변에도 좋은 자극이 돼요.',
+            화: '지금은 사람들과 어울리며 에너지를 나누는 게 잘 맞는 시기예요. 열정적으로 몰입한 만큼 성과도 눈에 보이게 따라오고 있어요.',
+            토: '지금은 주변에서 믿고 의지하는 든든한 존재로 자리잡은 시기예요. 화려하지 않아도 꾸준함으로 쌓아온 것들이 단단하게 자리를 잡고 있어요.',
+            금: '지금은 그동안 다져온 실력으로 확실한 성과를 만들어내는 시기예요. 맺고 끊는 게 분명해서 중요한 순간에 좋은 결정을 내리는 힘이 있어요.',
+            수: '지금은 쌓아온 경험을 바탕으로 유연하게 상황에 대처하는 시기예요. 서두르지 않아도 물 흐르듯 자연스럽게 풀려가는 흐름이에요.'
+        },
+        말년: {
+            목: '나이가 들어서도 새로운 것에 대한 호기심을 잃지 않는 시기예요. 늦게 시작한 취미나 배움이 뜻밖의 즐거움을 가져다줄 수 있어요.',
+            화: '말년에도 주변 사람들에게 온기를 나눠주는 밝은 존재로 지내는 시기예요. 가족, 지인들과의 관계에서 즐거움을 많이 느끼는 때예요.',
+            토: '그동안 쌓아온 신뢰 덕분에 주변에서 존경받고 편안하게 지내는 시기예요. 조급함 없이 여유롭게 하루하루를 누리는 때예요.',
+            금: '평생 다져온 원칙과 실력이 품격으로 드러나는 시기예요. 그동안의 노력이 결실을 맺어 여유롭게 그 열매를 즐길 수 있어요.',
+            수: '삶의 지혜가 깊어지고 마음이 평온해지는 시기예요. 조용히 자신만의 시간을 즐기며 진짜 원하는 것에 집중할 수 있는 때예요.'
+        }
     };
     const SAJU_ELEM_COLOR = { 목:'#4C9A73', 화:'#E0685C', 토:'#E3B24A', 금:'#9CA3AF', 수:'#5B7FD1' };
     const SAJU_ELEM_COLOR_NAME = { 목:'싱그러운 그린', 화:'강렬한 레드', 토:'따뜻한 옐로우', 금:'시크한 그레이', 수:'차분한 블루' };
@@ -4692,20 +4721,25 @@
         document.getElementById('sd-dm-char').style.color = SAJU_ELEM_COLOR[sajuDayMasterElem];
         document.getElementById('sd-dm-desc').textContent = `나의 일간은 ${sajuDayMasterElem} 기운이에요. ${SAJU_DM_DESC[sajuDayMasterElem]}`;
 
-        const counts = sajuComputeElemCounts(sajuPillars);
-        const maxCount = Math.max(1, ...Object.values(counts));
-        const barsEl = document.getElementById('sd-bars');
-        barsEl.innerHTML = '';
-        ['목','화','토','금','수'].forEach(e => {
-            const row = document.createElement('div');
-            row.className = 'sd-bar-row';
-            row.innerHTML = `
-                <div class="sdb-name">${e}</div>
-                <div class="sd-bar-track"><div class="sd-bar-fill" style="width:${(counts[e]/maxCount*100)||0}%; background:${SAJU_ELEM_COLOR[e]}"></div></div>
-                <div class="sdb-count">${counts[e]}</div>
-            `;
-            barsEl.appendChild(row);
-        });
+        // 초년운(년주) / 중년운(일주=나의 일간) / 말년운(시주, 없으면 월주로 대체)
+        const earlyElem = sajuElementOfGan(sajuPillars.year.gan);
+        const midElem = sajuDayMasterElem;
+        const lateElem = sajuPillars.hour ? sajuElementOfGan(sajuPillars.hour.gan) : sajuElementOfGan(sajuPillars.month.gan);
+        const stages = [
+            { key: '초년', label: '🌱 초년운', age: '유년~20대', elem: earlyElem },
+            { key: '중년', label: '🔥 중년운', age: '30~50대', elem: midElem },
+            { key: '말년', label: '🌾 말년운', age: '60대 이후', elem: lateElem, approx: !sajuPillars.hour }
+        ];
+        const lifeStagesEl = document.getElementById('sd-life-stages');
+        lifeStagesEl.innerHTML = stages.map(s => `
+            <div class="sd-life-card" style="background:${SAJU_ELEM_COLOR[s.elem]}14;">
+                <div class="sd-life-head">
+                    <div class="sd-life-badge" style="background:${SAJU_ELEM_COLOR[s.elem]}33; color:${SAJU_ELEM_COLOR[s.elem]}">${s.label}</div>
+                    <div class="sd-life-age">${s.age}</div>
+                </div>
+                <div class="sd-life-text">${SAJU_LIFE_STAGE[s.key][s.elem]}${s.approx ? ' <span style="opacity:0.55;">(시주 정보가 없어 대략적으로 풀이했어요)</span>' : ''}</div>
+            </div>
+        `).join('');
 
         sajuDetailModalOverlay.classList.add('active');
         lockBodyScroll();
