@@ -815,7 +815,8 @@
         .fp-lk-label { font-size: 12px; color: rgba(242,239,255,0.5); margin-bottom: 6px; letter-spacing: 0.04em; }
         .fp-swatch { width: 20px; height: 20px; border-radius: 50%; margin: 0 auto 5px; border: 1px solid rgba(255,255,255,0.25); }
         .fp-number { font-size: 17px; font-weight: 700; margin-top: 4px; white-space: nowrap; }
-        .fp-lotto-card { margin-top: 12px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 13px 14px; text-align: center; }
+        .fp-lotto-card { margin-top: 12px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 13px 14px; text-align: center; cursor: pointer; transition: background 0.15s, transform 0.1s; }
+        .fp-lotto-card:active { background: rgba(255,255,255,0.1); transform: scale(0.99); }
         .fp-lotto-title { font-size: 13.5px; font-weight: 700; color: #F2EFFF; margin-bottom: 10px; }
         .lotto-balls-row { display: flex; align-items: center; justify-content: center; gap: 5px; flex-wrap: wrap; }
         .lotto-ball { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; color: #2A2340; box-shadow: 0 2px 4px rgba(0,0,0,0.25) inset, 0 2px 3px rgba(0,0,0,0.3); flex-shrink: 0; }
@@ -4613,11 +4614,11 @@
                     <div class="fp-number">⏰ ${SAJU_ELEM_TIME[todayInfo.elem]}</div>
                 </div>
             </div>
-            <div class="fp-lotto-card">
+            <div class="fp-lotto-card" onclick="closeFortunePopup(); openLottoDrawModal();">
                 <div class="fp-lotto-title">🎱 오늘의 행운 로또번호</div>
                 <div class="lotto-balls-row">${lottoBallsHTML}</div>
                 <div class="fp-lotto-note">당신의 행운 번호로 만들었어요</div>
-                <div class="fp-lotto-link" onclick="closeFortunePopup(); openLottoDrawModal();">🎲 이 번호로 직접 뽑아보기 →</div>
+                <div class="fp-lotto-link">🎲 이 번호로 직접 뽑아보기 →</div>
             </div>
             <button class="fp-cta" onclick="closeFortunePopup()">오늘 하루도 힘내볼게요</button>
             <div class="fp-my-saju-link" onclick="closeFortunePopup(); openSajuDetailModal();">내 사주 자세히 보기 →</div>
@@ -4758,7 +4759,8 @@
 
     function closeLottoDrawModal() {
         if (lottoDrawModalOverlay) lottoDrawModalOverlay.classList.remove('active');
-        unlockBodyScroll();
+        // X를 눌러도 완전히 나가지 않고, 한 단계 뒤인 '오늘의 운세' 팝업으로 되돌아감
+        openFortunePopup();
     }
 
     function handleLottoDrawModalBackgroundClick(event) {
