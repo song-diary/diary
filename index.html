@@ -781,6 +781,13 @@
             font-size: 14px; cursor: pointer;
         }
         .fp-hero { text-align: center; }
+        .fp-hero-top { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
+        .fp-zodiac-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: 12.5px; font-weight: 700; color: rgba(242,239,255,0.8);
+            background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
+            padding: 5px 11px; border-radius: 999px;
+        }
         .fp-eyebrow {
             display: inline-flex; align-items: center; gap: 6px;
             font-size: 12.5px; font-weight: 800; letter-spacing: 0.05em;
@@ -803,11 +810,11 @@
         .fp-card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 12px 14px; }
         .fp-card .fpc-label { font-size: 12.5px; font-weight: 700; color: #C7B8FF; margin-bottom: 4px; }
         .fp-card .fpc-text { font-size: 14.5px; line-height: 1.6; color: rgba(242,239,255,0.88); }
-        .fp-lucky-row { display: flex; gap: 8px; margin-top: 12px; }
-        .fp-lucky-box { flex: 1; background: rgba(255,255,255,0.05); border-radius: 14px; padding: 10px; text-align: center; }
+        .fp-lucky-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 12px; }
+        .fp-lucky-box { background: rgba(255,255,255,0.05); border-radius: 14px; padding: 10px; text-align: center; }
         .fp-lk-label { font-size: 12px; color: rgba(242,239,255,0.5); margin-bottom: 6px; letter-spacing: 0.04em; }
         .fp-swatch { width: 20px; height: 20px; border-radius: 50%; margin: 0 auto 5px; border: 1px solid rgba(255,255,255,0.25); }
-        .fp-number { font-size: 18px; font-weight: 700; margin-top: 4px; }
+        .fp-number { font-size: 17px; font-weight: 700; margin-top: 4px; white-space: nowrap; }
         .fp-lotto-card { margin-top: 12px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 13px 14px; text-align: center; }
         .fp-lotto-title { font-size: 13.5px; font-weight: 700; color: #F2EFFF; margin-bottom: 10px; }
         .lotto-balls-row { display: flex; align-items: center; justify-content: center; gap: 5px; flex-wrap: wrap; }
@@ -2619,9 +2626,17 @@
     // ===================== 🔮 오늘의 운세 (사주팔자 기반) =====================
     const SAJU_ELEM_GAN = {'甲':'목','乙':'목','丙':'화','丁':'화','戊':'토','己':'토','庚':'금','辛':'금','壬':'수','癸':'수'};
     const SAJU_ELEM_ZHI = {'寅':'목','卯':'목','巳':'화','午':'화','辰':'토','戌':'토','丑':'토','未':'토','申':'금','酉':'금','亥':'수','子':'수'};
+    const SAJU_ZODIAC_ANIMAL = {
+        '子': { name: '쥐', emoji: '🐭' }, '丑': { name: '소', emoji: '🐮' }, '寅': { name: '호랑이', emoji: '🐯' },
+        '卯': { name: '토끼', emoji: '🐰' }, '辰': { name: '용', emoji: '🐲' }, '巳': { name: '뱀', emoji: '🐍' },
+        '午': { name: '말', emoji: '🐴' }, '未': { name: '양', emoji: '🐑' }, '申': { name: '원숭이', emoji: '🐵' },
+        '酉': { name: '닭', emoji: '🐔' }, '戌': { name: '개', emoji: '🐶' }, '亥': { name: '돼지', emoji: '🐷' }
+    };
     const SAJU_ELEM_COLOR = { 목:'#4C9A73', 화:'#E0685C', 토:'#E3B24A', 금:'#9CA3AF', 수:'#5B7FD1' };
     const SAJU_ELEM_COLOR_NAME = { 목:'싱그러운 그린', 화:'강렬한 레드', 토:'따뜻한 옐로우', 금:'시크한 그레이', 수:'차분한 블루' };
     const SAJU_ELEM_NUMBER = { 목:'3 · 8', 화:'2 · 7', 토:'5 · 10', 금:'4 · 9', 수:'1 · 6' };
+    const SAJU_ELEM_DIRECTION = { 목:'동쪽', 화:'남쪽', 토:'중앙', 금:'서쪽', 수:'북쪽' };
+    const SAJU_ELEM_TIME = { 목:'05~07시', 화:'11~13시', 토:'13~15시', 금:'15~17시', 수:'21~23시' };
     const SAJU_GENERATES = { 목:'화', 화:'토', 토:'금', 금:'수', 수:'목' };
     const SAJU_CONTROLS  = { 목:'토', 토:'수', 수:'화', 화:'금', 금:'목' };
 
@@ -4470,16 +4485,23 @@
         const weekday = ['일','월','화','수','목','금','토'][todayInfo.dateObj.getDay()];
         const dateLabel = `${todayInfo.dateObj.getMonth()+1}월 ${todayInfo.dateObj.getDate()}일 (${weekday})`;
 
-        // 오늘의 행운 숫자를 씨앗 삼아 로또번호 생성 (하루 동안은 고정, 다음날 자동으로 바뀜)
+        // 년지로 12지신 띠 계산
+        const yearZhi = sajuPillars && sajuPillars.year ? sajuPillars.year.zhi : null;
+        const zodiac = yearZhi ? SAJU_ZODIAC_ANIMAL[yearZhi] : null;
+        const zodiacBadgeHTML = zodiac ? `<div class="fp-zodiac-badge">${zodiac.emoji} ${zodiac.name}띠</div>` : '';
+
+        // 오늘의 행운 숫자를 씨앗 삼아 로또번호 생성 (하루 동안은 고정, 다음날 자동으로 바뀜) - 보너스 없이 6개만
         const elemNums = String(SAJU_ELEM_NUMBER[todayInfo.elem]).split('·').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
         const lottoSeed = `${getTodayStr()}_${todayInfo.gz}_${sajuBirthInfo.date}_${sajuDayMasterElem}`;
         const lotto = sajuGenerateLottoNumbers(lottoSeed, elemNums);
         const lottoBallsHTML = lotto.main.map(n => `<div class="lotto-ball" style="background:${sajuLottoBallColor(n)}">${n}</div>`).join('');
-        const lottoBonusHTML = `<div class="lotto-plus">+</div><div class="lotto-ball lotto-ball-bonus" style="background:${sajuLottoBallColor(lotto.bonus)}">${lotto.bonus}</div>`;
 
         bodyEl.innerHTML = `
             <div class="fp-hero">
-                <div class="fp-eyebrow">🔮 오늘 하루 브리핑</div>
+                <div class="fp-hero-top">
+                    <div class="fp-eyebrow">🔮 오늘 하루 브리핑</div>
+                    ${zodiacBadgeHTML}
+                </div>
                 <div class="fp-date">${dateLabel}</div>
                 <div class="fp-hero-row">
                     <div class="fp-mood-block">
@@ -4508,11 +4530,19 @@
                     <div class="fp-lk-label">행운의 숫자</div>
                     <div class="fp-number">${SAJU_ELEM_NUMBER[todayInfo.elem]}</div>
                 </div>
+                <div class="fp-lucky-box">
+                    <div class="fp-lk-label">행운의 방향</div>
+                    <div class="fp-number">🧭 ${SAJU_ELEM_DIRECTION[todayInfo.elem]}</div>
+                </div>
+                <div class="fp-lucky-box">
+                    <div class="fp-lk-label">행운의 시간</div>
+                    <div class="fp-number">⏰ ${SAJU_ELEM_TIME[todayInfo.elem]}</div>
+                </div>
             </div>
             <div class="fp-lotto-card">
                 <div class="fp-lotto-title">🎱 오늘의 행운 로또번호</div>
-                <div class="lotto-balls-row">${lottoBallsHTML}${lottoBonusHTML}</div>
-                <div class="fp-lotto-note">오늘의 기운으로 뽑아본 번호예요. 재미로만 봐주세요 :)</div>
+                <div class="lotto-balls-row">${lottoBallsHTML}</div>
+                <div class="fp-lotto-note">당신의 행운 번호로 만들었어요</div>
             </div>
             <button class="fp-cta" onclick="closeFortunePopup()">오늘 하루도 힘내볼게요</button>
             <div class="fp-my-saju-link" onclick="closeFortunePopup(); openSajuDetailModal();">내 사주 자세히 보기 →</div>
