@@ -795,6 +795,13 @@
         .fp-lk-label { font-size: 12.5px; color: rgba(242,239,255,0.5); margin-bottom: 7px; letter-spacing: 0.04em; }
         .fp-swatch { width: 22px; height: 22px; border-radius: 50%; margin: 0 auto 6px; border: 1px solid rgba(255,255,255,0.25); }
         .fp-number { font-size: 20px; font-weight: 700; margin-top: 5px; }
+        .fp-lotto-card { margin-top: 14px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 15px 14px; text-align: center; }
+        .fp-lotto-title { font-size: 14.5px; font-weight: 700; color: #F2EFFF; margin-bottom: 12px; }
+        .lotto-balls-row { display: flex; align-items: center; justify-content: center; gap: 6px; flex-wrap: wrap; }
+        .lotto-ball { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14.5px; font-weight: 800; color: #2A2340; box-shadow: 0 2px 4px rgba(0,0,0,0.25) inset, 0 2px 3px rgba(0,0,0,0.3); flex-shrink: 0; }
+        .lotto-ball-bonus { opacity: 0.92; border: 2px dashed rgba(255,255,255,0.55); }
+        .lotto-plus { font-size: 16px; color: rgba(242,239,255,0.4); font-weight: 700; margin: 0 1px; }
+        .fp-lotto-note { font-size: 12px; color: rgba(242,239,255,0.5); margin-top: 10px; line-height: 1.5; }
         .fp-cta {
             width: 100%; margin-top: 20px; padding: 14px; border: none; border-radius: 12px;
             background: linear-gradient(120deg, #FFD98E, #FF9AC2); color: #23163A; font-weight: 800; font-size: 16.5px; cursor: pointer;
@@ -2603,6 +2610,42 @@
     const SAJU_ELEM_NUMBER = { 목:'3 · 8', 화:'2 · 7', 토:'5 · 10', 금:'4 · 9', 수:'1 · 6' };
     const SAJU_GENERATES = { 목:'화', 화:'토', 토:'금', 금:'수', 수:'목' };
     const SAJU_CONTROLS  = { 목:'토', 토:'수', 수:'화', 화:'금', 금:'목' };
+
+    // ----- 🎱 오늘의 행운 로또번호 (오늘의 오행 숫자를 씨앗으로 매일 다르게, 그날은 고정) -----
+    function sajuHashToInt(str) {
+        let h = 0;
+        for (let i = 0; i < str.length; i++) { h = (Math.imul(31, h) + str.charCodeAt(i)) | 0; }
+        return h;
+    }
+    function sajuSeededRng(seed) {
+        let a = seed | 0;
+        return function () {
+            a |= 0; a = (a + 0x6D2B79F5) | 0;
+            let t = Math.imul(a ^ (a >>> 15), 1 | a);
+            t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+    }
+    function sajuLottoBallColor(n) {
+        if (n <= 10) return '#FBC400';
+        if (n <= 20) return '#69C8F2';
+        if (n <= 30) return '#FF7272';
+        if (n <= 40) return '#AAAAAA';
+        return '#B0D840';
+    }
+    // seedStr: 오늘 날짜/일진/생년월일 등으로 구성된 문자열 → 하루 동안은 항상 같은 번호, 다음날은 자동으로 바뀜
+    function sajuGenerateLottoNumbers(seedStr, anchorNumbers) {
+        const rng = sajuSeededRng(sajuHashToInt(seedStr));
+        const picked = new Set();
+        (anchorNumbers || []).forEach(n => { if (n >= 1 && n <= 45) picked.add(n); });
+        let guard = 0;
+        while (picked.size < 6 && guard < 500) { picked.add(Math.floor(rng() * 45) + 1); guard++; }
+        const main = Array.from(picked).sort((a, b) => a - b);
+        let bonus, guard2 = 0;
+        do { bonus = Math.floor(rng() * 45) + 1; guard2++; } while (picked.has(bonus) && guard2 < 500);
+        return { main, bonus };
+    }
+
     const SAJU_DM_DESC = {
         목: '뻗어나가려는 힘이 강하고, 새로운 걸 시작하는 데 겁이 없는 타입이에요.',
         화: '따뜻하고 표현이 풍부해서, 주변 분위기를 밝게 만드는 타입이에요.',
@@ -4411,6 +4454,13 @@
         const weekday = ['일','월','화','수','목','금','토'][todayInfo.dateObj.getDay()];
         const dateLabel = `${todayInfo.dateObj.getMonth()+1}월 ${todayInfo.dateObj.getDate()}일 (${weekday})`;
 
+        // 오늘의 행운 숫자를 씨앗 삼아 로또번호 생성 (하루 동안은 고정, 다음날 자동으로 바뀜)
+        const elemNums = String(SAJU_ELEM_NUMBER[todayInfo.elem]).split('·').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
+        const lottoSeed = `${getTodayStr()}_${todayInfo.gz}_${sajuBirthInfo.date}_${sajuDayMasterElem}`;
+        const lotto = sajuGenerateLottoNumbers(lottoSeed, elemNums);
+        const lottoBallsHTML = lotto.main.map(n => `<div class="lotto-ball" style="background:${sajuLottoBallColor(n)}">${n}</div>`).join('');
+        const lottoBonusHTML = `<div class="lotto-plus">+</div><div class="lotto-ball lotto-ball-bonus" style="background:${sajuLottoBallColor(lotto.bonus)}">${lotto.bonus}</div>`;
+
         bodyEl.innerHTML = `
             <div class="fp-eyebrow">오늘 하루 브리핑</div>
             <div class="fp-date">${dateLabel}</div>
@@ -4434,6 +4484,11 @@
                     <div class="fp-lk-label">행운의 숫자</div>
                     <div class="fp-number">${SAJU_ELEM_NUMBER[todayInfo.elem]}</div>
                 </div>
+            </div>
+            <div class="fp-lotto-card">
+                <div class="fp-lotto-title">🎱 오늘의 행운 로또번호</div>
+                <div class="lotto-balls-row">${lottoBallsHTML}${lottoBonusHTML}</div>
+                <div class="fp-lotto-note">오늘의 기운으로 뽑아본 번호예요. 재미로만 봐주세요 :)</div>
             </div>
             <button class="fp-cta" onclick="closeFortunePopup()">오늘 하루도 힘내볼게요</button>
             <div class="fp-my-saju-link" onclick="closeFortunePopup(); openSajuDetailModal();">내 사주 자세히 보기 →</div>
