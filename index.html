@@ -825,6 +825,20 @@
         .fp-lotto-note { font-size: 11.5px; color: rgba(242,239,255,0.5); margin-top: 8px; line-height: 1.5; }
         .fp-lotto-link { margin-top: 10px; font-size: 12.5px; font-weight: 700; color: #FFD98E; cursor: pointer; text-align: center; }
 
+        .fp-weather-card {
+            margin-top: 12px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px; padding: 12px 16px; display: flex; align-items: center; gap: 12px;
+        }
+        .fp-weather-loading { font-size: 13px; color: rgba(242,239,255,0.5); width: 100%; text-align: center; }
+        .fp-weather-fallback { font-size: 13px; color: rgba(242,239,255,0.4); width: 100%; text-align: center; }
+        .fp-weather-icon { font-size: 30px; line-height: 1; }
+        .fp-weather-mid { flex: 1; }
+        .fp-weather-temp { font-size: 20px; font-weight: 800; line-height: 1.2; }
+        .fp-weather-label { font-size: 12px; color: rgba(242,239,255,0.55); }
+        .fp-weather-range { font-size: 12px; color: rgba(242,239,255,0.55); white-space: nowrap; }
+
+        .fp-quote { text-align: center; font-size: 13px; font-style: italic; color: rgba(242,239,255,0.6); margin-top: 14px; line-height: 1.6; padding: 0 6px; }
+
         /* ----- 🎲 로또추첨기 도구 ----- */
         .ldt-fav-box { margin-top: 16px; }
         .ldt-fav-label { font-size: 12.5px; font-weight: 700; color: #C7B8FF; margin-bottom: 8px; }
@@ -1713,6 +1727,10 @@
                 </div>
                 <button class="action-btn" style="width:100%;" onclick="saveSajuBirthInfo()">저장하고 오늘의 운세 보기</button>
                 <div id="saju-saved-info" style="font-size:13.5px; color: var(--text-sub); margin-top:6px;"></div>
+                <div style="display: flex; align-items:center; gap:6px; margin-top:12px; padding-top:12px; border-top:1px solid var(--border-color);">
+                    <input type="checkbox" id="saju-show-lotto" checked onchange="onShowLottoToggle()" style="width:15px; height:15px;">
+                    <label for="saju-show-lotto" style="font-size:14px; font-weight:normal; color: var(--text-sub);">🎱 오늘의 행운 로또번호 보기</label>
+                </div>
             </div>
 
             <div class="settings-section" style="padding-top: 5px;">
@@ -2741,6 +2759,110 @@
     const SAJU_ELEM_NUMBER = { 목:'3 · 8', 화:'2 · 7', 토:'5 · 10', 금:'4 · 9', 수:'1 · 6' };
     const SAJU_ELEM_DIRECTION = { 목:'동쪽', 화:'남쪽', 토:'중앙', 금:'서쪽', 수:'북쪽' };
     const SAJU_ELEM_TIME = { 목:'05~07시', 화:'11~13시', 토:'13~15시', 금:'15~17시', 수:'21~23시' };
+
+    // ----- 오늘 하루 브리핑을 풍성하게: 건강 한마디 / 응원 한마디 (날짜 기준으로 매일 자동 변경) -----
+    const DAILY_HEALTH_TIPS = [
+        '아침에 일어나면 물 한 잔으로 하루를 시작해보세요. 밤새 부족했던 수분을 채워주는 가장 쉬운 습관이에요.',
+        '오늘은 소금 간을 평소보다 살짝 줄여보세요. 혈압 관리에 작은 습관이 크게 도움이 돼요.',
+        '앉아있는 시간이 길다면, 한 시간에 한 번씩 일어나 가볍게 스트레칭을 해주세요.',
+        '아침 햇볕을 10분만 쬐어도 하루의 활력과 잠의 질이 좋아진다고 해요.',
+        '오늘은 계단을 한 층이라도 걸어서 올라가 보는 건 어떨까요. 작은 움직임이 쌓이면 큰 차이가 돼요.',
+        '식사할 때 평소보다 조금만 천천히, 꼭꼭 씹어보세요. 소화도 편해지고 과식도 줄어들어요.',
+        '눈이 피로하다면 20분마다 20초씩 먼 곳을 바라봐주세요. 눈 건강을 지키는 간단한 습관이에요.',
+        '오늘 하루는 커피나 카페인을 평소보다 한 잔 줄여보는 것도 좋아요.',
+        '자기 전 스마트폰 화면을 30분만 멀리해보세요. 수면의 질이 달라질 수 있어요.',
+        '어깨와 목이 뻐근하다면 지금 잠깐 목을 좌우로 천천히 돌려보세요.',
+        '오늘은 채소 반찬을 한 가지 더 곁들여보는 건 어떨까요. 작은 변화가 몸을 가볍게 해줘요.',
+        '실내가 건조하다면 물을 자주 마시고 환기를 시켜주는 게 도움이 돼요.',
+        '혈압이나 혈당을 관리하고 계시다면, 오늘도 정해진 시간에 체크하는 걸 잊지 마세요.',
+        '점심 식사 후 10분만 가볍게 걸어보세요. 소화에도, 혈당 관리에도 도움이 돼요.',
+        '오늘은 평소보다 일찍 잠자리에 들어보는 건 어떨까요. 몸이 회복할 시간을 벌어줘요.',
+        '무릎이나 허리가 불편하다면, 무리한 동작보다는 가벼운 스트레칭으로 몸을 풀어주세요.',
+        '따뜻한 차 한 잔이 오늘 하루의 긴장을 풀어주는 데 도움이 될 거예요.',
+        '오늘 하루는 짜고 매운 음식보다 담백한 음식으로 속을 편하게 해보세요.',
+        '가벼운 산책이나 맨손체조로 몸을 깨워보는 아침, 어떠세요.',
+        '오늘 하루도 잊지 말고 챙기셔야 할 약이 있다면 미리 확인해보세요.'
+    ];
+    const DAILY_ENCOURAGE_QUOTES = [
+        '오늘 하루도 당신의 속도대로, 천천히 걸어가면 충분해요.',
+        '작은 일 하나를 해냈다면, 그것만으로도 오늘 할 일은 다 한 거예요.',
+        '완벽하지 않아도 괜찮아요. 오늘도 애쓴 당신을 응원해요.',
+        '누군가에게 웃어준 그 한마디가, 오늘 당신이 만든 가장 큰 선물이에요.',
+        '오늘 하루, 무리하지 말고 나에게 조금 더 다정해지기로 해요.',
+        '지나간 어제보다, 오늘의 작은 한 걸음이 더 소중해요.',
+        '오늘도 당신의 하루를 응원합니다.',
+        '가끔은 아무것도 안 해도 괜찮은 하루가 있어요. 오늘이 그런 날이어도 좋아요.',
+        '당신이 지나온 시간들이, 지금의 당신을 더 단단하게 만들었어요.',
+        '오늘 하루도 수고한 나에게, 작은 칭찬 한마디 건네보세요.',
+        '햇살 좋은 오늘, 마음에도 볕이 드는 하루가 되길 바라요.',
+        '조급해하지 않아도 돼요. 당신의 하루는 이미 잘 흘러가고 있어요.'
+    ];
+    function sajuDailyPick(arr, seedStr) {
+        const rng = sajuSeededRng(sajuHashToInt(seedStr));
+        return arr[Math.floor(rng() * arr.length)];
+    }
+
+    // ----- 오늘의 날씨 (Open-Meteo, 키 불필요) -----
+    function sajuWeatherIcon(code) {
+        if (code === 0) return { icon: '☀️', label: '맑음' };
+        if (code === 1 || code === 2) return { icon: '🌤️', label: '대체로 맑음' };
+        if (code === 3) return { icon: '☁️', label: '흐림' };
+        if (code === 45 || code === 48) return { icon: '🌫️', label: '안개' };
+        if (code >= 51 && code <= 57) return { icon: '🌦️', label: '이슬비' };
+        if (code >= 61 && code <= 67) return { icon: '🌧️', label: '비' };
+        if (code >= 71 && code <= 77) return { icon: '🌨️', label: '눈' };
+        if (code >= 80 && code <= 82) return { icon: '🌧️', label: '소나기' };
+        if (code >= 95) return { icon: '⛈️', label: '뇌우' };
+        return { icon: '🌡️', label: '' };
+    }
+    function renderWeatherBox(data) {
+        const el = document.getElementById('fp-weather-box');
+        if (!el) return;
+        if (!data) { el.innerHTML = `<div class="fp-weather-fallback">날씨 정보를 가져오지 못했어요</div>`; return; }
+        const w = sajuWeatherIcon(data.code);
+        el.innerHTML = `
+            <div class="fp-weather-icon">${w.icon}</div>
+            <div class="fp-weather-mid">
+                <div class="fp-weather-temp">${Math.round(data.temp)}°</div>
+                <div class="fp-weather-label">${w.label}</div>
+            </div>
+            <div class="fp-weather-range">최고 ${Math.round(data.max)}° · 최저 ${Math.round(data.min)}°</div>
+        `;
+    }
+    function fetchTodayWeather() {
+        const todayStr = getTodayStr();
+        const cacheKey = `smartDiaryWeatherCache_${todayStr}`;
+        try {
+            const cached = localStorage.getItem(cacheKey);
+            if (cached) { renderWeatherBox(JSON.parse(cached)); return; }
+        } catch (e) {}
+
+        const runFetch = (lat, lon) => {
+            fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&daily=temperature_2m_max,temperature_2m_min&timezone=auto`)
+                .then(r => r.json())
+                .then(json => {
+                    const data = {
+                        temp: json.current_weather.temperature,
+                        code: json.current_weather.weathercode,
+                        max: json.daily.temperature_2m_max[0],
+                        min: json.daily.temperature_2m_min[0]
+                    };
+                    try { localStorage.setItem(cacheKey, JSON.stringify(data)); } catch (e) {}
+                    renderWeatherBox(data);
+                })
+                .catch(() => renderWeatherBox(null));
+        };
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                pos => runFetch(pos.coords.latitude, pos.coords.longitude),
+                () => runFetch(37.5665, 126.9780), // 위치 거부/실패 시 서울 기준
+                { timeout: 5000 }
+            );
+        } else {
+            runFetch(37.5665, 126.9780);
+        }
+    }
     const SAJU_GENERATES = { 목:'화', 화:'토', 토:'금', 금:'수', 수:'목' };
     const SAJU_CONTROLS  = { 목:'토', 토:'수', 수:'화', 화:'금', 금:'목' };
 
@@ -4527,6 +4649,18 @@
         } else {
             savedInfoEl.textContent = '아직 설정되지 않았어요. 입력하면 매일 오늘의 운세를 볼 수 있어요.';
         }
+
+        const lottoChk = document.getElementById('saju-show-lotto');
+        if (lottoChk) lottoChk.checked = getShowLotto();
+    }
+
+    function getShowLotto() {
+        return localStorage.getItem('smartDiaryShowLotto') !== 'false'; // 기본값 true
+    }
+
+    function onShowLottoToggle() {
+        const checked = document.getElementById('saju-show-lotto').checked;
+        localStorage.setItem('smartDiaryShowLotto', checked ? 'true' : 'false');
     }
 
     function onSajuTimeUnknownToggle() {
@@ -4604,8 +4738,19 @@
         const zodiacBadgeHTML = zodiac ? `<div class="fp-zodiac-badge">${zodiac.emoji} ${zodiac.name}띠</div>` : '';
 
         // 오늘의 행운 숫자를 씨앗 삼아 로또번호 생성 (하루 동안은 고정, 다음날 자동으로 바뀜) - 보너스 없이 6개만
-        const lottoMain = sajuGetTodayLottoMain();
-        const lottoBallsHTML = lottoMain.map(n => `<div class="lotto-ball" style="background:${sajuLottoBallColor(n)}">${n}</div>`).join('');
+        const showLotto = getShowLotto();
+        const lottoMain = showLotto ? sajuGetTodayLottoMain() : null;
+        const lottoBallsHTML = lottoMain ? lottoMain.map(n => `<div class="lotto-ball" style="background:${sajuLottoBallColor(n)}">${n}</div>`).join('') : '';
+        const lottoCardHTML = showLotto ? `
+            <div class="fp-lotto-card" onclick="closeFortunePopup(); openLottoDrawModal();">
+                <div class="fp-lotto-title">🎱 오늘의 행운 로또번호</div>
+                <div class="lotto-balls-row">${lottoBallsHTML}</div>
+                <div class="fp-lotto-note">당신의 행운 번호로 만들었어요</div>
+                <div class="fp-lotto-link">🎲 이 번호로 직접 뽑아보기 →</div>
+            </div>` : '';
+
+        const healthTip = sajuDailyPick(DAILY_HEALTH_TIPS, `health_${getTodayStr()}`);
+        const quote = sajuDailyPick(DAILY_ENCOURAGE_QUOTES, `quote_${getTodayStr()}`);
 
         bodyEl.innerHTML = `
             <div class="fp-hero">
@@ -4626,10 +4771,14 @@
                     </div>
                 </div>
             </div>
+            <div class="fp-weather-card" id="fp-weather-box">
+                <div class="fp-weather-loading">📍 오늘 날씨 확인 중...</div>
+            </div>
             <div class="fp-cards">
                 <div class="fp-card"><div class="fpc-label">✅ 총운</div><div class="fpc-text">${f.total}</div></div>
                 <div class="fp-card"><div class="fpc-label">💰 재물운</div><div class="fpc-text">${f.money}</div></div>
                 <div class="fp-card"><div class="fpc-label">💗 애정운</div><div class="fpc-text">${f.love}</div></div>
+                <div class="fp-card"><div class="fpc-label">🌿 오늘의 건강 한마디</div><div class="fpc-text">${healthTip}</div></div>
             </div>
             <div class="fp-lucky-row">
                 <div class="fp-lucky-box">
@@ -4650,15 +4799,14 @@
                     <div class="fp-number">⏰ ${SAJU_ELEM_TIME[todayInfo.elem]}</div>
                 </div>
             </div>
-            <div class="fp-lotto-card" onclick="closeFortunePopup(); openLottoDrawModal();">
-                <div class="fp-lotto-title">🎱 오늘의 행운 로또번호</div>
-                <div class="lotto-balls-row">${lottoBallsHTML}</div>
-                <div class="fp-lotto-note">당신의 행운 번호로 만들었어요</div>
-                <div class="fp-lotto-link">🎲 이 번호로 직접 뽑아보기 →</div>
-            </div>
+            ${lottoCardHTML}
+            <div class="fp-quote">"${quote}"</div>
             <button class="fp-cta" onclick="closeFortunePopup()">오늘 하루도 힘내볼게요</button>
             <div class="fp-my-saju-link" onclick="closeFortunePopup(); openSajuDetailModal();">내 사주 자세히 보기 →</div>
         `;
+
+        fetchTodayWeather();
+
 
         fortunePopupOverlay.classList.add('active');
         lockBodyScroll();
@@ -4679,8 +4827,11 @@
     // 앱을 하루 중 처음 열었을 때만 자동으로 팝업을 띄움 (생년월일이 설정된 경우에만)
     function maybeAutoShowFortunePopup() {
         if (!sajuBirthInfo || !sajuBirthInfo.date || !sajuDayMasterElem) return;
+        // 아침 알림(푸시)을 눌러 ?autobrief=1 로 들어온 경우, 오늘 이미 봤어도 강제로 다시 열어줌
+        const urlParams = new URLSearchParams(window.location.search);
+        const forceOpen = urlParams.get('autobrief') === '1';
         const lastShown = localStorage.getItem('smartDiarySajuLastShown');
-        if (lastShown === getTodayStr()) return; // 오늘 이미 봤음
+        if (!forceOpen && lastShown === getTodayStr()) return; // 오늘 이미 봤음
         openFortunePopup();
     }
 
