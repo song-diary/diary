@@ -41,7 +41,7 @@
             padding: 15px;
             max-width: 600px;
             margin: 0 auto;
-            touch-action: manipulation;
+            touch-action: pan-x pan-y;
             font-size: var(--base-font-size);
             overscroll-behavior-y: contain;
         }
@@ -841,7 +841,13 @@
         .fp-weather-label { font-size: 12px; font-weight: 500; color: rgba(242,239,255,0.55); }
         .fp-weather-range { font-size: 12px; color: rgba(242,239,255,0.55); white-space: nowrap; }
 
-        .fp-exit-link { text-align: center; margin-top: 10px; font-size: 13px; color: rgba(242,239,255,0.4); cursor: pointer; padding: 8px; }
+        .fp-exit-btn {
+            display: block; width: 100%; margin-top: 12px; padding: 12px;
+            text-align: center; font-size: 14px; font-weight: 700;
+            color: rgba(242,239,255,0.75); background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; cursor: pointer;
+        }
+        .fp-exit-btn:active { background: rgba(255,255,255,0.12); }
 
         /* ----- 🎲 로또추첨기 도구 ----- */
         .ldt-fav-box { margin-top: 16px; }
@@ -884,7 +890,14 @@
             box-shadow: 0 20px 50px rgba(0,0,0,0.35); position: relative; animation: fadeIn 0.25s ease;
             touch-action: pan-y;
         }
-        .saju-detail-card .sd-title { font-size: 17.5px; font-weight: 800; margin-bottom: 14px; }
+        .saju-detail-card .sd-title { font-size: 17.5px; font-weight: 800; }
+        .sd-title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+        .sd-zodiac-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: 12px; font-weight: 700; color: #8A8071;
+            background: rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.08);
+            padding: 4px 10px; border-radius: 999px;
+        }
         .sd-pillars { display: grid; grid-template-columns: repeat(4,1fr); gap: 7px; margin-bottom: 18px; }
         .sd-pillar { background: rgba(0,0,0,0.04); border-radius: 12px; padding: 10px 4px; text-align: center; }
         .sd-pillar .sdp-label { font-size: 12px; color: #8A8071; margin-bottom: 6px; }
@@ -1285,7 +1298,7 @@
 
         .photo-lightbox-overlay.active {
             display: flex;
-            touch-action: none;
+            touch-action: pan-y pinch-zoom;
         }
 
         .photo-lightbox-img {
@@ -1721,6 +1734,7 @@
 
             <div class="settings-section">
                 <label>🔮 오늘의 운세 (사주팔자 설정)</label>
+                <div style="font-size:12px; color: var(--text-sub); margin-bottom:6px;">📅 생년월일은 <b>양력</b> 기준으로 입력해주세요</div>
                 <div style="display: flex; gap: 6px; margin-bottom: 6px;">
                     <input type="date" id="saju-birth-date" style="flex:1; padding:6px; border:1px solid var(--border-color); border-radius:6px; font-size:15px;">
                     <input type="time" id="saju-birth-time" disabled style="flex:1; padding:6px; border:1px solid var(--border-color); border-radius:6px; font-size:15px;">
@@ -1757,7 +1771,10 @@
 <div class="modal-overlay" id="saju-detail-modal-overlay" onclick="handleSajuDetailModalBackgroundClick(event)">
     <div class="saju-detail-card" id="saju-detail-card" onclick="event.stopPropagation()">
         <button class="close-form-btn" style="position:absolute; top:14px; right:14px;" onclick="closeSajuDetailModal()">✖</button>
-        <div class="sd-title">📜 나의 사주 풀이</div>
+        <div class="sd-title-row">
+            <div class="sd-title">📜 나의 사주 풀이</div>
+            <div id="sd-zodiac-badge"></div>
+        </div>
         <div class="sd-pillars" id="sd-pillars"></div>
         <div class="sd-dm-box">
             <div class="sd-dm-char" id="sd-dm-char">-</div>
@@ -1803,7 +1820,7 @@
         </div>
         <div class="fp-my-saju-link" onclick="ldtResetAll()">🔄 판 초기화 (처음부터 다시 뽑기)</div>
         <div class="ldt-small-note">※ 고정수를 6개 모두 입력하면 해당 번호로 완성돼요.<br>결과는 오늘 하루 동안 자동 저장돼요.</div>
-        <div class="fp-exit-link" onclick="closeLottoDrawModal()">종료</div>
+        <div class="fp-exit-btn" onclick="closeLottoDrawModal()">종료</div>
     </div>
 </div>
 
@@ -4709,11 +4726,6 @@
         const weekday = ['일','월','화','수','목','금','토'][todayInfo.dateObj.getDay()];
         const dateLabel = `${todayInfo.dateObj.getMonth()+1}월 ${todayInfo.dateObj.getDate()}일 (${weekday})`;
 
-        // 년지로 12지신 띠 계산
-        const yearZhi = sajuPillars && sajuPillars.year ? sajuPillars.year.zhi : null;
-        const zodiac = yearZhi ? SAJU_ZODIAC_ANIMAL[yearZhi] : null;
-        const zodiacBadgeHTML = zodiac ? `<div class="fp-zodiac-badge">${zodiac.emoji} ${zodiac.name}띠</div>` : '';
-
         // 오늘의 행운 숫자를 씨앗 삼아 로또번호 생성 (하루 동안은 고정, 다음날 자동으로 바뀜) - 보너스 없이 6개만
         const showLotto = getShowLotto();
         const lottoMain = showLotto ? sajuGetTodayLottoMain() : null;
@@ -4730,7 +4742,6 @@
             <div class="fp-hero">
                 <div class="fp-hero-top">
                     <div class="fp-eyebrow">🔮 오늘 하루 브리핑</div>
-                    ${zodiacBadgeHTML}
                 </div>
                 <div class="fp-date">${dateLabel}</div>
                 <div class="fp-hero-row">
@@ -4756,11 +4767,10 @@
                 <div class="fp-card"><div class="fpc-label">✅ 총운</div><div class="fpc-text">${f.total}</div></div>
                 <div class="fp-card"><div class="fpc-label">💰 재물운</div><div class="fpc-text">${f.money}</div></div>
                 <div class="fp-card"><div class="fpc-label">💗 애정운</div><div class="fpc-text">${f.love}</div></div>
-                <div class="fp-card"><div class="fpc-label">🌿 오늘의 컨디션</div><div class="fpc-text">${f.health}</div></div>
             </div>
             ${lottoCardHTML}
             <div class="fp-my-saju-link" onclick="closeFortunePopup(); openSajuDetailModal();">내 사주 자세히 보기 →</div>
-            <div class="fp-exit-link" onclick="closeFortunePopup()">종료</div>
+            <div class="fp-exit-btn" onclick="closeFortunePopup()">종료</div>
         `;
 
         fetchTodayWeather();
@@ -4798,6 +4808,13 @@
             openFortunePopup(); // 생년월일 없으면 설정 유도 화면으로
             return;
         }
+
+        // 년지로 12지신 띠 계산해서 제목 옆에 표시
+        const yearZhi = sajuPillars.year ? sajuPillars.year.zhi : null;
+        const zodiac = yearZhi ? SAJU_ZODIAC_ANIMAL[yearZhi] : null;
+        const zodiacBadgeEl = document.getElementById('sd-zodiac-badge');
+        if (zodiacBadgeEl) zodiacBadgeEl.innerHTML = zodiac ? `<div class="sd-zodiac-badge">${zodiac.emoji} ${zodiac.name}띠</div>` : '';
+
         const pillarsGrid = document.getElementById('sd-pillars');
         pillarsGrid.innerHTML = '';
         const order = [ { key:'year', label:'년주' }, { key:'month', label:'월주' }, { key:'day', label:'일주' }, { key:'hour', label:'시주' } ];
