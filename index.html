@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>다이어리&가계부</title>
     <style>
         :root {
@@ -33,7 +33,6 @@
 
         html {
             overscroll-behavior-y: contain;
-            touch-action: pan-y pinch-zoom;
         }
 
         body {
@@ -42,7 +41,7 @@
             padding: 15px;
             max-width: 600px;
             margin: 0 auto;
-            touch-action: pan-y pinch-zoom;
+            touch-action: manipulation;
             font-size: var(--base-font-size);
             overscroll-behavior-y: contain;
         }
@@ -61,7 +60,6 @@
             box-shadow: 0 3px 8px rgba(0,0,0,0.04);
         }
 
-        /* 메인 탭 바 */
         .main-tab-bar {
             display: flex;
             gap: 6px;
@@ -91,31 +89,14 @@
             line-height: 1;
         }
 
-        .main-tab-btn.settings-tab-btn {
-            flex: 0 0 40px;
-        }
+        .main-tab-btn.settings-tab-btn { flex: 0 0 40px; }
+        .main-tab-btn.input-tab-btn { background: var(--primary-color); border-color: var(--primary-color); color: #fff; }
+        .main-tab-btn.input-tab-btn:hover { background: var(--primary-hover); border-color: var(--primary-hover); color: #fff; }
+        .main-tab-btn.active { background: var(--primary-color); border-color: var(--primary-color); color: #fff; }
+        .main-tab-btn:hover:not(.active) { border-color: var(--primary-color); color: var(--primary-color); }
 
-        .main-tab-btn.input-tab-btn {
-            background: var(--primary-color);
-            border-color: var(--primary-color);
-            color: #fff;
-        }
-
-        .main-tab-btn.active {
-            background: var(--primary-color);
-            border-color: var(--primary-color);
-            color: #fff;
-        }
-
-        .tab-panel {
-            display: none;
-        }
-
-        .tab-panel.active {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: flex; flex-direction: column; gap: 15px; }
 
         .action-btn {
             background: var(--primary-color);
@@ -127,325 +108,159 @@
             font-size: calc(var(--base-font-size) - 1px);
             font-weight: bold;
         }
+        .action-btn:hover { background: var(--primary-hover); }
 
-        .action-btn:hover {
-            background: var(--primary-hover);
-        }
-
-        /* 설정 및 팝업 카드 스타일 */
-        #settings-card, #card-statement-card, #card-pending-card, #balance-location-card, #memo-form-card {
-            background: #fff;
-            border: 2px solid var(--primary-color);
-            animation: fadeIn 0.3s ease;
-            width: min(500px, 92vw);
-            max-height: 85vh;
-            overflow-y: auto;
-            border-radius: 12px;
-            padding: 16px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            overscroll-behavior: contain;
-            touch-action: pan-y pinch-zoom;
+        /* 설정 카드 (팝업 폼) */
+        #settings-card {
+            background: #fff8f8; border: 2px solid var(--primary-color);
+            animation: fadeIn 0.3s ease; width: 100%; max-width: 500px;
+            max-height: 90vh; overflow-y: auto; border-radius: 12px;
+            padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
 
         .settings-title {
-            font-size: calc(var(--base-font-size) + 1px);
-            font-weight: bold;
-            color: var(--primary-color);
-            margin-bottom: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: -1px;
-            background: #fff;
-            z-index: 5;
-            padding-top: 4px;
+            font-size: calc(var(--base-font-size) + 1px); font-weight: bold; color: var(--primary-color);
+            margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: -1px; background: #fff; z-index: 5; padding-top: 4px;
         }
 
         .settings-section {
-            margin-bottom: 12px;
-            padding-bottom: 10px;
-            border-bottom: 1px dashed var(--border-color);
+            margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px dashed var(--border-color);
         }
-
-        .settings-section:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
-
+        .settings-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
         .settings-section label {
-            display: block;
-            font-size: calc(var(--base-font-size) - 2px);
-            font-weight: bold;
-            margin-bottom: 6px;
-            color: var(--weekday-color);
+            display: block; font-size: calc(var(--base-font-size) - 2px); font-weight: bold; margin-bottom: 6px; color: var(--weekday-color);
         }
-
-        .view-select-group {
-            display: flex;
-            gap: 6px;
-        }
-
+        .view-select-group { display: flex; gap: 6px; }
         .view-select-btn {
-            flex: 1;
-            padding: 8px;
-            border: 1px solid var(--border-color);
-            background: #fff;
-            border-radius: 6px;
-            font-size: calc(var(--base-font-size) - 2px);
-            cursor: pointer;
-            color: var(--text-sub);
-            font-weight: bold;
+            flex: 1; padding: 8px; border: 1px solid var(--border-color); background: #fff;
+            border-radius: 6px; font-size: calc(var(--base-font-size) - 2px); cursor: pointer; color: var(--text-sub); font-weight: bold;
         }
-
-        .view-select-btn.active {
-            background: var(--primary-color);
-            color: white;
-            border-color: var(--primary-color);
-        }
-
-        /* 가계부 요약 및 통계 스타일 */
-        #money-summary-card {
-            background: linear-gradient(135deg, #f0fff4, #e6f9ed);
-            border: 1px solid #c2e8ce;
-            border-radius: 12px;
-            padding: 15px;
-        }
-
-        .money-summary-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            font-weight: bold;
-            color: #27ae60;
-            font-size: var(--base-font-size);
-        }
-
-        .money-summary-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            text-align: center;
-        }
-
-        .money-box {
-            background: #ffffff;
-            border: 2px solid #d2eedc;
-            border-radius: 8px;
-            padding: 8px 4px;
-            cursor: pointer;
-            position: relative;
-        }
-
-        .money-box .m-label {
-            font-size: calc(var(--base-font-size) - 4px);
-            color: var(--text-sub);
-            margin-bottom: 3px;
-        }
-
-        .money-box .m-value {
-            font-size: calc(var(--base-font-size) - 2px);
-            font-weight: bold;
-        }
-
-        .money-box.income .m-value { color: var(--income-color); }
-        .money-box.expense .m-value { color: var(--expense-color); }
-        .money-box.balance .m-value { color: #2980b9; }
-
-        .sub-feature-card {
-            background: #ffffff;
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 15px;
-        }
-
-        .feature-title {
-            font-size: var(--base-font-size);
-            font-weight: bold;
-            color: var(--text-main);
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        .view-select-btn.active { background: var(--primary-color); color: white; border-color: var(--primary-color); }
 
         /* 달력 스타일 */
-        .calendar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-
-        .calendar-header h3 {
-            color: var(--primary-color);
-            font-size: calc(var(--base-font-size) + 4px);
-        }
-
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .calendar-header h3 { color: var(--primary-color); font-size: calc(var(--base-font-size) + 4px); }
         .calendar-header button {
-            background: #faf5f5;
-            border: 1px solid var(--border-color);
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
+            background: #faf5f5; border: 1px solid var(--border-color); padding: 8px 16px;
+            border-radius: 6px; cursor: pointer; color: var(--text-main); font-weight: bold; font-size: calc(var(--base-font-size) - 1px); touch-action: manipulation;
         }
-
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 4px;
-            text-align: center;
-        }
-
-        .cal-day-name {
-            font-size: calc(var(--base-font-size) - 1px);
-            font-weight: bold;
-            padding-bottom: 6px;
-        }
+        .calendar-header button:hover { background: #f4e8e8; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
+        .cal-day-name { font-size: calc(var(--base-font-size) - 1px); font-weight: bold; padding-bottom: 6px; }
         .cal-day-name.sunday { color: var(--sun-color); }
         .cal-day-name.saturday { color: var(--sat-color); }
-
+        .cal-day-name.weekday { color: var(--weekday-color); }
         .cal-cell {
-            aspect-ratio: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            font-size: var(--base-font-size);
-            font-weight: 600;
-            border-radius: 8px;
-            cursor: pointer;
-            background: #ffffff;
-            border: 1px solid #e8dfdf;
-            color: var(--weekday-color);
+            aspect-ratio: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            font-size: var(--base-font-size); font-weight: 600; border-radius: 8px; cursor: pointer; position: relative;
+            background: #ffffff; border: 1px solid #e8dfdf; color: var(--weekday-color); touch-action: manipulation;
         }
+        .cal-cell:hover { opacity: 0.85; border-color: var(--primary-color); }
+        .cal-cell.empty { background: transparent; border: none; cursor: default; }
+        .cal-cell.sunday { background: #fdf2f2; border-color: #f7d6d6; }
+        .cal-cell.saturday { background: #f0f6fb; border-color: #d1e3f3; }
+        .cal-cell.today-date { border: 2px solid var(--accent-today) !important; font-weight: bold; background: #fff5f5 !important; }
+        .cal-cell.selected-date { border: 2px solid #2980b9 !important; box-shadow: inset 0 0 0 1px #2980b9; background: #eaf3fb !important; }
 
-        .cal-cell.today-date {
-            border: 2px solid var(--accent-today) !important;
-            background: #fff5f5 !important;
-        }
-
-        .cal-cell.selected-date {
-            border: 2px solid #2980b9 !important;
-            background: #eaf3fb !important;
-        }
-
-        /* 운세 및 사주 티저 */
+        /* 운세 티저 및 팝업 */
         .fortune-teaser {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 13px 16px;
-            border-radius: 14px;
-            margin-bottom: 12px;
-            background: linear-gradient(120deg, #2C2F5B, #4A3B77 55%, #2C2F5B);
-            color: #F4F0FF;
-            cursor: pointer;
-            box-shadow: 0 4px 14px rgba(44,47,91,0.28);
+            display: flex; align-items: center; gap: 10px; padding: 13px 16px; border-radius: 14px; margin-bottom: 12px;
+            background: linear-gradient(120deg, #2C2F5B, #4A3B77 55%, #2C2F5B); color: #F4F0FF; cursor: pointer; box-shadow: 0 4px 14px rgba(44,47,91,0.28);
         }
+        .fortune-teaser .ft-icon { font-size: 22px; }
         .fortune-teaser .ft-text { flex: 1; font-size: 16px; font-weight: 600; }
-        .fortune-teaser .ft-sub { font-size: 13px; color: rgba(244,240,255,0.6); }
+        .fortune-teaser .ft-arrow { font-size: 17px; opacity: 0.7; }
 
-        /* 모달 오버레이 공통 (확대 허용) */
+        /* 수정사항 2, 3: 모달 및 내부 팝업 폼의 touch-action 제한 해제 */
         .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            padding: 15px;
-            touch-action: pan-y pinch-zoom;
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5); z-index: 1000; justify-content: center; align-items: center; padding: 15px;
         }
+        .modal-overlay.active { display: flex; }
 
-        .modal-overlay.active {
-            display: flex;
-            touch-action: pan-y pinch-zoom;
+        #memo-form-card, #settings-card, #saju-detail-card, .fortune-popup-card {
+            overscroll-behavior: contain;
+            /* 터치 액션 제한 속성을 모두 지워서 손가락 확대가 가능하도록 함 */
         }
 
         .fortune-popup-card {
-            width: 100%; max-width: 420px; max-height: 92vh; overflow-y: auto;
-            border-radius: 22px; padding: 22px 20px 20px;
-            background: linear-gradient(165deg, #23264A 0%, #171933 60%, #14152B 100%);
-            color: #F2EFFF;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.45);
-            position: relative;
-            touch-action: pan-y pinch-zoom;
+            width: 100%; max-width: 420px; max-height: 92vh; overflow-y: auto; border-radius: 22px; padding: 22px 20px 20px;
+            background: linear-gradient(165deg, #23264A 0%, #171933 60%, #14152B 100%); color: #F2EFFF; box-shadow: 0 20px 50px rgba(0,0,0,0.45); position: relative; animation: fadeIn 0.25s ease;
         }
-
-        .fortune-popup-close, .close-form-btn {
-            position: absolute; top: 14px; right: 14px; 
-            background: rgba(255,255,255,0.15);
-            border: none; color: #fff; width: 32px; height: 32px; 
-            border-radius: 50%; font-size: 16px; font-weight: bold;
-            cursor: pointer; display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        .fortune-popup-close {
+            position: absolute; top: 14px; right: 14px; background: rgba(255,255,255,0.1); border: none; color: #F2EFFF; width: 30px; height: 30px; border-radius: 50%; font-size: 14px; cursor: pointer;
         }
-
-        /* 종료 및 링크 버튼 명시성 강화 */
-        .explicit-close-btn {
-            display: block;
-            width: 100%;
-            margin-top: 14px;
-            padding: 10px;
-            background: rgba(255,255,255,0.12);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 10px;
-            color: #fff;
-            font-weight: bold;
-            text-align: center;
-            cursor: pointer;
+        .fp-hero { text-align: center; }
+        .fp-hero-top { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
+        .fp-eyebrow {
+            display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 800;
+            color: #2A2340; background: linear-gradient(120deg, #FFD98E, #FF9AC2); padding: 6px 16px; border-radius: 999px;
         }
-
-        .diary-textarea {
-            width: 100%; min-height: 150px; border: 1px solid var(--border-color);
-            border-radius: 8px; padding: 12px; outline: none; background: #fff;
-            font-size: var(--memo-font-size); margin-bottom: 10px;
+        
+        /* 띠 표시는 사주 모달로 이동 */
+        .fp-zodiac-badge {
+            display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; font-weight: 700; color: rgba(242,239,255,0.8);
+            background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); padding: 5px 11px; border-radius: 999px;
         }
+        
+        /* 종료 버튼 시인성 개선 */
+        .fp-exit-btn {
+            width: 100%; padding: 12px; margin-top: 15px; border-radius: 12px;
+            background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2);
+            color: #F2EFFF; font-weight: bold; font-size: 15px; cursor: pointer; text-align: center;
+        }
+        .fp-exit-btn:hover { background: rgba(255,255,255,0.25); }
 
+        .saju-detail-card {
+            width: 100%; max-width: 420px; max-height: 90vh; overflow-y: auto; border-radius: 20px; padding: 22px 20px; background: #FBF8F1; color: #2A241C; box-shadow: 0 20px 50px rgba(0,0,0,0.35); position: relative; animation: fadeIn 0.25s ease;
+        }
+        .saju-detail-card .sd-title { font-size: 17.5px; font-weight: 800; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+
+        /* 다이어리 폼 */
+        #memo-form-card {
+            background: #ffffff; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; border: 2px solid var(--primary-color); border-radius: 12px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .form-header-info { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; font-size: calc(var(--base-font-size) + 1px); font-weight: bold; color: var(--primary-color); position: sticky; top: -1px; background: #fff; z-index: 5; padding-top: 4px; }
+        .close-form-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-sub); }
+
+        .diary-textarea { width: 100%; min-height: 150px; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; resize: vertical; outline: none; background: #fff; margin-bottom: 10px; line-height: 1.5; font-size: var(--memo-font-size); }
+        
         .btn-group { display: flex; gap: 8px; }
-        .btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-size: var(--base-font-size); cursor: pointer; font-weight: bold; touch-action: manipulation; }
         .btn-primary { background-color: var(--primary-color); color: white; }
+        .btn-primary:hover { background-color: var(--primary-hover); }
         .btn-secondary { background-color: #f0e2e2; color: var(--text-main); }
+        .btn-secondary:hover { background-color: #e5d2d2; }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        #diary-around-today-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+        .sub-memo-item { background: #fcfcfc; border: 1px solid #f0e6e6; border-radius: 8px; padding: 10px; word-break: break-all; }
+        
+        .empty-msg { text-align: center; color: var(--text-sub); padding: 20px 0; font-size: 14px; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
 
-    <!-- 🔮 오늘의 운세 및 사주 풀이 링크 영역 (요청 반영) -->
-    <div style="display: flex; gap: 8px;">
-        <div class="fortune-teaser" id="fortune-teaser" onclick="openFortunePopup()" style="flex: 2; margin-bottom: 0;">
-            <span class="ft-icon">🔮</span>
-            <div style="flex:1;">
-                <div class="ft-text" id="fortune-teaser-text">오늘의 운세 보기</div>
-                <div class="ft-sub" id="fortune-teaser-sub"></div>
-            </div>
-            <span>›</span>
+    <div class="fortune-teaser" onclick="openFortunePopup()">
+        <span class="ft-icon">🔮</span>
+        <div style="flex:1;">
+            <div class="ft-text">오늘의 운세 보기</div>
         </div>
-        <div class="fortune-teaser" onclick="openSajuDetailModal()" style="flex: 1; margin-bottom: 0; background: linear-gradient(120deg, #4A3B77, #2C2F5B); justify-content: center; text-align: center;">
-            <div class="ft-text" style="font-size: 14px;">📜 나의 사주 풀이</div>
-        </div>
+        <span class="ft-arrow">›</span>
     </div>
 
-    <!-- 🔑 달력 카드 -->
+    <!-- 달력 카드 -->
     <div class="card" id="calendar-card">
         <div class="calendar-header">
             <button onclick="changeMonth(-1)">◀ 이전</button>
-            <h3 id="cal-month-title">0000년 00월</h3>
+            <h3 id="cal-month-title"></h3>
             <button onclick="changeMonth(1)">다음 ▶</button>
         </div>
-        <div class="calendar-grid" id="cal-days-name-grid">
+        <div class="calendar-grid">
             <div class="cal-day-name sunday">일</div>
             <div class="cal-day-name weekday">월</div>
             <div class="cal-day-name weekday">화</div>
@@ -457,164 +272,207 @@
         <div class="calendar-grid" id="cal-days-grid" style="margin-top: 5px;"></div>
     </div>
 
-    <!-- 🧭 메인 탭 바 -->
     <div class="card main-tab-bar">
-        <button class="main-tab-btn settings-tab-btn" onclick="openSettingsModal()" title="설정">
-            <span class="tab-icon">☰</span>
-        </button>
-        <button class="main-tab-btn active" id="tab-diary-btn" onclick="switchMainTab('diary')">
-            <span class="tab-icon">📔</span>다이어리
-        </button>
-        <button class="main-tab-btn" id="tab-money-btn" onclick="switchMainTab('money')">
-            <span class="tab-icon">💰</span>가계부
-        </button>
-        <button class="main-tab-btn input-tab-btn" onclick="openDiaryForm(selectedViewDate || getTodayStr())">
-            <span class="tab-icon">✏️</span>입력
-        </button>
+        <button class="main-tab-btn settings-tab-btn" onclick="openSettingsModal()" title="설정"><span class="tab-icon">☰</span></button>
+        <button class="main-tab-btn active" id="tab-diary-btn" onclick="switchMainTab('diary')"><span class="tab-icon">📔</span>다이어리</button>
+        <button class="main-tab-btn" id="tab-money-btn" onclick="switchMainTab('money')"><span class="tab-icon">💰</span>가계부</button>
+        <button class="main-tab-btn input-tab-btn" onclick="openDiaryForm()"><span class="tab-icon">✏️</span>입력</button>
     </div>
 
-    <!-- 📔 다이어리 패널 -->
+    <!-- 다이어리 패널 -->
     <div class="tab-panel active" id="diary-panel">
-        <div class="card sub-feature-card">
-            <div class="feature-title">
-                <span id="selected-date-title">📔 다이어리 내역</span>
-            </div>
-            <div id="diary-around-today-list">등록된 내용이 없습니다.</div>
+        <div class="card">
+            <h3 style="margin-bottom: 10px; color: var(--text-main);" id="selected-date-title">📔 다이어리 내역</h3>
+            <div id="diary-list-container"></div>
         </div>
     </div>
 
-    <!-- 💰 가계부 패널 -->
+    <!-- 가계부 패널 (UI 데모용) -->
     <div class="tab-panel" id="money-panel">
-        <div class="card" id="money-summary-card">
-            <div class="money-summary-header">
-                <span>💵 가계부 현황</span>
-            </div>
-            <div class="money-summary-grid">
-                <div class="money-box income">
-                    <div class="m-label">총 수입</div>
-                    <div class="m-value" id="summary-income">0원</div>
-                </div>
-                <div class="money-box expense">
-                    <div class="m-label">총 지출</div>
-                    <div class="m-value" id="summary-expense">0원</div>
-                </div>
-                <div class="money-box balance">
-                    <div class="m-label">잔액</div>
-                    <div class="m-value" id="summary-balance">0원</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ⚙️ 설정 모달 -->
-    <div class="modal-overlay" id="settings-modal-overlay" onclick="closeSettingsModal()">
-        <div class="card" id="settings-card" onclick="event.stopPropagation()">
-            <div class="settings-title">
-                <span>🛠️ 환경 설정</span>
-                <button class="close-form-btn" onclick="closeSettingsModal()">✖</button>
-            </div>
-            <div class="settings-section">
-                <label>📅 생일 입력 (양력 기준)</label>
-                <input type="date" id="saju-birth-date" style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:6px;">
-            </div>
-            <div class="settings-section">
-                <button class="action-btn" style="width:100%;" onclick="saveSajuBirthInfo()">설정 저장</button>
-            </div>
-            <div class="explicit-close-btn" onclick="closeSettingsModal()">설정 닫기 (종료)</div>
-        </div>
-    </div>
-
-    <!-- 🔮 오늘의 운세 모달 -->
-    <div class="modal-overlay" id="fortune-popup-overlay" onclick="closeFortunePopup()">
-        <div class="fortune-popup-card" onclick="event.stopPropagation()">
-            <button class="fortune-popup-close" onclick="closeFortunePopup()">✖</button>
-            <h2 style="margin-bottom: 12px; font-size: 18px;">🔮 오늘의 운세</h2>
-            <div id="fortune-popup-body" style="font-size: 14px; line-height: 1.6;">생년월일을 설정하면 오늘의 운세가 나타납니다.</div>
-            <div class="explicit-close-btn" onclick="closeFortunePopup()">확인 및 종료</div>
-        </div>
-    </div>
-
-    <!-- 📜 사주 풀이 모달 -->
-    <div class="modal-overlay" id="saju-detail-modal-overlay" onclick="closeSajuDetailModal()">
-        <div class="fortune-popup-card" onclick="event.stopPropagation()">
-            <button class="fortune-popup-close" onclick="closeSajuDetailModal()">✖</button>
-            <h2 style="margin-bottom: 12px; font-size: 18px;">📜 나의 사주 풀이</h2>
-            <div id="saju-detail-body" style="font-size: 14px; line-height: 1.6;">설정된 생년월일 기반 사주 정보가 표시됩니다.</div>
-            <div class="explicit-close-btn" onclick="closeSajuDetailModal()">닫기 (종료)</div>
-        </div>
-    </div>
-
-    <!-- ✏️ 입력 폼 모달 -->
-    <div class="modal-overlay" id="memo-modal-overlay" onclick="closeDiaryFormPanel()">
-        <div id="memo-form-card" onclick="event.stopPropagation()">
-            <div class="settings-title">
-                <span id="form-target-date-title">📅 입력 폼</span>
-                <button class="close-form-btn" onclick="closeDiaryFormPanel()">✖</button>
-            </div>
-            <div class="diary-textarea" contenteditable="true" placeholder="내용을 입력하세요"></div>
-            <div class="btn-group">
-                <button class="btn btn-secondary" onclick="closeDiaryFormPanel()">취소</button>
-                <button class="btn btn-primary" onclick="closeDiaryFormPanel()">저장</button>
-            </div>
-            <div class="explicit-close-btn" onclick="closeDiaryFormPanel()">작업 종료</div>
+        <div class="card">
+            <h3 style="margin-bottom: 10px; color: var(--text-main);">💰 가계부 내역</h3>
+            <div class="empty-msg">선택한 날짜의 가계부 내역이 없습니다.</div>
         </div>
     </div>
 
 </div>
 
+<!-- 환경 설정 모달 -->
+<div class="modal-overlay" id="settings-modal-overlay" onclick="closeSettingsModal(event)">
+    <div class="card" id="settings-card" onclick="event.stopPropagation()">
+        <div class="settings-title">
+            <span>🛠️ 환경 설정</span>
+            <button class="close-form-btn" onclick="closeSettingsModal()">✖</button>
+        </div>
+        <!-- 1) 생일 양력 표시 수정 -->
+        <div class="settings-section">
+            <label>🔮 오늘의 운세 (사주팔자 설정 - 양력 생일)</label>
+            <div style="display: flex; gap: 6px; margin-bottom: 6px;">
+                <input type="date" id="saju-birth-date" style="flex:1; padding:6px; border:1px solid var(--border-color); border-radius:6px; font-size:15px;">
+            </div>
+            <button class="action-btn" style="width:100%;" onclick="alert('저장되었습니다.')">저장하고 오늘의 운세 보기</button>
+        </div>
+    </div>
+</div>
+
+<!-- 오늘의 운세 팝업 -->
+<div class="modal-overlay" id="fortune-popup-overlay" onclick="closeFortunePopup(event)">
+    <div class="fortune-popup-card" onclick="event.stopPropagation()">
+        <button class="fortune-popup-close" onclick="closeFortunePopup()">✖</button>
+        <div class="fp-hero">
+            <!-- 4) 컨디션 삭제, 6) 띠 표시 삭제(이동) -->
+            <div class="fp-hero-top"><div class="fp-eyebrow">오늘 하루 브리핑</div></div>
+            <div style="margin-top: 15px; background: rgba(255,255,255,0.06); padding: 15px; border-radius: 12px;">
+                <h4 style="color:#C7B8FF; margin-bottom:8px;">오늘의 총운</h4>
+                <p style="font-size:14px; line-height:1.6; color:rgba(255,255,255,0.9);">
+                    순조로운 하루가 예상됩니다. 계획했던 일들을 차분하게 하나씩 실행에 옮겨보세요. 주변 사람들과의 소통이 행운을 불러옵니다.
+                </p>
+            </div>
+            <button class="action-btn" style="width:100%; margin-top:15px;" onclick="openSajuDetailModal()">📜 나의 사주 풀이 전체 보기</button>
+        </div>
+        <!-- 5) 종료 버튼 명확화 -->
+        <button class="fp-exit-btn" onclick="closeFortunePopup()">종료 ✖</button>
+    </div>
+</div>
+
+<!-- 나의 사주 풀이 모달 -->
+<div class="modal-overlay" id="saju-detail-modal-overlay" onclick="closeSajuDetailModal(event)">
+    <div class="saju-detail-card" id="saju-detail-card" onclick="event.stopPropagation()">
+        <button class="close-form-btn" style="position:absolute; top:14px; right:14px;" onclick="closeSajuDetailModal()">✖</button>
+        <!-- 6) 띠 표시를 나의 사주 풀이 옆으로 이동 -->
+        <div class="sd-title">
+            📜 나의 사주 풀이 
+            <span class="fp-zodiac-badge" style="background:var(--primary-color); border:none; color:#fff;">🐯 호랑이띠</span>
+        </div>
+        <div style="font-size:15px; line-height:1.6; color:#5B5346;">
+            기본적인 사주 정보가 이곳에 표시됩니다. 타고난 기운과 성향을 바탕으로 삶의 방향을 조언해 드립니다.
+        </div>
+        <button class="fp-exit-btn" style="background:#e06d6d; border:none;" onclick="closeSajuDetailModal()">닫기 ✖</button>
+    </div>
+</div>
+
+<!-- 다이어리 입력 폼 모달 -->
+<div class="modal-overlay" id="memo-modal-overlay" onclick="closeDiaryFormPanel(event)">
+    <div id="memo-form-card" onclick="event.stopPropagation()">
+        <div class="form-header-info">
+            <span id="form-target-date-title">📅 입력하기</span>
+            <button class="close-form-btn" onclick="closeDiaryFormPanel()">✖</button>
+        </div>
+        <div style="font-size: 14px; font-weight: bold; color: var(--weekday-color); margin-bottom: 6px;">📝 상세내용 및 메모(일기) 작성</div>
+        <div id="diaryText" class="diary-textarea" contenteditable="true" placeholder="여기에 내용을 입력하세요"></div>
+        <div class="btn-group" style="margin-bottom: 0;">
+            <button class="btn btn-secondary" onclick="closeDiaryFormPanel()">취소</button>
+            <button class="btn btn-primary" onclick="saveDiary()">저장</button>
+        </div>
+    </div>
+</div>
+
 <script>
-    // 기본 유틸리티 및 인터랙션 함수
-    function getTodayStr() {
-        const d = new Date();
-        return d.toISOString().split('T')[0];
+    let currentDate = new Date();
+    let selectedDate = new Date();
+
+    function formatDate(date) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
     }
 
-    let selectedViewDate = getTodayStr();
-
-    function switchMainTab(tabName) {
-        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.main-tab-btn').forEach(b => b.classList.remove('active'));
-        if(tabName === 'diary') {
-            document.getElementById('diary-panel').classList.add('active');
-            document.getElementById('tab-diary-btn').classList.add('active');
-        } else if(tabName === 'money') {
-            document.getElementById('money-panel').classList.add('active');
-            document.getElementById('tab-money-btn').classList.add('active');
-        }
-    }
-
-    function openSettingsModal() { document.getElementById('settings-modal-overlay').classList.add('active'); }
-    function closeSettingsModal() { document.getElementById('settings-modal-overlay').classList.remove('active'); }
-
-    function openFortunePopup() { document.getElementById('fortune-popup-overlay').classList.add('active'); }
-    function closeFortunePopup() { document.getElementById('fortune-popup-overlay').classList.remove('active'); }
-
-    function openSajuDetailModal() { document.getElementById('saju-detail-modal-overlay').classList.add('active'); }
-    function closeSajuDetailModal() { document.getElementById('saju-detail-modal-overlay').classList.remove('active'); }
-
-    function openDiaryForm(dateStr) { document.getElementById('memo-modal-overlay').classList.add('active'); }
-    function closeDiaryFormPanel() { document.getElementById('memo-modal-overlay').classList.remove('active'); }
-
-    function saveSajuBirthInfo() {
-        alert('생일(양력) 정보가 저장되었습니다.');
-        closeSettingsModal();
-    }
-
-    // 간단 달력 렌더링 예시
     function renderCalendar() {
+        const monthTitle = document.getElementById('cal-month-title');
         const grid = document.getElementById('cal-days-grid');
         grid.innerHTML = '';
-        for(let i=1; i<=30; i++) {
-            const cell = document.createElement('div');
-            cell.className = 'cal-cell';
-            cell.innerText = i;
-            cell.onclick = () => openDiaryForm();
-            grid.appendChild(cell);
+        
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        monthTitle.innerText = `${year}년 ${month + 1}월`;
+
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        for (let i = 0; i < firstDay; i++) {
+            grid.innerHTML += `<div class="cal-cell empty"></div>`;
         }
-        document.getElementById('cal-month-title').innerText = "2026년 8월";
+
+        const todayStr = formatDate(new Date());
+        const selectedStr = formatDate(selectedDate);
+
+        for (let i = 1; i <= daysInMonth; i++) {
+            const dateStr = formatDate(new Date(year, month, i));
+            let classes = ['cal-cell'];
+            const dayOfWeek = new Date(year, month, i).getDay();
+            
+            if (dayOfWeek === 0) classes.push('sunday');
+            if (dayOfWeek === 6) classes.push('saturday');
+            if (dateStr === todayStr) classes.push('today-date');
+            if (dateStr === selectedStr) classes.push('selected-date');
+
+            grid.innerHTML += `<div class="${classes.join(' ')}" onclick="selectDate(${year}, ${month}, ${i})">${i}</div>`;
+        }
     }
 
-    renderCalendar();
+    function changeMonth(delta) {
+        currentDate.setMonth(currentDate.getMonth() + delta);
+        renderCalendar();
+    }
+
+    function selectDate(year, month, date) {
+        selectedDate = new Date(year, month, date);
+        document.getElementById('selected-date-title').innerText = `📔 ${month + 1}월 ${date}일 다이어리`;
+        document.getElementById('form-target-date-title').innerText = `📅 ${year}년 ${month + 1}월 ${date}일`;
+        renderCalendar();
+        loadDiary();
+    }
+
+    function switchMainTab(tab) {
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.main-tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(`${tab}-panel`).classList.add('active');
+        document.getElementById(`tab-${tab}-btn`).classList.add('active');
+    }
+
+    // Modal Functions
+    function openSettingsModal() { document.getElementById('settings-modal-overlay').classList.add('active'); }
+    function closeSettingsModal(e) { if(!e || e.target.id === 'settings-modal-overlay' || !e.target) document.getElementById('settings-modal-overlay').classList.remove('active'); }
+
+    function openFortunePopup() { document.getElementById('fortune-popup-overlay').classList.add('active'); }
+    function closeFortunePopup(e) { if(!e || e.target.id === 'fortune-popup-overlay' || !e.target) document.getElementById('fortune-popup-overlay').classList.remove('active'); }
+
+    function openSajuDetailModal() { closeFortunePopup(); document.getElementById('saju-detail-modal-overlay').classList.add('active'); }
+    function closeSajuDetailModal(e) { if(!e || e.target.id === 'saju-detail-modal-overlay' || !e.target) document.getElementById('saju-detail-modal-overlay').classList.remove('active'); }
+
+    function openDiaryForm() {
+        document.getElementById('memo-modal-overlay').classList.add('active');
+        document.getElementById('diaryText').innerText = ''; 
+    }
+    function closeDiaryFormPanel(e) { 
+        if(!e || e.target.id === 'memo-modal-overlay' || !e.target) document.getElementById('memo-modal-overlay').classList.remove('active'); 
+    }
+
+    // Simple Diary Storage Simulation
+    let diaries = {};
+    function saveDiary() {
+        const text = document.getElementById('diaryText').innerText.trim();
+        const dateStr = formatDate(selectedDate);
+        if(text) {
+            diaries[dateStr] = text;
+            loadDiary();
+        }
+        closeDiaryFormPanel();
+    }
+    
+    function loadDiary() {
+        const dateStr = formatDate(selectedDate);
+        const container = document.getElementById('diary-list-container');
+        if(diaries[dateStr]) {
+            container.innerHTML = `<div class="sub-memo-item">${diaries[dateStr]}</div>`;
+        } else {
+            container.innerHTML = `<div class="empty-msg">작성된 내역이 없습니다.</div>`;
+        }
+    }
+
+    // Init
+    selectDate(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
 </script>
 </body>
 </html>
