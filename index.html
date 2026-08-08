@@ -1298,7 +1298,7 @@
 
         .photo-lightbox-overlay.active {
             display: flex;
-            touch-action: pan-y pinch-zoom;
+            touch-action: none;
         }
 
         .photo-lightbox-img {
@@ -1313,6 +1313,9 @@
             -webkit-touch-callout: none; /* 길게 눌러도 브라우저 기본 "이미지 저장" 메뉴가 뜨지 않도록 */
             -webkit-user-select: none;
             user-select: none;
+            touch-action: none; /* 브라우저 기본 제스처 대신 JS 커스텀 핀치줌/팬이 전담 처리 */
+            transform-origin: center center;
+            will-change: transform;
         }
 
         .photo-lightbox-close {
@@ -5575,12 +5578,100 @@
         }
         document.getElementById('photo-lightbox-img').src = src;
         document.getElementById('photo-lightbox-overlay').classList.add('active');
+        resetPhotoZoom();
     }
 
     function closePhotoLightbox(event) {
         if (event) event.stopPropagation();
         document.getElementById('photo-lightbox-overlay').classList.remove('active');
         document.getElementById('photo-lightbox-img').src = '';
+        resetPhotoZoom();
+    }
+
+    // ----- 🔍 사진 전용 커스텀 핀치줌/팬/더블탭 확대 (브라우저 기본 페이지줌과 무관하게 동작 - 입력폼 멈춤버그와 충돌 없음) -----
+    let photoZoomScale = 1, photoZoomX = 0, photoZoomY = 0;
+    let pzStartDist = 0, pzStartScale = 1, pzPanStartX = 0, pzPanStartY = 0, pzTouchStartX = 0, pzTouchStartY = 0;
+    let pzIsPanning = false, pzLastTapTime = 0;
+
+    function resetPhotoZoom() {
+        photoZoomScale = 1; photoZoomX = 0; photoZoomY = 0;
+        applyPhotoZoomTransform();
+    }
+    function applyPhotoZoomTransform() {
+        const img = document.getElementById('photo-lightbox-img');
+        if (img) img.style.transform = `translate(${photoZoomX}px, ${photoZoomY}px) scale(${photoZoomScale})`;
+    }
+    function pzTouchDistance(touches) {
+        const dx = touches[0].clientX - touches[1].clientX;
+        const dy = touches[0].clientY - touches[1].clientY;
+        return Math.hypot(dx, dy);
+    }
+    function initPhotoZoomHandlers() {
+        const img = document.getElementById('photo-lightbox-img');
+        if (!img) return;
+
+        img.addEventListener('touchstart', function (e) {
+            if (e.touches.length === 2) {
+                e.preventDefault();
+                pzStartDist = pzTouchDistance(e.touches);
+                pzStartScale = photoZoomScale;
+                pzIsPanning = false;
+            } else if (e.touches.length === 1) {
+                if (photoZoomScale > 1) {
+                    pzIsPanning = true;
+                    pzPanStartX = e.touches[0].clientX; pzPanStartY = e.touches[0].clientY;
+                    pzTouchStartX = photoZoomX; pzTouchStartY = photoZoomY;
+                } else {
+                    // 더블탭 감지: 2.5배 확대 ↔ 원래크기 토글
+                    const now = Date.now();
+                    if (now - pzLastTapTime < 300) {
+                        photoZoomScale = photoZoomScale > 1 ? 1 : 2.5;
+                        photoZoomX = 0; photoZoomY = 0;
+                        applyPhotoZoomTransform();
+                    }
+                    pzLastTapTime = now;
+                }
+            }
+        }, { passive: false });
+
+        img.addEventListener('touchmove', function (e) {
+            if (e.touches.length === 2) {
+                e.preventDefault();
+                const dist = pzTouchDistance(e.touches);
+                if (pzStartDist > 0) {
+                    photoZoomScale = Math.min(4, Math.max(1, pzStartScale * (dist / pzStartDist)));
+                    applyPhotoZoomTransform();
+                }
+            } else if (e.touches.length === 1 && pzIsPanning) {
+                e.preventDefault();
+                const dx = e.touches[0].clientX - pzPanStartX;
+                const dy = e.touches[0].clientY - pzPanStartY;
+                photoZoomX = pzTouchStartX + dx;
+                photoZoomY = pzTouchStartY + dy;
+                applyPhotoZoomTransform();
+            }
+        }, { passive: false });
+
+        img.addEventListener('touchend', function (e) {
+            if (e.touches.length < 2) pzStartDist = 0;
+            if (e.touches.length === 0) {
+                pzIsPanning = false;
+                if (photoZoomScale <= 1) { photoZoomScale = 1; photoZoomX = 0; photoZoomY = 0; applyPhotoZoomTransform(); }
+            }
+        });
+    }
+
+    // 수정 폼의 작은 미리보기 사진: 두 손가락으로 터치하는 순간 바로 확대뷰어를 열어줌
+    // (사용자들이 사진이 작을 때 본능적으로 바로 핀치줌부터 시도하는 습관을 반영)
+    function initPhotoPreviewPinchOpen() {
+        const previewImg = document.getElementById('image-preview');
+        if (!previewImg) return;
+        previewImg.addEventListener('touchstart', function (e) {
+            if (e.touches && e.touches.length >= 2 && editingDiaryId && currentPhotoBase64) {
+                e.preventDefault();
+                openPhotoLightbox(currentPhotoBase64);
+            }
+        }, { passive: false });
     }
 
     // 현재 편집 중인 사진(currentPhotoBase64)을 저장/삭제하고, 다이어리 항목에 넣을 "키"를 반환
@@ -5962,6 +6053,10 @@
         sajuRecomputeFromBirthInfo();
         updateFortuneTeaser();
         maybeAutoShowFortunePopup();
+
+        // 📷 사진 확대뷰어 핀치줌/팬 + 미리보기 두손가락 즉시열기 핸들러 등록
+        initPhotoZoomHandlers();
+        initPhotoPreviewPinchOpen();
     };
 
     let csRowSeq = 0;
