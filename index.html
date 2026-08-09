@@ -918,6 +918,28 @@
         .sd-life-keyword { font-size: 14px; font-weight: 800; margin-bottom: 6px; }
         .sd-life-text { font-size: 14.5px; line-height: 1.65; color: #5B5346; }
 
+        /* ❤️ 건강 기록 보기 */
+        .hs-period-row { display: flex; gap: 6px; margin-bottom: 14px; }
+        .hs-period-btn {
+            flex: 1; padding: 8px; border-radius: 10px; border: 1px solid var(--border-color);
+            background: #fff; color: var(--text-sub); font-size: 13px; font-weight: 700; cursor: pointer;
+        }
+        .hs-period-btn.active { background: #c2455a; border-color: #c2455a; color: #fff; }
+        .hs-chart-block { margin-bottom: 14px; }
+        .hs-chart-title { font-size: 12.5px; font-weight: 700; color: #5B5346; margin-bottom: 6px; }
+        .hs-chart-empty { font-size: 13px; color: #A99D89; text-align: center; padding: 20px 0; }
+        .hs-med-summary-box {
+            display: flex; gap: 10px; background: rgba(0,0,0,0.03); border-radius: 12px; padding: 10px 12px; margin-top: 4px;
+        }
+        .hs-med-item { flex: 1; text-align: center; }
+        .hs-med-rate { font-size: 18px; font-weight: 800; color: #c2455a; }
+        .hs-med-label { font-size: 11px; color: #8A8071; margin-top: 2px; }
+        .hs-list-row {
+            display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.06); font-size: 13px;
+        }
+        .hs-list-date { width: 62px; flex-shrink: 0; color: #8A8071; font-size: 12px; }
+        .hs-list-vals { flex: 1; display: flex; flex-wrap: wrap; gap: 6px; }
+
         /* 팝업 모달 스타일 */
         .modal-overlay {
             display: none;
@@ -1060,6 +1082,41 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
+        }
+
+        /* ❤️ 건강 기록 입력 (혈압/혈당/복약) */
+        .health-input-box {
+            background: #fdf0f2;
+            border: 1px solid #f3c6cd;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .health-input-header {
+            display: flex; align-items: center; justify-content: space-between;
+            font-size: 14px; font-weight: bold; color: #c2455a; cursor: pointer;
+        }
+        #health-input-body { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+        .health-row { display: flex; align-items: center; gap: 6px; }
+        .health-row-label { width: 32px; font-size: 13px; color: var(--text-sub); flex-shrink: 0; }
+        .health-num-input {
+            width: 64px; padding: 7px 6px; border: 1px solid var(--border-color); border-radius: 6px;
+            font-size: 15px; text-align: center; background: #fff;
+        }
+        .health-sep { color: var(--text-sub); }
+        .health-unit { font-size: 12px; color: var(--text-sub); white-space: nowrap; }
+        .health-select {
+            padding: 6px 4px; border: 1px solid var(--border-color); border-radius: 6px;
+            font-size: 13px; background: #fff;
+        }
+        .health-med-row { gap: 16px; margin-top: 2px; }
+        .health-med-chk { display: flex; align-items: center; gap: 5px; font-size: 13.5px; color: var(--text-sub); cursor: pointer; }
+
+        /* ❤️ 목록에 표시되는 건강 배지 */
+        .health-badge-row { display: flex; flex-wrap: wrap; gap: 5px; margin: 4px 0; }
+        .health-badge {
+            display: inline-block; font-size: 11.5px; font-weight: 600; color: #c2455a;
+            background: #fdf0f2; border: 1px solid #f3c6cd; border-radius: 999px; padding: 2px 8px;
         }
 
         .money-input-row {
@@ -1506,6 +1563,7 @@
         <div class="card sub-feature-card" id="diary-around-today-card">
             <div class="feature-title">
                 <span id="selected-date-title">📔 다이어리</span>
+                <button type="button" class="quick-photo-btn" id="health-stats-open-btn" onclick="openHealthStatsModal()" title="건강 기록 보기">❤️</button>
                 <button type="button" class="quick-photo-btn" id="quick-photo-btn" onclick="triggerQuickPhoto()" title="바로 사진 찍기">📷</button>
                 <input type="file" id="quick-photo-input" accept="image/*" capture="environment" style="display:none;" onchange="handleQuickPhotoCapture(event)">
             </div>
@@ -1787,6 +1845,25 @@
     </div>
 </div>
 
+<!-- ❤️ 건강 기록 보기 -->
+<div class="modal-overlay" id="health-stats-modal-overlay" onclick="handleHealthStatsModalBackgroundClick(event)">
+    <div class="saju-detail-card" id="health-stats-card" onclick="event.stopPropagation()">
+        <button class="close-form-btn" style="position:absolute; top:14px; right:14px;" onclick="closeHealthStatsModal()">✖</button>
+        <div class="sd-title" style="margin-bottom:14px;">❤️ 건강 기록</div>
+
+        <div class="hs-period-row">
+            <button class="hs-period-btn active" id="hs-period-14" onclick="setHealthStatsPeriod(14)">2주</button>
+            <button class="hs-period-btn" id="hs-period-30" onclick="setHealthStatsPeriod(30)">1개월</button>
+            <button class="hs-period-btn" id="hs-period-90" onclick="setHealthStatsPeriod(90)">3개월</button>
+        </div>
+
+        <div id="hs-chart-area"></div>
+        <div id="hs-med-summary"></div>
+        <div id="hs-list-title" style="font-size:12px; color:#8A8071; font-weight:700; margin:14px 0 8px;">최근 기록</div>
+        <div id="hs-list-area"></div>
+    </div>
+</div>
+
 <!-- 🎲 로또추첨기 도구 -->
 <div class="modal-overlay" id="lotto-draw-modal-overlay" onclick="handleLottoDrawModalBackgroundClick(event)">
     <div class="fortune-popup-card" id="lotto-draw-card" onclick="event.stopPropagation()">
@@ -1863,6 +1940,36 @@
                     💳 카드결제 (대기중 - 결제일에 따로 정산)
                 </label>
                 <input type="text" id="card-pending-name-input" placeholder="카드명 (예: 국민카드)" style="display:none; width:100%; margin-top:6px; padding:6px; border:1px solid var(--border-color); border-radius:6px; font-size:16px; box-sizing:border-box;">
+            </div>
+        </div>
+
+        <!-- ❤️ 건강 기록 입력 영역: 다이어리/가계부 모드 공통, 선택사항, 기본은 접힌 상태 -->
+        <div class="health-input-box" id="health-input-section">
+            <div class="health-input-header" onclick="toggleHealthSection()">
+                <span>❤️ 오늘의 건강 (선택사항)</span>
+                <span id="health-toggle-icon">▼</span>
+            </div>
+            <div id="health-input-body" style="display:none;">
+                <div class="health-row">
+                    <label class="health-row-label">혈압</label>
+                    <input type="number" inputmode="numeric" id="health-systolic" class="health-num-input" placeholder="수축기" onfocus="scrollToInput(this)">
+                    <span class="health-sep">/</span>
+                    <input type="number" inputmode="numeric" id="health-diastolic" class="health-num-input" placeholder="이완기" onfocus="scrollToInput(this)">
+                    <span class="health-unit">mmHg</span>
+                </div>
+                <div class="health-row">
+                    <label class="health-row-label">혈당</label>
+                    <input type="number" inputmode="numeric" id="health-glucose" class="health-num-input" placeholder="수치" style="flex:1;" onfocus="scrollToInput(this)">
+                    <span class="health-unit">mg/dL</span>
+                    <select id="health-glucose-type" class="health-select">
+                        <option value="공복">공복</option>
+                        <option value="식후">식후</option>
+                    </select>
+                </div>
+                <div class="health-row health-med-row">
+                    <label class="health-med-chk"><input type="checkbox" id="health-med-morning"> 💊 아침 약</label>
+                    <label class="health-med-chk"><input type="checkbox" id="health-med-evening"> 💊 저녁 약</label>
+                </div>
             </div>
         </div>
 
@@ -3019,6 +3126,7 @@
     const fortunePopupOverlay = document.getElementById('fortune-popup-overlay');
     const sajuDetailModalOverlay = document.getElementById('saju-detail-modal-overlay');
     const lottoDrawModalOverlay = document.getElementById('lotto-draw-modal-overlay');
+    const healthStatsModalOverlay = document.getElementById('health-stats-modal-overlay');
     const tabDiaryBtn = document.getElementById('tab-diary-btn');
     const tabMoneyBtn = document.getElementById('tab-money-btn');
     const tabSettingsBtn = document.getElementById('tab-settings-btn');
@@ -4144,6 +4252,7 @@
             let timeBadgeInline = item.time ? `⏰ ${item.time}` : '';
             let textContentHTML = item.text ? `<div class="diary-text">${item.text}</div>` : '';
             let photoHTML = renderPhotoHTML(item);
+            let healthHTML = renderHealthBadgeHTML(item);
             subItem.classList.add(item.photo ? 'has-photo' : 'no-photo');
 
             subItem.innerHTML = `
@@ -4155,6 +4264,7 @@
                     </div>
                 </div>
                 ${headerHTML}
+                ${healthHTML}
                 ${textContentHTML}
                 ${photoHTML}
             `;
@@ -4311,6 +4421,7 @@
             let timeBadgeInline = item.time ? `⏰ ${item.time}` : '';
             let textContentHTML = item.text ? `<div class="diary-text">${item.text}</div>` : '';
             let photoHTML = renderPhotoHTML(item);
+            let healthHTML = renderHealthBadgeHTML(item);
             subItem.classList.add(item.photo ? 'has-photo' : 'no-photo');
 
             subItem.innerHTML = `
@@ -4322,6 +4433,7 @@
                     </div>
                 </div>
                 ${headerHTML}
+                ${healthHTML}
                 ${textContentHTML}
                 ${photoHTML}
             `;
@@ -4886,6 +4998,122 @@
         if (event.target === sajuDetailModalOverlay) closeSajuDetailModal();
     }
 
+    // ===================== ❤️ 건강 기록 보기 =====================
+    let healthStatsPeriodDays = 14;
+
+    function openHealthStatsModal() {
+        renderHealthStats();
+        if (healthStatsModalOverlay) healthStatsModalOverlay.classList.add('active');
+        lockBodyScroll();
+    }
+    function closeHealthStatsModal() {
+        if (healthStatsModalOverlay) healthStatsModalOverlay.classList.remove('active');
+        unlockBodyScroll();
+    }
+    function handleHealthStatsModalBackgroundClick(event) {
+        if (event.target === healthStatsModalOverlay) closeHealthStatsModal();
+    }
+    function setHealthStatsPeriod(days) {
+        healthStatsPeriodDays = days;
+        [14, 30, 90].forEach(d => {
+            const btn = document.getElementById(`hs-period-${d}`);
+            if (btn) btn.classList.toggle('active', d === days);
+        });
+        renderHealthStats();
+    }
+
+    function getHealthEntriesInPeriod(days) {
+        const all = getAllDiaries();
+        const cutoff = new Date();
+        cutoff.setHours(0, 0, 0, 0);
+        cutoff.setDate(cutoff.getDate() - (days - 1));
+        return all
+            .filter(item => item.health && normalizeDateStr(item.date))
+            .filter(item => {
+                const d = parseDateObj(normalizeDateStr(item.date));
+                return d >= cutoff;
+            })
+            .sort((a, b) => normalizeDateStr(a.date).localeCompare(normalizeDateStr(b.date)));
+    }
+
+    function hsBuildLineChart(points, opts) {
+        // points: [{x: dateStr, y: number}], opts: {color, unit, title}
+        if (points.length === 0) {
+            return `<div class="hs-chart-block"><div class="hs-chart-title">${opts.title}</div><div class="hs-chart-empty">아직 기록이 없어요</div></div>`;
+        }
+        const W = 300, H = 110, PAD = 10;
+        const values = points.map(p => p.y);
+        const min = Math.min(...values), max = Math.max(...values);
+        const range = Math.max(1, max - min);
+        const stepX = points.length > 1 ? (W - PAD * 2) / (points.length - 1) : 0;
+        const coords = points.map((p, i) => ({
+            x: PAD + i * stepX,
+            y: PAD + (1 - (p.y - min) / range) * (H - PAD * 2)
+        }));
+        let path = `M ${coords[0].x} ${coords[0].y}`;
+        for (let i = 1; i < coords.length; i++) path += ` L ${coords[i].x} ${coords[i].y}`;
+        const dots = coords.map(c => `<circle cx="${c.x}" cy="${c.y}" r="3" fill="${opts.color}" />`).join('');
+        const last = points[points.length - 1];
+        return `
+            <div class="hs-chart-block">
+                <div class="hs-chart-title">${opts.title} <span style="color:${opts.color}; font-weight:800;">최근 ${last.y}${opts.unit}</span></div>
+                <svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;">
+                    <path d="${path}" fill="none" stroke="${opts.color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                    ${dots}
+                </svg>
+            </div>`;
+    }
+
+    function renderHealthStats() {
+        const entries = getHealthEntriesInPeriod(healthStatsPeriodDays);
+        const chartArea = document.getElementById('hs-chart-area');
+        const medArea = document.getElementById('hs-med-summary');
+        const listArea = document.getElementById('hs-list-area');
+        if (!chartArea || !medArea || !listArea) return;
+
+        // 혈압(수축기 기준 추이) 차트
+        const bpPoints = entries.filter(e => e.health.systolic).map(e => ({
+            x: normalizeDateStr(e.date), y: e.health.systolic
+        }));
+        // 혈당 추이 차트
+        const glucosePoints = entries.filter(e => e.health.glucose).map(e => ({
+            x: normalizeDateStr(e.date), y: e.health.glucose
+        }));
+
+        chartArea.innerHTML =
+            hsBuildLineChart(bpPoints, { color: '#c2455a', unit: '', title: '🩺 혈압 추이(수축기)' }) +
+            hsBuildLineChart(glucosePoints, { color: '#4C7FD1', unit: '', title: '🩸 혈당 추이' });
+
+        // 복약률
+        const medEntries = entries.filter(e => e.health.medMorning || e.health.medEvening || 'medMorning' in e.health || 'medEvening' in e.health);
+        const totalDays = entries.length;
+        const morningCount = entries.filter(e => e.health.medMorning).length;
+        const eveningCount = entries.filter(e => e.health.medEvening).length;
+        if (totalDays > 0 && (morningCount > 0 || eveningCount > 0)) {
+            const morningRate = Math.round((morningCount / totalDays) * 100);
+            const eveningRate = Math.round((eveningCount / totalDays) * 100);
+            medArea.innerHTML = `
+                <div class="hs-med-summary-box">
+                    <div class="hs-med-item"><div class="hs-med-rate">${morningRate}%</div><div class="hs-med-label">아침약 복용률</div></div>
+                    <div class="hs-med-item"><div class="hs-med-rate">${eveningRate}%</div><div class="hs-med-label">저녁약 복용률</div></div>
+                </div>`;
+        } else {
+            medArea.innerHTML = '';
+        }
+
+        // 최근 기록 리스트 (최신순)
+        if (entries.length === 0) {
+            listArea.innerHTML = `<div class="hs-chart-empty">이 기간에는 기록이 없어요</div>`;
+        } else {
+            listArea.innerHTML = entries.slice().reverse().slice(0, 30).map(e => {
+                const d = parseDateObj(normalizeDateStr(e.date));
+                const dateLabel = `${d.getMonth() + 1}/${d.getDate()}`;
+                const badges = renderHealthBadgeHTML(e).replace('<div class="health-badge-row">', '').replace('</div>', '');
+                return `<div class="hs-list-row"><div class="hs-list-date">${dateLabel}</div><div class="hs-list-vals">${badges}</div></div>`;
+            }).join('');
+        }
+    }
+
     // ===================== 🎲 로또추첨기 도구 =====================
     let ldtGames = [];
     let ldtFavs = [];
@@ -5252,6 +5480,66 @@
 
     // mode: 'diary'(다이어리 입력폼) 또는 'money'(가계부 입력폼). 명시적으로 안 넘기면
     // 수정(기존 항목)일 때는 항목 종류로, 새 입력일 때는 현재 보고 있는 탭(다이어리/가계부)으로 자동 판단
+    function toggleHealthSection() {
+        const body = document.getElementById('health-input-body');
+        const icon = document.getElementById('health-toggle-icon');
+        if (!body) return;
+        const isOpen = body.style.display !== 'none';
+        body.style.display = isOpen ? 'none' : 'flex';
+        if (icon) icon.textContent = isOpen ? '▼' : '▲';
+    }
+
+    function resetHealthInputFields() {
+        const ids = ['health-systolic', 'health-diastolic', 'health-glucose'];
+        ids.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+        const glucoseTypeEl = document.getElementById('health-glucose-type');
+        if (glucoseTypeEl) glucoseTypeEl.value = '공복';
+        const medM = document.getElementById('health-med-morning');
+        const medE = document.getElementById('health-med-evening');
+        if (medM) medM.checked = false;
+        if (medE) medE.checked = false;
+        const body = document.getElementById('health-input-body');
+        const icon = document.getElementById('health-toggle-icon');
+        if (body) body.style.display = 'none';
+        if (icon) icon.textContent = '▼';
+    }
+
+    function populateHealthInputFields(healthObj) {
+        resetHealthInputFields();
+        if (!healthObj) return;
+        if (healthObj.systolic) document.getElementById('health-systolic').value = healthObj.systolic;
+        if (healthObj.diastolic) document.getElementById('health-diastolic').value = healthObj.diastolic;
+        if (healthObj.glucose) document.getElementById('health-glucose').value = healthObj.glucose;
+        if (healthObj.glucoseType) document.getElementById('health-glucose-type').value = healthObj.glucoseType;
+        document.getElementById('health-med-morning').checked = !!healthObj.medMorning;
+        document.getElementById('health-med-evening').checked = !!healthObj.medEvening;
+        // 저장된 값이 하나라도 있으면 입력폼을 열어서 바로 보이게 함
+        const hasAny = healthObj.systolic || healthObj.diastolic || healthObj.glucose || healthObj.medMorning || healthObj.medEvening;
+        if (hasAny) {
+            document.getElementById('health-input-body').style.display = 'flex';
+            document.getElementById('health-toggle-icon').textContent = '▲';
+        }
+    }
+
+    function collectHealthInputValue() {
+        const sysVal = document.getElementById('health-systolic').value.trim();
+        const diaVal = document.getElementById('health-diastolic').value.trim();
+        const glucoseVal = document.getElementById('health-glucose').value.trim();
+        const glucoseType = document.getElementById('health-glucose-type').value;
+        const medMorning = document.getElementById('health-med-morning').checked;
+        const medEvening = document.getElementById('health-med-evening').checked;
+
+        if (!sysVal && !diaVal && !glucoseVal && !medMorning && !medEvening) return null;
+        return {
+            systolic: sysVal ? Number(sysVal) : null,
+            diastolic: diaVal ? Number(diaVal) : null,
+            glucose: glucoseVal ? Number(glucoseVal) : null,
+            glucoseType: glucoseVal ? glucoseType : null,
+            medMorning: medMorning,
+            medEvening: medEvening
+        };
+    }
+
     function openDiaryForm(dateStr, existingItem = null, mode = null) {
         stopVoiceRecording();
         selectedReservationDate = normalizeDateStr(dateStr);
@@ -5300,6 +5588,7 @@
                 if (cardPendingCheckbox) { cardPendingCheckbox.checked = false; onCardPendingToggle(); }
                 if (cardPendingNameInput) cardPendingNameInput.value = '';
             }
+            populateHealthInputFields(existingItem.health || null);
         } else {
             textOutput.innerHTML = '';
             if (moneyNoteInput) moneyNoteInput.value = '';
@@ -5310,6 +5599,7 @@
             moneyAmountInput.value = '';
             if (cardPendingCheckbox) { cardPendingCheckbox.checked = false; onCardPendingToggle(); }
             if (cardPendingNameInput) cardPendingNameInput.value = '';
+            resetHealthInputFields();
         }
 
         updatePhotoPreview();
@@ -5392,6 +5682,7 @@
             const timeBadgeInline = item.time ? `⏰ ${item.time}` : '';
             const textContentHTML = item.text ? `<div class="diary-text">${item.text}</div>` : '';
             const photoHTML = renderPhotoHTML(item);
+            const healthHTML = renderHealthBadgeHTML(item);
 
             const itemBox = document.createElement('div');
             itemBox.className = 'sub-memo-item memo-only-box' + (item.photo ? ' has-photo' : ' no-photo');
@@ -5405,6 +5696,7 @@
                         <button class="delete-btn" onclick="event.stopPropagation(); deleteDiary('${item.id}')">삭제</button>
                     </div>
                 </div>
+                ${healthHTML}
                 ${textContentHTML}
                 ${photoHTML}
             `;
@@ -5468,6 +5760,7 @@
             const timeBadgeInline = item.time ? `⏰ ${item.time}` : '';
             const textContentHTML = item.text ? `<div class="diary-text">${item.text}</div>` : '';
             const photoHTML = renderPhotoHTML(item);
+            const healthHTML = renderHealthBadgeHTML(item);
 
             const itemBox = document.createElement('div');
             itemBox.className = 'sub-memo-item money-item-box' + (isExp ? ' is-expense' : '') + (item.photo ? ' has-photo' : ' no-photo');
@@ -5482,6 +5775,7 @@
                     </div>
                 </div>
                 ${headerHTML}
+                ${healthHTML}
                 ${textContentHTML}
                 ${photoHTML}
             `;
@@ -5559,6 +5853,19 @@
         // 혹시 아직 마이그레이션되지 않은 옛날 데이터(원본 base64가 그대로 남아있는 경우) 호환 처리
         if (photoKeyOrData.indexOf('data:image') === 0) return photoKeyOrData;
         return photoCache[photoKeyOrData] || '';
+    }
+
+    // ❤️ 건강 기록(혈압/혈당/복약) 배지 - 판정/색상 없이 입력한 수치만 그대로 표시
+    function renderHealthBadgeHTML(item) {
+        const h = item.health;
+        if (!h) return '';
+        const parts = [];
+        if (h.systolic && h.diastolic) parts.push(`<span class="health-badge">🩺 ${h.systolic}/${h.diastolic}</span>`);
+        if (h.glucose) parts.push(`<span class="health-badge">🩸 ${h.glucose}${h.glucoseType ? ' (' + h.glucoseType + ')' : ''}</span>`);
+        if (h.medMorning) parts.push(`<span class="health-badge">💊 아침약</span>`);
+        if (h.medEvening) parts.push(`<span class="health-badge">💊 저녁약</span>`);
+        if (parts.length === 0) return '';
+        return `<div class="health-badge-row">${parts.join('')}</div>`;
     }
 
     // 📷 사진만 표시 (확대보기/저장 기능은 수정폼으로 옮김 - 메인 목록에서는 항목을 터치하면 바로 수정폼이 열림)
@@ -5848,7 +6155,9 @@
             };
         }
 
-        if (!content && !currentPhotoBase64 && !moneyObj) {
+        const healthObj = collectHealthInputValue();
+
+        if (!content && !currentPhotoBase64 && !moneyObj && !healthObj) {
             if (currentFormMode === 'money') {
                 alert('가계부 금액을 입력해주세요.');
             } else {
@@ -5869,7 +6178,7 @@
         if (editingDiaryId) {
             diaries = diaries.map(item => {
                 if (item.id === editingDiaryId) {
-                    return { ...item, text: content, time: timeVal, photo: photoKey, money: moneyObj };
+                    return { ...item, text: content, time: timeVal, photo: photoKey, money: moneyObj, health: healthObj };
                 }
                 return item;
             });
@@ -5880,7 +6189,8 @@
                 time: timeVal,
                 text: content,
                 photo: photoKey,
-                money: moneyObj
+                money: moneyObj,
+                health: healthObj
             };
             diaries.push(newItem);
         }
