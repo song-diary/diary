@@ -1112,6 +1112,18 @@
         .health-med-row { gap: 16px; margin-top: 2px; }
         .health-med-chk { display: flex; align-items: center; gap: 5px; font-size: 13.5px; color: var(--text-sub); cursor: pointer; }
 
+        /* 📅 날짜 수정 입력란 */
+        .form-date-row {
+            display: flex; align-items: center; gap: 8px;
+            margin-bottom: 10px; padding: 8px 10px;
+            background: rgba(0,0,0,0.03); border-radius: 8px;
+        }
+        .form-date-label { font-size: 13.5px; font-weight: bold; color: var(--text-sub); flex-shrink: 0; }
+        #form-date-input {
+            flex: 1; padding: 7px 8px; border: 1px solid var(--border-color); border-radius: 6px;
+            font-size: 15px; background: #fff; color: var(--text-color);
+        }
+
         /* ❤️ 목록에 표시되는 건강 배지 */
         .health-badge-row { display: flex; flex-wrap: wrap; gap: 5px; margin: 4px 0; }
         .health-badge {
@@ -1812,6 +1824,14 @@
                 </div>
             </div>
 
+            <div class="settings-section">
+                <label>❤️ 건강 기록</label>
+                <div style="display: flex; align-items:center; gap:6px;">
+                    <input type="checkbox" id="settings-show-health" checked onchange="onShowHealthToggle()" style="width:15px; height:15px;">
+                    <label for="settings-show-health" style="font-size:14px; font-weight:normal; color: var(--text-sub);">일기 입력 시 혈압/혈당/복약 기록 사용</label>
+                </div>
+            </div>
+
             <div class="settings-section" style="padding-top: 5px;">
                 <button class="action-btn" style="background-color: var(--accent-today); width:100%; font-size:14px; padding:6px;" onclick="resetAllData()">⚠️ 데이터 초기화 (새로 시작)</button>
             </div>
@@ -1971,6 +1991,12 @@
                     <label class="health-med-chk"><input type="checkbox" id="health-med-evening"> 💊 저녁 약</label>
                 </div>
             </div>
+        </div>
+
+        <!-- 📅 날짜 수정 입력란: 건강 섹션 바로 아래 위치 -->
+        <div class="form-date-row" id="form-date-row">
+            <label class="form-date-label" for="form-date-input">📅 날짜</label>
+            <input type="date" id="form-date-input" onchange="onFormDateInputChanged()">
         </div>
 
         <!-- 📔 다이어리(메모/사진) 입력 영역: 다이어리_입력폼 모드에서만 표시 -->
@@ -4653,6 +4679,8 @@
     function openSettingsModal() {
         renderCategorySettingsList();
         populateSajuSettingsFields();
+        const healthChk = document.getElementById('settings-show-health');
+        if (healthChk) healthChk.checked = getShowHealth();
         if (settingsModalOverlay) settingsModalOverlay.classList.add('active');
         lockBodyScroll();
     }
@@ -4770,6 +4798,23 @@
     function onShowLottoToggle() {
         const checked = document.getElementById('saju-show-lotto').checked;
         localStorage.setItem('smartDiaryShowLotto', checked ? 'true' : 'false');
+    }
+
+    // ❤️ 건강 기록 입력 사용 여부 (설정에서 켜고 끌 수 있음, 기본값 true)
+    function getShowHealth() {
+        return localStorage.getItem('smartDiaryShowHealth') !== 'false';
+    }
+    function onShowHealthToggle() {
+        const checked = document.getElementById('settings-show-health').checked;
+        localStorage.setItem('smartDiaryShowHealth', checked ? 'true' : 'false');
+        applyShowHealthVisibility();
+    }
+    function applyShowHealthVisibility() {
+        const show = getShowHealth();
+        const inputSection = document.getElementById('health-input-section');
+        if (inputSection) inputSection.style.display = show ? '' : 'none';
+        const statsBtn = document.getElementById('health-stats-open-btn');
+        if (statsBtn) statsBtn.style.display = show ? '' : 'none';
     }
 
     function onSajuTimeUnknownToggle() {
@@ -5540,6 +5585,26 @@
         };
     }
 
+    function onFormDateInputChanged() {
+        const input = document.getElementById('form-date-input');
+        if (!input || !input.value) return;
+        selectedReservationDate = normalizeDateStr(input.value);
+
+        const dObj = parseDateObj(selectedReservationDate);
+        const dayName = getDayOfWeekStr(selectedReservationDate);
+        const modeLabel = currentFormMode === 'money' ? '💰 가계부' : '📔 다이어리';
+        if (formTargetDateTitle) {
+            formTargetDateTitle.innerHTML = `${modeLabel} · ${dObj.getFullYear()}년 ${dObj.getMonth() + 1}월 ${dObj.getDate()}일 (${dayName})`;
+        }
+        const reservationBoxEl = document.getElementById('reservation-box');
+        if (reservationBoxEl) {
+            reservationBoxEl.style.display = isFutureDate(selectedReservationDate) ? 'flex' : 'none';
+            if (isFutureDate(selectedReservationDate) && !reservationTimeInput.value) {
+                reservationTimeInput.value = '08:00';
+            }
+        }
+    }
+
     function openDiaryForm(dateStr, existingItem = null, mode = null) {
         stopVoiceRecording();
         selectedReservationDate = normalizeDateStr(dateStr);
@@ -5560,6 +5625,9 @@
         const modeLabel = effectiveMode === 'money' ? '💰 가계부' : '📔 다이어리';
 
         formTargetDateTitle.innerHTML = `${modeLabel} · ${dObj.getFullYear()}년 ${dObj.getMonth() + 1}월 ${dObj.getDate()}일 (${dayName})`;
+
+        const formDateInputEl = document.getElementById('form-date-input');
+        if (formDateInputEl) formDateInputEl.value = selectedReservationDate;
 
         // ⏰ 예약(미래 날짜)일 때만 시간 입력란을 표시
         const reservationBoxEl = document.getElementById('reservation-box');
@@ -5674,7 +5742,7 @@
         }
 
         if (filtered.length === 0) {
-            listEl.innerHTML = `<div style="font-size: var(--memo-font-size); color: var(--text-sub); text-align: center; padding: 22px 10px;">✏️ 입력 버튼을 눌러 작성해보세요</div>`;
+            listEl.innerHTML = `<div class="empty-state-hint" onclick="openDiaryForm('${dateStr}')" style="font-size: var(--memo-font-size); color: var(--text-sub); text-align: center; padding: 22px 10px; cursor:pointer;">✏️ 입력 버튼을 눌러 작성해보세요</div>`;
             return;
         }
 
@@ -5741,7 +5809,7 @@
         filtered.sort((a, b) => (b.time || '').localeCompare(a.time || ''));
 
         if (filtered.length === 0) {
-            listEl.innerHTML = `<div style="font-size: var(--memo-font-size); color: var(--text-sub); text-align: center; padding: 22px 10px;">💰 입력 버튼을 눌러 가계부 내역을 작성해보세요</div>`;
+            listEl.innerHTML = `<div class="empty-state-hint" onclick="openDiaryForm('${dateStr}', null, 'money')" style="font-size: var(--memo-font-size); color: var(--text-sub); text-align: center; padding: 22px 10px; cursor:pointer;">💰 입력 버튼을 눌러 가계부 내역을 작성해보세요</div>`;
             return;
         }
 
@@ -6367,6 +6435,7 @@
         // 📷 사진 확대뷰어 핀치줌/팬 + 미리보기 두손가락 즉시열기 핸들러 등록
         initPhotoZoomHandlers();
         initPhotoPreviewPinchOpen();
+        applyShowHealthVisibility();
     };
 
     let csRowSeq = 0;
