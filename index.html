@@ -848,6 +848,8 @@
             border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; cursor: pointer;
         }
         .fp-exit-btn:active { background: rgba(255,255,255,0.12); }
+        .fp-exit-btn.exit-btn-light { color: #6B6357; background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.12); }
+        .fp-exit-btn.exit-btn-light:active { background: rgba(0,0,0,0.08); }
 
         /* ----- 🎲 로또추첨기 도구 ----- */
         .ldt-fav-box { margin-top: 16px; }
@@ -1555,7 +1557,7 @@
     <!-- 🧭 메인 탭 바: 설정 / 다이어리 / 가계부 / 입력 -->
     <div class="card main-tab-bar">
         <button class="main-tab-btn settings-tab-btn" id="tab-settings-btn" onclick="openSettingsModal()" title="설정">
-            <span class="tab-icon">☰</span>
+            <span class="tab-icon">⚙️</span>
         </button>
         <button class="main-tab-btn" id="tab-diary-btn" onclick="switchMainTab('diary')">
             <span class="tab-icon">📔</span>다이어리
@@ -1835,6 +1837,7 @@
             <div class="settings-section" style="padding-top: 5px;">
                 <button class="action-btn" style="background-color: var(--accent-today); width:100%; font-size:14px; padding:6px;" onclick="resetAllData()">⚠️ 데이터 초기화 (새로 시작)</button>
             </div>
+            <div class="fp-exit-btn exit-btn-light" onclick="closeSettingsModal()">종료</div>
         </div>
     </div>
 
@@ -1862,6 +1865,7 @@
             <div class="sd-dm-desc" id="sd-dm-desc">-</div>
         </div>
         <div id="sd-life-stages"></div>
+        <div class="fp-exit-btn exit-btn-light" onclick="closeSajuDetailModal()">종료</div>
     </div>
 </div>
 
@@ -5036,7 +5040,9 @@
 
     function closeSajuDetailModal() {
         if (sajuDetailModalOverlay) sajuDetailModalOverlay.classList.remove('active');
+        // 전 단계인 '오늘의 운세' 팝업으로 되돌아감 (잠금을 먼저 풀어야 카운트가 어긋나지 않음)
         unlockBodyScroll();
+        openFortunePopup();
     }
 
     function handleSajuDetailModalBackgroundClick(event) {
@@ -5205,6 +5211,7 @@
     function closeLottoDrawModal() {
         if (lottoDrawModalOverlay) lottoDrawModalOverlay.classList.remove('active');
         // X를 눌러도 완전히 나가지 않고, 한 단계 뒤인 '오늘의 운세' 팝업으로 되돌아감
+        unlockBodyScroll(); // 로또 모달 잠금을 먼저 풀어야 다음 잠금 카운트가 어긋나지 않음
         openFortunePopup();
     }
 
