@@ -899,6 +899,20 @@
             background: rgba(255,255,255,0.08); color: #F2EFFF; font-size: 14px; font-weight: 700; text-align: center;
         }
         .ldt-small-note { font-size: 11.5px; color: rgba(242,239,255,0.4); text-align: center; margin-top: 14px; line-height: 1.6; }
+
+        .ldt-week-box {
+            margin-top: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px; padding: 12px 14px;
+        }
+        .ldt-week-title { font-size: 12.5px; font-weight: 700; color: #F2EFFF; margin-bottom: 10px; }
+        .ldt-week-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+        .ldt-week-day { width: 22px; flex-shrink: 0; font-size: 12.5px; font-weight: 700; color: #C7B8FF; }
+        .ldt-week-day.is-today { color: #FFD98E; }
+        .ldt-week-balls { display: flex; gap: 4px; flex-wrap: wrap; }
+        .ldt-mini-ball {
+            width: 22px; height: 22px; font-size: 10px;
+        }
+        .ldt-week-empty { font-size: 12px; color: rgba(242,239,255,0.3); }
         .fp-cta {
             width: 100%; margin-top: 16px; padding: 13px; border: none; border-radius: 12px;
             background: linear-gradient(120deg, #FFD98E, #FF9AC2); color: #23163A; font-weight: 800; font-size: 16px; cursor: pointer;
@@ -1936,6 +1950,11 @@
 
         <div id="ldt-results"></div>
 
+        <div class="ldt-week-box">
+            <div class="ldt-week-title">📅 이번주 모아보기 <span style="font-weight:400; opacity:0.6;">(월요일마다 초기화)</span></div>
+            <div id="ldt-week-area"></div>
+        </div>
+
         <div class="ldt-control-row">
             <select id="ldt-game-count" class="ldt-select">
                 <option value="1">1게임씩</option>
@@ -2972,10 +2991,20 @@
         return '#B0D840';
     }
     // seedStr: 오늘 날짜/일진/생년월일 등으로 구성된 문자열 → 하루 동안은 항상 같은 번호, 다음날은 자동으로 바뀜
-    function sajuGenerateLottoNumbers(seedStr, anchorNumbers) {
+    // baseAnchorNumbers: 오행 뿌리 숫자(예: 목=3,8). 그대로 쓰지 않고, 같은 끝자리의 10단위 확장 후보(3,13,23,33,43) 중
+    // 씨앗값에 따라 하나씩 골라서 앵커로 삼음 → "뿌리 숫자는 유지 + 매번 다른 자리대"가 동시에 됨
+    function sajuAnchorCandidates(base) {
+        const list = [];
+        for (let n = base; n <= 45; n += 10) list.push(n);
+        return list;
+    }
+    function sajuGenerateLottoNumbers(seedStr, baseAnchorNumbers) {
         const rng = sajuSeededRng(sajuHashToInt(seedStr));
         const picked = new Set();
-        (anchorNumbers || []).forEach(n => { if (n >= 1 && n <= 45) picked.add(n); });
+        (baseAnchorNumbers || []).forEach(base => {
+            const candidates = sajuAnchorCandidates(base);
+            if (candidates.length > 0) picked.add(candidates[Math.floor(rng() * candidates.length)]);
+        });
         let guard = 0;
         while (picked.size < 6 && guard < 500) { picked.add(Math.floor(rng() * 45) + 1); guard++; }
         const main = Array.from(picked).sort((a, b) => a - b);
@@ -2983,13 +3012,46 @@
         do { bonus = Math.floor(rng() * 45) + 1; guard2++; } while (picked.has(bonus) && guard2 < 500);
         return { main, bonus };
     }
+
+    // ----- 📅 이번주(월~토) 행운번호 누적 저장: 월요일마다 자동 리셋 -----
+    function sajuGetMondayOfWeek(dateStr) {
+        const d = parseDateObj(dateStr);
+        const dow = d.getDay(); // 0=일 ~ 6=토
+        const diffToMonday = (dow === 0 ? -6 : 1) - dow;
+        const monday = new Date(d);
+        monday.setDate(d.getDate() + diffToMonday);
+        const mm = String(monday.getMonth() + 1).padStart(2, '0');
+        const dd = String(monday.getDate()).padStart(2, '0');
+        return `${monday.getFullYear()}-${mm}-${dd}`;
+    }
+    function sajuGetWeeklyLottoStore() {
+        const monday = sajuGetMondayOfWeek(getTodayStr());
+        let store = null;
+        try { store = JSON.parse(localStorage.getItem('smartDiaryWeeklyLotto') || 'null'); } catch (e) {}
+        if (!store || store.weekStart !== monday) {
+            store = { weekStart: monday, days: {} };
+            localStorage.setItem('smartDiaryWeeklyLotto', JSON.stringify(store));
+        }
+        return store;
+    }
+    function sajuRecordTodayLottoWeekly(lottoMain) {
+        const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+        const dObj = parseDateObj(getTodayStr());
+        const dayLabel = dayNames[dObj.getDay()];
+        if (dayLabel === '일') return; // 월~토만 기록
+        const store = sajuGetWeeklyLottoStore();
+        store.days[dayLabel] = lottoMain;
+        localStorage.setItem('smartDiaryWeeklyLotto', JSON.stringify(store));
+    }
     // 오늘의 행운 로또번호 6개 (기운지수 카드 / 로또추첨기 도구에서 공용으로 사용)
     function sajuGetTodayLottoMain() {
         if (!sajuBirthInfo || !sajuBirthInfo.date || !sajuDayMasterElem) return null;
         const todayInfo = sajuGetTodayInfo();
         const elemNums = String(SAJU_ELEM_NUMBER[todayInfo.elem]).split('·').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
         const seed = `${getTodayStr()}_${todayInfo.gz}_${sajuBirthInfo.date}_${sajuDayMasterElem}`;
-        return sajuGenerateLottoNumbers(seed, elemNums).main;
+        const main = sajuGenerateLottoNumbers(seed, elemNums).main;
+        sajuRecordTodayLottoWeekly(main);
+        return main;
     }
 
     const SAJU_DM_DESC = {
@@ -5179,9 +5241,26 @@
 
         ldtRenderResults();
         ldtValidateInputs();
+        ldtRenderWeeklyBox();
 
         lottoDrawModalOverlay.classList.add('active');
         lockBodyScroll();
+    }
+
+    function ldtRenderWeeklyBox() {
+        const el = document.getElementById('ldt-week-area');
+        if (!el) return;
+        const store = sajuGetWeeklyLottoStore();
+        const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+        const todayLabel = dayNames[parseDateObj(getTodayStr()).getDay()];
+        const days = ['월', '화', '수', '목', '금', '토'];
+        el.innerHTML = days.map(d => {
+            const nums = store.days[d];
+            const ballsHtml = nums
+                ? nums.map(n => `<div class="lotto-ball ldt-mini-ball" style="background:${sajuLottoBallColor(n)}">${n}</div>`).join('')
+                : '<span class="ldt-week-empty">-</span>';
+            return `<div class="ldt-week-row"><div class="ldt-week-day ${d === todayLabel ? 'is-today' : ''}">${d}</div><div class="ldt-week-balls">${ballsHtml}</div></div>`;
+        }).join('');
     }
 
     function closeLottoDrawModal() {
