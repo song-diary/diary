@@ -5304,13 +5304,18 @@
         const keys = ldtStorageKeys();
         const savedGames = localStorage.getItem(keys.games);
         const savedFavs = localStorage.getItem(keys.favs);
+        const todayMain = sajuGetTodayLottoMain(); // 항상 최신 계산 → 1번째 게임(오늘의 행운번호)과 절대 어긋나지 않도록 함
 
         if (savedGames) {
             ldtGames = JSON.parse(savedGames);
             ldtFavs = savedFavs ? JSON.parse(savedFavs) : [];
+            // 1번째 게임(오늘의 행운번호)은 항상 최신값으로 덮어써서, 위쪽 팝업/이번주 모아보기와 항상 일치하게 유지
+            if (todayMain) {
+                ldtGames[0] = todayMain;
+                localStorage.setItem(keys.games, JSON.stringify(ldtGames));
+            }
         } else {
             // 오늘 처음 여는 경우: 오늘의 행운 로또번호를 1번째 게임으로 자동 채워서 자연스럽게 이어지게 함
-            const todayMain = sajuGetTodayLottoMain();
             ldtGames = todayMain ? [todayMain] : [];
             ldtFavs = [];
             localStorage.setItem(keys.games, JSON.stringify(ldtGames));
