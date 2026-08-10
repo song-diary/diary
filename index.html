@@ -2998,18 +2998,48 @@
         for (let n = base; n <= 45; n += 10) list.push(n);
         return list;
     }
+    // 동행복권 공식 통계(dhlottery.co.kr) 기준 역대 가장 많이 추첨된 번호 6개 - 재미 요소로 후보군에 살짝 섞어줌
+    const SAJU_LOTTO_HOT_NUMBERS = [34, 27, 12, 13, 18, 45];
+
+    // 3개 이상 연속된 숫자(예: 12,13,14)가 포함돼 있는지 검사
+    function sajuHasConsecutiveRun(numbers, minRun) {
+        const sorted = [...numbers].sort((a, b) => a - b);
+        let run = 1;
+        for (let i = 1; i < sorted.length; i++) {
+            if (sorted[i] === sorted[i - 1] + 1) {
+                run++;
+                if (run >= minRun) return true;
+            } else {
+                run = 1;
+            }
+        }
+        return false;
+    }
+
     function sajuGenerateLottoNumbers(seedStr, baseAnchorNumbers) {
-        const rng = sajuSeededRng(sajuHashToInt(seedStr));
-        const picked = new Set();
-        (baseAnchorNumbers || []).forEach(base => {
-            const candidates = sajuAnchorCandidates(base);
-            if (candidates.length > 0) picked.add(candidates[Math.floor(rng() * candidates.length)]);
-        });
-        let guard = 0;
-        while (picked.size < 6 && guard < 500) { picked.add(Math.floor(rng() * 45) + 1); guard++; }
-        const main = Array.from(picked).sort((a, b) => a - b);
-        let bonus, guard2 = 0;
-        do { bonus = Math.floor(rng() * 45) + 1; guard2++; } while (picked.has(bonus) && guard2 < 500);
+        let main = [], bonus = null;
+        for (let attempt = 0; attempt < 50; attempt++) {
+            const rng = sajuSeededRng(sajuHashToInt(seedStr + '_try' + attempt));
+            const picked = new Set();
+            (baseAnchorNumbers || []).forEach(base => {
+                const candidates = sajuAnchorCandidates(base);
+                if (candidates.length > 0) picked.add(candidates[Math.floor(rng() * candidates.length)]);
+            });
+            // 당첨확률(역대 최다 출현) 통계 번호 중 하나를 후보에 추가로 섞음
+            picked.add(SAJU_LOTTO_HOT_NUMBERS[Math.floor(rng() * SAJU_LOTTO_HOT_NUMBERS.length)]);
+            let guard = 0;
+            while (picked.size < 6 && guard < 500) { picked.add(Math.floor(rng() * 45) + 1); guard++; }
+            const candidate = Array.from(picked).sort((a, b) => a - b);
+
+            if (!sajuHasConsecutiveRun(candidate, 3)) {
+                main = candidate;
+                let guard2 = 0;
+                do { bonus = Math.floor(rng() * 45) + 1; guard2++; } while (picked.has(bonus) && guard2 < 500);
+                break;
+            }
+            // 3연속 이상 나오면 다음 시도로 재추첨 (그래도 같은 날짜 기준으로는 항상 같은 결과)
+            main = candidate; // 혹시 50번 다 실패해도 마지막 후보라도 반환
+        }
         return { main, bonus };
     }
 
