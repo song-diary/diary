@@ -986,7 +986,12 @@
         .hs-list-vals { flex: 1; display: flex; flex-direction: column; gap: 3px; }
 
         /* 🎯 버킷리스트 */
-        .bl-input-row { display: flex; gap: 8px; margin-bottom: 16px; }
+        .bl-add-toggle {
+            display: flex; align-items: center; gap: 6px; justify-content: center;
+            font-size: 13.5px; font-weight: 700; color: #A9754A; cursor: pointer;
+            padding: 10px; margin-top: 8px; border: 1px dashed #D9C4A9; border-radius: 10px;
+        }
+        .bl-input-row { display: flex; gap: 8px; margin-top: 10px; }
         #bl-new-input {
             flex: 1; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px;
             font-size: 15px; background: #fff;
@@ -994,7 +999,16 @@
         .bl-empty { text-align: center; color: #A99D89; font-size: 13.5px; padding: 24px 0; }
         .bl-item {
             display: flex; align-items: center; gap: 8px;
-            background: rgba(0,0,0,0.03); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px;
+            background: rgba(0,0,0,0.03); border-radius: 12px; padding: 10px 10px; margin-bottom: 8px;
+            transition: box-shadow 0.15s, transform 0.15s;
+        }
+        .bl-item.bl-dragging {
+            box-shadow: 0 6px 16px rgba(0,0,0,0.18); transform: scale(1.02);
+            background: #fff; opacity: 0.95; position: relative; z-index: 5;
+        }
+        .bl-drag-handle {
+            flex-shrink: 0; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+            font-size: 16px; color: #B0A692; cursor: grab; touch-action: none;
         }
         .bl-rank {
             flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
@@ -1002,14 +1016,10 @@
             display: flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 800;
         }
         .bl-text { flex: 1; font-size: 14.5px; color: #2A241C; line-height: 1.4; word-break: break-word; }
-        .bl-actions { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
-        .bl-arrow-row { display: flex; gap: 2px; }
-        .bl-btn {
-            border: none; background: rgba(0,0,0,0.06); border-radius: 6px; cursor: pointer;
-            width: 26px; height: 22px; font-size: 12px; color: #6B6357; display:flex; align-items:center; justify-content:center;
+        .bl-btn.bl-done {
+            flex-shrink: 0; border: none; background: #E3F3E7; color: #2E8B4F; font-weight: 700; font-size: 12px;
+            border-radius: 6px; padding: 7px 9px; cursor: pointer;
         }
-        .bl-btn:disabled { opacity: 0.25; cursor: default; }
-        .bl-btn.bl-done { width: 100%; background: #E3F3E7; color: #2E8B4F; font-weight: 700; font-size: 12px; height: 22px; margin-top: 2px; }
 
         /* 팝업 모달 스타일 */
         .modal-overlay {
@@ -1939,12 +1949,17 @@
         <button class="close-form-btn" style="position:absolute; top:14px; right:14px;" onclick="closeBucketListModal()">✖</button>
         <div class="sd-title" style="margin-bottom:14px;">🎯 나의 버킷리스트</div>
 
-        <div class="bl-input-row">
+        <div id="bl-list-area"></div>
+
+        <div class="bl-add-toggle" onclick="toggleBucketAddBox()">
+            <span id="bl-add-toggle-icon">➕</span> 새 목표 추가
+        </div>
+        <div class="bl-input-row" id="bl-add-box" style="display:none;">
             <input type="text" id="bl-new-input" placeholder="이루고 싶은 목표를 적어보세요" onkeypress="if(event.key==='Enter') addBucketListItem()">
             <button class="action-btn" style="padding:9px 14px;" onclick="addBucketListItem()">추가</button>
         </div>
 
-        <div id="bl-list-area"></div>
+        <div class="fp-exit-btn exit-btn-light" onclick="closeBucketListModal()">종료</div>
     </div>
 </div>
 
@@ -5220,6 +5235,7 @@
 
     // ===================== 🎯 버킷리스트 =====================
     let bucketListItems = [];
+    let blDragEl = null;
 
     function getBucketList() {
         try { return JSON.parse(localStorage.getItem('smartDiaryBucketList') || '[]'); } catch (e) { return []; }
@@ -5231,6 +5247,11 @@
     function openBucketListModal() {
         bucketListItems = getBucketList();
         renderBucketList();
+        // 열 때마다 추가란은 항상 접힌 상태로 시작 (목록이 먼저 짠 보이게)
+        const addBox = document.getElementById('bl-add-box');
+        const addIcon = document.getElementById('bl-add-toggle-icon');
+        if (addBox) addBox.style.display = 'none';
+        if (addIcon) addIcon.textContent = '➕';
         if (bucketListModalOverlay) bucketListModalOverlay.classList.add('active');
         lockBodyScroll();
     }
@@ -5242,6 +5263,16 @@
         if (event.target === bucketListModalOverlay) closeBucketListModal();
     }
 
+    function toggleBucketAddBox() {
+        const addBox = document.getElementById('bl-add-box');
+        const addIcon = document.getElementById('bl-add-toggle-icon');
+        if (!addBox) return;
+        const isOpen = addBox.style.display !== 'none';
+        addBox.style.display = isOpen ? 'none' : 'flex';
+        if (addIcon) addIcon.textContent = isOpen ? '➕' : '➖';
+        if (!isOpen) document.getElementById('bl-new-input').focus();
+    }
+
     function addBucketListItem() {
         const input = document.getElementById('bl-new-input');
         const text = input.value.trim();
@@ -5250,16 +5281,7 @@
         saveBucketList();
         input.value = '';
         renderBucketList();
-    }
-
-    function moveBucketListItem(id, direction) {
-        const idx = bucketListItems.findIndex(item => item.id === id);
-        if (idx === -1) return;
-        const targetIdx = idx + direction;
-        if (targetIdx < 0 || targetIdx >= bucketListItems.length) return;
-        [bucketListItems[idx], bucketListItems[targetIdx]] = [bucketListItems[targetIdx], bucketListItems[idx]];
-        saveBucketList();
-        renderBucketList();
+        input.focus();
     }
 
     function completeBucketListItem(id) {
@@ -5277,18 +5299,63 @@
             return;
         }
         listEl.innerHTML = bucketListItems.map((item, idx) => `
-            <div class="bl-item">
+            <div class="bl-item" data-id="${item.id}">
+                <div class="bl-drag-handle" data-drag-handle>☰</div>
                 <div class="bl-rank">${idx + 1}</div>
                 <div class="bl-text">${item.text}</div>
-                <div class="bl-actions">
-                    <div class="bl-arrow-row">
-                        <button class="bl-btn" onclick="moveBucketListItem('${item.id}', -1)" ${idx === 0 ? 'disabled' : ''}>▲</button>
-                        <button class="bl-btn" onclick="moveBucketListItem('${item.id}', 1)" ${idx === bucketListItems.length - 1 ? 'disabled' : ''}>▼</button>
-                    </div>
-                    <button class="bl-btn bl-done" onclick="completeBucketListItem('${item.id}')">✅ 완료</button>
-                </div>
+                <button class="bl-btn bl-done" onclick="completeBucketListItem('${item.id}')">✅ 완료</button>
             </div>
         `).join('');
+        blAttachDragHandlers();
+    }
+
+    // ----- 🖐️ 손가락으로 잡아서 위/아래로 옮기는 드래그 재정렬 -----
+    function blAttachDragHandlers() {
+        document.querySelectorAll('#bl-list-area [data-drag-handle]').forEach(handle => {
+            handle.addEventListener('touchstart', blDragStart, { passive: false });
+        });
+    }
+    function blDragStart(e) {
+        e.preventDefault();
+        blDragEl = e.currentTarget.closest('.bl-item');
+        if (!blDragEl) return;
+        blDragEl.classList.add('bl-dragging');
+        document.addEventListener('touchmove', blDragMove, { passive: false });
+        document.addEventListener('touchend', blDragEnd);
+        document.addEventListener('touchcancel', blDragEnd);
+    }
+    function blDragMove(e) {
+        if (!blDragEl) return;
+        e.preventDefault();
+        const touchY = e.touches[0].clientY;
+        const listEl = document.getElementById('bl-list-area');
+        const items = Array.from(listEl.querySelectorAll('.bl-item')).filter(el => el !== blDragEl);
+
+        let targetEl = null;
+        for (const el of items) {
+            const rect = el.getBoundingClientRect();
+            if (touchY < rect.top + rect.height / 2) { targetEl = el; break; }
+        }
+        if (targetEl) {
+            listEl.insertBefore(blDragEl, targetEl);
+        } else {
+            listEl.appendChild(blDragEl);
+        }
+    }
+    function blDragEnd() {
+        document.removeEventListener('touchmove', blDragMove);
+        document.removeEventListener('touchend', blDragEnd);
+        document.removeEventListener('touchcancel', blDragEnd);
+        if (!blDragEl) return;
+        blDragEl.classList.remove('bl-dragging');
+
+        // 최종 DOM 순서를 그대로 읽어서 데이터/순위번호 재정렬 후 저장
+        const listEl = document.getElementById('bl-list-area');
+        const newOrderIds = Array.from(listEl.querySelectorAll('.bl-item')).map(el => el.dataset.id);
+        bucketListItems.sort((a, b) => newOrderIds.indexOf(a.id) - newOrderIds.indexOf(b.id));
+        saveBucketList();
+        blDragEl = null;
+        renderBucketList(); // 순위번호(①②③) 갱신
     }
 
     // ===================== ❤️ 건강 기록 보기 =====================
