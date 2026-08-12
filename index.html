@@ -985,6 +985,32 @@
         .hs-list-date { width: 62px; flex-shrink: 0; color: #8A8071; font-size: 12px; }
         .hs-list-vals { flex: 1; display: flex; flex-direction: column; gap: 3px; }
 
+        /* 🎯 버킷리스트 */
+        .bl-input-row { display: flex; gap: 8px; margin-bottom: 16px; }
+        #bl-new-input {
+            flex: 1; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px;
+            font-size: 15px; background: #fff;
+        }
+        .bl-empty { text-align: center; color: #A99D89; font-size: 13.5px; padding: 24px 0; }
+        .bl-item {
+            display: flex; align-items: center; gap: 8px;
+            background: rgba(0,0,0,0.03); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px;
+        }
+        .bl-rank {
+            flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
+            background: linear-gradient(135deg, #E3B24A, #E0685C); color: #fff;
+            display: flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 800;
+        }
+        .bl-text { flex: 1; font-size: 14.5px; color: #2A241C; line-height: 1.4; word-break: break-word; }
+        .bl-actions { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
+        .bl-arrow-row { display: flex; gap: 2px; }
+        .bl-btn {
+            border: none; background: rgba(0,0,0,0.06); border-radius: 6px; cursor: pointer;
+            width: 26px; height: 22px; font-size: 12px; color: #6B6357; display:flex; align-items:center; justify-content:center;
+        }
+        .bl-btn:disabled { opacity: 0.25; cursor: default; }
+        .bl-btn.bl-done { width: 100%; background: #E3F3E7; color: #2E8B4F; font-weight: 700; font-size: 12px; height: 22px; margin-top: 2px; }
+
         /* 팝업 모달 스타일 */
         .modal-overlay {
             display: none;
@@ -1623,6 +1649,7 @@
         <div class="card sub-feature-card" id="diary-around-today-card">
             <div class="feature-title">
                 <span id="selected-date-title">📔 다이어리</span>
+                <button type="button" class="quick-photo-btn" id="bucket-list-open-btn" onclick="openBucketListModal()" title="버킷리스트">🎯</button>
                 <button type="button" class="quick-photo-btn" id="quick-photo-btn" onclick="triggerQuickPhoto()" title="바로 사진 찍기">📷</button>
                 <input type="file" id="quick-photo-input" accept="image/*" capture="environment" style="display:none;" onchange="handleQuickPhotoCapture(event)">
             </div>
@@ -1903,6 +1930,21 @@
         </div>
         <div id="sd-life-stages"></div>
         <div class="fp-exit-btn exit-btn-light" onclick="closeSajuDetailModal()">종료</div>
+    </div>
+</div>
+
+<!-- 🎯 버킷리스트 -->
+<div class="modal-overlay" id="bucket-list-modal-overlay" onclick="handleBucketListModalBackgroundClick(event)">
+    <div class="saju-detail-card" id="bucket-list-card" onclick="event.stopPropagation()">
+        <button class="close-form-btn" style="position:absolute; top:14px; right:14px;" onclick="closeBucketListModal()">✖</button>
+        <div class="sd-title" style="margin-bottom:14px;">🎯 나의 버킷리스트</div>
+
+        <div class="bl-input-row">
+            <input type="text" id="bl-new-input" placeholder="이루고 싶은 목표를 적어보세요" onkeypress="if(event.key==='Enter') addBucketListItem()">
+            <button class="action-btn" style="padding:9px 14px;" onclick="addBucketListItem()">추가</button>
+        </div>
+
+        <div id="bl-list-area"></div>
     </div>
 </div>
 
@@ -3263,6 +3305,7 @@
     const sajuDetailModalOverlay = document.getElementById('saju-detail-modal-overlay');
     const lottoDrawModalOverlay = document.getElementById('lotto-draw-modal-overlay');
     const healthStatsModalOverlay = document.getElementById('health-stats-modal-overlay');
+    const bucketListModalOverlay = document.getElementById('bucket-list-modal-overlay');
     const tabDiaryBtn = document.getElementById('tab-diary-btn');
     const tabMoneyBtn = document.getElementById('tab-money-btn');
     const tabSettingsBtn = document.getElementById('tab-settings-btn');
@@ -5173,6 +5216,79 @@
 
     function handleSajuDetailModalBackgroundClick(event) {
         if (event.target === sajuDetailModalOverlay) closeSajuDetailModal();
+    }
+
+    // ===================== 🎯 버킷리스트 =====================
+    let bucketListItems = [];
+
+    function getBucketList() {
+        try { return JSON.parse(localStorage.getItem('smartDiaryBucketList') || '[]'); } catch (e) { return []; }
+    }
+    function saveBucketList() {
+        localStorage.setItem('smartDiaryBucketList', JSON.stringify(bucketListItems));
+    }
+
+    function openBucketListModal() {
+        bucketListItems = getBucketList();
+        renderBucketList();
+        if (bucketListModalOverlay) bucketListModalOverlay.classList.add('active');
+        lockBodyScroll();
+    }
+    function closeBucketListModal() {
+        if (bucketListModalOverlay) bucketListModalOverlay.classList.remove('active');
+        unlockBodyScroll();
+    }
+    function handleBucketListModalBackgroundClick(event) {
+        if (event.target === bucketListModalOverlay) closeBucketListModal();
+    }
+
+    function addBucketListItem() {
+        const input = document.getElementById('bl-new-input');
+        const text = input.value.trim();
+        if (!text) return;
+        bucketListItems.push({ id: Date.now().toString(), text });
+        saveBucketList();
+        input.value = '';
+        renderBucketList();
+    }
+
+    function moveBucketListItem(id, direction) {
+        const idx = bucketListItems.findIndex(item => item.id === id);
+        if (idx === -1) return;
+        const targetIdx = idx + direction;
+        if (targetIdx < 0 || targetIdx >= bucketListItems.length) return;
+        [bucketListItems[idx], bucketListItems[targetIdx]] = [bucketListItems[targetIdx], bucketListItems[idx]];
+        saveBucketList();
+        renderBucketList();
+    }
+
+    function completeBucketListItem(id) {
+        if (!confirm('이 목표를 완료 처리하고 목록에서 지울까요? 🎉')) return;
+        bucketListItems = bucketListItems.filter(item => item.id !== id);
+        saveBucketList();
+        renderBucketList();
+    }
+
+    function renderBucketList() {
+        const listEl = document.getElementById('bl-list-area');
+        if (!listEl) return;
+        if (bucketListItems.length === 0) {
+            listEl.innerHTML = `<div class="bl-empty">🎯 이루고 싶은 목표를 자유롭게 적어보세요!</div>`;
+            return;
+        }
+        listEl.innerHTML = bucketListItems.map((item, idx) => `
+            <div class="bl-item">
+                <div class="bl-rank">${idx + 1}</div>
+                <div class="bl-text">${item.text}</div>
+                <div class="bl-actions">
+                    <div class="bl-arrow-row">
+                        <button class="bl-btn" onclick="moveBucketListItem('${item.id}', -1)" ${idx === 0 ? 'disabled' : ''}>▲</button>
+                        <button class="bl-btn" onclick="moveBucketListItem('${item.id}', 1)" ${idx === bucketListItems.length - 1 ? 'disabled' : ''}>▼</button>
+                    </div>
+                    <button class="bl-btn bl-done" onclick="completeBucketListItem('${item.id}')">✅ 완료</button>
+                </div>
+            </div>
+        `).join('');
     }
 
     // ===================== ❤️ 건강 기록 보기 =====================
