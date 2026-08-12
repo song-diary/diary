@@ -986,7 +986,7 @@
         .hs-list-vals { flex: 1; display: flex; flex-direction: column; gap: 3px; }
 
         /* 🎯 버킷리스트 */
-        .bl-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-right: 38px; }
+        .bl-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
         .bl-add-icon-btn {
             flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; border: none; cursor: pointer;
             background: linear-gradient(135deg, #E3B24A, #E0685C); color: #fff; font-size: 16px;
@@ -1007,7 +1007,8 @@
             background: linear-gradient(135deg, #E3B24A, #E0685C); color: #fff;
             display: flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 800;
         }
-        .bl-text { flex: 1; font-size: 14.5px; color: #2A241C; line-height: 1.4; word-break: break-word; }
+        .bl-text { flex: 1; font-size: 14.5px; color: #2A241C; line-height: 1.4; word-break: break-word; cursor: pointer; }
+        .bl-edit-hint { font-size: 11px; opacity: 0.4; }
         .bl-actions { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
         .bl-arrow-row { display: flex; gap: 2px; }
         .bl-btn {
@@ -1942,7 +1943,6 @@
 <!-- 🎯 버킷리스트 -->
 <div class="modal-overlay" id="bucket-list-modal-overlay" onclick="handleBucketListModalBackgroundClick(event)">
     <div class="saju-detail-card" id="bucket-list-card" onclick="event.stopPropagation()">
-        <button class="close-form-btn" style="position:absolute; top:14px; right:14px;" onclick="closeBucketListModal()">✖</button>
         <div class="bl-title-row">
             <div class="sd-title" style="margin-bottom:0;">🎯 나의 버킷리스트</div>
             <button type="button" class="bl-add-icon-btn" id="bl-add-toggle-icon" onclick="toggleBucketAddBox()" title="새 목표 추가">➕</button>
@@ -5288,6 +5288,18 @@
         renderBucketList();
     }
 
+    function editBucketListItem(id) {
+        const item = bucketListItems.find(i => i.id === id);
+        if (!item) return;
+        const newText = prompt('목표 내용을 수정하세요', item.text);
+        if (newText === null) return; // 취소
+        const trimmed = newText.trim();
+        if (!trimmed) return;
+        item.text = trimmed;
+        saveBucketList();
+        renderBucketList();
+    }
+
     function completeBucketListItem(id) {
         if (!confirm('이 목표를 완료 처리하고 목록에서 지울까요? 🎉')) return;
         bucketListItems = bucketListItems.filter(item => item.id !== id);
@@ -5305,7 +5317,7 @@
         listEl.innerHTML = bucketListItems.map((item, idx) => `
             <div class="bl-item">
                 <div class="bl-rank">${idx + 1}</div>
-                <div class="bl-text">${item.text}</div>
+                <div class="bl-text" onclick="editBucketListItem('${item.id}')">${item.text} <span class="bl-edit-hint">✏️</span></div>
                 <div class="bl-actions">
                     <div class="bl-arrow-row">
                         <button class="bl-btn" onclick="moveBucketListItem('${item.id}', -1)" ${idx === 0 ? 'disabled' : ''}>▲</button>
