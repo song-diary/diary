@@ -780,6 +780,21 @@
         .memo-line.fri { background-color: #9b59b6; }
         .memo-line.sat { background-color: var(--sat-color); }
 
+        /* 📆 달력 칸 안의 국경일/명절/24절기/삼복 이름 표시 */
+        .cal-special-label {
+            margin-top: 1px;
+            font-size: 8.5px;
+            font-weight: 700;
+            line-height: 1.1;
+            white-space: nowrap;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: clip;
+        }
+        .cal-special-label.cal-special-holiday { color: #E0685C; }
+        .cal-special-label.cal-special-term { color: #4C7FD1; }
+        .cal-special-label.cal-special-bok { color: #C2820A; }
+
         /* ===================== 🔮 오늘의 운세 (사주 기반) ===================== */
         .fortune-teaser {
             display: flex;
@@ -3733,6 +3748,17 @@
         }
     }
 
+    // 음력 공휴일: [설날 전날, 설날, 설날 다음날, 부처님오신날, 추석 전날, 추석, 추석 다음날]
+    const SAJU_LUNAR_HOLIDAYS_TABLE = {
+        2024: ['2024-02-09', '2024-02-10', '2024-02-11', '2024-05-15', '2024-09-16', '2024-09-17', '2024-09-18'],
+        2025: ['2025-01-28', '2025-01-29', '2025-01-30', '2025-05-05', '2025-10-05', '2025-10-06', '2025-10-07'],
+        2026: ['2026-02-16', '2026-02-17', '2026-02-18', '2026-05-24', '2026-09-24', '2026-09-25', '2026-09-26'],
+        2027: ['2027-02-06', '2027-02-07', '2027-02-08', '2027-05-13', '2027-09-14', '2027-09-15', '2027-09-16'],
+        2028: ['2028-01-26', '2028-01-27', '2028-01-28', '2028-05-02', '2028-10-02', '2028-10-03', '2028-10-04'],
+        2029: ['2029-02-12', '2029-02-13', '2029-02-14', '2029-05-20', '2029-09-21', '2029-09-22', '2029-09-23'],
+        2030: ['2030-02-02', '2030-02-03', '2030-02-04', '2030-05-09', '2030-09-11', '2030-09-12', '2030-09-13']
+    };
+
     function getKoreanHolidays(year) {
         // 신정(대체공휴일 미적용), 현충일(국가추모일, 대체공휴일 미적용)
         let holidays = new Set([`${year}-01-01`, `${year}-06-06`]);
@@ -3744,17 +3770,7 @@
         ];
         substituteEligibleSolar.forEach(d => holidays.add(d));
 
-        // 음력 공휴일: [설날 3일, 부처님오신날 1일, 추석 3일]
-        const lunarHolidays = {
-            2024: ['2024-02-09', '2024-02-10', '2024-02-11', '2024-05-15', '2024-09-16', '2024-09-17', '2024-09-18'],
-            2025: ['2025-01-28', '2025-01-29', '2025-01-30', '2025-05-05', '2025-10-05', '2025-10-06', '2025-10-07'],
-            2026: ['2026-02-16', '2026-02-17', '2026-02-18', '2026-05-24', '2026-09-24', '2026-09-25', '2026-09-26'],
-            2027: ['2027-02-06', '2027-02-07', '2027-02-08', '2027-05-13', '2027-09-14', '2027-09-15', '2027-09-16'],
-            2028: ['2028-01-26', '2028-01-27', '2028-01-28', '2028-05-02', '2028-10-02', '2028-10-03', '2028-10-04'],
-            2029: ['2029-02-12', '2029-02-13', '2029-02-14', '2029-05-20', '2029-09-21', '2029-09-22', '2029-09-23'],
-            2030: ['2030-02-02', '2030-02-03', '2030-02-04', '2030-05-09', '2030-09-11', '2030-09-12', '2030-09-13']
-        };
-        const yearLunar = lunarHolidays[year] || [];
+        const yearLunar = SAJU_LUNAR_HOLIDAYS_TABLE[year] || [];
         yearLunar.forEach(d => holidays.add(d));
 
         // ▶ 대체공휴일 자동 계산 (관공서의 공휴일에 관한 규정 기준: 토·일 겹침 + 다른 공휴일과 겹침)
@@ -3803,6 +3819,87 @@
         substitutes.forEach(d => holidays.add(d));
 
         return holidays;
+    }
+
+    // ----- 📆 달력 칸에 표시할 특별한 날 이름: 국경일/명절 > 24절기 > 삼복(초복·중복·말복) 순 우선순위 -----
+    const SAJU_SOLAR_HOLIDAY_NAMES = {
+        '01-01': '신정', '03-01': '삼일절', '05-05': '어린이날', '06-06': '현충일',
+        '08-15': '광복절', '10-03': '개천절', '10-09': '한글날', '12-25': '성탄절'
+    };
+    const SAJU_24_TERMS = ['소한','대한','입춘','우수','경칩','춘분','청명','곡우','입하','소만','망종','하지','소서','대서','입추','처서','백로','추분','한로','상강','입동','소설','대설','동지'];
+
+    function getLunarHolidayName(dateStr, year) {
+        const arr = SAJU_LUNAR_HOLIDAYS_TABLE[year];
+        if (!arr) return null;
+        const names = ['설날 전날', '설날', '설날 다음날', '부처님오신날', '추석 전날', '추석', '추석 다음날'];
+        const idx = arr.indexOf(dateStr);
+        return idx === -1 ? null : names[idx];
+    }
+
+    function getSolarTermLabel(dateStr) {
+        try {
+            const lib = sajuGetLib();
+            const d = parseDateObj(dateStr);
+            const y = d.getFullYear();
+            for (let n = 1; n <= 24; n++) {
+                const day = lib.getTerm(y, n);
+                const month = Math.ceil(n / 2);
+                if (day === d.getDate() && month === (d.getMonth() + 1)) {
+                    return SAJU_24_TERMS[n - 1];
+                }
+            }
+        } catch (e) {}
+        return null;
+    }
+
+    // 초복(하지로부터 3번째 경일) / 중복(4번째 경일) / 말복(입추로부터 첫 경일) - 하지가 경일이면 그날을 1번째로 셈
+    function getBokNalLabel(dateStr) {
+        try {
+            const lib = sajuGetLib();
+            const d = parseDateObj(dateStr);
+            const y = d.getFullYear();
+            const hajiDay = lib.getTerm(y, 12);
+            const ipchuDay = lib.getTerm(y, 15);
+            const addDays = (yy, mm, dd, n) => {
+                const dt = new Date(yy, mm - 1, dd);
+                dt.setDate(dt.getDate() + n);
+                return [dt.getFullYear(), dt.getMonth() + 1, dt.getDate()];
+            };
+            const fmt = (arr) => `${arr[0]}-${String(arr[1]).padStart(2, '0')}-${String(arr[2]).padStart(2, '0')}`;
+
+            const gyeongDays = [];
+            for (let i = 0; i <= 40 && gyeongDays.length < 4; i++) {
+                const [ny, nm, nd] = addDays(y, 6, hajiDay, i);
+                const r = lib.solar2lunar(ny, nm, nd);
+                if (r.gzDay[0] === '庚') gyeongDays.push([ny, nm, nd]);
+            }
+            const chobok = gyeongDays[2], jungbok = gyeongDays[3];
+            let malbok = null;
+            for (let i = 0; i <= 15; i++) {
+                const [ny, nm, nd] = addDays(y, 8, ipchuDay, i);
+                const r = lib.solar2lunar(ny, nm, nd);
+                if (r.gzDay[0] === '庚') { malbok = [ny, nm, nd]; break; }
+            }
+            if (chobok && fmt(chobok) === dateStr) return '초복';
+            if (jungbok && fmt(jungbok) === dateStr) return '중복';
+            if (malbok && fmt(malbok) === dateStr) return '말복';
+        } catch (e) {}
+        return null;
+    }
+
+    function getSpecialDayLabel(dateStr) {
+        const d = parseDateObj(dateStr);
+        const year = d.getFullYear();
+        const mmdd = `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+        if (SAJU_SOLAR_HOLIDAY_NAMES[mmdd]) return { label: SAJU_SOLAR_HOLIDAY_NAMES[mmdd], type: 'holiday' };
+        const lunarName = getLunarHolidayName(dateStr, year);
+        if (lunarName) return { label: lunarName, type: 'holiday' };
+        const bokLabel = getBokNalLabel(dateStr);
+        if (bokLabel) return { label: bokLabel, type: 'bok' };
+        const termLabel = getSolarTermLabel(dateStr);
+        if (termLabel) return { label: termLabel, type: 'term' };
+        return null;
     }
 
     function getAllDiaries() {
@@ -5711,8 +5808,12 @@
             else if (dayOfWeek === 6) cell.classList.add('saturday');
 
             const dayDiaries = diaries.filter(d => normalizeDateStr(d.date) === dateStr);
+            const specialInfo = getSpecialDayLabel(dateStr);
             let indicatorHTML = '';
-            if (dayDiaries.length > 0) {
+            if (specialInfo) {
+                // 국경일/명절/24절기/삼복이 있는 날은 기록 표시 바(memo-line) 대신 이름을 보여줌
+                indicatorHTML = `<div class="cal-special-label cal-special-${specialInfo.type}">${specialInfo.label}</div>`;
+            } else if (dayDiaries.length > 0) {
                 const daysMap = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
                 const lineClass = daysMap[dayOfWeek] || 'mon';
                 indicatorHTML = `<div class="memo-line ${lineClass}"></div>`;
