@@ -1009,6 +1009,10 @@
         }
         .bl-text { flex: 1; font-size: 14.5px; color: #2A241C; line-height: 1.4; word-break: break-word; cursor: pointer; }
         .bl-edit-hint { font-size: 11px; opacity: 0.4; }
+        .bl-edit-input {
+            flex: 1; font-size: 14.5px; color: #2A241C; padding: 6px 8px;
+            border: 1.5px solid #E3B24A; border-radius: 6px; background: #fff; min-width: 0;
+        }
         .bl-actions { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
         .bl-arrow-row { display: flex; gap: 2px; }
         .bl-btn {
@@ -5240,6 +5244,7 @@
 
     function openBucketListModal() {
         bucketListItems = getBucketList();
+        bucketEditingId = null;
         renderBucketList();
         // 열 때마다 추가란은 항상 접힌 상태로 시작 (목록이 먼저 짠 보이게)
         const addBox = document.getElementById('bl-add-box');
@@ -5288,15 +5293,28 @@
         renderBucketList();
     }
 
-    function editBucketListItem(id) {
+    let bucketEditingId = null; // 지금 수정 중인 항목 id (없으면 null)
+
+    function startEditBucketListItem(id) {
+        bucketEditingId = id;
+        renderBucketList();
+        const inputEl = document.getElementById(`bl-edit-input-${id}`);
+        if (inputEl) { inputEl.focus(); inputEl.select(); }
+    }
+
+    function saveEditBucketListItem(id) {
+        const inputEl = document.getElementById(`bl-edit-input-${id}`);
+        if (!inputEl) return;
+        const trimmed = inputEl.value.trim();
         const item = bucketListItems.find(i => i.id === id);
-        if (!item) return;
-        const newText = prompt('목표 내용을 수정하세요', item.text);
-        if (newText === null) return; // 취소
-        const trimmed = newText.trim();
-        if (!trimmed) return;
-        item.text = trimmed;
+        if (item && trimmed) item.text = trimmed;
+        bucketEditingId = null;
         saveBucketList();
+        renderBucketList();
+    }
+
+    function cancelEditBucketListItem() {
+        bucketEditingId = null;
         renderBucketList();
     }
 
@@ -5314,10 +5332,17 @@
             listEl.innerHTML = `<div class="bl-empty">🎯 이루고 싶은 목표를 자유롭게 적어보세요!</div>`;
             return;
         }
-        listEl.innerHTML = bucketListItems.map((item, idx) => `
+        listEl.innerHTML = bucketListItems.map((item, idx) => {
+            const isEditing = bucketEditingId === item.id;
+            const textAreaHTML = isEditing
+                ? `<input type="text" class="bl-edit-input" id="bl-edit-input-${item.id}" value="${item.text.replace(/"/g, '&quot;')}"
+                       onkeydown="if(event.key==='Enter'){saveEditBucketListItem('${item.id}');} if(event.key==='Escape'){cancelEditBucketListItem();}"
+                       onblur="saveEditBucketListItem('${item.id}')">`
+                : `<div class="bl-text" onclick="startEditBucketListItem('${item.id}')">${item.text} <span class="bl-edit-hint">✏️</span></div>`;
+            return `
             <div class="bl-item">
                 <div class="bl-rank">${idx + 1}</div>
-                <div class="bl-text" onclick="editBucketListItem('${item.id}')">${item.text} <span class="bl-edit-hint">✏️</span></div>
+                ${textAreaHTML}
                 <div class="bl-actions">
                     <div class="bl-arrow-row">
                         <button class="bl-btn" onclick="moveBucketListItem('${item.id}', -1)" ${idx === 0 ? 'disabled' : ''}>▲</button>
@@ -5326,7 +5351,7 @@
                     <button class="bl-btn bl-done" onclick="completeBucketListItem('${item.id}')">✅ 완료</button>
                 </div>
             </div>
-        `).join('');
+        `; }).join('');
     }
 
     // ===================== ❤️ 건강 기록 보기 =====================
