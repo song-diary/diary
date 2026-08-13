@@ -726,15 +726,10 @@
             border: 1px solid #e8dfdf;
             color: var(--weekday-color);
             touch-action: manipulation;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-        .cal-cell.cal-cell-pop {
-            animation: calCellPop 0.28s ease;
-            z-index: 2;
-        }
-        @keyframes calCellPop {
-            0% { transform: scale(1); }
-            40% { transform: scale(1.35); box-shadow: 0 4px 14px rgba(0,0,0,0.18); }
-            100% { transform: scale(1); }
+        .cal-cell.selected-date {
+            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
         }
 
         .cal-cell:hover {
@@ -1655,18 +1650,16 @@
             <h3 id="cal-month-title">0000년 00월</h3>
             <button onclick="changeMonth(1)">다음 ▶</button>
         </div>
-        <div id="cal-zoom-wrap" style="overflow:hidden; touch-action:none;">
-            <div class="calendar-grid" id="cal-days-name-grid">
-                <div class="cal-day-name sunday">일</div>
-                <div class="cal-day-name weekday">월</div>
-                <div class="cal-day-name weekday">화</div>
-                <div class="cal-day-name weekday">수</div>
-                <div class="cal-day-name weekday">목</div>
-                <div class="cal-day-name weekday">금</div>
-                <div class="cal-day-name saturday">토</div>
-            </div>
-            <div class="calendar-grid" id="cal-days-grid" style="margin-top: 5px; transition: transform 0.16s ease, opacity 0.16s ease;"></div>
+        <div class="calendar-grid" id="cal-days-name-grid">
+            <div class="cal-day-name sunday">일</div>
+            <div class="cal-day-name weekday">월</div>
+            <div class="cal-day-name weekday">화</div>
+            <div class="cal-day-name weekday">수</div>
+            <div class="cal-day-name weekday">목</div>
+            <div class="cal-day-name weekday">금</div>
+            <div class="cal-day-name saturday">토</div>
         </div>
+        <div class="calendar-grid" id="cal-days-grid" style="margin-top: 5px; transition: transform 0.16s ease, opacity 0.16s ease;"></div>
     </div>
 
     <!-- 🧭 메인 탭 바: 설정 / 다이어리 / 가계부 / 입력 -->
@@ -5840,10 +5833,34 @@
             }
 
             cell.innerHTML = `<span>${day}</span>${indicatorHTML}`;
-            cell.onclick = (e) => { popCalendarCell(e.currentTarget); selectDiaryDate(dateStr); };
+            cell.onclick = () => selectDiaryDate(dateStr);
             grid.appendChild(cell);
         }
+        applyCalendarCellEnlargement();
         updateMoneySummary();
+    }
+
+    // 📌 선택한 날짜 칸을 이웃 3칸(오른쪽, 아래, 오른쪽아래)까지 합친 크기로 키워서 계속 유지
+    // (예: 4일을 선택하면 4·5·11·12 자리를 합친 만큼 커짐)
+    function applyCalendarCellEnlargement() {
+        const grid = document.getElementById('cal-days-grid');
+        if (!grid) return;
+        grid.querySelectorAll('.cal-cell').forEach(c => {
+            c.style.transform = '';
+            c.style.zIndex = '';
+            c.style.position = '';
+        });
+        const target = grid.querySelector('.cal-cell.selected-date');
+        if (!target || target.classList.contains('empty')) return;
+        const rect = target.getBoundingClientRect();
+        const gap = 4; // .calendar-grid 의 gap 값과 동일하게 맞춤
+        if (rect.width > 0) {
+            const scale = (2 * rect.width + gap) / rect.width;
+            target.style.transformOrigin = 'top left';
+            target.style.position = 'relative';
+            target.style.zIndex = '5';
+            target.style.transform = `scale(${scale})`;
+        }
     }
 
     // 📅 달력에서 날짜를 클릭하면 팝업을 바로 열지 않고, 지금 보고 있는 탭(다이어리/가계부)의 내용을 아래에 표시
@@ -5858,7 +5875,6 @@
 
     function changeMonth(delta) {
         const grid = document.getElementById('cal-days-grid');
-        resetCalendarZoom(); // 달이 바뀌면 확대 상태를 초기화해서 다음 달도 항상 제자리에서 보이게 함
 
         const applyMonthDelta = () => {
             calMonth += delta;
@@ -6447,85 +6463,7 @@
         const dy = touches[0].clientY - touches[1].clientY;
         return Math.hypot(dx, dy);
     }
-    // ----- 📆 달력 전용 핀치줌/팬 (메인 화면 확대는 꺼져있지만, 달력만 별도로 확대 가능하게) -----
-    let calZoomScale = 1, calZoomX = 0, calZoomY = 0;
-    let czStartDist = 0, czStartScale = 1, czPanStartX = 0, czPanStartY = 0, czTouchStartX = 0, czTouchStartY = 0;
-    let czIsPanning = false, czLastTapTime = 0;
-
-    function resetCalendarZoom() {
-        calZoomScale = 1; calZoomX = 0; calZoomY = 0;
-        applyCalendarZoomTransform();
-    }
-    function applyCalendarZoomTransform() {
-        const wrap = document.getElementById('cal-zoom-wrap');
-        if (wrap) wrap.style.transform = `translate(${calZoomX}px, ${calZoomY}px) scale(${calZoomScale})`;
-    }
-    function czTouchDistance(touches) {
-        const dx = touches[0].clientX - touches[1].clientX;
-        const dy = touches[0].clientY - touches[1].clientY;
-        return Math.hypot(dx, dy);
-    }
-    function initCalendarZoomHandlers() {
-        const wrap = document.getElementById('cal-zoom-wrap');
-        if (!wrap) return;
-        wrap.style.transformOrigin = 'center top';
-
-        wrap.addEventListener('touchstart', function (e) {
-            if (e.touches.length === 2) {
-                e.preventDefault();
-                czStartDist = czTouchDistance(e.touches);
-                czStartScale = calZoomScale;
-                czIsPanning = false;
-            } else if (e.touches.length === 1 && calZoomScale > 1) {
-                e.preventDefault();
-                czIsPanning = true;
-                czPanStartX = e.touches[0].clientX; czPanStartY = e.touches[0].clientY;
-                czTouchStartX = calZoomX; czTouchStartY = calZoomY;
-            } else if (e.touches.length === 1) {
-                const now = Date.now();
-                if (now - czLastTapTime < 300) {
-                    calZoomScale = calZoomScale > 1 ? 1 : 2;
-                    calZoomX = 0; calZoomY = 0;
-                    applyCalendarZoomTransform();
-                }
-                czLastTapTime = now;
-            }
-        }, { passive: false });
-
-        wrap.addEventListener('touchmove', function (e) {
-            if (e.touches.length === 2) {
-                e.preventDefault();
-                const dist = czTouchDistance(e.touches);
-                if (czStartDist > 0) {
-                    calZoomScale = Math.min(2.5, Math.max(1, czStartScale * (dist / czStartDist)));
-                    applyCalendarZoomTransform();
-                }
-            } else if (e.touches.length === 1 && czIsPanning) {
-                e.preventDefault();
-                const dx = e.touches[0].clientX - czPanStartX;
-                const dy = e.touches[0].clientY - czPanStartY;
-                calZoomX = czTouchStartX + dx;
-                calZoomY = czTouchStartY + dy;
-                applyCalendarZoomTransform();
-            }
-        }, { passive: false });
-
-        wrap.addEventListener('touchend', function (e) {
-            if (e.touches.length < 2) czStartDist = 0;
-            if (e.touches.length === 0) {
-                czIsPanning = false;
-                if (calZoomScale <= 1) { calZoomScale = 1; calZoomX = 0; calZoomY = 0; applyCalendarZoomTransform(); }
-            }
-        });
-    }
-
-    // 📌 날짜 칸을 누르면 살짝 확대됐다가 제자리로 돌아오는 탭 피드백
-    function popCalendarCell(cellEl) {
-        if (!cellEl) return;
-        cellEl.classList.remove('cal-cell-pop');
-        void cellEl.offsetWidth; // 강제 리플로우로 같은 애니메이션을 연속으로 눌러도 재생되게 함
-        cellEl.classList.add('cal-cell-pop');
-    }
+    // ----- 📆 달력: 선택한 날짜 칸이 4칸 크기로 커진 채 유지됨 (applyCalendarCellEnlargement 함수 참고) -----
 
     function initPhotoZoomHandlers() {
         const img = document.getElementById('photo-lightbox-img');
@@ -6981,7 +6919,6 @@
         // 📷 사진 확대뷰어 핀치줌/팬 + 미리보기 두손가락 즉시열기 핸들러 등록
         initPhotoZoomHandlers();
         initPhotoPreviewPinchOpen();
-        initCalendarZoomHandlers();
         applyShowHealthVisibility();
     };
 
