@@ -727,6 +727,15 @@
             color: var(--weekday-color);
             touch-action: manipulation;
         }
+        .cal-cell.cal-cell-pop {
+            animation: calCellPop 0.28s ease;
+            z-index: 2;
+        }
+        @keyframes calCellPop {
+            0% { transform: scale(1); }
+            40% { transform: scale(1.35); box-shadow: 0 4px 14px rgba(0,0,0,0.18); }
+            100% { transform: scale(1); }
+        }
 
         .cal-cell:hover {
             opacity: 0.85;
@@ -794,6 +803,15 @@
         .cal-special-label.cal-special-holiday { color: #E0685C; }
         .cal-special-label.cal-special-term { color: #4C7FD1; }
         .cal-special-label.cal-special-bok { color: #C2820A; }
+
+        .cal-special-title-badge {
+            display: inline-flex; align-items: center; gap: 3px;
+            font-size: 12px; font-weight: 700; margin-left: 6px;
+            padding: 2px 8px; border-radius: 999px;
+        }
+        .cal-special-title-badge.cal-special-holiday { background: #FDF0F2; color: #C2455A; }
+        .cal-special-title-badge.cal-special-term { background: #EEF3FC; color: #4C7FD1; }
+        .cal-special-title-badge.cal-special-bok { background: #FBF1DE; color: #C2820A; }
 
         /* ===================== 🔮 오늘의 운세 (사주 기반) ===================== */
         .fortune-teaser {
@@ -5822,7 +5840,7 @@
             }
 
             cell.innerHTML = `<span>${day}</span>${indicatorHTML}`;
-            cell.onclick = () => selectDiaryDate(dateStr);
+            cell.onclick = (e) => { popCalendarCell(e.currentTarget); selectDiaryDate(dateStr); };
             grid.appendChild(cell);
         }
         updateMoneySummary();
@@ -6158,7 +6176,10 @@
             const todayTag = isTodayDate ? ' (오늘)' : '';
             const lunarLabel = getLunarLabel(dateStr);
             const lunarHTML = lunarLabel ? `<span style="font-size:11px; font-weight:normal; color:var(--text-sub); margin-left:6px;">🌙 ${lunarLabel}</span>` : '';
-            titleEl.innerHTML = `📔 ${badge}${dateLabel}${todayTag}${lunarHTML}`;
+            const specialInfo = getSpecialDayLabel(dateStr);
+            const specialIcon = specialInfo ? (specialInfo.type === 'holiday' ? '🎊' : specialInfo.type === 'term' ? '🍃' : '🌡️') : '';
+            const specialHTML = specialInfo ? `<span class="cal-special-title-badge cal-special-${specialInfo.type}">${specialIcon} ${specialInfo.label}</span>` : '';
+            titleEl.innerHTML = `📔 ${badge}${dateLabel}${todayTag}${lunarHTML}${specialHTML}`;
         }
 
         const diaries = getAllDiaries();
@@ -6234,7 +6255,10 @@
         if (titleEl) {
             const badge = isReservedDate ? `<span style="background:var(--primary-color); color:white; padding:1px 5px; border-radius:4px; font-size:11px; margin-right:4px; font-weight:bold;">예약</span>` : '';
             const todayTag = isTodayDate ? ' (오늘)' : '';
-            titleEl.innerHTML = `💰 ${badge}${dateLabel}${todayTag}`;
+            const specialInfo = getSpecialDayLabel(dateStr);
+            const specialIcon = specialInfo ? (specialInfo.type === 'holiday' ? '🎊' : specialInfo.type === 'term' ? '🍃' : '🌡️') : '';
+            const specialHTML = specialInfo ? `<span class="cal-special-title-badge cal-special-${specialInfo.type}">${specialIcon} ${specialInfo.label}</span>` : '';
+            titleEl.innerHTML = `💰 ${badge}${dateLabel}${todayTag}${specialHTML}`;
         }
 
         const diaries = getAllDiaries();
@@ -6493,6 +6517,14 @@
                 if (calZoomScale <= 1) { calZoomScale = 1; calZoomX = 0; calZoomY = 0; applyCalendarZoomTransform(); }
             }
         });
+    }
+
+    // 📌 날짜 칸을 누르면 살짝 확대됐다가 제자리로 돌아오는 탭 피드백
+    function popCalendarCell(cellEl) {
+        if (!cellEl) return;
+        cellEl.classList.remove('cal-cell-pop');
+        void cellEl.offsetWidth; // 강제 리플로우로 같은 애니메이션을 연속으로 눌러도 재생되게 함
+        cellEl.classList.add('cal-cell-pop');
     }
 
     function initPhotoZoomHandlers() {
