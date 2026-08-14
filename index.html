@@ -726,10 +726,13 @@
             border: 1px solid #e8dfdf;
             color: var(--weekday-color);
             touch-action: manipulation;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            transition: transform 0.2s ease;
         }
-        .cal-cell.selected-date {
-            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+        .cal-cell span { font-size: calc(var(--base-font-size) + 2px); }
+        .cal-cell-inner {
+            width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: transform 0.2s ease;
         }
 
         .cal-cell:hover {
@@ -3005,6 +3008,7 @@
     let calMonth = __initToday.getMonth(); // 오늘 날짜 기준 당월로 자동 설정
     let selectedReservationDate = null;
     let selectedViewDate = null; // 📅 달력에서 선택(클릭)한 날짜 - 아래 다이어리 리스트에 표시됨
+    let calEnlargedDate = null; // 📌 달력에서 확대되어 표시 중인 날짜 (선택과 별개로, 다시 누르면 꺼짐)
     let editingDiaryId = null;
     let currentFormMode = 'diary'; // '입력' 폼이 다이어리용인지 가계부용인지 구분 ('diary' | 'money')
     let currentPhotoBase64 = null;
@@ -3772,7 +3776,7 @@
         2030: ['2030-02-02', '2030-02-03', '2030-02-04', '2030-05-09', '2030-09-11', '2030-09-12', '2030-09-13']
     };
 
-    function getKoreanHolidays(year) {
+    function computeKoreanHolidayInfo(year) {
         // 신정(대체공휴일 미적용), 현충일(국가추모일, 대체공휴일 미적용)
         let holidays = new Set([`${year}-01-01`, `${year}-06-06`]);
 
@@ -3831,7 +3835,15 @@
 
         substitutes.forEach(d => holidays.add(d));
 
-        return holidays;
+        return { holidays, substitutes };
+    }
+
+    function getKoreanHolidays(year) {
+        return computeKoreanHolidayInfo(year).holidays;
+    }
+
+    function getSubstituteHolidaySet(year) {
+        return computeKoreanHolidayInfo(year).substitutes;
     }
 
     // ----- 📆 달력 칸에 표시할 특별한 날 이름: 국경일/명절 > 24절기 > 삼복(초복·중복·말복) 순 우선순위 -----
@@ -3844,9 +3856,11 @@
     function getLunarHolidayName(dateStr, year) {
         const arr = SAJU_LUNAR_HOLIDAYS_TABLE[year];
         if (!arr) return null;
-        const names = ['설날 전날', '설날', '설날 다음날', '부처님오신날', '추석 전날', '추석', '추석 다음날'];
-        const idx = arr.indexOf(dateStr);
-        return idx === -1 ? null : names[idx];
+        // 전날/다음날은 표시 안 함 - 명절 당일(설날/부처님오신날/추석)만 표시
+        if (arr[1] === dateStr) return '설날';
+        if (arr[3] === dateStr) return '부처님오신날';
+        if (arr[5] === dateStr) return '추석';
+        return null;
     }
 
     function getSolarTermLabel(dateStr) {
@@ -3905,6 +3919,7 @@
         const year = d.getFullYear();
         const mmdd = `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
+        if (getSubstituteHolidaySet(year).has(dateStr)) return { label: '대체공휴일', type: 'holiday' };
         if (SAJU_SOLAR_HOLIDAY_NAMES[mmdd]) return { label: SAJU_SOLAR_HOLIDAY_NAMES[mmdd], type: 'holiday' };
         const lunarName = getLunarHolidayName(dateStr, year);
         if (lunarName) return { label: lunarName, type: 'holiday' };
@@ -5816,6 +5831,7 @@
 
             if (dateStr === todayStr) cell.classList.add('today-date');
             if (selectedViewDate && dateStr === selectedViewDate) cell.classList.add('selected-date');
+            if (calEnlargedDate && dateStr === calEnlargedDate) cell.classList.add('enlarged-date');
 
             if (dayOfWeek === 0 || holidays.has(dateStr)) cell.classList.add('sunday');
             else if (dayOfWeek === 6) cell.classList.add('saturday');
@@ -5832,7 +5848,7 @@
                 indicatorHTML = `<div class="memo-line ${lineClass}"></div>`;
             }
 
-            cell.innerHTML = `<span>${day}</span>${indicatorHTML}`;
+            cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>`;
             cell.onclick = () => selectDiaryDate(dateStr);
             grid.appendChild(cell);
         }
@@ -5840,8 +5856,8 @@
         updateMoneySummary();
     }
 
-    // 📌 선택한 날짜 칸을 이웃 3칸(오른쪽, 아래, 오른쪽아래)까지 합친 크기로 키워서 계속 유지
-    // (예: 4일을 선택하면 4·5·11·12 자리를 합친 만큼 커짐)
+    // 📌 선택한 날짜 칸을 바로 아래 칸까지(세로로만) 합친 2칸 크기로 키워서 유지.
+    // 안쪽 내용(cal-cell-inner)은 반대로 축소시켜서, 박스는 커져도 숫자 글씨 크기는 원래 그대로 보이게 함.
     function applyCalendarCellEnlargement() {
         const grid = document.getElementById('cal-days-grid');
         if (!grid) return;
@@ -5849,24 +5865,31 @@
             c.style.transform = '';
             c.style.zIndex = '';
             c.style.position = '';
+            const inner = c.querySelector('.cal-cell-inner');
+            if (inner) inner.style.transform = '';
         });
-        const target = grid.querySelector('.cal-cell.selected-date');
+        const target = grid.querySelector('.cal-cell.enlarged-date');
         if (!target || target.classList.contains('empty')) return;
         const rect = target.getBoundingClientRect();
         const gap = 4; // .calendar-grid 의 gap 값과 동일하게 맞춤
-        if (rect.width > 0) {
-            const scale = (2 * rect.width + gap) / rect.width;
+        if (rect.height > 0) {
+            const scale = (2 * rect.height + gap) / rect.height;
             target.style.transformOrigin = 'top left';
             target.style.position = 'relative';
             target.style.zIndex = '5';
-            target.style.transform = `scale(${scale})`;
+            target.style.transform = `scaleY(${scale})`;
+            const inner = target.querySelector('.cal-cell-inner');
+            if (inner) inner.style.transform = `scaleY(${1 / scale})`;
         }
     }
 
     // 📅 달력에서 날짜를 클릭하면 팝업을 바로 열지 않고, 지금 보고 있는 탭(다이어리/가계부)의 내용을 아래에 표시
     // (예전엔 무조건 다이어리 탭으로 이동해서, 가계부 탭에서 날짜를 눌러도 다이어리로 튕기는 문제가 있었음)
     function selectDiaryDate(dateStr) {
-        selectedViewDate = normalizeDateStr(dateStr);
+        const normalized = normalizeDateStr(dateStr);
+        // 이미 확대되어 있는 날짜를 다시 누르면 크기만 원래대로 되돌림 (선택 자체는 유지)
+        calEnlargedDate = (calEnlargedDate === normalized) ? null : normalized;
+        selectedViewDate = normalized;
         renderCalendar();
         renderDiaryAroundToday();
         renderMoneyAroundToday();
@@ -5875,6 +5898,7 @@
 
     function changeMonth(delta) {
         const grid = document.getElementById('cal-days-grid');
+        calEnlargedDate = null; // 달이 바뀌면 확대 상태 초기화
 
         const applyMonthDelta = () => {
             calMonth += delta;
