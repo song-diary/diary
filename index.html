@@ -5809,6 +5809,8 @@
         for (let i = 0; i < firstDay; i++) {
             const emptyCell = document.createElement('div');
             emptyCell.className = 'cal-cell empty';
+            emptyCell.style.gridColumn = String(i + 1);
+            emptyCell.style.gridRow = '1';
             grid.appendChild(emptyCell);
         }
 
@@ -5822,6 +5824,14 @@
 
             const dObj = new Date(calYear, calMonth, day);
             const dayOfWeek = dObj.getDay();
+
+            // 📌 모든 칸에 자기 요일(열)·주차(행)를 명시적으로 못박아서, 특정 칸이 position:absolute로
+            // 빠져도(확대될 때) 다른 칸들이 앞으로 당겨져 밀리지 않도록 함
+            const cellIndex = firstDay + (day - 1);
+            const col = (cellIndex % 7) + 1;
+            const row = Math.floor(cellIndex / 7) + 1;
+            cell.style.gridColumn = String(col);
+            cell.style.gridRow = String(row);
 
             if (dateStr === todayStr) cell.classList.add('today-date');
             if (selectedViewDate && dateStr === selectedViewDate) cell.classList.add('selected-date');
