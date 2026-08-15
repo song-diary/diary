@@ -700,7 +700,9 @@
             gap: 4px;
             text-align: center;
         }
-        #cal-days-grid { position: relative; }
+        /* 📆 날짜 칸들은 더 이상 CSS grid가 아니라, JS가 직접 계산한 left/top/width/height로 배치됨
+           (grid-row span 방식이 브라우저마다 다르게 해석되는 문제가 있어서 완전히 배제) */
+        #cal-days-grid { position: relative; display: block; }
 
         .cal-day-name {
             font-size: calc(var(--base-font-size) - 1px);
@@ -713,7 +715,6 @@
         .cal-day-name.weekday { color: var(--weekday-color); }
 
         .cal-cell {
-            aspect-ratio: 1;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -722,12 +723,12 @@
             font-weight: 600;
             border-radius: 8px;
             cursor: pointer;
-            position: relative;
+            position: absolute;
             background: #ffffff;
             border: 1px solid #e8dfdf;
             color: var(--weekday-color);
             touch-action: manipulation;
-            transition: transform 0.2s ease;
+            box-sizing: border-box;
         }
         .cal-cell span { font-size: calc(var(--base-font-size) + 2px); }
         .cal-cell-inner {
@@ -736,8 +737,7 @@
         }
         .cal-cell.enlarged-date {
             border-width: 1px !important; /* 확대 시 테두리를 절반 두께로, 4면 동일하게 */
-            position: relative;
-            z-index: 3; /* 그리드에서 겹치는 아래 칸 위로 올라오도록 */
+            z-index: 3; /* 겹치는 아래 칸 위로 올라오도록 */
         }
         .cal-cell.enlarged-date .cal-cell-inner span {
             font-size: calc(var(--base-font-size) + 4px); /* 평소보다 살짝 더 크게 */
@@ -5808,11 +5808,28 @@
         const holidays = getKoreanHolidays(calYear);
         const todayStr = getTodayStr();
 
+        // 📐 칸 크기를 직접 계산 (7칸 정사각형 + 사이 간격 4px) - CSS grid 기능을 아예 안 쓰고
+        // JS가 모든 칸의 위치를 픽셀 단위로 직접 지정해서, 브라우저별 해석 차이 문제를 원천 차단함
+        const gap = 4;
+        const gridWidth = grid.getBoundingClientRect().width || grid.parentElement.getBoundingClientRect().width;
+        const cellSize = (gridWidth - gap * 6) / 7;
+        const totalCells = firstDay + lastDate;
+        const totalRows = Math.ceil(totalCells / 7);
+        grid.style.height = `${totalRows * cellSize + (totalRows - 1) * gap}px`;
+
+        function placeCell(el, cellIndex, rowSpan) {
+            const col = cellIndex % 7;
+            const row = Math.floor(cellIndex / 7);
+            el.style.left = `${col * (cellSize + gap)}px`;
+            el.style.top = `${row * (cellSize + gap)}px`;
+            el.style.width = `${cellSize}px`;
+            el.style.height = `${cellSize * rowSpan + gap * (rowSpan - 1)}px`;
+        }
+
         for (let i = 0; i < firstDay; i++) {
             const emptyCell = document.createElement('div');
             emptyCell.className = 'cal-cell empty';
-            emptyCell.style.gridColumn = String(i + 1);
-            emptyCell.style.gridRow = '1';
+            placeCell(emptyCell, i, 1);
             grid.appendChild(emptyCell);
         }
 
@@ -5827,15 +5844,9 @@
             const dObj = new Date(calYear, calMonth, day);
             const dayOfWeek = dObj.getDay();
 
-            // 📌 모든 칸에 자기 요일(열)·주차(행)를 명시적으로 못박음
-            const cellIndex = firstDay + (day - 1);
-            const col = (cellIndex % 7) + 1;
-            const row = Math.floor(cellIndex / 7) + 1;
-            cell.style.gridColumn = String(col);
-
             const isEnlarged = calEnlargedDate && dateStr === calEnlargedDate;
-            // 확대된 칸은 그리드 기능으로 "이 칸에서 2줄을 차지해라"라고 지정 (좌표 계산 없이 브라우저가 정확히 배치)
-            cell.style.gridRow = isEnlarged ? `${row} / span 2` : String(row);
+            const cellIndex = firstDay + (day - 1);
+            placeCell(cell, cellIndex, isEnlarged ? 2 : 1);
 
             if (dateStr === todayStr) cell.classList.add('today-date');
             if (selectedViewDate && dateStr === selectedViewDate) cell.classList.add('selected-date');
@@ -5856,8 +5867,7 @@
         updateMoneySummary();
     }
 
-    // 📌 확대는 이제 렌더링 시 grid-row에 "span 2"를 지정하는 방식으로 처리됨 (위 renderCalendar 참고)
-    // → 좌표 계산이 필요 없어서 항상 정확한 자기 자리에서 아래로 커짐
+    // 📌 확대는 renderCalendar 안에서 픽셀 좌표를 직접 계산해 처리됨 (CSS grid span 방식은 문제가 있어 폐기)
 
     // 📅 달력에서 날짜를 클릭하면 팝업을 바로 열지 않고, 지금 보고 있는 탭(다이어리/가계부)의 내용을 아래에 표시
     // (예전엔 무조건 다이어리 탭으로 이동해서, 가계부 탭에서 날짜를 눌러도 다이어리로 튕기는 문제가 있었음)
