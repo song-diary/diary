@@ -799,6 +799,19 @@
         .cal-special-label.cal-special-term { color: #4C7FD1; }
         .cal-special-label.cal-special-bok { color: #C2820A; }
 
+        .cal-anniv-label {
+            margin-top: 1px;
+            font-size: 8.5px;
+            font-weight: 700;
+            line-height: 1.1;
+            white-space: nowrap;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: clip;
+            color: #9C6ADE;
+        }
+        .cal-cell.enlarged-date .cal-anniv-label { font-size: 12px; }
+
         .cal-special-title-badge {
             display: inline-flex; align-items: center; gap: 3px;
             font-size: 12px; font-weight: 700; margin-left: 6px;
@@ -1221,6 +1234,18 @@
         }
         .health-med-row { gap: 16px; margin-top: 2px; }
         .health-med-chk { display: flex; align-items: center; gap: 5px; font-size: 13.5px; color: var(--text-sub); cursor: pointer; }
+
+        /* 🎉 기념일 입력란 */
+        .anniv-input-row {
+            display: flex; align-items: center; gap: 8px;
+            margin-bottom: 10px; padding: 8px 10px;
+            background: #FDF3E7; border-radius: 8px;
+        }
+        .anniv-label { font-size: 13.5px; font-weight: bold; color: #A9754A; flex-shrink: 0; }
+        #anniv-input {
+            flex: 1; padding: 7px 8px; border: 1px solid var(--border-color); border-radius: 6px;
+            font-size: 15px; background: #fff; color: var(--text-color);
+        }
 
         /* 📅 날짜 수정 입력란 */
         .form-date-row {
@@ -2122,6 +2147,12 @@
                     <label class="health-med-chk"><input type="checkbox" id="health-med-evening"> 💊 저녁 약</label>
                 </div>
             </div>
+        </div>
+
+        <!-- 🎉 기념일 입력란: 달력에 짧은 메모로 표시됨 -->
+        <div class="anniv-input-row" id="anniv-input-row">
+            <label class="anniv-label" for="anniv-input">🎉 기념일</label>
+            <input type="text" id="anniv-input" maxlength="6" placeholder="예: 결혼기념일 (5자 내외)">
         </div>
 
         <!-- 📅 날짜 수정 입력란: 건강 섹션 바로 아래 위치 -->
@@ -3927,6 +3958,13 @@
         return null;
     }
 
+    // 🎉 개인 기념일: 일기 항목에 저장된 기념일 메모를 날짜 기준으로 조회 (달력 칸 표시용)
+    function getAnniversaryForDate(dateStr) {
+        const diaries = getAllDiaries();
+        const found = diaries.find(item => item.anniversary && normalizeDateStr(item.date) === dateStr);
+        return found ? found.anniversary : null;
+    }
+
     function getAllDiaries() {
         let combinedList = [];
         let standardData = localStorage.getItem('smartDiaryList');
@@ -4460,7 +4498,7 @@
                 if (!item.money || item.money.type !== 'income') return false;
             } else if (currentStatsType === 'memo') {
                 if (item.money && item.money.amount) return false;
-                if (!item.text && !item.photo && !item.health) return false;
+                if (!item.text && !item.photo && !item.health && !item.anniversary) return false;
             }
 
             let itemDateStr = normalizeDateStr(item.date);
@@ -4658,7 +4696,7 @@
         let filtered = diaries.filter(item => {
             // 다이어리(메모) 항목만 대상: 금액이 있는 가계부 항목은 제외
             if (item.money && item.money.amount) return false;
-            if (!item.text && !item.photo && !item.health) return false;
+            if (!item.text && !item.photo && !item.health && !item.anniversary) return false;
 
             let itemDateStr = normalizeDateStr(item.date);
             let itemDate = parseDateObj(itemDateStr);
@@ -5856,9 +5894,10 @@
             else if (dayOfWeek === 6) cell.classList.add('saturday');
 
             const specialInfo = getSpecialDayLabel(dateStr);
-            const indicatorHTML = specialInfo
-                ? `<div class="cal-special-label cal-special-${specialInfo.type}">${specialInfo.label}</div>`
-                : '';
+            const annivText = getAnniversaryForDate(dateStr);
+            let indicatorHTML = '';
+            if (specialInfo) indicatorHTML += `<div class="cal-special-label cal-special-${specialInfo.type}">${specialInfo.label}</div>`;
+            if (annivText) indicatorHTML += `<div class="cal-anniv-label">🎉${annivText}</div>`;
 
             cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>`;
             cell.onclick = () => selectDiaryDate(dateStr);
@@ -6139,6 +6178,7 @@
                 if (cardPendingNameInput) cardPendingNameInput.value = '';
             }
             populateHealthInputFields(existingItem.health || null);
+            document.getElementById('anniv-input').value = existingItem.anniversary || '';
         } else {
             textOutput.innerHTML = '';
             if (moneyNoteInput) moneyNoteInput.value = '';
@@ -6150,6 +6190,7 @@
             if (cardPendingCheckbox) { cardPendingCheckbox.checked = false; onCardPendingToggle(); }
             if (cardPendingNameInput) cardPendingNameInput.value = '';
             resetHealthInputFields();
+            document.getElementById('anniv-input').value = '';
         }
 
         updatePhotoPreview();
@@ -6205,13 +6246,15 @@
             const specialInfo = getSpecialDayLabel(dateStr);
             const specialIcon = specialInfo ? (specialInfo.type === 'holiday' ? '🎊' : specialInfo.type === 'term' ? '🍃' : '🌡️') : '';
             const specialHTML = specialInfo ? `<span class="cal-special-title-badge cal-special-${specialInfo.type}">${specialIcon} ${specialInfo.label}</span>` : '';
-            titleEl.innerHTML = `📔 ${badge}${dateLabel}${todayTag}${lunarHTML}${specialHTML}`;
+            const annivText = getAnniversaryForDate(dateStr);
+            const annivHTML = annivText ? `<span class="cal-special-title-badge" style="background:#F3EBFF; color:#9C6ADE;">🎉 ${annivText}</span>` : '';
+            titleEl.innerHTML = `📔 ${badge}${dateLabel}${todayTag}${lunarHTML}${specialHTML}${annivHTML}`;
         }
 
         const diaries = getAllDiaries();
         let filtered = diaries.filter(item => {
             if (item.money && item.money.amount) return false;
-            if (!item.text && !item.photo && !item.health) return false;
+            if (!item.text && !item.photo && !item.health && !item.anniversary) return false;
             return normalizeDateStr(item.date) === dateStr;
         });
 
@@ -6718,8 +6761,10 @@
         }
 
         const healthObj = collectHealthInputValue();
+        const annivInputEl = document.getElementById('anniv-input');
+        const annivVal = annivInputEl ? annivInputEl.value.trim() : '';
 
-        if (!content && !currentPhotoBase64 && !moneyObj && !healthObj) {
+        if (!content && !currentPhotoBase64 && !moneyObj && !healthObj && !annivVal) {
             if (currentFormMode === 'money') {
                 alert('가계부 금액을 입력해주세요.');
             } else {
@@ -6740,7 +6785,7 @@
         if (editingDiaryId) {
             diaries = diaries.map(item => {
                 if (item.id === editingDiaryId) {
-                    return { ...item, text: content, time: timeVal, photo: photoKey, money: moneyObj, health: healthObj };
+                    return { ...item, text: content, time: timeVal, photo: photoKey, money: moneyObj, health: healthObj, anniversary: annivVal || null };
                 }
                 return item;
             });
@@ -6752,7 +6797,8 @@
                 text: content,
                 photo: photoKey,
                 money: moneyObj,
-                health: healthObj
+                health: healthObj,
+                anniversary: annivVal || null
             };
             diaries.push(newItem);
         }
