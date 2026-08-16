@@ -789,11 +789,11 @@
             margin-top: 1px;
             font-size: 8.5px;
             font-weight: 700;
-            line-height: 1.1;
-            white-space: nowrap;
+            line-height: 1.15;
+            white-space: normal;
             max-width: 100%;
-            overflow: hidden;
-            text-overflow: clip;
+            word-break: keep-all;
+            overflow-wrap: break-word;
         }
         .cal-special-label.cal-special-holiday { color: #E0685C; }
         .cal-special-label.cal-special-term { color: #4C7FD1; }
@@ -803,11 +803,11 @@
             margin-top: 1px;
             font-size: 8.5px;
             font-weight: 700;
-            line-height: 1.1;
-            white-space: nowrap;
+            line-height: 1.15;
+            white-space: normal;
             max-width: 100%;
-            overflow: hidden;
-            text-overflow: clip;
+            word-break: keep-all;
+            overflow-wrap: break-word;
             color: #9C6ADE;
         }
         .cal-cell.enlarged-date .cal-anniv-label { font-size: 12px; }
@@ -1246,6 +1246,15 @@
             flex: 1; padding: 7px 8px; border: 1px solid var(--border-color); border-radius: 6px;
             font-size: 15px; background: #fff; color: var(--text-color);
         }
+        .anniv-repeat-row {
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+            margin: -4px 0 10px 2px;
+        }
+        .anniv-repeat-select {
+            padding: 5px 6px; border: 1px solid var(--border-color); border-radius: 6px;
+            font-size: 12.5px; background: #fff; color: var(--text-color);
+        }
+        .anniv-cal-radio { font-size: 12.5px; color: var(--text-sub); display: flex; align-items: center; gap: 3px; cursor: pointer; }
 
         /* 📅 날짜 수정 입력란 */
         .form-date-row {
@@ -2149,16 +2158,25 @@
             </div>
         </div>
 
-        <!-- 🎉 기념일 입력란: 달력에 짧은 메모로 표시됨 -->
-        <div class="anniv-input-row" id="anniv-input-row">
-            <label class="anniv-label" for="anniv-input">🎉 기념일</label>
-            <input type="text" id="anniv-input" maxlength="6" placeholder="예: 결혼기념일 (5자 내외)">
-        </div>
-
         <!-- 📅 날짜 수정 입력란: 건강 섹션 바로 아래 위치 -->
         <div class="form-date-row" id="form-date-row">
             <label class="form-date-label" for="form-date-input">📅 날짜</label>
             <input type="date" id="form-date-input" onchange="onFormDateInputChanged()">
+        </div>
+
+        <!-- 🎉 제목&기념일 입력란: 달력에 짧은 메모로 표시됨, 매년/매달 반복 가능 -->
+        <div class="anniv-input-row" id="anniv-input-row">
+            <label class="anniv-label" for="anniv-input">🎉 제목&기념일</label>
+            <input type="text" id="anniv-input" maxlength="6" placeholder="예: 결혼기념일 (5자 내외)">
+        </div>
+        <div class="anniv-repeat-row" id="anniv-repeat-row">
+            <select id="anniv-repeat-select" class="anniv-repeat-select">
+                <option value="none">반복 안 함</option>
+                <option value="yearly">매년 반복</option>
+                <option value="monthly">매달 반복</option>
+            </select>
+            <label class="anniv-cal-radio"><input type="radio" name="anniv-cal-type" id="anniv-cal-solar" value="solar" checked> 양력</label>
+            <label class="anniv-cal-radio"><input type="radio" name="anniv-cal-type" id="anniv-cal-lunar" value="lunar"> 음력</label>
         </div>
 
         <!-- 📔 다이어리(메모/사진) 입력 영역: 다이어리_입력폼 모드에서만 표시 -->
@@ -3959,9 +3977,44 @@
     }
 
     // 🎉 개인 기념일: 일기 항목에 저장된 기념일 메모를 날짜 기준으로 조회 (달력 칸 표시용)
+    // 반복 없음: 정확히 그 날짜만 / 매년·매달 반복: 양력 또는 음력 기준으로 같은 날을 계속 찾아줌
+    function sajuAnniversaryMatches(item, dateStr) {
+        const anchorDate = normalizeDateStr(item.date);
+        const repeat = item.annivRepeat || 'none';
+        if (repeat === 'none') return anchorDate === dateStr;
+
+        const calType = item.annivCalType || 'solar';
+        const target = parseDateObj(dateStr);
+
+        if (calType === 'solar') {
+            const anchor = parseDateObj(anchorDate);
+            if (repeat === 'yearly') {
+                return target.getMonth() === anchor.getMonth() && target.getDate() === anchor.getDate();
+            }
+            if (repeat === 'monthly') {
+                return target.getDate() === anchor.getDate();
+            }
+        } else { // 음력 기준
+            try {
+                const lib = sajuGetLib();
+                const [ay, am, ad] = anchorDate.split('-').map(Number);
+                const anchorLunar = lib.solar2lunar(ay, am, ad);
+                const [ty, tm, td] = dateStr.split('-').map(Number);
+                const targetLunar = lib.solar2lunar(ty, tm, td);
+                if (repeat === 'yearly') {
+                    return targetLunar.lMonth === anchorLunar.lMonth && targetLunar.lDay === anchorLunar.lDay;
+                }
+                if (repeat === 'monthly') {
+                    return targetLunar.lDay === anchorLunar.lDay;
+                }
+            } catch (e) { return false; }
+        }
+        return false;
+    }
+
     function getAnniversaryForDate(dateStr) {
         const diaries = getAllDiaries();
-        const found = diaries.find(item => item.anniversary && normalizeDateStr(item.date) === dateStr);
+        const found = diaries.find(item => item.anniversary && sajuAnniversaryMatches(item, dateStr));
         return found ? found.anniversary : null;
     }
 
@@ -5897,7 +5950,7 @@
             const annivText = getAnniversaryForDate(dateStr);
             let indicatorHTML = '';
             if (specialInfo) indicatorHTML += `<div class="cal-special-label cal-special-${specialInfo.type}">${specialInfo.label}</div>`;
-            if (annivText) indicatorHTML += `<div class="cal-anniv-label">🎉${annivText}</div>`;
+            if (annivText) indicatorHTML += `<div class="cal-anniv-label">${annivText}</div>`;
 
             cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>`;
             cell.onclick = () => selectDiaryDate(dateStr);
@@ -6179,6 +6232,9 @@
             }
             populateHealthInputFields(existingItem.health || null);
             document.getElementById('anniv-input').value = existingItem.anniversary || '';
+            document.getElementById('anniv-repeat-select').value = existingItem.annivRepeat || 'none';
+            document.getElementById('anniv-cal-solar').checked = (existingItem.annivCalType || 'solar') === 'solar';
+            document.getElementById('anniv-cal-lunar').checked = existingItem.annivCalType === 'lunar';
         } else {
             textOutput.innerHTML = '';
             if (moneyNoteInput) moneyNoteInput.value = '';
@@ -6191,6 +6247,8 @@
             if (cardPendingNameInput) cardPendingNameInput.value = '';
             resetHealthInputFields();
             document.getElementById('anniv-input').value = '';
+            document.getElementById('anniv-repeat-select').value = 'none';
+            document.getElementById('anniv-cal-solar').checked = true;
         }
 
         updatePhotoPreview();
@@ -6247,8 +6305,8 @@
             const specialIcon = specialInfo ? (specialInfo.type === 'holiday' ? '🎊' : specialInfo.type === 'term' ? '🍃' : '🌡️') : '';
             const specialHTML = specialInfo ? `<span class="cal-special-title-badge cal-special-${specialInfo.type}">${specialIcon} ${specialInfo.label}</span>` : '';
             const annivText = getAnniversaryForDate(dateStr);
-            const annivHTML = annivText ? `<span class="cal-special-title-badge" style="background:#F3EBFF; color:#9C6ADE;">🎉 ${annivText}</span>` : '';
-            titleEl.innerHTML = `📔 ${badge}${dateLabel}${todayTag}${lunarHTML}${specialHTML}${annivHTML}`;
+            const annivLineHTML = annivText ? `<div style="font-size:12.5px; font-weight:700; color:#9C6ADE; margin-top:3px;">🎉 ${annivText}</div>` : '';
+            titleEl.innerHTML = `<div>📔 ${badge}${dateLabel}${todayTag}${lunarHTML}${specialHTML}</div>${annivLineHTML}`;
         }
 
         const diaries = getAllDiaries();
@@ -6763,6 +6821,8 @@
         const healthObj = collectHealthInputValue();
         const annivInputEl = document.getElementById('anniv-input');
         const annivVal = annivInputEl ? annivInputEl.value.trim() : '';
+        const annivRepeatVal = annivVal ? document.getElementById('anniv-repeat-select').value : 'none';
+        const annivCalTypeVal = document.getElementById('anniv-cal-lunar').checked ? 'lunar' : 'solar';
 
         if (!content && !currentPhotoBase64 && !moneyObj && !healthObj && !annivVal) {
             if (currentFormMode === 'money') {
@@ -6785,7 +6845,7 @@
         if (editingDiaryId) {
             diaries = diaries.map(item => {
                 if (item.id === editingDiaryId) {
-                    return { ...item, text: content, time: timeVal, photo: photoKey, money: moneyObj, health: healthObj, anniversary: annivVal || null };
+                    return { ...item, text: content, time: timeVal, photo: photoKey, money: moneyObj, health: healthObj, anniversary: annivVal || null, annivRepeat: annivRepeatVal, annivCalType: annivCalTypeVal };
                 }
                 return item;
             });
@@ -6798,7 +6858,9 @@
                 photo: photoKey,
                 money: moneyObj,
                 health: healthObj,
-                anniversary: annivVal || null
+                anniversary: annivVal || null,
+                annivRepeat: annivRepeatVal,
+                annivCalType: annivCalTypeVal
             };
             diaries.push(newItem);
         }
