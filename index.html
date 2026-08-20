@@ -735,6 +735,23 @@
             width: 100%; height: 100%;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
         }
+
+        /* v35: 라벨이 셀 밖으로 시각적으로 튀어나가지 않도록 내부 폭만 제한 */
+        .cal-cell-inner {
+            min-width: 0;
+            max-width: 100%;
+            overflow: hidden;
+            padding: 2px 1px;
+            box-sizing: border-box;
+        }
+        .cal-special-label,
+        .cal-anniv-label {
+            width: 100%;
+            max-width: 100%;
+            text-align: center;
+            overflow-wrap: anywhere;
+            word-break: keep-all;
+        }
         .cal-cell.enlarged-date {
             border-width: 1px !important; /* 확대 시 테두리를 절반 두께로, 4면 동일하게 */
             z-index: 3; /* 겹치는 아래 칸 위로 올라오도록 */
@@ -1671,36 +1688,6 @@
             background: var(--card-bg);
         }
     </style>
-<style id="v35-calendar-layout-fix">
-/* v35 fix: 기존 폰트 크기는 유지하고 달력 셀의 공간만 조정 */
-.calendar-grid {
-  width:100%;
-  min-width:0;
-  box-sizing:border-box;
-  gap:2px;
-}
-.calendar-grid > * {
-  min-width:0 !important;
-  max-width:100% !important;
-  box-sizing:border-box;
-}
-.calendar-day, .calendar-cell, .day-cell {
-  min-width:0 !important;
-  max-width:100% !important;
-  box-sizing:border-box !important;
-  overflow:hidden;
-}
-.calendar-day *, .calendar-cell *, .day-cell * {
-  max-width:100%;
-  box-sizing:border-box;
-}
-.calendar-day .holiday, .calendar-day .event, .calendar-day .memo,
-.calendar-cell .holiday, .calendar-cell .event, .calendar-cell .memo,
-.day-cell .holiday, .day-cell .event, .day-cell .memo {
-  overflow-wrap:anywhere;
-  word-break:keep-all;
-}
-</style>
 </head>
 <body>
 
@@ -5937,22 +5924,53 @@
         const holidays = getKoreanHolidays(calYear);
         const todayStr = getTodayStr();
 
-        // 📐 칸 크기를 직접 계산 (7칸 정사각형 + 사이 간격 4px) - CSS grid 기능을 아예 안 쓰고
-        // JS가 모든 칸의 위치를 픽셀 단위로 직접 지정해서, 브라우저별 해석 차이 문제를 원천 차단함
+        // v35 테스트: 폰트 크기는 그대로 유지하고,
+        // 특별일/기념일이 있는 행만 세로 공간을 조금 더 확보한다.
         const gap = 4;
         const gridWidth = grid.getBoundingClientRect().width || grid.parentElement.getBoundingClientRect().width;
         const cellSize = (gridWidth - gap * 6) / 7;
         const totalCells = firstDay + lastDate;
         const totalRows = Math.ceil(totalCells / 7);
-        grid.style.height = `${totalRows * cellSize + (totalRows - 1) * gap}px`;
+
+        // 각 행의 기본 높이는 정사각형(cellSize).
+        // 라벨이 있는 날짜가 포함된 행에는 추가 높이를 준다.
+        const rowExtra = new Array(totalRows).fill(0);
+
+        for (let day = 1; day <= lastDate; day++) {
+            const mStr = String(calMonth + 1).padStart(2, '0');
+            const dStr = String(day).padStart(2, '0');
+            const dateStr = `${calYear}-${mStr}-${dStr}`;
+            const specialInfo = getSpecialDayLabel(dateStr);
+            const annivText = getAnniversaryForDate(dateStr);
+
+            if (specialInfo || annivText) {
+                const row = Math.floor((firstDay + day - 1) / 7);
+                // 한 종류면 약 18px, 두 종류가 겹치면 약 28px 확보.
+                rowExtra[row] = Math.max(rowExtra[row], specialInfo && annivText ? 28 : 18);
+            }
+        }
+
+        const rowHeights = rowExtra.map(extra => cellSize + extra);
+        const rowTops = [];
+        let currentTop = 0;
+        for (let r = 0; r < totalRows; r++) {
+            rowTops[r] = currentTop;
+            currentTop += rowHeights[r] + (r < totalRows - 1 ? gap : 0);
+        }
+        grid.style.height = `${currentTop}px`;
 
         function placeCell(el, cellIndex, rowSpan) {
             const col = cellIndex % 7;
             const row = Math.floor(cellIndex / 7);
             el.style.left = `${col * (cellSize + gap)}px`;
-            el.style.top = `${row * (cellSize + gap)}px`;
+            el.style.top = `${rowTops[row]}px`;
             el.style.width = `${cellSize}px`;
-            el.style.height = `${cellSize * rowSpan + gap * (rowSpan - 1)}px`;
+
+            let height = rowHeights[row];
+            for (let r = 1; r < rowSpan && row + r < totalRows; r++) {
+                height += gap + rowHeights[row + r];
+            }
+            el.style.height = `${height}px`;
         }
 
         for (let i = 0; i < firstDay; i++) {
