@@ -1688,6 +1688,25 @@
             background: var(--card-bg);
         }
     </style>
+
+<style id="v36-adjacent-month-calendar">
+/* v36: 현재 달 앞/뒤의 날짜를 희미하게 표시 */
+.cal-cell.adjacent-month {
+    opacity: 0.32;
+    font-weight: 600;
+    background: #fafafa !important;
+    border-color: #e9e9e9 !important;
+    color: #68727c !important;
+}
+.cal-cell.adjacent-month span {
+    color: #68727c !important;
+}
+.cal-cell.adjacent-month:hover {
+    opacity: 0.65;
+    border-color: #b8c7d6 !important;
+}
+</style>
+
 </head>
 <body>
 
@@ -5921,19 +5940,27 @@
 
         const firstDay = new Date(calYear, calMonth, 1).getDay();
         const lastDate = new Date(calYear, calMonth + 1, 0).getDate();
+        const prevYear = calMonth === 0 ? calYear - 1 : calYear;
+        const prevMonth = calMonth === 0 ? 11 : calMonth - 1;
+        const prevLastDate = new Date(prevYear, prevMonth + 1, 0).getDate();
+        const nextYear = calMonth === 11 ? calYear + 1 : calYear;
+        const nextMonth = calMonth === 11 ? 0 : calMonth + 1;
+
         const holidays = getKoreanHolidays(calYear);
         const todayStr = getTodayStr();
 
-        // v35 테스트: 폰트 크기는 그대로 유지하고,
-        // 특별일/기념일이 있는 행만 세로 공간을 조금 더 확보한다.
+        // v36:
+        // 현재 달 앞쪽에는 전월 말일, 뒤쪽에는 다음 달 초 날짜를 희미하게 표시한다.
+        // 7열 달력의 한 주 단위가 끊기지 않도록 마지막 행까지 채운다.
         const gap = 4;
         const gridWidth = grid.getBoundingClientRect().width || grid.parentElement.getBoundingClientRect().width;
         const cellSize = (gridWidth - gap * 6) / 7;
+
         const totalCells = firstDay + lastDate;
         const totalRows = Math.ceil(totalCells / 7);
+        const totalVisibleCells = totalRows * 7;
 
-        // 각 행의 기본 높이는 정사각형(cellSize).
-        // 라벨이 있는 날짜가 포함된 행에는 추가 높이를 준다.
+        // 라벨이 있는 현재 달의 행만 세로 공간을 추가 확보한다.
         const rowExtra = new Array(totalRows).fill(0);
 
         for (let day = 1; day <= lastDate; day++) {
@@ -5945,23 +5972,28 @@
 
             if (specialInfo || annivText) {
                 const row = Math.floor((firstDay + day - 1) / 7);
-                // 한 종류면 약 18px, 두 종류가 겹치면 약 28px 확보.
-                rowExtra[row] = Math.max(rowExtra[row], specialInfo && annivText ? 28 : 18);
+                rowExtra[row] = Math.max(
+                    rowExtra[row],
+                    specialInfo && annivText ? 28 : 18
+                );
             }
         }
 
         const rowHeights = rowExtra.map(extra => cellSize + extra);
         const rowTops = [];
         let currentTop = 0;
+
         for (let r = 0; r < totalRows; r++) {
             rowTops[r] = currentTop;
             currentTop += rowHeights[r] + (r < totalRows - 1 ? gap : 0);
         }
+
         grid.style.height = `${currentTop}px`;
 
-        function placeCell(el, cellIndex, rowSpan) {
+        function placeCell(el, cellIndex, rowSpan = 1) {
             const col = cellIndex % 7;
             const row = Math.floor(cellIndex / 7);
+
             el.style.left = `${col * (cellSize + gap)}px`;
             el.style.top = `${rowTops[row]}px`;
             el.style.width = `${cellSize}px`;
@@ -5973,13 +6005,45 @@
             el.style.height = `${height}px`;
         }
 
-        for (let i = 0; i < firstDay; i++) {
-            const emptyCell = document.createElement('div');
-            emptyCell.className = 'cal-cell empty';
-            placeCell(emptyCell, i, 1);
-            grid.appendChild(emptyCell);
+        function makeAdjacentDateCell(dateStr, day, cellIndex) {
+            const cell = document.createElement('div');
+            cell.className = 'cal-cell adjacent-month';
+            placeCell(cell, cellIndex, 1);
+
+            // 인접 월은 날짜 숫자만 희미하게 표시한다.
+            cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span></div>`;
+
+            cell.onclick = () => {
+                const target = normalizeDateStr(dateStr);
+                const targetObj = new Date(
+                    Number(target.slice(0, 4)),
+                    Number(target.slice(5, 7)) - 1,
+                    Number(target.slice(8, 10))
+                );
+
+                calYear = targetObj.getFullYear();
+                calMonth = targetObj.getMonth();
+                calEnlargedDate = null;
+                selectedViewDate = target;
+
+                renderCalendar();
+                renderDiaryAroundToday();
+                renderMoneyAroundToday();
+                if (isDiarySearchFilterOpen) filterDiaryCustomList();
+            };
+
+            grid.appendChild(cell);
         }
 
+        // 전월 말일 표시: 예) 8월 화면이면 7월 26~31일
+        for (let i = 0; i < firstDay; i++) {
+            const day = prevLastDate - firstDay + i + 1;
+            const dateStr =
+                `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            makeAdjacentDateCell(dateStr, day, i);
+        }
+
+        // 현재 달
         for (let day = 1; day <= lastDate; day++) {
             const mStr = String(calMonth + 1).padStart(2, '0');
             const dStr = String(day).padStart(2, '0');
@@ -6005,13 +6069,30 @@
             const specialInfo = getSpecialDayLabel(dateStr);
             const annivText = getAnniversaryForDate(dateStr);
             let indicatorHTML = '';
-            if (specialInfo) indicatorHTML += `<div class="cal-special-label cal-special-${specialInfo.type}">${specialInfo.label}</div>`;
-            if (annivText) indicatorHTML += `<div class="cal-anniv-label">${annivText}</div>`;
 
-            cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>`;
+            if (specialInfo) {
+                indicatorHTML += `<div class="cal-special-label cal-special-${specialInfo.type}">${specialInfo.label}</div>`;
+            }
+            if (annivText) {
+                indicatorHTML += `<div class="cal-anniv-label">${annivText}</div>`;
+            }
+
+            cell.innerHTML =
+                `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>`;
+
             cell.onclick = () => selectDiaryDate(dateStr);
             grid.appendChild(cell);
         }
+
+        // 다음 달 초 표시: 예) 8월 화면이면 9월 1~5일
+        const trailingCount = totalVisibleCells - totalCells;
+        for (let i = 1; i <= trailingCount; i++) {
+            const dateStr =
+                `${nextYear}-${String(nextMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+            const cellIndex = totalCells + (i - 1);
+            makeAdjacentDateCell(dateStr, i, cellIndex);
+        }
+
         updateMoneySummary();
     }
 
