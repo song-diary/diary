@@ -1707,6 +1707,21 @@
 }
 </style>
 
+
+<style id="v38-calendar-scroll">
+/* v38: 월 제목/요일은 고정하고 날짜 영역만 세로 스크롤 */
+#cal-days-grid {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    touch-action: pan-y;
+}
+#cal-days-grid::-webkit-scrollbar {
+    width: 4px;
+}
+</style>
+
 </head>
 <body>
 
@@ -7282,6 +7297,50 @@
         alert(`${savedCount}건이 가계부에 저장되었습니다.`);
         closeCardStatementModal();
     }
+</script>
+
+
+<script id="v38-calendar-scroll-init">
+(function () {
+    function setupCalendarDateScroll() {
+        const grid = document.getElementById('cal-days-grid');
+        if (!grid) return;
+
+        const calendar = grid.parentElement;
+        if (!calendar) return;
+
+        /*
+         * 기존 달력의 월 제목/요일은 grid 바깥에 있으므로 그대로 고정되고,
+         * 날짜 grid에만 최대 높이를 부여하여 내부 스크롤을 만든다.
+         */
+        const calendarRect = calendar.getBoundingClientRect();
+        const gridRect = grid.getBoundingClientRect();
+
+        // 기존 렌더링 높이를 유지하되, 화면에 들어오는 날짜 영역을 viewport로 사용.
+        // 너무 작게 제한하지 않아 일반 화면에서는 기존 모습과 거의 같다.
+        const currentHeight = parseFloat(getComputedStyle(grid).height) || gridRect.height;
+        const availableHeight = Math.max(180, Math.floor(calendarRect.height - gridRect.top + calendarRect.top));
+
+        if (availableHeight > 0 && currentHeight > availableHeight + 2) {
+            grid.style.maxHeight = availableHeight + 'px';
+            grid.style.overflowY = 'auto';
+        } else {
+            grid.style.maxHeight = '';
+            grid.style.overflowY = 'visible';
+        }
+    }
+
+    window.addEventListener('resize', function () {
+        setTimeout(setupCalendarDateScroll, 80);
+    });
+
+    window.addEventListener('orientationchange', function () {
+        setTimeout(setupCalendarDateScroll, 180);
+    });
+
+    // 기존 renderCalendar()가 실행된 뒤 적용
+    setTimeout(setupCalendarDateScroll, 350);
+})();
 </script>
 
 </body>
