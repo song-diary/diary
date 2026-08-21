@@ -1708,14 +1708,17 @@
 </style>
 
 
-<style id="v38-calendar-scroll">
-/* v38: 월 제목/요일은 고정하고 날짜 영역만 세로 스크롤 */
+<style id="v39-calendar-scroll">
+/* v39: 월/요일은 고정, 날짜 4행을 보이는 창으로 만들고 날짜만 내부 스크롤 */
 #cal-days-grid {
     overflow-y: auto !important;
     overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch;
-    overscroll-behavior-y: contain;
-    touch-action: pan-y;
+    overscroll-behavior: contain;
+    touch-action: pan-y !important;
+}
+#cal-days-grid .cal-cell {
+    touch-action: auto !important;
 }
 #cal-days-grid::-webkit-scrollbar {
     width: 4px;
@@ -7300,48 +7303,57 @@
 </script>
 
 
-<script id="v38-calendar-scroll-init">
+
+
+<script id="v39-calendar-scroll-init">
 (function () {
-    function setupCalendarDateScroll() {
+    function applyDateOnlyScroll() {
         const grid = document.getElementById('cal-days-grid');
         if (!grid) return;
 
-        const calendar = grid.parentElement;
-        if (!calendar) return;
-
-        /*
-         * 기존 달력의 월 제목/요일은 grid 바깥에 있으므로 그대로 고정되고,
-         * 날짜 grid에만 최대 높이를 부여하여 내부 스크롤을 만든다.
-         */
-        const calendarRect = calendar.getBoundingClientRect();
-        const gridRect = grid.getBoundingClientRect();
-
-        // 기존 렌더링 높이를 유지하되, 화면에 들어오는 날짜 영역을 viewport로 사용.
-        // 너무 작게 제한하지 않아 일반 화면에서는 기존 모습과 거의 같다.
-        const currentHeight = parseFloat(getComputedStyle(grid).height) || gridRect.height;
-        const availableHeight = Math.max(180, Math.floor(calendarRect.height - gridRect.top + calendarRect.top));
-
-        if (availableHeight > 0 && currentHeight > availableHeight + 2) {
-            grid.style.maxHeight = availableHeight + 'px';
-            grid.style.overflowY = 'auto';
-        } else {
-            grid.style.maxHeight = '';
-            grid.style.overflowY = 'visible';
+        const firstCell = grid.querySelector('.cal-cell');
+        if (!firstCell) {
+            setTimeout(applyDateOnlyScroll, 100);
+            return;
         }
+
+        // renderCalendar()가 계산한 실제 셀 크기를 이용해 항상 4개 행 높이의
+        // 고정 viewport를 만든다. 따라서 카드/월 제목/요일은 움직이지 않는다.
+        const cellHeight = parseFloat(getComputedStyle(firstCell).height) || firstCell.getBoundingClientRect().height;
+        const gap = 4;
+        const viewportHeight = Math.round(cellHeight * 4 + gap * 3);
+
+        grid.style.height = viewportHeight + 'px';
+        grid.style.maxHeight = viewportHeight + 'px';
+        grid.style.overflowY = 'auto';
+        grid.style.overflowX = 'hidden';
+        grid.style.touchAction = 'pan-y';
+
+        // 절대배치 셀은 기존 위치를 그대로 유지한다.
+        // 스크롤 영역의 내용 높이는 renderCalendar()가 설정한 scrollHeight가 된다.
     }
 
+    // 달력 렌더링 직후 실행
+    setTimeout(applyDateOnlyScroll, 250);
+    setTimeout(applyDateOnlyScroll, 700);
+
     window.addEventListener('resize', function () {
-        setTimeout(setupCalendarDateScroll, 80);
+        setTimeout(applyDateOnlyScroll, 100);
     });
-
     window.addEventListener('orientationchange', function () {
-        setTimeout(setupCalendarDateScroll, 180);
+        setTimeout(applyDateOnlyScroll, 200);
     });
 
-    // 기존 renderCalendar()가 실행된 뒤 적용
-    setTimeout(setupCalendarDateScroll, 350);
+    // 월 이동/날짜 선택으로 renderCalendar()가 다시 그려진 뒤에도 적용
+    const originalRenderCalendar = window.renderCalendar;
+    if (typeof originalRenderCalendar === 'function') {
+        window.renderCalendar = function () {
+            const result = originalRenderCalendar.apply(this, arguments);
+            setTimeout(applyDateOnlyScroll, 30);
+            return result;
+        };
+    }
 })();
 </script>
-
 </body>
 </html>
