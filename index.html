@@ -1708,21 +1708,55 @@
 </style>
 
 
-<style id="v39-calendar-scroll">
-/* v39: 월/요일은 고정, 날짜 4행을 보이는 창으로 만들고 날짜만 내부 스크롤 */
-#cal-days-grid {
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-    touch-action: pan-y !important;
+<style id="v40-sticky-calendar-symbol">
+/* v40: 페이지 전체는 자연스럽게 스크롤하고, 달력 월/요일만 상단에 고정 */
+#calendar-sticky-symbol {
+    position: sticky;
+    top: 0;
+    z-index: 900;
+    display: none;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 0 0 12px 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    padding: 8px 10px 6px;
+    margin: -1px 0 8px;
 }
-#cal-days-grid .cal-cell {
-    touch-action: auto !important;
+#calendar-sticky-symbol .sticky-calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    margin-bottom: 5px;
 }
-#cal-days-grid::-webkit-scrollbar {
-    width: 4px;
+#calendar-sticky-symbol .sticky-calendar-title {
+    flex: 1;
+    text-align: center;
+    color: var(--primary-color);
+    font-weight: bold;
+    font-size: calc(var(--base-font-size) + 4px);
 }
+#calendar-sticky-symbol button {
+    background: #faf5f5;
+    border: 1px solid var(--border-color);
+    padding: 5px 9px;
+    border-radius: 6px;
+    font-size: calc(var(--base-font-size) - 2px);
+}
+#calendar-sticky-symbol .sticky-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    text-align: center;
+    font-size: calc(var(--base-font-size) - 1px);
+    font-weight: bold;
+}
+#calendar-sticky-symbol .sticky-weekdays span {
+    padding-bottom: 1px;
+}
+#calendar-sticky-symbol .sticky-weekdays .sun { color: var(--sun-color); }
+#calendar-sticky-symbol .sticky-weekdays .sat { color: var(--sat-color); }
+#calendar-sticky-symbol .sticky-weekdays .wd { color: var(--weekday-color); }
 </style>
 
 </head>
@@ -1741,6 +1775,24 @@
     </div>
 
     <!-- 🔑 달력 카드 -->
+    <!-- v40: 페이지 스크롤용 달력 상징 고정 헤더 -->
+    <div id="calendar-sticky-symbol" aria-hidden="true">
+        <div class="sticky-calendar-header">
+            <button type="button" id="sticky-cal-prev">◀</button>
+            <div class="sticky-calendar-title" id="sticky-cal-month-title">0000년 00월</div>
+            <button type="button" id="sticky-cal-next">▶</button>
+        </div>
+        <div class="sticky-weekdays">
+            <span class="sun">일</span>
+            <span class="wd">월</span>
+            <span class="wd">화</span>
+            <span class="wd">수</span>
+            <span class="wd">목</span>
+            <span class="wd">금</span>
+            <span class="sat">토</span>
+        </div>
+    </div>
+
     <div class="card" id="calendar-card">
         <div class="calendar-header">
             <button onclick="changeMonth(-1)">◀ 이전</button>
@@ -7303,57 +7355,78 @@
 </script>
 
 
-
-
-<script id="v39-calendar-scroll-init">
+<script id="v40-sticky-calendar-init">
 (function () {
-    function applyDateOnlyScroll() {
-        const grid = document.getElementById('cal-days-grid');
-        if (!grid) return;
+    function setupStickyCalendarSymbol() {
+        const card = document.getElementById('calendar-card');
+        const sticky = document.getElementById('calendar-sticky-symbol');
+        const title = document.getElementById('cal-month-title');
+        const stickyTitle = document.getElementById('sticky-cal-month-title');
+        if (!card || !sticky || !title || !stickyTitle) return;
 
-        const firstCell = grid.querySelector('.cal-cell');
-        if (!firstCell) {
-            setTimeout(applyDateOnlyScroll, 100);
-            return;
+        stickyTitle.textContent = title.textContent;
+
+        // 달력의 실제 상단 헤더가 화면 상단을 지나갈 때만
+        // 상징용 고정 헤더를 보여준다.
+        const cardRect = card.getBoundingClientRect();
+        const header = card.querySelector('.calendar-header');
+        const headerHeight = header ? header.getBoundingClientRect().height : 48;
+
+        if (cardRect.top <= 0 && cardRect.bottom > headerHeight + 10) {
+            sticky.style.display = 'block';
+        } else {
+            sticky.style.display = 'none';
         }
-
-        // renderCalendar()가 계산한 실제 셀 크기를 이용해 항상 4개 행 높이의
-        // 고정 viewport를 만든다. 따라서 카드/월 제목/요일은 움직이지 않는다.
-        const cellHeight = parseFloat(getComputedStyle(firstCell).height) || firstCell.getBoundingClientRect().height;
-        const gap = 4;
-        const viewportHeight = Math.round(cellHeight * 4 + gap * 3);
-
-        grid.style.height = viewportHeight + 'px';
-        grid.style.maxHeight = viewportHeight + 'px';
-        grid.style.overflowY = 'auto';
-        grid.style.overflowX = 'hidden';
-        grid.style.touchAction = 'pan-y';
-
-        // 절대배치 셀은 기존 위치를 그대로 유지한다.
-        // 스크롤 영역의 내용 높이는 renderCalendar()가 설정한 scrollHeight가 된다.
     }
 
-    // 달력 렌더링 직후 실행
-    setTimeout(applyDateOnlyScroll, 250);
-    setTimeout(applyDateOnlyScroll, 700);
+    function syncStickyTitle() {
+        const title = document.getElementById('cal-month-title');
+        const stickyTitle = document.getElementById('sticky-cal-month-title');
+        if (title && stickyTitle) stickyTitle.textContent = title.textContent;
+    }
 
-    window.addEventListener('resize', function () {
-        setTimeout(applyDateOnlyScroll, 100);
-    });
+    window.addEventListener('scroll', setupStickyCalendarSymbol, { passive: true });
+    window.addEventListener('resize', setupStickyCalendarSymbol, { passive: true });
     window.addEventListener('orientationchange', function () {
-        setTimeout(applyDateOnlyScroll, 200);
+        setTimeout(setupStickyCalendarSymbol, 150);
     });
 
-    // 월 이동/날짜 선택으로 renderCalendar()가 다시 그려진 뒤에도 적용
+    const prev = document.getElementById('sticky-cal-prev');
+    const next = document.getElementById('sticky-cal-next');
+    if (prev) prev.onclick = function () {
+        changeMonth(-1);
+        setTimeout(function () {
+            syncStickyTitle();
+            setupStickyCalendarSymbol();
+        }, 30);
+    };
+    if (next) next.onclick = function () {
+        changeMonth(1);
+        setTimeout(function () {
+            syncStickyTitle();
+            setupStickyCalendarSymbol();
+        }, 30);
+    };
+
+    // 기존 renderCalendar 이후에도 월 제목을 동기화한다.
     const originalRenderCalendar = window.renderCalendar;
     if (typeof originalRenderCalendar === 'function') {
         window.renderCalendar = function () {
             const result = originalRenderCalendar.apply(this, arguments);
-            setTimeout(applyDateOnlyScroll, 30);
+            setTimeout(function () {
+                syncStickyTitle();
+                setupStickyCalendarSymbol();
+            }, 20);
             return result;
         };
     }
+
+    setTimeout(function () {
+        syncStickyTitle();
+        setupStickyCalendarSymbol();
+    }, 250);
 })();
 </script>
+
 </body>
 </html>
