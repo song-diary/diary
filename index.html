@@ -1708,55 +1708,20 @@
 </style>
 
 
-<style id="v40-sticky-calendar-symbol">
-/* v40: 페이지 전체는 자연스럽게 스크롤하고, 달력 월/요일만 상단에 고정 */
-#calendar-sticky-symbol {
+<style id="v41-sticky-original-calendar">
+/* v41: 기존 달력 자체가 자연스럽게 위로 올라가다가 월/요일만 상단에 고정 */
+#calendar-card .calendar-header {
     position: sticky;
     top: 0;
-    z-index: 900;
-    display: none;
+    z-index: 60;
     background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 0 0 12px 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    padding: 8px 10px 6px;
-    margin: -1px 0 8px;
 }
-#calendar-sticky-symbol .sticky-calendar-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 6px;
-    margin-bottom: 5px;
+#calendar-card .calendar-weekdays {
+    position: sticky;
+    top: 0;
+    z-index: 59;
+    background: var(--card-bg);
 }
-#calendar-sticky-symbol .sticky-calendar-title {
-    flex: 1;
-    text-align: center;
-    color: var(--primary-color);
-    font-weight: bold;
-    font-size: calc(var(--base-font-size) + 4px);
-}
-#calendar-sticky-symbol button {
-    background: #faf5f5;
-    border: 1px solid var(--border-color);
-    padding: 5px 9px;
-    border-radius: 6px;
-    font-size: calc(var(--base-font-size) - 2px);
-}
-#calendar-sticky-symbol .sticky-weekdays {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 4px;
-    text-align: center;
-    font-size: calc(var(--base-font-size) - 1px);
-    font-weight: bold;
-}
-#calendar-sticky-symbol .sticky-weekdays span {
-    padding-bottom: 1px;
-}
-#calendar-sticky-symbol .sticky-weekdays .sun { color: var(--sun-color); }
-#calendar-sticky-symbol .sticky-weekdays .sat { color: var(--sat-color); }
-#calendar-sticky-symbol .sticky-weekdays .wd { color: var(--weekday-color); }
 </style>
 
 </head>
@@ -1775,24 +1740,6 @@
     </div>
 
     <!-- 🔑 달력 카드 -->
-    <!-- v40: 페이지 스크롤용 달력 상징 고정 헤더 -->
-    <div id="calendar-sticky-symbol" aria-hidden="true">
-        <div class="sticky-calendar-header">
-            <button type="button" id="sticky-cal-prev">◀</button>
-            <div class="sticky-calendar-title" id="sticky-cal-month-title">0000년 00월</div>
-            <button type="button" id="sticky-cal-next">▶</button>
-        </div>
-        <div class="sticky-weekdays">
-            <span class="sun">일</span>
-            <span class="wd">월</span>
-            <span class="wd">화</span>
-            <span class="wd">수</span>
-            <span class="wd">목</span>
-            <span class="wd">금</span>
-            <span class="sat">토</span>
-        </div>
-    </div>
-
     <div class="card" id="calendar-card">
         <div class="calendar-header">
             <button onclick="changeMonth(-1)">◀ 이전</button>
@@ -7355,76 +7302,44 @@
 </script>
 
 
-<script id="v40-sticky-calendar-init">
+<script id="v41-sticky-original-calendar-init">
 (function () {
-    function setupStickyCalendarSymbol() {
+    function applySticky() {
         const card = document.getElementById('calendar-card');
-        const sticky = document.getElementById('calendar-sticky-symbol');
-        const title = document.getElementById('cal-month-title');
-        const stickyTitle = document.getElementById('sticky-cal-month-title');
-        if (!card || !sticky || !title || !stickyTitle) return;
+        if (!card) return;
 
-        stickyTitle.textContent = title.textContent;
-
-        // 달력의 실제 상단 헤더가 화면 상단을 지나갈 때만
-        // 상징용 고정 헤더를 보여준다.
-        const cardRect = card.getBoundingClientRect();
         const header = card.querySelector('.calendar-header');
-        const headerHeight = header ? header.getBoundingClientRect().height : 48;
+        const weekdays = card.querySelector('.calendar-weekdays');
+        const grid = document.getElementById('cal-days-grid');
 
-        if (cardRect.top <= 0 && cardRect.bottom > headerHeight + 10) {
-            sticky.style.display = 'block';
-        } else {
-            sticky.style.display = 'none';
+        if (!header || !weekdays) return;
+
+        // 기존 달력의 월/요일을 그대로 사용한다. 별도의 복제 헤더는 만들지 않는다.
+        header.style.position = 'sticky';
+        header.style.top = '0px';
+        header.style.zIndex = '60';
+        header.style.background = 'var(--card-bg)';
+
+        const headerHeight = header.getBoundingClientRect().height;
+        weekdays.style.position = 'sticky';
+        weekdays.style.top = headerHeight + 'px';
+        weekdays.style.zIndex = '59';
+        weekdays.style.background = 'var(--card-bg)';
+
+        // 날짜 영역은 별도 스크롤하지 않는다.
+        if (grid) {
+            grid.style.overflowY = 'visible';
+            grid.style.overflowX = 'visible';
+            grid.style.maxHeight = '';
+            grid.style.touchAction = '';
         }
     }
 
-    function syncStickyTitle() {
-        const title = document.getElementById('cal-month-title');
-        const stickyTitle = document.getElementById('sticky-cal-month-title');
-        if (title && stickyTitle) stickyTitle.textContent = title.textContent;
-    }
+    window.addEventListener('resize', () => setTimeout(applySticky, 50));
+    window.addEventListener('orientationchange', () => setTimeout(applySticky, 150));
 
-    window.addEventListener('scroll', setupStickyCalendarSymbol, { passive: true });
-    window.addEventListener('resize', setupStickyCalendarSymbol, { passive: true });
-    window.addEventListener('orientationchange', function () {
-        setTimeout(setupStickyCalendarSymbol, 150);
-    });
-
-    const prev = document.getElementById('sticky-cal-prev');
-    const next = document.getElementById('sticky-cal-next');
-    if (prev) prev.onclick = function () {
-        changeMonth(-1);
-        setTimeout(function () {
-            syncStickyTitle();
-            setupStickyCalendarSymbol();
-        }, 30);
-    };
-    if (next) next.onclick = function () {
-        changeMonth(1);
-        setTimeout(function () {
-            syncStickyTitle();
-            setupStickyCalendarSymbol();
-        }, 30);
-    };
-
-    // 기존 renderCalendar 이후에도 월 제목을 동기화한다.
-    const originalRenderCalendar = window.renderCalendar;
-    if (typeof originalRenderCalendar === 'function') {
-        window.renderCalendar = function () {
-            const result = originalRenderCalendar.apply(this, arguments);
-            setTimeout(function () {
-                syncStickyTitle();
-                setupStickyCalendarSymbol();
-            }, 20);
-            return result;
-        };
-    }
-
-    setTimeout(function () {
-        syncStickyTitle();
-        setupStickyCalendarSymbol();
-    }, 250);
+    setTimeout(applySticky, 150);
+    setTimeout(applySticky, 500);
 })();
 </script>
 
