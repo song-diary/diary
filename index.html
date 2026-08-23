@@ -7583,5 +7583,45 @@ body { touch-action: pan-y !important; }
 })();
 </script>
 
+
+<script>
+// v48.1 - 달력 2달씩 넘어가는 버그 수정
+(function(){
+  if(window.changeMonth && !window.changeMonth._debounced){
+    const origChangeMonth = window.changeMonth;
+    let lastCall = 0;
+    window.changeMonth = function(delta){
+      const now = Date.now();
+      if(now - lastCall < 400){
+        console.log('changeMonth debounced', delta);
+        return;
+      }
+      lastCall = now;
+      return origChangeMonth.apply(this, arguments);
+    };
+    window.changeMonth._debounced = true;
+  }
+  // 기존 스와이프 리스너 제거 후 하나만 재등록
+  const grid = document.getElementById('cal-days-grid');
+  if(grid){
+    const newGrid = grid.cloneNode(true);
+    grid.parentNode.replaceChild(newGrid, grid);
+    let startX=0, startY=0;
+    newGrid.addEventListener('touchstart', e=>{
+      startX=e.touches[0].clientX;
+      startY=e.touches[0].clientY;
+    }, {passive:true});
+    newGrid.addEventListener('touchend', e=>{
+      const diffX = e.changedTouches[0].clientX - startX;
+      const diffY = e.changedTouches[0].clientY - startY;
+      if(Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX)>60){
+        if(diffX<0) changeMonth(1); else changeMonth(-1);
+      }
+    }, {passive:true});
+    console.log('swipe re-registered single');
+  }
+})();
+</script>
+
 </body>
 </html>
