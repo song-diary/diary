@@ -7573,5 +7573,43 @@ body { touch-action: pan-y !important; }
   });
 })();
 </script>
+<script>
+// v45.1 패치 - 다른 일자 업로드 수정
+(function(){
+  // 기존 closeDiaryFormPanel 후킹
+  if(window.closeDiaryFormPanel && !window.closeDiaryFormPanel._patched451){
+    const origClose = window.closeDiaryFormPanel;
+    window.closeDiaryFormPanel = function(){
+      const result = origClose.apply(this, arguments);
+      setTimeout(()=>{
+        if(window.switchMode) switchMode(window.currentViewMode || localStorage.getItem('diaryViewMode') || 'gallery');
+        if(window.renderMemoryCardV44) renderMemoryCardV44();
+      }, 200);
+      return result;
+    };
+    window.closeDiaryFormPanel._patched451 = true;
+  }
+  
+  // handleQuickPhotoCapture가 다른 날짜도 되도록 확실히
+  if(window.handleQuickPhotoCapture && !window.handleQuickPhotoCapture._patched451){
+    const origCapture = window.handleQuickPhotoCapture;
+    window.handleQuickPhotoCapture = function(event){
+      console.log('quick photo capture for date:', window.selectedViewDate);
+      return origCapture.apply(this, arguments);
+    };
+    window.handleQuickPhotoCapture._patched451 = true;
+  }
+  
+  // openDiaryForm이 다른 날짜로 열릴 때 로그
+  if(window.openDiaryForm && !window.openDiaryForm._patched451){
+    const origOpen = window.openDiaryForm;
+    window.openDiaryForm = function(dateStr, item, mode){
+      console.log('openDiaryForm date:', dateStr, 'selectedViewDate:', window.selectedViewDate);
+      return origOpen.apply(this, arguments);
+    };
+    window.openDiaryForm._patched451 = true;
+  }
+})();
+</script>
 </body>
 </html>
