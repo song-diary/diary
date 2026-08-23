@@ -1722,14 +1722,57 @@ body { touch-action: pan-y !important; }
 }
 .cal-cell.adjacent-month:hover { opacity: 0.65 !important; }
 
-/* v44 갤러리 - 확실히 구분되게 */
-.diary-view-toggle { display:flex; gap:8px; margin:12px 0; }
-.diary-view-toggle button { flex:1; padding:12px; border:2px solid #e06d6d; background:#fff; border-radius:24px; font-weight:bold; cursor:pointer; }
-.diary-view-toggle button.active { background:#e06d6d; color:#fff; }
+/* v45 최종 갤러리 - 사진 위, 글 아래, 일렬 정렬 */
+.view-mode-bar {
+  display:flex; gap:8px; margin:12px 0;
+  position:sticky; top:0; z-index:100;
+  background:var(--bg-color, #faf6f3);
+  padding:10px 0;
+  border-bottom:1px solid #eee;
+}
+.view-mode-bar button {
+  flex:1; padding:12px; border:2px solid #e06d6d;
+  background:#fff; border-radius:24px; font-weight:bold; cursor:pointer; font-size:14px;
+}
+.view-mode-bar button.active { background:#e06d6d; color:#fff; }
 
+/* 리스트형 - 사진 위, 글 아래, 일렬로 보기 좋게 */
+#diary-around-today-list.list-mode {
+  display:flex !important;
+  flex-direction:column !important;
+  gap:16px !important;
+}
+#diary-around-today-list.list-mode .diary-card-new {
+  background:#fff;
+  border-radius:16px;
+  overflow:hidden;
+  border:1px solid #eee;
+  box-shadow:0 2px 8px rgba(0,0,0,0.06);
+}
+#diary-around-today-list.list-mode .diary-card-new .photo-top {
+  width:100%;
+  aspect-ratio:4/3;
+  background:#f5f0f0;
+  overflow:hidden;
+}
+#diary-around-today-list.list-mode .diary-card-new .photo-top img {
+  width:100%; height:100%; object-fit:cover; display:block;
+}
+#diary-around-today-list.list-mode .diary-card-new .text-bottom {
+  padding:12px 14px 10px;
+}
+#diary-around-today-list.list-mode .diary-card-new .text-bottom .time-row {
+  font-size:11px; color:#999; margin-bottom:6px; display:flex; justify-content:space-between;
+}
+#diary-around-today-list.list-mode .diary-card-new .text-bottom .diary-text-new {
+  font-size:14px; line-height:1.5; color:#333;
+  white-space:pre-wrap; word-break:break-word;
+}
+
+/* 갤러리형 3열 - 터짐 방지 */
 #diary-around-today-list.gallery-mode {
   display:grid !important;
-  grid-template-columns:repeat(3, 1fr) !important;
+  grid-template-columns:repeat(3, minmax(0, 1fr)) !important;
   gap:3px !important;
   background:#000 !important;
   padding:3px !important;
@@ -1739,37 +1782,33 @@ body { touch-action: pan-y !important; }
   box-sizing:border-box !important;
   overflow:hidden !important;
 }
-.gallery-photo-item {
+#diary-around-today-list.gallery-mode .gallery-photo-item {
   aspect-ratio:1;
   background:#222;
   overflow:hidden;
   position:relative;
   cursor:pointer;
   width:100%;
-  max-width:100%;
+  min-width:0;
   box-sizing:border-box;
 }
-.gallery-photo-item img { width:100%; height:100%; object-fit:cover; display:block; }
-.gallery-photo-item .g-date { position:absolute; bottom:0; left:0; right:0; background:linear-gradient(transparent,rgba(0,0,0,0.8)); color:#fff; font-size:9px; padding:6px 2px 3px; text-align:center; }
-
-/* 버튼 항상 보이게 - 카드 밖에 고정 */
-.diary-view-toggle-fixed {
-  display:flex;
-  gap:8px;
-  margin:12px 0;
-  position:sticky;
-  top:0;
-  z-index:10;
-  background:var(--bg-color);
-  padding:8px 0;
+#diary-around-today-list.gallery-mode .gallery-photo-item img {
+  width:100%; height:100%; object-fit:cover; display:block;
 }
-.diary-view-toggle-fixed button { flex:1; padding:12px; border:2px solid #e06d6d; background:#fff; border-radius:24px; font-weight:bold; cursor:pointer; }
-.diary-view-toggle-fixed button.active { background:#e06d6d; color:#fff; }
-
+#diary-around-today-list.gallery-mode .gallery-photo-item .g-date {
+  position:absolute; bottom:0; left:0; right:0;
+  background:linear-gradient(transparent, rgba(0,0,0,0.8));
+  color:#fff; font-size:9px; padding:6px 2px 3px; text-align:center;
+}
 
 .today-hero-v44 { background:linear-gradient(135deg,#e06d6d 0%,#ff8a8a 100%); color:white; border-radius:16px; padding:20px; text-align:center; margin-bottom:12px; }
 .today-hero-v44 button { margin-top:10px; background:#fff; color:#e06d6d; border:none; padding:10px 20px; border-radius:24px; font-weight:bold; cursor:pointer; }
 .memory-card-v44 { background:#fff; border:1.5px solid #f0c6c6; border-radius:16px; padding:16px; margin-bottom:12px; }
+.memory-card-v44 h4 { font-size:15px; color:#c0392b; margin-bottom:10px; }
+.photo-grid-v44 { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+.photo-item-v44 { border-radius:14px; overflow:hidden; aspect-ratio:1; background:#f5f0f0; position:relative; cursor:pointer; }
+.photo-item-v44 img { width:100%; height:100%; object-fit:cover; }
+.photo-item-date-v44 { position:absolute; bottom:0; left:0; right:0; background:linear-gradient(transparent,rgba(0,0,0,0.8)); color:white; padding:10px 8px 6px; font-size:11px; }
 
 </style>
 </head>
@@ -1809,11 +1848,16 @@ body { touch-action: pan-y !important; }
 
     
     <div class="card today-hero-v44" id="today-hero-v44">
-      <h2>📸 오늘의 타임캡슐 v44</h2>
-      <p>사진 3열 갤러리 테스트</p>
+      <h2>📸 오늘의 타임캡슐 v45</h2>
+      <p>사진 위, 글 아래 - 일렬 정렬</p>
       <button onclick="triggerQuickPhoto()">📷 바로 찍기</button>
     </div>
     <div class="card memory-card-v44" id="memory-card-container-v44">로딩중...</div>
+    
+    <div class="view-mode-bar" id="view-mode-bar">
+      <button id="btn-list-mode" onclick="switchMode('list')">📝 리스트형 (사진 위)</button>
+      <button id="btn-gallery-mode" class="active" onclick="switchMode('gallery')">🖼️ 갤러리형 3열</button>
+    </div>
 
     <!-- 🧭 메인 탭 바: 설정 / 다이어리 / 가계부 / 입력 -->
     <div class="card main-tab-bar">
@@ -7404,59 +7448,105 @@ body { touch-action: pan-y !important; }
 })();
 </script>
 <script>
-// v44 갤러리 - 단순하고 확실하게
-
-window.switchToGallery = function(){
-  console.log('switchToGallery clicked');
-  localStorage.setItem('diaryViewMode','gallery');
-  ['btn-list','btn-list-top'].forEach(id=>{ const b=document.getElementById(id); if(b) b.classList.remove('active'); });
-  ['btn-gallery','btn-gallery-top'].forEach(id=>{ const b=document.getElementById(id); if(b) b.classList.add('active'); });
+// v45 최종 - 사진 위, 글 아래, 터짐 방지, 버튼 항상 보임
+(function(){
+  window.currentViewMode = localStorage.getItem('diaryViewMode') || 'gallery';
   
-  const listEl = document.getElementById('diary-around-today-list');
-  if(!listEl){ alert('리스트 엘리먼트 없음'); return; }
+  window.renderDiaryListNew = function(){
+    const listEl = document.getElementById('diary-around-today-list');
+    if(!listEl) return;
+    const selectedDate = window.selectedViewDate || (typeof getTodayStr==='function'?getTodayStr():'');
+    let diaries = [];
+    try { diaries = JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); } catch(e){}
+    let filtered = diaries.filter(d => {
+      if(d.money && d.money.amount) return false;
+      if(!d.text && !d.photo && !d.health && !d.anniversary) return false;
+      return d.date === selectedDate;
+    });
+    filtered.sort((a,b)=>(b.time||'').localeCompare(a.time||''));
+    
+    if(filtered.length===0){
+      listEl.className = 'list-mode';
+      listEl.innerHTML = `<div style="text-align:center;padding:30px;color:#999;background:#fff;border-radius:16px;border:1px dashed #e0c0c0;">${selectedDate}에 기록 없음<br><button onclick="openDiaryForm('${selectedDate}')" style="margin-top:10px;background:#e06d6d;color:#fff;border:none;padding:8px 16px;border-radius:20px;">✏️ 작성하기</button></div>`;
+      return;
+    }
+    
+    listEl.className = 'list-mode';
+    listEl.innerHTML = filtered.map(item => {
+      const src = item.photo ? (typeof getPhotoSrc==='function'?getPhotoSrc(item.photo):item.photo) : '';
+      const photoHTML = src ? `<div class="photo-top" onclick="openPhotoLightbox('${item.photo}')"><img src="${src}" loading="lazy"></div>` : '';
+      const time = item.time || '';
+      const text = (item.text || '').replace(/</g,'&lt;');
+      return `
+        <div class="diary-card-new" onclick="openDiaryForm('${item.date}', ${JSON.stringify(item).replace(/"/g,'&quot;')})">
+          ${photoHTML}
+          <div class="text-bottom">
+            <div class="time-row">
+              <span>⏰ ${time} ${item.health?'❤️':''}</span>
+              <span>
+                <button onclick="event.stopPropagation(); openDiaryForm('${item.date}', ${JSON.stringify(item).replace(/"/g,'&quot;')})" style="border:none;background:#f0f0f0;padding:2px 8px;border-radius:10px;font-size:11px;">수정</button>
+                <button onclick="event.stopPropagation(); deleteDiary('${item.id}')" style="border:none;background:#ffe0e0;padding:2px 8px;border-radius:10px;font-size:11px;">삭제</button>
+              </span>
+            </div>
+            <div class="diary-text-new">${text || (src?'사진':'')}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  };
   
-  let diaries = [];
-  try { diaries = JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); } catch(e){}
-  const selectedDate = window.selectedViewDate || (typeof getTodayStr==='function'?getTodayStr():'');
-  const filtered = diaries.filter(d => !d.money && d.date === selectedDate);
-  const withPhoto = filtered.filter(d=>d.photo);
+  window.renderDiaryGalleryNew = function(){
+    const listEl = document.getElementById('diary-around-today-list');
+    if(!listEl) return;
+    const selectedDate = window.selectedViewDate || (typeof getTodayStr==='function'?getTodayStr():'');
+    let diaries = [];
+    try { diaries = JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); } catch(e){}
+    const filtered = diaries.filter(d => !d.money && d.date === selectedDate && d.photo);
+    
+    listEl.className = 'gallery-mode';
+    if(filtered.length===0){
+      listEl.innerHTML = `<div style="grid-column:1/-1;background:#fff;padding:30px;text-align:center;border-radius:8px;color:#999;"><div style="font-size:30px;">📷</div>사진 없음<br>${selectedDate}<br><button onclick="triggerQuickPhoto()" style="margin-top:10px;background:#e06d6d;color:#fff;border:none;padding:8px 16px;border-radius:20px;">📷 찍기</button></div>`;
+      return;
+    }
+    listEl.innerHTML = filtered.map(item => {
+      const src = typeof getPhotoSrc==='function'?getPhotoSrc(item.photo):item.photo;
+      return `<div class="gallery-photo-item" onclick="openPhotoLightbox('${item.photo}')"><img src="${src}" loading="lazy"><div class="g-date">${item.time||''}</div></div>`;
+    }).join('');
+  };
   
-  listEl.className = 'gallery-mode';
-  if(withPhoto.length===0){
-    listEl.innerHTML = '<div style="grid-column:1/-1;background:#fff;padding:30px;text-align:center;border-radius:8px;"><div style="font-size:30px;">📷</div><div>사진 없음<br>'+selectedDate+'</div><button onclick="triggerQuickPhoto()" style="margin-top:10px;background:#e06d6d;color:#fff;border:none;padding:8px 16px;border-radius:20px;">찍기</button></div>';
-    return;
+  window.switchMode = function(mode){
+    window.currentViewMode = mode;
+    localStorage.setItem('diaryViewMode', mode);
+    const btnL = document.getElementById('btn-list-mode');
+    const btnG = document.getElementById('btn-gallery-mode');
+    if(btnL) btnL.classList.toggle('active', mode==='list');
+    if(btnG) btnG.classList.toggle('active', mode==='gallery');
+    
+    if(mode==='list'){
+      renderDiaryListNew();
+    } else {
+      renderDiaryGalleryNew();
+    }
+  };
+  
+  // 달력 날짜 변경 시에도 갤러리 모드 유지
+  const origSelectDate = window.selectDiaryDate;
+  if(origSelectDate && !origSelectDate._v45){
+    window.selectDiaryDate = function(dateStr){
+      const r = origSelectDate.apply(this, arguments);
+      setTimeout(()=> switchMode(window.currentViewMode), 100);
+      return r;
+    };
+    window.selectDiaryDate._v45 = true;
   }
-  listEl.innerHTML = withPhoto.map(item => {
-    const src = (typeof getPhotoSrc==='function'?getPhotoSrc(item.photo):item.photo);
-    return `<div class="gallery-photo-item" onclick="openPhotoLightbox('${item.photo}')"><img src="${src}" loading="lazy"><div class="g-date">${item.time||''}</div></div>`;
-  }).join('');
-};
-
-window.switchToList = function(){
-  console.log('switchToList clicked');
-  localStorage.setItem('diaryViewMode','list');
-  ['btn-list','btn-list-top'].forEach(id=>{ const b=document.getElementById(id); if(b) b.classList.add('active'); });
-  ['btn-gallery','btn-gallery-top'].forEach(id=>{ const b=document.getElementById(id); if(b) b.classList.remove('active'); });
   
-  // 원래 렌더 함수 호출
-  const listEl = document.getElementById('diary-around-today-list');
-  if(listEl) listEl.className = 'list-mode';
-  
-  if(typeof window.renderDiaryAroundTodayOrig === 'function'){
-    window.renderDiaryAroundTodayOrig();
-    if(listEl) listEl.className = 'list-mode';
-  } else {
-    location.reload();
-  }
-};
-
-
-// 원본 백업 및 메모리 카드
-document.addEventListener('DOMContentLoaded', function(){
-  // 원본 백업
-  if(window.renderDiaryAroundToday && !window.renderDiaryAroundTodayOrig){
-    window.renderDiaryAroundTodayOrig = window.renderDiaryAroundToday;
-    window._origRender = window.renderDiaryAroundToday;
+  // 기존 renderDiaryAroundToday를 우리 것으로 교체
+  if(window.renderDiaryAroundToday && !window.renderDiaryAroundToday._v45){
+    window._backupRender = window.renderDiaryAroundToday;
+    window.renderDiaryAroundToday = function(){
+      switchMode(window.currentViewMode);
+    };
+    window.renderDiaryAroundToday._v45 = true;
   }
   
   window.renderMemoryCardV44 = function(){
@@ -7466,23 +7556,22 @@ document.addEventListener('DOMContentLoaded', function(){
     try { diaries = JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); } catch(e){}
     const withPhoto = diaries.filter(x=>x.photo).slice(-4).reverse();
     if(withPhoto.length===0){ c.innerHTML='<h4>📸 추억</h4><div style="color:#999;text-align:center;padding:10px;">사진 없음</div>'; return; }
-    c.innerHTML = '<h4>📸 최근 사진 '+withPhoto.length+'장</h4><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">'+withPhoto.map(it=>`<div style="border-radius:10px;overflow:hidden;aspect-ratio:1;background:#f0f0f0;" onclick="selectDiaryDate('${it.date}')"><img src="${typeof getPhotoSrc==='function'?getPhotoSrc(it.photo):it.photo}" style="width:100%;height:100%;object-fit:cover;"></div>`).join('')+'</div>';
+    c.innerHTML = '<h4>📸 최근 사진 '+withPhoto.length+'장</h4><div class="photo-grid-v44">'+withPhoto.map(it=>`<div class="photo-item-v44" onclick="selectDiaryDate('${it.date}')"><img src="${typeof getPhotoSrc==='function'?getPhotoSrc(it.photo):it.photo}"><div class="photo-item-date-v44">${it.date}</div></div>`).join('')+'</div>';
   };
   
-  setTimeout(function(){
-    if(window.renderMemoryCardV44) renderMemoryCardV44();
-    const mode = localStorage.getItem('diaryViewMode') || 'gallery';
-    if(mode==='gallery'){
-      setTimeout(window.switchToGallery, 500);
-    }
-  }, 800);
-});
-
-window.addEventListener('load', function(){
-  setTimeout(function(){
-    if(window.renderMemoryCardV44) renderMemoryCardV44();
-  }, 1200);
-});
+  document.addEventListener('DOMContentLoaded', ()=>{
+    setTimeout(()=>{
+      if(window.renderMemoryCardV44) renderMemoryCardV44();
+      switchMode(window.currentViewMode);
+    }, 600);
+  });
+  window.addEventListener('load', ()=>{
+    setTimeout(()=>{
+      if(window.renderMemoryCardV44) renderMemoryCardV44();
+      switchMode(window.currentViewMode);
+    }, 1000);
+  });
+})();
 </script>
 </body>
 </html>
