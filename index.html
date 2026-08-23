@@ -1722,67 +1722,72 @@ body { touch-action: pan-y !important; }
 }
 .cal-cell.adjacent-month:hover { opacity: 0.65 !important; }
 
-/* ===== v44 포토 다이어리 강화 - 가계부는 설정에서 온오프 유지 ===== */
+/* ===== v44 갤러리형 포토 다이어리 ===== */
 .today-hero-v44 {
   background: linear-gradient(135deg, #e06d6d 0%, #ff8a8a 100%);
   color: white;
   border-radius: 16px;
-  padding: 18px;
+  padding: 20px;
   text-align: center;
-  margin-bottom: 0;
+  box-shadow: 0 4px 12px rgba(224,109,109,0.3);
 }
-.today-hero-v44 h2 { font-size: 18px; margin-bottom: 4px; }
-.today-hero-v44 p { font-size: 12px; opacity: 0.9; }
+.today-hero-v44 h2 { font-size: 19px; margin-bottom: 6px; }
+.today-hero-v44 p { font-size: 12px; opacity: 0.92; line-height: 1.4; }
 .today-hero-v44 button {
-  margin-top: 10px;
+  margin-top: 12px;
   background: white;
   color: #e06d6d;
   border: none;
-  padding: 8px 16px;
-  border-radius: 20px;
+  padding: 10px 20px;
+  border-radius: 24px;
   font-weight: bold;
+  font-size: 14px;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
 .memory-card-v44 {
-  background: linear-gradient(135deg, #fff8f0 0%, #ffe8e8 100%);
+  background: #fff;
   border: 1.5px solid #f0c6c6;
-  border-radius: 14px;
-  padding: 14px;
-  margin-top: 12px;
-  margin-bottom: 4px;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
-.memory-card-v44 h4 { font-size: 14px; color: #c0392b; margin-bottom: 8px; }
-.memory-empty-v44 { color: #999; font-size: 13px; text-align: center; padding: 16px; line-height: 1.5; }
+.memory-card-v44 h4 { font-size: 15px; color: #c0392b; margin-bottom: 10px; }
+.memory-empty-v44 { color: #999; font-size: 13px; text-align: center; padding: 18px; line-height: 1.6; }
 
 .photo-grid-v44 {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
+  gap: 10px;
 }
 .photo-item-v44 {
-  border-radius: 12px;
+  border-radius: 14px;
   overflow: hidden;
   aspect-ratio: 1;
-  background: #f0f0f0;
+  background: #f5f0f0;
   position: relative;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   transition: transform 0.15s;
 }
-.photo-item-v44:active { transform: scale(0.97); }
+.photo-item-v44:active { transform: scale(0.96); }
 .photo-item-v44 img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .photo-item-date-v44 {
   position: absolute; bottom: 0; left: 0; right: 0;
-  background: linear-gradient(transparent, rgba(0,0,0,0.75));
-  color: white; padding: 10px 6px 5px; font-size: 11px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.8));
+  color: white; padding: 12px 8px 6px; font-size: 11px; font-weight: bold;
 }
 
-/* 다이어리 사진 크게 */
-#diary-around-today-list .diary-item-photo img,
-#diary-search-result-list .diary-item-photo img {
-  border-radius: 12px;
+/* 다이어리 리스트도 갤러리형으로 */
+#diary-around-today-list {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 12px !important;
+}
+#diary-around-today-list .diary-item {
+  border-radius: 14px !important;
+  overflow: hidden;
 }
 
 </style>
@@ -1820,6 +1825,20 @@ body { touch-action: pan-y !important; }
         </div>
         <div class="calendar-grid" id="cal-days-grid" style="margin-top: 5px; transition: transform 0.16s ease, opacity 0.16s ease;"></div>
     </div>
+
+    
+    <!-- ===== v44 갤러리형 포토 타임캡슐 ===== -->
+    <div class="card today-hero-v44" id="today-hero-v44">
+      <h2>📸 오늘의 타임캡슐</h2>
+      <p>오늘 사진 한 장이 10년 뒤 자서전이 됩니다<br>사주와 함께 기록해보세요</p>
+      <button onclick="openDiaryForm(selectedViewDate || getTodayStr())">📷 오늘 사진 남기기</button>
+    </div>
+
+    <div class="card memory-card-v44" id="memory-card-container-v44">
+      <h4>📸 추억을 불러오는 중...</h4>
+      <div class="memory-empty-v44">잠시만요...</div>
+    </div>
+
 
     <!-- 🧭 메인 탭 바: 설정 / 다이어리 / 가계부 / 입력 -->
     <div class="card main-tab-bar">
@@ -7410,7 +7429,7 @@ body { touch-action: pan-y !important; }
 })();
 </script>
 <script>
-// v44 포토 다이어리 - 1년 전 오늘 / 추억 카드 (가계부는 그대로 유지)
+// v44 갤러리형 - 1년 전 오늘 + 갤러리형 다이어리
 (function(){
   window.renderMemoryCardV44 = function(){
     const container = document.getElementById('memory-card-container-v44');
@@ -7427,43 +7446,36 @@ body { touch-action: pan-y !important; }
     const memories = diaries.filter(x => x.date === dateStr && x.photo);
     if(memories.length > 0){
       container.innerHTML = `
-        <div class="memory-card-v44">
           <h4>📸 1년 전 오늘 - ${y}년 ${Number(m)}월 ${Number(d)}일</h4>
-          <p style="font-size:11px;color:#888;margin-bottom:8px;">그날 남긴 사진이에요</p>
           <div class="photo-grid-v44">
             ${memories.map(item=>`
               <div class="photo-item-v44" onclick="selectDiaryDate('${item.date}')">
                 <img src="${item.photo}" loading="lazy">
-                <div class="photo-item-date-v44">${(item.text||'').slice(0,15)}</div>
+                <div class="photo-item-date-v44">${(item.text||'').slice(0,12)}</div>
               </div>
             `).join('')}
           </div>
-        </div>
       `;
       return;
     }
     const withPhoto = diaries.filter(x=>x.photo).slice(-6).reverse();
     if(withPhoto.length === 0){
       container.innerHTML = `
-        <div class="memory-card-v44">
           <h4>📸 1년 전 오늘</h4>
           <div class="memory-empty-v44">아직 남긴 사진이 없어요<br>오늘부터 하루 한 장씩 남겨보세요!<br>1년 뒤 오늘이 추억이 됩니다 ✨</div>
-        </div>
       `;
       return;
     }
     container.innerHTML = `
-      <div class="memory-card-v44">
-        <h4>📸 추억의 타임캡슐 - 최근 사진</h4>
-        <div class="photo-grid-v44">
-          ${withPhoto.map(item=>`
-            <div class="photo-item-v44" onclick="selectDiaryDate('${item.date}')">
-              <img src="${item.photo}" loading="lazy">
-              <div class="photo-item-date-v44">${item.date}</div>
-            </div>
-          `).join('')}
-        </div>
-      </div>
+          <h4>📸 추억의 타임캡슐</h4>
+          <div class="photo-grid-v44">
+            ${withPhoto.map(item=>`
+              <div class="photo-item-v44" onclick="selectDiaryDate('${item.date}')">
+                <img src="${item.photo}" loading="lazy">
+                <div class="photo-item-date-v44">${item.date}</div>
+              </div>
+            `).join('')}
+          </div>
     `;
   };
   function initV44(){
@@ -7473,15 +7485,15 @@ body { touch-action: pan-y !important; }
   if(origDiary && !origDiary._v44){
     window.renderDiaryAroundToday = function(...args){
       const r = origDiary.apply(this, args);
-      setTimeout(()=>{ window.renderMemoryCardV44 && renderMemoryCardV44(); }, 150);
+      setTimeout(initV44, 150);
       return r;
     };
     window.renderDiaryAroundToday._v44 = true;
   }
-  document.addEventListener('DOMContentLoaded', ()=> setTimeout(initV44, 700));
-  window.addEventListener('load', ()=>{ setTimeout(initV44, 900); setTimeout(initV44, 1600); });
+  document.addEventListener('DOMContentLoaded', ()=> setTimeout(initV44, 800));
+  window.addEventListener('load', ()=>{ setTimeout(initV44, 1000); setTimeout(initV44, 1800); });
   setTimeout(initV44, 600);
-  setTimeout(initV44, 1300);
+  setTimeout(initV44, 1400);
 })();
 </script>
 </body>
