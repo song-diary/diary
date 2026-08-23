@@ -1863,7 +1863,50 @@ body { touch-action: pan-y !important; }
 }
 
 
-/* v48 - 달력 상단 고정 + 간소화 */
+
+/* v49 - 리스트형만, 사진 위/글 아래 고정 */
+#diary-around-today-list {
+  display:flex !important;
+  flex-direction:column !important;
+  gap:16px !important;
+}
+#diary-around-today-list .sub-memo-item {
+  display:flex !important;
+  flex-direction:column !important;
+  background:#fff !important;
+  border-radius:16px !important;
+  overflow:hidden !important;
+  border:1px solid #eee !important;
+  box-shadow:0 2px 8px rgba(0,0,0,0.06) !important;
+  padding:0 !important;
+}
+#diary-around-today-list .sub-memo-item .item-top-row {
+  order:2;
+  padding:8px 12px 4px;
+  background:#fff;
+}
+#diary-around-today-list .sub-memo-item .diary-text {
+  order:3;
+  padding:0 12px 12px;
+  font-size:14px;
+  line-height:1.5;
+}
+#diary-around-today-list .sub-memo-item .diary-photo-wrap {
+  order:1;
+  width:100%;
+  margin:0 !important;
+  border-radius:0 !important;
+}
+#diary-around-today-list .sub-memo-item .diary-photo-wrap .diary-photo {
+  width:100%;
+  aspect-ratio:4/3;
+  object-fit:cover;
+  display:block;
+  border-radius:0 !important;
+  margin:0 !important;
+}
+
+/* v48 sticky kept */
 #calendar-card { position:relative; }
 .calendar-header { position:sticky !important; top:0 !important; z-index:25 !important; background:var(--bg-color, #faf6f3) !important; }
 #cal-days-name-grid { position:sticky !important; top:44px !important; z-index:24 !important; background:var(--bg-color, #faf6f3) !important; padding:6px 0 !important; }
@@ -1884,6 +1927,49 @@ body { touch-action: pan-y !important; }
   font-weight:600 !important;
 }
 .view-mode-bar button.active { background:#e06d6d !important; color:#fff !important; border-color:#e06d6d !important; }
+
+
+/* v49 - 리스트형만, 사진 위/글 아래 고정 */
+#diary-around-today-list {
+  display:flex !important;
+  flex-direction:column !important;
+  gap:16px !important;
+}
+#diary-around-today-list .sub-memo-item {
+  display:flex !important;
+  flex-direction:column !important;
+  background:#fff !important;
+  border-radius:16px !important;
+  overflow:hidden !important;
+  border:1px solid #eee !important;
+  box-shadow:0 2px 8px rgba(0,0,0,0.06) !important;
+  padding:0 !important;
+}
+#diary-around-today-list .sub-memo-item .item-top-row {
+  order:2;
+  padding:8px 12px 4px;
+  background:#fff;
+}
+#diary-around-today-list .sub-memo-item .diary-text {
+  order:3;
+  padding:0 12px 12px;
+  font-size:14px;
+  line-height:1.5;
+}
+#diary-around-today-list .sub-memo-item .diary-photo-wrap {
+  order:1;
+  width:100%;
+  margin:0 !important;
+  border-radius:0 !important;
+}
+#diary-around-today-list .sub-memo-item .diary-photo-wrap .diary-photo {
+  width:100%;
+  aspect-ratio:4/3;
+  object-fit:cover;
+  display:block;
+  border-radius:0 !important;
+  margin:0 !important;
+}
 
 </style>
 </head>
@@ -1922,11 +2008,7 @@ body { touch-action: pan-y !important; }
     </div>
 
     
-            <div class="view-mode-bar" id="view-mode-bar">
-      <button id="btn-list-mode" onclick="switchMode('list')">📝 리스트형</button>
-      <button id="btn-gallery-mode" class="active" onclick="switchMode('gallery')">🖼️ 갤러리형</button>
-    </div>
-
+            
     <!-- 🧭 메인 탭 바: 설정 / 다이어리 / 가계부 / 입력 -->
     <div class="card main-tab-bar">
         <button class="main-tab-btn settings-tab-btn" id="tab-settings-btn" onclick="openSettingsModal()" title="설정">
@@ -7482,31 +7564,14 @@ body { touch-action: pan-y !important; }
 <script>
 // v46 - 원본 저장 로직 100% 유지, CSS 클래스만 토글
 (function(){
-  window.currentViewMode = localStorage.getItem('diaryViewMode') || 'list';
-  
-  window.switchMode = function(mode){
-    window.currentViewMode = mode;
-    localStorage.setItem('diaryViewMode', mode);
-    const btnL = document.getElementById('btn-list-mode');
-    const btnG = document.getElementById('btn-gallery-mode');
-    if(btnL) btnL.classList.toggle('active', mode==='list');
-    if(btnG) btnG.classList.toggle('active', mode==='gallery');
     
-    const listEl = document.getElementById('diary-around-today-list');
-    if(listEl){
-      listEl.classList.remove('list-mode','gallery-mode');
-      listEl.classList.add(mode+'-mode');
-    }
-    console.log('switched to', mode, 'for date', window.selectedViewDate);
-  };
-  
+    
   // 기존 renderDiaryAroundToday 후킹 - 렌더 후 우리 모드 클래스 유지
   if(window.renderDiaryAroundToday && !window.renderDiaryAroundToday._v46){
     const origRender = window.renderDiaryAroundToday;
     window.renderDiaryAroundToday = function(){
       const result = origRender.apply(this, arguments);
-      setTimeout(()=> switchMode(window.currentViewMode), 50);
-      return result;
+      setTimeout(()=> switchMode(      return result;
     };
     window.renderDiaryAroundToday._v46 = true;
   }
@@ -7516,8 +7581,7 @@ body { touch-action: pan-y !important; }
     const origSelect = window.selectDiaryDate;
     window.selectDiaryDate = function(dateStr){
       const r = origSelect.apply(this, arguments);
-      setTimeout(()=> switchMode(window.currentViewMode), 100);
-      return r;
+      setTimeout(()=> switchMode(      return r;
     };
     window.selectDiaryDate._v46 = true;
   }
@@ -7536,14 +7600,12 @@ body { touch-action: pan-y !important; }
   document.addEventListener('DOMContentLoaded', ()=>{
     setTimeout(()=>{
       if(window.renderMemoryCardV44) renderMemoryCardV44();
-      switchMode(window.currentViewMode);
-    }, 700);
+      switchMode(    }, 700);
   });
   window.addEventListener('load', ()=>{
     setTimeout(()=>{
       if(window.renderMemoryCardV44) renderMemoryCardV44();
-      switchMode(window.currentViewMode);
-    }, 1200);
+      switchMode(    }, 1200);
   });
   
   // closeDiaryFormPanel 후킹 - 저장 후 메모리 갱신
@@ -7553,8 +7615,7 @@ body { touch-action: pan-y !important; }
       const r = origClose.apply(this, arguments);
       setTimeout(()=>{
         if(window.renderMemoryCardV44) renderMemoryCardV44();
-        switchMode(window.currentViewMode);
-      }, 200);
+        switchMode(      }, 200);
       return r;
     };
     window.closeDiaryFormPanel._v46 = true;
@@ -7562,26 +7623,6 @@ body { touch-action: pan-y !important; }
 })();
 </script>
 
-<script>
-// v48 스와이프 복원 - 부드럽게
-(function(){
-  const grid = document.getElementById('cal-days-grid');
-  if(!grid || grid._swipe48) return;
-  grid._swipe48 = true;
-  let startX=0, startY=0;
-  grid.addEventListener('touchstart', e=>{
-    startX=e.touches[0].clientX;
-    startY=e.touches[0].clientY;
-  }, {passive:true});
-  grid.addEventListener('touchend', e=>{
-    const diffX = e.changedTouches[0].clientX - startX;
-    const diffY = e.changedTouches[0].clientY - startY;
-    if(Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX)>50){
-      if(diffX<0) changeMonth(1); else changeMonth(-1);
-    }
-  }, {passive:true});
-})();
-</script>
 
 
 <script>
@@ -7620,6 +7661,21 @@ body { touch-action: pan-y !important; }
     }, {passive:true});
     console.log('swipe re-registered single');
   }
+})();
+</script>
+
+
+<script>
+// v49 - 리스트형 고정
+(function(){
+  // 갤러리 모드 완전 제거, 리스트만
+  const listEl = document.getElementById('diary-around-today-list');
+  if(listEl){
+    listEl.classList.remove('gallery-mode');
+    listEl.classList.add('list-mode');
+  }
+  // 기존 switchMode 있으면 무력화
+  window.switchMode = function(){ console.log('gallery removed, list only'); };
 })();
 </script>
 
