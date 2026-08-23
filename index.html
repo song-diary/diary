@@ -2006,6 +2006,45 @@ body { touch-action: pan-y !important; }
   line-height:1.2 !important;
 }
 
+
+/* v51 - 월+요일만 고정, 달력 날짜는 스크롤로 사라지게 */
+#calendar-card {
+  position:relative !important;
+  top:auto !important;
+  overflow:visible !important;
+}
+#sticky-month-week-bar {
+  position:sticky !important;
+  top:0 !important;
+  z-index:40 !important;
+  background:var(--bg-color, #faf6f3) !important;
+  padding:6px 0 4px !important;
+  border-bottom:1px solid #eee !important;
+  margin:0 -16px !important;
+  padding-left:16px !important;
+  padding-right:16px !important;
+}
+#sticky-month-week-bar .calendar-header {
+  margin:0 !important;
+  padding:0 0 4px !important;
+  position:relative !important;
+  top:auto !important;
+  border:none !important;
+  background:transparent !important;
+}
+#sticky-month-week-bar #cal-days-name-grid {
+  position:relative !important;
+  top:auto !important;
+  margin:0 !important;
+  padding:2px 0 0 !important;
+  background:transparent !important;
+}
+#calendar-card .calendar-header,
+#calendar-card #cal-days-name-grid {
+  /* 원본은 숨김 - 복제본이 sticky bar에 있음 */
+  display:none !important;
+}
+
 </style>
 </head>
 <body>
@@ -7711,6 +7750,86 @@ body { touch-action: pan-y !important; }
   }
   // 기존 switchMode 있으면 무력화
   window.switchMode = function(){ console.log('gallery removed, list only'); };
+})();
+</script>
+
+
+<script>
+// v51 - 월+요일만 고정되도록 헤더를 sticky bar로 복제
+(function(){
+  function setupStickyBar(){
+    const calCard = document.getElementById('calendar-card');
+    const origHeader = calCard ? calCard.querySelector('.calendar-header') : document.querySelector('.calendar-header');
+    const origWeek = document.getElementById('cal-days-name-grid');
+    const daysGrid = document.getElementById('cal-days-grid');
+    if(!origHeader || !origWeek || !calCard) return;
+    
+    // 이미 있으면 제거
+    let bar = document.getElementById('sticky-month-week-bar');
+    if(bar) bar.remove();
+    
+    bar = document.createElement('div');
+    bar.id = 'sticky-month-week-bar';
+    
+    // 헤더 복제
+    const headerClone = origHeader.cloneNode(true);
+    // 헤더 안 버튼 이벤트 재연결
+    const moneyBtn = headerClone.querySelector('button');
+    const settingsBtn = headerClone.querySelectorAll('button')[1];
+    if(moneyBtn) moneyBtn.onclick = () => switchMainTab('money');
+    if(settingsBtn) settingsBtn.onclick = () => openSettingsModal();
+    
+    // 월 제목 ID는 원본에만 있어야 하므로 clone에서는 ID 제거 후 동기화
+    const origTitle = document.getElementById('cal-month-title');
+    const cloneTitle = headerClone.querySelector('#cal-month-title');
+    if(cloneTitle) cloneTitle.id = 'cal-month-title-clone';
+    
+    const weekClone = origWeek.cloneNode(true);
+    weekClone.id = 'cal-days-name-grid-clone';
+    
+    bar.appendChild(headerClone);
+    bar.appendChild(weekClone);
+    
+    // 달력 카드 바로 앞에 삽입
+    calCard.parentNode.insertBefore(bar, calCard);
+    
+    // 월 제목 동기화
+    function syncTitle(){
+      const ot = document.getElementById('cal-month-title');
+      const ct = document.getElementById('cal-month-title-clone');
+      if(ot && ct) ct.textContent = ot.textContent;
+    }
+    // renderCalendar가 제목을 바꾸므로 MutationObserver로 동기화
+    const ot = document.getElementById('cal-month-title');
+    if(ot){
+      const mo = new MutationObserver(syncTitle);
+      mo.observe(ot, {childList:true, characterData:true, subtree:true});
+    }
+    syncTitle();
+    
+    // 원본 요일 그리드는 이제 달력 날짜만 남기므로 표시 (헤더만 숨김)
+    // 우리가 CSS로 원본 헤더+요일을 숨겼으니, 달력 날짜만 보이게 하려면 원본 요일은 숨기고 clone만 보여야 함 -> 이미 위 CSS로 숨김
+    // 대신 달력 카드 안에는 날짜 그리드만 남음
+    origHeader.style.display='none';
+    origWeek.style.display='none';
+  }
+  
+  document.addEventListener('DOMContentLoaded', setupStickyBar);
+  window.addEventListener('load', ()=> setTimeout(setupStickyBar, 500));
+  // 월 이동 후에도 동기화
+  if(window.renderCalendar && !window.renderCalendar._v51){
+    const origRC = window.renderCalendar;
+    window.renderCalendar = function(){
+      const r = origRC.apply(this, arguments);
+      setTimeout(()=>{
+        const ot = document.getElementById('cal-month-title');
+        const ct = document.getElementById('cal-month-title-clone');
+        if(ot && ct) ct.textContent = ot.textContent;
+      }, 50);
+      return r;
+    };
+    window.renderCalendar._v51 = true;
+  }
 })();
 </script>
 
