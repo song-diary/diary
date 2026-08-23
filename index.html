@@ -1729,11 +1729,15 @@ body { touch-action: pan-y !important; }
 
 #diary-around-today-list.gallery-mode {
   display:grid !important;
-  grid-template-columns:repeat(3,1fr) !important;
+  grid-template-columns:repeat(3, 1fr) !important;
   gap:3px !important;
   background:#000 !important;
   padding:3px !important;
   border-radius:12px !important;
+  width:100% !important;
+  max-width:100% !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
 }
 .gallery-photo-item {
   aspect-ratio:1;
@@ -1741,9 +1745,27 @@ body { touch-action: pan-y !important; }
   overflow:hidden;
   position:relative;
   cursor:pointer;
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
 }
-.gallery-photo-item img { width:100%; height:100%; object-fit:cover; }
+.gallery-photo-item img { width:100%; height:100%; object-fit:cover; display:block; }
 .gallery-photo-item .g-date { position:absolute; bottom:0; left:0; right:0; background:linear-gradient(transparent,rgba(0,0,0,0.8)); color:#fff; font-size:9px; padding:6px 2px 3px; text-align:center; }
+
+/* 버튼 항상 보이게 - 카드 밖에 고정 */
+.diary-view-toggle-fixed {
+  display:flex;
+  gap:8px;
+  margin:12px 0;
+  position:sticky;
+  top:0;
+  z-index:10;
+  background:var(--bg-color);
+  padding:8px 0;
+}
+.diary-view-toggle-fixed button { flex:1; padding:12px; border:2px solid #e06d6d; background:#fff; border-radius:24px; font-weight:bold; cursor:pointer; }
+.diary-view-toggle-fixed button.active { background:#e06d6d; color:#fff; }
+
 
 .today-hero-v44 { background:linear-gradient(135deg,#e06d6d 0%,#ff8a8a 100%); color:white; border-radius:16px; padding:20px; text-align:center; margin-bottom:12px; }
 .today-hero-v44 button { margin-top:10px; background:#fff; color:#e06d6d; border:none; padding:10px 20px; border-radius:24px; font-weight:bold; cursor:pointer; }
@@ -7383,13 +7405,12 @@ body { touch-action: pan-y !important; }
 </script>
 <script>
 // v44 갤러리 - 단순하고 확실하게
+
 window.switchToGallery = function(){
   console.log('switchToGallery clicked');
   localStorage.setItem('diaryViewMode','gallery');
-  const btnL = document.getElementById('btn-list');
-  const btnG = document.getElementById('btn-gallery');
-  if(btnL) btnL.classList.remove('active');
-  if(btnG) btnG.classList.add('active');
+  ['btn-list','btn-list-top'].forEach(id=>{ const b=document.getElementById(id); if(b) b.classList.remove('active'); });
+  ['btn-gallery','btn-gallery-top'].forEach(id=>{ const b=document.getElementById(id); if(b) b.classList.add('active'); });
   
   const listEl = document.getElementById('diary-around-today-list');
   if(!listEl){ alert('리스트 엘리먼트 없음'); return; }
@@ -7407,29 +7428,28 @@ window.switchToGallery = function(){
   }
   listEl.innerHTML = withPhoto.map(item => {
     const src = (typeof getPhotoSrc==='function'?getPhotoSrc(item.photo):item.photo);
-    return `<div class="gallery-photo-item" onclick="openPhotoLightbox('${item.photo}')"><img src="${src}"><div class="g-date">${item.time||''}</div></div>`;
+    return `<div class="gallery-photo-item" onclick="openPhotoLightbox('${item.photo}')"><img src="${src}" loading="lazy"><div class="g-date">${item.time||''}</div></div>`;
   }).join('');
-  alert('갤러리형 3열로 변경! 사진 '+withPhoto.length+'장');
 };
 
 window.switchToList = function(){
   console.log('switchToList clicked');
   localStorage.setItem('diaryViewMode','list');
-  const btnL = document.getElementById('btn-list');
-  const btnG = document.getElementById('btn-gallery');
-  if(btnL) btnL.classList.add('active');
-  if(btnG) btnG.classList.remove('active');
+  ['btn-list','btn-list-top'].forEach(id=>{ const b=document.getElementById(id); if(b) b.classList.add('active'); });
+  ['btn-gallery','btn-gallery-top'].forEach(id=>{ const b=document.getElementById(id); if(b) b.classList.remove('active'); });
   
   // 원래 렌더 함수 호출
-  if(typeof renderDiaryAroundTodayOrig === 'function'){
-    renderDiaryAroundTodayOrig();
-  } else if(window._origRender){
-    window._origRender();
+  const listEl = document.getElementById('diary-around-today-list');
+  if(listEl) listEl.className = 'list-mode';
+  
+  if(typeof window.renderDiaryAroundTodayOrig === 'function'){
+    window.renderDiaryAroundTodayOrig();
+    if(listEl) listEl.className = 'list-mode';
   } else {
-    // 직접 원본 로직 실행 - 페이지 새로고침
     location.reload();
   }
 };
+
 
 // 원본 백업 및 메모리 카드
 document.addEventListener('DOMContentLoaded', function(){
