@@ -1881,10 +1881,10 @@ body { touch-action: pan-y !important; }
 
     <!-- 🔑 달력 카드 -->
     <div class="card" id="calendar-card">
-        <div class="calendar-header">
-            <button onclick="changeMonth(-1)">◀ 이전</button>
-            <h3 id="cal-month-title">0000년 00월</h3>
-            <button onclick="changeMonth(1)">다음 ▶</button>
+        <div class="calendar-header" style="display:flex;justify-content:space-between;align-items:center;">
+            <button onclick="switchMainTab('money')" style="background:#fff;border:1.5px solid #e0c0c0;border-radius:20px;padding:8px 14px;font-weight:bold;cursor:pointer;">💰 가계부</button>
+            <h3 id="cal-month-title" style="flex:1;text-align:center;margin:0 8px;">0000년 00월</h3>
+            <button onclick="openSettingsModal()" style="background:#fff;border:1.5px solid #e0c0c0;border-radius:20px;padding:8px 14px;font-weight:bold;cursor:pointer;">⚙️ 설정</button>
         </div>
         <div class="calendar-grid" id="cal-days-name-grid">
             <div class="cal-day-name sunday">일</div>
@@ -1899,14 +1899,7 @@ body { touch-action: pan-y !important; }
     </div>
 
     
-    <div class="card today-hero-v44" id="today-hero-v44">
-      <h2>📸 오늘의 타임캡슐 v46</h2>
-      <p>원본 로직 그대로 - 사진 위, 글 아래</p>
-      <button onclick="triggerQuickPhoto()">📷 바로 찍기 (선택한 날짜에 저장됨)</button>
-    </div>
-    <div class="card memory-card-v44" id="memory-card-container-v44">로딩중...</div>
-    
-    <div class="view-mode-bar" id="view-mode-bar">
+            <div class="view-mode-bar" id="view-mode-bar">
       <button id="btn-list-mode" onclick="switchMode('list')">📝 리스트형 (사진 위/글 아래)</button>
       <button id="btn-gallery-mode" class="active" onclick="switchMode('gallery')">🖼️ 갤러리형 3열</button>
     </div>
@@ -7544,6 +7537,45 @@ body { touch-action: pan-y !important; }
     window.closeDiaryFormPanel._v46 = true;
   }
 })();
+</script>
+<script>
+// 달력 월 이동을 타이틀 클릭으로
+document.addEventListener('DOMContentLoaded', ()=>{
+  const title = document.getElementById('cal-month-title');
+  if(title){
+    title.style.cursor='pointer';
+    title.title='클릭하면 월 이동 메뉴';
+    title.addEventListener('click', ()=>{
+      const m = prompt('월 이동: -1=이전달, 1=다음달, 0=오늘', '0');
+      if(m===null) return;
+      const delta = parseInt(m);
+      if(!isNaN(delta)){
+        if(delta===0){
+          const now = new Date();
+          calYear = now.getFullYear();
+          calMonth = now.getMonth();
+          selectedViewDate = getTodayStr();
+          renderCalendar();
+          renderDiaryAroundToday();
+        } else {
+          changeMonth(delta);
+        }
+      }
+    });
+  }
+  // 스와이프로 월 이동
+  const grid = document.getElementById('cal-days-grid');
+  if(grid){
+    let startX=0;
+    grid.addEventListener('touchstart', e=>{ startX=e.touches[0].clientX; }, {passive:true});
+    grid.addEventListener('touchend', e=>{
+      const diff = e.changedTouches[0].clientX - startX;
+      if(Math.abs(diff)>60){
+        if(diff<0) changeMonth(1); else changeMonth(-1);
+      }
+    });
+  }
+});
 </script>
 </body>
 </html>
