@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>다이어리&가계부 v42 - sticky 복구</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>다이어리&가계부 v43 - 2줄고정+흐릿</title>
 <style>
         :root {
             --bg-color: #f7f4f4;
@@ -1685,19 +1685,13 @@
             background: var(--card-bg);
         }
     
-
-/* === v42 FIXED 2-LINE STICKY - 월+요일 함께 고정 === */
-#calendar-card {
-  overflow: visible !important;
-  position: relative !important;
-  padding-top: 0 !important;
-}
+/* === v43 2줄 고정 + 인접월 흐릿하게 === */
+#calendar-card { overflow: visible !important; position: relative !important; padding-top: 0 !important; }
 .calendar-sticky-wrap {
   position: sticky !important;
   top: 0 !important;
   z-index: 100 !important;
   background: var(--card-bg) !important;
-  /* 카드의 둥근 모서리 위쪽 유지 */
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
   padding-top: 15px;
@@ -1707,30 +1701,26 @@
   padding-bottom: 8px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
-.calendar-sticky-wrap .calendar-header {
-  position: relative !important;
-  top: auto !important;
-  z-index: auto !important;
+.calendar-sticky-wrap .calendar-header { position: relative !important; top: auto !important; z-index: auto !important; }
+#cal-days-name-grid { position: relative !important; top: auto !important; background: var(--card-bg) !important; }
+#cal-days-grid { overflow: visible !important; max-height: none !important; z-index: 1; }
+html, body { overscroll-behavior-y: auto !important; }
+body { touch-action: pan-y !important; }
+
+/* 흐릿한 인접월 */
+.cal-cell.adjacent-month {
+  opacity: 0.38 !important;
+  filter: grayscale(15%);
+  background: #fafafa !important;
+  border-color: #eee !important;
 }
-#cal-days-name-grid, .calendar-weekdays {
-  position: relative !important;
-  top: auto !important;
-  z-index: auto !important;
-  background: var(--card-bg) !important;
+.cal-cell.adjacent-month .cal-cell-inner { opacity: 0.8; }
+.cal-cell.adjacent-month .cal-special-label,
+.cal-cell.adjacent-month .cal-anniv-label {
+  opacity: 0.6 !important;
+  font-size: 0.82em;
 }
-#cal-days-grid {
-  overflow: visible !important;
-  max-height: none !important;
-  position: relative;
-  z-index: 1;
-}
-html, body {
-  overscroll-behavior-y: auto !important;
-  overscroll-behavior-x: none !important;
-}
-body {
-  touch-action: pan-y !important;
-}
+.cal-cell.adjacent-month:hover { opacity: 0.65 !important; }
 </style>
 </head>
 <body>
@@ -6043,29 +6033,28 @@ body {
             const cell = document.createElement('div');
             cell.className = 'cal-cell adjacent-month';
             placeCell(cell, cellIndex, 1);
-
-            // 인접 월은 날짜 숫자만 희미하게 표시한다.
-            cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span></div>`;
-
+            const specialInfo = getSpecialDayLabel(dateStr);
+            const annivText = getAnniversaryForDate(dateStr);
+            let indicatorHTML = '';
+            if (specialInfo) {
+                indicatorHTML += `<div class="cal-special-label cal-special-${specialInfo.type}">${specialInfo.label}</div>`;
+            }
+            if (annivText) {
+                indicatorHTML += `<div class="cal-anniv-label">${annivText}</div>`;
+            }
+            cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>`;
             cell.onclick = () => {
                 const target = normalizeDateStr(dateStr);
-                const targetObj = new Date(
-                    Number(target.slice(0, 4)),
-                    Number(target.slice(5, 7)) - 1,
-                    Number(target.slice(8, 10))
-                );
-
+                const targetObj = new Date(Number(target.slice(0, 4)), Number(target.slice(5, 7)) - 1, Number(target.slice(8, 10)));
                 calYear = targetObj.getFullYear();
                 calMonth = targetObj.getMonth();
                 calEnlargedDate = null;
                 selectedViewDate = target;
-
                 renderCalendar();
                 renderDiaryAroundToday();
                 renderMoneyAroundToday();
                 if (isDiarySearchFilterOpen) filterDiaryCustomList();
             };
-
             grid.appendChild(cell);
         }
 
@@ -7319,67 +7308,41 @@ body {
 
 
 
-
 </script>
 <script>
-</script>
-<script>
-// v42 2줄 고정 - 월+요일을 하나의 sticky 래퍼로 묶기
+// v43 2줄 고정 + 인접월 흐릿 처리
 (function(){
   function ensureStickyWrap(){
     const card=document.getElementById('calendar-card');
     if(!card) return;
     const header=card.querySelector('.calendar-header');
-    const weekdays=document.getElementById('cal-days-name-grid') || card.querySelector('.calendar-weekdays');
+    const weekdays=document.getElementById('cal-days-name-grid');
     const grid=document.getElementById('cal-days-grid');
     if(!header||!weekdays) return;
-
-    // 이미 래퍼가 있으면 재사용
     let wrap=card.querySelector('.calendar-sticky-wrap');
     if(!wrap){
       wrap=document.createElement('div');
       wrap.className='calendar-sticky-wrap';
-      // header 앞에 삽입
       card.insertBefore(wrap, header);
       wrap.appendChild(header);
       wrap.appendChild(weekdays);
-      console.log('[v42] sticky wrap 생성 - 월+요일 2줄 고정');
     }
-    
-    // 스타일 강제
-    wrap.style.position='sticky';
-    wrap.style.top='0px';
-    wrap.style.zIndex='100';
-    wrap.style.background='var(--card-bg)';
-    
-    if(grid){
-      grid.style.overflow='visible';
-      grid.style.maxHeight='none';
-    }
+    wrap.style.position='sticky'; wrap.style.top='0px'; wrap.style.zIndex='100';
+    if(grid){ grid.style.overflow='visible'; grid.style.maxHeight='none'; }
     card.style.overflow='visible';
   }
-  
   function init(){
     ensureStickyWrap();
-    // renderCalendar가 DOM을 재생성할 때마다 다시 래핑
-    if(window.renderCalendar && !window.renderCalendar._v42patched){
+    if(window.renderCalendar && !window.renderCalendar._v43){
       const orig=window.renderCalendar;
-      window.renderCalendar=function(...args){
-        const r=orig.apply(this,args);
-        setTimeout(ensureStickyWrap, 20);
-        setTimeout(ensureStickyWrap, 150);
-        return r;
-      };
-      window.renderCalendar._v42patched=true;
+      window.renderCalendar=function(...a){ const r=orig.apply(this,a); setTimeout(ensureStickyWrap,20); setTimeout(ensureStickyWrap,150); return r; };
+      window.renderCalendar._v43=true;
     }
   }
-
   document.addEventListener('DOMContentLoaded', init);
   window.addEventListener('load', ()=>{ init(); setTimeout(init,200); setTimeout(init,600); });
   window.addEventListener('resize', ()=> setTimeout(ensureStickyWrap,50));
-  setTimeout(init,100);
-  setTimeout(init,500);
-  setTimeout(init,1200);
+  setTimeout(init,100); setTimeout(init,500); setTimeout(init,1200);
 })();
 </script>
 </body>
