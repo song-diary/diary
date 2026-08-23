@@ -1790,6 +1790,34 @@ body { touch-action: pan-y !important; }
   overflow: hidden;
 }
 
+
+/* v44.1 진짜 갤러리형 다이어리 */
+#diary-around-today-list .diary-item {
+  background: #fff;
+  border: 1px solid #eee;
+  padding: 0 !important;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+#diary-around-today-list .diary-item .diary-item-photo {
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+}
+#diary-around-today-list .diary-item .diary-item-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+#diary-around-today-list .diary-item .diary-item-text {
+  padding: 8px;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 </style>
 </head>
 <body>
@@ -1831,7 +1859,7 @@ body { touch-action: pan-y !important; }
     <div class="card today-hero-v44" id="today-hero-v44">
       <h2>📸 오늘의 타임캡슐</h2>
       <p>오늘 사진 한 장이 10년 뒤 자서전이 됩니다<br>사주와 함께 기록해보세요</p>
-      <button onclick="openDiaryForm(selectedViewDate || getTodayStr())">📷 오늘 사진 남기기</button>
+      <button onclick="if(typeof triggerQuickPhoto === 'function') triggerQuickPhoto(); else openDiaryForm(selectedViewDate || getTodayStr())">📷 오늘 사진 남기기</button>
     </div>
 
     <div class="card memory-card-v44" id="memory-card-container-v44">
@@ -1851,7 +1879,7 @@ body { touch-action: pan-y !important; }
         <button class="main-tab-btn" id="tab-money-btn" onclick="switchMainTab('money')">
             <span class="tab-icon">💰</span>가계부
         </button>
-        <button class="main-tab-btn input-tab-btn" id="tab-input-btn" onclick="openDiaryForm(selectedViewDate || getTodayStr())">
+        <button class="main-tab-btn input-tab-btn" id="tab-input-btn" onclick="if(typeof triggerQuickPhoto === 'function') triggerQuickPhoto(); else openDiaryForm(selectedViewDate || getTodayStr())">
             <span class="tab-icon">✏️</span>입력
         </button>
         <button class="main-tab-btn health-tab-btn" id="health-stats-open-btn" onclick="openHealthStatsModal()" title="건강 기록 보기">
@@ -7494,6 +7522,89 @@ body { touch-action: pan-y !important; }
   window.addEventListener('load', ()=>{ setTimeout(initV44, 1000); setTimeout(initV44, 1800); });
   setTimeout(initV44, 600);
   setTimeout(initV44, 1400);
+})();
+</script>
+<script>
+// v44.1 갤러리형 진짜 포토 중심 - 기존 기능과 차별화
+(function(){
+  // 다이어리 리스트를 사진 중심으로 재정의 (기존 함수 덮어쓰기 - 갤러리 모드)
+  const origRender = window.renderDiaryAroundToday;
+  window.renderDiaryAroundTodayGallery = function(){
+    const listEl = document.getElementById('diary-around-today-list');
+    const titleEl = document.getElementById('selected-date-title');
+    if(!listEl) return;
+    
+    const selectedDate = window.selectedViewDate || (typeof getTodayStr==='function'?getTodayStr():'');
+    if(titleEl) titleEl.textContent = `📸 ${selectedDate} 타임캡슐`;
+    
+    let diaries = [];
+    try { diaries = JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); } catch(e){}
+    // 선택한 날짜의 사진만 필터 - 포토 다이어리 컨셉
+    const filtered = diaries.filter(d => d.date === selectedDate);
+    const photoOnly = filtered.filter(d => d.photo);
+    const toShow = photoOnly.length > 0 ? photoOnly : filtered; // 사진 있으면 사진만, 없으면 텍스트도
+    
+    if(toShow.length === 0){
+      listEl.innerHTML = `
+        <div style="grid-column: 1 / -1; text-align: center; padding: 30px 10px; color: #999; background: white; border-radius: 14px; border: 1.5px dashed #e0c0c0;">
+          <div style="font-size: 32px; margin-bottom: 8px;">📷</div>
+          <div style="font-size: 13px; line-height: 1.5;">${selectedDate}에 남긴 사진이 없어요<br>오늘의 타임캡슐에 첫 사진을 남겨보세요!</div>
+          <button onclick="triggerQuickPhoto()" style="margin-top: 12px; background: #e06d6d; color: white; border: none; padding: 8px 16px; border-radius: 20px; font-size: 13px;">📷 바로 찍기</button>
+        </div>
+      `;
+      return;
+    }
+    
+    listEl.innerHTML = toShow.map(item => {
+      if(item.photo){
+        return `
+          <div class="diary-item" onclick="if(window.openPhotoViewer) openPhotoViewer('${item.id}'); else selectDiaryDate('${item.date}')" style="cursor:pointer;">
+            <div class="diary-item-photo"><img src="${item.photo}" loading="lazy"></div>
+            <div class="diary-item-text">${(item.text||'사진').slice(0,18) || '사진'}</div>
+            <div style="font-size:10px;color:#aaa;padding:0 8px 6px;">${item.time||''} ${item.money?'💰':''}</div>
+          </div>
+        `;
+      } else {
+        return `
+          <div class="diary-item" onclick="selectDiaryDate('${item.date}')" style="padding:12px !important;">
+            <div style="font-size:12px;">${item.text||''}</div>
+            <div style="font-size:10px;color:#aaa;margin-top:6px;">${item.time||''}</div>
+          </div>
+        `;
+      }
+    }).join('');
+  };
+  
+  // 기존 renderDiaryAroundToday를 갤러리 버전으로 교체 (설정으로 토글 가능하게)
+  if(origRender){
+    window.renderDiaryAroundToday = function(...args){
+      // v44 갤러리 모드 플래그
+      if(window._photoGalleryMode !== false){
+        return window.renderDiaryAroundTodayGallery();
+      } else {
+        return origRender.apply(this, args);
+      }
+    };
+    // 플래그 기본값: 갤러리 모드 ON
+    window._photoGalleryMode = true;
+  }
+  
+  // 사진 뷰어 열기 헬퍼 (기존 로직 있으면 활용)
+  window.openPhotoViewer = window.openPhotoViewer || function(id){
+    // 기존 다이어리 상세 모달 열기
+    const diaries = JSON.parse(localStorage.getItem('smartDiaryList')||'[]');
+    const item = diaries.find(d=>d.id===id);
+    if(item && item.photo){
+      // 간단한 확대 뷰어
+      const viewer = document.createElement('div');
+      viewer.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+      viewer.innerHTML = `<div style="max-width:90%;text-align:center;"><img src="${item.photo}" style="max-width:100%;max-height:80vh;border-radius:12px;"><div style="color:white;margin-top:12px;font-size:13px;">${item.text||''}<br><small>${item.date}</small></div><button onclick="this.parentElement.parentElement.remove()" style="margin-top:12px;background:white;color:black;border:none;padding:8px 16px;border-radius:20px;">닫기</button></div>`;
+      viewer.onclick = (e)=>{ if(e.target===viewer) viewer.remove(); };
+      document.body.appendChild(viewer);
+    }
+  };
+  
+  console.log('[v44.1] 갤러리형 포토 다이어리 적용');
 })();
 </script>
 </body>
