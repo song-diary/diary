@@ -1772,6 +1772,62 @@ body { touch-action: pan-y !important; }
   color: white; padding: 10px 8px 6px; font-size: 11px;
 }
 
+
+/* v44 갤러리형 토글 */
+.diary-view-toggle {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.diary-view-toggle button {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #e0c0c0;
+  background: #fff;
+  border-radius: 20px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.diary-view-toggle button.active {
+  background: #e06d6d;
+  color: white;
+  border-color: #e06d6d;
+}
+
+/* 갤러리형 */
+#diary-around-today-list.gallery-mode {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 10px !important;
+}
+#diary-around-today-list.gallery-mode .diary-item {
+  border-radius: 14px !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  background: #fff;
+  border: 1px solid #eee;
+  display: flex;
+  flex-direction: column;
+}
+#diary-around-today-list.gallery-mode .diary-item-photo {
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: #f5f0f0;
+}
+#diary-around-today-list.gallery-mode .diary-item-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+#diary-around-today-list.gallery-mode .diary-item-text {
+  padding: 8px 8px 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 </style>
 </head>
 <body>
@@ -1848,6 +1904,12 @@ body { touch-action: pan-y !important; }
                 <button type="button" class="quick-photo-btn" id="quick-photo-btn" onclick="triggerQuickPhoto()" title="바로 사진 찍기">📷</button>
                 <input type="file" id="quick-photo-input" accept="image/*" capture="environment" style="display:none;" onchange="handleQuickPhotoCapture(event)">
             </div>
+            
+<div class="diary-view-toggle" id="diary-view-toggle">
+  <button id="btn-list-view" onclick="setDiaryViewMode('list')">📝 리스트형</button>
+  <button id="btn-gallery-view" class="active" onclick="setDiaryViewMode('gallery')">🖼️ 갤러리형</button>
+</div>
+
             <div id="diary-around-today-list"></div>
         </div>
 
@@ -7460,6 +7522,55 @@ body { touch-action: pan-y !important; }
   document.addEventListener('DOMContentLoaded', ()=> setTimeout(initV44, 800));
   window.addEventListener('load', ()=>{ setTimeout(initV44, 1000); setTimeout(initV44, 2000); });
   setTimeout(initV44, 800);
+})();
+</script>
+<script>
+// v44 갤러리형 토글 - 안전하게 클래스만 추가
+(function(){
+  window._diaryViewMode = localStorage.getItem('diaryViewMode') || 'gallery';
+  
+  window.setDiaryViewMode = function(mode){
+    window._diaryViewMode = mode;
+    localStorage.setItem('diaryViewMode', mode);
+    const listEl = document.getElementById('diary-around-today-list');
+    const btnList = document.getElementById('btn-list-view');
+    const btnGallery = document.getElementById('btn-gallery-view');
+    if(listEl){
+      if(mode === 'gallery'){
+        listEl.classList.add('gallery-mode');
+      } else {
+        listEl.classList.remove('gallery-mode');
+      }
+    }
+    if(btnList && btnGallery){
+      btnList.classList.toggle('active', mode==='list');
+      btnGallery.classList.toggle('active', mode==='gallery');
+    }
+  };
+  
+  // 기존 렌더 후 갤러리 클래스 적용
+  const origRender = window.renderDiaryAroundToday;
+  if(origRender && !origRender._galleryToggle){
+    window.renderDiaryAroundToday = function(...args){
+      const r = origRender.apply(this, args);
+      setTimeout(()=>{
+        setDiaryViewMode(window._diaryViewMode);
+        // 메모리 카드도 갱신
+        if(window.renderMemoryCardV44) renderMemoryCardV44();
+      }, 100);
+      return r;
+    };
+    window.renderDiaryAroundToday._galleryToggle = true;
+  }
+  
+  // 초기 적용
+  document.addEventListener('DOMContentLoaded', ()=>{
+    setTimeout(()=> setDiaryViewMode(window._diaryViewMode), 800);
+  });
+  window.addEventListener('load', ()=>{
+    setTimeout(()=> setDiaryViewMode(window._diaryViewMode), 1200);
+  });
+  setTimeout(()=> setDiaryViewMode(window._diaryViewMode), 600);
 })();
 </script>
 </body>
