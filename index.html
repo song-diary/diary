@@ -1722,27 +1722,39 @@ body { touch-action: pan-y !important; }
 }
 .cal-cell.adjacent-month:hover { opacity: 0.65 !important; }
 
-/* ===== v44 포토 타임캡슐 ===== */
+/* ===== v44 포토 다이어리 강화 - 가계부는 설정에서 온오프 유지 ===== */
 .today-hero-v44 {
   background: linear-gradient(135deg, #e06d6d 0%, #ff8a8a 100%);
   color: white;
   border-radius: 16px;
   padding: 18px;
   text-align: center;
-  margin: 0 0 12px 0;
+  margin-bottom: 0;
 }
 .today-hero-v44 h2 { font-size: 18px; margin-bottom: 4px; }
 .today-hero-v44 p { font-size: 12px; opacity: 0.9; }
+.today-hero-v44 button {
+  margin-top: 10px;
+  background: white;
+  color: #e06d6d;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
 
 .memory-card-v44 {
   background: linear-gradient(135deg, #fff8f0 0%, #ffe8e8 100%);
   border: 1.5px solid #f0c6c6;
   border-radius: 14px;
   padding: 14px;
-  margin-bottom: 12px;
+  margin-top: 12px;
+  margin-bottom: 4px;
 }
 .memory-card-v44 h4 { font-size: 14px; color: #c0392b; margin-bottom: 8px; }
-.memory-empty-v44 { color: #999; font-size: 13px; text-align: center; padding: 16px; }
+.memory-empty-v44 { color: #999; font-size: 13px; text-align: center; padding: 16px; line-height: 1.5; }
 
 .photo-grid-v44 {
   display: grid;
@@ -1757,17 +1769,21 @@ body { touch-action: pan-y !important; }
   position: relative;
   cursor: pointer;
   box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  transition: transform 0.15s;
 }
-.photo-item-v44 img { width: 100%; height: 100%; object-fit: cover; }
+.photo-item-v44:active { transform: scale(0.97); }
+.photo-item-v44 img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .photo-item-date-v44 {
   position: absolute; bottom: 0; left: 0; right: 0;
-  background: linear-gradient(transparent, rgba(0,0,0,0.7));
-  color: white; padding: 8px 6px 4px; font-size: 11px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.75));
+  color: white; padding: 10px 6px 5px; font-size: 11px;
 }
 
-/* 가계부 탭 숨김 - 설정에서 끈 것과 동일하지만, v44에서는 아예 안 보이게 (코드는 유지) */
-#money-panel { display: none !important; }
-.main-tab-btn[data-tab="money"] { display: none !important; }
+/* 다이어리 사진 크게 */
+#diary-around-today-list .diary-item-photo img,
+#diary-search-result-list .diary-item-photo img {
+  border-radius: 12px;
+}
 
 </style>
 </head>
@@ -7394,12 +7410,11 @@ body { touch-action: pan-y !important; }
 })();
 </script>
 <script>
-// v44 포토 타임캡슐 - 1년 전 오늘 + 포토 그리드
+// v44 포토 다이어리 - 1년 전 오늘 / 추억 카드 (가계부는 그대로 유지)
 (function(){
   window.renderMemoryCardV44 = function(){
     const container = document.getElementById('memory-card-container-v44');
-    if(!container) { console.log('memory container not found'); return; }
-    
+    if(!container) return;
     const today = new Date();
     const oneYearAgo = new Date(today);
     oneYearAgo.setFullYear(today.getFullYear() - 1);
@@ -7407,16 +7422,14 @@ body { touch-action: pan-y !important; }
     const m = String(oneYearAgo.getMonth()+1).padStart(2,'0');
     const d = String(oneYearAgo.getDate()).padStart(2,'0');
     const dateStr = `${y}-${m}-${d}`;
-    
     let diaries = [];
     try { diaries = JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); } catch(e){}
     const memories = diaries.filter(x => x.date === dateStr && x.photo);
-    
     if(memories.length > 0){
       container.innerHTML = `
         <div class="memory-card-v44">
           <h4>📸 1년 전 오늘 - ${y}년 ${Number(m)}월 ${Number(d)}일</h4>
-          <p style="font-size:11px;color:#888;margin-bottom:8px;">그날 남긴 사진이에요. 시간 참 빠르죠?</p>
+          <p style="font-size:11px;color:#888;margin-bottom:8px;">그날 남긴 사진이에요</p>
           <div class="photo-grid-v44">
             ${memories.map(item=>`
               <div class="photo-item-v44" onclick="selectDiaryDate('${item.date}')">
@@ -7429,8 +7442,6 @@ body { touch-action: pan-y !important; }
       `;
       return;
     }
-    
-    // 1년 전 없으면 최근 사진 6장
     const withPhoto = diaries.filter(x=>x.photo).slice(-6).reverse();
     if(withPhoto.length === 0){
       container.innerHTML = `
@@ -7441,11 +7452,9 @@ body { touch-action: pan-y !important; }
       `;
       return;
     }
-    
     container.innerHTML = `
       <div class="memory-card-v44">
-        <h4>📸 추억의 타임캡슐</h4>
-        <p style="font-size:11px;color:#888;margin-bottom:8px;">최근 남긴 사진들이에요</p>
+        <h4>📸 추억의 타임캡슐 - 최근 사진</h4>
         <div class="photo-grid-v44">
           ${withPhoto.map(item=>`
             <div class="photo-item-v44" onclick="selectDiaryDate('${item.date}')">
@@ -7457,36 +7466,22 @@ body { touch-action: pan-y !important; }
       </div>
     `;
   };
-  
   function initV44(){
-    console.log('[v44] init');
     if(window.renderMemoryCardV44) renderMemoryCardV44();
   }
-  
-  // 기존 렌더 후에도 갱신
-  if(window.renderDiaryAroundToday && !window.renderDiaryAroundToday._v44){
-    const orig = window.renderDiaryAroundToday;
+  const origDiary = window.renderDiaryAroundToday;
+  if(origDiary && !origDiary._v44){
     window.renderDiaryAroundToday = function(...args){
-      const r = orig.apply(this, args);
+      const r = origDiary.apply(this, args);
       setTimeout(()=>{ window.renderMemoryCardV44 && renderMemoryCardV44(); }, 150);
       return r;
     };
     window.renderDiaryAroundToday._v44 = true;
   }
-  if(window.renderCalendar && !window.renderCalendar._v44mem){
-    const origCal = window.renderCalendar;
-    window.renderCalendar = function(...args){
-      const r = origCal.apply(this, args);
-      setTimeout(()=>{ window.renderMemoryCardV44 && renderMemoryCardV44(); }, 200);
-      return r;
-    };
-    window.renderCalendar._v44mem = true;
-  }
-  
-  document.addEventListener('DOMContentLoaded', ()=> setTimeout(initV44, 600));
-  window.addEventListener('load', ()=>{ setTimeout(initV44, 800); setTimeout(initV44, 1500); });
-  setTimeout(initV44, 500);
-  setTimeout(initV44, 1200);
+  document.addEventListener('DOMContentLoaded', ()=> setTimeout(initV44, 700));
+  window.addEventListener('load', ()=>{ setTimeout(initV44, 900); setTimeout(initV44, 1600); });
+  setTimeout(initV44, 600);
+  setTimeout(initV44, 1300);
 })();
 </script>
 </body>
