@@ -1722,54 +1722,84 @@ body { touch-action: pan-y !important; }
 }
 .cal-cell.adjacent-month:hover { opacity: 0.65 !important; }
 
-/* v52 - 깔끔 최종: 월+요일 고정, 리스트만, 아이콘만, 간격 제거 */
-#calendar-card { overflow:visible !important; padding-top:0 !important; }
+/* v53 - 3가지 수정 */
+/* 1) 달력만 고정, 사진 올라오면 고정 풀림 */
+#calendar-card {
+  position:relative !important;
+  overflow:visible !important;
+  background:var(--bg-color, #faf6f3) !important;
+}
 .calendar-header {
   position:sticky !important;
   top:0 !important;
-  z-index:40 !important;
+  z-index:30 !important;
   background:var(--bg-color, #faf6f3) !important;
-  margin:0 -16px !important;
-  padding:8px 16px 4px !important;
-  border-bottom:none !important;
+  margin:0 !important;
+  padding:8px 0 4px !important;
   display:flex !important;
   justify-content:space-between !important;
   align-items:center !important;
+  border-bottom:none !important;
 }
-.calendar-header h3 { margin:0 !important; font-size:16px !important; flex:1; text-align:center; }
-.calendar-header button {
-  background:none !important; border:none !important;
-  font-size:22px !important; padding:4px 8px !important;
-  cursor:pointer;
-}
+.calendar-header h3 { margin:0 !important; flex:1; text-align:center; font-size:16px !important; }
+.calendar-header button { background:none !important; border:none !important; font-size:22px !important; padding:4px 8px !important; }
 #cal-days-name-grid {
   position:sticky !important;
   top:38px !important;
-  z-index:39 !important;
+  z-index:29 !important;
   background:var(--bg-color, #faf6f3) !important;
-  margin:0 -16px !important;
-  padding:2px 16px 6px !important;
+  margin:0 !important;
+  padding:2px 0 6px !important;
   border-bottom:1px solid #eee !important;
 }
-#cal-days-grid { margin-top:4px !important; }
-
-/* 리스트형만 - 사진 위/글 아래 */
-#diary-around-today-list {
-  display:flex !important; flex-direction:column !important; gap:14px !important;
+#cal-days-grid {
+  margin-top:4px !important;
 }
+
+/* 2) 일자 사각 크기 동일 - 라벨 있어도 크기 동일하게 */
+.cal-cell {
+  box-sizing:border-box !important;
+  display:flex !important;
+  flex-direction:column !important;
+  justify-content:center !important;
+  align-items:center !important;
+}
+.cal-cell .cal-cell-inner { padding:2px !important; }
+.cal-special-label, .cal-anniv-label {
+  font-size:9px !important;
+  line-height:1.1 !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  max-width:100% !important;
+}
+
+/* 3) ㅡㄹ자(?) - 사진 카드 및 구분선 크기 동일 */
 #diary-around-today-list .sub-memo-item {
-  display:flex !important; flex-direction:column !important;
-  background:#fff !important; border-radius:16px !important;
-  overflow:hidden !important; border:1px solid #eee !important;
-  box-shadow:0 2px 8px rgba(0,0,0,0.06) !important; padding:0 !important;
+  min-height:unset !important;
 }
-#diary-around-today-list .sub-memo-item .item-top-row { order:2; padding:8px 12px 4px; }
-#diary-around-today-list .sub-memo-item .diary-text { order:3; padding:0 12px 12px; font-size:14px; line-height:1.5; }
-#diary-around-today-list .sub-memo-item .diary-photo-wrap { order:1; width:100%; margin:0 !important; border-radius:0 !important; }
-#diary-around-today-list .sub-memo-item .diary-photo-wrap .diary-photo { width:100%; aspect-ratio:4/3; object-fit:cover; display:block; border-radius:0 !important; margin:0 !important; }
-
-/* 상단 뷰모드 바 제거 */
+#diary-around-today-list .sub-memo-item .diary-photo-wrap .diary-photo {
+  aspect-ratio:4/3 !important;
+  height:auto !important;
+}
 .view-mode-bar { display:none !important; }
+
+
+/* v54 - 일자 크기 완전 동일 + 마지막 일자 확대 */
+.cal-cell {
+  box-sizing:border-box !important;
+  border-radius:10px !important;
+  border-width:1px !important;
+}
+.cal-cell.enlarged-date {
+  z-index:10 !important;
+  box-shadow:0 4px 12px rgba(0,0,0,0.15) !important;
+  border:2px solid var(--primary-color) !important;
+}
+#cal-days-grid {
+  overflow:visible !important;
+  padding-bottom:40px !important; /* 마지막 행 확대 공간 */
+}
 
 </style>
 </head>
@@ -6034,26 +6064,9 @@ body { touch-action: pan-y !important; }
         const totalRows = Math.ceil(totalCells / 7);
         const totalVisibleCells = totalRows * 7;
 
-        // 라벨이 있는 현재 달의 행만 세로 공간을 추가 확보한다.
+        // v53 - 모든 행 높이 동일 (라벨 있어도 크기 차이 없음)
         const rowExtra = new Array(totalRows).fill(0);
-
-        for (let day = 1; day <= lastDate; day++) {
-            const mStr = String(calMonth + 1).padStart(2, '0');
-            const dStr = String(day).padStart(2, '0');
-            const dateStr = `${calYear}-${mStr}-${dStr}`;
-            const specialInfo = getSpecialDayLabel(dateStr);
-            const annivText = getAnniversaryForDate(dateStr);
-
-            if (specialInfo || annivText) {
-                const row = Math.floor((firstDay + day - 1) / 7);
-                rowExtra[row] = Math.max(
-                    rowExtra[row],
-                    specialInfo && annivText ? 28 : 18
-                );
-            }
-        }
-
-        const rowHeights = rowExtra.map(extra => cellSize + extra);
+        const rowHeights = rowExtra.map(extra => cellSize);
         const rowTops = [];
         let currentTop = 0;
 
@@ -6130,11 +6143,28 @@ body { touch-action: pan-y !important; }
 
             const isEnlarged = calEnlargedDate && dateStr === calEnlargedDate;
             const cellIndex = firstDay + (day - 1);
-            placeCell(cell, cellIndex, isEnlarged ? 2 : 1);
+            const row = Math.floor(cellIndex / 7);
+            const isLastRow = row === totalRows - 1;
+            // 마지막 행도 확대되도록: rowSpan 대신 확대 시 높이를 1.8배로
+            if(isEnlarged && isLastRow){
+                placeCell(cell, cellIndex, 1);
+                // 확대 후 JS에서 높이 추가
+            } else {
+                placeCell(cell, cellIndex, isEnlarged ? 2 : 1);
+            }
 
             if (dateStr === todayStr) cell.classList.add('today-date');
             if (selectedViewDate && dateStr === selectedViewDate) cell.classList.add('selected-date');
-            if (isEnlarged) cell.classList.add('enlarged-date');
+            if (isEnlarged) {
+                cell.classList.add('enlarged-date');
+                const row = Math.floor((firstDay + (day - 1)) / 7);
+                if(row === totalRows - 1){
+                    // 마지막 행 확대: 높이 1.8배 + 아래로 겹치도록
+                    const currentH = parseFloat(cell.style.height) || cellSize;
+                    cell.style.height = `${currentH * 1.8}px`;
+                    cell.style.zIndex = '10';
+                }
+            }
 
             if (dayOfWeek === 0 || holidays.has(dateStr)) cell.classList.add('sunday');
             else if (dayOfWeek === 6) cell.classList.add('saturday');
@@ -7397,30 +7427,53 @@ body { touch-action: pan-y !important; }
 </script>
 
 <script>
-// v52 - 월+요일 고정, 2달 점프 방지, 리스트 고정
+// v53 - 일자 사각 크기 동일하게 + 달력 고정 해제 자연스럽게 + 1달 이동
 (function(){
-  // 2달 점프 방지
-  if(window.changeMonth && !window.changeMonth._fixed){
-    const orig = window.changeMonth;
+  // rowExtra로 인한 높이 차이 제거 - 모든 행 동일 높이로
+  if(window.renderCalendar && !window.renderCalendar._v53){
+    const origRC = window.renderCalendar;
+    window.renderCalendar = function(){
+      // rowExtra를 0으로 만들기 위해 getSpecialDayLabel, getAnniversaryForDate를 임시로 무시하고 높이 계산
+      // 대신 렌더 후 CSS로 높이 강제 통일
+      const result = origRC.apply(this, arguments);
+      // 모든 cal-cell 높이 통일
+      const grid = document.getElementById('cal-days-grid');
+      if(grid){
+        const cells = grid.querySelectorAll('.cal-cell');
+        if(cells.length>0){
+          // 첫 셀의 계산된 높이로 통일
+          const firstH = cells[0].offsetHeight;
+          // 이미 placeCell에서 높이가 설정되므로, rowExtra로 인한 차이만 줄임
+          // CSS에서 min-height로 덮을 수 있도록 inline height 제거하지 않음, 대신 가장 작은 높이로 통일하지 않고
+          // 여기서는 라벨이 있어도 셀 크기는 동일하게 유지 (라벨은 내부에서 작게 표시)
+        }
+      }
+      return result;
+    };
+    window.renderCalendar._v53 = true;
+  }
+
+  // 2달 점프 방지 + 스와이프
+  if(window.changeMonth && !window.changeMonth._v53){
+    const origCM = window.changeMonth;
     let last=0;
     window.changeMonth = function(d){
       const now=Date.now();
-      if(now-last<350) return;
+      if(now-last<400) return;
       last=now;
-      return orig.apply(this, arguments);
+      return origCM.apply(this, arguments);
     };
-    window.changeMonth._fixed=true;
+    window.changeMonth._v53=true;
   }
-  // 스와이프 1개만
   const grid = document.getElementById('cal-days-grid');
-  if(grid && !grid._swipe){
-    grid._swipe=true;
+  if(grid && !grid._swipe53){
+    grid._swipe53=true;
     let sx=0, sy=0;
     grid.addEventListener('touchstart', e=>{ sx=e.touches[0].clientX; sy=e.touches[0].clientY; }, {passive:true});
     grid.addEventListener('touchend', e=>{
       const dx=e.changedTouches[0].clientX - sx;
       const dy=e.changedTouches[0].clientY - sy;
-      if(Math.abs(dx)>Math.abs(dy) && Math.abs(dx)>60){
+      if(Math.abs(dx)>Math.abs(dy) && Math.abs(dx)>70){
         if(dx<0) changeMonth(1); else changeMonth(-1);
       }
     }, {passive:true});
