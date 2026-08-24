@@ -2103,6 +2103,10 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                     <span class="toggle-card-label">❤️ 건강기록</span>
                     <label class="toggle-switch"><input type="checkbox" id="settings-show-health" checked onchange="onShowHealthToggle()"><span class="toggle-slider"></span></label>
                 </div>
+                <div class="toggle-card">
+                    <span class="toggle-card-label">🖼️ 달력 사진 배경</span>
+                    <label class="toggle-switch"><input type="checkbox" id="toggle-calendar-photo" checked onchange="setCalendarPhotoVisibility(this.checked)"><span class="toggle-slider"></span></label>
+                </div>
             </div>
 
             <div class="settings-section">
@@ -3496,6 +3500,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     let isMoneySummaryVisible = localStorage.getItem('smartDiaryMoneySummaryVisible') !== 'false';
     let isCategoryStatsVisible = localStorage.getItem('smartDiaryCategoryStatsVisible') !== 'false';
     let isSearchFilterVisible = localStorage.getItem('smartDiarySearchFilterVisible') !== 'false';
+    let isCalendarPhotoVisible = localStorage.getItem('smartDiaryCalendarPhotoVisible') !== 'false';
 
     let currentMoneyType = 'expense';
 
@@ -5236,6 +5241,8 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         if (categoryStatsChk) categoryStatsChk.checked = isCategoryStatsVisible;
         const searchFilterChk = document.getElementById('toggle-search-filter');
         if (searchFilterChk) searchFilterChk.checked = isSearchFilterVisible;
+        const calPhotoChk = document.getElementById('toggle-calendar-photo');
+        if (calPhotoChk) calPhotoChk.checked = isCalendarPhotoVisible;
         if (settingsModalOverlay) settingsModalOverlay.classList.add('active');
         lockBodyScroll();
     }
@@ -6193,21 +6200,22 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 indicatorHTML += `<div class="cal-anniv-label">${annivText}</div>`;
             }
 
-            // v65 사진 썸네일 - 안정적 img 태그
+            // v66 사진 썸네일 - 설정 온/오프
             let photoSrc = '';
-            try {
-                const allDiaries = getAllDiaries();
-                const photoEntry = allDiaries.find(d => normalizeDateStr(d.date) === dateStr && d.photo);
-                if(photoEntry){
-                    const src = getPhotoSrc(photoEntry.photo);
-                    if(src) photoSrc = src;
-                }
-            } catch(e){}
             let photoImgHTML = '';
-            if(photoSrc){
-                cell.classList.add('has-photo');
-                // base64는 따옴표 이스케이프 필요 없게 data: 그대로 사용
-                photoImgHTML = `<img class="cal-photo-img" src="${photoSrc}" alt="">`;
+            if(isCalendarPhotoVisible){
+                try {
+                    const allDiaries = getAllDiaries();
+                    const photoEntry = allDiaries.find(d => normalizeDateStr(d.date) === dateStr && d.photo);
+                    if(photoEntry){
+                        const src = getPhotoSrc(photoEntry.photo);
+                        if(src) photoSrc = src;
+                    }
+                } catch(e){}
+                if(photoSrc){
+                    cell.classList.add('has-photo');
+                    photoImgHTML = `<img class="cal-photo-img" src="${photoSrc}" alt="">`;
+                }
             }
             cell.innerHTML =
                 `<div class="cal-cell-inner">${photoImgHTML}<span>${day}</span>${indicatorHTML}</div>`;
