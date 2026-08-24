@@ -1722,33 +1722,26 @@ body { touch-action: pan-y !important; }
 }
 .cal-cell.adjacent-month:hover { opacity: 0.65 !important; }
 
-/* v55 최종 - 균일 크기, 고정, 리스트 */
+/* v56 - 위아래 줄이고 좌우 늘리고 확대 제거 */
 #calendar-card { position:relative !important; overflow:visible !important; background:var(--bg-color, #faf6f3) !important; }
-.calendar-header {
-  position:sticky !important; top:0 !important; z-index:30 !important;
-  background:var(--bg-color, #faf6f3) !important; margin:0 !important; padding:8px 0 4px !important;
-  display:flex !important; justify-content:space-between !important; align-items:center !important;
-  border:none !important;
-}
+.calendar-header { position:sticky !important; top:0 !important; z-index:30 !important; background:var(--bg-color, #faf6f3) !important; margin:0 !important; padding:6px 0 3px !important; display:flex !important; justify-content:space-between !important; align-items:center !important; }
 .calendar-header h3 { margin:0 !important; flex:1; text-align:center; font-size:16px !important; }
 .calendar-header button { background:none !important; border:none !important; font-size:22px !important; padding:4px 8px !important; }
-#cal-days-name-grid {
-  position:sticky !important; top:38px !important; z-index:29 !important;
-  background:var(--bg-color, #faf6f3) !important; margin:0 !important; padding:2px 0 6px !important;
-  border-bottom:1px solid #eee !important;
-}
-#cal-days-grid { margin-top:4px !important; overflow:visible !important; padding-bottom:50px !important; }
-.cal-cell { box-sizing:border-box !important; border-radius:10px !important; }
-.cal-cell.enlarged-date { z-index:10 !important; box-shadow:0 6px 16px rgba(0,0,0,0.18) !important; border:2px solid var(--primary-color) !important; }
-.cal-special-label, .cal-anniv-label { font-size:9px !important; line-height:1.2 !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; max-width:100% !important; }
+#cal-days-name-grid { position:sticky !important; top:34px !important; z-index:29 !important; background:var(--bg-color, #faf6f3) !important; margin:0 !important; padding:2px 0 4px !important; border-bottom:1px solid #eee !important; gap:2px !important; }
+#cal-days-grid { margin-top:2px !important; overflow:visible !important; gap:2px !important; padding-bottom:10px !important; }
+.calendar-grid { gap:2px !important; }
+.cal-cell { box-sizing:border-box !important; border-radius:8px !important; border-width:1px !important; padding:0 !important; }
+.cal-cell span { font-size:14px !important; font-weight:600 !important; }
+.cal-cell-inner { padding:2px 1px !important; gap:1px !important; }
+.cal-special-label, .cal-anniv-label { font-size:8px !important; line-height:1.1 !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; max-width:100% !important; }
 
-/* 리스트형 고정 - 사진 위, 글씨+시간 아래 */
-#diary-around-today-list { display:flex !important; flex-direction:column !important; gap:14px !important; }
-#diary-around-today-list .sub-memo-item { display:flex !important; flex-direction:column !important; background:#fff !important; border-radius:16px !important; overflow:hidden !important; border:1px solid #eee !important; box-shadow:0 2px 8px rgba(0,0,0,0.06) !important; padding:0 !important; }
-#diary-around-today-list .sub-memo-item .diary-photo-wrap { order:1; width:100% !important; margin:0 !important; border-radius:0 !important; }
-#diary-around-today-list .sub-memo-item .diary-photo-wrap .diary-photo { width:100% !important; aspect-ratio:4/3 !important; object-fit:cover !important; display:block !important; border-radius:0 !important; margin:0 !important; }
-#diary-around-today-list .sub-memo-item .diary-text { order:2; padding:12px 12px 0 !important; }
-#diary-around-today-list .sub-memo-item .item-top-row { order:3; padding:8px 12px 12px !important; background:#fff !important; }
+/* 리스트 */
+#diary-around-today-list { display:flex !important; flex-direction:column !important; gap:12px !important; }
+#diary-around-today-list .sub-memo-item { display:flex !important; flex-direction:column !important; background:#fff !important; border-radius:14px !important; overflow:hidden !important; border:1px solid #eee !important; padding:0 !important; }
+#diary-around-today-list .sub-memo-item .diary-photo-wrap { order:1; width:100% !important; margin:0 !important; }
+#diary-around-today-list .sub-memo-item .diary-photo-wrap .diary-photo { width:100% !important; aspect-ratio:4/3 !important; object-fit:cover !important; }
+#diary-around-today-list .sub-memo-item .diary-text { order:2; padding:10px 12px 0 !important; }
+#diary-around-today-list .sub-memo-item .item-top-row { order:3; padding:6px 12px 10px !important; }
 .view-mode-bar { display:none !important; }
 
 </style>
@@ -6006,28 +5999,34 @@ body { touch-action: pan-y !important; }
         // v36:
         // 현재 달 앞쪽에는 전월 말일, 뒤쪽에는 다음 달 초 날짜를 희미하게 표시한다.
         // 7열 달력의 한 주 단위가 끊기지 않도록 마지막 행까지 채운다.
-        const gap = 4;
+        const gap = 2; // v56 - 좌우 폭 늘리기 위해 간격 줄임
         const gridWidth = grid.getBoundingClientRect().width || grid.parentElement.getBoundingClientRect().width;
         const cellSize = (gridWidth - gap * 6) / 7;
+        const compactHeight = cellSize * 0.72; // v56 - 위아래 줄임
 
         const totalCells = firstDay + lastDate;
         const totalRows = Math.ceil(totalCells / 7);
         const totalVisibleCells = totalRows * 7;
 
-        // v55 - 모든 날짜 동일 크기, 2줄도 쪼그라들지 않게 여유 확보
-        // 전체 중 최대 필요 공간을 구해 모든 행에 동일 적용
-        let maxExtra = 0;
+        // 라벨이 있는 현재 달의 행만 세로 공간을 추가 확보한다.
+        const rowExtra = new Array(totalRows).fill(0);
+
         for (let day = 1; day <= lastDate; day++) {
             const mStr = String(calMonth + 1).padStart(2, '0');
             const dStr = String(day).padStart(2, '0');
             const dateStr = `${calYear}-${mStr}-${dStr}`;
             const specialInfo = getSpecialDayLabel(dateStr);
             const annivText = getAnniversaryForDate(dateStr);
+
             if (specialInfo || annivText) {
-                maxExtra = Math.max(maxExtra, specialInfo && annivText ? 28 : 18);
+                const row = Math.floor((firstDay + day - 1) / 7);
+                rowExtra[row] = Math.max(
+                    rowExtra[row],
+                    specialInfo && annivText ? 28 : 18
+                );
             }
         }
-        const rowExtra = new Array(totalRows).fill(maxExtra);
+
         const rowHeights = rowExtra.map(extra => cellSize + extra);
         const rowTops = [];
         let currentTop = 0;
@@ -6103,27 +6102,13 @@ body { touch-action: pan-y !important; }
             const dObj = new Date(calYear, calMonth, day);
             const dayOfWeek = dObj.getDay();
 
-            const isEnlarged = calEnlargedDate && dateStr === calEnlargedDate;
+            const isEnlarged = false; // v56 - 확대 제거
             const cellIndex = firstDay + (day - 1);
-            const rowIdx = Math.floor(cellIndex / 7);
-            const isLastRow = rowIdx === totalRows - 1;
-            if(isEnlarged && isLastRow){
-                placeCell(cell, cellIndex, 1);
-            } else {
-                placeCell(cell, cellIndex, isEnlarged ? 2 : 1);
-            }
+            placeCell(cell, cellIndex, 1);
 
             if (dateStr === todayStr) cell.classList.add('today-date');
             if (selectedViewDate && dateStr === selectedViewDate) cell.classList.add('selected-date');
-            if (isEnlarged) {
-                cell.classList.add('enlarged-date');
-                const rowIdx = Math.floor((firstDay + (day - 1)) / 7);
-                if(rowIdx === totalRows - 1){
-                    const baseH = cellSize + maxExtra;
-                    cell.style.height = `${baseH * 1.8}px`;
-                    cell.style.zIndex = '10';
-                }
-            }
+            // v56 확대 제거
 
             if (dayOfWeek === 0 || holidays.has(dateStr)) cell.classList.add('sunday');
             else if (dayOfWeek === 6) cell.classList.add('saturday');
@@ -6164,8 +6149,7 @@ body { touch-action: pan-y !important; }
     // (예전엔 무조건 다이어리 탭으로 이동해서, 가계부 탭에서 날짜를 눌러도 다이어리로 튕기는 문제가 있었음)
     function selectDiaryDate(dateStr) {
         const normalized = normalizeDateStr(dateStr);
-        // 이미 확대되어 있는 날짜를 다시 누르면 크기만 원래대로 되돌림 (선택 자체는 유지)
-        calEnlargedDate = (calEnlargedDate === normalized) ? null : normalized;
+        calEnlargedDate = null; // v56 - 확대 없음
         selectedViewDate = normalized;
         renderCalendar();
         renderDiaryAroundToday();
@@ -6541,7 +6525,6 @@ body { touch-action: pan-y !important; }
             itemBox.className = 'sub-memo-item memo-only-box' + (item.photo ? ' has-photo' : ' no-photo');
             if (isReservedDate) itemBox.classList.add('is-reserved');
 
-            // v55 - 사진 위, 글씨+시간 아래
             itemBox.innerHTML = `
                 ${photoHTML}
                 ${healthHTML}
@@ -7388,14 +7371,14 @@ body { touch-action: pan-y !important; }
 
 <script>
 (function(){
-  if(window.changeMonth && !window.changeMonth._v55){
+  if(window.changeMonth && !window.changeMonth._v56){
     const orig=window.changeMonth; let last=0;
     window.changeMonth=function(d){ const now=Date.now(); if(now-last<400) return; last=now; return orig.apply(this, arguments); };
-    window.changeMonth._v55=true;
+    window.changeMonth._v56=true;
   }
   const grid=document.getElementById('cal-days-grid');
-  if(grid && !grid._swipe55){
-    grid._swipe55=true; let sx=0, sy=0;
+  if(grid && !grid._swipe56){
+    grid._swipe56=true; let sx=0, sy=0;
     grid.addEventListener('touchstart', e=>{ sx=e.touches[0].clientX; sy=e.touches[0].clientY; }, {passive:true});
     grid.addEventListener('touchend', e=>{
       const dx=e.changedTouches[0].clientX-sx; const dy=e.changedTouches[0].clientY-sy;
