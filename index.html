@@ -3555,6 +3555,60 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         });
         return result;
     }
+
+    const SAJU_FORTUNE_DETAIL = {
+        '비견': {
+            total: (dm, strength) => `${dm}일간인 당신은 ${strength}이라 오늘 비견이 들어오면 경쟁자가 많아요. 내 것을 지키려다 부딪히기 쉬운 날이에요. 혼자보다는 협업보다 단독으로 움직이는 게 유리해요.`,
+            money: (dm) => `지갑 단속 필요! 같은 ${dm}끼리 모이면 돈 얘기하다 감정 상하기 쉬워요. 공동투자, 돈 빌려주는 건 오늘 피하세요.`,
+            love: (dm) => `내 주장만 내세우면 관계가 삐걱해요. ${dm}일간은 오늘 한 발 양보하면 오히려 더 큰 걸 얻어요. 먼저 웃어주세요.`
+        },
+        '겁재': {
+            total: (dm, strength) => `겁재가 들어오는 날! ${dm}일간에게 오늘은 승부욕이 불타는 날이에요. ${strength}이면 더 경쟁심이 세져요. 무리한 승부는 피하고 페이스 조절이 필요해요.`,
+            money: (dm) => `돈 나가는 자리에요. 예상치 못한 지출이나 경쟁 입찰에 휘말릴 수 있어요. 오늘은 지키는 게 버는 거예요.`,
+            love: (dm) => `질투나 경쟁심이 올라오는 날이에요. 연인이 있다면 괜한 의심보다 믿음이 필요해요. 솔로라면 오늘 고백은 살짝 미뤄보세요.`
+        },
+        '식신': {
+            total: (dm, strength) => `식신이 들어오는 날! ${dm}일간에게 오늘은 만들고 표현하는 에너지가 넘쳐요. ${strength}이면 아이디어가 술술 풀려요. 먹을 복도 있고 즐거운 날이에요.`,
+            money: (dm) => `맛있는 거, 즐거운 소비에 돈 쓰기 좋은 날이에요. 다만 식신은 쓰고 즐기는 별이라 저축보다는 경험에 투자하는 게 더 값져요.`,
+            love: (dm) => `매력이 뿜뿜하는 날! 유머와 여유가 넘쳐서 주변 사람이 당신에게 끌려요. 데이트 신청하기 딱 좋은 날이에요.`
+        },
+        '상관': {
+            total: (dm, strength) => `상관이 들어왔네요! ${dm}일간은 오늘 말과 글이 날카로워요. ${strength}이면 더 비판적이 되기 쉬워요. 하고 싶은 말 참지 말고 표현하되, 상사 앞에서는 한 번 더 생각하세요.`,
+            money: (dm) => `톡톡 튀는 아이디어로 돈이 될 수 있는 날이에요. 다만 상관이라 잔소리 듣거나 구설수에 휘말릴 수 있어요. 계약서는 꼼꼼히!`,
+            love: (dm) => `말이 직설적으로 나가서 오해 사기 쉬운 날이에요. 돌려 말하기 연습이 필요한 하루예요. 표현은 부드럽게, 마음은 솔직하게.`
+        },
+        '편재': {
+            total: (dm, strength) => `편재가 들어오는 날! 큰 돈, 큰 기회가 보이는 날이에요. ${dm}일간에게 오늘은 베팅하는 날! ${strength}이면 더 과감해도 좋아요.`,
+            money: (dm) => `대박운! 편재는 큰 돈, 뜻밖의 수입이에요. 로또, 투자, 사업 제안이 들어올 수 있어요. 다만 편재는 들어왔다 나가는 돈이라 바로 저축하세요.`,
+            love: (dm) => `화려하고 즐거운 만남이 예상돼요. 인기 폭발! 여러 사람에게 연락 올 수 있어요. 하지만 가볍게 보이는 건 주의.`
+        },
+        '정재': {
+            total: (dm, strength) => `정재가 들어왔어요. ${dm}일간에게 오늘은 차곡차곡 모으고 관리하는 날이에요. ${strength}이면 더 안정적으로 결과가 보여요.`,
+            money: (dm) => `정재는 월급, 안정적 수입이에요! 오늘은 돈 관리, 가계부 정리하기 딱 좋은 날이에요. 작은 돈이 모여 큰 돈 되는 날.`,
+            love: (dm) => `진중하고 성실한 만남이 좋은 날이에요. 오래 만날 사람, 믿을 수 있는 사람에게 집중하세요. 가벼운 만남보다 진지한 대화가 길해요.`
+        },
+        '편관': {
+            total: (dm, strength) => `편관이 들어오는 날! ${dm}일간에게 오늘은 압박과 책임이 들어오는 날이에요. ${strength}이면 더 버겁게 느껴질 수 있어요. 하지만 이겨내면 레벨업하는 날이에요.`,
+            money: (dm) => `세금, 벌금, 예상 못한 지출 조심! 편관은 통제하는 별이라 돈 나갈 일이 생겨요. 미리 대비하면 괜찮아요.`,
+            love: (dm) => `관계에서 부담 느끼기 쉬운 날이에요. 상대가 무겁게 느껴지거나 내가 무거워질 수 있어요. 오늘은 가볍게 만나기보다 깊이 대화해보세요.`
+        },
+        '정관': {
+            total: (dm, strength) => `정관이 들어왔네요! ${dm}일간에게 오늘은 인정받고 자리 잡는 날이에요. ${strength}이면 더 안정적으로 승진, 합격운이 들어와요.`,
+            money: (dm) => `직장에서 인정받아 보너스나 승진으로 돈이 들어올 수 있어요. 정관은 정직한 돈이에요. 땀 흘린 만큼 돌아와요.`,
+            love: (dm) => `믿음직한 만남! 정관은 결혼, 약혼 같은 공식적인 인연을 뜻해요. 오늘 만나는 사람은 오래 갈 수 있어요.`
+        },
+        '편인': {
+            total: (dm, strength) => `편인이 들어오는 날! ${dm}일간에게 오늘은 특별한 아이디어, 엉뚱한 생각이 떠오르는 날이에요. ${strength}이면 더 독특한 발상이 빛나요.`,
+            money: (dm) => `특이한 곳에서 돈이 생길 수 있어요. 편인은 남다른 감각으로 버는 돈이에요. 중고거래, 아이디어 판매 같은 걸 해보세요.`,
+            love: (dm) => `신비로운 매력! 평소와 다른 모습에 끌리는 날이에요. 색다른 데이트, 특별한 경험이 사랑을 키워요.`
+        },
+        '정인': {
+            total: (dm, strength) => `정인이 들어왔어요! ${dm}일간에게 오늘은 공부하고 도움 받는 날이에요. ${strength}이면 더 귀인이 들어와요.`,
+            money: (dm) => `문서, 자격증, 부동산으로 돈이 되는 날이에요. 정인은 안정적인 자산이에요. 공부하거나 문서 정리하면 나중에 돈이 돼요.`,
+            love: (dm) => `편안하고 따뜻한 사랑! 엄마 같은, 포근한 인연이 들어오는 날이에요. 오래된 친구에게 연락해보세요. 힐링되는 하루가 될 거예요.`
+        }
+    };
+
     function sajuGetEnhancedFortune(){
         if(!sajuPillars || !sajuBirthInfo) return null;
         const todayInfo = sajuGetTodayInfo();
@@ -5566,6 +5620,28 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         const dateLabel = `${enhanced.dateObj.getMonth()+1}월 ${enhanced.dateObj.getDate()}일 (${weekday}) ${enhanced.todayGz}`;
         const tenGodLabel = enhanced ? `${enhanced.todayGan}(${enhanced.tenGodGan})` : '';
         const hapChungHTML = enhanced && enhanced.hapChung.length > 0 ? enhanced.hapChung.map(h => `<div class="fp-hap-item">${h.type === '충' ? '⚡' : '💞'} ${h.text}</div>`).join('') : '<div class="fp-hap-item">오늘은 특별한 합충 없이 무난한 흐름이에요</div>';
+        
+        // 개인화된 상세 운세 - 10신 기준
+        let detailTotal = f.total, detailMoney = f.money, detailLove = f.love;
+        if(enhanced && SAJU_FORTUNE_DETAIL[enhanced.tenGodGan]){
+            const dmGanName = sajuPillars.day.gan;
+            const strength = enhanced.strength;
+            try {
+                detailTotal = SAJU_FORTUNE_DETAIL[enhanced.tenGodGan].total(dmGanName, strength);
+                detailMoney = SAJU_FORTUNE_DETAIL[enhanced.tenGodGan].money(dmGanName);
+                detailLove = SAJU_FORTUNE_DETAIL[enhanced.tenGodGan].love(dmGanName);
+                // 합충 있으면 추가 문구
+                if(enhanced.hapChung.some(h=>h.type==='육합'||h.type==='삼합')){
+                    detailLove += ' 게다가 오늘 삼합/육합으로 인연이 붙는 날이라 만남이 더 기대돼요!';
+                }
+                if(enhanced.hapChung.some(h=>h.type==='충')){
+                    detailTotal += ' 오늘 충이 있어 변동이 있을 수 있으니 무리한 이동보다 정리에 집중하세요.';
+                }
+                if(enhanced.todayGz && enhanced.useful && enhanced.todayGz[0] && sajuElementOfGan(enhanced.todayGz[0]) === enhanced.useful.god){
+                    detailTotal += ` 오늘 ${enhanced.useful.god}(${enhanced.useful.reason}) 기운이 들어와서 당신에게 특히 좋은 날이에요!`;
+                }
+            } catch(e){}
+        }
         const showLotto = getShowLotto();
         const lottoMain = showLotto ? sajuGetTodayLottoMain() : null;
         const lottoBallsHTML = lottoMain ? lottoMain.map(n => `<div class="lotto-ball" style="background:${sajuLottoBallColor(n)}">${n}</div>`).join('') : '';
@@ -5601,9 +5677,9 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 <div class="fp-mantra-text">${f.mantra}</div>
             </div>
             <div class="fp-cards">
-                <div class="fp-card"><div class="fpc-label">✅ 총운</div><div class="fpc-text">${f.total}</div></div>
-                <div class="fp-card"><div class="fpc-label">💰 재물운</div><div class="fpc-text">${f.money}</div></div>
-                <div class="fp-card"><div class="fpc-label">💗 애정운</div><div class="fpc-text">${f.love}</div></div>
+                <div class="fp-card"><div class="fpc-label">✅ 총운 - ${enhanced.tenGodGan}</div><div class="fpc-text">${detailTotal}</div></div>
+                <div class="fp-card"><div class="fpc-label">💰 재물운 - ${enhanced.tenGodGan}</div><div class="fpc-text">${detailMoney}</div></div>
+                <div class="fp-card"><div class="fpc-label">💗 애정운 - ${enhanced.tenGodGan}</div><div class="fpc-text">${detailLove}</div></div>
             </div>
             <div style="background:#fff8f0; border-radius:12px; padding:10px 12px; margin:10px 0; border:1px solid #ffe0b2;">
                 <div style="font-size:13px; font-weight:800; margin-bottom:6px; color:#5d4037;">🔗 합충형파 - 오늘의 인연/변동</div>
