@@ -1775,6 +1775,11 @@ body { touch-action: pan-y !important; }
 #diary-around-today-list .sub-memo-item .diary-text { order:3; padding:4px 12px 12px !important; font-size:14px !important; }
 .view-mode-bar { display:none !important; }
 
+
+/* v59 정사각형 */
+.cal-cell { aspect-ratio:1/1 !important; }
+.cal-cell-inner { height:100% !important; display:flex !important; flex-direction:column !important; justify-content:center !important; align-items:center !important; }
+
 </style>
 </head>
 <body>
@@ -6033,14 +6038,14 @@ body { touch-action: pan-y !important; }
         const gap = 2;
         const gridWidth = grid.getBoundingClientRect().width || grid.parentElement.getBoundingClientRect().width;
         const cellSize = (gridWidth - gap * 6) / 7;
-        const compactHeight = cellSize * 0.58; // v58 더 줄임
+        const compactHeight = cellSize; // v59 정사각형 // v58 더 줄임
 
         const totalCells = firstDay + lastDate;
         const totalRows = Math.ceil(totalCells / 7);
         const totalVisibleCells = totalRows * 7;
 
         // v58 - 모든 행 완전 동일, 30,31 작아지는 버그 수정
-        let maxExtra = 0;
+        let maxExtra = 0; // v59 정사각형이므로 extra 무시
         for (let day = 1; day <= lastDate; day++) {
             const mStr = String(calMonth + 1).padStart(2, '0');
             const dStr = String(day).padStart(2, '0');
@@ -6052,7 +6057,7 @@ body { touch-action: pan-y !important; }
             }
         }
         const rowExtra = new Array(totalRows).fill(maxExtra);
-        const rowHeights = new Array(totalRows).fill(compactHeight + maxExtra);
+        const rowHeights = new Array(totalRows).fill(cellSize); // v59 정사각형, 2줄이어도 같은 크기
         const rowTops = [];
         let currentTop = 0;
 
