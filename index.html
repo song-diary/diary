@@ -1802,24 +1802,39 @@ body { touch-action: pan-y !important; }
 button[onclick="openBucketListModal()"] { display:none !important; }
 
 
-/* v62 - 달력 사진 썸네일 */
-.cal-cell { position:relative !important; overflow:hidden !important; }
-.cal-cell .cal-photo-thumb {
-  position:absolute !important;
-  inset:0 !important;
-  width:100% !important;
-  height:100% !important;
-  opacity:0.35 !important;
-  z-index:0 !important;
-}
-.cal-cell .cal-photo-thumb img {
-  width:100% !important; height:100% !important; object-fit:cover !important;
-}
-.cal-cell .cal-cell-inner { position:relative !important; z-index:1 !important; }
-.cal-cell.has-photo { border-color: var(--primary-color, #6b8cff) !important; }
-.cal-cell.sunday .cal-photo-thumb, .cal-cell.saturday .cal-photo-thumb { opacity:0.25 !important; }
-.cal-cell.selected-date .cal-photo-thumb { opacity:0.45 !important; }
-.cal-cell.today-date .cal-photo-thumb { opacity:0.5 !important; }
+/* v63 - 사진 달력 정리, 대각선 버그 수정 */
+#calendar-card { background:var(--bg-color, #faf6f3) !important; border:none !important; box-shadow:none !important; padding:0 !important; margin:0 0 8px 0 !important; overflow:visible !important; }
+.calendar-header { position:sticky !important; top:0 !important; z-index:30 !important; background:var(--bg-color, #faf6f3) !important; margin:0 !important; padding:6px 0 2px !important; display:flex !important; justify-content:space-between !important; align-items:center !important; }
+.calendar-header h3 { font-size:20px !important; font-weight:800 !important; margin:0 !important; flex:1; text-align:center; }
+.calendar-header button { font-size:18px !important; background:none !important; border:none !important; padding:2px 6px !important; }
+#cal-days-name-grid { position:sticky !important; top:34px !important; z-index:29 !important; background:var(--bg-color, #faf6f3) !important; margin:0 !important; padding:2px 0 3px !important; gap:2px !important; border-bottom:none !important; }
+#cal-days-grid { background:var(--bg-color, #faf6f3) !important; margin:0 !important; padding:2px 0 8px !important; gap:2px !important; overflow:visible !important; }
+.cal-cell { box-sizing:border-box !important; border-radius:8px !important; border:1px solid #eee !important; background:#fff !important; overflow:hidden !important; position:absolute !important; }
+.cal-cell.has-photo { border-color:var(--primary-color, #6b8cff) !important; }
+.cal-cell.has-photo::after { content:''; position:absolute; inset:0; background:rgba(255,255,255,0.65); z-index:0; }
+.cal-cell.has-photo .cal-cell-inner { position:relative; z-index:1; }
+.cal-cell.sunday { background:#fdf2f2 !important; border-color:#f7d6d6 !important; }
+.cal-cell.sunday span { color:#e74c3c !important; }
+.cal-cell.saturday { background:#f0f6fb !important; border-color:#d1e3f3 !important; }
+.cal-cell.saturday span { color:#3498db !important; }
+.cal-cell.sunday.has-photo::after { background:rgba(253,242,242,0.6); }
+.cal-cell.saturday.has-photo::after { background:rgba(240,246,251,0.6); }
+.cal-cell.today-date { border:2px solid var(--accent-today, #e74c3c) !important; }
+.cal-cell.selected-date { border:2px solid #2980b9 !important; background:#eaf3fb !important; }
+.cal-cell-inner { padding:2px !important; display:flex !important; flex-direction:column !important; align-items:center !important; justify-content:center !important; height:100% !important; }
+.cal-cell-inner span { font-size:14px !important; font-weight:600 !important; line-height:1 !important; }
+.cal-special-label, .cal-anniv-label { font-size:7px !important; line-height:1 !important; }
+
+/* 리스트 - 사진, 시간, 내용 */
+#diary-around-today-list { display:flex !important; flex-direction:column !important; gap:10px !important; }
+#diary-around-today-list .sub-memo-item { display:flex !important; flex-direction:column !important; background:#fff !important; border-radius:14px !important; overflow:hidden !important; border:1px solid #eee !important; padding:0 !important; }
+#diary-around-today-list .sub-memo-item .diary-photo-wrap { order:1; width:100% !important; margin:0 !important; }
+#diary-around-today-list .sub-memo-item .diary-photo-wrap .diary-photo { width:100% !important; aspect-ratio:4/3 !important; object-fit:cover !important; }
+#diary-around-today-list .sub-memo-item .item-top-row { order:2; padding:6px 12px 4px !important; }
+#diary-around-today-list .sub-memo-item .diary-text { order:3; padding:4px 12px 12px !important; font-size:var(--memo-font-size, 16px) !important; }
+#diary-around-today-list .diary-text { font-size:var(--memo-font-size, 16px) !important; }
+.view-mode-bar { display:none !important; }
+#bucket-list-open-btn, #bucket-list-modal-overlay { display:none !important; }
 
 </style>
 </head>
@@ -6165,11 +6180,6 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 
             if (dayOfWeek === 0 || holidays.has(dateStr)) cell.classList.add('sunday');
             else if (dayOfWeek === 6) cell.classList.add('saturday');
-            // v62 사진 있으면 클래스 추가
-            try {
-                const all = getAllDiaries();
-                if(all.some(d => normalizeDateStr(d.date) === dateStr && d.photo)) cell.classList.add('has-photo');
-            } catch(e){}
 
             const specialInfo = getSpecialDayLabel(dateStr);
             const annivText = getAnniversaryForDate(dateStr);
@@ -6182,20 +6192,24 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 indicatorHTML += `<div class="cal-anniv-label">${annivText}</div>`;
             }
 
-            // v62 - 사진 썸네일
-            let photoThumbHTML = '';
+            // v63 사진 배경으로
+            let photoSrc = '';
             try {
                 const allDiaries = getAllDiaries();
                 const photoEntry = allDiaries.find(d => normalizeDateStr(d.date) === dateStr && d.photo);
                 if(photoEntry){
                     const src = getPhotoSrc(photoEntry.photo);
-                    if(src){
-                        photoThumbHTML = `<div class="cal-photo-thumb"><img src="${src}" loading="lazy"></div>`;
-                    }
+                    if(src) photoSrc = src;
                 }
             } catch(e){}
+            if(photoSrc){
+                cell.classList.add('has-photo');
+                cell.style.backgroundImage = `url('${'" + photoSrc + "'}')`;
+                cell.style.backgroundSize = 'cover';
+                cell.style.backgroundPosition = 'center';
+            }
             cell.innerHTML =
-                `<div class="cal-cell-inner"><span>${day}</span>${photoThumbHTML}${indicatorHTML}</div>`;
+                `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>`;
 
             cell.onclick = () => selectDiaryDate(dateStr);
             grid.appendChild(cell);
