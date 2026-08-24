@@ -3452,38 +3452,135 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 
     // 관계(십성 단순화)별 오늘의 무드 · 지수 · 카피 - 옛스러운 명리학 용어 대신 현대적인 톤으로
     // + 그날 기운에 맞는 건강 조언(health) / 오늘의 한마디 지침(mantra)까지 함께 묶음
+    
+    // ===================== 🔮 강화된 운세 시스템 v68 =====================
     const SAJU_FORTUNE = {
         비겁: { mood: '직진 모드 🚀', score: 68,
-            total: '오늘은 내 목소리에 힘이 실리는 날이에요. 하고 싶은 대로 밀어붙이면 의외로 잘 풀리지만, 남의 말을 아예 안 듣고 가다간 부딪힐 수 있어요. 가끔은 브레이크도 필요한 하루예요.',
-            money: '충동구매 주의보! 사고 싶은 게 눈에 띄면 일단 장바구니에 담아두고 하루만 묵혀보세요. 그것만으로도 지갑이 훨씬 가벼워질 거예요.',
-            love: '고집부리다 삐끗하기 쉬운 날이에요. 먼저 웃어주는 쪽이 오늘의 승자예요. 한 발 양보하는 게 손해처럼 느껴져도, 결국 더 큰 걸 얻게 될 거예요.',
-            health: '에너지가 넘치는 만큼 몸에 힘이 잔뜩 들어가기 쉬운 날이에요. 어깨와 목의 힘을 빼고, 틈틈이 심호흡으로 긴장을 풀어주세요.',
+            total: '오늘은 내 목소리에 힘이 실리는 날이에요. 하고 싶은 대로 밀어붙이면 의외로 잘 풀리지만, 남의 말을 아예 안 듣고 가다간 부딪힐 수 있어요.',
+            money: '충동구매 주의보! 사고 싶은 게 눈에 띄면 일단 장바구니에 담아두고 하루만 묵혀보세요.',
+            love: '고집부리다 삐끗하기 쉬운 날이에요. 먼저 웃어주는 쪽이 오늘의 승자예요.',
+            health: '에너지가 넘치는 만큼 몸에 힘이 잔뜩 들어가기 쉬운 날이에요. 어깨와 목의 힘을 빼고 심호흡을.',
             mantra: '오늘은 밀어붙이되, 한 번은 멈춰 서서 숨을 고르세요.' },
         식상: { mood: '텐션 업 ✨', score: 82,
-            total: '말도 잘 통하고 아이디어도 술술 풀리는 날이에요. 미뤄뒀던 이야기, 오늘 꺼내보세요. 생각지도 못한 곳에서 좋은 반응이 돌아올 수 있어요.',
-            money: '기분 좋은 소비가 이어질 수 있어요. 나를 위한 작은 선물 정도는 괜찮지만, 그 기분에 취해 너무 크게 쓰지 않도록 살짝 브레이크를 걸어두세요.',
-            love: '마음이 술술 잘 전해지는 날이에요. 문자 한 통이 관계를 확 풀어줄 수도 있어요. 오늘만큼은 먼저 연락해보는 용기를 내보세요.',
-            health: '머리를 많이 쓰는 날이라 눈과 목이 쉽게 피로해질 수 있어요. 물을 자주 마시고, 잠깐씩 먼 곳을 바라보며 눈을 쉬어주세요.',
+            total: '말도 잘 통하고 아이디어도 술술 풀리는 날이에요. 미뤄뒀던 이야기, 오늘 꺼내보세요.',
+            money: '기분 좋은 소비가 이어질 수 있어요. 나를 위한 작은 선물 정도는 괜찮지만 브레이크도 필요해요.',
+            love: '마음이 술술 잘 전해지는 날이에요. 문자 한 통이 관계를 확 풀어줄 수도 있어요.',
+            health: '머리를 많이 쓰는 날이라 눈과 목이 쉽게 피로해질 수 있어요.',
             mantra: '떠오르는 생각이 있다면, 오늘 안에 말이나 글로 꺼내보세요.' },
         재성: { mood: '대박 예감 💰', score: 90,
-            total: '미뤄뒀던 일을 마무리 짓기 딱 좋은 날이에요. 결과가 눈에 보이기 시작해요. 그동안의 노력이 하나둘 제자리를 찾아가는 느낌을 받을 수 있어요.',
-            money: '오늘의 주인공은 재물운이에요! 반가운 소식이나 뜻밖의 수입이 있을 수 있어요. 좋은 흐름일수록 기록해두는 습관이 다음 기회로 이어져요.',
-            love: '마음 한 번 더 써주면 관계가 확 깊어지는 날이에요. 작은 선물이나 배려 하나가 크게 다가갈 수 있어요.',
-            health: '성과에 몰입하다 끼니를 거르기 쉬운 날이에요. 식사 시간만큼은 꼭 챙기고, 물도 자주 마셔주세요.',
+            total: '미뤄뒀던 일을 마무리 짓기 딱 좋은 날이에요. 결과가 눈에 보이기 시작해요.',
+            money: '오늘의 주인공은 재물운! 반가운 소식이나 뜻밖의 수입이 있을 수 있어요.',
+            love: '마음 한 번 더 써주면 관계가 확 깊어지는 날이에요.',
+            health: '성과에 몰입하다 끼니를 거르기 쉬운 날이에요. 식사 시간 꼭 챙기세요.',
             mantra: '오늘 마무리 지은 것 하나가, 내일의 큰 결실이 됩니다.' },
         관성: { mood: '숨 고르기 🧘', score: 58,
-            total: '오늘은 페이스 조절이 관건이에요. 정해진 루틴대로만 움직이면 무탈하게 지나가요. 새로운 걸 벌이기보다 하던 일을 잘 마무리하는 데 집중해보세요.',
-            money: '지갑은 오늘 하루 잠가두세요. 계획에 없던 큰 결제는 다음으로 미뤄도 좋아요. 대신 가계부를 한 번 들여다보는 건 좋은 하루가 될 거예요.',
-            love: '말 한마디, 표정 하나가 크게 느껴지는 날이에요. 평소보다 한 톤 부드럽게 다가가면 오해를 줄일 수 있어요.',
-            health: '긴장하기 쉬운 하루라 어깨와 뒷목이 뻐근해질 수 있어요. 틈틈이 목과 어깨를 가볍게 풀어주고, 무리한 일정은 피하는 게 좋아요.',
+            total: '오늘은 페이스 조절이 관건이에요. 정해진 루틴대로 움직이면 무탈하게 지나가요.',
+            money: '지갑은 오늘 하루 잠가두세요. 계획에 없던 큰 결제는 다음으로 미뤄도 좋아요.',
+            love: '말 한마디, 표정 하나가 크게 느껴지는 날이에요. 평소보다 부드럽게 다가가세요.',
+            health: '긴장하기 쉬운 하루라 어깨와 뒷목이 뻐근해질 수 있어요.',
             mantra: '오늘은 새로 벌이기보다, 있는 걸 지키는 하루로 삼아보세요.' },
         인성: { mood: '차분함 🌿', score: 75,
-            total: '배우고 정리하기 좋은 하루예요. 새로운 걸 익히기에 딱인 컨디션이에요. 머릿속이 복잡했던 일도 오늘은 정리가 잘 될 거예요.',
-            money: '무리하지 않고 지키는 게 이득인 날이에요. 저축이나 가계부 정리 추천! 작은 정리 습관이 나중에 큰 여유로 돌아와요.',
-            love: '편안하고 익숙한 만남이 좋은 날이에요. 오래된 인연에게 연락 한 번 해보세요. 잔잔한 대화 속에서 마음이 채워지는 하루가 될 거예요.',
-            health: '몸과 마음이 안정되는 날이라 충전하기 좋은 타이밍이에요. 평소보다 조금 일찍 잠자리에 들어보는 것도 좋아요.',
+            total: '배우고 정리하기 좋은 하루예요. 새로운 걸 익히기에 딱인 컨디션이에요.',
+            money: '무리하지 않고 지키는 게 이득인 날이에요. 저축이나 가계부 정리 추천!',
+            love: '편안하고 익숙한 만남이 좋은 날이에요. 오래된 인연에게 연락해보세요.',
+            health: '몸과 마음이 안정되는 날이라 충전하기 좋은 타이밍이에요.',
             mantra: '오늘은 채우는 날이에요. 배우고, 쉬고, 정리하세요.' }
     };
+
+    const SAJU_TEN_GOD_MAP = {
+        '甲': {'甲':'비견','乙':'겁재','丙':'식신','丁':'상관','戊':'편재','己':'정재','庚':'편관','辛':'정관','壬':'편인','癸':'정인'},
+        '乙': {'甲':'겁재','乙':'비견','丙':'상관','丁':'식신','戊':'정재','己':'편재','庚':'정관','辛':'편관','壬':'정인','癸':'편인'},
+        '丙': {'丙':'비견','丁':'겁재','戊':'식신','己':'상관','庚':'편재','辛':'정재','壬':'편관','癸':'정관','甲':'편인','乙':'정인'},
+        '丁': {'丙':'겁재','丁':'비견','戊':'상관','己':'식신','庚':'정재','辛':'편재','壬':'정관','癸':'편관','甲':'정인','乙':'편인'},
+        '戊': {'戊':'비견','己':'겁재','庚':'식신','辛':'상관','壬':'편재','癸':'정재','甲':'편관','乙':'정관','丙':'편인','丁':'정인'},
+        '己': {'戊':'겁재','己':'비견','庚':'상관','辛':'식신','壬':'정재','癸':'편재','甲':'정관','乙':'편관','丙':'정인','丁':'편인'},
+        '庚': {'庚':'비견','辛':'겁재','壬':'식신','癸':'상관','甲':'편재','乙':'정재','丙':'편관','丁':'정관','戊':'편인','己':'정인'},
+        '辛': {'庚':'겁재','辛':'비견','壬':'상관','癸':'식신','甲':'정재','乙':'편재','丙':'정관','丁':'편관','戊':'정인','己':'편인'},
+        '壬': {'壬':'비견','癸':'겁재','甲':'식신','乙':'상관','丙':'편재','丁':'정재','戊':'편관','己':'정관','庚':'편인','辛':'정인'},
+        '癸': {'壬':'겁재','癸':'비견','甲':'상관','乙':'식신','丙':'정재','丁':'편재','戊':'정관','己':'편관','庚':'정인','辛':'편인'}
+    };
+
+    const SAJU_LUCK_COLOR = { '목':'#4CAF50 초록','화':'#E74C3C 빨강','토':'#FF9800 주황','금':'#FFFFFF 흰색/금색','수':'#2196F3 파랑/검정' };
+    const SAJU_LUCK_PLACE = { '목':'공원, 서점, 숲','화':'카페, 조명 밝은 곳','토':'집, 마당, 베이커리','금':'은행, 보석가게, 깔끔한 사무실','수':'물가, 도서관, 조용한 곳' };
+    const SAJU_HAP = { '子丑': '합','寅亥': '합','卯戌': '합','辰酉': '합','巳申': '합','午未': '합' };
+    const SAJU_CHUNG = { '子午': '충','丑未': '충','寅申': '충','卯酉': '충','辰戌': '충','巳亥': '충' };
+    const SAJU_SAMHAP = [
+        { keys: ['申','子','辰'], name: '신자진 수국', elem: '수', meaning: '큰 흐름이 만들어지는 날' },
+        { keys: ['亥','卯','未'], name: '해묘미 목국', elem: '목', meaning: '인연과 협력이 커지는 날' },
+        { keys: ['寅','午','戌'], name: '인오술 화국', elem: '화', meaning: '열정과 성과가 모이는 날' },
+        { keys: ['巳','酉','丑'], name: '사유축 금국', elem: '금', meaning: '결과와 결실이 맺히는 날' }
+    ];
+
+    function sajuGetTenGod(dayGan, targetGan){
+        if(!SAJU_TEN_GOD_MAP[dayGan] || !SAJU_TEN_GOD_MAP[dayGan][targetGan]) return '비견';
+        return SAJU_TEN_GOD_MAP[dayGan][targetGan];
+    }
+    function sajuGetUsefulGod(pillars, dayElem, strength){
+        const counts = sajuComputeElemCounts(pillars);
+        let minElem = '목'; let minCount = 10;
+        for(let e in counts){ if(counts[e] < minCount){ minCount = counts[e]; minElem = e; } }
+        if(strength && strength.includes('신강')){
+            if(dayElem === '목') return { god: '금', reason: '관성(금)이 필요해요', color: '금' };
+            if(dayElem === '금') return { god: '화', reason: '관성(화)이 필요해요', color: '화' };
+            if(dayElem === '화') return { god: '수', reason: '관성(수)이 필요해요', color: '수' };
+            if(dayElem === '수') return { god: '토', reason: '관성(토)이 필요해요', color: '토' };
+            if(dayElem === '토') return { god: '목', reason: '관성(목)이 필요해요', color: '목' };
+        } else {
+            return { god: minElem, reason: minElem + ' 기운이 부족해서 보충이 필요해요', color: minElem };
+        }
+        return { god: minElem, reason: minElem + ' 보충', color: minElem };
+    }
+    function sajuCheckHapChung(myZhis, todayZhi){
+        let result = [];
+        myZhis.forEach(myZhi => {
+            if(!myZhi) return;
+            const key1 = myZhi + todayZhi;
+            const key2 = todayZhi + myZhi;
+            if(SAJU_HAP[key1] || SAJU_HAP[key2]){
+                result.push({ type: '육합', my: myZhi, today: todayZhi, text: myZhi + todayZhi + ' 육합 - 인연이 붙는 날이에요' });
+            }
+            if(SAJU_CHUNG[key1] || SAJU_CHUNG[key2]){
+                result.push({ type: '충', my: myZhi, today: todayZhi, text: myZhi + todayZhi + ' 충 - 변동수, 이동수 있어요' });
+            }
+        });
+        SAJU_SAMHAP.forEach(sam => {
+            if(sam.keys.includes(todayZhi)){
+                const haveCount = myZhis.filter(z => sam.keys.includes(z)).length;
+                if(haveCount >= 1){
+                    result.push({ type: '삼합', name: sam.name, elem: sam.elem, text: sam.name + ' - ' + sam.meaning });
+                }
+            }
+        });
+        return result;
+    }
+    function sajuGetEnhancedFortune(){
+        if(!sajuPillars || !sajuBirthInfo) return null;
+        const todayInfo = sajuGetTodayInfo();
+        const dayGan = sajuPillars.day.gan;
+        const todayGan = todayInfo.gz[0];
+        const todayZhi = todayInfo.gz[1];
+        const tenGodGan = sajuGetTenGod(dayGan, todayGan);
+        const relation = sajuRelationOf(sajuDayMasterElem, todayInfo.elem);
+        const base = SAJU_FORTUNE[relation] || SAJU_FORTUNE['비겁'];
+        const strength = sajuJudgeStrength(sajuPillars, sajuDayMasterElem);
+        const useful = sajuGetUsefulGod(sajuPillars, sajuDayMasterElem, strength);
+        const myZhis = [sajuPillars.year?.zhi, sajuPillars.month?.zhi, sajuPillars.day?.zhi, sajuPillars.hour?.zhi].filter(Boolean);
+        const hapChung = sajuCheckHapChung(myZhis, todayZhi);
+        let score = base.score;
+        if(todayInfo.elem === useful.god) score = Math.min(95, score + 15);
+        if(hapChung.some(h => h.type === '육합' || h.type === '삼합')) score = Math.min(96, score + 10);
+        if(hapChung.some(h => h.type === '충')) score = Math.max(45, score - 8);
+        const luckColor = SAJU_LUCK_COLOR[useful.god] || SAJU_LUCK_COLOR['목'];
+        const luckPlace = SAJU_LUCK_PLACE[useful.god] || SAJU_LUCK_PLACE['목'];
+        return {
+            base, tenGodGan, relation, strength, useful, hapChung,
+            score, todayGan, todayZhi,
+            luckColor, luckPlace,
+            todayGz: todayInfo.gz,
+            dateObj: todayInfo.dateObj
+        };
+    }
+
     let sajuBirthInfo = JSON.parse(localStorage.getItem('smartDiarySajuBirth') || 'null'); // { date, time|null }
     let sajuPillars = null;   // { year:{gan,zhi}, month:{...}, day:{...}, hour:{...}|null }
     let sajuDayMasterElem = null;
@@ -5460,13 +5557,13 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             return;
         }
 
-        const todayInfo = sajuGetTodayInfo();
-        const relation = sajuRelationOf(sajuDayMasterElem, todayInfo.elem);
-        const f = SAJU_FORTUNE[relation];
-        const weekday = ['일','월','화','수','목','금','토'][todayInfo.dateObj.getDay()];
-        const dateLabel = `${todayInfo.dateObj.getMonth()+1}월 ${todayInfo.dateObj.getDate()}일 (${weekday})`;
-
-        // 오늘의 행운 숫자를 씨앗 삼아 로또번호 생성 (하루 동안은 고정, 다음날 자동으로 바뀜) - 보너스 없이 6개만
+        const enhanced = sajuGetEnhancedFortune();
+        const f = enhanced ? enhanced.base : SAJU_FORTUNE['비겁'];
+        const score = enhanced ? enhanced.score : f.score;
+        const weekday = ['일','월','화','수','목','금','토'][enhanced.dateObj.getDay()];
+        const dateLabel = `${enhanced.dateObj.getMonth()+1}월 ${enhanced.dateObj.getDate()}일 (${weekday}) ${enhanced.todayGz}`;
+        const tenGodLabel = enhanced ? `${enhanced.todayGan}(${enhanced.tenGodGan})` : '';
+        const hapChungHTML = enhanced && enhanced.hapChung.length > 0 ? enhanced.hapChung.map(h => `<div class="fp-hap-item">${h.type === '충' ? '⚡' : '💞'} ${h.text}</div>`).join('') : '<div class="fp-hap-item">오늘은 특별한 합충 없이 무난한 흐름이에요</div>';
         const showLotto = getShowLotto();
         const lottoMain = showLotto ? sajuGetTodayLottoMain() : null;
         const lottoBallsHTML = lottoMain ? lottoMain.map(n => `<div class="lotto-ball" style="background:${sajuLottoBallColor(n)}">${n}</div>`).join('') : '';
@@ -5481,7 +5578,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         bodyEl.innerHTML = `
             <div class="fp-hero">
                 <div class="fp-hero-top">
-                    <div class="fp-eyebrow">🔮 오늘 하루 브리핑</div>
+                    <div class="fp-eyebrow">🔮 오늘 하루 브리핑 - ${tenGodLabel} 들어오는 날</div>
                 </div>
                 <div class="fp-date">${dateLabel}</div>
                 <div class="fp-hero-row">
@@ -5492,9 +5589,10 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                     <div class="fp-hero-divider"></div>
                     <div class="fp-score-block">
                         <div class="fp-mini-label">기운 지수</div>
-                        <div class="fp-score">${f.score}</div>
+                        <div class="fp-score">${score}</div>
                     </div>
                 </div>
+                <div style="margin-top:8px; font-size:11px; color:#8a7a6a;">신강/신약: ${enhanced.strength} / 용신: ${enhanced.useful.god}(${enhanced.useful.reason})</div>
             </div>
             <div class="fp-mantra-card">
                 <div class="fp-mantra-mark">"</div>
@@ -5504,6 +5602,18 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 <div class="fp-card"><div class="fpc-label">✅ 총운</div><div class="fpc-text">${f.total}</div></div>
                 <div class="fp-card"><div class="fpc-label">💰 재물운</div><div class="fpc-text">${f.money}</div></div>
                 <div class="fp-card"><div class="fpc-label">💗 애정운</div><div class="fpc-text">${f.love}</div></div>
+            </div>
+            <div style="background:#fff8f0; border-radius:12px; padding:10px 12px; margin:10px 0;">
+                <div style="font-size:13px; font-weight:800; margin-bottom:6px;">🔗 합충형파 - 오늘의 인연/변동</div>
+                ${hapChungHTML}
+            </div>
+            <div style="background:#f5f8ff; border-radius:12px; padding:10px 12px; margin:10px 0; display:flex; gap:12px;">
+                <div style="flex:1"><div style="font-size:11px; color:#888;">🎨 행운컬러</div><div style="font-size:13px; font-weight:700;">${enhanced.luckColor}</div></div>
+                <div style="flex:1"><div style="font-size:11px; color:#888;">📍 행운장소</div><div style="font-size:13px; font-weight:700;">${enhanced.luckPlace}</div></div>
+            </div>
+            <div style="background:#f0fff4; border-radius:12px; padding:10px 12px; margin:10px 0; border:1px dashed #4CAF50;">
+                <div style="font-size:13px; font-weight:800;">📸 오늘의 포토미션</div>
+                <div style="font-size:12px; margin-top:4px;">행운컬러 <b>${enhanced.luckColor.split(' ')[0]}</b>가 들어간 사진 1장을 찍어보세요! ${enhanced.hapChung.some(h=>h.type==='육합'||h.type==='삼합') ? '인연이 들어오는 날이니 사람과 함께 찍으면 더 좋아요!' : '오늘의 기운을 담아보세요.'}</div>
             </div>
             <div class="fp-my-saju-link-big" onclick="closeFortunePopup(); openSajuDetailModal();">📜 내 사주 자세히 보기 →</div>
             ${lottoCardHTML}
