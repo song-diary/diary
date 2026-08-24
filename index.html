@@ -3829,6 +3829,12 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         diarySearchDivider.style.display = isSearchFilterVisible ? 'flex' : 'none';
     }
 
+    function setCalendarPhotoVisibility(visible) {
+        isCalendarPhotoVisible = !!visible;
+        localStorage.setItem('smartDiaryCalendarPhotoVisible', visible ? 'true' : 'false');
+        console.log('달력사진배경', visible);
+        renderCalendar();
+    }
     function setSearchFilterVisibility(isVisible) {
         isSearchFilterVisible = isVisible;
         localStorage.setItem('smartDiarySearchFilterVisible', isVisible);
@@ -6200,10 +6206,11 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 indicatorHTML += `<div class="cal-anniv-label">${annivText}</div>`;
             }
 
-            // v66 사진 썸네일 - 설정 온/오프
+            // v67 사진 썸네일 - 설정 온/오프 (localStorage 직접 체크)
             let photoSrc = '';
             let photoImgHTML = '';
-            if(isCalendarPhotoVisible){
+            const showPhotoBg = (typeof isCalendarPhotoVisible !== 'undefined' ? isCalendarPhotoVisible : localStorage.getItem('smartDiaryCalendarPhotoVisible') !== 'false');
+            if(showPhotoBg){
                 try {
                     const allDiaries = getAllDiaries();
                     const photoEntry = allDiaries.find(d => normalizeDateStr(d.date) === dateStr && d.photo);
