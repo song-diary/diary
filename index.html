@@ -1802,7 +1802,7 @@ body { touch-action: pan-y !important; }
 button[onclick="openBucketListModal()"] { display:none !important; }
 
 
-/* v63 - 사진 달력 정리, 대각선 버그 수정 */
+/* v65 - 사진 달력 안정화 */
 #calendar-card { background:var(--bg-color, #faf6f3) !important; border:none !important; box-shadow:none !important; padding:0 !important; margin:0 0 8px 0 !important; overflow:visible !important; }
 .calendar-header { position:sticky !important; top:0 !important; z-index:30 !important; background:var(--bg-color, #faf6f3) !important; margin:0 !important; padding:6px 0 2px !important; display:flex !important; justify-content:space-between !important; align-items:center !important; }
 .calendar-header h3 { font-size:20px !important; font-weight:800 !important; margin:0 !important; flex:1; text-align:center; }
@@ -1811,8 +1811,9 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 #cal-days-grid { background:var(--bg-color, #faf6f3) !important; margin:0 !important; padding:2px 0 8px !important; gap:2px !important; overflow:visible !important; }
 .cal-cell { box-sizing:border-box !important; border-radius:8px !important; border:1px solid #eee !important; background:#fff !important; overflow:hidden !important; position:absolute !important; }
 .cal-cell.has-photo { border-color:var(--primary-color, #6b8cff) !important; }
-.cal-cell.has-photo::after { content:''; position:absolute; inset:0; background:rgba(255,255,255,0.65); z-index:0; }
+.cal-cell .cal-photo-img { position:absolute !important; inset:0 !important; width:100% !important; height:100% !important; object-fit:cover !important; opacity:0.38 !important; z-index:0 !important; pointer-events:none !important; }
 .cal-cell.has-photo .cal-cell-inner { position:relative; z-index:1; }
+.cal-cell.has-photo .cal-cell-inner span, .cal-cell.has-photo .cal-special-label, .cal-cell.has-photo .cal-anniv-label { position:relative; z-index:2; background:rgba(255,255,255,0.7); border-radius:4px; padding:0 2px; }
 .cal-cell.sunday { background:#fdf2f2 !important; border-color:#f7d6d6 !important; }
 .cal-cell.sunday span { color:#e74c3c !important; }
 .cal-cell.saturday { background:#f0f6fb !important; border-color:#d1e3f3 !important; }
@@ -6192,7 +6193,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 indicatorHTML += `<div class="cal-anniv-label">${annivText}</div>`;
             }
 
-            // v63 사진 배경으로
+            // v65 사진 썸네일 - 안정적 img 태그
             let photoSrc = '';
             try {
                 const allDiaries = getAllDiaries();
@@ -6202,14 +6203,14 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                     if(src) photoSrc = src;
                 }
             } catch(e){}
+            let photoImgHTML = '';
             if(photoSrc){
                 cell.classList.add('has-photo');
-                cell.style.backgroundImage = 'url(' + photoSrc + ')';
-                cell.style.backgroundSize = 'cover';
-                cell.style.backgroundPosition = 'center';
+                // base64는 따옴표 이스케이프 필요 없게 data: 그대로 사용
+                photoImgHTML = `<img class="cal-photo-img" src="${photoSrc}" alt="">`;
             }
             cell.innerHTML =
-                `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>`;
+                `<div class="cal-cell-inner">${photoImgHTML}<span>${day}</span>${indicatorHTML}</div>`;
 
             cell.onclick = () => selectDiaryDate(dateStr);
             grid.appendChild(cell);
@@ -6958,6 +6959,10 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             });
         } catch (e) {
             console.error('사진 DB 초기화/마이그레이션 실패:', e);
+        } finally {
+            // v65 - 사진 캐시 로드 후 달력 다시 그리기
+            try { if(typeof renderCalendar === 'function') renderCalendar(); } catch(e){}
+            try { if(typeof renderDiaryAroundToday === 'function') renderDiaryAroundToday(); } catch(e){}
         }
     }
 
