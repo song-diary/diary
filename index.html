@@ -1801,6 +1801,26 @@ body { touch-action: pan-y !important; }
 #bucket-list-open-btn, #bucket-list-modal-overlay, #bucket-list-card { display:none !important; }
 button[onclick="openBucketListModal()"] { display:none !important; }
 
+
+/* v62 - 달력 사진 썸네일 */
+.cal-cell { position:relative !important; overflow:hidden !important; }
+.cal-cell .cal-photo-thumb {
+  position:absolute !important;
+  inset:0 !important;
+  width:100% !important;
+  height:100% !important;
+  opacity:0.35 !important;
+  z-index:0 !important;
+}
+.cal-cell .cal-photo-thumb img {
+  width:100% !important; height:100% !important; object-fit:cover !important;
+}
+.cal-cell .cal-cell-inner { position:relative !important; z-index:1 !important; }
+.cal-cell.has-photo { border-color: var(--primary-color, #6b8cff) !important; }
+.cal-cell.sunday .cal-photo-thumb, .cal-cell.saturday .cal-photo-thumb { opacity:0.25 !important; }
+.cal-cell.selected-date .cal-photo-thumb { opacity:0.45 !important; }
+.cal-cell.today-date .cal-photo-thumb { opacity:0.5 !important; }
+
 </style>
 </head>
 <body>
@@ -6145,6 +6165,11 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 
             if (dayOfWeek === 0 || holidays.has(dateStr)) cell.classList.add('sunday');
             else if (dayOfWeek === 6) cell.classList.add('saturday');
+            // v62 사진 있으면 클래스 추가
+            try {
+                const all = getAllDiaries();
+                if(all.some(d => normalizeDateStr(d.date) === dateStr && d.photo)) cell.classList.add('has-photo');
+            } catch(e){}
 
             const specialInfo = getSpecialDayLabel(dateStr);
             const annivText = getAnniversaryForDate(dateStr);
@@ -6157,8 +6182,20 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 indicatorHTML += `<div class="cal-anniv-label">${annivText}</div>`;
             }
 
+            // v62 - 사진 썸네일
+            let photoThumbHTML = '';
+            try {
+                const allDiaries = getAllDiaries();
+                const photoEntry = allDiaries.find(d => normalizeDateStr(d.date) === dateStr && d.photo);
+                if(photoEntry){
+                    const src = getPhotoSrc(photoEntry.photo);
+                    if(src){
+                        photoThumbHTML = `<div class="cal-photo-thumb"><img src="${src}" loading="lazy"></div>`;
+                    }
+                }
+            } catch(e){}
             cell.innerHTML =
-                `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>`;
+                `<div class="cal-cell-inner"><span>${day}</span>${photoThumbHTML}${indicatorHTML}</div>`;
 
             cell.onclick = () => selectDiaryDate(dateStr);
             grid.appendChild(cell);
