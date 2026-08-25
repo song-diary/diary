@@ -1844,8 +1844,8 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 .fp-hap-item { color:#3e2723 !important; font-size:14px !important; padding:3px 0 !important; }
 
         /* 🖼️ 갤러리 모드 - 3장씩 깔끔하게 */
-        .diary-view-toggle { display:flex; gap:6px; margin:8px 0; justify-content:flex-end; }
-        .diary-view-toggle button { padding:5px 10px; border-radius:8px; border:1px solid #ddd; background:#fff; font-size:12px; cursor:pointer; }
+        .diary-view-toggle { display:flex; gap:3px; margin:0; justify-content:flex-end; align-items:center; margin-left:auto; }
+        .diary-view-toggle button { padding:2px 5px !important; border-radius:6px !important; border:1px solid #ddd !important; background:#fff !important; font-size:10px !important; cursor:pointer !important; line-height:1.2 !important; }
         .diary-view-toggle button.active { background:var(--primary-color); color:#fff; border-color:var(--primary-color); }
         #diary-around-today-list.gallery-mode { display:grid !important; grid-template-columns: repeat(3, 1fr) !important; gap:8px !important; }
         #diary-around-today-list.gallery-mode .sub-memo-item { grid-column: span 1 !important; display:flex !important; flex-direction:column; width:100% !important; }
@@ -6837,18 +6837,8 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             const annivLineHTML = annivText ? `<div style="font-size:12.5px; font-weight:700; color:#9C6ADE; margin-top:3px;">제목 : ${annivText}</div>` : '';
             const toggleEl = document.getElementById('diary-view-toggle');
             titleEl.innerHTML = `<div style="display:flex; align-items:center; justify-content:space-between; width:100%; font-size:13px;"><div style="display:flex; align-items:center; gap:4px;">${badge}${dateLabel}${lunarHTML}${specialHTML}</div><div id="toggle-placeholder"></div></div>${annivLineHTML}`;
-            const placeholder = document.getElementById('toggle-placeholder');
-            if (toggleEl && placeholder) {
-                placeholder.appendChild(toggleEl);
-            } else if (placeholder) {
-                // create if not exists
-                const td = document.createElement('div');
-                td.id = 'diary-view-toggle';
-                td.className = 'diary-view-toggle';
-                td.style.cssText = 'display:flex; gap:4px; margin-left:auto;';
-                td.innerHTML = `<button id="btn-view-list" class="active" onclick="setDiaryViewMode('list')" style="padding:3px 7px; font-size:11px; border-radius:6px; border:1px solid #ddd; background:var(--primary-color); color:#fff;">📝</button><button id="btn-view-gallery" onclick="setDiaryViewMode('gallery')" style="padding:3px 7px; font-size:11px; border-radius:6px; border:1px solid #ddd; background:#fff;">🖼️</button>`;
-                placeholder.appendChild(td);
-            }
+            const ph = document.getElementById('toggle-placeholder');
+            if(ph) ph.appendChild(toggleEl);
         }
 
         const diaries = getAllDiaries();
