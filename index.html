@@ -1428,8 +1428,11 @@
         #money-around-today-list .sub-memo-item.has-photo .diary-photo,
         #search-result-list .sub-memo-item.has-photo .diary-photo,
         #diary-search-result-list .sub-memo-item.has-photo .diary-photo {
-            aspect-ratio: 1 / 1;
-            object-fit: cover;
+            aspect-ratio: auto;
+            object-fit: contain;
+            max-height: 320px;
+            background: #f8f5f0;
+            border-radius: 10px;
         }
 
         /* 📝 텍스트만 있는 항목: 읽기 편하도록 한 줄 전체 너비를 그대로 사용 */
@@ -1770,7 +1773,7 @@ body { touch-action: pan-y !important; }
 #diary-around-today-list { display:flex !important; flex-direction:column !important; gap:10px !important; }
 #diary-around-today-list .sub-memo-item { display:flex !important; flex-direction:column !important; background:#fff !important; border-radius:14px !important; overflow:hidden !important; border:1px solid #eee !important; padding:0 !important; }
 #diary-around-today-list .sub-memo-item .diary-photo-wrap { order:1; width:100% !important; margin:0 !important; }
-#diary-around-today-list .sub-memo-item .diary-photo-wrap .diary-photo { width:100% !important; aspect-ratio:4/3 !important; object-fit:cover !important; }
+#diary-around-today-list .sub-memo-item .diary-photo-wrap .diary-photo { width:100% !important; aspect-ratio:auto !important; object-fit:contain !important; max-height:320px; background:#f8f5f0; }
 #diary-around-today-list .sub-memo-item .item-top-row { order:2; padding:6px 12px 4px !important; display:flex !important; justify-content:space-between !important; align-items:center !important; }
 #diary-around-today-list .sub-memo-item .diary-text { order:3; padding:4px 12px 12px !important; font-size:var(--memo-font-size, 14px) !important; }
 .view-mode-bar { display:none !important; }
@@ -1830,7 +1833,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 #diary-around-today-list { display:flex !important; flex-direction:column !important; gap:10px !important; }
 #diary-around-today-list .sub-memo-item { display:flex !important; flex-direction:column !important; background:#fff !important; border-radius:14px !important; overflow:hidden !important; border:1px solid #eee !important; padding:0 !important; }
 #diary-around-today-list .sub-memo-item .diary-photo-wrap { order:1; width:100% !important; margin:0 !important; }
-#diary-around-today-list .sub-memo-item .diary-photo-wrap .diary-photo { width:100% !important; aspect-ratio:4/3 !important; object-fit:cover !important; }
+#diary-around-today-list .sub-memo-item .diary-photo-wrap .diary-photo { width:100% !important; aspect-ratio:auto !important; object-fit:contain !important; max-height:320px; background:#f8f5f0; }
 #diary-around-today-list .sub-memo-item .item-top-row { order:2; padding:6px 12px 4px !important; }
 #diary-around-today-list .sub-memo-item .diary-text { order:3; padding:4px 12px 12px !important; font-size:var(--memo-font-size, 16px) !important; }
 #diary-around-today-list .diary-text { font-size:var(--memo-font-size, 16px) !important; }
@@ -1839,6 +1842,20 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 
 
 .fp-hap-item { color:#3e2723 !important; font-size:14px !important; padding:3px 0 !important; }
+
+        /* 🖼️ 갤러리 모드 - 3장씩 깔끔하게 */
+        .diary-view-toggle { display:flex; gap:6px; margin:8px 0; justify-content:flex-end; }
+        .diary-view-toggle button { padding:5px 10px; border-radius:8px; border:1px solid #ddd; background:#fff; font-size:12px; cursor:pointer; }
+        .diary-view-toggle button.active { background:var(--primary-color); color:#fff; border-color:var(--primary-color); }
+        #diary-around-today-list.gallery-mode { display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; }
+        #diary-around-today-list.gallery-mode .sub-memo-item { grid-column: span 1 !important; display:flex; flex-direction:column; }
+        #diary-around-today-list.gallery-mode .sub-memo-item .diary-photo-wrap { width:100%; }
+        #diary-around-today-list.gallery-mode .sub-memo-item .diary-photo { width:100%; aspect-ratio:1/1 !important; object-fit:cover !important; border-radius:10px; max-height:none; }
+        #diary-around-today-list.gallery-mode .sub-memo-item .item-top-row,
+        #diary-around-today-list.gallery-mode .sub-memo-item .diary-text,
+        #diary-around-today-list.gallery-mode .sub-memo-item .health-badge { display:none; }
+        #diary-around-today-list.gallery-mode .sub-memo-item.has-photo::after { content: attr(data-text-preview); font-size:11px; color:#888; padding:4px 2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
 </style>
 </head>
 <body>
@@ -6769,6 +6786,15 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         const isTodayDate = dateStr === getTodayStr();
         const dateLabel = `${dObj.getMonth() + 1}월 ${dObj.getDate()}일(${dayName})`;
 
+        // Gallery toggle button insertion
+        if (!document.getElementById('diary-view-toggle')) {
+            const toggleDiv = document.createElement('div');
+            toggleDiv.id = 'diary-view-toggle';
+            toggleDiv.className = 'diary-view-toggle';
+            toggleDiv.innerHTML = `<button id="btn-view-list" class="active" onclick="setDiaryViewMode('list')">📝 리스트</button><button id="btn-view-gallery" onclick="setDiaryViewMode('gallery')">🖼️ 갤러리</button>`;
+            const card = document.getElementById('diary-around-today-card');
+            if (card) card.insertBefore(toggleDiv, document.getElementById('diary-around-today-list'));
+        }
         if (titleEl) {
             const badge = isReservedDate ? `<span style="background:var(--primary-color); color:white; padding:1px 5px; border-radius:4px; font-size:11px; margin-right:4px; font-weight:bold;">예약</span>` : '';
             const todayTag = isTodayDate ? ' (오늘)' : '';
@@ -6813,6 +6839,8 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 
             const itemBox = document.createElement('div');
             itemBox.className = 'sub-memo-item memo-only-box' + (item.photo ? ' has-photo' : ' no-photo');
+            const previewText = (item.text || '').substring(0,20);
+            itemBox.setAttribute('data-text-preview', previewText);
             if (isReservedDate) itemBox.classList.add('is-reserved');
 
             itemBox.innerHTML = `
@@ -6830,6 +6858,28 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             itemBox.addEventListener('click', () => openDiaryForm(dateStr, item));
             listEl.appendChild(itemBox);
         });
+    }
+
+
+    function setDiaryViewMode(mode){
+        const listEl = document.getElementById('diary-around-today-list');
+        const btnList = document.getElementById('btn-view-list');
+        const btnGallery = document.getElementById('btn-view-gallery');
+        if(!listEl) return;
+        if(mode==='gallery'){
+            listEl.classList.add('gallery-mode');
+            if(btnList) btnList.classList.remove('active');
+            if(btnGallery) btnGallery.classList.add('active');
+        } else {
+            listEl.classList.remove('gallery-mode');
+            if(btnList) btnList.classList.add('active');
+            if(btnGallery) btnGallery.classList.remove('active');
+        }
+        localStorage.setItem('smartDiaryViewMode', mode);
+    }
+    function restoreDiaryViewMode(){
+        const mode = localStorage.getItem('smartDiaryViewMode') || 'list';
+        setDiaryViewMode(mode);
     }
 
     function renderMoneyAroundToday() {
