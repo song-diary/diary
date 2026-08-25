@@ -1592,7 +1592,7 @@
             flex-shrink: 0;
         }
 
-        .edit-btn, .delete-btn {
+        .edit-btn-hidden, .delete-btn {
             background: none;
             border: 1px solid transparent;
             font-size: calc(var(--memo-font-size) - 5px);
@@ -1603,8 +1603,8 @@
             white-space: nowrap;
         }
 
-        .edit-btn { color: #3498db; }
-        .edit-btn:hover { background: #ebf5fb; }
+        .edit-btn-hidden { color: #3498db; }
+        .edit-btn-hidden:hover { background: #ebf5fb; }
 
         .delete-btn { color: #e74c3c; }
         .delete-btn:hover { background: #fdf2f2; }
@@ -1862,11 +1862,23 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         #diary-around-today-list.gallery-mode .sub-memo-item .item-top-row { justify-content:flex-end !important; order:2; margin-top:4px; }
         #diary-around-today-list.gallery-mode .sub-memo-item .diary-text { display:block !important; font-size:11px !important; color:#666 !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; order:3; margin-top:4px; padding:0 2px; }
         #diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns { display:flex !important; gap:4px; }
-        #diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .edit-btn,
+        #diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .edit-btn-hidden,
         #diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .delete-btn { font-size:10px !important; padding:2px 6px !important; }
         #diary-around-today-list.gallery-mode .sub-memo-item .diary-photo-wrap { order:1; }
 
         #diary-around-today-list.gallery-mode .sub-memo-item.has-photo.no-after::after { content: attr(data-text-preview); font-size:11px; color:#888; padding:4px 2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+
+        /* 1) 수정 버튼 전체 제거 */
+        .edit-btn, button.edit-btn, .memo-action-btns .edit-btn { display:none !important; }
+        .memo-action-btns { justify-content:flex-end !important; }
+        /* 2) 내용 간격 좁히기 - 한 줄 더 들어갈 정도로 */
+        .sub-memo-item .diary-text { margin-top:2px !important; line-height:1.35 !important; }
+        .sub-memo-item .item-top-row { margin-bottom:2px !important; }
+        /* 3) 직접 찍는 사진 아이콘 제거 */
+        .quick-photo-btn { display:none !important; }
+        /* 5) 일자 앞 아이콘 제거, 일자 작게 */
+        #selected-date-title, #diary-around-today-card h3, .selected-date-title { font-size:13px !important; }
 
 </style>
 </head>
@@ -5027,7 +5039,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 <div class="item-top-row">
                     <span class="time-badge-inline">${timeBadgeInline}</span>
                     <div class="memo-action-btns">
-                        <button class="edit-btn" onclick='event.stopPropagation(); openDiaryForm("${dateStr}", ${JSON.stringify(item)})'>수정</button>
+                        
                         <button class="delete-btn" onclick="event.stopPropagation(); deleteDiary('${item.id}')">삭제</button>
                     </div>
                 </div>
@@ -5196,7 +5208,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 <div class="item-top-row">
                     <span class="time-badge-inline">${timeBadgeInline}</span>
                     <div class="memo-action-btns">
-                        <button class="edit-btn" onclick='event.stopPropagation(); openDiaryForm("${dateStr}", ${JSON.stringify(item)})'>수정</button>
+                        
                         <button class="delete-btn" onclick="event.stopPropagation(); deleteDiary('${item.id}')">삭제</button>
                     </div>
                 </div>
@@ -6808,16 +6820,14 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             if (card) card.insertBefore(toggleDiv, document.getElementById('diary-around-today-list'));
         }
         if (titleEl) {
-            const badge = isReservedDate ? `<span style="background:var(--primary-color); color:white; padding:1px 5px; border-radius:4px; font-size:11px; margin-right:4px; font-weight:bold;">예약</span>` : '';
-            const todayTag = isTodayDate ? ' (오늘)' : '';
+            const badge = isReservedDate ? `<span style="background:var(--primary-color); color:white; padding:1px 5px; border-radius:4px; font-size:10px; margin-right:4px; font-weight:bold;">예약</span>` : '';
             const lunarLabel = getLunarLabel(dateStr);
-            const lunarHTML = lunarLabel ? `<span style="font-size:11px; font-weight:normal; color:var(--text-sub); margin-left:6px;">🌙 ${lunarLabel}</span>` : '';
+            const lunarHTML = lunarLabel ? `<span style="font-size:11px; font-weight:normal; color:var(--text-sub); margin-left:6px;">${lunarLabel}</span>` : '';
             const specialInfo = getSpecialDayLabel(dateStr);
-            const specialIcon = specialInfo ? (specialInfo.type === 'holiday' ? '🎊' : specialInfo.type === 'term' ? '🍃' : '🌡️') : '';
-            const specialHTML = specialInfo ? `<span class="cal-special-title-badge cal-special-${specialInfo.type}">${specialIcon} ${specialInfo.label}</span>` : '';
+            const specialHTML = specialInfo ? `<span class="cal-special-title-badge cal-special-${specialInfo.type}" style="font-size:11px;">${specialInfo.label}</span>` : '';
             const annivText = getAnniversaryForDate(dateStr);
-            const annivLineHTML = annivText ? `<div style="font-size:12.5px; font-weight:700; color:#9C6ADE; margin-top:3px;">🎉 ${annivText}</div>` : '';
-            titleEl.innerHTML = `<div>📔 ${badge}${dateLabel}${todayTag}${lunarHTML}${specialHTML}</div>${annivLineHTML}`;
+            const annivLineHTML = annivText ? `<div style="font-size:12.5px; font-weight:700; color:#9C6ADE; margin-top:3px;">제목 : ${annivText}</div>` : '';
+            titleEl.innerHTML = `<div style="font-size:13px;">${badge}${dateLabel}${lunarHTML}${specialHTML}</div>${annivLineHTML}`;
         }
 
         const diaries = getAllDiaries();
@@ -6860,7 +6870,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 <div class="item-top-row">
                     <span class="time-badge-inline">${timeBadgeInline}</span>
                     <div class="memo-action-btns">
-                        <button class="edit-btn" onclick='event.stopPropagation(); openDiaryForm("${dateStr}", ${JSON.stringify(item)})'>수정</button>
+                        
                         <button class="delete-btn" onclick="event.stopPropagation(); deleteDiary('${item.id}')">삭제</button>
                     </div>
                 </div>
@@ -6963,7 +6973,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 <div class="item-top-row">
                     <span class="time-badge-inline">${timeBadgeInline}</span>
                     <div class="memo-action-btns">
-                        <button class="edit-btn" onclick='event.stopPropagation(); openDiaryForm("${dateStr}", ${JSON.stringify(item)})'>수정</button>
+                        
                         <button class="delete-btn" onclick="event.stopPropagation(); deleteDiary('${item.id}')">삭제</button>
                     </div>
                 </div>
