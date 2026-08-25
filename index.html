@@ -6810,23 +6810,45 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         const isTodayDate = dateStr === getTodayStr();
         const dateLabel = `${dObj.getMonth() + 1}월 ${dObj.getDate()}일(${dayName})`;
 
-
-        // Gallery toggle button insertion - same line as date, right aligned
-        let toggleEl = document.getElementById('diary-view-toggle');
-        if (!toggleEl) {
-            toggleEl = document.createElement('div');
-            toggleEl.id = 'diary-view-toggle';
-            toggleEl.className = 'diary-view-toggle';
-            toggleEl.style.cssText = 'display:flex; gap:3px; margin-left:auto; align-items:center;';
+        // Gallery toggle - create element safely
+        function ensureDiaryToggle(){
+            let t = document.getElementById('diary-view-toggle');
+            if(!t){
+                t = document.createElement('div');
+                t.id = 'diary-view-toggle';
+                t.className = 'diary-view-toggle';
+                t.style.cssText = 'display:flex; gap:3px; margin-left:auto; align-items:center;';
+            }
+            const cm = localStorage.getItem('smartDiaryViewMode') || 'list';
+            const activeStyle = 'background:var(--primary-color); color:#fff; border-color:var(--primary-color);';
+            const normalStyle = 'background:#fff; color:#333;';
+            t.innerHTML = '<button onclick="openDiaryForm(selectedViewDate || getTodayStr())" style="padding:3px 6px; font-size:10px; border-radius:6px; border:1px solid #ddd; '+normalStyle+'">✏️ 입력</button>'
+                        + '<button id="btn-view-list" onclick="setDiaryViewMode(\'list\')" style="padding:3px 6px; font-size:10px; border-radius:6px; border:1px solid #ddd; '+(cm==='list'?activeStyle:normalStyle)+'">📝 리스트</button>'
+                        + '<button id="btn-view-gallery" onclick="setDiaryViewMode(\'gallery\')" style="padding:3px 6px; font-size:10px; border-radius:6px; border:1px solid #ddd; '+(cm==='gallery'?activeStyle:normalStyle)+'">🖼️ 갤러리</button>';
+            return t;
         }
-        const currentMode = localStorage.getItem('smartDiaryViewMode') || 'list';
-        toggleEl.innerHTML = `
-            <button onclick="openDiaryForm(selectedViewDate || getTodayStr())" style="padding:3px 6px; font-size:10px; border-radius:6px; border:1px solid #ddd; background:#fff; display:flex; align-items:center; gap:2px;">✏️<span style="font-size:9px;">입력</span></button>
-            <button id="btn-view-list" class="${currentMode==='list'?'active':''}" onclick="setDiaryViewMode('list')" style="padding:3px 6px; font-size:10px; border-radius:6px; border:1px solid #ddd; ${currentMode==='list'?'background:var(--primary-color); color:#fff; border-color:var(--primary-color);':'background:#fff;'} display:flex; align-items:center; gap:2px;">📝<span style="font-size:9px;">리스트</span></button>
-            <button id="btn-view-gallery" class="${currentMode==='gallery'?'active':''}" onclick="setDiaryViewMode('gallery')" style="padding:3px 6px; font-size:10px; border-radius:6px; border:1px solid #ddd; ${currentMode==='gallery'?'background:var(--primary-color); color:#fff; border-color:var(--primary-color);':'background:#fff;'} display:flex; align-items:center; gap:2px;">🖼️<span style="font-size:9px;">갤러리</span></button>
-        `;
-
-        // attach to placeholder logic
+        if (titleEl) {
+            const badge = isReservedDate ? `<span style="background:var(--primary-color); color:white; padding:1px 5px; border-radius:4px; font-size:10px; margin-right:4px; font-weight:bold;">예약</span>` : '';
+            const lunarLabel = getLunarLabel(dateStr);
+            const lunarHTML = lunarLabel ? `<span style="font-size:11px; font-weight:normal; color:var(--text-sub); margin-left:6px;">${lunarLabel}</span>` : '';
+            const specialInfo = getSpecialDayLabel(dateStr);
+            const specialHTML = specialInfo ? `<span class="cal-special-title-badge cal-special-${specialInfo.type}" style="font-size:11px;">${specialInfo.label}</span>` : '';
+            const annivText = getAnniversaryForDate(dateStr);
+            const annivLineHTML = annivText ? `<div style="font-size:12.5px; font-weight:700; color:#9C6ADE; margin-top:3px;">제목 : ${annivText}</div>` : '';
+            const toggleEl = document.getElementById('diary-view-toggle');
+            titleEl.innerHTML = `<div style="display:flex; align-items:center; justify-content:space-between; width:100%; font-size:13px;"><div style="display:flex; align-items:center; gap:4px;">${badge}${dateLabel}${lunarHTML}${specialHTML}</div><div id="toggle-placeholder"></div></div>${annivLineHTML}`;
+            const placeholder = document.getElementById('toggle-placeholder');
+            if (toggleEl && placeholder) {
+                placeholder.appendChild(toggleEl);
+            } else if (placeholder) {
+                // create if not exists
+                const td = document.createElement('div');
+                td.id = 'diary-view-toggle';
+                td.className = 'diary-view-toggle';
+                td.style.cssText = 'display:flex; gap:4px; margin-left:auto;';
+                td.innerHTML = `<button id="btn-view-list" class="active" onclick="setDiaryViewMode('list')" style="padding:3px 7px; font-size:11px; border-radius:6px; border:1px solid #ddd; background:var(--primary-color); color:#fff;">📝</button><button id="btn-view-gallery" onclick="setDiaryViewMode('gallery')" style="padding:3px 7px; font-size:11px; border-radius:6px; border:1px solid #ddd; background:#fff;">🖼️</button>`;
+                placeholder.appendChild(td);
+            }
         }
 
         const diaries = getAllDiaries();
@@ -6884,29 +6906,20 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 
     function setDiaryViewMode(mode){
         const listEl = document.getElementById('diary-around-today-list');
+        if(!listEl) return;
+        if(mode==='gallery') listEl.classList.add('gallery-mode');
+        else listEl.classList.remove('gallery-mode');
+        localStorage.setItem('smartDiaryViewMode', mode);
         const btnList = document.getElementById('btn-view-list');
         const btnGallery = document.getElementById('btn-view-gallery');
-        if(!listEl) return;
-        if(mode==='gallery'){
-            listEl.classList.add('gallery-mode');
-        } else {
-            listEl.classList.remove('gallery-mode');
-        }
-        localStorage.setItem('smartDiaryViewMode', mode);
-        // Update button styles
         if(btnList && btnGallery){
             if(mode==='gallery'){
-                btnList.style.background='#fff'; btnList.style.color='#333'; btnList.classList.remove('active');
-                btnGallery.style.background='var(--primary-color)'; btnGallery.style.color='#fff'; btnGallery.classList.add('active');
+                btnList.style.background='#fff'; btnList.style.color='#333';
+                btnGallery.style.background='var(--primary-color)'; btnGallery.style.color='#fff';
             } else {
-                btnGallery.style.background='#fff'; btnGallery.style.color='#333'; btnGallery.classList.remove('active');
-                btnList.style.background='var(--primary-color)'; btnList.style.color='#fff'; btnList.classList.add('active');
+                btnGallery.style.background='#fff'; btnGallery.style.color='#333';
+                btnList.style.background='var(--primary-color)'; btnList.style.color='#fff';
             }
-        }
-        // Re-render to ensure mode persists
-        const toggleEl = document.getElementById('diary-view-toggle');
-        if(toggleEl){
-            // keep current HTML but update active state via styles above
         }
     }
     function restoreDiaryViewMode(){
@@ -6916,19 +6929,9 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             if(mode==='gallery') listEl.classList.add('gallery-mode');
             else listEl.classList.remove('gallery-mode');
         }
-        // Update buttons if they exist
-        const btnList = document.getElementById('btn-view-list');
-        const btnGallery = document.getElementById('btn-view-gallery');
-        if(btnList && btnGallery){
-            if(mode==='gallery'){
-                btnList.style.background='#fff'; btnList.style.color='#333'; btnList.classList.remove('active');
-                btnGallery.style.background='var(--primary-color)'; btnGallery.style.color='#fff'; btnGallery.classList.add('active');
-            } else {
-                btnGallery.style.background='#fff'; btnGallery.style.color='#333'; btnGallery.classList.remove('active');
-                btnList.style.background='var(--primary-color)'; btnList.style.color='#fff'; btnList.classList.add('active');
-            }
-        }
     }
+    window.addEventListener('load', function(){ setTimeout(restoreDiaryViewMode, 200); });
+
 
     function renderMoneyAroundToday() {
         const listEl = document.getElementById('money-around-today-list');
