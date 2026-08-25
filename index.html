@@ -1880,6 +1880,11 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         /* 5) 일자 앞 아이콘 제거, 일자 작게 */
         #selected-date-title, #diary-around-today-card h3, .selected-date-title { font-size:13px !important; }
 
+
+        #selected-date-title { display:flex; flex-direction:column; width:100%; }
+        #selected-date-title > div:first-child { width:100%; }
+        #diary-view-toggle { margin-left:auto !important; justify-content:flex-end !important; }
+
 </style>
 </head>
 <body>
@@ -6810,8 +6815,9 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         const isTodayDate = dateStr === getTodayStr();
         const dateLabel = `${dObj.getMonth() + 1}월 ${dObj.getDate()}일(${dayName})`;
 
-        // Gallery toggle - create element safely
+        // Gallery toggle - create element safely - right aligned to whole box
         function ensureDiaryToggle(){
+
             let t = document.getElementById('diary-view-toggle');
             if(!t){
                 t = document.createElement('div');
@@ -6835,7 +6841,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             const specialHTML = specialInfo ? `<span class="cal-special-title-badge cal-special-${specialInfo.type}" style="font-size:11px;">${specialInfo.label}</span>` : '';
             const annivText = getAnniversaryForDate(dateStr);
             const annivLineHTML = annivText ? `<div style="font-size:12.5px; font-weight:700; color:#9C6ADE; margin-top:3px;">제목 : ${annivText}</div>` : '';
-            titleEl.innerHTML = `<div style="display:flex; align-items:center; justify-content:space-between; width:100%; font-size:13px;"><div style="display:flex; align-items:center; gap:4px;">${badge}${dateLabel}${lunarHTML}${specialHTML}</div><div id="toggle-placeholder"></div></div>${annivLineHTML}`;
+            titleEl.innerHTML = `<div style="display:flex; align-items:center; justify-content:space-between; width:100%; font-size:13px;"><div style="display:flex; align-items:center; gap:4px; flex-shrink:0;">${badge}${dateLabel}${lunarHTML}${specialHTML}</div><div id="toggle-placeholder" style="margin-left:auto; display:flex; justify-content:flex-end;"></div></div>${annivLineHTML}`;
             const toggleEl = ensureDiaryToggle();
             const ph = document.getElementById('toggle-placeholder');
             if(ph && toggleEl) ph.appendChild(toggleEl);
@@ -6904,11 +6910,11 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         const btnGallery = document.getElementById('btn-view-gallery');
         if(btnList && btnGallery){
             if(mode==='gallery'){
-                btnList.style.background='#fff'; btnList.style.color='#333';
-                btnGallery.style.background='var(--primary-color)'; btnGallery.style.color='#fff';
+                btnList.style.background='#fff'; btnList.style.color='#333'; btnList.style.borderColor='#ddd';
+                btnGallery.style.background='var(--primary-color)'; btnGallery.style.color='#fff'; btnGallery.style.borderColor='var(--primary-color)';
             } else {
-                btnGallery.style.background='#fff'; btnGallery.style.color='#333';
-                btnList.style.background='var(--primary-color)'; btnList.style.color='#fff';
+                btnGallery.style.background='#fff'; btnGallery.style.color='#333'; btnGallery.style.borderColor='#ddd';
+                btnList.style.background='var(--primary-color)'; btnList.style.color='#fff'; btnList.style.borderColor='var(--primary-color)';
             }
         }
     }
