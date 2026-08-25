@@ -6810,15 +6810,15 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         const isTodayDate = dateStr === getTodayStr();
         const dateLabel = `${dObj.getMonth() + 1}월 ${dObj.getDate()}일(${dayName})`;
 
-        // Gallery toggle button insertion
+        // Gallery toggle button insertion - same line as date
         if (!document.getElementById('diary-view-toggle')) {
             const toggleDiv = document.createElement('div');
             toggleDiv.id = 'diary-view-toggle';
             toggleDiv.className = 'diary-view-toggle';
-            toggleDiv.innerHTML = `<button id="btn-view-list" class="active" onclick="setDiaryViewMode('list')">📝 리스트</button><button id="btn-view-gallery" onclick="setDiaryViewMode('gallery')">🖼️ 갤러리</button>`;
-            const card = document.getElementById('diary-around-today-card');
-            if (card) card.insertBefore(toggleDiv, document.getElementById('diary-around-today-list'));
+            toggleDiv.style.cssText = 'display:flex; gap:4px; margin-left:auto;';
+            toggleDiv.innerHTML = `<button id="btn-view-list" class="active" onclick="setDiaryViewMode('list')" style="padding:3px 7px; font-size:11px;">📝</button><button id="btn-view-gallery" onclick="setDiaryViewMode('gallery')" style="padding:3px 7px; font-size:11px;">🖼️</button>`;
         }
+
         if (titleEl) {
             const badge = isReservedDate ? `<span style="background:var(--primary-color); color:white; padding:1px 5px; border-radius:4px; font-size:10px; margin-right:4px; font-weight:bold;">예약</span>` : '';
             const lunarLabel = getLunarLabel(dateStr);
@@ -6827,7 +6827,20 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             const specialHTML = specialInfo ? `<span class="cal-special-title-badge cal-special-${specialInfo.type}" style="font-size:11px;">${specialInfo.label}</span>` : '';
             const annivText = getAnniversaryForDate(dateStr);
             const annivLineHTML = annivText ? `<div style="font-size:12.5px; font-weight:700; color:#9C6ADE; margin-top:3px;">제목 : ${annivText}</div>` : '';
-            titleEl.innerHTML = `<div style="font-size:13px;">${badge}${dateLabel}${lunarHTML}${specialHTML}</div>${annivLineHTML}`;
+            const toggleEl = document.getElementById('diary-view-toggle');
+            titleEl.innerHTML = `<div style="display:flex; align-items:center; justify-content:space-between; width:100%; font-size:13px;"><div style="display:flex; align-items:center; gap:4px;">${badge}${dateLabel}${lunarHTML}${specialHTML}</div><div id="toggle-placeholder"></div></div>${annivLineHTML}`;
+            const placeholder = document.getElementById('toggle-placeholder');
+            if (toggleEl && placeholder) {
+                placeholder.appendChild(toggleEl);
+            } else if (placeholder) {
+                // create if not exists
+                const td = document.createElement('div');
+                td.id = 'diary-view-toggle';
+                td.className = 'diary-view-toggle';
+                td.style.cssText = 'display:flex; gap:4px; margin-left:auto;';
+                td.innerHTML = `<button id="btn-view-list" class="active" onclick="setDiaryViewMode('list')" style="padding:3px 7px; font-size:11px; border-radius:6px; border:1px solid #ddd; background:var(--primary-color); color:#fff;">📝</button><button id="btn-view-gallery" onclick="setDiaryViewMode('gallery')" style="padding:3px 7px; font-size:11px; border-radius:6px; border:1px solid #ddd; background:#fff;">🖼️</button>`;
+                placeholder.appendChild(td);
+            }
         }
 
         const diaries = getAllDiaries();
