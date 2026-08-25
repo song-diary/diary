@@ -6835,10 +6835,10 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             const specialHTML = specialInfo ? `<span class="cal-special-title-badge cal-special-${specialInfo.type}" style="font-size:11px;">${specialInfo.label}</span>` : '';
             const annivText = getAnniversaryForDate(dateStr);
             const annivLineHTML = annivText ? `<div style="font-size:12.5px; font-weight:700; color:#9C6ADE; margin-top:3px;">제목 : ${annivText}</div>` : '';
-            const toggleEl = document.getElementById('diary-view-toggle');
             titleEl.innerHTML = `<div style="display:flex; align-items:center; justify-content:space-between; width:100%; font-size:13px;"><div style="display:flex; align-items:center; gap:4px;">${badge}${dateLabel}${lunarHTML}${specialHTML}</div><div id="toggle-placeholder"></div></div>${annivLineHTML}`;
+            const toggleEl = ensureDiaryToggle();
             const ph = document.getElementById('toggle-placeholder');
-            if(ph) ph.appendChild(toggleEl);
+            if(ph && toggleEl) ph.appendChild(toggleEl);
         }
 
         const diaries = getAllDiaries();
