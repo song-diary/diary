@@ -1900,9 +1900,9 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     <!-- 🔑 달력 카드 -->
     <div class="card" id="calendar-card">
                 <div class="calendar-header">
-            <button onclick="switchMainTab('money')" title="가계부">💰</button>
+            <button id="top-toggle-btn" onclick="toggleMainTab()" title="전환" style="font-size:13px; padding:4px 8px; border-radius:8px; border:1px solid #ddd; background:#fff; cursor:pointer;">💰 가계부</button>
             <h3 id="cal-month-title">0000년 00월</h3>
-            <button onclick="openSettingsModal()" title="설정">⚙️</button>
+            <button onclick="openSettingsModal()" title="설정" style="font-size:13px; padding:4px 8px; border-radius:8px; border:1px solid #ddd; background:#fff; cursor:pointer;">⚙️</button>
         </div>
         <div class="calendar-grid" id="cal-days-name-grid">
             <div class="cal-day-name sunday">일</div>
@@ -1914,25 +1914,6 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             <div class="cal-day-name saturday">토</div>
         </div>
         <div class="calendar-grid" id="cal-days-grid" style="margin-top: 5px; transition: transform 0.16s ease, opacity 0.16s ease;"></div>
-    </div>
-
-    <!-- 🧭 메인 탭 바: 설정 / 다이어리 / 가계부 / 입력 -->
-    <div class="card main-tab-bar">
-        <button class="main-tab-btn settings-tab-btn" id="tab-settings-btn" onclick="openSettingsModal()" title="설정">
-            <span class="tab-icon">⚙️</span>
-        </button>
-        <button class="main-tab-btn" id="tab-diary-btn" onclick="switchMainTab('diary')">
-            <span class="tab-icon">📔</span>다이어리
-        </button>
-        <button class="main-tab-btn" id="tab-money-btn" onclick="switchMainTab('money')">
-            <span class="tab-icon">💰</span>가계부
-        </button>
-        <button class="main-tab-btn input-tab-btn" id="tab-input-btn" onclick="openDiaryForm(selectedViewDate || getTodayStr())">
-            <span class="tab-icon">✏️</span>입력
-        </button>
-        <button class="main-tab-btn health-tab-btn" id="health-stats-open-btn" onclick="openHealthStatsModal()" title="건강 기록 보기">
-            <span class="tab-icon">❤️</span>
-        </button>
     </div>
 
     <!-- ===================== 📔 다이어리 패널 ===================== -->
@@ -5413,15 +5394,20 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 
     function switchMainTab(tabName) {
         const panels = { diary: diaryPanel, money: moneyPanel };
-        const buttons = { diary: tabDiaryBtn, money: tabMoneyBtn };
-
         Object.keys(panels).forEach(key => {
             if (panels[key]) panels[key].classList.toggle('active', key === tabName);
-            if (buttons[key]) buttons[key].classList.toggle('active', key === tabName);
         });
-
         currentMainTab = tabName;
-
+        const topBtn = document.getElementById('top-toggle-btn');
+        if(topBtn){
+            if(tabName === 'diary'){
+                topBtn.innerHTML = '💰 가계부';
+                topBtn.title = '가계부로 이동';
+            } else {
+                topBtn.innerHTML = '📔 다이어리';
+                topBtn.title = '다이어리로 이동';
+            }
+        }
         if (tabName === 'money') {
             updateMoneySummary();
             renderMoneyAroundToday();
@@ -5430,6 +5416,11 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             renderDiaryAroundToday();
             if (isDiarySearchFilterOpen) filterDiaryCustomList();
         }
+        localStorage.setItem('smartDiaryMainTab', tabName);
+    }
+    function toggleMainTab(){
+        if(currentMainTab === 'diary') switchMainTab('money');
+        else switchMainTab('diary');
     }
 
     // ===================== ⚙️ 설정 팝업 폼 =====================
@@ -6923,7 +6914,10 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             }
         }
     }
-    window.addEventListener('load', function(){ setTimeout(restoreDiaryViewMode, 200); });
+    window.addEventListener('load', function(){ 
+            const savedTab = localStorage.getItem('smartDiaryMainTab') || 'diary';
+            setTimeout(()=>{ switchMainTab(savedTab); restoreDiaryViewMode(); }, 200);
+        });
 
 
     function renderMoneyAroundToday() {
