@@ -2261,6 +2261,33 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             overflow: visible !important;
         }
 
+
+        /* v116: 스크롤 근본 수정 - 모든 터치 제한 제거 + 강제 스크롤 */
+        html, body {
+            touch-action: auto !important;
+            overscroll-behavior: auto !important;
+        }
+        #memo-modal-overlay {
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            -webkit-overflow-scrolling: touch !important;
+            touch-action: pan-y !important;
+            overscroll-behavior: contain !important;
+        }
+        #memo-form-card {
+            touch-action: pan-y !important;
+            -webkit-overflow-scrolling: touch !important;
+            overscroll-behavior: contain !important;
+            will-change: scroll-position !important;
+        }
+        #memo-form-card * {
+            touch-action: auto !important;
+        }
+        /* 입력 필드 포커스 시 스크롤 되도록 */
+        #textOutput, #money-note-input, #money-amount-input {
+            touch-action: auto !important;
+        }
+
 </style>
 </head>
 <body>
@@ -7148,7 +7175,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             memoModalOverlay.classList.add('active');
         }
         // v115: body fixed 대신 overflow hidden만으로 배경 스크롤 막기 - 폼 내부 스크롤은 살아있음
-        document.documentElement.style.overflow = "hidden";
+        document.documentElement.style.overflow = ""; // v116: html은 막지 않음
         document.body.style.overflow = "hidden";
         // 폼 카드를 맨 위로 스크롤
         setTimeout(() => {
