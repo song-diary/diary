@@ -1734,8 +1734,8 @@
   padding-bottom: 8px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
-.calendar-sticky-wrap .calendar-header { position: relative !important; top: auto !important; z-index: auto !important; }
-#cal-days-name-grid { position: relative !important; top: auto !important; background: var(--card-bg) !important; }
+.calendar-sticky-wrap { position: sticky !important; top: 0 !important; z-index: 30 !important; background: var(--bg-color, #faf6f3) !important; }
+#cal-days-name-grid { position: sticky !important; top: 34px !important; z-index: 29 !important; background: #faf6f3 !important; }
 #cal-days-grid { overflow: visible !important; max-height: none !important; z-index: 1; }
 html, body { overscroll-behavior-y: auto !important; }
 body { touch-action: pan-y !important; }
@@ -2041,30 +2041,83 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         }
 
 
-        /* v108: 메인 화면 하얀색 공간을 달력 배경색과 동일하게 */
-        .app-container, .calendar-sticky-wrap, #cal-days-name-grid, .calendar-header {
-            background-color: var(--bg-color, #faf6f3) !important;
-            background: var(--bg-color, #faf6f3) !important;
-        }
-        #cal-days-name-grid {
-            background: #faf6f3 !important;
-            background-color: #faf6f3 !important;
-        }
-        .calendar-header {
-            background: #faf6f3 !important;
-        }
-        /* 요일칸 하얀 배경 제거 */
-        .calendar-weekday {
-            background: transparent !important;
-        }
-        /* 달력과 운세 사이 흰 공간 제거 - 운세 바로 아래 달력이 붙도록 */
-        .fortune-teaser {
-            margin-bottom: 0 !important;
-        }
+        /* v108+v109: 하얀 공간 제거 + 년월/요일 고정 복구 */
         .calendar-sticky-wrap {
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 30 !important;
+            background: #faf6f3 !important;
             margin-top: 8px !important;
             padding-top: 4px !important;
             border-radius: 12px 12px 0 0;
+        }
+        .calendar-header {
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 31 !important;
+            background: #faf6f3 !important;
+        }
+        #cal-days-name-grid {
+            position: sticky !important;
+            top: 34px !important;
+            z-index: 29 !important;
+            background: #faf6f3 !important;
+        }
+        .calendar-weekday {
+            background: transparent !important;
+        }
+        .fortune-teaser {
+            margin-bottom: 8px !important;
+        }
+        /* 2) 수정폼 맨 위로 올리기 - 위 공간 제거 */
+        #diary-form-overlay, #diary-edit-modal, .diary-form-container {
+            top: 0 !important;
+            margin-top: 0 !important;
+            padding-top: 10px !important;
+        }
+        #diary-form, .diary-form {
+            margin-top: 0 !important;
+            top: 0 !important;
+        }
+        /* 수정폼 오버레이가 있다면 맨 위부터 시작 */
+        .modal-overlay, .diary-modal-overlay {
+            align-items: flex-start !important;
+            padding-top: 0 !important;
+        }
+
+
+        /* v109: 수정폼을 맨 위로 + 아래 내용 보이게 (bottom sheet -> top sheet) */
+        #diary-form-overlay {
+            align-items: flex-start !important;
+            justify-content: center !important;
+            padding-top: 0 !important;
+            background: rgba(0,0,0,0.35) !important;
+        }
+        #diary-form-overlay .card#memo-form-card {
+            margin-top: 0 !important;
+            border-radius: 0 0 18px 18px !important;
+            max-height: 90vh !important;
+            animation: drawerDown 0.28s ease !important;
+        }
+        @keyframes drawerDown {
+            from { transform: translateY(-100%); }
+            to { transform: translateY(0); }
+        }
+        /* 달력 고정 최종 복구 */
+        #calendar-card {
+            position: relative !important;
+        }
+        #calendar-card .calendar-header {
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 31 !important;
+            background: #faf6f3 !important;
+        }
+        #cal-days-name-grid {
+            position: sticky !important;
+            top: 38px !important;
+            z-index: 30 !important;
+            background: #faf6f3 !important;
         }
 
 </style>
