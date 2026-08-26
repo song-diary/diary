@@ -2622,8 +2622,8 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         <div class="btn-group" style="margin-bottom: 0;">
             <button class="btn btn-secondary" id="record-btn">🎤 음성메모</button>
             <label class="btn btn-secondary" id="photo-attach-label" style="text-align:center; display:flex; align-items:center; justify-content:center; cursor:pointer;">
-                📎 사진 첨부
-                <input type="file" id="diary-photo-input" accept="image/*" style="display:none;" onchange="previewImage(event)">
+                📎 사진/동영상 첨부
+                <input type="file" id="diary-photo-input" accept="image/*,video/*" style="display:none;" onchange="previewImage(event)">
             </label>
             <button class="btn btn-primary" onclick="manualSaveDiary()">저장</button>
         </div>
@@ -6961,6 +6961,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             if (moneyNoteInput) moneyNoteInput.value = existingItem.text || '';
             reservationTimeInput.value = existingItem.time || '';
             currentPhotoBase64 = existingItem.photo ? (getPhotoSrc(existingItem.photo) || null) : null;
+            currentMediaType = currentPhotoBase64 && currentPhotoBase64.indexOf('data:video')===0 ? 'video' : 'image';
             if (existingItem.money && existingItem.money.amount) {
                 setMoneyType(existingItem.money.type || 'expense', existingItem.money.category || '');
                 moneyAmountInput.value = Number(existingItem.money.amount || 0).toLocaleString();
@@ -7332,11 +7333,16 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         return html;
     }
 
-    // 📷 사진만 표시 (확대보기/저장 기능은 수정폼으로 옮김 - 메인 목록에서는 항목을 터치하면 바로 수정폼이 열림)
+    // 📷 사진/동영상 표시
     function renderPhotoHTML(item) {
         if (!item.photo) return '';
+        const src = getPhotoSrc(item.photo);
+        const isVideo = src && src.indexOf('data:video') === 0;
+        if (isVideo) {
+            return `<div class="diary-photo-wrap"><video src="${src}" controls style="width:100%; border-radius:10px; max-height:300px;"></video></div>`;
+        }
         return `<div class="diary-photo-wrap">
-            <img src="${getPhotoSrc(item.photo)}" class="diary-photo" alt="첨부사진" oncontextmenu="return false;" ondragstart="return false;">
+            <img src="${src}" class="diary-photo" alt="첨부사진" oncontextmenu="return false;" ondragstart="return false;">
         </div>`;
     }
 
@@ -7575,12 +7581,28 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     function updatePhotoPreview() {
         const wrap = document.getElementById('photo-preview-wrap');
         const img = document.getElementById('image-preview');
+        const videoEl = document.getElementById('video-preview');
+        // 비디오 엘리먼트가 없으면 생성
+        let vEl = videoEl;
+        if (!vEl) {
+            vEl = document.createElement('video');
+            vEl.id = 'video-preview';
+            vEl.controls = true;
+            vEl.style.cssText = 'width:100%; max-height:300px; border-radius:10px;';
+            wrap.appendChild(vEl);
+        }
         if (currentPhotoBase64) {
-            img.src = currentPhotoBase64;
+            const isVideo = currentPhotoBase64.indexOf('data:video') === 0 || currentMediaType === 'video';
+            if (isVideo) {
+                vEl.src = currentPhotoBase64;
+                vEl.style.display = 'block';
+                img.style.display = 'none';
+            } else {
+                img.src = currentPhotoBase64;
+                img.style.display = 'block';
+                vEl.style.display = 'none';
+            }
             wrap.style.display = 'block';
-            // ✏️ 기존 항목을 "수정" 중일 때만 사진을 눌러 크게 볼 수 있음.
-            // (사진은 촬영/첨부 시점에 이미 갤러리에 원본이 저장되어 있으므로, 앱에서 별도로 다시 저장하는
-            //  기능은 두지 않음 - 중복 저장을 막기 위함)
             if (editingDiaryId) {
                 img.style.cursor = 'pointer';
                 img.onclick = () => openPhotoLightbox(currentPhotoBase64);
@@ -7590,10 +7612,13 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             }
         } else {
             img.src = '';
+            if (vEl) { vEl.src = ''; vEl.style.display = 'none'; }
             img.onclick = null;
             wrap.style.display = 'none';
         }
     }
+    let currentMediaType = 'image';
+
 
     function removeImage() {
         if (!confirm('사진을 취소할까요? 삭제한 사진은 복구할 수 없어요.')) return;
