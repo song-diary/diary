@@ -1879,7 +1879,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         .diary-view-toggle button.active { background:var(--primary-color); color:#fff; border-color:var(--primary-color); }
         #diary-around-today-list.gallery-mode { display:grid !important; grid-template-columns: repeat(3, 1fr) !important; gap:8px !important; }
         #diary-around-today-list.gallery-mode .sub-memo-item { grid-column: span 1 !important; display:flex !important; flex-direction:column; width:100% !important; }
-        #diary-around-today-list.gallery-mode .sub-memo-item.no-photo { display:none !important; }
+        #diary-around-today-list.gallery-mode .sub-memo-item.no-photo { display:flex !important; background:#fdfbff; border:1px dashed #d8cde8; min-height:80px; justify-content:center; align-items:center; }\n.gallery-mode .sub-memo-item.no-photo .diary-text { display:block !important; }\n.gallery-mode .sub-memo-item.no-photo::before { content:'📝 제목만'; font-size:11px; color:#9C6ADE; }
         #diary-around-today-list.gallery-mode .sub-memo-item.has-photo { grid-column: auto !important; }
         #diary-around-today-list.gallery-mode .sub-memo-item .diary-photo-wrap { width:100%; }
         #diary-around-today-list.gallery-mode .sub-memo-item .diary-photo { width:100% !important; aspect-ratio:1/1 !important; object-fit:cover !important; border-radius:10px !important; max-height:none !important; height:100px; }
@@ -6925,17 +6925,20 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             itemBox.setAttribute('data-text-preview', previewText);
             if (isReservedDate) itemBox.classList.add('is-reserved');
 
+            const annivHTML = item.anniversary ? `<div style="font-weight:bold; color:#9C6ADE; font-size:14px; margin-bottom:4px;">🎉 ${item.anniversary} ${item.annivRepeat && item.annivRepeat!=='none' ? '(' + (item.annivRepeat==='yearly'?'매년':'매달') + ')' : ''}</div>` : '';
             itemBox.innerHTML = `
                 ${photoHTML}
                 <div class="item-top-row">
                     <span class="time-badge-inline">${timeBadgeInline}</span>
                     <div class="memo-action-btns">
-                        
+                        <button class="edit-btn-hidden" onclick="event.stopPropagation(); openDiaryForm('${dateStr}', getAllDiaries().find(d=>d.id==='${item.id}'))" style="color:#3498db; background:none; border:1px solid #ddd; border-radius:4px; padding:2px 6px;">수정</button>
                         <button class="delete-btn" onclick="event.stopPropagation(); deleteDiary('${item.id}')">삭제</button>
                     </div>
                 </div>
                 ${healthHTML}
+                ${annivHTML}
                 ${textContentHTML}
+                ${!item.text && !item.photo ? '<div style="font-size:12px; color:#999; padding:4px 0;">사진/내용 추가하려면 수정 버튼 클릭</div>' : ''}
             `;
             itemBox.addEventListener('click', () => openDiaryForm(dateStr, item));
             listEl.appendChild(itemBox);
@@ -7055,7 +7058,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 <div class="item-top-row">
                     <span class="time-badge-inline">${timeBadgeInline}</span>
                     <div class="memo-action-btns">
-                        
+                        <button class="edit-btn-hidden" onclick="event.stopPropagation(); openDiaryForm('${dateStr}', getAllDiaries().find(d=>d.id==='${item.id}'))" style="color:#3498db; background:none; border:1px solid #ddd; border-radius:4px; padding:2px 6px;">수정</button>
                         <button class="delete-btn" onclick="event.stopPropagation(); deleteDiary('${item.id}')">삭제</button>
                     </div>
                 </div>
