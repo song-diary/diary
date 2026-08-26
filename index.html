@@ -1987,6 +1987,33 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         .item-top-row { order:3; }
         .diary-text { order:4; }
 
+
+        /* v104: 사진 없는 칸도 사진 공간 확보 */
+        .sub-memo-item.no-photo .photo-title-area { display:block !important; }
+        .sub-memo-item.no-photo::after {
+            content:'';
+            display:block;
+            width:100%;
+            aspect-ratio:1/1;
+            background:#f5f0f0;
+            border-radius:10px;
+            min-height:100px;
+            order:2;
+        }
+        #diary-around-today-list:not(.gallery-mode) .sub-memo-item.no-photo::after {
+            aspect-ratio:auto;
+            min-height:80px;
+        }
+        /* 갤러리 모드에서 no-photo도 동일한 높이 */
+        #diary-around-today-list.gallery-mode .sub-memo-item.no-photo {
+            display:flex !important;
+            flex-direction:column;
+        }
+        #diary-around-today-list.gallery-mode .sub-memo-item.no-photo::after {
+            height:100px;
+            aspect-ratio:1/1;
+        }
+
 </style>
 </head>
 <body>
@@ -6964,7 +6991,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             if (isReservedDate) itemBox.classList.add('is-reserved');
 
             const titleText = item.anniversary || '';
-            const titleHTML = `<div class="photo-title-area" style="height:20px; font-size:12px; font-weight:bold; color:#9C6ADE; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; margin-bottom:4px;">${titleText ? titleText : '&nbsp;'}</div>`;
+            const titleHTML = `<div class="photo-title-area" style="height:20px; font-size:12px; font-weight:bold; color:#9C6ADE; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; margin-bottom:4px; padding-left:6px;">${titleText ? titleText : '&nbsp;'}</div>`;
             itemBox.innerHTML = `
                 ${titleHTML}
                 ${photoHTML}
