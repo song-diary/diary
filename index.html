@@ -3684,7 +3684,8 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         '癸': {'壬':'겁재','癸':'비견','甲':'상관','乙':'식신','丙':'정재','丁':'편재','戊':'정관','己':'편관','庚':'정인','辛':'편인'}
     };
 
-    const SAJU_LUCK_COLOR = { '목':'#4CAF50 초록','화':'#E74C3C 빨강','토':'#FF9800 주황','금':'#FFFFFF 흰색/금색','수':'#2196F3 파랑/검정' };
+    const SAJU_LUCK_COLOR = { '목':'초록','화':'빨강','토':'주황','금':'흰색/금색','수':'파랑/검정' };
+    const SAJU_LUCK_COLOR_HEX = { '목':'#4CAF50','화':'#E74C3C','토':'#FF9800','금':'#FFFFFF','수':'#2196F3' };
     const SAJU_LUCK_PLACE = { '목':'공원, 서점, 숲','화':'카페, 조명 밝은 곳','토':'집, 마당, 베이커리','금':'은행, 보석가게, 깔끔한 사무실','수':'물가, 도서관, 조용한 곳' };
     const SAJU_HAP = { '子丑': '합','寅亥': '합','卯戌': '합','辰酉': '합','巳申': '합','午未': '합' };
     const SAJU_CHUNG = { '子午': '충','丑未': '충','寅申': '충','卯酉': '충','辰戌': '충','巳亥': '충' };
@@ -3811,11 +3812,12 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         if(hapChung.some(h => h.type === '육합' || h.type === '삼합')) score = Math.min(96, score + 10);
         if(hapChung.some(h => h.type === '충')) score = Math.max(45, score - 8);
         const luckColor = SAJU_LUCK_COLOR[useful.god] || SAJU_LUCK_COLOR['목'];
+        const luckColorHex = SAJU_LUCK_COLOR_HEX[useful.god] || SAJU_LUCK_COLOR_HEX['목'];
         const luckPlace = SAJU_LUCK_PLACE[useful.god] || SAJU_LUCK_PLACE['목'];
         return {
             base, tenGodGan, relation, strength, useful, hapChung,
             score, todayGan, todayZhi,
-            luckColor, luckPlace,
+            luckColor, luckColorHex, luckPlace,
             todayGz: todayInfo.gz,
             dateObj: todayInfo.dateObj
         };
@@ -5885,7 +5887,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             </div>
             <div style="background:#f0fff4; border-radius:12px; padding:10px 12px; margin:10px 0; border:1px dashed #4CAF50;">
                 <div style="font-size:14px; font-weight:800; color:#1b5e20;">📸 오늘의 포토미션</div>
-                <div style="font-size:14px; margin-top:4px; color:#2e7d32; line-height:1.5;">행운컬러 <b>${enhanced.luckColor.split(' ')[0]}</b>가 들어간 사진 1장을 찍어보세요! ${enhanced.hapChung.some(h=>h.type==='육합'||h.type==='삼합') ? '인연이 들어오는 날이니 사람과 함께 찍으면 더 좋아요!' : '오늘의 기운을 담아보세요.'}</div>
+                <div style="font-size:14px; margin-top:4px; color:#2e7d32; line-height:1.5;">행운컬러 <b>${enhanced.luckColor}</b>(${enhanced.luckColorHex})가 들어간 사진 1장을 찍어보세요! ${enhanced.hapChung.some(h=>h.type==='육합'||h.type==='삼합') ? '인연이 들어오는 날이니 사람과 함께 찍으면 더 좋아요!' : '오늘의 기운을 담아보세요.'}</div>
             </div>
             <div class="fp-my-saju-link-big" onclick="closeFortunePopup(); openSajuDetailModal();">📜 내 사주 자세히 보기 →</div>
             ${lottoCardHTML}
