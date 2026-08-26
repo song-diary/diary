@@ -1975,6 +1975,18 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         .edit-btn-hidden { border-color:#3498db !important; color:#3498db !important; }
         .delete-btn { border-color:#e74c3c !important; color:#e74c3c !important; }
 
+
+        /* v102: 제목 영역 고정 높이로 사진 정렬 일정하게 */
+        .photo-title-area { height:20px !important; line-height:20px; }
+        .sub-memo-item.has-photo .diary-photo { margin-top:0 !important; }
+        .sub-memo-item { display:flex; flex-direction:column; }
+        /* 사진 위 아이콘 제거 - photo-title-area 외에는 사진 위에 아무것도 없도록 */
+        .sub-memo-item .health-badge, .sub-memo-item [class*="anniv"] { display:none !important; }
+        .photo-title-area { order:1; }
+        .diary-photo-wrap { order:2; }
+        .item-top-row { order:3; }
+        .diary-text { order:4; }
+
 </style>
 </head>
 <body>
@@ -6951,20 +6963,19 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             itemBox.setAttribute('data-text-preview', previewText);
             if (isReservedDate) itemBox.classList.add('is-reserved');
 
-            const annivHTML = item.anniversary ? `<div style="font-weight:bold; color:#9C6ADE; font-size:14px; margin-bottom:4px;">🎉 ${item.anniversary} ${item.annivRepeat && item.annivRepeat!=='none' ? '(' + (item.annivRepeat==='yearly'?'매년':'매달') + ')' : ''}</div>` : '';
+            const titleText = item.anniversary || (item.text ? item.text.substring(0,15) : '');
+            const titleHTML = `<div class="photo-title-area" style="height:20px; font-size:12px; font-weight:bold; color:#9C6ADE; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; margin-bottom:4px;">${titleText ? titleText : '&nbsp;'}</div>`;
             itemBox.innerHTML = `
+                ${titleHTML}
                 ${photoHTML}
                 <div class="item-top-row">
                     <span class="time-badge-inline">${timeBadgeInline}</span>
                     <div class="memo-action-btns">
-                        <button class="edit-btn-hidden" onclick="event.stopPropagation(); openDiaryForm('${dateStr}', getAllDiaries().find(d=>d.id==='${item.id}'))" style="color:#3498db; background:none; border:1px solid #ddd; border-radius:4px; padding:2px 6px;">수정</button>
+                        <button class="edit-btn-hidden" onclick="event.stopPropagation(); openDiaryForm('${dateStr}', getAllDiaries().find(d=>d.id==='${item.id}'))">수정</button>
                         <button class="delete-btn" onclick="event.stopPropagation(); deleteDiary('${item.id}')">삭제</button>
                     </div>
                 </div>
-                ${healthHTML}
-                ${annivHTML}
                 ${textContentHTML}
-                ${!item.text && !item.photo ? '<div style="font-size:12px; color:#999; padding:4px 0;">사진/내용 추가하려면 수정 버튼 클릭</div>' : ''}
             `;
             itemBox.addEventListener('click', () => openDiaryForm(dateStr, item));
             listEl.appendChild(itemBox);
