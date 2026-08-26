@@ -1988,30 +1988,23 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         .diary-text { order:4; }
 
 
-        /* v104: 사진 없는 칸도 사진 공간 확보 */
-        .sub-memo-item.no-photo .photo-title-area { display:block !important; }
-        .sub-memo-item.no-photo::after {
-            content:'';
-            display:block;
+        /* v105: 사진 없는 칸 빈 공간 확보 + 버튼은 사진 밑으로 */
+        .sub-memo-item.no-photo .empty-photo-placeholder {
             width:100%;
             aspect-ratio:1/1;
             background:#f5f0f0;
             border-radius:10px;
             min-height:100px;
             order:2;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            color:#bbb;
+            font-size:20px;
         }
-        #diary-around-today-list:not(.gallery-mode) .sub-memo-item.no-photo::after {
-            aspect-ratio:auto;
+        #diary-around-today-list:not(.gallery-mode) .sub-memo-item.no-photo .empty-photo-placeholder {
             min-height:80px;
-        }
-        /* 갤러리 모드에서 no-photo도 동일한 높이 */
-        #diary-around-today-list.gallery-mode .sub-memo-item.no-photo {
-            display:flex !important;
-            flex-direction:column;
-        }
-        #diary-around-today-list.gallery-mode .sub-memo-item.no-photo::after {
-            height:100px;
-            aspect-ratio:1/1;
+            aspect-ratio:auto;
         }
 
 </style>
@@ -6992,9 +6985,10 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 
             const titleText = item.anniversary || '';
             const titleHTML = `<div class="photo-title-area" style="height:20px; font-size:12px; font-weight:bold; color:#9C6ADE; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; margin-bottom:4px; padding-left:6px;">${titleText ? titleText : '&nbsp;'}</div>`;
+            const emptyPhotoHTML = !item.photo ? `<div class="empty-photo-placeholder">📷</div>` : '';
             itemBox.innerHTML = `
                 ${titleHTML}
-                ${photoHTML}
+                ${photoHTML}${emptyPhotoHTML}
                 <div class="item-top-row">
                     <span class="time-badge-inline">${timeBadgeInline}</span>
                     <div class="memo-action-btns">
