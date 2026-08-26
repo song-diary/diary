@@ -1910,6 +1910,35 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         /* 5) 일자 앞 아이콘 제거, 일자 작게 */
         #selected-date-title, #diary-around-today-card h3, .selected-date-title { font-size:13px !important; }
 
+
+        /* === 건강 관련 전부 숨김 (v95) === */
+        #health-input-section, #health-stats-modal-overlay, #health-stats-open-btn,
+        #settings-show-health, .health-badge-row, .health-badge { display:none !important; }
+        #health-toggle-icon, #health-input-body { display:none !important; }
+
+
+        /* === 가로모드 달력 반응형 fix (v96) === */
+        @media screen and (orientation: landscape) {
+            #calendar-card { width:100% !important; max-width:100% !important; }
+            #cal-days-grid { width:100% !important; }
+            .calendar-sticky-wrap { width:100% !important; max-width:100% !important; }
+            .container { max-width: 95% !important; width:95% !important; }
+        }
+        @media screen and (max-width: 900px) and (orientation: landscape) {
+            .container { max-width: 95vw !important; }
+            #calendar-card { transform: none !important; }
+        }
+        /* 일반 반응형 - 컨테이너가 화면에 맞게 늘어나도록 */
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            transition: max-width 0.2s ease;
+        }
+        @media screen and (min-width: 700px) {
+            .container { max-width: 90%; }
+        }
+
 </style>
 </head>
 <body>
@@ -6941,7 +6970,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             }
         }
     }
-    window.addEventListener('load', function(){ 
+    window.addEventListener('load', function(){ document.querySelectorAll('[id*=health]').forEach(el=>{ if(el.id!=='health-input-section') el.style.display='none'; }); 
             const savedTab = localStorage.getItem('smartDiaryMainTab') || 'diary';
             setTimeout(()=>{ switchMainTab(savedTab); restoreDiaryViewMode(); }, 200);
         });
