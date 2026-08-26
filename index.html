@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>다이어리&가계부 v43 - 2줄고정+흐릿</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>다이어리&가계부 v43 - 2줄고정+흐릿</title>
 <style>
         :root {
             --bg-color: #f7f4f4;
@@ -1937,6 +1937,16 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         }
         @media screen and (min-width: 700px) {
             .container { max-width: 90%; }
+        }
+
+
+        /* v97 자동 리사이즈 */
+        html, body { width:100%; overflow-x:hidden; }
+        .container { width:100%; max-width:600px; margin:0 auto; box-sizing:border-box; }
+        #calendar-card, #diary-panel, #money-panel { width:100%; box-sizing:border-box; }
+        @media (orientation: landscape) {
+            .container { max-width: 95vw !important; width: 95vw !important; }
+            #calendar-card { max-width: 100% !important; }
         }
 
 </style>
@@ -7820,6 +7830,40 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     g.addEventListener('touchstart', e=>{ sx=e.touches[0].clientX; sy=e.touches[0].clientY; }, {passive:true});
     g.addEventListener('touchend', e=>{ const dx=e.changedTouches[0].clientX-sx; const dy=e.changedTouches[0].clientY-sy; if(Math.abs(dx)>Math.abs(dy) && Math.abs(dx)>70){ if(dx<0) changeMonth(1); else changeMonth(-1); } }, {passive:true});
   }
+})();
+</script>
+
+
+<script>
+(function(){
+    function autoResizeCalendar(){
+        // Force reflow
+        document.body.style.display='none';
+        document.body.offsetHeight;
+        document.body.style.display='';
+        // Re-render calendar if function exists
+        if(typeof renderCalendar === 'function'){
+            try{ renderCalendar(); }catch(e){}
+        }
+        // Adjust container width based on orientation
+        const isLandscape = window.innerWidth > window.innerHeight;
+        const container = document.querySelector('.container');
+        if(container){
+            if(isLandscape){
+                container.style.maxWidth = '95vw';
+                container.style.width = '95vw';
+            }else{
+                container.style.maxWidth = '600px';
+                container.style.width = '100%';
+            }
+        }
+    }
+    window.addEventListener('orientationchange', function(){
+        setTimeout(autoResizeCalendar, 100);
+        setTimeout(autoResizeCalendar, 300);
+    });
+    window.addEventListener('resize', autoResizeCalendar);
+    window.addEventListener('load', autoResizeCalendar);
 })();
 </script>
 
