@@ -2222,6 +2222,45 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             height: 100dvh !important;
         }
 
+
+        /* v115 FINAL: 수정폼 스크롤 확실하게 */
+        #diary-form-overlay {
+            display: none !important;
+            position: fixed !important;
+            inset: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            height: 100dvh !important;
+            overflow: hidden !important;
+            align-items: flex-start !important;
+            justify-content: center !important;
+            padding: 0 !important;
+            z-index: 1000 !important;
+        }
+        #diary-form-overlay.active {
+            display: flex !important;
+        }
+        #diary-form-overlay #memo-form-card {
+            width: 100% !important;
+            max-width: 600px !important;
+            height: 100dvh !important;
+            max-height: 100dvh !important;
+            min-height: 100dvh !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            -webkit-overflow-scrolling: touch !important;
+            overscroll-behavior: contain !important;
+            border-radius: 0 !important;
+            margin: 0 !important;
+            padding-bottom: 40px !important;
+            display: block !important;
+        }
+        /* 내부 폼 */
+        #memo-form-card form,
+        #memo-form-card .form-content {
+            overflow: visible !important;
+        }
+
 </style>
 </head>
 <body>
@@ -7108,8 +7147,14 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         if (memoModalOverlay) {
             memoModalOverlay.classList.add('active');
         }
-        // lockBodyScroll(); // v114: 스크롤 위해 잠금 해제
-        document.body.style.overflow = "hidden"; // 배경 스크롤만 막기
+        // v115: body fixed 대신 overflow hidden만으로 배경 스크롤 막기 - 폼 내부 스크롤은 살아있음
+        document.documentElement.style.overflow = "hidden";
+        document.body.style.overflow = "hidden";
+        // 폼 카드를 맨 위로 스크롤
+        setTimeout(() => {
+            const card = document.getElementById('memo-form-card');
+            if (card) card.scrollTop = 0;
+        }, 50);
     }
 
     function closeDiaryFormPanel() {
@@ -7117,8 +7162,9 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         if (memoModalOverlay) {
             memoModalOverlay.classList.remove('active');
         }
-        document.body.style.overflow = ""; // v114 복구
-        // unlockBodyScroll(); // 기존 잠금 방식 미사용
+        document.documentElement.style.overflow = "";
+        document.body.style.overflow = "";
+        // v115 복구
         editingDiaryId = null;
         currentPhotoBase64 = null;
         selectedReservationDate = null;
