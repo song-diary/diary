@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>다이어리&가계부 V142</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>다이어리&가계부 V143</title>
 <style>
         :root {
             --bg-color: #f7f4f4;
@@ -2237,122 +2237,58 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         }
 
 
-/* ===== V142: 하얀색 분리 + 폴더폰 버튼 통합 최종 ===== */
-
-/* 년월일 하얀색 분리 해결 - 원인은 sticky-wrap이 두번 생기고 margin/padding 겹쳐서 틈 생김 */
-#calendar-card {
-    overflow: visible !important;
-    position: relative !important;
-    padding-top: 0 !important;
-}
-#calendar-card .calendar-sticky-wrap {
-    position: sticky !important;
-    top: 0 !important;
-    z-index: 300 !important;
-    background: #ffffff !important;
-    margin: 0 !important;
-    padding: 12px 15px 8px 15px !important;
-    border-radius: 12px 12px 0 0 !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
-    border-bottom: 1px solid #f0e6e6 !important;
-    display: block !important;
-}
-#calendar-card .calendar-sticky-wrap .calendar-header {
-    background: transparent !important;
-    margin: 0 0 6px 0 !important;
-    padding: 0 !important;
-    box-shadow: none !important;
-    border: none !important;
-    border-radius: 0 !important;
-    position: static !important;
-}
-#calendar-card .calendar-sticky-wrap #cal-days-name-grid {
-    background: transparent !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    box-shadow: none !important;
-    border: none !important;
-    position: static !important;
-}
-#calendar-card .calendar-sticky-wrap + #cal-days-grid,
-#calendar-card #cal-days-grid {
-    margin-top: 8px !important;
-}
-
-/* 갤러리 수정/삭제 중앙 */
-.item-top-row {
-    width: 100% !important;
-    box-sizing: border-box !important;
+/* ===== V143: 갤러리 수정/삭제 네모박스 정중앙 ===== */
+#diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns {
     display: flex !important;
-    flex-wrap: wrap !important;
     justify-content: center !important;
     align-items: center !important;
-    gap: 8px !important;
-    margin: 6px auto 0 auto !important;
-}
-.memo-action-btns {
-    display: flex !important;
-    justify-content: center !important;
-    margin: 0 auto !important;
-    gap: 8px !important;
-}
-@media (max-width: 380px) {
-    .item-top-row { justify-content: center !important; }
-    .memo-action-btns { width: 100% !important; justify-content: center !important; }
-}
-
-/* 수정폼 버튼: 3등분 grid로 떨어짐 방지 */
-#memo-form-card .btn-group {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr 1fr !important;
     gap: 6px !important;
     width: 100% !important;
+    margin: 6px auto 0 auto !important;
+    position: static !important;
+    left: auto !important;
+    right: auto !important;
+    transform: none !important;
 }
-#memo-form-card .btn-group .btn,
-#memo-form-card .btn-group label.btn,
-#memo-form-card #record-btn,
-#memo-form-card #photo-attach-label,
-#memo-form-card .btn-group .btn-primary {
-    height: 44px !important;
-    min-height: 44px !important;
-    font-size: 12px !important;
-    font-weight: 700 !important;
-    padding: 0 4px !important;
-    line-height: 1.1 !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    min-width: 0 !important;
-    display: flex !important;
+#diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .edit-btn-hidden,
+#diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .delete-btn {
+    margin: 0 !important;
+    flex: 0 0 auto !important;
+    min-width: 44px !important;
+    display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
+    text-align: center !important;
 }
-@media (min-width: 381px) {
-    #memo-form-card .btn-group .btn,
-    #memo-form-card .btn-group label.btn,
-    #memo-form-card #record-btn,
-    #memo-form-card #photo-attach-label,
-    #memo-form-card .btn-group .btn-primary {
-        font-size: 14px !important;
-        padding: 0 8px !important;
-    }
+/* 기존 space-between + margin:auto 덮어쓰기 */
+#diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .edit-btn-hidden {
+    margin-right: 0 !important;
 }
-#memo-form-card .fp-exit-btn,
-#memo-form-card .fp-exit-btn.exit-btn-light {
-    grid-column: 1 / -1 !important;
-    width: 100% !important;
-    max-width: 200px !important;
-    margin: 10px auto 0 auto !important;
-    height: 44px !important;
-    display: flex !important;
+#diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .delete-btn {
+    margin-left: 0 !important;
+}
+/* 네모박스 자체 중앙 정렬 강화 */
+#diary-around-today-list.gallery-mode {
+    justify-items: center !important;
+}
+#diary-around-today-list.gallery-mode .sub-memo-item {
     align-items: center !important;
-    justify-content: center !important;
+    justify-content: flex-start !important;
 }
-@media (max-width: 320px) {
-    #memo-form-card .btn-group { grid-template-columns: 1fr 1fr !important; }
-    #memo-form-card .btn-group .btn-primary { grid-column: 1 / -1 !important; }
+#diary-around-today-list.gallery-mode .sub-memo-item .diary-photo-wrap {
+    margin: 0 auto !important;
+}
+
+/* 년월일 하얀 분리도 같이 유지 */
+#calendar-card { overflow: visible !important; }
+#calendar-card .calendar-sticky-wrap {
+    position: sticky !important; top: 0 !important; z-index: 300 !important;
+    background: #ffffff !important; margin: 0 !important;
+    padding: 12px 15px 8px 15px !important; border-radius: 12px 12px 0 0 !important;
+}
+#calendar-card .calendar-sticky-wrap .calendar-header,
+#calendar-card .calendar-sticky-wrap #cal-days-name-grid {
+    background: transparent !important; margin: 0 !important; border: none !important; box-shadow: none !important;
 }
 
 </style>
