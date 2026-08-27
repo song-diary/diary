@@ -7527,21 +7527,15 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         const reader = new FileReader();
         reader.onload = function(e) {
             const result = e.target.result;
-            const finish = (dataUrl, type) => {
-                currentPhotoBase64 = dataUrl;
-                if (typeof currentMediaType !== 'undefined') currentMediaType = type;
-                updatePhotoPreview();
-                setTimeout(() => {
-                    if (confirm('📸 사진을 저장할까요?\n확인=바로저장 / 취소=미리보기 유지')) {
-                        manualSaveDiary();
-                    }
-                }, 250);
-            };
             if (file.type.startsWith('video/')) {
-                finish(result, 'video');
+                currentPhotoBase64 = result;
+                if (typeof currentMediaType !== 'undefined') currentMediaType = 'video';
+                updatePhotoPreview();
             } else {
                 compressImageForStorage(result, function(compressedDataUrl) {
-                    finish(compressedDataUrl, 'image');
+                    currentPhotoBase64 = compressedDataUrl;
+                    if (typeof currentMediaType !== 'undefined') currentMediaType = 'image';
+                    updatePhotoPreview();
                 });
             }
         };
