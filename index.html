@@ -2209,6 +2209,33 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             touch-action: pan-x pan-y pinch-zoom !important;
         }
 
+
+        /* v133: 메인 사진 클릭 = 확대, 수정폼 이동 삭제 */
+        .diary-photo-wrap img {
+            pointer-events: auto !important;
+            cursor: zoom-in !important;
+            touch-action: pan-x pan-y pinch-zoom !important;
+        }
+        #photo-lightbox {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 99999;
+            align-items: center;
+            justify-content: center;
+            touch-action: pan-x pan-y pinch-zoom !important;
+        }
+        #photo-lightbox.show {
+            display: flex !important;
+        }
+        #photo-lightbox img {
+            max-width: 100vw !important;
+            max-height: 100vh !important;
+            object-fit: contain !important;
+            touch-action: pan-x pan-y pinch-zoom !important;
+        }
+
 </style>
 </head>
 <body>
@@ -8138,6 +8165,49 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     window.addEventListener('resize', autoResizeCalendar);
     window.addEventListener('load', autoResizeCalendar);
 })();
+<script>
+
+        /* v133 메인 사진 클릭 -> 확대 전용, 수정폼 이동 제거 */
+        (function(){
+            // 기존 사진 클릭이 수정폼으로 가는 것 방지
+            const origRender = window.renderDiaries;
+            function setupPhotoExpand() {
+                document.querySelectorAll('.diary-photo-wrap img').forEach(img => {
+                    // 기존 onclick 제거하고 확대 전용으로
+                    img.onclick = function(e) {
+                        e.stopPropagation();
+                        const src = this.src;
+                        const lb = document.getElementById('photo-lightbox');
+                        const lbImg = document.getElementById('lightbox-img');
+                        if (lb && lbImg) {
+                            lbImg.src = src;
+                            lb.classList.add('show');
+                            lb.style.display = 'flex';
+                            document.body.style.overflow = 'hidden';
+                        }
+                    };
+                });
+            }
+            
+            // 렌더링 후 매번 적용
+            const observer = new MutationObserver(() => setupPhotoExpand());
+            observer.observe(document.body, {childList:true, subtree:true});
+            
+            document.addEventListener('click', function(e){
+                const lb = document.getElementById('photo-lightbox');
+                if (!lb) return;
+                if (e.target.id === 'photo-lightbox' || e.target.id === 'lightbox-img') {
+                    lb.classList.remove('show');
+                    lb.style.display = 'none';
+                    document.body.style.overflow = '';
+                }
+            });
+            
+            // 초기 적용
+            setTimeout(setupPhotoExpand, 500);
+        })();
+
+</script>
 </script>
 
 </body>
