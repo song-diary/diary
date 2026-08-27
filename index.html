@@ -2237,6 +2237,8 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         }
 
 </style>
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#f59e0b">
 </head>
 <body>
 
@@ -8206,6 +8208,36 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             // 초기 적용
             setTimeout(setupPhotoExpand, 500);
         })();
+
+</script>
+<script>
+
+        /* v134 PWA 오프라인 + 자동업데이트 */
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.register('./sw.js').then(reg => {
+            console.log('PWA 등록됨');
+            reg.addEventListener('updatefound', () => {
+              const newWorker = reg.installing;
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  if (confirm('새 버전이 있어요! 업데이트할까요?')) {
+                    newWorker.postMessage({action:'skipWaiting'});
+                    window.location.reload();
+                  }
+                }
+              });
+            });
+          });
+          navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
+        }
+        
+        // 온라인되면 자동 버전 체크
+        window.addEventListener('online', () => {
+          console.log('온라인 - 업데이트 확인');
+          if (navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({action:'checkUpdate'});
+          }
+        });
 
 </script>
 </script>
