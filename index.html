@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>다이어리&가계부 v43 - 2줄고정+흐릿</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>다이어리&가계부 v136 - 2줄고정+흐릿</title>
 <style>
         :root {
             --bg-color: #f7f4f4;
@@ -8235,36 +8235,37 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         })();
 
 </script>
-<script>
-
-        /* v134 PWA 오프라인 + 자동업데이트 */
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.register('./sw.js').then(reg => {
-            console.log('PWA 등록됨');
-            reg.addEventListener('updatefound', () => {
-              const newWorker = reg.installing;
-              newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  if (confirm('새 버전이 있어요! 업데이트할까요?')) {
-                    newWorker.postMessage({action:'skipWaiting'});
-                    window.location.reload();
-                  }
-                }
-              });
-            });
-          });
-          navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
-        }
-        
-        // 온라인되면 자동 버전 체크
-        window.addEventListener('online', () => {
-          console.log('온라인 - 업데이트 확인');
-          if (navigator.serviceWorker.controller) {
-            navigator.serviceWorker.controller.postMessage({action:'checkUpdate'});
-          }
-        });
 
 </script>
+
+
+<script>
+/* v136 단일파일 PWA - sw.js 필요없음 */
+(function(){
+  const swCode = `
+    const CACHE_NAME='smartdiary-v136';
+    self.addEventListener('install', e=>{ self.skipWaiting(); e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(['./']))); });
+    self.addEventListener('activate', e=>{ e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))).then(()=>self.clients.claim())); });
+    self.addEventListener('fetch', e=>{ e.respondWith(fetch(e.request,{cache:'no-store'}).then(r=>{ const cl=r.clone(); caches.open(CACHE_NAME).then(c=>c.put(e.request,cl)); return r; }).catch(()=>caches.match(e.request).then(c=>c||caches.match('./')))); });
+  `;
+  if('serviceWorker' in navigator){
+    try{
+      const blob = new Blob([swCode], {type:'text/javascript'});
+      const url = URL.createObjectURL(blob);
+      navigator.serviceWorker.register(url).then(reg=>{
+        console.log('단일파일 PWA 등록됨 v136');
+        reg.addEventListener('updatefound', ()=>{
+          const nw = reg.installing;
+          nw.addEventListener('statechange', ()=>{
+            if(nw.state==='installed' && navigator.serviceWorker.controller){
+              if(confirm('새 버전이 있어요! 업데이트할까요?')) window.location.reload();
+            }
+          });
+        });
+      });
+    }catch(e){ console.log('PWA 실패', e); }
+  }
+})();
 </script>
 
 </body>
