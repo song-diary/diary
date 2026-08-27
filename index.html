@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>다이어리&가계부 V148 SINGLE</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>다이어리&가계부 V149 SINGLE</title>
 <style>
         :root {
             --bg-color: #f7f4f4;
@@ -2237,13 +2237,13 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         }
 
 
-/* ===== V148 SINGLE FILE - 모든 수정 고정 ===== */
+/* ===== V149 SINGLE - 절기/기념일 좌측정렬 고정 ===== */
 #diary-around-today-list.gallery-mode .sub-memo-item { display:flex !important; flex-direction:column !important; align-items:center !important; }
 #diary-around-today-list.gallery-mode .sub-memo-item .diary-photo-wrap { width:100% !important; margin:0 auto !important; }
 #diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns {
     display:flex !important; justify-content:center !important; align-items:center !important;
     gap:6px !important; width:85% !important; max-width:85% !important;
-    margin:6px auto 2px auto !important; padding:0 !important;
+    margin:6px auto 2px auto !important;
 }
 #diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .edit-btn-hidden,
 #diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .delete-btn {
@@ -2259,7 +2259,11 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     display:flex !important; flex-wrap:nowrap !important;
     justify-content:space-between !important; align-items:flex-start !important; gap:8px !important;
 }
-#selected-date-title { flex:1 1 auto !important; min-width:0 !important; }
+#selected-date-title { 
+    flex:1 1 auto !important; min-width:0 !important; 
+    text-align:left !important; align-items:flex-start !important;
+}
+#selected-date-title > div { text-align:left !important; align-items:flex-start !important; }
 #diary-view-toggle { display:flex !important; flex-shrink:0 !important; gap:4px !important; margin-left:auto !important; align-self:flex-start !important; }
 
 #calendar-card { overflow:visible !important; }
@@ -2284,6 +2288,9 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     min-width:0 !important; display:flex !important; align-items:center !important; justify-content:center !important;
 }
 #memo-form-card .fp-exit-btn { grid-column:1 / -1 !important; width:100% !important; max-width:200px !important; margin:10px auto 0 auto !important; height:44px !important; display:flex !important; align-items:center !important; justify-content:center !important; }
+
+/* 절기/기념일 좌측정렬 */
+.cal-special-title-badge { display:inline-block !important; text-align:left !important; margin-left:0 !important; }
 
 </style>
   <link rel="manifest" href="./manifest.json">
@@ -7220,15 +7227,16 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             toggleDiv.innerHTML = `<button id="btn-view-list" class="active" onclick="setDiaryViewMode('list')" style="padding:3px 7px; font-size:11px;">📝</button><button id="btn-view-gallery" onclick="setDiaryViewMode('gallery')" style="padding:3px 7px; font-size:11px;">🖼️</button>`;
         }
 
-        if (titleEl) {
+                if (titleEl) {
             const badge = isReservedDate ? `<span style="background:var(--primary-color); color:white; padding:1px 5px; border-radius:4px; font-size:10px; margin-right:4px; font-weight:bold;">예약</span>` : '';
             const lunarLabel = getLunarLabel(dateStr);
-            const lunarHTML = lunarLabel ? `<div style="font-size:11px; font-weight:normal; color:var(--text-sub); margin-top:2px;">${lunarLabel}</div>` : '';
+            const lunarHTML = lunarLabel ? `<div style="font-size:11px; font-weight:normal; color:var(--text-sub); margin-top:2px; text-align:left;">${lunarLabel}</div>` : '';
             const specialInfo = getSpecialDayLabel(dateStr);
-            const specialHTML = specialInfo ? `<span class="cal-special-title-badge cal-special-${specialInfo.type}" style="font-size:11px; margin-left:4px;">${specialInfo.label}</span>` : '';
+            const specialHTML = specialInfo ? `<div style="font-size:11px; text-align:left; margin-top:2px; color:#d35400;"><span class="cal-special-title-badge cal-special-${specialInfo.type}">${specialInfo.label}</span></div>` : '';
             const annivText = getAnniversaryForDate(dateStr);
-            const annivLineHTML = annivText ? `<div style="font-size:12.5px; font-weight:700; color:#9C6ADE; margin-top:3px;">제목 : ${annivText}</div>` : '';
-            titleEl.innerHTML = `<div><div style="font-size:13px; display:flex; flex-wrap:wrap; align-items:center; gap:4px;">${badge}${dateLabel}${specialHTML}</div>${lunarHTML}${annivLineHTML}</div>`;
+            const annivLineHTML = annivText ? `<div style="font-size:12.5px; font-weight:700; color:#9C6ADE; margin-top:3px; text-align:left;">제목 : ${annivText}</div>` : '';
+            // V149: 양력 좌측정렬, 절기/기념일/음력도 모두 양력과 동일하게 좌측정렬
+            titleEl.innerHTML = `<div style="text-align:left;"><div style="font-size:13px; text-align:left;">${badge}${dateLabel}</div>${specialHTML}${lunarHTML}${annivLineHTML}</div>`;
         }
 
         const diaries = getAllDiaries();
@@ -8261,10 +8269,9 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 </script>
 <script>
 
-        /* V148 단일파일 PWA - sw.js 파일 없이 작동 */
-        (function(){
+                (function(){
           const swCode = `
-            const CACHE_NAME='smartdiary-V148-SINGLE';
+            const CACHE_NAME='smartdiary-V149-SINGLE';
             self.addEventListener('install', e=>{ self.skipWaiting(); e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(['./']))); });
             self.addEventListener('activate', e=>{ e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))).then(()=>self.clients.claim())); });
             self.addEventListener('fetch', e=>{ e.respondWith(fetch(e.request,{cache:'no-store'}).then(r=>{ const cl=r.clone(); caches.open(CACHE_NAME).then(c=>c.put(e.request,cl)); return r; }).catch(()=>caches.match(e.request).then(c=>c||caches.match('./')))); });
@@ -8273,20 +8280,10 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             try{
               const blob = new Blob([swCode], {type:'text/javascript'});
               const url = URL.createObjectURL(blob);
-              navigator.serviceWorker.register(url).then(reg=>{
-                reg.addEventListener('updatefound', ()=>{
-                  const nw = reg.installing;
-                  nw.addEventListener('statechange', ()=>{
-                    if(nw.state==='installed' && navigator.serviceWorker.controller){
-                      if(confirm('새 버전이 있어요! 업데이트할까요?')) window.location.reload();
-                    }
-                  });
-                });
-              });
+              navigator.serviceWorker.register(url);
             }catch(e){}
           }
         })();
-
 </script>
 </script>
 
