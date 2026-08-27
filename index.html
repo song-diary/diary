@@ -1720,6 +1720,22 @@
     
 /* === v43 2줄 고정 + 인접월 흐릿하게 === */
 #calendar-card { overflow: visible !important; position: relative !important; padding-top: 0 !important; }
+.calendar-sticky-wrap {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 100 !important;
+  background: var(--card-bg) !important;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  padding-top: 15px;
+  margin: -15px -15px 0 -15px;
+  padding-left: 15px;
+  padding-right: 15px;
+  padding-bottom: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.calendar-sticky-wrap .calendar-header { position: relative !important; top: auto !important; z-index: auto !important; }
+#cal-days-name-grid { position: relative !important; top: auto !important; background: var(--card-bg) !important; }
 #cal-days-grid { overflow: visible !important; max-height: none !important; z-index: 1; }
 html, body { overscroll-behavior-y: auto !important; }
 body { touch-action: pan-y !important; }
@@ -1755,7 +1771,77 @@ body { touch-action: pan-y !important; }
 .calendar-header h3 { font-size:20px !important; font-weight:800 !important; margin:0 !important; flex:1; text-align:center; }
 .calendar-header button { font-size:18px !important; background:none !important; border:none !important; padding:2px 6px !important; }
 
+#cal-days-name-grid {
+  position:sticky !important; top:34px !important; z-index:29 !important;
+  background:var(--bg-color, #faf6f3) !important;
+  margin:0 !important; padding:2px 0 3px !important;
+  border-bottom:none !important;
+  gap:2px !important;
+}
+#cal-days-name-grid div { font-size:12px !important; color:var(--text-sub) !important; }
+
+#cal-days-grid {
+  background:var(--bg-color, #faf6f3) !important;
+  margin:0 !important; padding:2px 0 8px !important;
+  gap:2px !important;
+  overflow:visible !important;
+}
+.cal-cell {
+  background:#fff !important;
+  border-radius:8px !important;
+  box-sizing:border-box !important;
+  border:1px solid #eee !important;
+  display:flex !important; flex-direction:column !important;
+  justify-content:center !important; align-items:center !important;
+}
+.cal-cell.adjacent-month { background:#fafafa !important; opacity:0.5 !important; }
+.cal-cell-inner { padding:1px !important; gap:0 !important; }
+.cal-cell span { font-size:var(--memo-font-size, 14px) !important; line-height:1.1 !important; }
+.cal-special-label, .cal-anniv-label { font-size:7px !important; line-height:1 !important; }
+
+/* 리스트 - 사진, 시간(수정삭제), 내용 순 */
+#diary-around-today-list { display:flex !important; flex-direction:column !important; gap:10px !important; }
+#diary-around-today-list .sub-memo-item { display:flex !important; flex-direction:column !important; background:#fff !important; border-radius:14px !important; overflow:hidden !important; border:1px solid #eee !important; padding:0 !important; }
+#diary-around-today-list .sub-memo-item .diary-photo-wrap { order:1; width:100% !important; margin:0 !important; }
+#diary-around-today-list .sub-memo-item .diary-photo-wrap .diary-photo { width:100% !important; aspect-ratio:auto !important; object-fit:contain !important; max-height:320px; background:#f8f5f0; }
+#diary-around-today-list .sub-memo-item .item-top-row { order:2; padding:6px 12px 4px !important; display:flex !important; justify-content:space-between !important; align-items:center !important; }
+#diary-around-today-list .sub-memo-item .diary-text { order:3; padding:4px 12px 12px !important; font-size:var(--memo-font-size, 14px) !important; }
+.view-mode-bar { display:none !important; }
+
+
+/* v59 정사각형 */
+.cal-cell { aspect-ratio:1/1 !important; }
+.cal-cell-inner { height:100% !important; display:flex !important; flex-direction:column !important; justify-content:center !important; align-items:center !important; }
+
+
+/* v60 - 토일 색상 복원 */
+.cal-day-name.sunday { color: var(--sun-color, #e74c3c) !important; }
+.cal-day-name.saturday { color: var(--sat-color, #3498db) !important; }
+.cal-cell.sunday { background:#fdf2f2 !important; border-color:#f7d6d6 !important; }
+.cal-cell.sunday span { color:#e74c3c !important; }
+.cal-cell.saturday { background:#f0f6fb !important; border-color:#d1e3f3 !important; }
+.cal-cell.saturday span { color:#3498db !important; }
+.cal-cell.today-date { border:2px solid var(--accent-today, #e74c3c) !important; background:#fff5f5 !important; }
+.cal-cell.selected-date { border:2px solid #2980b9 !important; background:#eaf3fb !important; }
+
+
+/* v61 - 글자크기 조절 복원 + 버킷리스트 삭제 */
+.diary-text { font-size:var(--memo-font-size, 16px) !important; line-height:1.6 !important; }
+#diary-around-today-list .sub-memo-item .diary-text { font-size:var(--memo-font-size, 16px) !important; }
+#money-around-today-list .diary-text { font-size:var(--memo-font-size, 16px) !important; }
+
+/* 버킷리스트 숨김 */
+#bucket-list-open-btn, #bucket-list-modal-overlay, #bucket-list-card { display:none !important; }
+button[onclick="openBucketListModal()"] { display:none !important; }
+
+
+/* v65 - 사진 달력 안정화 */
+#calendar-card { background:var(--bg-color, #faf6f3) !important; border:none !important; box-shadow:none !important; padding:0 !important; margin:0 0 8px 0 !important; overflow:visible !important; }
+.calendar-header { position:sticky !important; top:0 !important; z-index:30 !important; background:var(--bg-color, #faf6f3) !important; margin:0 !important; padding:6px 0 2px !important; display:flex !important; justify-content:space-between !important; align-items:center !important; }
+.calendar-header h3 { font-size:20px !important; font-weight:800 !important; margin:0 !important; flex:1; text-align:center; }
 .calendar-header button { font-size:18px !important; background:none !important; border:none !important; padding:2px 6px !important; }
+#cal-days-name-grid { position:sticky !important; top:34px !important; z-index:29 !important; background:var(--bg-color, #faf6f3) !important; margin:0 !important; padding:2px 0 3px !important; gap:2px !important; border-bottom:none !important; }
+#cal-days-grid { background:var(--bg-color, #faf6f3) !important; margin:0 !important; padding:2px 0 8px !important; gap:2px !important; overflow:visible !important; }
 .cal-cell { box-sizing:border-box !important; border-radius:8px !important; border:1px solid #eee !important; background:#fff !important; overflow:hidden !important; position:absolute !important; }
 .cal-cell.has-photo { border-color:var(--primary-color, #6b8cff) !important; }
 .cal-cell .cal-photo-img { position:absolute !important; inset:0 !important; width:100% !important; height:100% !important; object-fit:cover !important; opacity:0.38 !important; z-index:0 !important; pointer-events:none !important; }
@@ -1835,7 +1921,9 @@ body { touch-action: pan-y !important; }
         @media screen and (orientation: landscape) {
             #calendar-card { width:100% !important; max-width:100% !important; }
             #cal-days-grid { width:100% !important; }
-                    }
+            .calendar-sticky-wrap { width:100% !important; max-width:100% !important; }
+            .container { max-width: 95% !important; width:95% !important; }
+        }
         @media screen and (max-width: 900px) and (orientation: landscape) {
             .container { max-width: 95vw !important; }
             #calendar-card { transform: none !important; }
@@ -1953,48 +2041,43 @@ body { touch-action: pan-y !important; }
         }
 
 
-        /* v117 CLEAN: 모든 수정사항을 하나로 정리 */
-        /* 달력 배경 통일 + 년월/요일 고정 */
-        #calendar-card {
-            position: relative !important;
-            overflow: visible !important;
-            background: #f7f4f4 !important;
-        }
-        #calendar-card .calendar-header {
-            position: sticky !important;
-            top: 0 !important;
-            z-index: 50 !important;
-            background: #f7f4f4 !important;
-            padding: 8px 0 !important;
-        }
-        #cal-days-name-grid {
-            position: sticky !important;
-            top: 42px !important;
-            z-index: 49 !important;
-            background: #f7f4f4 !important;
-            padding: 4px 0 !important;
-        }
-        .calendar-weekday { background: transparent !important; }
+        
 
-        /* 수정폼 전체화면 + 스크롤 */
+        /* v121: 스크롤 확실 + 사진터치 완전 삭제 */
         #memo-modal-overlay {
+            position: fixed !important;
+            inset: 0 !important;
             align-items: flex-start !important;
             justify-content: center !important;
             overflow-y: auto !important;
+            overflow-x: hidden !important;
             -webkit-overflow-scrolling: touch !important;
+            overscroll-behavior: contain !important;
+            touch-action: pan-y !important;
+            padding: 0 !important;
         }
         #memo-form-card {
             width: 100% !important;
             max-width: 600px !important;
-            min-height: 100dvh !important;
             height: auto !important;
+            min-height: 100dvh !important;
             max-height: none !important;
-            overflow-y: auto !important;
-            -webkit-overflow-scrolling: touch !important;
-            border-radius: 0 0 18px 18px !important;
+            overflow: visible !important;
             margin: 0 auto !important;
+            flex-shrink: 0 !important;
+            touch-action: pan-y !important;
         }
-        html, body { touch-action: auto !important; overscroll-behavior: auto !important; }
+        /* 사진 터치 완전 차단 */
+        #image-preview {
+            pointer-events: none !important;
+            cursor: default !important;
+        }
+        #photo-preview-wrap {
+            pointer-events: none !important;
+        }
+        #photo-preview-wrap button {
+            pointer-events: auto !important;
+        }
 
 </style>
 </head>
@@ -2498,7 +2581,7 @@ body { touch-action: pan-y !important; }
         <div class="btn-group" style="margin-bottom: 0;">
             <button class="btn btn-secondary" id="record-btn">🎤 음성메모</button>
             <label class="btn btn-secondary" id="photo-attach-label" style="text-align:center; display:flex; align-items:center; justify-content:center; cursor:pointer;">
-                📎 사진/동영상 첨부
+                📎 사진/동영상
                 <input type="file" id="diary-photo-input" accept="image/*,video/*" style="display:none;" onchange="previewImage(event)">
             </label>
             <button class="btn btn-primary" onclick="manualSaveDiary()">저장</button>
@@ -3369,6 +3452,7 @@ body { touch-action: pan-y !important; }
     let editingDiaryId = null;
     let currentFormMode = 'diary'; // '입력' 폼이 다이어리용인지 가계부용인지 구분 ('diary' | 'money')
     let currentPhotoBase64 = null;
+    let currentMediaType = 'image';
 
     // ===================== 🔮 오늘의 운세 (사주팔자 기반) =====================
     const SAJU_ELEM_GAN = {'甲':'목','乙':'목','丙':'화','丁':'화','戊':'토','己':'토','庚':'금','辛':'금','壬':'수','癸':'수'};
@@ -6880,10 +6964,7 @@ body { touch-action: pan-y !important; }
         if (memoModalOverlay) {
             memoModalOverlay.classList.add('active');
         }
-        // v117 CLEAN: position:fixed 대신 overflow hidden만 - 스크롤 살아있음
-        document.documentElement.style.overflow = 'hidden';
-        document.body.style.overflow = 'hidden';
-        setTimeout(() => { const c=document.getElementById('memo-form-card'); if(c) c.scrollTop=0; }, 30);
+        lockBodyScroll();
     }
 
     function closeDiaryFormPanel() {
@@ -6891,8 +6972,7 @@ body { touch-action: pan-y !important; }
         if (memoModalOverlay) {
             memoModalOverlay.classList.remove('active');
         }
-        document.documentElement.style.overflow = '';
-        document.body.style.overflow = '';
+        unlockBodyScroll();
         editingDiaryId = null;
         currentPhotoBase64 = null;
         selectedReservationDate = null;
@@ -7191,7 +7271,7 @@ body { touch-action: pan-y !important; }
     function getPhotoSrc(photoKeyOrData) {
         if (!photoKeyOrData) return '';
         // 혹시 아직 마이그레이션되지 않은 옛날 데이터(원본 base64가 그대로 남아있는 경우) 호환 처리
-        if (photoKeyOrData.indexOf('data:image') === 0 || photoKeyOrData.indexOf('data:video') === 0) return photoKeyOrData;
+        if (photoKeyOrData.indexOf('data:image')===0 || photoKeyOrData.indexOf('data:video')===0) return photoKeyOrData;
         return photoCache[photoKeyOrData] || '';
     }
 
@@ -7215,10 +7295,9 @@ body { touch-action: pan-y !important; }
     // 📷 사진만 표시 (확대보기/저장 기능은 수정폼으로 옮김 - 메인 목록에서는 항목을 터치하면 바로 수정폼이 열림)
     function renderPhotoHTML(item) {
         if (!item.photo) return '';
-        const src = getPhotoSrc(item.photo);
-        if (src && src.indexOf('data:video')===0) { return `<div class="diary-photo-wrap"><video src="${src}" controls style="width:100%; border-radius:10px; max-height:300px;"></video></div>`; }
+        const _src=getPhotoSrc(item.photo); if(_src && _src.indexOf('data:video')===0){ return `<div class="diary-photo-wrap"><video src="${_src}" controls style="width:100%; border-radius:10px;"></video></div>`; }
         return `<div class="diary-photo-wrap">
-            <img src="${src}" class="diary-photo" alt="첨부사진" oncontextmenu="return false;" ondragstart="return false;">
+            <img src="${_src}" class="diary-photo" alt="첨부사진" oncontextmenu="return false;" ondragstart="return false;">
         </div>`;
     }
 
@@ -7411,23 +7490,13 @@ body { touch-action: pan-y !important; }
         if (!file) return;
         const reader = new FileReader();
         reader.onload = function(e) {
-            const result = e.target.result;
-            if (file.type.startsWith('video/')) {
-                currentPhotoBase64 = result;
-                currentMediaType = 'video';
+            compressImageForStorage(e.target.result, function(compressedDataUrl) {
+                currentPhotoBase64 = compressedDataUrl;
                 updatePhotoPreview();
-            } else {
-                compressImageForStorage(result, function(compressedDataUrl) {
-                    currentPhotoBase64 = compressedDataUrl;
-                    currentMediaType = 'image';
-                    updatePhotoPreview();
-                });
-            }
+            });
         };
         reader.readAsDataURL(file);
     }
-    let currentMediaType = 'image';
-
 
     // 📷 사진 첨부 시 용량을 줄여 localStorage 메모리 문제를 방지 (최대 폭/높이 제한 + JPEG 압축)
     function compressImageForStorage(dataUrl, callback) {
@@ -7467,16 +7536,24 @@ body { touch-action: pan-y !important; }
     function updatePhotoPreview() {
         const wrap = document.getElementById('photo-preview-wrap');
         const img = document.getElementById('image-preview');
-        let vEl = document.getElementById('video-preview');
-        if (!vEl) { vEl = document.createElement('video'); vEl.id='video-preview'; vEl.controls=true; vEl.style.cssText='width:100%; max-height:300px; border-radius:10px; display:none;'; wrap.appendChild(vEl); }
         if (currentPhotoBase64) {
-            const isVideo = currentPhotoBase64.indexOf('data:video')===0 || (typeof currentMediaType !== 'undefined' && currentMediaType==='video');
-            if (isVideo) { vEl.src=currentPhotoBase64; vEl.style.display='block'; img.style.display='none'; }
-            else { img.src=currentPhotoBase64; img.style.display='block'; vEl.style.display='none'; }
-            wrap.style.display='block';
-            if (editingDiaryId) { img.style.cursor='pointer'; img.onclick=()=>openPhotoLightbox(currentPhotoBase64); }
-            else { img.style.cursor='default'; img.onclick=null; }
-        } else { img.src=''; if(vEl){ vEl.src=''; vEl.style.display='none'; } img.onclick=null; wrap.style.display='none'; }
+            img.src = currentPhotoBase64;
+            wrap.style.display = 'block';
+            // ✏️ 기존 항목을 "수정" 중일 때만 사진을 눌러 크게 볼 수 있음.
+            // (사진은 촬영/첨부 시점에 이미 갤러리에 원본이 저장되어 있으므로, 앱에서 별도로 다시 저장하는
+            //  기능은 두지 않음 - 중복 저장을 막기 위함)
+            if (editingDiaryId) {
+                img.style.cursor = 'default';
+                img.onclick = null; // 사진터치 삭제
+            } else {
+                img.style.cursor = 'default';
+                img.onclick = null;
+            }
+        } else {
+            img.src = '';
+            img.onclick = null;
+            wrap.style.display = 'none';
+        }
     }
 
     function removeImage() {
@@ -7850,7 +7927,15 @@ body { touch-action: pan-y !important; }
     const weekdays=document.getElementById('cal-days-name-grid');
     const grid=document.getElementById('cal-days-grid');
     if(!header||!weekdays) return;
-    let wrap=card.querySelector('    wrap.style.position='sticky'; wrap.style.top='0px'; wrap.style.zIndex='100';
+    let wrap=card.querySelector('.calendar-sticky-wrap');
+    if(!wrap){
+      wrap=document.createElement('div');
+      wrap.className='calendar-sticky-wrap';
+      card.insertBefore(wrap, header);
+      wrap.appendChild(header);
+      wrap.appendChild(weekdays);
+    }
+    wrap.style.position='sticky'; wrap.style.top='0px'; wrap.style.zIndex='100';
     if(grid){ grid.style.overflow='visible'; grid.style.maxHeight='none'; }
     card.style.overflow='visible';
   }
