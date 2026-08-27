@@ -7526,15 +7526,27 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         if (!file) return;
         const reader = new FileReader();
         reader.onload = function(e) {
-            compressImageForStorage(e.target.result, function(compressedDataUrl) {
-                currentPhotoBase64 = compressedDataUrl;
+            const result = e.target.result;
+            const finish = (dataUrl, type) => {
+                currentPhotoBase64 = dataUrl;
+                if (typeof currentMediaType !== 'undefined') currentMediaType = type;
                 updatePhotoPreview();
-            });
+                setTimeout(() => {
+                    if (confirm('📸 사진을 저장할까요?\n확인=바로저장 / 취소=미리보기 유지')) {
+                        manualSaveDiary();
+                    }
+                }, 250);
+            };
+            if (file.type.startsWith('video/')) {
+                finish(result, 'video');
+            } else {
+                compressImageForStorage(result, function(compressedDataUrl) {
+                    finish(compressedDataUrl, 'image');
+                });
+            }
         };
         reader.readAsDataURL(file);
-    }
-
-    // 📷 사진 첨부 시 용량을 줄여 localStorage 메모리 문제를 방지 (최대 폭/높이 제한 + JPEG 압축)
+    }  // 📷 사진 첨부 시 용량을 줄여 localStorage 메모리 문제를 방지 (최대 폭/높이 제한 + JPEG 압축)
     function compressImageForStorage(dataUrl, callback) {
         const MAX_DIMENSION = 1280;
         const JPEG_QUALITY = 0.7;
