@@ -1738,7 +1738,7 @@
 #cal-days-name-grid { position: relative !important; top: auto !important; background: var(--card-bg) !important; }
 #cal-days-grid { overflow: visible !important; max-height: none !important; z-index: 1; }
 html, body { overscroll-behavior-y: auto !important; }
-body { touch-action: pan-y !important; }
+body { touch-action: pan-x pan-y pinch-zoom !important; }
 
 /* 흐릿한 인접월 */
 .cal-cell.adjacent-month {
@@ -2064,7 +2064,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             overflow-x: hidden !important;
             -webkit-overflow-scrolling: touch !important;
             overscroll-behavior: contain !important;
-            touch-action: pan-y !important;
+            touch-action: pan-x pan-y pinch-zoom !important;
             padding: 0 !important;
         }
         #memo-form-card {
@@ -2076,7 +2076,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             overflow: visible !important;
             margin: 0 auto !important;
             flex-shrink: 0 !important;
-            touch-action: pan-y !important;
+            touch-action: pan-x pan-y pinch-zoom !important;
         }
         /* 사진 터치 완전 차단 */
         #image-preview {
@@ -2088,6 +2088,31 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         }
         #photo-preview-wrap button {
             pointer-events: auto !important;
+        }
+
+
+        /* v123: 손가락 화면 확대 복구 - pinch-zoom 허용 */
+        html, body {
+            touch-action: auto !important;
+            overscroll-behavior: auto !important;
+            -webkit-text-size-adjust: 100% !important;
+        }
+        body {
+            touch-action: pan-x pan-y pinch-zoom !important;
+        }
+        #memo-modal-overlay, #memo-form-card, .diary-photo-wrap, .diary-card, #calendar-card {
+            touch-action: pan-x pan-y pinch-zoom !important;
+        }
+        /* 수정폼 사진 미리보기만 터치 차단, 확대는 전체 화면 pinch로 가능 */
+        #photo-preview-wrap #image-preview {
+            pointer-events: none !important;
+        }
+        /* 이미지 확대 라이트박스는 pinch-zoom 가능하게 */
+        #photo-lightbox {
+            touch-action: pan-x pan-y pinch-zoom !important;
+        }
+        #photo-lightbox img {
+            touch-action: pan-x pan-y pinch-zoom !important;
         }
 
 </style>
