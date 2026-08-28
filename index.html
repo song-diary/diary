@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>다이어리&가계부 V152 SINGLE</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>다이어리&가계부 V153 SINGLE</title>
 <style>
         :root {
             --bg-color: #f7f4f4;
@@ -2352,6 +2352,53 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 .cal-cell-inner .cal-anniv-label {
     color: #34495e !important;
     font-weight: 700 !important;
+}
+
+
+
+/* V154: 일자 위쪽 정렬 버그 수정 - 다시 가운데 정렬 */
+.cal-cell-inner {
+    justify-content: center !important;
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+}
+.cal-cell-inner span {
+    margin-bottom: 1px !important;
+}
+
+/* V153: 폴더폰용 제목/절기 폰트 키우고 2줄 표시 */
+.cal-anniv-label, .cal-special-label {
+    font-size: 10px !important;
+    line-height: 1.15 !important;
+    font-weight: 700 !important;
+    color: #34495e !important;
+    white-space: normal !important;
+    word-break: break-all !important;
+    overflow-wrap: anywhere !important;
+    max-height: 28px !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    text-align: center !important;
+    padding: 0 1px !important;
+}
+.cal-anniv-label { color: #34495e !important; }
+.cal-special-label.cal-special-holiday { color: #E0685C !important; }
+.cal-special-label.cal-special-term { color: #4C7FD1 !important; }
+.cal-special-label.cal-special-bok { color: #C2820A !important; }
+
+/* 4자 넘어 2줄일 때도 셀 높이 유지 - 정사각형 유지하면서 내부 정렬 */
+.cal-cell-inner {
+    justify-content: flex-start !important;
+    padding-top: 3px !important;
+}
+.cal-cell-inner span { margin-bottom: 1px !important; }
+
+/* 폰트 키웠으므로 인접월은 9px */
+.cal-cell.adjacent-month .cal-anniv-label,
+.cal-cell.adjacent-month .cal-special-label {
+    font-size: 9px !important;
 }
 
 </style>
@@ -6767,6 +6814,26 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         if (fontSizeDisplay) fontSizeDisplay.textContent = `${currentMemoFontSize}px`;
     }
 
+    
+    // V153: 4자 넘으면 2줄로 나누는 스마트 포맷
+    function formatCalLabel(text) {
+        if (!text) return '';
+        const clean = String(text).trim();
+        if (clean.length <= 4) return clean;
+        // 5자 이상: 2~3자 + 나머지
+        if (clean.length === 5) {
+            return clean.slice(0,2) + '<br>' + clean.slice(2);
+        }
+        if (clean.length === 6) {
+            return clean.slice(0,3) + '<br>' + clean.slice(3);
+        }
+        // 7자 이상: 3자 + 3자 + 나머지
+        if (clean.length >= 7) {
+            return clean.slice(0,3) + '<br>' + clean.slice(3,6);
+        }
+        return clean;
+    }
+
     function renderCalendar() {
         const title = document.getElementById('cal-month-title');
         const grid = document.getElementById('cal-days-grid');
@@ -6845,10 +6912,10 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             const annivText = getAnniversaryForDate(dateStr);
             let indicatorHTML = '';
             if (specialInfo) {
-                indicatorHTML += `<div class="cal-special-label cal-special-${specialInfo.type}">${specialInfo.label}</div>`;
+                indicatorHTML += `<div class="cal-special-label cal-special-${specialInfo.type}">${formatCalLabel(specialInfo.label)}</div>`;
             }
             if (annivText) {
-                indicatorHTML += `<div class="cal-anniv-label">${annivText}</div>`;
+                indicatorHTML += `<div class="cal-anniv-label">${formatCalLabel(annivText)}</div>`;
             }
             cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>`;
             cell.onclick = () => {
@@ -6901,10 +6968,10 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             let indicatorHTML = '';
 
             if (specialInfo) {
-                indicatorHTML += `<div class="cal-special-label cal-special-${specialInfo.type}">${specialInfo.label}</div>`;
+                indicatorHTML += `<div class="cal-special-label cal-special-${specialInfo.type}">${formatCalLabel(specialInfo.label)}</div>`;
             }
             if (annivText) {
-                indicatorHTML += `<div class="cal-anniv-label">${annivText}</div>`;
+                indicatorHTML += `<div class="cal-anniv-label">${formatCalLabel(annivText)}</div>`;
             }
 
             // v67 사진 썸네일 - 설정 온/오프 (localStorage 직접 체크)
