@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>다이어리&가계부 V178 SINGLE - 정렬 안정</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>다이어리&가계부 V179 SINGLE - 완전동일</title>
 <style>
         :root {
             --bg-color: #f7f4f4;
@@ -356,7 +356,7 @@
             font-size: calc(var(--base-font-size) - 1px); font-weight: bold; color: var(--weekday-color);
             margin-bottom: 10px;
         }
-        .toggle-grid { display: grid; grid-template-columns: 1fr 1fr; width:100%; box-sizing:border-box; gap: 8px; margin-bottom: 16px; }
+        .toggle-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
         .toggle-card {
             display: flex; align-items: center; justify-content: space-between; gap: 6px;
             background: #f7f5f0; border: 1px solid var(--border-color); border-radius: 10px;
@@ -1419,7 +1419,7 @@
         #search-result-list,
         #diary-search-result-list {
             display: grid;
-            grid-template-columns: 1fr 1fr; width:100%; box-sizing:border-box;
+            grid-template-columns: 1fr 1fr;
             gap: 8px;
             align-items: stretch;
         }
@@ -2434,15 +2434,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 }
 
 
-/* V177 - 3+2 버튼 */
-.btn-group { width:100%; }
-#record-btn, #camera-btn, #gallery-btn { min-width:0 !important; }
-
-
-/* V178 - 정렬 안정화 */
-.btn-group { width:100% !important; box-sizing:border-box; }
-.btn-group:first-of-type { margin-bottom:6px !important; }
-.btn-group .btn { box-sizing:border-box; height:44px !important; }
+/* V179 - 완전 동일 정렬 */
 
 </style>
   <link rel="manifest" href="./manifest.json">
@@ -2949,19 +2941,20 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             </div>
         </div>
 
-        <div class="btn-group" style="margin-bottom: 0; display:grid !important; grid-template-columns: 1fr 1fr 1fr; width:100%; box-sizing:border-box; gap:6px;">
-            <button class="btn btn-secondary" id="record-btn" style="padding:11px 2px; font-size:13.5px; display:flex; align-items:center; justify-content:center; white-space:nowrap; border-radius:8px;">🎤 음성메모</button>
-            <button type="button" class="btn btn-secondary" id="camera-btn" style="padding:11px 2px; font-size:13.5px; display:flex; align-items:center; justify-content:center; white-space:nowrap; border-radius:8px;">📷 카메라</button>
-            <button type="button" class="btn btn-secondary" id="gallery-btn" style="padding:11px 2px; font-size:13.5px; display:flex; align-items:center; justify-content:center; white-space:nowrap; border-radius:8px;">🖼️ 갤러리</button>
-        </div>
-        <div class="btn-group" style="margin-top:6px; margin-bottom: 0; display:grid !important; grid-template-columns: 1fr 1fr; width:100%; box-sizing:border-box; gap:6px;">
-            <button class="btn btn-primary" onclick="manualSaveDiary()" style="padding:12px 2px; font-size:14px; font-weight:bold; display:flex; align-items:center; justify-content:center; border-radius:8px;">💾 저장</button>
-            <div class="btn btn-secondary fp-exit-btn exit-btn-light" onclick="closeDiaryFormPanel()" style="padding:12px 2px; font-size:14px; display:flex; align-items:center; justify-content:center; border-radius:8px; cursor:pointer;">종료</div>
-        </div>
-        <!-- 숨김 파일 입력 -->
-        <input type="file" id="diary-photo-input-camera" accept="image/*" capture="environment" style="display:none;">
-        <input type="file" id="diary-photo-input-gallery" accept="image/*" style="display:none;">
-        <input type="file" id="diary-photo-input" accept="image/*" style="display:none;" onchange="previewImage(event)">
+        <div style="display:flex; flex-direction:column; gap:6px; width:100%; margin-bottom:0;">
+  <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:6px; width:100%;">
+    <button class="btn btn-secondary" id="record-btn" type="button" style="width:100%; height:46px; padding:0; font-size:13px; border-radius:8px; display:flex; align-items:center; justify-content:center;">🎤 음성메모</button>
+    <button class="btn btn-secondary" id="camera-btn" type="button" style="width:100%; height:46px; padding:0; font-size:13px; border-radius:8px; display:flex; align-items:center; justify-content:center;">📷 카메라</button>
+    <button class="btn btn-secondary" id="gallery-btn" type="button" style="width:100%; height:46px; padding:0; font-size:13px; border-radius:8px; display:flex; align-items:center; justify-content:center;">🖼️ 갤러리</button>
+  </div>
+  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; width:100%;">
+    <button class="btn btn-primary" type="button" onclick="manualSaveDiary()" style="width:100%; height:48px; padding:0; font-size:14px; font-weight:bold; border-radius:8px; display:flex; align-items:center; justify-content:center; background:var(--primary-color); color:#fff; border:none;">💾 저장</button>
+    <button class="btn btn-secondary" type="button" onclick="closeDiaryFormPanel()" style="width:100%; height:48px; padding:0; font-size:14px; border-radius:8px; display:flex; align-items:center; justify-content:center; background:#f0f0f0; border:1px solid var(--border-color);">종료</button>
+  </div>
+</div>
+<input type="file" id="diary-photo-input-camera" accept="image/*" capture="environment" style="display:none;">
+<input type="file" id="diary-photo-input-gallery" accept="image/*" style="display:none;">
+<input type="file" id="diary-photo-input" accept="image/*" style="display:none;" onchange="previewImage(event)">
     </div>
 </div>
 
@@ -8488,20 +8481,13 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     const galInput = document.getElementById('diary-photo-input-gallery');
     const camBtn = document.getElementById('camera-btn');
     const galBtn = document.getElementById('gallery-btn');
-    if(!origInput || !camInput || !galInput) return;
-    if(camInput.dataset.wired) return;
+    if(!origInput || !camInput || !galInput || camInput.dataset.wired) return;
     camInput.dataset.wired='1';
     function handleFile(e){
-      const file = e.target.files[0];
-      if(!file) return;
-      const dt = new DataTransfer();
-      dt.items.add(file);
+      const file = e.target.files[0]; if(!file) return;
+      const dt = new DataTransfer(); dt.items.add(file);
       origInput.files = dt.files;
-      if(typeof previewImage === 'function'){
-        previewImage({target: origInput});
-      } else {
-        origInput.dispatchEvent(new Event('change', {bubbles:true}));
-      }
+      if(typeof previewImage==='function'){ previewImage({target: origInput}); }
     }
     camInput.addEventListener('change', handleFile);
     galInput.addEventListener('change', handleFile);
@@ -8509,7 +8495,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     galBtn.addEventListener('click', ()=> galInput.click());
   }
   document.addEventListener('DOMContentLoaded', setupPhotoButtons);
-  setTimeout(setupPhotoButtons, 500);
+  setTimeout(setupPhotoButtons, 600);
 })();
 </script>
 
