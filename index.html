@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>다이어리&가계부 V169 SINGLE - 폰트 동일</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>다이어리&가계부 V172 SINGLE - 왼쪽정렬+메모3줄</title>
 <style>
         :root {
             --bg-color: #f7f4f4;
@@ -2417,48 +2417,21 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 }
 
 
-/* V166 - 제목&기념일 placeholder */
-#anniv-input::placeholder { color:#bbb !important; font-weight:400 !important; opacity:1; }
+/* V171 fix main not opening */
+#anniv-input::placeholder { color:#bbb !important; opacity:1; }
 #anniv-input:focus { outline:none; border-color: var(--primary-color) !important; }
+#anniv-input, #textOutput.diary-textarea { font-size:14.5px !important; }
 
 
-/* V167 - 제목&기념일과 메모 입력란 크기 동일하게, 제목 조금 크게, 메모 조금 작게 */
-#anniv-input-row {
-    width: 100% !important;
-    box-sizing: border-box !important;
-}
-#anniv-input {
-    flex: 1 1 auto !important;
-    width: auto !important;
-    min-width: 0 !important;
-    font-size: 15.5px !important; /* 제목 조금 크게 */
-    padding: 9px 10px !important;
-    box-sizing: border-box !important;
-}
+/* V172 - 왼쪽정렬 + 메모 3-4줄 */
+#anniv-input-row { align-items:flex-start !important; text-align:left !important; }
+#diary-content-section { text-align:left !important; }
 #textOutput.diary-textarea {
-    font-size: 14px !important; /* 메모 조금 작게 */
-    min-height: 110px !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
+    min-height: 90px !important; /* 3-4줄 */
+    height: auto !important;
+    line-height: 1.5 !important;
     padding: 10px 12px !important;
 }
-#diary-content-section {
-    width: 100% !important;
-    box-sizing: border-box !important;
-}
-/* 두 입력란 너비 통일감 */
-#anniv-input-row, #diary-content-section {
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-}
-
-
-/* V169 - 제목과 메모 폰트 동일 */
-#anniv-input, #textOutput.diary-textarea {
-    font-size: 14.5px !important;
-}
-#anniv-input { font-size: 14.5px !important; }
-#textOutput.diary-textarea { font-size: 14.5px !important; }
 
 </style>
   <link rel="manifest" href="./manifest.json">
@@ -2938,15 +2911,20 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         </div>
 
         <!-- 제목&기념일 입력란: 달력에 짧은 메모로 표시됨, 매년/매달 반복 가능 -->
-                <div class="anniv-input-row" id="anniv-input-row" style="display:flex; align-items:center; gap:6px; flex-wrap:nowrap; padding:8px 8px;">
-            <input type="text" id="anniv-input" maxlength="6" placeholder="제목&기념일(예 : 생일)" style="flex:0 1 110px; width:110px; min-width:80px;">
-            <select id="anniv-repeat-select" class="anniv-repeat-select" style="flex:0 0 78px; font-size:11.5px; padding:5px 2px;">
-                <option value="none">반복 안 함</option>
-                <option value="yearly">매년 반복</option>
-                <option value="monthly">매달 반복</option>
-            </select>
-            <label class="anniv-cal-radio" style="flex-shrink:0; font-size:12px; margin:0;"><input type="radio" name="anniv-cal-type" id="anniv-cal-solar" value="solar" checked> 양력</label>
-            <label class="anniv-cal-radio" style="flex-shrink:0; font-size:12px; margin:0;"><input type="radio" name="anniv-cal-type" id="anniv-cal-lunar" value="lunar"> 음력</label>
+                <div class="anniv-input-row" id="anniv-input-row" style="display:flex; flex-direction:column; gap:6px; padding:0 0 10px 0; background:transparent; border-radius:0; margin-bottom:6px; align-items:flex-start; width:100%;">
+            <div style="display:flex; align-items:center; gap:5px; font-size:14px; font-weight:bold; color:var(--weekday-color); margin-bottom:2px;">
+                <span>🎉</span><span>제목&amp;기념일</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px; flex-wrap:nowrap; width:100%; background:#FDF3E7; border-radius:8px; padding:8px 10px; box-sizing:border-box;">
+                <input type="text" id="anniv-input" maxlength="6" placeholder="예: 생일" style="flex:1 1 auto; min-width:0; padding:8px 10px; border:1px solid var(--border-color); border-radius:6px; font-size:14.5px; background:#fff;">
+                <select id="anniv-repeat-select" class="anniv-repeat-select" style="flex:0 0 78px; font-size:11.5px; padding:5px 2px;">
+                    <option value="none">반복 안 함</option>
+                    <option value="yearly">매년 반복</option>
+                    <option value="monthly">매달 반복</option>
+                </select>
+                <label class="anniv-cal-radio" style="flex-shrink:0; font-size:12px; margin:0;"><input type="radio" name="anniv-cal-type" id="anniv-cal-solar" value="solar" checked> 양력</label>
+                <label class="anniv-cal-radio" style="flex-shrink:0; font-size:12px; margin:0;"><input type="radio" name="anniv-cal-type" id="anniv-cal-lunar" value="lunar"> 음력</label>
+            </div>
         </div>
 
         <!-- 📔 다이어리(메모/사진) 입력 영역: 다이어리_입력폼 모드에서만 표시 -->
@@ -8479,12 +8457,10 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 
 
 <script>
-// V166: 입력폼 열릴때 제목&기념일에 커서
 (function(){
-  function focusAnniv(){ const el=document.getElementById('anniv-input'); if(el){ setTimeout(function(){ el.focus(); },150); } }
+  function focusAnniv(){ var el=document.getElementById('anniv-input'); if(el){ setTimeout(function(){ el.focus(); },200); } }
   var mo=document.getElementById('memo-modal-overlay');
   if(mo){ var obs=new MutationObserver(function(){ if(mo.classList.contains('active')) focusAnniv(); }); obs.observe(mo,{attributes:true, attributeFilter:['class']}); }
-  if(window.openDiaryForm){ var o=window.openDiaryForm; window.openDiaryForm=function(){ var r=o.apply(this,arguments); focusAnniv(); return r; }; }
 })();
 </script>
 
