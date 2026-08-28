@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>다이어리&가계부 V153 SINGLE</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>다이어리&가계부 V155 SINGLE</title>
 <style>
         :root {
             --bg-color: #f7f4f4;
@@ -2399,6 +2399,21 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 .cal-cell.adjacent-month .cal-anniv-label,
 .cal-cell.adjacent-month .cal-special-label {
     font-size: 9px !important;
+}
+
+
+/* V155 A안: 일자 칸 아래로 25% 늘려서 3줄까지 보이게 */
+.cal-cell {
+    aspect-ratio: auto !important;
+}
+.cal-cell-inner {
+    justify-content: center !important;
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+}
+.cal-anniv-label, .cal-special-label {
+    -webkit-line-clamp: 3 !important;
+    max-height: 38px !important;
 }
 
 </style>
@@ -6878,7 +6893,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             }
         }
         const rowExtra = new Array(totalRows).fill(maxExtra);
-        const rowHeights = new Array(totalRows).fill(cellSize); // v59 정사각형, 2줄이어도 같은 크기
+        const rowHeights = new Array(totalRows).fill(cellSize * 1.25); // V155 A안: 3줄 보이게 세로 25% 늘림
         const rowTops = [];
         let currentTop = 0;
 
