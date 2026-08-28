@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>다이어리&가계부 V174 SINGLE - 사진만+메인정상</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>다이어리&가계부 V175 SINGLE - 카메라 갤러리 분리</title>
 <style>
         :root {
             --bg-color: #f7f4f4;
@@ -8462,6 +8462,78 @@ button[onclick="openBucketListModal()"] { display:none !important; }
   var mo=document.getElementById('memo-modal-overlay');
   if(mo){ var obs=new MutationObserver(function(){ if(mo.classList.contains('active')) focusAnniv(); }); obs.observe(mo,{attributes:true, attributeFilter:['class']}); }
 })();
+</script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  // Find all photo inputs
+  const fileInputs = document.querySelectorAll('input[type="file"][accept*="image"]');
+  fileInputs.forEach((origInput, idx) => {
+    // Create wrapper
+    const wrapper = document.createElement('div');
+    wrapper.style.display='flex';
+    wrapper.style.gap='6px';
+    wrapper.style.flexWrap='wrap';
+
+    // Camera input (capture)
+    const camInput = document.createElement('input');
+    camInput.type='file';
+    camInput.accept='image/*';
+    camInput.capture='environment';
+    camInput.style.display='none';
+    camInput.id = origInput.id + '_camera_' + idx;
+
+    // Gallery input (no capture)
+    const galInput = document.createElement('input');
+    galInput.type='file';
+    galInput.accept='image/*';
+    galInput.style.display='none';
+    galInput.id = origInput.id + '_gallery_' + idx;
+
+    // Forward change events to original input handler
+    function forwardChange(e){
+      // Copy files to original input via DataTransfer
+      const dt = new DataTransfer();
+      for(let f of e.target.files) dt.items.add(f);
+      origInput.files = dt.files;
+      origInput.dispatchEvent(new Event('change', {bubbles:true}));
+    }
+    camInput.addEventListener('change', forwardChange);
+    galInput.addEventListener('change', forwardChange);
+
+    // Buttons
+    const camBtn = document.createElement('button');
+    camBtn.type='button';
+    camBtn.textContent='📷 카메라';
+    camBtn.style.cssText='flex:1; padding:8px; border:1px solid var(--border-color); border-radius:6px; background:#fff; font-size:13px; cursor:pointer;';
+    camBtn.onclick = () => camInput.click();
+
+    const galBtn = document.createElement('button');
+    galBtn.type='button';
+    galBtn.textContent='🖼️ 갤러리';
+    galBtn.style.cssText='flex:1; padding:8px; border:1px solid var(--border-color); border-radius:6px; background:#fff; font-size:13px; cursor:pointer;';
+    galBtn.onclick = () => galInput.click();
+
+    wrapper.appendChild(camBtn);
+    wrapper.appendChild(galBtn);
+    wrapper.appendChild(camInput);
+    wrapper.appendChild(galInput);
+
+    // Insert after original button's parent or replace
+    // Find button that triggers origInput
+    const btn = document.querySelector('button[onclick*="'+origInput.id+'"]') || origInput.parentElement.querySelector('button');
+    if(btn){
+      btn.style.display='none';
+    }
+    origInput.style.display='none';
+    if(origInput.parentElement){
+      origInput.parentElement.appendChild(wrapper);
+    } else {
+      origInput.insertAdjacentElement('afterend', wrapper);
+    }
+  });
+});
 </script>
 
 </body>
