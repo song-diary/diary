@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>다이어리&가계부 v43 - 2줄고정+흐릿</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>다이어리&가계부 V155 SINGLE</title>
 <style>
         :root {
             --bg-color: #f7f4f4;
@@ -2236,6 +2236,186 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             touch-action: pan-x pan-y pinch-zoom !important;
         }
 
+
+/* ===== V149 SINGLE - 절기/기념일 좌측정렬 고정 ===== */
+#diary-around-today-list.gallery-mode .sub-memo-item { display:flex !important; flex-direction:column !important; align-items:center !important; }
+#diary-around-today-list.gallery-mode .sub-memo-item .diary-photo-wrap { width:100% !important; margin:0 auto !important; }
+#diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns {
+    display:flex !important; justify-content:center !important; align-items:center !important;
+    gap:6px !important; width:85% !important; max-width:85% !important;
+    margin:6px auto 2px auto !important;
+}
+#diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .edit-btn-hidden,
+#diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .delete-btn {
+    margin:0 !important; flex:0 0 auto !important; min-width:36px !important;
+    padding:3px 8px !important; font-size:11px !important;
+    display:inline-flex !important; justify-content:center !important; align-items:center !important;
+}
+#diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .edit-btn-hidden { margin-right:0 !important; }
+#diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .delete-btn { margin-left:0 !important; }
+
+#diary-around-today-card { position:relative !important; }
+#diary-around-today-card .feature-title {
+    display:flex !important; flex-wrap:nowrap !important;
+    justify-content:space-between !important; align-items:flex-start !important; gap:8px !important;
+}
+#selected-date-title { 
+    flex:1 1 auto !important; min-width:0 !important; 
+    text-align:left !important; align-items:flex-start !important;
+}
+#selected-date-title > div { text-align:left !important; align-items:flex-start !important; }
+#diary-view-toggle { display:flex !important; flex-shrink:0 !important; gap:4px !important; margin-left:auto !important; align-self:flex-start !important; }
+
+#calendar-card { overflow:visible !important; }
+#calendar-card .calendar-sticky-wrap {
+    position:sticky !important; top:0 !important; z-index:300 !important;
+    background:#ffffff !important; margin:0 !important;
+    padding:12px 15px 8px 15px !important; border-radius:12px 12px 0 0 !important;
+    border-bottom:1px solid #f0e6e6 !important;
+}
+#calendar-card .calendar-sticky-wrap .calendar-header,
+#calendar-card .calendar-sticky-wrap #cal-days-name-grid {
+    background:transparent !important; margin:0 !important; border:none !important; box-shadow:none !important;
+}
+#memo-form-card .btn-group { display:grid !important; grid-template-columns:1fr 1fr 1fr !important; gap:6px !important; width:100% !important; }
+#memo-form-card .btn-group .btn,
+#memo-form-card .btn-group label.btn,
+#memo-form-card #record-btn,
+#memo-form-card #photo-attach-label,
+#memo-form-card .btn-group .btn-primary {
+    height:44px !important; min-height:44px !important; font-size:12px !important; font-weight:700 !important;
+    padding:0 4px !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important;
+    min-width:0 !important; display:flex !important; align-items:center !important; justify-content:center !important;
+}
+#memo-form-card .fp-exit-btn { grid-column:1 / -1 !important; width:100% !important; max-width:200px !important; margin:10px auto 0 auto !important; height:44px !important; display:flex !important; align-items:center !important; justify-content:center !important; }
+
+/* 절기/기념일 좌측정렬 */
+.cal-special-title-badge { display:inline-block !important; text-align:left !important; margin-left:0 !important; }
+
+
+/* V150: 입력 버튼 리스트/갤러리 밑으로 - 주의해서 수정 */
+#diary-around-today-card .feature-title {
+    display:flex !important;
+    justify-content:space-between !important;
+    align-items:flex-start !important;
+    gap:8px !important;
+}
+#selected-date-title { flex:1 1 auto !important; text-align:left !important; min-width:0 !important; }
+#diary-view-toggle {
+    display:grid !important;
+    grid-template-columns:1fr 1fr !important;
+    gap:4px !important;
+    width:112px !important;
+    flex-shrink:0 !important;
+    margin-left:auto !important;
+    align-self:flex-start !important;
+}
+#diary-view-toggle #btn-view-list,
+#diary-view-toggle #btn-view-gallery { width:100% !important; }
+#diary-view-toggle button[onclick*="openDiaryForm"] {
+    grid-column:1 / -1 !important;
+    width:100% !important;
+}
+
+
+/* V151: A안 - 달력 요일/일자 폰트 살짝 키우기 */
+.cal-day-name {
+    font-size: 16px !important;
+    font-weight: 800 !important;
+}
+#cal-days-name-grid div {
+    font-size: 16px !important;
+}
+.cal-cell span {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    line-height: 1.15 !important;
+}
+.cal-cell-inner span {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+}
+
+
+/* V152 B안: 일자에 나타나는 제목 색깔을 일자색과 비슷한 진회색으로 */
+.cal-anniv-label {
+    color: #34495e !important;
+    font-weight: 700 !important;
+}
+.cal-cell .cal-anniv-label {
+    color: #34495e !important;
+}
+#cal-days-grid .cal-anniv-label {
+    color: #34495e !important;
+}
+/* 달력 셀 안의 제목 span */
+.cal-cell-inner .cal-anniv-label {
+    color: #34495e !important;
+    font-weight: 700 !important;
+}
+
+
+
+/* V154: 일자 위쪽 정렬 버그 수정 - 다시 가운데 정렬 */
+.cal-cell-inner {
+    justify-content: center !important;
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+}
+.cal-cell-inner span {
+    margin-bottom: 1px !important;
+}
+
+/* V153: 폴더폰용 제목/절기 폰트 키우고 2줄 표시 */
+.cal-anniv-label, .cal-special-label {
+    font-size: 10px !important;
+    line-height: 1.15 !important;
+    font-weight: 700 !important;
+    color: #34495e !important;
+    white-space: normal !important;
+    word-break: break-all !important;
+    overflow-wrap: anywhere !important;
+    max-height: 28px !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    text-align: center !important;
+    padding: 0 1px !important;
+}
+.cal-anniv-label { color: #34495e !important; }
+.cal-special-label.cal-special-holiday { color: #E0685C !important; }
+.cal-special-label.cal-special-term { color: #4C7FD1 !important; }
+.cal-special-label.cal-special-bok { color: #C2820A !important; }
+
+/* 4자 넘어 2줄일 때도 셀 높이 유지 - 정사각형 유지하면서 내부 정렬 */
+.cal-cell-inner {
+    justify-content: flex-start !important;
+    padding-top: 3px !important;
+}
+.cal-cell-inner span { margin-bottom: 1px !important; }
+
+/* 폰트 키웠으므로 인접월은 9px */
+.cal-cell.adjacent-month .cal-anniv-label,
+.cal-cell.adjacent-month .cal-special-label {
+    font-size: 9px !important;
+}
+
+
+/* V155 A안: 일자 칸 아래로 25% 늘려서 3줄까지 보이게 */
+.cal-cell {
+    aspect-ratio: auto !important;
+}
+.cal-cell-inner {
+    justify-content: center !important;
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+}
+.cal-anniv-label, .cal-special-label {
+    -webkit-line-clamp: 3 !important;
+    max-height: 38px !important;
+}
+
 </style>
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#f59e0b">
@@ -2281,10 +2461,10 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         <div class="card sub-feature-card" id="diary-around-today-card">
             <div class="feature-title" style="display:flex; align-items:center; justify-content:space-between; width:100%;">
                 <span id="selected-date-title" style="flex-shrink:0; font-size:13px;">다이어리</span>
-                <div id="diary-view-toggle" style="display:flex; gap:4px; margin-left:auto;">
-                    <button onclick="openDiaryForm(selectedViewDate || getTodayStr())" style="padding:3px 7px; font-size:10px; border-radius:6px; border:1px solid #ddd; background:#fff;">✏️ 입력</button>
-                    <button id="btn-view-list" onclick="setDiaryViewMode('list')" style="padding:3px 7px; font-size:10px; border-radius:6px; border:1px solid #8e6b6b; background:#8e6b6b; color:#fff;">📝 리스트</button>
-                    <button id="btn-view-gallery" onclick="setDiaryViewMode('gallery')" style="padding:3px 7px; font-size:10px; border-radius:6px; border:1px solid #ddd; background:#fff;">🖼️ 갤러리</button>
+                <div id="diary-view-toggle" style="display:grid; grid-template-columns:1fr 1fr; gap:4px; margin-left:auto; width:112px;">
+                    <button id="btn-view-list" onclick="setDiaryViewMode('list')" style="padding:4px 2px; font-size:10px; border-radius:6px; border:1px solid #8e6b6b; background:#8e6b6b; color:#fff;">📝 리스트</button>
+                    <button id="btn-view-gallery" onclick="setDiaryViewMode('gallery')" style="padding:4px 2px; font-size:10px; border-radius:6px; border:1px solid #ddd; background:#fff;">🖼️ 갤러리</button>
+                    <button onclick="openDiaryForm(selectedViewDate || getTodayStr())" style="grid-column:1 / -1; padding:4px 2px; font-size:10px; border-radius:6px; border:1px solid #e06d6d; background:#fff; color:#e06d6d; font-weight:bold;">✏️ 입력</button>
                 </div>
             </div>
             <div id="diary-around-today-list"></div>
@@ -6649,6 +6829,26 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         if (fontSizeDisplay) fontSizeDisplay.textContent = `${currentMemoFontSize}px`;
     }
 
+    
+    // V153: 4자 넘으면 2줄로 나누는 스마트 포맷
+    function formatCalLabel(text) {
+        if (!text) return '';
+        const clean = String(text).trim();
+        if (clean.length <= 4) return clean;
+        // 5자 이상: 2~3자 + 나머지
+        if (clean.length === 5) {
+            return clean.slice(0,2) + '<br>' + clean.slice(2);
+        }
+        if (clean.length === 6) {
+            return clean.slice(0,3) + '<br>' + clean.slice(3);
+        }
+        // 7자 이상: 3자 + 3자 + 나머지
+        if (clean.length >= 7) {
+            return clean.slice(0,3) + '<br>' + clean.slice(3,6);
+        }
+        return clean;
+    }
+
     function renderCalendar() {
         const title = document.getElementById('cal-month-title');
         const grid = document.getElementById('cal-days-grid');
@@ -6693,7 +6893,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             }
         }
         const rowExtra = new Array(totalRows).fill(maxExtra);
-        const rowHeights = new Array(totalRows).fill(cellSize); // v59 정사각형, 2줄이어도 같은 크기
+        const rowHeights = new Array(totalRows).fill(cellSize * 1.25); // V155 A안: 3줄 보이게 세로 25% 늘림
         const rowTops = [];
         let currentTop = 0;
 
@@ -6727,10 +6927,10 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             const annivText = getAnniversaryForDate(dateStr);
             let indicatorHTML = '';
             if (specialInfo) {
-                indicatorHTML += `<div class="cal-special-label cal-special-${specialInfo.type}">${specialInfo.label}</div>`;
+                indicatorHTML += `<div class="cal-special-label cal-special-${specialInfo.type}">${formatCalLabel(specialInfo.label)}</div>`;
             }
             if (annivText) {
-                indicatorHTML += `<div class="cal-anniv-label">${annivText}</div>`;
+                indicatorHTML += `<div class="cal-anniv-label">${formatCalLabel(annivText)}</div>`;
             }
             cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>`;
             cell.onclick = () => {
@@ -6783,10 +6983,10 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             let indicatorHTML = '';
 
             if (specialInfo) {
-                indicatorHTML += `<div class="cal-special-label cal-special-${specialInfo.type}">${specialInfo.label}</div>`;
+                indicatorHTML += `<div class="cal-special-label cal-special-${specialInfo.type}">${formatCalLabel(specialInfo.label)}</div>`;
             }
             if (annivText) {
-                indicatorHTML += `<div class="cal-anniv-label">${annivText}</div>`;
+                indicatorHTML += `<div class="cal-anniv-label">${formatCalLabel(annivText)}</div>`;
             }
 
             // v67 사진 썸네일 - 설정 온/오프 (localStorage 직접 체크)
@@ -7171,15 +7371,16 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             toggleDiv.innerHTML = `<button id="btn-view-list" class="active" onclick="setDiaryViewMode('list')" style="padding:3px 7px; font-size:11px;">📝</button><button id="btn-view-gallery" onclick="setDiaryViewMode('gallery')" style="padding:3px 7px; font-size:11px;">🖼️</button>`;
         }
 
-        if (titleEl) {
+                        if (titleEl) {
             const badge = isReservedDate ? `<span style="background:var(--primary-color); color:white; padding:1px 5px; border-radius:4px; font-size:10px; margin-right:4px; font-weight:bold;">예약</span>` : '';
             const lunarLabel = getLunarLabel(dateStr);
-            const lunarHTML = lunarLabel ? `<span style="font-size:11px; font-weight:normal; color:var(--text-sub); margin-left:6px;">${lunarLabel}</span>` : '';
+            const lunarHTML = lunarLabel ? `<div style="font-size:11px; font-weight:normal; color:var(--text-sub); margin-top:2px; text-align:left;">${lunarLabel}</div>` : '';
             const specialInfo = getSpecialDayLabel(dateStr);
-            const specialHTML = specialInfo ? `<span class="cal-special-title-badge cal-special-${specialInfo.type}" style="font-size:11px;">${specialInfo.label}</span>` : '';
+            const specialHTML = specialInfo ? `<span style="font-size:11px; margin-left:6px; color:#d35400;" class="cal-special-title-badge cal-special-${specialInfo.type}">${specialInfo.label}</span>` : '';
             const annivText = getAnniversaryForDate(dateStr);
-            const annivLineHTML = annivText ? `<div style="font-size:12.5px; font-weight:700; color:#9C6ADE; margin-top:3px;">제목 : ${annivText}</div>` : '';
-            titleEl.innerHTML = `<div style="font-size:13px;">${badge}${dateLabel}${lunarHTML}${specialHTML}</div>${annivLineHTML}`;
+            const annivLineHTML = annivText ? `<div style="font-size:11px; font-weight:700; color:#9C6ADE; margin-top:2px; text-align:left;">제목 : ${annivText}</div>` : '';
+            // V150: 양력 옆에 절기/기념일, 음력은 밑으로 좌측정렬 - 입력은 리스트/갤러리 밑으로
+            titleEl.innerHTML = `<div style="text-align:left;"><div style="font-size:13px; text-align:left;">${badge}${dateLabel}${specialHTML}</div>${lunarHTML}${annivLineHTML}</div>`;
         }
 
         const diaries = getAllDiaries();
@@ -7301,13 +7502,16 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         const isTodayDate = dateStr === getTodayStr();
         const dateLabel = `${dObj.getMonth() + 1}월 ${dObj.getDate()}일(${dayName})`;
 
-        if (titleEl) {
-            const badge = isReservedDate ? `<span style="background:var(--primary-color); color:white; padding:1px 5px; border-radius:4px; font-size:11px; margin-right:4px; font-weight:bold;">예약</span>` : '';
-            const todayTag = isTodayDate ? ' (오늘)' : '';
+                if (titleEl) {
+            const badge = isReservedDate ? `<span style="background:var(--primary-color); color:white; padding:1px 5px; border-radius:4px; font-size:10px; margin-right:4px; font-weight:bold;">예약</span>` : '';
+            const lunarLabel = getLunarLabel(dateStr);
+            const lunarHTML = lunarLabel ? `<div style="font-size:11px; font-weight:normal; color:var(--text-sub); margin-top:2px; text-align:left;">${lunarLabel}</div>` : '';
             const specialInfo = getSpecialDayLabel(dateStr);
-            const specialIcon = specialInfo ? (specialInfo.type === 'holiday' ? '🎊' : specialInfo.type === 'term' ? '🍃' : '🌡️') : '';
-            const specialHTML = specialInfo ? `<span class="cal-special-title-badge cal-special-${specialInfo.type}">${specialIcon} ${specialInfo.label}</span>` : '';
-            titleEl.innerHTML = `💰 ${badge}${dateLabel}${todayTag}${specialHTML}`;
+            const specialHTML = specialInfo ? `<span style="font-size:11px; margin-left:6px; color:#d35400;" class="cal-special-title-badge cal-special-${specialInfo.type}">${specialInfo.label}</span>` : '';
+            const annivText = getAnniversaryForDate(dateStr);
+            const annivLineHTML = annivText ? `<div style="font-size:11px; font-weight:700; color:#9C6ADE; margin-top:2px; text-align:left;">제목 : ${annivText}</div>` : '';
+            // V150: 양력 옆에 절기/기념일, 음력은 밑으로 좌측정렬 - 입력은 리스트/갤러리 밑으로
+            titleEl.innerHTML = `<div style="text-align:left;"><div style="font-size:13px; text-align:left;">${badge}${dateLabel}${specialHTML}</div>${lunarHTML}${annivLineHTML}</div>`;
         }
 
         const diaries = getAllDiaries();
@@ -8212,33 +8416,21 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 </script>
 <script>
 
-        /* v134 PWA 오프라인 + 자동업데이트 */
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.register('./sw.js').then(reg => {
-            console.log('PWA 등록됨');
-            reg.addEventListener('updatefound', () => {
-              const newWorker = reg.installing;
-              newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  if (confirm('새 버전이 있어요! 업데이트할까요?')) {
-                    newWorker.postMessage({action:'skipWaiting'});
-                    window.location.reload();
-                  }
-                }
-              });
-            });
-          });
-          navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
-        }
-        
-        // 온라인되면 자동 버전 체크
-        window.addEventListener('online', () => {
-          console.log('온라인 - 업데이트 확인');
-          if (navigator.serviceWorker.controller) {
-            navigator.serviceWorker.controller.postMessage({action:'checkUpdate'});
+                (function(){
+          const swCode = `
+            const CACHE_NAME='smartdiary-V149-SINGLE';
+            self.addEventListener('install', e=>{ self.skipWaiting(); e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(['./']))); });
+            self.addEventListener('activate', e=>{ e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))).then(()=>self.clients.claim())); });
+            self.addEventListener('fetch', e=>{ e.respondWith(fetch(e.request,{cache:'no-store'}).then(r=>{ const cl=r.clone(); caches.open(CACHE_NAME).then(c=>c.put(e.request,cl)); return r; }).catch(()=>caches.match(e.request).then(c=>c||caches.match('./')))); });
+          `;
+          if('serviceWorker' in navigator){
+            try{
+              const blob = new Blob([swCode], {type:'text/javascript'});
+              const url = URL.createObjectURL(blob);
+              navigator.serviceWorker.register(url);
+            }catch(e){}
           }
-        });
-
+        })();
 </script>
 </script>
 
