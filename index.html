@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>다이어리&가계부 V149 SINGLE</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>다이어리&가계부 V150 SINGLE</title>
 <style>
         :root {
             --bg-color: #f7f4f4;
@@ -2292,6 +2292,31 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 /* 절기/기념일 좌측정렬 */
 .cal-special-title-badge { display:inline-block !important; text-align:left !important; margin-left:0 !important; }
 
+
+/* V150: 입력 버튼 리스트/갤러리 밑으로 - 주의해서 수정 */
+#diary-around-today-card .feature-title {
+    display:flex !important;
+    justify-content:space-between !important;
+    align-items:flex-start !important;
+    gap:8px !important;
+}
+#selected-date-title { flex:1 1 auto !important; text-align:left !important; min-width:0 !important; }
+#diary-view-toggle {
+    display:grid !important;
+    grid-template-columns:1fr 1fr !important;
+    gap:4px !important;
+    width:112px !important;
+    flex-shrink:0 !important;
+    margin-left:auto !important;
+    align-self:flex-start !important;
+}
+#diary-view-toggle #btn-view-list,
+#diary-view-toggle #btn-view-gallery { width:100% !important; }
+#diary-view-toggle button[onclick*="openDiaryForm"] {
+    grid-column:1 / -1 !important;
+    width:100% !important;
+}
+
 </style>
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#f59e0b">
@@ -2337,10 +2362,10 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         <div class="card sub-feature-card" id="diary-around-today-card">
             <div class="feature-title" style="display:flex; align-items:center; justify-content:space-between; width:100%;">
                 <span id="selected-date-title" style="flex-shrink:0; font-size:13px;">다이어리</span>
-                <div id="diary-view-toggle" style="display:flex; gap:4px; margin-left:auto;">
-                    <button onclick="openDiaryForm(selectedViewDate || getTodayStr())" style="padding:3px 7px; font-size:10px; border-radius:6px; border:1px solid #ddd; background:#fff;">✏️ 입력</button>
-                    <button id="btn-view-list" onclick="setDiaryViewMode('list')" style="padding:3px 7px; font-size:10px; border-radius:6px; border:1px solid #8e6b6b; background:#8e6b6b; color:#fff;">📝 리스트</button>
-                    <button id="btn-view-gallery" onclick="setDiaryViewMode('gallery')" style="padding:3px 7px; font-size:10px; border-radius:6px; border:1px solid #ddd; background:#fff;">🖼️ 갤러리</button>
+                <div id="diary-view-toggle" style="display:grid; grid-template-columns:1fr 1fr; gap:4px; margin-left:auto; width:112px;">
+                    <button id="btn-view-list" onclick="setDiaryViewMode('list')" style="padding:4px 2px; font-size:10px; border-radius:6px; border:1px solid #8e6b6b; background:#8e6b6b; color:#fff;">📝 리스트</button>
+                    <button id="btn-view-gallery" onclick="setDiaryViewMode('gallery')" style="padding:4px 2px; font-size:10px; border-radius:6px; border:1px solid #ddd; background:#fff;">🖼️ 갤러리</button>
+                    <button onclick="openDiaryForm(selectedViewDate || getTodayStr())" style="grid-column:1 / -1; padding:4px 2px; font-size:10px; border-radius:6px; border:1px solid #e06d6d; background:#fff; color:#e06d6d; font-weight:bold;">✏️ 입력</button>
                 </div>
             </div>
             <div id="diary-around-today-list"></div>
@@ -7227,16 +7252,16 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             toggleDiv.innerHTML = `<button id="btn-view-list" class="active" onclick="setDiaryViewMode('list')" style="padding:3px 7px; font-size:11px;">📝</button><button id="btn-view-gallery" onclick="setDiaryViewMode('gallery')" style="padding:3px 7px; font-size:11px;">🖼️</button>`;
         }
 
-                if (titleEl) {
+                        if (titleEl) {
             const badge = isReservedDate ? `<span style="background:var(--primary-color); color:white; padding:1px 5px; border-radius:4px; font-size:10px; margin-right:4px; font-weight:bold;">예약</span>` : '';
             const lunarLabel = getLunarLabel(dateStr);
             const lunarHTML = lunarLabel ? `<div style="font-size:11px; font-weight:normal; color:var(--text-sub); margin-top:2px; text-align:left;">${lunarLabel}</div>` : '';
             const specialInfo = getSpecialDayLabel(dateStr);
-            const specialHTML = specialInfo ? `<div style="font-size:11px; text-align:left; margin-top:2px; color:#d35400;"><span class="cal-special-title-badge cal-special-${specialInfo.type}">${specialInfo.label}</span></div>` : '';
+            const specialHTML = specialInfo ? `<span style="font-size:11px; margin-left:6px; color:#d35400;" class="cal-special-title-badge cal-special-${specialInfo.type}">${specialInfo.label}</span>` : '';
             const annivText = getAnniversaryForDate(dateStr);
-            const annivLineHTML = annivText ? `<div style="font-size:12.5px; font-weight:700; color:#9C6ADE; margin-top:3px; text-align:left;">제목 : ${annivText}</div>` : '';
-            // V149: 양력 좌측정렬, 절기/기념일/음력도 모두 양력과 동일하게 좌측정렬
-            titleEl.innerHTML = `<div style="text-align:left;"><div style="font-size:13px; text-align:left;">${badge}${dateLabel}</div>${specialHTML}${lunarHTML}${annivLineHTML}</div>`;
+            const annivLineHTML = annivText ? `<div style="font-size:11px; font-weight:700; color:#9C6ADE; margin-top:2px; text-align:left;">제목 : ${annivText}</div>` : '';
+            // V150: 양력 옆에 절기/기념일, 음력은 밑으로 좌측정렬 - 입력은 리스트/갤러리 밑으로
+            titleEl.innerHTML = `<div style="text-align:left;"><div style="font-size:13px; text-align:left;">${badge}${dateLabel}${specialHTML}</div>${lunarHTML}${annivLineHTML}</div>`;
         }
 
         const diaries = getAllDiaries();
@@ -7358,13 +7383,16 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         const isTodayDate = dateStr === getTodayStr();
         const dateLabel = `${dObj.getMonth() + 1}월 ${dObj.getDate()}일(${dayName})`;
 
-        if (titleEl) {
-            const badge = isReservedDate ? `<span style="background:var(--primary-color); color:white; padding:1px 5px; border-radius:4px; font-size:11px; margin-right:4px; font-weight:bold;">예약</span>` : '';
-            const todayTag = isTodayDate ? ' (오늘)' : '';
+                if (titleEl) {
+            const badge = isReservedDate ? `<span style="background:var(--primary-color); color:white; padding:1px 5px; border-radius:4px; font-size:10px; margin-right:4px; font-weight:bold;">예약</span>` : '';
+            const lunarLabel = getLunarLabel(dateStr);
+            const lunarHTML = lunarLabel ? `<div style="font-size:11px; font-weight:normal; color:var(--text-sub); margin-top:2px; text-align:left;">${lunarLabel}</div>` : '';
             const specialInfo = getSpecialDayLabel(dateStr);
-            const specialIcon = specialInfo ? (specialInfo.type === 'holiday' ? '🎊' : specialInfo.type === 'term' ? '🍃' : '🌡️') : '';
-            const specialHTML = specialInfo ? `<span class="cal-special-title-badge cal-special-${specialInfo.type}">${specialIcon} ${specialInfo.label}</span>` : '';
-            titleEl.innerHTML = `💰 ${badge}${dateLabel}${todayTag}${specialHTML}`;
+            const specialHTML = specialInfo ? `<span style="font-size:11px; margin-left:6px; color:#d35400;" class="cal-special-title-badge cal-special-${specialInfo.type}">${specialInfo.label}</span>` : '';
+            const annivText = getAnniversaryForDate(dateStr);
+            const annivLineHTML = annivText ? `<div style="font-size:11px; font-weight:700; color:#9C6ADE; margin-top:2px; text-align:left;">제목 : ${annivText}</div>` : '';
+            // V150: 양력 옆에 절기/기념일, 음력은 밑으로 좌측정렬 - 입력은 리스트/갤러리 밑으로
+            titleEl.innerHTML = `<div style="text-align:left;"><div style="font-size:13px; text-align:left;">${badge}${dateLabel}${specialHTML}</div>${lunarHTML}${annivLineHTML}</div>`;
         }
 
         const diaries = getAllDiaries();
