@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>다이어리&가계부 V163 SINGLE - V155기반 요일 정중앙</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>다이어리&가계부 V168 SINGLE</title>
 <style>
         :root {
             --bg-color: #f7f4f4;
@@ -2417,10 +2417,39 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 }
 
 
-/* V163 - V155 기반 요일만 정중앙: sticky-wrap 좌우패딩 0 (날짜칸 absolute는 패딩 무시, 요일은 패딩 때문에 15px 밀림) */
-.calendar-sticky-wrap {
-    padding-left: 0 !important;
-    padding-right: 0 !important;
+/* V166 - 제목&기념일 placeholder */
+#anniv-input::placeholder { color:#bbb !important; font-weight:400 !important; opacity:1; }
+#anniv-input:focus { outline:none; border-color: var(--primary-color) !important; }
+
+
+/* V167 - 제목&기념일과 메모 입력란 크기 동일하게, 제목 조금 크게, 메모 조금 작게 */
+#anniv-input-row {
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+#anniv-input {
+    flex: 1 1 auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+    font-size: 15.5px !important; /* 제목 조금 크게 */
+    padding: 9px 10px !important;
+    box-sizing: border-box !important;
+}
+#textOutput.diary-textarea {
+    font-size: 14px !important; /* 메모 조금 작게 */
+    min-height: 110px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 10px 12px !important;
+}
+#diary-content-section {
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+/* 두 입력란 너비 통일감 */
+#anniv-input-row, #diary-content-section {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
 }
 
 </style>
@@ -2902,8 +2931,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 
         <!-- 제목&기념일 입력란: 달력에 짧은 메모로 표시됨, 매년/매달 반복 가능 -->
                 <div class="anniv-input-row" id="anniv-input-row" style="display:flex; align-items:center; gap:6px; flex-wrap:nowrap; padding:8px 8px;">
-            <label class="anniv-label" for="anniv-input" style="flex-shrink:0;">제목&기념일</label>
-            <input type="text" id="anniv-input" maxlength="6" placeholder="예: 결혼" style="flex:0 1 90px; width:90px; min-width:70px;">
+            <input type="text" id="anniv-input" maxlength="6" placeholder="제목&기념일(예 : 생일)" style="flex:0 1 110px; width:110px; min-width:80px;">
             <select id="anniv-repeat-select" class="anniv-repeat-select" style="flex:0 0 78px; font-size:11.5px; padding:5px 2px;">
                 <option value="none">반복 안 함</option>
                 <option value="yearly">매년 반복</option>
@@ -8439,6 +8467,17 @@ button[onclick="openBucketListModal()"] { display:none !important; }
           }
         })();
 </script>
+</script>
+
+
+<script>
+// V166: 입력폼 열릴때 제목&기념일에 커서
+(function(){
+  function focusAnniv(){ const el=document.getElementById('anniv-input'); if(el){ setTimeout(function(){ el.focus(); },150); } }
+  var mo=document.getElementById('memo-modal-overlay');
+  if(mo){ var obs=new MutationObserver(function(){ if(mo.classList.contains('active')) focusAnniv(); }); obs.observe(mo,{attributes:true, attributeFilter:['class']}); }
+  if(window.openDiaryForm){ var o=window.openDiaryForm; window.openDiaryForm=function(){ var r=o.apply(this,arguments); focusAnniv(); return r; }; }
+})();
 </script>
 
 </body>
