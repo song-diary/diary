@@ -7126,7 +7126,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                         if(list.length && typeof openPhotoLightbox === 'function'){ openPhotoLightbox(list); }
                     } catch(err){
                         console.error(err);
-                        alert('사진을 불러올 수 없습니다: ' + err.message);
+                        alert('사진 로드 실패, diary 개수:' + (typeof getAllDiaries==='function' ? getAllDiaries().length : 'unknown') + ' err:' + err.message);
                     }
                     return;
                 }
@@ -7754,9 +7754,19 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     // 렌더링에서 사용: item.photo(키 문자열)를 실제 이미지 데이터(base64)로 변환
     function getPhotoSrc(photoKeyOrData) {
         if (!photoKeyOrData) return '';
-        // 혹시 아직 마이그레이션되지 않은 옛날 데이터(원본 base64가 그대로 남아있는 경우) 호환 처리
         if (photoKeyOrData.indexOf('data:image')===0 || photoKeyOrData.indexOf('data:video')===0) return photoKeyOrData;
-        return photoCache[photoKeyOrData] || '';
+        // cache 로드 시도
+        if(!window.photoCache || Object.keys(window.photoCache).length===0){
+            try{
+                const cached = localStorage.getItem('smartDiaryPhotoCache');
+                if(cached){ window.photoCache = JSON.parse(cached); }
+            }catch(e){}
+        }
+        if(window.photoCache && window.photoCache[photoKeyOrData]) return window.photoCache[photoKeyOrData];
+        if(photoCache && photoCache[photoKeyOrData]) return photoCache[photoKeyOrData];
+        // 마지막으로 키 자체가 base64일 수도 있음
+        if(photoKeyOrData.length > 100) return photoKeyOrData;
+        return '';
     }
 
     // ❤️ 건강 기록(혈압/혈당/복약) 배지 - 판정/색상 없이 입력한 수치만 그대로 표시
