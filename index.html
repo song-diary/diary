@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>다이어리&가계부 V193 SINGLE - 사진 세모표시</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>다이어리&가계부 V194 SINGLE - 사진 세모표시</title>
 <style>
         :root {
             --bg-color: #f7f4f4;
@@ -2507,6 +2507,16 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 /* V188 자동 전환 애니메이션 */
 .container, #calendar-card, .cal-cell { transition: all 0.25s ease !important; }
 
+
+/* V194 세모 위 숫자 */
+.cal-photo-corner .corner-count {
+  position: absolute !important;
+  top: 1px !important;
+  right: 2px !important;
+  font-size: 9px !important;
+  font-weight: 800 !important;
+  color: #6a4a8a !important;
+}
 </style>
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#f59e0b">
@@ -7085,33 +7095,39 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 indicatorHTML += `<div class="cal-anniv-label">${formatCalLabel(annivText)}</div>`;
             }
 
-            // V192 - 사진은 희미 배경 대신 좌측 상단 세모로 표시 (부드러운 색)
-            let photoSrc = '';
-            let hasPhotoFlag = false;
+            // V194 - 사진 여러 장 지원, 세모 클릭시 세로 리스트
+            let photoList = [];
             try {
                 const allDiaries = getAllDiaries();
-                const photoEntry = allDiaries.find(d => normalizeDateStr(d.date) === dateStr && d.photo);
-                if(photoEntry){
-                    const src = getPhotoSrc(photoEntry.photo);
-                    if(src){ photoSrc = src; hasPhotoFlag = true; }
-                }
+                allDiaries.forEach(d => {
+                    if(normalizeDateStr(d.date) === dateStr && d.photo){
+                        const src = getPhotoSrc(d.photo);
+                        if(src) photoList.push(src);
+                    }
+                });
             } catch(e){}
+            const hasPhotoFlag = photoList.length > 0;
             if(hasPhotoFlag){
                 cell.classList.add('has-photo');
             }
+            const photoDataAttr = hasPhotoFlag ? encodeURIComponent(JSON.stringify(photoList)) : '';
             cell.innerHTML =
                 `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + 
-                (hasPhotoFlag ? `<div class="cal-photo-corner" data-photo="${photoSrc}" data-date="${dateStr}"></div>` : '');
+                (hasPhotoFlag ? `<div class="cal-photo-corner" data-photos="${photoDataAttr}" data-date="${dateStr}" data-count="${photoList.length}"><span class="corner-count">${photoList.length > 1 ? photoList.length : ''}</span></div>` : '');
 
             cell.onclick = (e) => {
-                const target = e.target;
-                if(target.classList.contains('cal-photo-corner')){
+                const target = e.target.closest('.cal-photo-corner');
+                if(target){
                     e.stopPropagation();
-                    const src = target.getAttribute('data-photo');
-                    if(src){
-                        // 꽉 차게 보기 - 라이트박스
-                        if(typeof openPhotoLightbox === 'function'){ openPhotoLightbox(src); }
-                        else { window.open(src, '_blank'); }
+                    const data = target.getAttribute('data-photos');
+                    try {
+                        const list = JSON.parse(decodeURIComponent(data));
+                        if(list && list.length){
+                            if(typeof openPhotoLightbox === 'function'){ openPhotoLightbox(list); }
+                        }
+                    } catch(err){
+                        const src = target.getAttribute('data-photo');
+                        if(src && typeof openPhotoLightbox === 'function') openPhotoLightbox([src]);
                     }
                     return;
                 }
