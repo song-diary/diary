@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>다이어리&가계부 V184 SINGLE - 동영상 3중차단</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>다이어리&가계부 V185 SINGLE - 건강기능 제거</title>
 <style>
         :root {
             --bg-color: #f7f4f4;
@@ -1248,7 +1248,9 @@
         }
 
         /* ❤️ 건강 기록 입력 (혈압/혈당/복약) */
-        .health-input-box {
+        .health-input-box { display:none !important; /* V185 제거 */
+            }
+        .health-input-box-removed {
             background: #fdf0f2;
             border: 1px solid #f3c6cd;
             border-radius: 8px;
@@ -2710,10 +2712,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                     <span class="toggle-card-label">🎱 로또번호</span>
                     <label class="toggle-switch"><input type="checkbox" id="saju-show-lotto" checked onchange="onShowLottoToggle()"><span class="toggle-slider"></span></label>
                 </div>
-                <div class="toggle-card">
-                    <span class="toggle-card-label">❤️ 건강기록</span>
-                    <label class="toggle-switch"><input type="checkbox" id="settings-show-health" checked onchange="onShowHealthToggle()"><span class="toggle-slider"></span></label>
-                </div>
+                <!-- V185 건강기록 토글 제거 -->
                 <div class="toggle-card">
                     <span class="toggle-card-label">🖼️ 달력 사진 배경</span>
                     <label class="toggle-switch"><input type="checkbox" id="toggle-calendar-photo" checked onchange="setCalendarPhotoVisibility(this.checked)"><span class="toggle-slider"></span></label>
@@ -6153,7 +6152,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 
     // ❤️ 건강 기록 입력 사용 여부 (설정에서 켜고 끌 수 있음, 기본값 true)
     function getShowHealth() {
-        return localStorage.getItem('smartDiaryShowHealth') !== 'false';
+        return false; // V185 건강기능 완전 제거
     }
     function onShowHealthToggle() {
         const checked = document.getElementById('settings-show-health').checked;
@@ -6161,11 +6160,10 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         applyShowHealthVisibility();
     }
     function applyShowHealthVisibility() {
-        const show = getShowHealth();
         const inputSection = document.getElementById('health-input-section');
-        if (inputSection) inputSection.style.display = show ? '' : 'none';
+        if (inputSection) inputSection.style.display = 'none';
         const statsBtn = document.getElementById('health-stats-open-btn');
-        if (statsBtn) statsBtn.style.display = show ? '' : 'none';
+        if (statsBtn) statsBtn.style.display = 'none';
     }
 
     function onSajuTimeUnknownToggle() {
