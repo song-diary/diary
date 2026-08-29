@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>다이어리&가계부 V180 SINGLE - 빈문구+날짜폰트</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>다이어리&가계부 V184 SINGLE - 동영상 3중차단</title>
 <style>
         :root {
             --bg-color: #f7f4f4;
@@ -7711,6 +7711,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     }
 
     // 📷 사진만 표시 (확대보기/저장 기능은 수정폼으로 옮김 - 메인 목록에서는 항목을 터치하면 바로 수정폼이 열림)
+    function _blockedVideoCheck(item){ if(item && item.photo && item.photo.startsWith('data:video/')) return ''; }
     function renderPhotoHTML(item) {
         if (!item.photo) return '';
         const _src=getPhotoSrc(item.photo); if(_src && _src.indexOf('data:video')===0){ return `<div class="diary-photo-wrap"><video src="${_src}" controls style="width:100%; border-radius:10px;"></video></div>`; }
@@ -7906,20 +7907,22 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     function previewImage(event) {
         const file = event.target.files[0];
         if (!file) return;
+        if (file.type.startsWith('video/') || /\.(mp4|mov|avi|mkv|webm|3gp)$/i.test(file.name)) {
+            alert('동영상은 저장되지 않습니다. 사진만 선택해주세요! 📷');
+            event.target.value = '';
+            currentPhotoBase64 = null;
+            const wrap = document.getElementById('photo-preview-wrap');
+            if(wrap) wrap.style.display='none';
+            return;
+        }
         const reader = new FileReader();
         reader.onload = function(e) {
             const result = e.target.result;
-            if (file.type.startsWith('video/')) {
-                currentPhotoBase64 = result;
-                if (typeof currentMediaType !== 'undefined') currentMediaType = 'video';
+            compressImageForStorage(result, function(compressedDataUrl) {
+                currentPhotoBase64 = compressedDataUrl;
+                if (typeof currentMediaType !== 'undefined') currentMediaType = 'image';
                 updatePhotoPreview();
-            } else {
-                compressImageForStorage(result, function(compressedDataUrl) {
-                    currentPhotoBase64 = compressedDataUrl;
-                    if (typeof currentMediaType !== 'undefined') currentMediaType = 'image';
-                    updatePhotoPreview();
-                });
-            }
+            });
         };
         reader.readAsDataURL(file);
     }  // 📷 사진 첨부 시 용량을 줄여 localStorage 메모리 문제를 방지 (최대 폭/높이 제한 + JPEG 압축)
@@ -7988,7 +7991,10 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         if (fileInput) fileInput.value = '';
     }
 
+    function _orig_manualSaveDiary_block_check(){ if(currentPhotoBase64 && (currentPhotoBase64.startsWith('data:video/') || currentPhotoBase64.includes('video/'))){ alert('동영상은 저장할 수 없습니다!'); return; } }
     function manualSaveDiary() {
+        if(currentPhotoBase64 && (currentPhotoBase64.startsWith('data:video/') || currentPhotoBase64.includes('video/'))){ alert('동영상은 저장할 수 없습니다! 사진만 가능합니다.'); currentPhotoBase64=null; return; }
+        if(typeof currentMediaType!=='undefined' && currentMediaType==='video'){ alert('동영상은 저장할 수 없습니다!'); currentMediaType='image'; currentPhotoBase64=null; return; }
         const content = (currentFormMode === 'money')
             ? (moneyNoteInput ? moneyNoteInput.value.trim() : '')
             : textOutput.innerHTML.trim();
@@ -8511,6 +8517,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     camInput.dataset.wired='1';
     function handleFile(e){
       const file = e.target.files[0]; if(!file) return;
+      if(file.type.startsWith('video/') || /\.(mp4|mov|avi|mkv|webm|3gp)$/i.test(file.name)){ alert('동영상은 저장되지 않습니다. 사진만 선택해주세요! 📷'); e.target.value=''; return; }
       const dt = new DataTransfer(); dt.items.add(file);
       origInput.files = dt.files;
       if(typeof previewImage==='function'){ previewImage({target: origInput}); }
