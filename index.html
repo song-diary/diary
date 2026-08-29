@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>다이어리&가계부 V179 SINGLE - 완전동일</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>다이어리&가계부 V180 SINGLE - 빈문구+날짜폰트</title>
 <style>
         :root {
             --bg-color: #f7f4f4;
@@ -2435,6 +2435,32 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 
 
 /* V179 - 완전 동일 정렬 */
+
+
+/* V180 FIX 1 - 빈 상태 문구 압축 방지: 항상 전체 너비 */
+#diary-around-today-list .empty-state-hint,
+#diary-around-today-list.gallery-mode .empty-state-hint {
+  grid-column: 1 / -1 !important;
+  width: 100% !important;
+  white-space: normal !important;
+  word-break: keep-all !important;
+  font-size: var(--memo-font-size) !important;
+}
+
+/* V180 FIX 2 - 날짜 폰트 달력과 동일 */
+.form-date-row { font-size: var(--base-font-size) !important; }
+#form-date-input, #form-date-label, .form-date-label,
+#selected-date-title, #selected-date-title div {
+  font-size: var(--base-font-size) !important;
+}
+#selected-date-title div div:first-child {
+  font-size: var(--base-font-size) !important; /* dateLabel */
+}
+/* 달력 셀 폰트와 동일하게 */
+.cal-cell { font-size: var(--base-font-size) !important; }
+.form-date-row .form-date-label { font-size: var(--base-font-size) !important; }
+
+/* 3. 4버튼 유지 */
 
 </style>
   <link rel="manifest" href="./manifest.json">
@@ -7409,7 +7435,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             const annivText = getAnniversaryForDate(dateStr);
             const annivLineHTML = annivText ? `<div style="font-size:11px; font-weight:700; color:#9C6ADE; margin-top:2px; text-align:left;">제목 : ${annivText}</div>` : '';
             // V150: 양력 옆에 절기/기념일, 음력은 밑으로 좌측정렬 - 입력은 리스트/갤러리 밑으로
-            titleEl.innerHTML = `<div style="text-align:left;"><div style="font-size:13px; text-align:left;">${badge}${dateLabel}${specialHTML}</div>${lunarHTML}${annivLineHTML}</div>`;
+            titleEl.innerHTML = `<div style="text-align:left;"><div style="font-size: var(--base-font-size); text-align:left;">${badge}${dateLabel}${specialHTML}</div>${lunarHTML}${annivLineHTML}</div>`;
         }
 
         const diaries = getAllDiaries();
@@ -7540,7 +7566,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             const annivText = getAnniversaryForDate(dateStr);
             const annivLineHTML = annivText ? `<div style="font-size:11px; font-weight:700; color:#9C6ADE; margin-top:2px; text-align:left;">제목 : ${annivText}</div>` : '';
             // V150: 양력 옆에 절기/기념일, 음력은 밑으로 좌측정렬 - 입력은 리스트/갤러리 밑으로
-            titleEl.innerHTML = `<div style="text-align:left;"><div style="font-size:13px; text-align:left;">${badge}${dateLabel}${specialHTML}</div>${lunarHTML}${annivLineHTML}</div>`;
+            titleEl.innerHTML = `<div style="text-align:left;"><div style="font-size: var(--base-font-size); text-align:left;">${badge}${dateLabel}${specialHTML}</div>${lunarHTML}${annivLineHTML}</div>`;
         }
 
         const diaries = getAllDiaries();
