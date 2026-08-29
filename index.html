@@ -7126,7 +7126,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                         if(list.length && typeof openPhotoLightbox === 'function'){ openPhotoLightbox(list); }
                     } catch(err){
                         console.error(err);
-                        alert('사진 로드 실패, diary 개수:' + (typeof getAllDiaries==='function' ? getAllDiaries().length : 'unknown') + ' err:' + err.message);
+                        alert('사진을 불러올 수 없습니다: ' + err.message);
                     }
                     return;
                 }
@@ -7700,6 +7700,64 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     const PHOTO_STORE_NAME = 'photos';
     let __photoDbPromise = null;
 
+async function getPhotoSrcAsync(photoKeyOrData){
+  if(!photoKeyOrData) return '';
+  if(photoKeyOrData.indexOf('data:image')===0 || photoKeyOrData.indexOf('data:video')===0) return photoKeyOrData;
+  if(window.photoCache && window.photoCache[photoKeyOrData]) return window.photoCache[photoKeyOrData];
+  if(typeof photoCache !== 'undefined' && photoCache[photoKeyOrData]) return photoCache[photoKeyOrData];
+  try{
+    const db = await openPhotoDB();
+    const rec = await new Promise((res, rej) => {
+      const tx = db.transaction(PHOTO_STORE_NAME, 'readonly');
+      const store = tx.objectStore(PHOTO_STORE_NAME);
+      const r = store.get(photoKeyOrData);
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+    });
+    if(rec){
+      const src = rec.data || rec;
+      if(window.photoCache) window.photoCache[photoKeyOrData] = src;
+      if(typeof photoCache !== 'undefined') photoCache[photoKeyOrData] = src;
+      return src;
+    }
+  }catch(e){ console.error('IDB load fail', e); }
+  if(photoKeyOrData.length > 100) return photoKeyOrData;
+  return '';
+}
+async function getPhotosByDateAsync(dateStr){
+  const all = getAllDiaries();
+  const keys = [];
+  all.forEach(d => { if(normalizeDateStr(d.date)===dateStr && d.photo) keys.push(d.photo); });
+  const out = [];
+  for(const k of keys){
+    const s = await getPhotoSrcAsync(k);
+    if(s) out.push(s);
+  }
+  return out;
+}
+function openPhotoLightboxV2(srcOrList){
+  let list = Array.isArray(srcOrList) ? srcOrList : [srcOrList];
+  list = list.filter(s => s && s.length > 50);
+  if(list.length===0){ alert('저장된 사진을 찾을 수 없습니다.'); return; }
+  let overlay = document.getElementById('photo-lightbox-overlay');
+  if(!overlay){
+    overlay = document.createElement('div');
+    overlay.id = 'photo-lightbox-overlay';
+    overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.75); display:flex; align-items:center; justify-content:center; z-index:99999; overflow-y:auto; padding:20px 10px;';
+    document.body.appendChild(overlay);
+  }
+  const calCard = document.getElementById('calendar-card');
+  let calW = calCard ? calCard.getBoundingClientRect().width : 360;
+  calW = Math.min(calW * 0.95, window.innerWidth * 0.92);
+  const calH = calCard ? calCard.getBoundingClientRect().height : 340;
+  let imgsHTML = list.map(src => `<img src="${src}" style="display:block; width:${calW}px; max-width:92vw; max-height:${calH*1.1}px; height:auto; border-radius:10px; object-fit:contain; background:#fff; margin-bottom:10px; border:1px solid #eee;">`).join('');
+  overlay.innerHTML = `<div id="photo-lightbox-box" style="position:relative; background:#fff; padding:12px; border-radius:16px; box-shadow:0 10px 40px rgba(0,0,0,0.4); max-height:85vh; overflow-y:auto;"><div style="text-align:center; font-size:13px; color:#888; margin-bottom:8px;">📷 ${list.length}장</div>${imgsHTML}<div onclick="document.getElementById('photo-lightbox-overlay').style.display='none'" style="position:absolute; top:-10px; right:-10px; background:#fff; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; box-shadow:0 2px 8px rgba(0,0,0,0.2); cursor:pointer;">✖</div></div>`;
+  overlay.onclick = (e) => { if(e.target===overlay) overlay.style.display='none'; };
+  overlay.style.display='flex';
+}
+
+
+
     function openPhotoDB() {
         if (__photoDbPromise) return __photoDbPromise;
         __photoDbPromise = new Promise((resolve, reject) => {
@@ -7754,19 +7812,9 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     // 렌더링에서 사용: item.photo(키 문자열)를 실제 이미지 데이터(base64)로 변환
     function getPhotoSrc(photoKeyOrData) {
         if (!photoKeyOrData) return '';
+        // 혹시 아직 마이그레이션되지 않은 옛날 데이터(원본 base64가 그대로 남아있는 경우) 호환 처리
         if (photoKeyOrData.indexOf('data:image')===0 || photoKeyOrData.indexOf('data:video')===0) return photoKeyOrData;
-        // cache 로드 시도
-        if(!window.photoCache || Object.keys(window.photoCache).length===0){
-            try{
-                const cached = localStorage.getItem('smartDiaryPhotoCache');
-                if(cached){ window.photoCache = JSON.parse(cached); }
-            }catch(e){}
-        }
-        if(window.photoCache && window.photoCache[photoKeyOrData]) return window.photoCache[photoKeyOrData];
-        if(photoCache && photoCache[photoKeyOrData]) return photoCache[photoKeyOrData];
-        // 마지막으로 키 자체가 base64일 수도 있음
-        if(photoKeyOrData.length > 100) return photoKeyOrData;
-        return '';
+        return photoCache[photoKeyOrData] || '';
     }
 
     // ❤️ 건강 기록(혈압/혈당/복약) 배지 - 판정/색상 없이 입력한 수치만 그대로 표시
