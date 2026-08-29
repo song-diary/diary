@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>다이어리&가계부 V187 SINGLE - 가로모드</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>다이어리&가계부 V188 SINGLE - 자동리사이즈</title>
 <style>
         :root {
             --bg-color: #f7f4f4;
@@ -2474,6 +2474,10 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 @media screen and (max-width: 900px) and (orientation: landscape) {
   #calendar { zoom: 1.15; }
 }
+
+
+/* V188 자동 전환 애니메이션 */
+.container, #calendar-card, .cal-cell { transition: all 0.25s ease !important; }
 
 </style>
   <link rel="manifest" href="./manifest.json">
@@ -8538,6 +8542,33 @@ button[onclick="openBucketListModal()"] { display:none !important; }
   }
   document.addEventListener('DOMContentLoaded', setupPhotoButtons);
   setTimeout(setupPhotoButtons, 600);
+})();
+</script>
+
+
+<script>
+// V188 가로/세로 자동 리사이즈
+(function(){
+  function autoResizeCalendar(){
+    // 강제 리플로우
+    document.body.style.display='none';
+    document.body.offsetHeight;
+    document.body.style.display='';
+    // 달력 다시 그리기 있으면 호출
+    if(typeof renderCalendar==='function'){ try{ renderCalendar(); }catch(e){} }
+    if(typeof updateCalendarView==='function'){ try{ updateCalendarView(); }catch(e){} }
+    // 컨테이너 너비 강제 재계산
+    const cal = document.getElementById('calendar-card');
+    if(cal){ cal.style.display='none'; cal.offsetHeight; cal.style.display=''; }
+  }
+  window.addEventListener('orientationchange', function(){
+    setTimeout(autoResizeCalendar, 100);
+    setTimeout(autoResizeCalendar, 400);
+  });
+  window.addEventListener('resize', function(){
+    clearTimeout(window._resizeTimer);
+    window._resizeTimer = setTimeout(autoResizeCalendar, 150);
+  });
 })();
 </script>
 
