@@ -7095,39 +7095,38 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 indicatorHTML += `<div class="cal-anniv-label">${formatCalLabel(annivText)}</div>`;
             }
 
-            // V194 - 사진 여러 장 지원, 세모 클릭시 세로 리스트
-            let photoList = [];
+                        // V195 - 사진 여러 장 지원, 세모 클릭시 세로 리스트 - src는 attribute에 안 넣고 날짜로 조회
+            let photoListCount = 0;
             try {
                 const allDiaries = getAllDiaries();
-                allDiaries.forEach(d => {
-                    if(normalizeDateStr(d.date) === dateStr && d.photo){
-                        const src = getPhotoSrc(d.photo);
-                        if(src) photoList.push(src);
-                    }
-                });
+                photoListCount = allDiaries.filter(d => normalizeDateStr(d.date) === dateStr && d.photo).length;
             } catch(e){}
-            const hasPhotoFlag = photoList.length > 0;
+            const hasPhotoFlag = photoListCount > 0;
             if(hasPhotoFlag){
                 cell.classList.add('has-photo');
             }
-            const photoDataAttr = hasPhotoFlag ? encodeURIComponent(JSON.stringify(photoList)) : '';
             cell.innerHTML =
                 `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + 
-                (hasPhotoFlag ? `<div class="cal-photo-corner" data-photos="${photoDataAttr}" data-date="${dateStr}" data-count="${photoList.length}"><span class="corner-count">${photoList.length > 1 ? photoList.length : ''}</span></div>` : '');
+                (hasPhotoFlag ? `<div class="cal-photo-corner" data-date="${dateStr}" data-count="${photoListCount}"><span class="corner-count">${photoListCount > 1 ? photoListCount : ''}</span></div>` : '');
 
             cell.onclick = (e) => {
                 const target = e.target.closest('.cal-photo-corner');
                 if(target){
                     e.stopPropagation();
-                    const data = target.getAttribute('data-photos');
+                    const dStr = target.getAttribute('data-date');
                     try {
-                        const list = JSON.parse(decodeURIComponent(data));
-                        if(list && list.length){
-                            if(typeof openPhotoLightbox === 'function'){ openPhotoLightbox(list); }
-                        }
+                        const allDiaries = getAllDiaries();
+                        const list = [];
+                        allDiaries.forEach(d => {
+                            if(normalizeDateStr(d.date) === dStr && d.photo){
+                                const src = getPhotoSrc(d.photo);
+                                if(src) list.push(src);
+                            }
+                        });
+                        if(list.length && typeof openPhotoLightbox === 'function'){ openPhotoLightbox(list); }
                     } catch(err){
-                        const src = target.getAttribute('data-photo');
-                        if(src && typeof openPhotoLightbox === 'function') openPhotoLightbox([src]);
+                        console.error(err);
+                        alert('사진을 불러올 수 없습니다: ' + err.message);
                     }
                     return;
                 }
