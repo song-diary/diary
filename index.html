@@ -2766,11 +2766,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                     <label class="toggle-switch"><input type="checkbox" id="saju-show-lotto" checked onchange="onShowLottoToggle()"><span class="toggle-slider"></span></label>
                 </div>
                 <!-- V185 건강기록 토글 제거 -->
-                <div class="toggle-card">
-                    <span class="toggle-card-label">🖼️ 달력 사진 배경</span>
-                    <label class="toggle-switch"><input type="checkbox" id="toggle-calendar-photo" checked onchange="setCalendarPhotoVisibility(this.checked)"><span class="toggle-slider"></span></label>
                 </div>
-            </div>
 
             <div class="settings-section">
                 <label>🏷️ 지출 계정 과목 관리</label>
@@ -4325,7 +4321,8 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     let isMoneySummaryVisible = localStorage.getItem('smartDiaryMoneySummaryVisible') !== 'false';
     let isCategoryStatsVisible = localStorage.getItem('smartDiaryCategoryStatsVisible') !== 'false';
     let isSearchFilterVisible = localStorage.getItem('smartDiarySearchFilterVisible') !== 'false';
-    let isCalendarPhotoVisible = localStorage.getItem('smartDiaryCalendarPhotoVisible') !== 'false';
+    let isCalendarPhotoVisible = false; // removed
+    let _old_isCalendarPhotoVisible = localStorage.getItem('smartDiaryCalendarPhotoVisible') !== 'false';
 
     let currentMoneyType = 'expense';
 
@@ -4654,7 +4651,8 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         diarySearchDivider.style.display = isSearchFilterVisible ? 'flex' : 'none';
     }
 
-    function setCalendarPhotoVisibility(visible) {
+    function setCalendarPhotoVisibility(visible) { isCalendarPhotoVisible=false; return; }
+    function _orig_setCalendarPhotoVisibility(visible) {
         isCalendarPhotoVisible = !!visible;
         localStorage.setItem('smartDiaryCalendarPhotoVisible', visible ? 'true' : 'false');
         console.log('달력사진배경', visible);
