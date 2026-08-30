@@ -4321,8 +4321,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     let isMoneySummaryVisible = localStorage.getItem('smartDiaryMoneySummaryVisible') !== 'false';
     let isCategoryStatsVisible = localStorage.getItem('smartDiaryCategoryStatsVisible') !== 'false';
     let isSearchFilterVisible = localStorage.getItem('smartDiarySearchFilterVisible') !== 'false';
-    let isCalendarPhotoVisible = false; // removed
-    let _old_isCalendarPhotoVisible = localStorage.getItem('smartDiaryCalendarPhotoVisible') !== 'false';
+    let isCalendarPhotoVisible = false;
 
     let currentMoneyType = 'expense';
 
@@ -4651,8 +4650,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         diarySearchDivider.style.display = isSearchFilterVisible ? 'flex' : 'none';
     }
 
-    function setCalendarPhotoVisibility(visible) { isCalendarPhotoVisible=false; return; }
-    function _orig_setCalendarPhotoVisibility(visible) {
+    function setCalendarPhotoVisibility(visible) {
         isCalendarPhotoVisible = !!visible;
         localStorage.setItem('smartDiaryCalendarPhotoVisible', visible ? 'true' : 'false');
         console.log('달력사진배경', visible);
@@ -7547,7 +7545,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                         let ov=document.getElementById('photo-lightbox-overlay');
                         if(!ov){ ov=document.createElement('div'); ov.id='photo-lightbox-overlay'; ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:99999;padding:20px;'; document.body.appendChild(ov); }
                         const cal=document.getElementById('calendar-card'); let w=cal?cal.getBoundingClientRect().width:360; w=Math.min(w*0.95, innerWidth*0.92);
-                        ov.innerHTML=`<div style="background:#fff;padding:12px;border-radius:16px;position:relative;"><img src="${src}" style="width:${w}px;max-width:92vw;max-height:70vh;border-radius:10px;object-fit:contain;"><div onclick="this.closest('#photo-lightbox-overlay').style.display='none'" style="position:absolute;top:-8px;right:-8px;background:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.2);cursor:pointer;">✖</div></div>`;
+                        ov.innerHTML=`<div style="background:#fff;padding:12px;border-radius:16px;position:relative;"><img src="${src}" style="width:${w}px;max-width:92vw;max-height:70vh;border-radius:10px;object-fit:contain;"><div onclick="this.closest('#photo-lightbox-overlay').style.display='none'" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.75);color:#fff;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.2);cursor:pointer;">✖</div></div>`;
                         ov.style.display='flex'; ov.onclick=(ev)=>{ if(ev.target===ov) ov.style.display='none'; };
                     }
                 });
@@ -7695,7 +7693,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                         let ov=document.getElementById('photo-lightbox-overlay');
                         if(!ov){ ov=document.createElement('div'); ov.id='photo-lightbox-overlay'; ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:99999;padding:20px;'; document.body.appendChild(ov); }
                         const cal=document.getElementById('calendar-card'); let w=cal?cal.getBoundingClientRect().width:360; w=Math.min(w*0.95, innerWidth*0.92);
-                        ov.innerHTML=`<div style="background:#fff;padding:12px;border-radius:16px;position:relative;"><img src="${src}" style="width:${w}px;max-width:92vw;max-height:70vh;border-radius:10px;object-fit:contain;"><div onclick="this.closest('#photo-lightbox-overlay').style.display='none'" style="position:absolute;top:-8px;right:-8px;background:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.2);cursor:pointer;">✖</div></div>`;
+                        ov.innerHTML=`<div style="background:#fff;padding:12px;border-radius:16px;position:relative;"><img src="${src}" style="width:${w}px;max-width:92vw;max-height:70vh;border-radius:10px;object-fit:contain;"><div onclick="this.closest('#photo-lightbox-overlay').style.display='none'" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.75);color:#fff;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.2);cursor:pointer;">✖</div></div>`;
                         ov.style.display='flex'; ov.onclick=(ev)=>{ if(ev.target===ov) ov.style.display='none'; };
                     }
                 });
@@ -7771,7 +7769,7 @@ async function showPhotosForDate(dateStr){
     for(const src of list){
       html += `<img src="${src}" style="display:block;width:${calW}px;max-width:92vw;max-height:60vh;height:auto;border-radius:10px;margin-bottom:10px;object-fit:contain;background:#f5f5f5;">`;
     }
-    html += `<div onclick="document.getElementById('photo-lightbox-overlay').style.display='none'" style="position:absolute;top:-8px;right:-8px;background:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.2);cursor:pointer;">✖</div></div>`;
+    html += `<div onclick="document.getElementById('photo-lightbox-overlay').style.display='none'" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.75);color:#fff;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.2);cursor:pointer;">✖</div></div>`;
     overlay.innerHTML = html;
     overlay.style.display='flex';
     overlay.onclick = (e)=>{ if(e.target===overlay) overlay.style.display='none'; };
