@@ -4018,32 +4018,42 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     }
 
     function sajuGenerateLottoNumbers(seedStr, baseAnchorNumbers) {
-        let main = [], bonus = null;
-        for (let attempt = 0; attempt < 50; attempt++) {
-            const rng = sajuSeededRng(sajuHashToInt(seedStr + '_try' + attempt));
-            const picked = new Set();
-            (baseAnchorNumbers || []).forEach(base => {
-                const candidates = sajuAnchorCandidates(base);
-                if (candidates.length > 0) picked.add(candidates[Math.floor(rng() * candidates.length)]);
-            });
-            // 당첨확률(역대 최다 출현) 통계 번호 중 하나를 후보에 추가로 섞음
-            picked.add(SAJU_LOTTO_HOT_NUMBERS[Math.floor(rng() * SAJU_LOTTO_HOT_NUMBERS.length)]);
-            let guard = 0;
-            while (picked.size < 6 && guard < 500) { picked.add(Math.floor(rng() * 45) + 1); guard++; }
-            const candidate = Array.from(picked).sort((a, b) => a - b);
-
-            if (!sajuHasConsecutiveRun(candidate, 3)) {
-                main = candidate;
-                let guard2 = 0;
-                do { bonus = Math.floor(rng() * 45) + 1; guard2++; } while (picked.has(bonus) && guard2 < 500);
-                break;
+        // V220 - 100,000명 중 1등 사주로 로또 (보너스 없음)
+        try{
+            // 해시 & 시드 RNG (기존 로직 재사용)
+            let h=2166136261; for(let i=0;i<seedStr.length;i++){ h^=seedStr.charCodeAt(i); h=Math.imul(h,16777619);} h>>>=0;
+            let s=h; const rng=function(){ s=(s*1664525+1013904223)>>>0; return s/4294967296; };
+            const gans = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+            const tenGods = ['비견','겁재','식신','상관','편재','정재','편관','정관','편인','정인'];
+            const baseScore = { '비견':68,'겁재':62,'식신':78,'상관':65,'편재':82,'정재':75,'편관':60,'정관':72,'편인':70,'정인':80 };
+            let best=null; let bestScore=-1;
+            for(let i=0;i<100000;i++){
+                const gan = gans[Math.floor(rng()*10)];
+                const tg = tenGods[Math.floor(rng()*10)];
+                let sc = (baseScore[tg]||70) + Math.floor(rng()*20);
+                if(sc>bestScore){ bestScore=sc; best={ year:1960+Math.floor(rng()*50), gan:gan, tenGod:tg, score:sc }; }
             }
-            // 3연속 이상 나오면 다음 시도로 재추첨 (그래도 같은 날짜 기준으로는 항상 같은 결과)
-            main = candidate; // 혹시 50번 다 실패해도 마지막 후보라도 반환
+            // best 기반으로 번호 생성
+            const mapGan = { '甲':[3,8,13,23,33], '乙':[3,8,18,28,38], '丙':[2,7,12,27,37], '丁':[2,7,17,22,42], '戊':[5,10,15,25,35], '己':[5,10,20,30,40], '庚':[4,9,14,29,39], '辛':[4,9,19,34,44], '壬':[1,6,11,26,36], '癸':[1,6,16,21,41] };
+            const mapTG = { '비견':[11,22,33], '겁재':[12,23,34], '식신':[3,13,23], '상관':[7,17,27], '편재':[8,18,28], '정재':[5,15,25], '편관':[9,19,29], '정관':[6,16,26], '편인':[2,12,22], '정인':[4,14,24] };
+            const pool = new Set();
+            (mapGan[best.gan]||[]).forEach(n=>pool.add(n));
+            (mapTG[best.tenGod]||[]).forEach(n=>pool.add(n));
+            pool.add((best.score % 45)+1);
+            pool.add((best.year % 45)+1);
+            let arr = Array.from(pool);
+            while(arr.length<6){ const n=Math.floor(rng()*45)+1; if(!arr.includes(n)) arr.push(n); }
+            for(let i=arr.length-1;i>0;i--){ const j=Math.floor(rng()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
+            const main = arr.slice(0,6).sort((a,b)=>a-b);
+            try{ localStorage.setItem('lottoBest_'+seedStr.slice(0,10), JSON.stringify(best)); }catch(e){}
+            return { main: main, bonus: null, luckiest: best };
+        }catch(e){
+            // 절대 안 터지게 fallback
+            return { main: [3,11,23,28,34,41], bonus: null, luckiest: null };
         }
-        return { main, bonus };
     }
 
+    // ----- 📅 이번주(월~토) 행운번호 누적 저장
     // ----- 📅 이번주(월~토) 행운번호 누적 저장: 월요일마다 자동 리셋 -----
     function sajuGetMondayOfWeek(dateStr) {
         const d = parseDateObj(dateStr);
