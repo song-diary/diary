@@ -899,7 +899,7 @@
         .fp-cards { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
         .fp-card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 12px 14px; }
         .fp-card .fpc-label { font-size: 12.5px; font-weight: 700; color: #C7B8FF; margin-bottom: 4px; }
-        .fp-card .fpc-text { font-size: 14.5px; line-height: 1.6; color: rgba(242,239,255,0.88); }
+        .fp-card .fpc-text { font-size: 16.5px; line-height: 1.6; color: rgba(242,239,255,0.88); }
         .fp-lotto-card { margin-top: 12px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 13px 14px; text-align: center; cursor: pointer; transition: background 0.15s, transform 0.1s; }
         .fp-lotto-card:active { background: rgba(255,255,255,0.1); transform: scale(0.99); }
         .fp-lotto-title { font-size: 13.5px; font-weight: 700; color: #F2EFFF; margin-bottom: 10px; }
@@ -2517,7 +2517,11 @@ button[onclick="openBucketListModal()"] { display:none !important; }
   font-weight: 800 !important;
   color: #6a4a8a !important;
 }
-</style>
+
+        /* V226 hides */
+        .fp-save-btn-hidden{display:none !important;}
+        .fp-prescription-hidden{display:none !important;}
+        </style>
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#f59e0b">
 </head>
@@ -4017,25 +4021,20 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         return false;
     }
 
-    // V223 - 토요일 추첨일 기준 100,000명 중 1등 로또 (보너스 없음)
     function sajuGetSaturdayStr(){
         try{
             const today = new Date();
-            const day = today.getDay(); // 0=일
-            let diff = 6 - day; // 토요일까지
-            if(diff < 0) diff += 7; // 일요일이면 다음 토요일
+            const day = today.getDay();
+            let diff = 6 - day;
+            if(diff < 0) diff += 7;
             const sat = new Date(today);
             sat.setDate(today.getDate() + diff);
-            const yyyy = sat.getFullYear();
-            const mm = String(sat.getMonth()+1).padStart(2,'0');
-            const dd = String(sat.getDate()).padStart(2,'0');
-            return yyyy+'-'+mm+'-'+dd;
+            return sat.getFullYear()+'-'+String(sat.getMonth()+1).padStart(2,'0')+'-'+String(sat.getDate()).padStart(2,'0');
         }catch(e){ return getTodayStr(); }
     }
     function sajuGenerateLottoNumbers(seedStr, baseAnchorNumbers) {
         try{
             const saturdayStr = sajuGetSaturdayStr();
-            // 토요일 기준 100,000명 중 1등 찾기
             let h=2166136261; const satSeed = saturdayStr + '_SAT_100K';
             for(let i=0;i<satSeed.length;i++){ h^=satSeed.charCodeAt(i); h=Math.imul(h,16777619);} h>>>=0;
             let s=h; const rngSat=function(){ s=(s*1664525+1013904223)>>>0; return s/4294967296; };
@@ -4049,7 +4048,6 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 let sc = (baseScore[tg]||70) + Math.floor(rngSat()*20);
                 if(sc>bestScore){ bestScore=sc; best={ year:1960+Math.floor(rngSat()*50), gan:gan, tenGod:tg, score:sc, saturday:saturdayStr }; }
             }
-            // 오늘 날짜로 번호 섞기 (월~토 매일 다른 6개, 근데 뿌리는 토요일 1등)
             let h2=2166136261; const todaySeed = seedStr + '_' + best.year + '_' + best.gan;
             for(let i=0;i<todaySeed.length;i++){ h2^=todaySeed.charCodeAt(i); h2=Math.imul(h2,16777619);} h2>>>=0;
             let s2=h2; const rng=function(){ s2=(s2*1664525+1013904223)>>>0; return s2/4294967296; };
@@ -4066,7 +4064,8 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             const main = arr.slice(0,6).sort((a,b)=>a-b);
             try{ localStorage.setItem('lottoBest_SAT_'+saturdayStr, JSON.stringify(best)); }catch(e){}
             try{ localStorage.setItem('lottoBest_'+seedStr.slice(0,10), JSON.stringify(best)); }catch(e){}
-            setTimeout(function(){ try{ const el=document.getElementById('fortune-lotto-story'); if(el&&best){ el.textContent = best.saturday+' 추첨 '+best.year+'년생 '+best.gan+'일간 '+best.tenGod+' '+best.score+'점 1등 기운'; } }catch(e){} }, 120);
+            try{ sajuRecordTodayLottoWeekly(main); }catch(e){}
+            setTimeout(function(){ try{ const el=document.getElementById('fortune-lotto-story'); if(el&&best){ el.textContent = best.saturday+' 추첨 '+best.year+'년생 '+best.gan+'일간 '+best.tenGod+' '+best.score+'점 1등'; } }catch(e){} }, 120);
             return { main: main, bonus: null, luckiest: best };
         }catch(e){
             return { main: [3,11,23,28,34,41], bonus: null, luckiest: null };
@@ -6457,22 +6456,22 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 
             <div style="margin-top:14px;display:grid;gap:10px;">
                 <div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:12px;">
-                    <div style="font-size:12px;color:#FFD98E;font-weight:700;margin-bottom:4px;">💬 전체 흐름</div>
+                    <div style="font-size:12px;color:#FFD98E;font-weight:700;margin-bottom:4px;">🌟 총운</div>
                     <div style="font-size:13.5px;line-height:1.5;color:rgba(255,255,255,0.85);">${friendlyTotal}..</div>
                 </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
                     <div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:10px;">
-                        <div style="font-size:11px;color:#7CFF9B;font-weight:700;">💰 돈</div>
+                        <div style="font-size:11px;color:#7CFF9B;font-weight:700;">💰 재물운</div>
                         <div style="font-size:12.5px;line-height:1.4;margin-top:3px;color:rgba(255,255,255,0.8);">${detailMoney.substring(0,60)}..</div>
                     </div>
                     <div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:10px;">
-                        <div style="font-size:11px;color:#FF9AC2;font-weight:700;">💗 마음</div>
+                        <div style="font-size:11px;color:#FF9AC2;font-weight:700;">💗 애정운</div>
                         <div style="font-size:12.5px;line-height:1.4;margin-top:3px;color:rgba(255,255,255,0.8);">${detailLove.substring(0,60)}..</div>
                     </div>
                 </div>
             </div>
 
-            <div style="margin-top:14px;background:linear-gradient(135deg,#2A2E5E,#24274D);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:14px;">
+            <div style="margin-top:14px;display:none;background:linear-gradient(135deg,#2A2E5E,#24274D);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:14px;">
                 <div style="font-size:12px;font-weight:800;color:#FFD98E;margin-bottom:8px;">💊 오늘의 처방전</div>
                 <div style="display:grid;gap:6px;font-size:13px;color:rgba(255,255,255,0.85);">
                     <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">행운색</span><span>🎨 ${color}</span></div>
@@ -6483,7 +6482,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 </div>
             </div>
 
-            <div class="fp-lotto-card" onclick="closeFortunePopup(); setTimeout(()=>openLottoDrawModal(), 150);" style="margin-top:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:13px 14px;text-align:center;cursor:pointer;"><div class="fp-lotto-title">🎱 이번 주 토요일 1등 노리는 번호</div><div class="lotto-balls-row" id="fortune-lotto-balls"></div><div id="fortune-lotto-story" style="font-size:11px;color:#FFD98E;margin-top:8px;font-weight:700;"></div><div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:3px;">토요일 추첨일 기준 100,000명 중 1등 기운 · 1게임 1천원</div></div><div style="margin-top:12px;display:flex;gap:8px;"><button onclick="saveFortuneCard()" style="flex:1;background:#fff;color:#23264A;border:none;padding:10px;border-radius:10px;font-weight:800;font-size:13px;">📸 이미지 저장</button>
+            <div class="fp-lotto-card" onclick="closeFortunePopup(); setTimeout(()=>openLottoDrawModal(), 150);" style="margin-top:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:13px 14px;text-align:center;cursor:pointer;"><div class="fp-lotto-title">🎱 이번 주 토요일 1등 노리는 번호</div><div class="lotto-balls-row" id="fortune-lotto-balls"></div><div id="fortune-lotto-story" style="font-size:11px;color:#FFD98E;margin-top:8px;font-weight:700;"></div><div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:3px;">토요일 기준 100,000명 중 1등 · 1게임 1천원</div></div><div style="margin-top:12px;display:none;"><button onclick="saveFortuneCard()" style="flex:1;background:#fff;color:#23264A;border:none;padding:10px;border-radius:10px;font-weight:800;font-size:13px;">📸 이미지 저장</button>
                 </div><div style="margin-top:14px;"><button onclick="closeFortunePopup()" style="width:100%;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:14px;border-radius:14px;font-weight:800;font-size:15px;">✖ 종료</button></div>`;
 
         try{ const lottoNumbers = typeof sajuGetLottoNumbers==='function' ? sajuGetLottoNumbers() : [3,11,23,28,34,41]; const ballsEl = document.getElementById('fortune-lotto-balls'); if(ballsEl){ const colors=['#FFD98E','#FF9AC2','#8EC5FC','#A0E7A0','#C7B8FF','#FFB07C']; ballsEl.innerHTML = lottoNumbers.map((n,i)=>`<div class="lotto-ball" style="background:${colors[i%colors.length]}">${n}</div>`).join(''); } }catch(e){} fortunePopupOverlay.classList.add('active'); lockBodyScroll(); } function saveFortuneCard_DISABLED(){
