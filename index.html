@@ -6243,9 +6243,32 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         const subEl = document.getElementById('fortune-teaser-sub');
         if (!textEl) return;
         if (teaserEl) teaserEl.style.display = getShowFortune() ? '' : 'none';
+        try{
+            if (sajuBirthInfo && sajuBirthInfo.date && typeof sajuGetEnhancedFortune==='function') {
+                const enh = sajuGetEnhancedFortune();
+                if(enh){
+                    const tenGod = enh.tenGodGan;
+                    const oneLiners = {
+                        '비견': '내 고집대로 가도 괜찮은 날, 근데 옆도 한번 봐줘요',
+                        '겁재': '경쟁심이 올라와요, 비교 말고 내 페이스대로',
+                        '식신': '아이디어가 맛있게 떠오르는 날이에요',
+                        '상관': '하고 싶은 말이 많아지는 날이에요',
+                        '편재': '작은 기회가 톡톡 들어오는 날이에요',
+                        '정재': '차곡차곡, 실속 챙기는 날이에요',
+                        '편관': '조금 부담돼도 해내면 레벨업하는 날',
+                        '정관': '믿을 만한 사람으로 보이는 날이에요',
+                        '편인': '번뜩이는 영감이 오는 날, 메모해둬요',
+                        '정인': '누가 나를 챙겨주고, 나도 배우는 날이에요'
+                    };
+                    textEl.textContent = '오늘의 운세';
+                    subEl.textContent = oneLiners[tenGod] || (enh.base ? enh.base.total.split('.')[0] : '오늘 하루, 나에게 맞는 기운 확인하기');
+                    return;
+                }
+            }
+        }catch(e){}
         if (sajuBirthInfo && sajuBirthInfo.date) {
-            textEl.textContent = '오늘의 운세 보기';
-            subEl.textContent = '오늘 하루, 나에게 맞는 기운 확인하기';
+            textEl.textContent = '오늘의 운세';
+            subEl.textContent = '아이디어가 맛있게 떠오르는 날이에요';
         } else {
             textEl.textContent = '오늘의 운세 시작하기';
             subEl.textContent = '생년월일 입력하고 매일 아침 운세 받아보기';
