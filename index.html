@@ -6271,12 +6271,38 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         return { gz: todayGz, elem: sajuElementOfGan(todayGz[0]), dateObj: today };
     }
 
+    
+    // V208 - 친근한 운세 헬퍼
+    const FRIENDLY_TEN_GOD = {
+        '비견': { name:'내 편', desc:'나랑 비슷한 에너지', emoji:'👥' },
+        '겁재': { name:'경쟁', desc:'부딪히면서 배우는', emoji:'⚔️' },
+        '식신': { name:'아이디어', desc:'맛있는 생각', emoji:'💡' },
+        '상관': { name:'표현', desc:'하고 싶은 말', emoji:'🎤' },
+        '편재': { name:'기회', desc:'들어오는 돈', emoji:'💸' },
+        '정재': { name:'실속', desc:'차곡차곡 모으는', emoji:'🐷' },
+        '편관': { name:'도전', desc:'나를 키우는', emoji:'🏔️' },
+        '정관': { name:'책임', desc:'믿고 맡기는', emoji:'🏢' },
+        '편인': { name:'영감', desc:'번뜩이는', emoji:'✨' },
+        '정인': { name:'배움', desc:'챙겨주는', emoji:'📚' }
+    };
+    const FRIENDLY_COLORS = ['미스트 그린','코랄 핑크','스카이 블루','버터 옐로우','라벤더 퍼플','피치 오렌지','민트','크림 베이지'];
+    const FRIENDLY_ACTIONS = [
+        '오전 10분 산책하기','책상 위 물건 3개만 정리','좋아하는 노래 1곡 크게 듣기','물 한 컵 천천히 마시기',
+        '안 쓰는 물건 1개 버리기','친구에게 안부 한 마디','5분 스트레칭','좋아하는 향 맡기'
+    ];
+    const FRIENDLY_AVOIDS = [
+        '오후 늦게 중요한 결정','단톡방에서 논쟁','밤늦게 쇼핑','빈 속으로 커피',
+        '같은 얘기 세 번 이상 반복','갑자기 큰돈 쓰기'
+    ];
+    function getDailySeed(str){ let h=0; for(let i=0;i<str.length;i++) h=(h*31+str.charCodeAt(i))%100000; return h; }
+    function pickBySeed(arr, seed, offset=0){ return arr[(seed+offset)%arr.length]; }
+
+
     function openFortunePopup() {
         const bodyEl = document.getElementById('fortune-popup-body');
         if (!bodyEl) return;
 
         if (!sajuBirthInfo || !sajuBirthInfo.date || !sajuDayMasterElem) {
-            // 아직 생년월일이 없는 경우: 설정 유도 화면
             bodyEl.innerHTML = `
                 <div class="fp-hero">
                     <div class="fp-eyebrow">🔮 오늘 하루 브리핑</div>
@@ -6293,94 +6319,135 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         const enhanced = sajuGetEnhancedFortune();
         const f = enhanced ? enhanced.base : SAJU_FORTUNE['비겁'];
         const score = enhanced ? enhanced.score : f.score;
+        // 어제 점수 비교
+        const yKey = 'fortuneScore_' + (enhanced ? enhanced.dateObj.toISOString().slice(0,10) : new Date().toISOString().slice(0,10));
+        const prevScore = parseInt(localStorage.getItem('fortuneScore_prev')||'0');
+        const delta = prevScore ? score - prevScore : 0;
+        localStorage.setItem('fortuneScore_prev', score);
+        localStorage.setItem(yKey, score);
+
         const weekday = ['일','월','화','수','목','금','토'][enhanced.dateObj.getDay()];
-        const dateLabel = `${enhanced.dateObj.getMonth()+1}월 ${enhanced.dateObj.getDate()}일 (${weekday}) ${enhanced.todayGz}`;
-        const tenGodLabel = enhanced ? `${enhanced.todayGan}(${enhanced.tenGodGan})` : '';
-        const hapChungHTML = enhanced && enhanced.hapChung.length > 0 ? enhanced.hapChung.map(h => `<div class="fp-hap-item">${h.type === '충' ? '⚡' : '💞'} ${h.text}</div>`).join('') : '<div class="fp-hap-item">오늘은 특별한 합충 없이 무난한 흐름이에요</div>';
-        
-        // 개인화된 상세 운세 - 10신 기준
+        const dateLabel = `${enhanced.dateObj.getMonth()+1}월 ${enhanced.dateObj.getDate()}일 (${weekday})`;
+        const tenGod = enhanced ? enhanced.tenGodGan : '비견';
+        const friendly = FRIENDLY_TEN_GOD[tenGod] || {name:tenGod, desc:'', emoji:'🔮'};
+
+        // 씨드 기반 랜덤 - 날짜+일간으로 매일 같음
+        const seedStr = (enhanced ? enhanced.dateObj.toISOString().slice(0,10) : '') + (sajuPillars?.day?.gan||'');
+        const seed = getDailySeed(seedStr);
+        const color = pickBySeed(FRIENDLY_COLORS, seed, 0);
+        const action = pickBySeed(FRIENDLY_ACTIONS, seed, 1);
+        const avoid = pickBySeed(FRIENDLY_AVOIDS, seed, 2);
+        const num1 = (seed % 9) + 1;
+        const num2 = ((seed+3) % 9) + 1;
+        const goodTime = pickBySeed(['09:00~11:00','11:00~13:00','14:00~16:00','19:00~21:00','07:00~09:00'], seed, 3);
+
+        // 친근한 한줄
+        const oneLiners = {
+            '비견': '내 고집대로 가도 괜찮은 날, 근데 옆도 한번 봐줘요',
+            '겁재': '경쟁심이 올라와요, 비교 말고 내 페이스대로',
+            '식신': '아이디어가 맛있게 떠오르는 날이에요',
+            '상관': '하고 싶은 말이 많아지는 날, 말하기 전에 한 번만 더',
+            '편재': '작은 기회가 톡톡 들어와요, 가볍게 잡아봐요',
+            '정재': '차곡차곡, 오늘은 실속 챙기는 날',
+            '편관': '조금 부담돼도 해내면 레벨업하는 날',
+            '정관': '믿을 만한 사람으로 보이는 날이에요',
+            '편인': '번뜩이는 영감이 오는 날, 메모해둬요',
+            '정인': '누가 나를 챙겨주고, 나도 배우는 날'
+        };
+        const oneLine = oneLiners[tenGod] || f.total.split('.')[0];
+
+        // 4대 운세 친근하게 재작성
         let detailTotal = f.total, detailMoney = f.money, detailLove = f.love;
-        if(enhanced && SAJU_FORTUNE_DETAIL[enhanced.tenGodGan]){
-            const dmGanName = sajuPillars.day.gan;
+        if(enhanced && SAJU_FORTUNE_DETAIL[tenGod]){
+            const dm = sajuPillars.day.gan;
             const strength = enhanced.strength;
-            try {
-                detailTotal = SAJU_FORTUNE_DETAIL[enhanced.tenGodGan].total(dmGanName, strength);
-                detailMoney = SAJU_FORTUNE_DETAIL[enhanced.tenGodGan].money(dmGanName);
-                detailLove = SAJU_FORTUNE_DETAIL[enhanced.tenGodGan].love(dmGanName);
-                // 합충 있으면 추가 문구
-                if(enhanced.hapChung.some(h=>h.type==='육합'||h.type==='삼합')){
-                    detailLove += ' 게다가 오늘 삼합/육합으로 인연이 붙는 날이라 만남이 더 기대돼요!';
-                }
-                if(enhanced.hapChung.some(h=>h.type==='충')){
-                    detailTotal += ' 오늘 충이 있어 변동이 있을 수 있으니 무리한 이동보다 정리에 집중하세요.';
-                }
-                if(enhanced.todayGz && enhanced.useful && enhanced.todayGz[0] && sajuElementOfGan(enhanced.todayGz[0]) === enhanced.useful.god){
-                    detailTotal += ` 오늘 ${enhanced.useful.god}(${enhanced.useful.reason}) 기운이 들어와서 당신에게 특히 좋은 날이에요!`;
-                }
-            } catch(e){}
+            try{
+                detailTotal = SAJU_FORTUNE_DETAIL[tenGod].total(dm, strength);
+                detailMoney = SAJU_FORTUNE_DETAIL[tenGod].money(dm);
+                detailLove = SAJU_FORTUNE_DETAIL[tenGod].love(dm);
+            }catch(e){}
         }
-        const showLotto = getShowLotto();
-        const lottoMain = showLotto ? sajuGetTodayLottoMain() : null;
-        const lottoBallsHTML = lottoMain ? lottoMain.map(n => `<div class="lotto-ball" style="background:${sajuLottoBallColor(n)}">${n}</div>`).join('') : '';
-        const lottoCardHTML = showLotto ? `
-            <div class="fp-lotto-card" onclick="closeFortunePopup(); openLottoDrawModal();">
-                <div class="fp-lotto-title">🎱 오늘의 행운 로또번호</div>
-                <div class="lotto-balls-row">${lottoBallsHTML}</div>
-                <div class="fp-lotto-note">당신의 행운 번호로 만들었어요</div>
-                <div class="fp-lotto-link">🎲 이 번호로 직접 뽑아보기 →</div>
-            </div>` : '';
+        // 친근하게 요약
+        const friendlyTotal = detailTotal.replace(/비견|겁재|식신|상관|편재|정재|편관|정관|편인|정인/g, '').replace(/일간|일주/g,'나').substring(0,90);
+        
+        // 어제 일기 연동
+        let diaryHint = '';
+        try{
+            const all = getAllDiaries();
+            const yDate = new Date(enhanced.dateObj); yDate.setDate(yDate.getDate()-1);
+            const yStr = yDate.toISOString().slice(0,10);
+            const yDiaries = all.filter(d=>normalizeDateStr(d.date)===yStr && d.text);
+            if(yDiaries.length>0){
+                const txt = yDiaries[0].text.slice(0,30);
+                if(txt.includes('회사')||txt.includes('일')||txt.includes('직장')) diaryHint = "어제 '회사' 얘기 썼죠? 오늘 오전에 실마리 보여요";
+                else if(txt.includes('돈')||txt.includes('월급')) diaryHint = "어제 돈 고민 썼죠? 오늘은 지출 전에 한 번만 더 생각해봐요";
+                else if(txt.includes('연애')||txt.includes('사랑')||txt.includes('남친')||txt.includes('여친')) diaryHint = "어제 마음 썼던 그 얘기, 오늘은 가볍게 연락해도 좋아요";
+                else diaryHint = `어제 쓴 "${txt}..." 그 마음, 오늘은 좀 가볍게 가져가도 돼요`;
+            }
+        }catch(e){}
+
+        const deltaHTML = delta>0 ? `<span style="color:#7CFF9B;font-size:12px;">▲ ${delta} 어제보다 좋아요</span>` : delta<0 ? `<span style="color:#FF9AA2;font-size:12px;">▼ ${Math.abs(delta)} 살짝 내려감</span>` : `<span style="color:rgba(255,255,255,0.5);font-size:12px;">어제와 비슷</span>`;
 
         bodyEl.innerHTML = `
             <div class="fp-hero">
-                <div class="fp-hero-top">
-                    <div class="fp-eyebrow">🔮 오늘 하루 브리핑 - ${tenGodLabel} 들어오는 날</div>
+                <div class="fp-eyebrow" style="background:linear-gradient(120deg,#FFD98E,#FF9AC2);color:#2A2340;">${friendly.emoji} 오늘은 ${friendly.name}의 날</div>
+                <div style="margin-top:10px;font-size:20px;font-weight:800;line-height:1.3;color:#fff;">${oneLine}</div>
+                <div class="fp-date">${dateLabel} · ${friendly.desc}</div>
+            </div>
+
+            <div style="margin-top:16px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:14px;display:flex;align-items:center;justify-content:space-between;">
+                <div><div style="font-size:12px;color:rgba(255,255,255,0.5);">오늘의 점수</div><div style="font-size:28px;font-weight:900;color:#FFD98E;">${score}<span style="font-size:14px;font-weight:600;opacity:0.7;">/100</span></div></div>
+                <div style="text-align:right;">${deltaHTML}<div style="margin-top:6px;display:flex;gap:6px;justify-content:flex-end;"><span style="background:rgba(255,255,255,0.12);padding:4px 8px;border-radius:999px;font-size:11px;">#${color.split(' ')[0]}</span><span style="background:rgba(255,255,255,0.12);padding:4px 8px;border-radius:999px;font-size:11px;">#${action.split(' ')[0]}</span></div></div>
+            </div>
+
+            ${diaryHint ? `<div style="margin-top:12px;background:linear-gradient(135deg,rgba(255,217,142,0.15),rgba(255,154,194,0.12));border:1px dashed rgba(255,217,142,0.4);border-radius:12px;padding:10px 12px;font-size:13px;color:#FFE9C2;">📔 ${diaryHint}</div>` : ''}
+
+            <div style="margin-top:14px;display:grid;gap:10px;">
+                <div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:12px;">
+                    <div style="font-size:12px;color:#FFD98E;font-weight:700;margin-bottom:4px;">💬 전체 흐름</div>
+                    <div style="font-size:13.5px;line-height:1.5;color:rgba(255,255,255,0.85);">${friendlyTotal}..</div>
                 </div>
-                <div class="fp-date">${dateLabel}</div>
-                <div class="fp-hero-row">
-                    <div class="fp-mood-block">
-                        <div class="fp-mini-label">오늘의 분위기</div>
-                        <div class="fp-mood">${f.mood}</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                    <div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:10px;">
+                        <div style="font-size:11px;color:#7CFF9B;font-weight:700;">💰 돈</div>
+                        <div style="font-size:12.5px;line-height:1.4;margin-top:3px;color:rgba(255,255,255,0.8);">${detailMoney.substring(0,60)}..</div>
                     </div>
-                    <div class="fp-hero-divider"></div>
-                    <div class="fp-score-block">
-                        <div class="fp-mini-label">기운 지수</div>
-                        <div class="fp-score">${score}</div>
+                    <div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:10px;">
+                        <div style="font-size:11px;color:#FF9AC2;font-weight:700;">💗 마음</div>
+                        <div style="font-size:12.5px;line-height:1.4;margin-top:3px;color:rgba(255,255,255,0.8);">${detailLove.substring(0,60)}..</div>
                     </div>
                 </div>
-                <div style="margin-top:8px; font-size:11px; color:#8a7a6a;">신강/신약: ${enhanced.strength} / 용신: ${enhanced.useful.god}(${enhanced.useful.reason})</div>
             </div>
-            <div class="fp-mantra-card">
-                <div class="fp-mantra-mark">"</div>
-                <div class="fp-mantra-text">${f.mantra}</div>
+
+            <div style="margin-top:14px;background:linear-gradient(135deg,#2A2E5E,#24274D);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:14px;">
+                <div style="font-size:12px;font-weight:800;color:#FFD98E;margin-bottom:8px;">💊 오늘의 처방전</div>
+                <div style="display:grid;gap:6px;font-size:13px;color:rgba(255,255,255,0.85);">
+                    <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">행운색</span><span>🎨 ${color}</span></div>
+                    <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">행운숫자</span><span>🔢 ${num1}, ${num2}</span></div>
+                    <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">좋은 시간</span><span>⏰ ${goodTime}</span></div>
+                    <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">하면 좋은 것</span><span>✅ ${action}</span></div>
+                    <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">조심할 것</span><span>⚠️ ${avoid}</span></div>
+                </div>
             </div>
-            <div class="fp-cards">
-                <div class="fp-card"><div class="fpc-label">✅ 총운 - ${enhanced.tenGodGan}</div><div class="fpc-text">${detailTotal}</div></div>
-                <div class="fp-card"><div class="fpc-label">💰 재물운 - ${enhanced.tenGodGan}</div><div class="fpc-text">${detailMoney}</div></div>
-                <div class="fp-card"><div class="fpc-label">💗 애정운 - ${enhanced.tenGodGan}</div><div class="fpc-text">${detailLove}</div></div>
+
+            <div style="margin-top:12px;display:flex;gap:8px;">
+                <button onclick="saveFortuneCard()" style="flex:1;background:#fff;color:#23264A;border:none;padding:10px;border-radius:10px;font-weight:800;font-size:13px;">📸 이미지 저장</button>
+                <button onclick="shareFortune()" style="flex:1;background:linear-gradient(120deg,#FFD98E,#FF9AC2);color:#2A2340;border:none;padding:10px;border-radius:10px;font-weight:800;font-size:13px;">💬 공유하기</button>
             </div>
-            <div style="background:#fff8f0; border-radius:12px; padding:10px 12px; margin:10px 0; border:1px solid #ffe0b2;">
-                <div style="font-size:14px; font-weight:800; margin-bottom:6px; color:#5d4037;">🔗 합충형파 - 오늘의 인연/변동</div>
-                <div style="color:#3e2723; font-size:14px; line-height:1.5;">${hapChungHTML}</div>
-            </div>
-            <div style="background:#f5f8ff; border-radius:12px; padding:10px 12px; margin:10px 0; display:flex; gap:12px; border:1px solid #c5cae9;">
-                <div style="flex:1"><div style="font-size:12px; color:#666;">🎨 행운컬러</div><div style="font-size:14px; font-weight:700; color:#1a237e;">${enhanced.luckColor}</div></div>
-                <div style="flex:1"><div style="font-size:12px; color:#666;">📍 행운장소</div><div style="font-size:14px; font-weight:700; color:#1a237e;">${enhanced.luckPlace}</div></div>
-            </div>
-            <div style="background:#f0fff4; border-radius:12px; padding:10px 12px; margin:10px 0; border:1px dashed #4CAF50;">
-                <div style="font-size:14px; font-weight:800; color:#1b5e20;">📸 오늘의 포토미션</div>
-                <div style="font-size:14px; margin-top:4px; color:#2e7d32; line-height:1.5;">행운컬러 <b>${enhanced.luckColor}</b>(${enhanced.luckColorHex})가 들어간 사진 1장을 찍어보세요! ${enhanced.hapChung.some(h=>h.type==='육합'||h.type==='삼합') ? '인연이 들어오는 날이니 사람과 함께 찍으면 더 좋아요!' : '오늘의 기운을 담아보세요.'}</div>
-            </div>
-            <div class="fp-my-saju-link-big" onclick="closeFortunePopup(); openSajuDetailModal();">📜 내 사주 자세히 보기 →</div>
-            ${lottoCardHTML}
-            <div class="fp-exit-btn" onclick="closeFortunePopup()">종료</div>
         `;
 
         fortunePopupOverlay.classList.add('active');
         lockBodyScroll();
-
-        // 오늘 하루 한 번 더 자동으로 뜨지 않도록 표시 기록
-        localStorage.setItem('smartDiarySajuLastShown', getTodayStr());
     }
+    function saveFortuneCard(){
+        alert('캡처해서 저장해보세요! (이미지 저장 기능은 다음 버전에서 자동 저장으로 업그레이드할게요)');
+    }
+    function shareFortune(){
+        const text = document.getElementById('fortune-popup-body').innerText.slice(0,200);
+        if(navigator.share){ navigator.share({title:'오늘의 운세', text:text}).catch(()=>{}); }
+        else { navigator.clipboard.writeText(text).then(()=>alert('복사됐어요! 카톡에 붙여넣기 해보세요')).catch(()=>alert(text)); }
+    }
+
 
     function closeFortunePopup() {
         if (fortunePopupOverlay) fortunePopupOverlay.classList.remove('active');
