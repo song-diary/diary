@@ -7019,12 +7019,25 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     }
 
     function ldtDrawNumbers(favs) {
-        const nums = [...favs];
-        while (nums.length < 6) {
-            const n = Math.floor(Math.random() * 45) + 1;
-            if (!nums.includes(n)) nums.push(n);
+        try{
+            // V238 FIX: 고정수도 귀인 알고리즘으로 채우기!
+            const result = sajuGenerateLottoNumbers(getTodayStr(), favs, 1);
+            if(result && result.allGames && result.allGames[0]) return result.allGames[0];
+            // fallback
+            const nums = [...favs];
+            while (nums.length < 6) {
+                const n = Math.floor(Math.random() * 45) + 1;
+                if (!nums.includes(n)) nums.push(n);
+            }
+            return nums.sort((a, b) => a - b);
+        }catch(e){
+            const nums = [...favs];
+            while (nums.length < 6) {
+                const n = Math.floor(Math.random() * 45) + 1;
+                if (!nums.includes(n)) nums.push(n);
+            }
+            return nums.sort((a, b) => a - b);
         }
-        return nums.sort((a, b) => a - b);
     }
 
     function ldtAddGames() {
