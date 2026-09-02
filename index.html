@@ -2876,8 +2876,8 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     <div class="fortune-popup-card" id="lotto-draw-card" onclick="event.stopPropagation()">
         <button class="fortune-popup-close" onclick="closeLottoDrawModal()">✖</button>
         <div class="fp-hero">
-            <div class="fp-hero-top"><div class="fp-eyebrow">🎲 1등 주문형 1~5게임</div></div>
-            <div class="fp-date" id="ldt-subtitle">버튼 누르는 순간 생성! 50만명 귀인+시주+밀리초</div>
+            <div class="fp-hero-top"><div class="fp-eyebrow">🎲 로또 1등 생성기 (고정수+주문형)</div></div>
+            <div class="fp-date" id="ldt-subtitle">고정수 + 주문형 1~5게임! 버튼 누르면 즉시 생성!</div>
         </div>
 
         <div class="ldt-fav-box">
@@ -2895,9 +2895,21 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 
         <div id="ldt-results"></div>
 
-        <div class="ldt-week-box" style="display:none !important;">
-            <div class="ldt-week-title">📅 이번주 모아보기 <span style="font-weight:400; opacity:0.6;">(월요일마다 초기화)</span></div>
-            <div id="ldt-week-area"></div>
+        <div class="ldt-week-box" style="background: linear-gradient(135deg, rgba(255,215,0,0.08), rgba(255,154,194,0.08)); border:1px solid rgba(255,215,0,0.25); border-radius:14px; padding:14px;">
+            <div class="ldt-week-title" style="color:#FFD98E; font-size:13px; font-weight:800;">✨ NEW! 생성시각+50만명 귀인 주문형 1~5게임</div>
+            <div style="font-size:10px; color:rgba(255,255,255,0.5); margin:4px 0 10px;">버튼 누르는 순간의 밀리초까지 섞어 세상에서 하나뿐인 번호 생성!</div>
+            <div style="display:flex; gap:6px; margin-bottom:12px; align-items:center; flex-wrap:wrap;">
+                <span style="font-size:12px; color:#FFD98E; font-weight:bold;">몇게임?</span>
+                <button onclick="sajuGenerateLottoNumbers(getTodayStr(), null, 1)" style="width:38px; height:38px; border-radius:50%; border:1px solid #555; background:#222; color:#fff; font-weight:bold; cursor:pointer;">1</button>
+                <button onclick="sajuGenerateLottoNumbers(getTodayStr(), null, 2)" style="width:38px; height:38px; border-radius:50%; border:1px solid #555; background:#222; color:#fff; font-weight:bold; cursor:pointer;">2</button>
+                <button onclick="sajuGenerateLottoNumbers(getTodayStr(), null, 3)" style="width:38px; height:38px; border-radius:50%; border:1px solid #555; background:#222; color:#fff; font-weight:bold; cursor:pointer;">3</button>
+                <button onclick="sajuGenerateLottoNumbers(getTodayStr(), null, 4)" style="width:38px; height:38px; border-radius:50%; border:1px solid #555; background:#222; color:#fff; font-weight:bold; cursor:pointer;">4</button>
+                <button onclick="sajuGenerateLottoNumbers(getTodayStr(), null, 5)" style="width:38px; height:38px; border-radius:50%; border:2px solid #ffcc00; background:#ffcc00; color:#000; font-weight:bold; cursor:pointer;">5</button>
+                <span style="font-size:10px; color:#888; margin-left:4px;">클릭=즉시생성</span>
+            </div>
+            <div id="fortune-lotto-balls" style="display:flex; flex-direction:column; gap:6px;"></div>
+            <div id="fortune-lotto-story" style="font-size:11px; color:#FFD98E; margin-top:8px; font-weight:700; line-height:1.4;"></div>
+            <div style="font-size:9px; color:rgba(255,255,255,0.3); margin-top:6px; text-align:center;">50만명 중 1등 + 시주 포함 + 생성타임 고유 · 중복 확률 0%</div>
         </div>
 
         <div class="ldt-control-row">
@@ -4038,7 +4050,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             const saturdayStr = sajuGetSaturdayStr();
             const now = new Date();
             const genTimeStr = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0')+' '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0')+'.'+String(now.getMilliseconds()).padStart(3,'0');
-            const genTimeSeed = Date.now()+'_'+Math.floor(Math.random()*1000000)+'_'+now.getMilliseconds();
+            const genTimeSeed = Date.now()+'_'+Math.floor(Math.random()*1000000)+'_'+now.getMilliseconds()+'_'+Math.random();
             let h=2166136261; const satSeed = saturdayStr + '_SAT_500K_TIME_'+genTimeSeed;
             for(let i=0;i<satSeed.length;i++){ h^=satSeed.charCodeAt(i); h=Math.imul(h,16777619);} h>>>=0;
             let s=h; const rngSat=function(){ s=(s*1664525+1013904223)>>>0; return s/4294967296; };
@@ -4057,6 +4069,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 let sc = (baseScore[tg]||70) + Math.floor(rngSat()*20) + (timeBonus[tb]||0);
                 if(sc>bestScore){ bestScore=sc; best={ year:1960+Math.floor(rngSat()*50), gan:gan, tenGod:tg, timeBranch:tb, timeHour:timeHours[tbIdx], timeIdx:tbIdx, score:sc, saturday:saturdayStr, genTime:genTimeStr, genSeed:genTimeSeed }; }
             }
+            if(!best){ best={ year:1990, gan:'甲', tenGod:'편재', timeBranch:'午', timeHour:'11-13시', timeIdx:6, score:99, saturday:saturdayStr, genTime:genTimeStr, genSeed:genTimeSeed }; }
             const mapGan = { '甲':[3,8,13,23,33], '乙':[3,8,18,28,38], '丙':[2,7,12,27,37], '丁':[2,7,17,22,42], '戊':[5,10,15,25,35], '己':[5,10,20,30,40], '庚':[4,9,14,29,39], '辛':[4,9,19,34,44], '壬':[1,6,11,26,36], '癸':[1,6,16,21,41] };
             const mapTG = { '비견':[11,22,33], '겁재':[12,23,34], '식신':[3,13,23], '상관':[7,17,27], '편재':[8,18,28], '정재':[5,15,25], '편관':[9,19,29], '정관':[6,16,26], '편인':[2,12,22], '정인':[4,14,24] };
             const mapTime = { '子':[1,11,21], '丑':[2,12,22], '寅':[3,13,23], '卯':[4,14,24], '辰':[5,15,25], '巳':[6,16,26], '午':[7,17,27], '未':[8,18,28], '申':[9,19,29], '酉':[10,20,30], '戌':[11,21,31], '亥':[12,22,32] };
@@ -4071,7 +4084,9 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 (mapTime[best.timeBranch]||[]).forEach(n=>pool.add(n));
                 pool.add((best.score % 45)+1);
                 pool.add(((best.year + best.timeIdx + g*7) % 45)+1);
-                pool.add((parseInt(String(genTimeSeed).slice(-4)) + g*13) % 45 + 1);
+                let numSeed = String(genTimeSeed).replace(/[^0-9]/g,'').slice(-4);
+                pool.add((parseInt(numSeed||'1234') + g*13) % 45 + 1);
+                if(baseAnchorNumbers && baseAnchorNumbers.length>0){ baseAnchorNumbers.forEach(n=>{ if(n>=1&&n<=45) pool.add(n); }); }
                 let arr = Array.from(pool);
                 while(arr.length<6){ const n=Math.floor(rng()*45)+1; if(!arr.includes(n)) arr.push(n); }
                 for(let i=arr.length-1;i>0;i--){ const j=Math.floor(rng()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
@@ -4081,24 +4096,21 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             try{ localStorage.setItem('lottoBest_SAT_'+saturdayStr, JSON.stringify(best)); }catch(e){}
             try{ localStorage.setItem('lottoBest_'+seedStr.slice(0,10), JSON.stringify(best)); }catch(e){}
             try{ localStorage.setItem('lottoGames_'+seedStr.slice(0,10), JSON.stringify(allGames)); }catch(e){}
-            // Update both fortune popup and ldt modal
             setTimeout(function(){
                 try{
                     const storyEl=document.getElementById('fortune-lotto-story');
                     if(storyEl&&best){ storyEl.textContent = best.saturday+' 추첨 50만명 중 1등 '+best.year+'년 '+best.timeBranch+'시('+best.timeHour+')생 '+best.gan+'간 '+best.tenGod+' '+best.score+'점 · '+best.genTime+' · '+cnt+'게임'; }
                     const ballsEl=document.getElementById('fortune-lotto-balls');
                     if(ballsEl){
-                        const colors=['#FFD98E','#FF9AC2','#8EC5FC','#A0E7A0','#C7B8FF','#FFB07C'];
                         let html='';
                         for(let i=0;i<allGames.length;i++){
                             const nums=allGames[i];
-                            html+='<div style="display:flex; gap:5px; align-items:center; margin:4px 0;"><span style="font-size:10px; color:#888; min-width:30px;">'+(i+1)+'게임</span>';
-                            for(let j=0;j<nums.length;j++){ html+='<div class="lotto-ball" style="background:'+colors[j%colors.length]+'; width:26px; height:26px; line-height:26px; font-size:11px;">'+nums[j]+'</div>'; }
+                            html+='<div style="display:flex; gap:5px; align-items:center; margin:5px 0; background:rgba(255,255,255,0.04); padding:6px 8px; border-radius:8px;"><span style="font-size:11px; color:#FFD98E; min-width:34px; font-weight:bold;">'+(i+1)+'게임</span>';
+                            for(let n of nums){ html+='<span style="display:inline-block; width:28px; height:28px; line-height:28px; text-align:center; border-radius:50%; background:#fff; color:#000; font-size:12px; font-weight:bold;">'+n+'</span>'; }
                             html+='</div>';
                         }
                         ballsEl.innerHTML=html;
                     }
-                    // Also update ldt modal if open
                     const ldtArea=document.getElementById('ldt-results');
                     if(ldtArea){
                         let html2='<div style="margin:10px 0; padding:12px; background:rgba(255,255,255,0.05); border-radius:12px;">';
@@ -4115,6 +4127,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             }, 100);
             return { main: allGames[0], allGames: allGames, bonus: null, luckiest: best, count: cnt };
         }catch(e){
+            console.error(e);
             const fallback = [[3,11,23,28,34,41],[2,7,19,27,33,44],[5,14,22,29,37,40],[1,8,18,26,35,42],[6,12,21,30,36,43]];
             return { main: fallback[0], allGames: fallback.slice(0, gameCount||5), bonus: null, luckiest: null, count: gameCount||5 };
         }
@@ -4146,7 +4159,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         }
         return store;
     }
-    function sajuRecordTodayLottoWeekly(lottoMain) { return; /* V234 주문형 - 요일 누적 삭제 */ }
+    function sajuRecordTodayLottoWeekly(lottoMain) { return; /* V237 주문형 - 요일 누적 삭제 */ }
     // 오늘의 행운 로또번호 6개 (기운지수 카드 / 로또추첨기 도구에서 공용으로 사용)
     function sajuGetTodayLottoMain() {
         if (!sajuBirthInfo || !sajuBirthInfo.date || !sajuDayMasterElem) return null;
@@ -6526,23 +6539,10 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 </div>
             </div>
 
-            <div class="fp-lotto-card" style="margin-top:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:13px 14px; cursor:default;">
-            <div class="fp-lotto-title" style="display:flex; justify-content:space-between; align-items:center;"><span>🎱 1등 주문형 생성기</span><span style="font-size:10px; color:rgba(255,255,255,0.4);">50만명+시주+생성시각</span></div>
-            <div style="display:flex; gap:6px; margin:10px 0; justify-content:center; align-items:center;">
-                <span style="font-size:11px; color:#aaa;">몇게임?</span>
-                <button onclick="event.stopPropagation(); sajuGenerateLottoNumbers(getTodayStr(), null, 1)" style="width:32px; height:32px; border-radius:50%; border:1px solid #555; background:#222; color:#fff; font-weight:bold; cursor:pointer;">1</button>
-                <button onclick="event.stopPropagation(); sajuGenerateLottoNumbers(getTodayStr(), null, 2)" style="width:32px; height:32px; border-radius:50%; border:1px solid #555; background:#222; color:#fff; font-weight:bold; cursor:pointer;">2</button>
-                <button onclick="event.stopPropagation(); sajuGenerateLottoNumbers(getTodayStr(), null, 3)" style="width:32px; height:32px; border-radius:50%; border:1px solid #555; background:#222; color:#fff; font-weight:bold; cursor:pointer;">3</button>
-                <button onclick="event.stopPropagation(); sajuGenerateLottoNumbers(getTodayStr(), null, 4)" style="width:32px; height:32px; border-radius:50%; border:1px solid #555; background:#222; color:#fff; font-weight:bold; cursor:pointer;">4</button>
-                <button onclick="event.stopPropagation(); sajuGenerateLottoNumbers(getTodayStr(), null, 5)" style="width:32px; height:32px; border-radius:50%; border:1px solid #ffcc00; background:#ffcc00; color:#000; font-weight:bold; cursor:pointer;">5</button>
-            </div>
-            <div id="fortune-lotto-balls" style="display:flex; flex-direction:column; gap:4px;"></div>
-            <div id="fortune-lotto-story" style="font-size:10px;color:#FFD98E;margin-top:8px; font-weight:700; line-height:1.4;"></div>
-            <div style="font-size:9px;color:rgba(255,255,255,0.3);margin-top:4px;">버튼을 누르는 순간의 시각으로 생성 · 겹칠 확률 0%</div>
-        </div><div style="margin-top:12px;display:none;"><button onclick="saveFortuneCard()" style="flex:1;background:#fff;color:#23264A;border:none;padding:10px;border-radius:10px;font-weight:800;font-size:13px;">📸 이미지 저장</button>
+            <div class="fp-lotto-card" onclick="closeFortunePopup(); setTimeout(()=>openLottoDrawModal(), 150);" style="margin-top:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:13px 14px;text-align:center;cursor:pointer;"><div class="fp-lotto-title">🎱 이번 주 토요일 1등 노리는 번호</div><div class="lotto-balls-row" id="fortune-lotto-balls"></div><div id="fortune-lotto-story" style="font-size:11px;color:#FFD98E;margin-top:8px;font-weight:700;"></div><div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:3px;">50만명 중 1등 + 시주 포함 + 생성타임 고유 · 5게임 5천원 · 로또 1등</div></div><div style="margin-top:12px;display:none;"><button onclick="saveFortuneCard()" style="flex:1;background:#fff;color:#23264A;border:none;padding:10px;border-radius:10px;font-weight:800;font-size:13px;">📸 이미지 저장</button>
                 </div><div style="margin-top:14px;"><button onclick="closeFortunePopup()" style="width:100%;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:14px;border-radius:14px;font-weight:800;font-size:15px;">✖ 종료</button></div>`;
 
-        try{ const ballsEl = document.getElementById('fortune-lotto-balls'); if(ballsEl){ ballsEl.innerHTML = '<div style="text-align:center; padding:8px;"><div style="font-size:11px; color:#888; margin-bottom:6px;">몇게임?</div><div style="display:flex; gap:6px; justify-content:center;"><button onclick="event.stopPropagation(); sajuGenerateLottoNumbers(getTodayStr(), null, 1)" style="width:30px; height:30px; border-radius:50%; border:1px solid #555; background:#222; color:#fff; font-weight:bold;">1</button><button onclick="event.stopPropagation(); sajuGenerateLottoNumbers(getTodayStr(), null, 2)" style="width:30px; height:30px; border-radius:50%; border:1px solid #555; background:#222; color:#fff; font-weight:bold;">2</button><button onclick="event.stopPropagation(); sajuGenerateLottoNumbers(getTodayStr(), null, 3)" style="width:30px; height:30px; border-radius:50%; border:1px solid #555; background:#222; color:#fff; font-weight:bold;">3</button><button onclick="event.stopPropagation(); sajuGenerateLottoNumbers(getTodayStr(), null, 4)" style="width:30px; height:30px; border-radius:50%; border:1px solid #555; background:#222; color:#fff; font-weight:bold;">4</button><button onclick="event.stopPropagation(); sajuGenerateLottoNumbers(getTodayStr(), null, 5)" style="width:30px; height:30px; border-radius:50%; border:1px solid #ffcc00; background:#ffcc00; color:#000; font-weight:bold;">5</button></div></div>'; } }catch(e){} fortunePopupOverlay.classList.add('active'); lockBodyScroll(); } function saveFortuneCard_DISABLED(){
+        try{ const lottoNumbers = typeof sajuGetLottoNumbers==='function' ? sajuGetLottoNumbers() : [3,11,23,28,34,41]; const ballsEl = document.getElementById('fortune-lotto-balls'); if(ballsEl){ const colors=['#FFD98E','#FF9AC2','#8EC5FC','#A0E7A0','#C7B8FF','#FFB07C']; ballsEl.innerHTML = lottoNumbers.map((n,i)=>`<div class="lotto-ball" style="background:${colors[i%colors.length]}">${n}</div>`).join(''); } }catch(e){} fortunePopupOverlay.classList.add('active'); lockBodyScroll(); } function saveFortuneCard_DISABLED(){
         alert('캡처해서 저장해보세요! (이미지 저장 기능은 다음 버전에서 자동 저장으로 업그레이드할게요)');
     }
     function shareFortune_DISABLED(){
