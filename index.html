@@ -2896,19 +2896,16 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         <div id="ldt-results"></div>
 
         <div class="ldt-week-box" style="background: linear-gradient(135deg, rgba(255,215,0,0.08), rgba(255,154,194,0.08)); border:1px solid rgba(255,215,0,0.25); border-radius:14px; padding:14px; margin-top:14px;">
-            <div style="color:#FFD98E; font-size:13px; font-weight:800;">✨ NEW! 생성시각+50만명 귀인 주문형 (고정수 반영!)</div>
-            <div style="font-size:10px; color:rgba(255,255,255,0.5); margin:4px 0 10px;">고정수 3개 박고 → 몇게임 선택 → 즉시 생성! 공 색깔 기존과 동일!</div>
-            <div style="display:flex; gap:8px; margin-bottom:10px; align-items:center; flex-wrap:wrap; background:rgba(0,0,0,0.2); padding:8px 10px; border-radius:10px;">
+            <div style="color:#FFD98E; font-size:13px; font-weight:800;">✨ NEW! 생성시각+50만명 귀인 주문형</div>
+            <div style="font-size:10px; color:rgba(255,255,255,0.5); margin:4px 0 10px;">고정수 2개면 매게임 2개 고정! 3개면 매게임 3개 고정! 수량·게임수 선택 후 생성 버튼을 눌러야 생성됨!</div>
+            <div style="display:flex; gap:8px; margin-bottom:10px; align-items:center; flex-wrap:wrap; background:rgba(0,0,0,0.25); padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.06);">
                 <label style="display:flex; align-items:center; gap:4px; font-size:11px; color:#FFD98E; cursor:pointer;"><input type="checkbox" id="ldt-include-favs" checked style="accent-color:#ffcc00;"> 고정수 포함</label>
-                <span style="font-size:12px; color:#FFD98E; font-weight:bold; margin-left:6px;">몇게임?</span>
-                <button onclick="sajuGenerateNewLotto(1)" style="width:34px; height:34px; border-radius:50%; border:1px solid #555; background:#222; color:#fff; font-weight:bold; cursor:pointer;">1</button>
-                <button onclick="sajuGenerateNewLotto(2)" style="width:34px; height:34px; border-radius:50%; border:1px solid #555; background:#222; color:#fff; font-weight:bold; cursor:pointer;">2</button>
-                <button onclick="sajuGenerateNewLotto(3)" style="width:34px; height:34px; border-radius:50%; border:1px solid #555; background:#222; color:#fff; font-weight:bold; cursor:pointer;">3</button>
-                <button onclick="sajuGenerateNewLotto(4)" style="width:34px; height:34px; border-radius:50%; border:1px solid #555; background:#222; color:#fff; font-weight:bold; cursor:pointer;">4</button>
-                <button onclick="sajuGenerateNewLotto(5)" style="width:34px; height:34px; border-radius:50%; border:2px solid #ffcc00; background:#ffcc00; color:#000; font-weight:bold; cursor:pointer;">5</button>
+                <span style="font-size:12px; color:#fff; font-weight:bold; margin-left:8px;">수량:</span>
+                <select id="ldt-new-game-count" style="background:#222; color:#fff; border:1px solid #444; border-radius:8px; padding:4px 6px; font-size:12px;"><option value="1">1게임</option><option value="2">2게임</option><option value="3">3게임</option><option value="4">4게임</option><option value="5" selected>5게임</option></select>
+                <button onclick="sajuGenerateNewLottoManual()" style="margin-left:6px; padding:6px 12px; border-radius:20px; border:none; background:#ffcc00; color:#000; font-weight:800; font-size:12px; cursor:pointer;">🎲 생성하기</button>
                 <button onclick="clearFixedNumbers()" style="margin-left:auto; font-size:10px; padding:4px 8px; border-radius:12px; border:1px solid #444; background:#1a1a1a; color:#888; cursor:pointer;">고정해제</button>
             </div>
-            <div id="ldt-new-balls" style="display:flex; flex-direction:column; gap:6px; min-height:20px;"></div>
+            <div id="ldt-new-balls" style="display:flex; flex-direction:column; gap:6px; min-height:20px;"><div style="text-align:center; color:rgba(255,255,255,0.3); font-size:11px; padding:12px;">고정수 선택 → 수량·게임수 선택 → 생성하기를 눌러보세요!</div></div>
             <div id="ldt-new-story" style="font-size:11px; color:#FFD98E; margin-top:8px; font-weight:700; line-height:1.4; min-height:16px;"></div>
         </div>
         <div id="ldt-week-area" style="display:none;"></div>
@@ -4085,35 +4082,49 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         pool.add(((best.year + best.timeIdx) % 45)+1);
         return pool;
     }
-    function sajuGenerateNewLotto(gameCount){
+    function sajuGenerateWithFixedGuaranteed(favs, best, gameIdx){
+        // FIXED 2개면 매게임 2개 고정, 3개면 매게임 3개 고정 보장!
+        let h2=2166136261; const seed = getTodayStr() + '_' + best.year + '_' + best.gan + '_' + best.timeBranch + '_' + best.genSeed + '_G'+gameIdx+'_'+(Date.now()+gameIdx*7919+Math.random()*10000);
+        for(let i=0;i<seed.length;i++){ h2^=seed.charCodeAt(i); h2=Math.imul(h2,16777619);} h2>>>=0;
+        let s2=h2; const rng=function(){ s2=(s2*1664525+1013904223)>>>0; return s2/4294967296; };
+        const poolBase = sajuBuildLottoPool(best);
+        const pool = new Set(poolBase);
+        pool.add((parseInt(String(best.genSeed).replace(/[^0-9]/g,'').slice(-4)||'1234') + gameIdx*13) % 45 + 1);
+        pool.add(((best.year + best.timeIdx + gameIdx*7) % 45)+1);
+        // 고정수는 pool이 아니라 무조건 포함!
+        const fixed = (favs||[]).filter(n=>n>=1&&n<=45);
+        const candidates = Array.from(pool).filter(n=>!fixed.includes(n));
+        // shuffle candidates
+        for(let i=candidates.length-1;i>0;i--){ const j=Math.floor(rng()*(i+1)); [candidates[i],candidates[j]]=[candidates[j],candidates[i]]; }
+        const need = 6 - fixed.length;
+        const picked = candidates.slice(0, need);
+        const result = [...fixed, ...picked].sort((a,b)=>a-b);
+        // 만약 후보 부족하면 랜덤으로 채우기
+        while(result.length<6){ const n=Math.floor(rng()*45)+1; if(!result.includes(n)) result.push(n); result.sort((a,b)=>a-b); }
+        return result;
+    }
+    function sajuGenerateNewLottoManual(){
         try{
-            const cnt = Math.min(5, Math.max(1, parseInt(gameCount)||5));
-            const includeFavsEl = document.getElementById("ldt-include-favs"); const includeFavs = includeFavsEl ? includeFavsEl.checked : true; const rawFavs = typeof ldtGetFavoriteNumbers==='function' ? ldtGetFavoriteNumbers() : []; const favs = includeFavs ? rawFavs : [];
+            const cntEl = document.getElementById('ldt-new-game-count');
+            const cnt = Math.min(5, Math.max(1, parseInt(cntEl ? cntEl.value : '5')||5));
+            const includeEl = document.getElementById('ldt-include-favs');
+            const includeFavs = includeEl ? includeEl.checked : true;
+            const rawFavs = typeof ldtGetFavoriteNumbers==='function' ? ldtGetFavoriteNumbers() : [];
+            const favs = includeFavs ? rawFavs : [];
             const best = sajuGetBestGwainForLotto();
-            const poolBase = sajuBuildLottoPool(best);
             const allGames = [];
-            for(let g=0; g<cnt; g++){
-                let h2=2166136261; const todaySeed = getTodayStr() + '_' + best.year + '_' + best.gan + '_' + best.timeBranch + '_' + best.genSeed + '_GAME'+g+'_'+(Date.now()+g*7919+Math.random()*10000);
-                for(let i=0;i<todaySeed.length;i++){ h2^=todaySeed.charCodeAt(i); h2=Math.imul(h2,16777619);} h2>>>=0;
-                let s2=h2; const rng=function(){ s2=(s2*1664525+1013904223)>>>0; return s2/4294967296; };
-                const pool = new Set(poolBase);
-                pool.add((parseInt(String(best.genSeed).replace(/[^0-9]/g,'').slice(-4)||'1234') + g*13) % 45 + 1);
-                pool.add(((best.year + best.timeIdx + g*7) % 45)+1);
-                (favs||[]).forEach(n=>{ if(n>=1&&n<=45) pool.add(n); });
-                let arr = Array.from(pool);
-                while(arr.length<6){ const n=Math.floor(rng()*45)+1; if(!arr.includes(n)) arr.push(n); }
-                for(let i=arr.length-1;i>0;i--){ const j=Math.floor(rng()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
-                const main = arr.slice(0,6).sort((a,b)=>a-b);
-                allGames.push(main);
-            }
+            for(let g=0; g<cnt; g++){ allGames.push(sajuGenerateWithFixedGuaranteed(favs, best, g)); }
             const ballsEl=document.getElementById('ldt-new-balls');
             const storyEl=document.getElementById('ldt-new-story');
-            if(storyEl&&best){ storyEl.textContent = best.saturday+' 추첨 50만명 중 1등 '+best.year+'년 '+best.timeBranch+'시('+best.timeHour+')생 '+best.gan+'간 '+best.tenGod+' '+best.score+'점 · '+best.genTime+' · '+cnt+'게임 (고정수 '+(favs.length?favs.join(','):'없음')+')'; }
+            if(storyEl&&best){ 
+                const fixedTxt = favs.length ? '고정 '+favs.join(',')+' 매게임 '+favs.length+'개 보장' : '고정 없음 - 순수 귀인';
+                storyEl.textContent = best.saturday+' 추첨 50만명 중 1등 '+best.year+'년 '+best.timeBranch+'시('+best.timeHour+')생 '+best.gan+'간 '+best.tenGod+' '+best.score+'점 · '+best.genTime+' · '+cnt+'게임 · '+fixedTxt; 
+            }
             if(ballsEl){
                 let html='';
                 for(let i=0;i<allGames.length;i++){
                     const nums=allGames[i];
-                    html+='<div class="ldt-game" style="margin:6px 0;"><div class="ldt-game-label">'+(i+1)+'게임 (NEW 귀인+고정수)</div><div class="lotto-balls-row">';
+                    html+='<div class="ldt-game" style="margin:6px 0;"><div class="ldt-game-label">'+(i+1)+'게임 (고정 '+favs.length+'개 보장)'+'</div><div class="lotto-balls-row">';
                     for(let n of nums){ 
                         const col = typeof sajuLottoBallColor==='function' ? sajuLottoBallColor(n) : '#FBC400';
                         const isFav = favs.includes(n);
@@ -4123,12 +4134,18 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 }
                 ballsEl.innerHTML=html;
             }
+            // 기존 폼(lotteryGames)도 같은 방식으로 업데이트? NEW 전용이므로 분리 유지
             return { allGames: allGames, best: best };
         }catch(e){ console.error(e); alert('생성 오류: '+e.message); return null; }
     }
-    function clearFixedNumbers(){ try{ for(let i=1;i<=6;i++){ const el=document.getElementById(`ldt-fav${i}`); if(el) el.value=""; } if(typeof ldtValidateInputs==="function") ldtValidateInputs(); }catch(e){} }
+    function sajuGenerateNewLotto(gameCount){
+        // 호환용 - manual로 위임
+        const el=document.getElementById('ldt-new-game-count');
+        if(el) el.value = gameCount;
+        return sajuGenerateNewLottoManual();
+    }
+    function clearFixedNumbers(){ try{ for(let i=1;i<=6;i++){ const el=document.getElementById(`ldt-fav${i}`); if(el) el.value=""; } if(typeof ldtValidateInputs==="function") ldtValidateInputs(); const nb=document.getElementById('ldt-new-balls'); if(nb) nb.innerHTML='<div style="text-align:center; color:rgba(255,255,255,0.3); font-size:11px; padding:12px;">고정해제됨! 수량·게임수 선택 → 생성하기를 눌러보세요!</div>'; }catch(e){} }
     function sajuGenerateLottoNumbers(seedStr, baseAnchorNumbers, gameCount){
-        // 기존 호환용 - NEW 함수로 위임
         return sajuGenerateNewLotto(gameCount||5) || { main:[3,11,23,28,34,41], allGames:[[3,11,23,28,34,41]], bonus:null, luckiest:null, count:5 };
     }
 
@@ -6538,7 +6555,11 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 </div>
             </div>
 
-            <div class="fp-lotto-card" onclick="closeFortunePopup(); setTimeout(()=>openLottoDrawModal(), 150);" style="margin-top:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:13px 14px;text-align:center;cursor:pointer;"><div class="fp-lotto-title">🎱 이번 주 토요일 1등 노리는 번호</div><div class="lotto-balls-row" id="fortune-lotto-balls"></div><div id="fortune-lotto-story" style="font-size:11px;color:#FFD98E;margin-top:8px;font-weight:700;"></div><div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:3px;">50만명 중 1등 + 시주 포함 + 생성타임 고유 · 5게임 5천원 · 로또 1등</div></div><div style="margin-top:12px;display:none;"><button onclick="saveFortuneCard()" style="flex:1;background:#fff;color:#23264A;border:none;padding:10px;border-radius:10px;font-weight:800;font-size:13px;">📸 이미지 저장</button>
+            <div class="fp-lotto-card" onclick="closeFortunePopup(); setTimeout(()=>openLottoDrawModal(), 150);" style="margin-top:12px;background:linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,154,194,0.15));border:1px solid rgba(255,215,0,0.35);border-radius:14px;padding:16px 14px;text-align:center;cursor:pointer;">
+            <div style="font-size:14px; font-weight:800; color:#FFD98E;">🎱 로또 1등 생성기 입장하기</div>
+            <div style="font-size:11px; color:rgba(255,255,255,0.65); margin-top:4px;">50만명 귀인 + 시주 + 생성시각 밀리초 조합</div>
+            <div style="font-size:10px; color:rgba(255,255,255,0.4); margin-top:3px;">고정수 선택 후 수량·게임수 결정 → 생성</div>
+        </div><div style="margin-top:12px;display:none;"><button onclick="saveFortuneCard()" style="flex:1;background:#fff;color:#23264A;border:none;padding:10px;border-radius:10px;font-weight:800;font-size:13px;">📸 이미지 저장</button>
                 </div><div style="margin-top:14px;"><button onclick="closeFortunePopup()" style="width:100%;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:14px;border-radius:14px;font-weight:800;font-size:15px;">✖ 종료</button></div>`;
 
         try{ const lottoNumbers = typeof sajuGetLottoNumbers==='function' ? sajuGetLottoNumbers() : [3,11,23,28,34,41]; const ballsEl = document.getElementById('fortune-lotto-balls'); if(ballsEl){ const colors=['#FFD98E','#FF9AC2','#8EC5FC','#A0E7A0','#C7B8FF','#FFB07C']; ballsEl.innerHTML = lottoNumbers.map((n,i)=>`<div class="lotto-ball" style="background:${colors[i%colors.length]}">${n}</div>`).join(''); } }catch(e){} fortunePopupOverlay.classList.add('active'); lockBodyScroll(); } function saveFortuneCard_DISABLED(){
@@ -6910,9 +6931,9 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         const keys = ldtStorageKeys();
         const savedGames = localStorage.getItem(keys.games);
         const savedFavs = localStorage.getItem(keys.favs);
-        const todayMain = sajuGetTodayLottoMain(); // 항상 최신 계산 → 1번째 게임(오늘의 행운번호)과 절대 어긋나지 않도록 함
+        const todayMain = null; // V243: 자동 생성 금지 - 사용자 결정 // 항상 최신 계산 → 1번째 게임(오늘의 행운번호)과 절대 어긋나지 않도록 함
 
-        if (savedGames) {
+        if (false && savedGames) { // V243: 자동 로드 금지
             ldtGames = JSON.parse(savedGames);
             ldtFavs = savedFavs ? JSON.parse(savedFavs) : [];
             // 1번째 게임(오늘의 행운번호)은 항상 최신값으로 덮어써서, 위쪽 팝업/이번주 모아보기와 항상 일치하게 유지
@@ -6921,16 +6942,14 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 localStorage.setItem(keys.games, JSON.stringify(ldtGames));
             }
         } else {
-            // 오늘 처음 여는 경우: 오늘의 행운 로또번호를 1번째 게임으로 자동 채워서 자연스럽게 이어지게 함
-            ldtGames = todayMain ? [todayMain] : [];
-            ldtFavs = [];
-            localStorage.setItem(keys.games, JSON.stringify(ldtGames));
-            localStorage.setItem(keys.favs, JSON.stringify(ldtFavs));
+            ldtGames = [];
+            ldtFavs = savedFavs ? JSON.parse(savedFavs) : [];
+            // V243: 자동 생성 금지, 빈 상태로 시작
         }
 
         const subtitleEl = document.getElementById('ldt-subtitle');
         if (subtitleEl) {
-            subtitleEl.textContent = ldtGames.length ? '오늘의 행운 번호로 시작했어요 (고정수는 위에 입력) ' : '수량을 고르고 번호를 뽑아보세요 - 고정수는 선택사항!';
+            subtitleEl.textContent = ldtGames.length ? '오늘의 행운 번호로 시작했어요' : '수량을 고르고 번호를 뽑아보세요';
         }
 
         for (let i = 1; i <= 6; i++) {
@@ -7020,19 +7039,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         function ldtDrawNumbers(favs) {
         try{
             const best = sajuGetBestGwainForLotto();
-            const poolBase = sajuBuildLottoPool(best);
-            let h2=2166136261; const seed = getTodayStr() + '_' + best.year + '_' + best.gan + '_' + best.timeBranch + '_' + best.genSeed + '_' + Date.now() + '_' + Math.random();
-            for(let i=0;i<seed.length;i++){ h2^=seed.charCodeAt(i); h2=Math.imul(h2,16777619);} h2>>>=0;
-            let s2=h2; const rng=function(){ s2=(s2*1664525+1013904223)>>>0; return s2/4294967296; };
-            const pool = new Set(poolBase);
-            (favs||[]).forEach(n=>{ if(n>=1&&n<=45) pool.add(n); });
-            pool.add((best.score % 45)+1);
-            pool.add(((best.year + best.timeIdx) % 45)+1);
-            let arr = Array.from(pool);
-            while(arr.length<6){ const n=Math.floor(rng()*45)+1; if(!arr.includes(n)) arr.push(n); }
-            for(let i=arr.length-1;i>0;i--){ const j=Math.floor(rng()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
-            const main = arr.slice(0,6).sort((a,b)=>a-b);
-            return main;
+            return sajuGenerateWithFixedGuaranteed(favs||[], best, Math.floor(Math.random()*1000));
         }catch(e){
             const nums = [...(favs||[])];
             while (nums.length < 6) {
