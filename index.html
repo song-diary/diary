@@ -2532,7 +2532,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 #lotto-draw-modal-overlay #ldt-subtitle{font-size:15px !important;}
 #fortune-popup-overlay .fortune-popup-card{font-size:16px !important;}
 </style>
-<style>.fortune-popup-close{display:none !important;} .close-form-btn{display:none !important;} #fortune-popup-overlay .fp-close-btn{display:none !important;}</style><style>.fp-yesterday-box, .fp-prev-diary, .fp-diary-history, [class*="yesterday"]{display:none !important;}</style><style>.fp-diary-box{display:none !important;}</style><style>.fortune-popup-close, .close-form-btn, .fp-close-btn{display:none !important;}</style><style>#fortune-popup-overlay .fortune-popup-close, #lotto-draw-modal-overlay .fortune-popup-close, .close-form-btn, .fp-close-btn{display:none !important; visibility:hidden !important; width:0 !important; height:0 !important;}</style></head>
+<style>.fortune-popup-close{display:none !important;} .close-form-btn{display:none !important;} #fortune-popup-overlay .fp-close-btn{display:none !important;}</style><style>.fp-yesterday-box, .fp-prev-diary, .fp-diary-history, [class*="yesterday"]{display:none !important;}</style><style>.fp-diary-box{display:none !important;}</style></head>
 <body>
 
 
@@ -2687,7 +2687,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             <div class="card" id="balance-location-card">
                 <div class="settings-title">
                     <span>💼 잔액 보관처별 분류 / 이월액</span>
-                    
+                    <button class="close-form-btn" onclick="closeBalanceLocationModal()" title="닫기">✖</button>
                 </div>
                 <div id="balance-location-body"></div>
 
@@ -2705,7 +2705,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             <div class="card" id="card-statement-card">
                 <div class="settings-title">
                     <span>💳 카드명세 일괄 입력</span>
-                    
+                    <button class="close-form-btn" onclick="closeCardStatementModal()" title="닫기">✖</button>
                 </div>
                 <div style="font-size: 12px; color: var(--text-sub); margin-bottom: 8px;">받은 카드명세서를 보며 한번에 입력</div>
                 <div style="margin-bottom: 8px;">
@@ -2728,7 +2728,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             <div class="card" id="card-pending-card">
                 <div class="settings-title">
                     <span>⏳ 카드 대기 지출</span>
-                    
+                    <button class="close-form-btn" onclick="closeCardPendingModal()" title="닫기">✖</button>
                 </div>
                 <div style="font-size: 12px; color: var(--text-sub); margin-bottom: 8px;">아직 카드 결제일에 정산되지 않은 지출 목록입니다. 실제 잔액에는 반영되지 않고 있어요. 결제일이 되면 항목을 선택해서 '정산하기'를 눌러주세요. (정산일 기준으로 잔액에 반영됩니다)</div>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
@@ -2752,7 +2752,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         <div class="card" id="settings-card">
             <div class="settings-title">
                 <span>🛠️ 환경 설정 (온/오프 및 과목 관리)</span>
-                
+                <button class="close-form-btn" onclick="closeSettingsModal()" title="설정 닫기">✖</button>
             </div>
 
             <div class="toggle-grid-title">⚡ 기능 켜기/끄기</div>
@@ -2834,7 +2834,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 <!-- 🔮 오늘의 운세 팝업 -->
 <div class="modal-overlay" id="fortune-popup-overlay" onclick="handleFortunePopupBackgroundClick(event)">
     <div class="fortune-popup-card" id="fortune-popup-card" onclick="event.stopPropagation()">
-        
+        <button class="fortune-popup-close"  onclick="closeFortunePopup()">✖</button>
         <div id="fortune-popup-body"><!-- JS로 채워짐 --></div>
     </div>
 </div>
@@ -2842,7 +2842,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 <!-- 📜 나의 사주 풀이 모달 -->
 <div class="modal-overlay" id="saju-detail-modal-overlay" onclick="handleSajuDetailModalBackgroundClick(event)">
     <div class="saju-detail-card" id="saju-detail-card" onclick="event.stopPropagation()">
-        
+        <button class="close-form-btn" style="position:absolute; top:14px; right:14px;" onclick="closeSajuDetailModal()">✖</button>
         <div class="sd-title-row">
             <div class="sd-title">📜 나의 사주 풀이</div>
             <div id="sd-zodiac-badge"></div>
@@ -2862,7 +2862,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 <!-- ❤️ 건강 기록 보기 -->
 <div class="modal-overlay" id="health-stats-modal-overlay" onclick="handleHealthStatsModalBackgroundClick(event)">
     <div class="saju-detail-card" id="health-stats-card" onclick="event.stopPropagation()">
-        
+        <button class="close-form-btn" style="position:absolute; top:14px; right:14px;" onclick="closeHealthStatsModal()">✖</button>
         <div class="sd-title" style="margin-bottom:14px;">❤️ 건강 기록</div>
 
         <div class="hs-period-row">
@@ -2881,8 +2881,8 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 
 <!-- 🎲 로또추첨기 도구 -->
 <div class="modal-overlay" id="lotto-draw-modal-overlay" onclick="handleLottoDrawModalBackgroundClick(event)">
-    <div class="fortune-popup-card" id="lotto-draw-card" onclick="event.stopPropagation()">
-        
+    <div class="fortune-popup-card" id="lotto-draw-card" style="position:relative;"><button class="fortune-popup-close" onclick="closeLottoDrawModal()" style="position:absolute; top:10px; right:10px; background:none; border:none; font-size:20px; color:#fff; cursor:pointer;">✖</button> onclick="event.stopPropagation()">
+        <button class="fortune-popup-close"  onclick="closeLottoDrawModal()">✖</button>
         <div class="fp-hero">
             <div class="fp-hero-top"><div class="fp-eyebrow">🎲 로또 번호 뽑기</div></div>
             <div class="fp-date" id="ldt-subtitle" style="display:none;"></div>
@@ -2933,7 +2933,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 
 <!-- 📝 입력 폼 모달 팝업 -->
 <div class="photo-lightbox-overlay" id="photo-lightbox-overlay" onclick="closePhotoLightbox(event)">
-    
+    <button type="button" class="photo-lightbox-close" onclick="closePhotoLightbox(event)" title="닫기">✖</button>
     <img id="photo-lightbox-img" class="photo-lightbox-img" src="" alt="사진 확대보기" onclick="event.stopPropagation()" oncontextmenu="return false;" ondragstart="return false;">
 </div>
 
@@ -2941,7 +2941,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     <div id="memo-form-card">
         <div class="form-header-info">
             <span id="form-target-date-title">📅 0000년 00월 00일</span>
-            
+            <button class="close-form-btn" onclick="closeDiaryFormPanel()" title="입력창 닫기">✖</button>
         </div>
 
         <div class="reservation-box" id="reservation-box" style="display:none;">
@@ -6582,7 +6582,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             <div style="font-size:14px; font-weight:800; color:#FFD98E;">🎱 로또 1등 생성기 입장하기</div>
             <div style="font-size:11px; color:rgba(255,255,255,0.65); margin-top:4px;">50만명 귀인 + 시주 + 생성시각</div>
         </div><div style="margin-top:12px;display:none;"><button onclick="saveFortuneCard()" style="flex:1;background:#fff;color:#23264A;border:none;padding:10px;border-radius:10px;font-weight:800;font-size:13px;">📸 이미지 저장</button>
-                </div><div style="margin-top:14px;"><button onclick="closeFortunePopup()" style="width:100%;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:14px;border-radius:14px;font-weight:800;font-size:15px;">✖ 종료</button></div>`;
+                </div><div style="margin-top:14px;"><button onclick="closeFortunePopup()" style="width:100%;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:14px;border-radius:14px;font-weight:800;font-size:15px;">종료</button></div>`;
 
         try{ const lottoNumbers = typeof sajuGetLottoNumbers==='function' ? sajuGetLottoNumbers() : [3,11,23,28,34,41]; const ballsEl = document.getElementById('fortune-lotto-balls'); if(ballsEl){ const colors=['#FFD98E','#FF9AC2','#8EC5FC','#A0E7A0','#C7B8FF','#FFB07C']; ballsEl.innerHTML = lottoNumbers.map((n,i)=>`<div class="lotto-ball" style="background:${colors[i%colors.length]}">${n}</div>`).join(''); } }catch(e){} fortunePopupOverlay.classList.add('active'); lockBodyScroll(); } function saveFortuneCard_DISABLED(){
         alert('캡처해서 저장해보세요! (이미지 저장 기능은 다음 버전에서 자동 저장으로 업그레이드할게요)');
