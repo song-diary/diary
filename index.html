@@ -2898,13 +2898,15 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         <div class="ldt-week-box" style="background: linear-gradient(135deg, rgba(255,215,0,0.08), rgba(255,154,194,0.08)); border:1px solid rgba(255,215,0,0.25); border-radius:14px; padding:14px; margin-top:14px;">
             <div style="color:#FFD98E; font-size:13px; font-weight:800;">✨ NEW! 생성시각+50만명 귀인 주문형 (고정수 반영!)</div>
             <div style="font-size:10px; color:rgba(255,255,255,0.5); margin:4px 0 10px;">고정수 3개 박고 → 몇게임 선택 → 즉시 생성! 공 색깔 기존과 동일!</div>
-            <div style="display:flex; gap:6px; margin-bottom:12px; align-items:center; flex-wrap:wrap; background:rgba(0,0,0,0.2); padding:8px 10px; border-radius:10px;">
-                <span style="font-size:12px; color:#FFD98E; font-weight:bold;">몇게임?</span>
-                <button onclick="sajuGenerateNewLotto(1)" style="width:36px; height:36px; border-radius:50%; border:1px solid #555; background:#222; color:#fff; font-weight:bold; cursor:pointer;">1</button>
-                <button onclick="sajuGenerateNewLotto(2)" style="width:36px; height:36px; border-radius:50%; border:1px solid #555; background:#222; color:#fff; font-weight:bold; cursor:pointer;">2</button>
-                <button onclick="sajuGenerateNewLotto(3)" style="width:36px; height:36px; border-radius:50%; border:1px solid #555; background:#222; color:#fff; font-weight:bold; cursor:pointer;">3</button>
-                <button onclick="sajuGenerateNewLotto(4)" style="width:36px; height:36px; border-radius:50%; border:1px solid #555; background:#222; color:#fff; font-weight:bold; cursor:pointer;">4</button>
-                <button onclick="sajuGenerateNewLotto(5)" style="width:36px; height:36px; border-radius:50%; border:2px solid #ffcc00; background:#ffcc00; color:#000; font-weight:bold; cursor:pointer;">5</button>
+            <div style="display:flex; gap:8px; margin-bottom:10px; align-items:center; flex-wrap:wrap; background:rgba(0,0,0,0.2); padding:8px 10px; border-radius:10px;">
+                <label style="display:flex; align-items:center; gap:4px; font-size:11px; color:#FFD98E; cursor:pointer;"><input type="checkbox" id="ldt-include-favs" checked style="accent-color:#ffcc00;"> 고정수 포함</label>
+                <span style="font-size:12px; color:#FFD98E; font-weight:bold; margin-left:6px;">몇게임?</span>
+                <button onclick="sajuGenerateNewLotto(1)" style="width:34px; height:34px; border-radius:50%; border:1px solid #555; background:#222; color:#fff; font-weight:bold; cursor:pointer;">1</button>
+                <button onclick="sajuGenerateNewLotto(2)" style="width:34px; height:34px; border-radius:50%; border:1px solid #555; background:#222; color:#fff; font-weight:bold; cursor:pointer;">2</button>
+                <button onclick="sajuGenerateNewLotto(3)" style="width:34px; height:34px; border-radius:50%; border:1px solid #555; background:#222; color:#fff; font-weight:bold; cursor:pointer;">3</button>
+                <button onclick="sajuGenerateNewLotto(4)" style="width:34px; height:34px; border-radius:50%; border:1px solid #555; background:#222; color:#fff; font-weight:bold; cursor:pointer;">4</button>
+                <button onclick="sajuGenerateNewLotto(5)" style="width:34px; height:34px; border-radius:50%; border:2px solid #ffcc00; background:#ffcc00; color:#000; font-weight:bold; cursor:pointer;">5</button>
+                <button onclick="clearFixedNumbers()" style="margin-left:auto; font-size:10px; padding:4px 8px; border-radius:12px; border:1px solid #444; background:#1a1a1a; color:#888; cursor:pointer;">고정해제</button>
             </div>
             <div id="ldt-new-balls" style="display:flex; flex-direction:column; gap:6px; min-height:20px;"></div>
             <div id="ldt-new-story" style="font-size:11px; color:#FFD98E; margin-top:8px; font-weight:700; line-height:1.4; min-height:16px;"></div>
@@ -4086,7 +4088,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     function sajuGenerateNewLotto(gameCount){
         try{
             const cnt = Math.min(5, Math.max(1, parseInt(gameCount)||5));
-            const favs = typeof ldtGetFavoriteNumbers==='function' ? ldtGetFavoriteNumbers() : [];
+            const includeFavsEl = document.getElementById("ldt-include-favs"); const includeFavs = includeFavsEl ? includeFavsEl.checked : true; const rawFavs = typeof ldtGetFavoriteNumbers==='function' ? ldtGetFavoriteNumbers() : []; const favs = includeFavs ? rawFavs : [];
             const best = sajuGetBestGwainForLotto();
             const poolBase = sajuBuildLottoPool(best);
             const allGames = [];
@@ -4124,6 +4126,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             return { allGames: allGames, best: best };
         }catch(e){ console.error(e); alert('생성 오류: '+e.message); return null; }
     }
+    function clearFixedNumbers(){ try{ for(let i=1;i<=6;i++){ const el=document.getElementById(`ldt-fav${i}`); if(el) el.value=""; } if(typeof ldtValidateInputs==="function") ldtValidateInputs(); }catch(e){} }
     function sajuGenerateLottoNumbers(seedStr, baseAnchorNumbers, gameCount){
         // 기존 호환용 - NEW 함수로 위임
         return sajuGenerateNewLotto(gameCount||5) || { main:[3,11,23,28,34,41], allGames:[[3,11,23,28,34,41]], bonus:null, luckiest:null, count:5 };
@@ -6927,7 +6930,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 
         const subtitleEl = document.getElementById('ldt-subtitle');
         if (subtitleEl) {
-            subtitleEl.textContent = ldtGames.length ? '오늘의 행운 번호로 시작했어요' : '수량을 고르고 번호를 뽑아보세요';
+            subtitleEl.textContent = ldtGames.length ? '오늘의 행운 번호로 시작했어요 (고정수는 위에 입력) ' : '수량을 고르고 번호를 뽑아보세요 - 고정수는 선택사항!';
         }
 
         for (let i = 1; i <= 6; i++) {
