@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>다이어리&가계부 V194 SINGLE - 사진 세모표시</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes"><title>다이어리&가계부 V194 SINGLE - 사진 세모표시</title>
 <style>
         :root {
             --bg-color: #f7f4f4;
@@ -2524,7 +2524,15 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         </style>
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#f59e0b">
-</head>
+
+<style>
+#lotto-draw-modal-overlay .ldt-game-label{font-size:15px !important; font-weight:800 !important;}
+#lotto-draw-modal-overlay .lotto-ball{width:36px !important; height:36px !important; line-height:36px !important; font-size:15px !important;}
+#lotto-draw-modal-overlay .ldt-input{font-size:18px !important; height:44px !important;}
+#lotto-draw-modal-overlay #ldt-subtitle{font-size:15px !important;}
+#fortune-popup-overlay .fortune-popup-card{font-size:16px !important;}
+</style>
+<style>.fortune-popup-close{display:none !important;} .close-form-btn{display:none !important;} #fortune-popup-overlay .fp-close-btn{display:none !important;}</style><style>.fp-yesterday-box, .fp-prev-diary, .fp-diary-history, [class*="yesterday"]{display:none !important;}</style><style>.fp-diary-box{display:none !important;}</style></head>
 <body>
 
 
@@ -2877,7 +2885,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         <button class="fortune-popup-close" onclick="closeLottoDrawModal()">✖</button>
         <div class="fp-hero">
             <div class="fp-hero-top"><div class="fp-eyebrow">🎲 로또 번호 뽑기</div></div>
-            <div class="fp-date" id="ldt-subtitle">오늘의 행운 번호로 시작해봐요</div>
+            <div class="fp-date" id="ldt-subtitle" style="display:none;"></div>
         </div>
 
         <div class="ldt-fav-box">
@@ -2918,7 +2926,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             <button id="ldt-draw-btn" onclick="ldtAddGames()">뽑기</button>
         </div>
         <div class="fp-my-saju-link" style="display:none;" onclick="ldtResetAll()">구형 초기화</div>
-        <div class="ldt-small-note">※ 고정수를 6개 모두 입력하면 해당 번호로 완성돼요.<br>결과는 오늘 하루 동안 자동 저장돼요.</div>
+        
         <div class="fp-exit-btn" onclick="closeLottoDrawModal()">종료</div>
     </div>
 </div>
@@ -4153,7 +4161,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             return {allGames:allGames, best:best};
         }catch(e){ console.error(e); alert('생성 오류: '+e.message); return null; }
     }
-    function clearFixedNumbers(){ try{ for(let i=1;i<=6;i++){ const el=document.getElementById('ldt-fav'+i); if(el) el.value=''; } if(typeof ldtValidateInputs==='function') ldtValidateInputs(); const nb=document.getElementById('ldt-new-balls'); if(nb) nb.innerHTML='<div style="text-align:center; color:#888; font-size:12px; padding:10px;">해제됨! 다시 생성해보세요!</div>'; }catch(e){} }
+    function clearFixedNumbers(){ try{ for(let i=1;i<=6;i++){ const el=document.getElementById('ldt-fav'+i); if(el) el.value=''; } if(typeof ldtValidateInputs==='function') ldtValidateInputs(); }catch(e){} }
     function ldtResetAllNew(){ try{ if(!confirm('판을 초기화할까요?')) return; clearFixedNumbers(); const nb=document.getElementById('ldt-new-balls'); if(nb) nb.innerHTML='<div style="text-align:center; color:#888; font-size:12px; padding:10px;">초기화됨! 고정수 선택 → 생성하기!</div>'; const st=document.getElementById('ldt-new-story'); if(st){ st.style.display='none'; st.textContent=''; } }catch(e){} }
 
     // ----- 📅 이번주(월~토) 행운번호 누적 저장
