@@ -4021,22 +4021,6 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         return false;
     }
 
-
-    function sajuInitLottoSelector(){
-        try{
-            const el = document.getElementById('fortune-lotto-numbers');
-            if(!el) return;
-            if(el.innerHTML.includes('lotto-btn-1')) return;
-            let html = '<div style="display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap; align-items:center;"><span style="font-size:12px; color:#aaa; margin-right:4px;">몇게임?</span>';
-            for(let k=1;k<=5;k++){ html+='<button id="lotto-btn-'+k+'" onclick="sajuGenerateLottoNumbers(getTodayStr(), null, '+k+')" style="width:38px; height:38px; border-radius:50%; border:1px solid '+(k===5?'#ffcc00':'#555')+'; background:'+(k===5?'#ffcc00':'#222')+'; color:'+(k===5?'#000':'#fff')+'; font-weight:bold; cursor:pointer; font-size:14px;">'+k+'</button>'; }
-            html+='</div>';
-            html+='<div style="padding:14px; border:1px dashed #444; border-radius:12px; text-align:center; color:#777; font-size:12px; line-height:1.5;">위 버튼을 누르면<br>그 순간 생성타임 + 50만명 귀인 사주로<br>1등 번호가 생성됩니다!</div>';
-            el.innerHTML = html;
-            const storyEl = document.getElementById('fortune-lotto-story');
-            if(storyEl){ storyEl.textContent = '원하는 게임 수를 선택하세요!'; }
-        }catch(e){}
-    }
-
     function sajuGetSaturdayStr(){
         try{
             const today = new Date();
@@ -4048,7 +4032,20 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             return sat.getFullYear()+'-'+String(sat.getMonth()+1).padStart(2,'0')+'-'+String(sat.getDate()).padStart(2,'0');
         }catch(e){ return getTodayStr(); }
     }
-    // V230 주문형 1~5게임 - 생성시각 + 50만명 + 시주 - 요일/토요일 자동삭제, 주문형만!
+    function sajuInitLottoSelector(){
+        try{
+            const el = document.getElementById('fortune-lotto-numbers');
+            if(!el) return;
+            if(el.innerHTML.includes('lotto-btn-1')) return;
+            let html = '<div style="display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap; align-items:center;"><span style="font-size:12px; color:#aaa; margin-right:4px;">몇게임?</span>';
+            for(let k=1;k<=5;k++){ html+='<button id="lotto-btn-'+k+'" onclick="sajuGenerateLottoNumbers(getTodayStr(), null, '+k+')" style="width:38px; height:38px; border-radius:50%; border:1px solid '+(k===5?'#ffcc00':'#555')+'; background:'+(k===5?'#ffcc00':'#222')+'; color:'+(k===5?'#000':'#fff')+'; font-weight:bold; cursor:pointer; font-size:14px;">'+k+'</button>'; }
+            html+='</div>';
+            html+='<div style="padding:14px; border:1px dashed #444; border-radius:12px; text-align:center; color:#777; font-size:12px; line-height:1.5;">위 버튼을 누르면<br>그 순간 생성타임 + 50만명 귀인 사주로<br>1등 번호가 생성됩니다!</div>';
+            el.innerHTML = html;
+            const storyEl = document.getElementById('fortune-lotto-story');
+            if(storyEl){ storyEl.textContent = '원하는 게임 수를 선택하세요! (생성시각 + 50만명 귀인)'; }
+        }catch(e){}
+    }
     function sajuGenerateLottoNumbers(seedStr, baseAnchorNumbers, gameCount){
         try{
             const cnt = Math.min(5, Math.max(1, parseInt(gameCount)||5));
@@ -4098,7 +4095,6 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             try{ localStorage.setItem('lottoBest_SAT_'+saturdayStr, JSON.stringify(best)); }catch(e){}
             try{ localStorage.setItem('lottoBest_'+seedStr.slice(0,10), JSON.stringify(best)); }catch(e){}
             try{ localStorage.setItem('lottoGames_'+seedStr.slice(0,10), JSON.stringify(allGames)); }catch(e){}
-            sajuInitLottoSelector();
             setTimeout(function(){
                 try{
                     const el=document.getElementById('fortune-lotto-story');
@@ -4141,8 +4137,103 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         const dd = String(monday.getDate()).padStart(2, '0');
         return `${monday.getFullYear()}-${mm}-${dd}`;
     }
-    function sajuGetWeeklyLottoStore(){ return {saturday: sajuGetSaturdayStr(), days:{}}; }
-    function sajuRecordTodayLottoWeekly(lottoMain) { return; /* V231 주문형 - 요일 누적 삭제 */ };
+    function sajuGetWeeklyLottoStore() {
+        const monday = sajuGetMondayOfWeek(getTodayStr());
+        let store = null;
+        try { store = JSON.parse(localStorage.getItem('smartDiaryWeeklyLotto') || 'null'); } catch (e) {}
+        if (!store || store.weekStart !== monday) {
+            store = { weekStart: monday, days: {} };
+            localStorage.setItem('smartDiaryWeeklyLotto', JSON.stringify(store));
+        }
+        return store;
+    }
+    function sajuRecordTodayLottoWeekly(lottoMain) { return; /* V231 주문형 - 요일 누적 기능 제거, 주문형만 사용 */
+        const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+        const dObj = parseDateObj(getTodayStr());
+        const dayLabel = dayNames[dObj.getDay()];
+        if (dayLabel === '일') return; // 월~토만 기록
+        const store = sajuGetWeeklyLottoStore();
+        store.days[dayLabel] = lottoMain;
+        localStorage.setItem('smartDiaryWeeklyLotto', JSON.stringify(store));
+    }
+    // 오늘의 행운 로또번호 6개 (기운지수 카드 / 로또추첨기 도구에서 공용으로 사용)
+    function sajuGetTodayLottoMain() {
+        if (!sajuBirthInfo || !sajuBirthInfo.date || !sajuDayMasterElem) return null;
+        const todayInfo = sajuGetTodayInfo();
+        const elemNums = String(SAJU_ELEM_NUMBER[todayInfo.elem]).split('·').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
+        const seed = `${getTodayStr()}_${todayInfo.gz}_${sajuBirthInfo.date}_${sajuDayMasterElem}`;
+        const main = sajuGenerateLottoNumbers(seed, elemNums).main;
+        sajuRecordTodayLottoWeekly(main);
+        return main;
+    }
+
+    const SAJU_DM_DESC_GAN = {
+        '甲': '큰 나무처럼 곧고 리더십이 있어서, 무리 안에서 자연스럽게 중심이 되는 타입이에요. 한번 마음먹으면 주저 없이 밀어붙이는 추진력이 가장 큰 무기예요.',
+        '乙': '화초나 넝쿨처럼 유연하고 적응력이 좋아서, 어떤 환경에서도 요령껏 자리를 잡는 타입이에요. 겉으론 부드러워 보여도 끝까지 뻗어나가는 은근한 끈기가 있어요.',
+        '丙': '태양처럼 뜨겁고 화끈해서, 숨기는 것 없이 감정을 드러내는 타입이에요. 그 밝은 에너지 덕분에 주변 분위기를 화사하게 만들어줘요.',
+        '丁': '달빛이나 촛불처럼 은은하고 섬세해서, 요란하지 않게 주변을 따뜻하게 밝혀주는 타입이에요. 감정 표현이 부드러워서 곁에 있으면 편안함을 느껴요.',
+        '戊': '큰 산처럼 묵직하고 포용력이 있어서, 주변 사람들이 기대고 의지하는 타입이에요. 화려하진 않아도 한 번 맺은 인연은 오래도록 지키는 편이에요.',
+        '己': '논밭처럼 부드럽고 실속있어서, 남을 챙기고 길러내는 데 소질이 있는 타입이에요. 티 나지 않게 꾸준히 자기 몫을 해내는 성실함이 강점이에요.',
+        '庚': '무쇠나 칼처럼 강인하고 결단력이 있어서, 중요한 순간에 확실하게 결정을 내리는 타입이에요. 옳다고 믿는 일 앞에서는 쉽게 흔들리지 않는 강단이 있어요.',
+        '辛': '보석처럼 섬세하고 예리해서, 디테일을 놓치지 않는 안목이 있는 타입이에요. 세련된 감각과 깔끔한 일처리로 주변의 신뢰를 얻는 편이에요.',
+        '壬': '바다나 큰 강처럼 스케일이 크고 포용력이 있어서, 큰 그림을 그리는 데 강한 타입이에요. 겉으로 드러내지 않아도 속으로 많은 걸 헤아리는 편이에요.',
+        '癸': '이슬비나 샘물처럼 맑고 섬세해서, 조용히 스며들듯 사람 마음을 얻는 타입이에요. 눈에 띄지 않아도 꼭 필요한 순간에 도움을 주는 세심함이 있어요.'
+    };
+
+    // ----- 💪 신강/신약 판정: 8글자 중 나를 돕는 기운 vs 나를 소모시키는 기운을 세어서 비교 (진짜 명식 데이터 기반) -----
+    const SAJU_STRENGTH_BLURB = {
+        신강: '사주에 나를 도와주는 기운이 많은 편이에요. 스스로 판단하고 밀어붙이는 힘이 강해서, 남에게 기대기보다 직접 나서서 해결하는 걸 편하게 느껴요.',
+        신약: '사주에 나를 채워주기보다 힘을 쏟게 만드는 기운이 많은 편이에요. 대신 그만큼 주변 사람이나 환경과 조화를 이루는 감각이 좋은 편이에요.'
+    };
+    function sajuJudgeStrength(pillars, dayMasterElem) {
+        const counts = sajuComputeElemCounts(pillars);
+        let supportGen = null;
+        for (const k in SAJU_GENERATES) { if (SAJU_GENERATES[k] === dayMasterElem) { supportGen = k; break; } }
+        let controlsMe = null;
+        for (const k in SAJU_CONTROLS) { if (SAJU_CONTROLS[k] === dayMasterElem) { controlsMe = k; break; } }
+        const iGenerate = SAJU_GENERATES[dayMasterElem];
+        const iControl = SAJU_CONTROLS[dayMasterElem];
+        const supportCount = (counts[dayMasterElem] || 0) + (counts[supportGen] || 0);
+        const drainCount = (counts[iGenerate] || 0) + (counts[iControl] || 0) + (counts[controlsMe] || 0);
+        return supportCount >= drainCount ? '신강' : '신약';
+    }
+
+    // 관계(십성 단순화)별 오늘의 무드 · 지수 · 카피 - 옛스러운 명리학 용어 대신 현대적인 톤으로
+    // + 그날 기운에 맞는 건강 조언(health) / 오늘의 한마디 지침(mantra)까지 함께 묶음
+    
+    // ===================== 🔮 강화된 운세 시스템 v68 =====================
+    const SAJU_FORTUNE = {
+        비겁: { mood: '직진 모드 🚀', score: 68,
+            total: '오늘은 내 목소리에 힘이 실리는 날이에요. 하고 싶은 대로 밀어붙이면 의외로 잘 풀리지만, 남의 말을 아예 안 듣고 가다간 부딪힐 수 있어요.',
+            money: '충동구매 주의보! 사고 싶은 게 눈에 띄면 일단 장바구니에 담아두고 하루만 묵혀보세요.',
+            love: '고집부리다 삐끗하기 쉬운 날이에요. 먼저 웃어주는 쪽이 오늘의 승자예요.',
+            health: '에너지가 넘치는 만큼 몸에 힘이 잔뜩 들어가기 쉬운 날이에요. 어깨와 목의 힘을 빼고 심호흡을.',
+            mantra: '오늘은 밀어붙이되, 한 번은 멈춰 서서 숨을 고르세요.' },
+        식상: { mood: '텐션 업 ✨', score: 82,
+            total: '말도 잘 통하고 아이디어도 술술 풀리는 날이에요. 미뤄뒀던 이야기, 오늘 꺼내보세요.',
+            money: '기분 좋은 소비가 이어질 수 있어요. 나를 위한 작은 선물 정도는 괜찮지만 브레이크도 필요해요.',
+            love: '마음이 술술 잘 전해지는 날이에요. 문자 한 통이 관계를 확 풀어줄 수도 있어요.',
+            health: '머리를 많이 쓰는 날이라 눈과 목이 쉽게 피로해질 수 있어요.',
+            mantra: '떠오르는 생각이 있다면, 오늘 안에 말이나 글로 꺼내보세요.' },
+        재성: { mood: '대박 예감 💰', score: 90,
+            total: '미뤄뒀던 일을 마무리 짓기 딱 좋은 날이에요. 결과가 눈에 보이기 시작해요.',
+            money: '오늘의 주인공은 재물운! 반가운 소식이나 뜻밖의 수입이 있을 수 있어요.',
+            love: '마음 한 번 더 써주면 관계가 확 깊어지는 날이에요.',
+            health: '성과에 몰입하다 끼니를 거르기 쉬운 날이에요. 식사 시간 꼭 챙기세요.',
+            mantra: '오늘 마무리 지은 것 하나가, 내일의 큰 결실이 됩니다.' },
+        관성: { mood: '숨 고르기 🧘', score: 58,
+            total: '오늘은 페이스 조절이 관건이에요. 정해진 루틴대로 움직이면 무탈하게 지나가요.',
+            money: '지갑은 오늘 하루 잠가두세요. 계획에 없던 큰 결제는 다음으로 미뤄도 좋아요.',
+            love: '말 한마디, 표정 하나가 크게 느껴지는 날이에요. 평소보다 부드럽게 다가가세요.',
+            health: '긴장하기 쉬운 하루라 어깨와 뒷목이 뻐근해질 수 있어요.',
+            mantra: '오늘은 새로 벌이기보다, 있는 걸 지키는 하루로 삼아보세요.' },
+        인성: { mood: '차분함 🌿', score: 75,
+            total: '배우고 정리하기 좋은 하루예요. 새로운 걸 익히기에 딱인 컨디션이에요.',
+            money: '무리하지 않고 지키는 게 이득인 날이에요. 저축이나 가계부 정리 추천!',
+            love: '편안하고 익숙한 만남이 좋은 날이에요. 오래된 인연에게 연락해보세요.',
+            health: '몸과 마음이 안정되는 날이라 충전하기 좋은 타이밍이에요.',
+            mantra: '오늘은 채우는 날이에요. 배우고, 쉬고, 정리하세요.' }
+    };
 
     const SAJU_TEN_GOD_MAP = {
         '甲': {'甲':'비견','乙':'겁재','丙':'식신','丁':'상관','戊':'편재','己':'정재','庚':'편관','辛':'정관','壬':'편인','癸':'정인'},
