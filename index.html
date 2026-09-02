@@ -2532,7 +2532,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 #lotto-draw-modal-overlay #ldt-subtitle{font-size:15px !important;}
 #fortune-popup-overlay .fortune-popup-card{font-size:16px !important;}
 </style>
-<style>.fortune-popup-close{display:none !important;} .close-form-btn{display:none !important;} #fortune-popup-overlay .fp-close-btn{display:none !important;}</style><style>.fp-yesterday-box, .fp-prev-diary, .fp-diary-history, [class*="yesterday"]{display:none !important;}</style><style>.fp-diary-box{display:none !important;}</style></head>
+<style>.fortune-popup-close{display:none !important;} .close-form-btn{display:none !important;} #fortune-popup-overlay .fp-close-btn{display:none !important;}</style><style>.fp-yesterday-box, .fp-prev-diary, .fp-diary-history, [class*="yesterday"]{display:none !important;}</style><style>.fp-diary-box{display:none !important;}</style><style>.fortune-popup-close, .close-form-btn, .fp-close-btn{display:none !important;}</style></head>
 <body>
 
 
@@ -2834,7 +2834,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 <!-- 🔮 오늘의 운세 팝업 -->
 <div class="modal-overlay" id="fortune-popup-overlay" onclick="handleFortunePopupBackgroundClick(event)">
     <div class="fortune-popup-card" id="fortune-popup-card" onclick="event.stopPropagation()">
-        <button class="fortune-popup-close" onclick="closeFortunePopup()">✖</button>
+        <button class="fortune-popup-close" style="display:none !important;" onclick="closeFortunePopup()">✖</button>
         <div id="fortune-popup-body"><!-- JS로 채워짐 --></div>
     </div>
 </div>
@@ -2882,7 +2882,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 <!-- 🎲 로또추첨기 도구 -->
 <div class="modal-overlay" id="lotto-draw-modal-overlay" onclick="handleLottoDrawModalBackgroundClick(event)">
     <div class="fortune-popup-card" id="lotto-draw-card" onclick="event.stopPropagation()">
-        <button class="fortune-popup-close" onclick="closeLottoDrawModal()">✖</button>
+        <button class="fortune-popup-close" style="display:none !important;" onclick="closeLottoDrawModal()">✖</button>
         <div class="fp-hero">
             <div class="fp-hero-top"><div class="fp-eyebrow">🎲 로또 번호 뽑기</div></div>
             <div class="fp-date" id="ldt-subtitle" style="display:none;"></div>
@@ -4156,7 +4156,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             const ballsEl=document.getElementById('ldt-new-balls'); const storyEl=document.getElementById('ldt-new-story');
             if(storyEl&&best){ const fixedTxt=favs.length?'고정 '+favs.join(',')+' 매게임 '+favs.length+'개 보장':'고정 없음'; storyEl.textContent=best.saturday+' 추첨 50만명 중 1등 '+best.year+'년 '+best.timeBranch+'시('+best.timeHour+')생 '+best.gan+'간 '+best.tenGod+' '+best.score+'점 · '+best.genTime+' · '+cnt+'게임 · '+fixedTxt; storyEl.style.display='block'; }
             if(ballsEl){
-                let html=''; for(let i=0;i<allGames.length;i++){ const nums=allGames[i]; html+='<div class="ldt-game" style="margin:6px 0;"><div class="ldt-game-label">'+(i+1)+'게임 (고정 '+favs.length+'개 보장)</div><div class="lotto-balls-row">'; for(let n of nums){ const col=typeof sajuLottoBallColor==='function'?sajuLottoBallColor(n):'#FBC400'; const isFav=favs.includes(n); html+='<div class="lotto-ball '+(isFav?'ldt-fav-ball':'')+'" style="background:'+col+';">'+n+'</div>'; } html+='</div></div>'; } ballsEl.innerHTML=html;
+                let html=''; for(let i=0;i<allGames.length;i++){ const nums=allGames[i]; html+='<div class="ldt-game" style="margin:6px 0;"><div class="ldt-game-label">'+(i+1)+'게임 </div><div class="lotto-balls-row">'; for(let n of nums){ const col=typeof sajuLottoBallColor==='function'?sajuLottoBallColor(n):'#FBC400'; const isFav=favs.includes(n); html+='<div class="lotto-ball '+(isFav?'ldt-fav-ball':'')+'" style="background:'+col+';">'+n+'</div>'; } html+='</div></div>'; } ballsEl.innerHTML=html;
             }
             return {allGames:allGames, best:best};
         }catch(e){ console.error(e); alert('생성 오류: '+e.message); return null; }
@@ -6467,7 +6467,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         const enhanced = sajuGetEnhancedFortune();
         const f = enhanced ? enhanced.base : SAJU_FORTUNE['비겁'];
         const score = enhanced ? enhanced.score : f.score;
-        // 어제 점수 비교
+        //  점수 비교
         const yKey = 'fortuneScore_' + (enhanced ? enhanced.dateObj.toISOString().slice(0,10) : new Date().toISOString().slice(0,10));
         const prevScore = parseInt(localStorage.getItem('fortuneScore_prev')||'0');
         const delta = prevScore ? score - prevScore : 0;
@@ -6518,7 +6518,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         // 친근하게 요약
         const friendlyTotal = detailTotal.replace(/비견|겁재|식신|상관|편재|정재|편관|정관|편인|정인/g, '').replace(/일간|일주/g,'나').substring(0,90);
         
-        // 어제 일기 연동
+        //  일기 연동
         let diaryHint = '';
         try{
             const all = getAllDiaries();
@@ -6527,14 +6527,14 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             const yDiaries = all.filter(d=>normalizeDateStr(d.date)===yStr && d.text);
             if(yDiaries.length>0){
                 const txt = yDiaries[0].text.slice(0,30);
-                if(txt.includes('회사')||txt.includes('일')||txt.includes('직장')) diaryHint = "어제 '회사' 얘기 썼죠? 오늘 오전에 실마리 보여요";
-                else if(txt.includes('돈')||txt.includes('월급')) diaryHint = "어제 돈 고민 썼죠? 오늘은 지출 전에 한 번만 더 생각해봐요";
-                else if(txt.includes('연애')||txt.includes('사랑')||txt.includes('남친')||txt.includes('여친')) diaryHint = "어제 마음 썼던 그 얘기, 오늘은 가볍게 연락해도 좋아요";
-                else diaryHint = `어제 쓴 "${txt}..." 그 마음, 오늘은 좀 가볍게 가져가도 돼요`;
+                if(txt.includes('회사')||txt.includes('일')||txt.includes('직장')) diaryHint = " '회사' 얘기 썼죠? 오늘 오전에 실마리 보여요";
+                else if(txt.includes('돈')||txt.includes('월급')) diaryHint = " 돈 고민 썼죠? 오늘은 지출 전에 한 번만 더 생각해봐요";
+                else if(txt.includes('연애')||txt.includes('사랑')||txt.includes('남친')||txt.includes('여친')) diaryHint = " 마음 썼던 그 얘기, 오늘은 가볍게 연락해도 좋아요";
+                else diaryHint = ` "${txt}..." 그 마음, 오늘은 좀 가볍게 가져가도 돼요`;
             }
         }catch(e){}
 
-        const deltaHTML = delta>0 ? `<span style="color:#7CFF9B;font-size:12px;">▲ ${delta} 어제보다 좋아요</span>` : delta<0 ? `<span style="color:#FF9AA2;font-size:12px;">▼ ${Math.abs(delta)} 살짝 내려감</span>` : `<span style="color:rgba(255,255,255,0.5);font-size:12px;">어제와 비슷</span>`;
+        const deltaHTML = delta>0 ? `<span style="color:#7CFF9B;font-size:12px;">▲ ${delta} 보다 좋아요</span>` : delta<0 ? `<span style="color:#FF9AA2;font-size:12px;">▼ ${Math.abs(delta)} 살짝 내려감</span>` : `<span style="color:rgba(255,255,255,0.5);font-size:12px;">와 비슷</span>`;
 
         bodyEl.innerHTML = `
             <div class="fp-hero">
@@ -6548,7 +6548,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 <div style="text-align:right;">${deltaHTML}<div style="margin-top:6px;display:flex;gap:6px;justify-content:flex-end;"><span style="background:rgba(255,255,255,0.12);padding:4px 8px;border-radius:999px;font-size:11px;">#${color.split(' ')[0]}</span><span style="background:rgba(255,255,255,0.12);padding:4px 8px;border-radius:999px;font-size:11px;">#${action.split(' ')[0]}</span></div></div>
             </div>
 
-            ${diaryHint ? `<div style="margin-top:12px;background:linear-gradient(135deg,rgba(255,217,142,0.15),rgba(255,154,194,0.12));border:1px dashed rgba(255,217,142,0.4);border-radius:12px;padding:10px 12px;font-size:13px;color:#FFE9C2;">📔 ${diaryHint}</div>` : ''}
+            ${diaryHint ? `<div style="margin-top:12px;background:linear-gradient(135deg,rgba(255,217,142,0.15),rgba(255,154,194,0.12));border:1px dashed rgba(255,217,142,0.4);border-radius:12px;padding:10px 12px;font-size:13px;color:#FFE9C2;">📔 </div>` : ''}
 
             <div style="margin-top:14px;display:grid;gap:10px;">
                 <div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:12px;">
