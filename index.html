@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>다이어리&가계부 v43 - 2줄고정+흐릿</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>다이어리&가계부 V194 SINGLE - 사진 세모표시</title>
 <style>
         :root {
             --bg-color: #f7f4f4;
@@ -899,7 +899,7 @@
         .fp-cards { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
         .fp-card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 12px 14px; }
         .fp-card .fpc-label { font-size: 12.5px; font-weight: 700; color: #C7B8FF; margin-bottom: 4px; }
-        .fp-card .fpc-text { font-size: 14.5px; line-height: 1.6; color: rgba(242,239,255,0.88); }
+        .fp-card .fpc-text { font-size: 16.5px; line-height: 1.6; color: rgba(242,239,255,0.88); }
         .fp-lotto-card { margin-top: 12px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 13px 14px; text-align: center; cursor: pointer; transition: background 0.15s, transform 0.1s; }
         .fp-lotto-card:active { background: rgba(255,255,255,0.1); transform: scale(0.99); }
         .fp-lotto-title { font-size: 13.5px; font-weight: 700; color: #F2EFFF; margin-bottom: 10px; }
@@ -1248,7 +1248,9 @@
         }
 
         /* ❤️ 건강 기록 입력 (혈압/혈당/복약) */
-        .health-input-box {
+        .health-input-box { display:none !important; /* V185 제거 */
+            }
+        .health-input-box-removed {
             background: #fdf0f2;
             border: 1px solid #f3c6cd;
             border-radius: 8px;
@@ -1843,10 +1845,38 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 #cal-days-name-grid { position:sticky !important; top:34px !important; z-index:29 !important; background:var(--bg-color, #faf6f3) !important; margin:0 !important; padding:2px 0 3px !important; gap:2px !important; border-bottom:none !important; }
 #cal-days-grid { background:var(--bg-color, #faf6f3) !important; margin:0 !important; padding:2px 0 8px !important; gap:2px !important; overflow:visible !important; }
 .cal-cell { box-sizing:border-box !important; border-radius:8px !important; border:1px solid #eee !important; background:#fff !important; overflow:hidden !important; position:absolute !important; }
-.cal-cell.has-photo { border-color:var(--primary-color, #6b8cff) !important; }
-.cal-cell .cal-photo-img { position:absolute !important; inset:0 !important; width:100% !important; height:100% !important; object-fit:cover !important; opacity:0.38 !important; z-index:0 !important; pointer-events:none !important; }
-.cal-cell.has-photo .cal-cell-inner { position:relative; z-index:1; }
-.cal-cell.has-photo .cal-cell-inner span, .cal-cell.has-photo .cal-special-label, .cal-cell.has-photo .cal-anniv-label { position:relative; z-index:2; background:rgba(255,255,255,0.7); border-radius:4px; padding:0 2px; }
+
+/* V192 - 사진 희미 배경 제거, 좌측 상단 세모로 표시 */
+.cal-cell.has-photo { border-color: #e8d5f2 !important; }
+.cal-cell .cal-photo-img { display:none !important; }
+.cal-cell.has-photo .cal-photo-corner {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 28px !important;
+  height: 28px !important;
+  background: #d8c6e8 !important;
+  clip-path: polygon(0 0, 100% 0, 0 100%) !important;
+  border-top-left-radius: 7px !important;
+  z-index: 3 !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+}
+.cal-cell.has-photo .cal-photo-corner::after {
+  content: '📷' !important;
+  position: absolute !important;
+  top: 2px !important;
+  left: 2px !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));
+}
+.cal-cell.has-photo.sunday .cal-photo-corner { background: #f2c9c9 !important; }
+.cal-cell.has-photo.saturday .cal-photo-corner { background: #c9daf2 !important; }
+.cal-cell.has-photo.today-date .cal-photo-corner { background: #b8e0d8 !important; }
+
 .cal-cell.sunday { background:#fdf2f2 !important; border-color:#f7d6d6 !important; }
 .cal-cell.sunday span { color:#e74c3c !important; }
 .cal-cell.saturday { background:#f0f6fb !important; border-color:#d1e3f3 !important; }
@@ -1873,7 +1903,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 
 .fp-hap-item { color:#3e2723 !important; font-size:14px !important; padding:3px 0 !important; }
 
-        /* 🖼️ 갤러리 모드 - 3장씩 깔끔하게 */
+        /* 🖼️ 앨범 3 모드 - 3장씩 깔끔하게 */
         .diary-view-toggle { display:flex; gap:6px; margin:8px 0; justify-content:flex-end; }
         .diary-view-toggle button { padding:5px 10px; border-radius:8px; border:1px solid #ddd; background:#fff; font-size:12px; cursor:pointer; }
         .diary-view-toggle button.active { background:var(--primary-color); color:#fff; border-color:var(--primary-color); }
@@ -1950,7 +1980,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         }
 
 
-        /* v101: 갤러리 수정 왼쪽/삭제 오른쪽, 사각박스 */
+        /* v101: 앨범 3 수정 왼쪽/삭제 오른쪽, 사각박스 */
         #diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns {
             display:flex !important;
             justify-content:space-between !important;
@@ -2236,7 +2266,262 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             touch-action: pan-x pan-y pinch-zoom !important;
         }
 
-</style>
+
+/* ===== V149 SINGLE - 절기/기념일 좌측정렬 고정 ===== */
+#diary-around-today-list.gallery-mode .sub-memo-item { display:flex !important; flex-direction:column !important; align-items:center !important; }
+#diary-around-today-list.gallery-mode .sub-memo-item .diary-photo-wrap { width:100% !important; margin:0 auto !important; }
+#diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns {
+    display:flex !important; justify-content:center !important; align-items:center !important;
+    gap:6px !important; width:85% !important; max-width:85% !important;
+    margin:6px auto 2px auto !important;
+}
+#diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .edit-btn-hidden,
+#diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .delete-btn {
+    margin:0 !important; flex:0 0 auto !important; min-width:36px !important;
+    padding:3px 8px !important; font-size:11px !important;
+    display:inline-flex !important; justify-content:center !important; align-items:center !important;
+}
+#diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .edit-btn-hidden { margin-right:0 !important; }
+#diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .delete-btn { margin-left:0 !important; }
+
+#diary-around-today-card { position:relative !important; }
+#diary-around-today-card .feature-title {
+    display:flex !important; flex-wrap:nowrap !important;
+    justify-content:space-between !important; align-items:flex-start !important; gap:8px !important;
+}
+#selected-date-title { 
+    flex:1 1 auto !important; min-width:0 !important; 
+    text-align:left !important; align-items:flex-start !important;
+}
+#selected-date-title > div { text-align:left !important; align-items:flex-start !important; }
+#diary-view-toggle { display:flex !important; flex-shrink:0 !important; gap:4px !important; margin-left:auto !important; align-self:flex-start !important; }
+
+#calendar-card { overflow:visible !important; }
+#calendar-card .calendar-sticky-wrap {
+    position:sticky !important; top:0 !important; z-index:300 !important;
+    background:#ffffff !important; margin:0 !important;
+    padding:12px 15px 8px 15px !important; border-radius:12px 12px 0 0 !important;
+    border-bottom:1px solid #f0e6e6 !important;
+}
+#calendar-card .calendar-sticky-wrap .calendar-header,
+#calendar-card .calendar-sticky-wrap #cal-days-name-grid {
+    background:transparent !important; margin:0 !important; border:none !important; box-shadow:none !important;
+}
+#memo-form-card .btn-group { display:grid !important; grid-template-columns:1fr 1fr 1fr !important; gap:6px !important; width:100% !important; }
+#memo-form-card .btn-group .btn,
+#memo-form-card .btn-group label.btn,
+#memo-form-card #record-btn,
+#memo-form-card #photo-attach-label,
+#memo-form-card .btn-group .btn-primary {
+    height:44px !important; min-height:44px !important; font-size:12px !important; font-weight:700 !important;
+    padding:0 4px !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important;
+    min-width:0 !important; display:flex !important; align-items:center !important; justify-content:center !important;
+}
+#memo-form-card .fp-exit-btn { grid-column:1 / -1 !important; width:100% !important; max-width:200px !important; margin:10px auto 0 auto !important; height:44px !important; display:flex !important; align-items:center !important; justify-content:center !important; }
+
+/* 절기/기념일 좌측정렬 */
+.cal-special-title-badge { display:inline-block !important; text-align:left !important; margin-left:0 !important; }
+
+
+/* V150: 입력 버튼 리스트/앨범 3 밑으로 - 주의해서 수정 */
+#diary-around-today-card .feature-title {
+    display:flex !important;
+    justify-content:space-between !important;
+    align-items:flex-start !important;
+    gap:8px !important;
+}
+#selected-date-title { flex:1 1 auto !important; text-align:left !important; min-width:0 !important; }
+#diary-view-toggle {
+    display:grid !important;
+    grid-template-columns:1fr 1fr !important;
+    gap:4px !important;
+    width:112px !important;
+    flex-shrink:0 !important;
+    margin-left:auto !important;
+    align-self:flex-start !important;
+}
+#diary-view-toggle #btn-view-list,
+#diary-view-toggle #btn-view-gallery { width:100% !important; }
+#diary-view-toggle button[onclick*="openDiaryForm"] {
+    grid-column:1 / -1 !important;
+    width:100% !important;
+}
+
+
+/* V151: A안 - 달력 요일/일자 폰트 살짝 키우기 */
+.cal-day-name {
+    font-size: 16px !important;
+    font-weight: 800 !important;
+}
+#cal-days-name-grid div {
+    font-size: 16px !important;
+}
+.cal-cell span {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    line-height: 1.15 !important;
+}
+.cal-cell-inner span {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+}
+
+
+/* V152 B안: 일자에 나타나는 제목 색깔을 일자색과 비슷한 진회색으로 */
+.cal-anniv-label {
+    color: #34495e !important;
+    font-weight: 700 !important;
+}
+.cal-cell .cal-anniv-label {
+    color: #34495e !important;
+}
+#cal-days-grid .cal-anniv-label {
+    color: #34495e !important;
+}
+/* 달력 셀 안의 제목 span */
+.cal-cell-inner .cal-anniv-label {
+    color: #34495e !important;
+    font-weight: 700 !important;
+}
+
+
+
+/* V154: 일자 위쪽 정렬 버그 수정 - 다시 가운데 정렬 */
+.cal-cell-inner {
+    justify-content: center !important;
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+}
+.cal-cell-inner span {
+    margin-bottom: 1px !important;
+}
+
+/* V153: 폴더폰용 제목/절기 폰트 키우고 2줄 표시 */
+.cal-anniv-label, .cal-special-label {
+    font-size: 10px !important;
+    line-height: 1.15 !important;
+    font-weight: 700 !important;
+    color: #34495e !important;
+    white-space: normal !important;
+    word-break: break-all !important;
+    overflow-wrap: anywhere !important;
+    max-height: 28px !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    text-align: center !important;
+    padding: 0 1px !important;
+}
+.cal-anniv-label { color: #34495e !important; }
+.cal-special-label.cal-special-holiday { color: #E0685C !important; }
+.cal-special-label.cal-special-term { color: #4C7FD1 !important; }
+.cal-special-label.cal-special-bok { color: #C2820A !important; }
+
+/* 4자 넘어 2줄일 때도 셀 높이 유지 - 정사각형 유지하면서 내부 정렬 */
+.cal-cell-inner {
+    justify-content: flex-start !important;
+    padding-top: 3px !important;
+}
+.cal-cell-inner span { margin-bottom: 1px !important; }
+
+/* 폰트 키웠으므로 인접월은 9px */
+.cal-cell.adjacent-month .cal-anniv-label,
+.cal-cell.adjacent-month .cal-special-label {
+    font-size: 9px !important;
+}
+
+
+/* V155 A안: 일자 칸 아래로 25% 늘려서 3줄까지 보이게 */
+.cal-cell {
+    aspect-ratio: auto !important;
+}
+.cal-cell-inner {
+    justify-content: center !important;
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+}
+.cal-anniv-label, .cal-special-label {
+    -webkit-line-clamp: 3 !important;
+    max-height: 38px !important;
+}
+
+
+/* V171 fix main not opening */
+#anniv-input::placeholder { color:#bbb !important; opacity:1; }
+#anniv-input:focus { outline:none; border-color: var(--primary-color) !important; }
+#anniv-input, #textOutput.diary-textarea { font-size:14.5px !important; }
+
+
+/* V172 - 왼쪽정렬 + 메모 3-4줄 */
+#anniv-input-row { align-items:flex-start !important; text-align:left !important; }
+#diary-content-section { text-align:left !important; }
+#textOutput.diary-textarea {
+    min-height: 90px !important; /* 3-4줄 */
+    height: auto !important;
+    line-height: 1.5 !important;
+    padding: 10px 12px !important;
+}
+
+
+/* V179 - 완전 동일 정렬 */
+
+
+/* V180 FIX 1 - 빈 상태 문구 압축 방지: 항상 전체 너비 */
+#diary-around-today-list .empty-state-hint,
+#diary-around-today-list.gallery-mode .empty-state-hint {
+  grid-column: 1 / -1 !important;
+  width: 100% !important;
+  white-space: normal !important;
+  word-break: keep-all !important;
+  font-size: var(--memo-font-size) !important;
+}
+
+/* V180 FIX 2 - 날짜 폰트 달력과 동일 */
+.form-date-row { font-size: var(--base-font-size) !important; }
+#form-date-input, #form-date-label, .form-date-label,
+#selected-date-title, #selected-date-title div {
+  font-size: var(--base-font-size) !important;
+}
+#selected-date-title div div:first-child {
+  font-size: var(--base-font-size) !important; /* dateLabel */
+}
+/* 달력 셀 폰트와 동일하게 */
+.cal-cell { font-size: var(--base-font-size) !important; }
+.form-date-row .form-date-label { font-size: var(--base-font-size) !important; }
+
+/* 3. 4버튼 유지 */
+
+
+/* V187 가로모드 - 달력 크게 */
+@media screen and (orientation: landscape) {
+  .container { max-width: 95vw !important; width: 95vw !important; }
+  #calendar-card { max-width: 100% !important; }
+  .cal-cell { min-height: 62px !important; }
+}
+@media screen and (max-width: 900px) and (orientation: landscape) {
+  #calendar { zoom: 1.15; }
+}
+
+
+/* V188 자동 전환 애니메이션 */
+.container, #calendar-card, .cal-cell { transition: all 0.25s ease !important; }
+
+
+/* V194 세모 위 숫자 */
+.cal-photo-corner .corner-count {
+  position: absolute !important;
+  top: 1px !important;
+  right: 2px !important;
+  font-size: 9px !important;
+  font-weight: 800 !important;
+  color: #6a4a8a !important;
+}
+
+        /* V226 hides */
+        .fp-save-btn-hidden{display:none !important;}
+        .fp-prescription-hidden{display:none !important;}
+        </style>
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#f59e0b">
 </head>
@@ -2281,10 +2566,10 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         <div class="card sub-feature-card" id="diary-around-today-card">
             <div class="feature-title" style="display:flex; align-items:center; justify-content:space-between; width:100%;">
                 <span id="selected-date-title" style="flex-shrink:0; font-size:13px;">다이어리</span>
-                <div id="diary-view-toggle" style="display:flex; gap:4px; margin-left:auto;">
-                    <button onclick="openDiaryForm(selectedViewDate || getTodayStr())" style="padding:3px 7px; font-size:10px; border-radius:6px; border:1px solid #ddd; background:#fff;">✏️ 입력</button>
-                    <button id="btn-view-list" onclick="setDiaryViewMode('list')" style="padding:3px 7px; font-size:10px; border-radius:6px; border:1px solid #8e6b6b; background:#8e6b6b; color:#fff;">📝 리스트</button>
-                    <button id="btn-view-gallery" onclick="setDiaryViewMode('gallery')" style="padding:3px 7px; font-size:10px; border-radius:6px; border:1px solid #ddd; background:#fff;">🖼️ 갤러리</button>
+                <div id="diary-view-toggle" style="display:grid; grid-template-columns:1fr 1fr; gap:4px; margin-left:auto; width:112px;">
+                    <button id="btn-view-list" onclick="setDiaryViewMode('list')" style="padding:4px 2px; font-size:10px; border-radius:6px; border:1px solid #8e6b6b; background:#8e6b6b; color:#fff;">🖼️ 앨범 1</button>
+                    <button id="btn-view-gallery" onclick="setDiaryViewMode('gallery')" style="padding:4px 2px; font-size:10px; border-radius:6px; border:1px solid #ddd; background:#fff;">🖼️ 앨범 3</button>
+                    <button onclick="openDiaryForm(selectedViewDate || getTodayStr())" style="grid-column:1 / -1; padding:12px 2px; font-size:16px; border-radius:10px; border:2px solid #e06d6d; background:linear-gradient(135deg, #ff6b6b, #e06d6d); color:#fff; font-weight:900; letter-spacing:1px; box-shadow:0 3px 8px rgba(224,109,109,0.3);">✏️ 입력</button>
                 </div>
             </div>
             <div id="diary-around-today-list"></div>
@@ -2484,15 +2769,8 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                     <span class="toggle-card-label">🎱 로또번호</span>
                     <label class="toggle-switch"><input type="checkbox" id="saju-show-lotto" checked onchange="onShowLottoToggle()"><span class="toggle-slider"></span></label>
                 </div>
-                <div class="toggle-card">
-                    <span class="toggle-card-label">❤️ 건강기록</span>
-                    <label class="toggle-switch"><input type="checkbox" id="settings-show-health" checked onchange="onShowHealthToggle()"><span class="toggle-slider"></span></label>
+                <!-- V185 건강기록 토글 제거 -->
                 </div>
-                <div class="toggle-card">
-                    <span class="toggle-card-label">🖼️ 달력 사진 배경</span>
-                    <label class="toggle-switch"><input type="checkbox" id="toggle-calendar-photo" checked onchange="setCalendarPhotoVisibility(this.checked)"><span class="toggle-slider"></span></label>
-                </div>
-            </div>
 
             <div class="settings-section">
                 <label>🏷️ 지출 계정 과목 관리</label>
@@ -2714,16 +2992,20 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         </div>
 
         <!-- 제목&기념일 입력란: 달력에 짧은 메모로 표시됨, 매년/매달 반복 가능 -->
-                <div class="anniv-input-row" id="anniv-input-row" style="display:flex; align-items:center; gap:6px; flex-wrap:nowrap; padding:8px 8px;">
-            <label class="anniv-label" for="anniv-input" style="flex-shrink:0;">제목&기념일</label>
-            <input type="text" id="anniv-input" maxlength="6" placeholder="예: 결혼" style="flex:0 1 90px; width:90px; min-width:70px;">
-            <select id="anniv-repeat-select" class="anniv-repeat-select" style="flex:0 0 78px; font-size:11.5px; padding:5px 2px;">
-                <option value="none">반복 안 함</option>
-                <option value="yearly">매년 반복</option>
-                <option value="monthly">매달 반복</option>
-            </select>
-            <label class="anniv-cal-radio" style="flex-shrink:0; font-size:12px; margin:0;"><input type="radio" name="anniv-cal-type" id="anniv-cal-solar" value="solar" checked> 양력</label>
-            <label class="anniv-cal-radio" style="flex-shrink:0; font-size:12px; margin:0;"><input type="radio" name="anniv-cal-type" id="anniv-cal-lunar" value="lunar"> 음력</label>
+                <div class="anniv-input-row" id="anniv-input-row" style="display:flex; flex-direction:column; gap:6px; padding:0 0 10px 0; background:transparent; border-radius:0; margin-bottom:6px; align-items:flex-start; width:100%;">
+            <div style="display:flex; align-items:center; gap:5px; font-size:14px; font-weight:bold; color:var(--weekday-color); margin-bottom:2px;">
+                <span>🎉</span><span>제목&amp;기념일</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px; flex-wrap:nowrap; width:100%; background:#FDF3E7; border-radius:8px; padding:8px 10px; box-sizing:border-box;">
+                <input type="text" id="anniv-input" maxlength="6" placeholder="예: 생일" style="flex:1 1 auto; min-width:0; padding:8px 10px; border:1px solid var(--border-color); border-radius:6px; font-size:14.5px; background:#fff;">
+                <select id="anniv-repeat-select" class="anniv-repeat-select" style="flex:0 0 78px; font-size:11.5px; padding:5px 2px;">
+                    <option value="none">반복 안 함</option>
+                    <option value="yearly">매년 반복</option>
+                    <option value="monthly">매달 반복</option>
+                </select>
+                <label class="anniv-cal-radio" style="flex-shrink:0; font-size:12px; margin:0;"><input type="radio" name="anniv-cal-type" id="anniv-cal-solar" value="solar" checked> 양력</label>
+                <label class="anniv-cal-radio" style="flex-shrink:0; font-size:12px; margin:0;"><input type="radio" name="anniv-cal-type" id="anniv-cal-lunar" value="lunar"> 음력</label>
+            </div>
         </div>
 
         <!-- 📔 다이어리(메모/사진) 입력 영역: 다이어리_입력폼 모드에서만 표시 -->
@@ -2737,15 +3019,20 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             </div>
         </div>
 
-        <div class="btn-group" style="margin-bottom: 0;">
-            <button class="btn btn-secondary" id="record-btn">🎤 음성메모</button>
-            <label class="btn btn-secondary" id="photo-attach-label" style="text-align:center; display:flex; align-items:center; justify-content:center; cursor:pointer;">
-                📎 사진/동영상
-                <input type="file" id="diary-photo-input" accept="image/*,video/*" style="display:none;" onchange="previewImage(event)">
-            </label>
-            <button class="btn btn-primary" onclick="manualSaveDiary()">저장</button>
-        </div>
-        <div class="fp-exit-btn exit-btn-light" onclick="closeDiaryFormPanel()">종료</div>
+        <div style="display:flex; flex-direction:column; gap:6px; width:100%; margin-bottom:0;">
+  <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:6px; width:100%;">
+    <button class="btn btn-secondary" id="record-btn" type="button" style="width:100%; height:46px; padding:0; font-size:13px; border-radius:8px; display:flex; align-items:center; justify-content:center;">🎤 음성메모</button>
+    <button class="btn btn-secondary" id="camera-btn" type="button" style="width:100%; height:46px; padding:0; font-size:13px; border-radius:8px; display:flex; align-items:center; justify-content:center;">📷 카메라</button>
+    <button class="btn btn-secondary" id="gallery-btn" type="button" style="width:100%; height:46px; padding:0; font-size:13px; border-radius:8px; display:flex; align-items:center; justify-content:center;">🖼️ 갤러리</button>
+  </div>
+  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; width:100%;">
+    <button class="btn btn-primary" type="button" onclick="manualSaveDiary()" style="width:100%; height:48px; padding:0; font-size:14px; font-weight:bold; border-radius:8px; display:flex; align-items:center; justify-content:center; background:var(--primary-color); color:#fff; border:none;">💾 저장</button>
+    <button class="btn btn-secondary" type="button" onclick="closeDiaryFormPanel()" style="width:100%; height:48px; padding:0; font-size:14px; border-radius:8px; display:flex; align-items:center; justify-content:center; background:#f0f0f0; border:1px solid var(--border-color);">종료</button>
+  </div>
+</div>
+<input type="file" id="diary-photo-input-camera" accept="image/*" capture="environment" style="display:none;">
+<input type="file" id="diary-photo-input-gallery" accept="image/*" style="display:none;">
+<input type="file" id="diary-photo-input" accept="image/*" style="display:none;" onchange="previewImage(event)">
     </div>
 </div>
 
@@ -3745,16 +4032,15 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             return sat.getFullYear()+'-'+String(sat.getMonth()+1).padStart(2,'0')+'-'+String(sat.getDate()).padStart(2,'0');
         }catch(e){ return getTodayStr(); }
     }
-    // V230: 주문형 1~5게임 생성 - 생성시각 + 50만명 귀인 + 시주
+    // V230 주문형 1~5게임 - 생성시각 + 50만명 + 시주 - 요일/토요일 자동삭제, 주문형만!
     function sajuGenerateLottoNumbers(seedStr, baseAnchorNumbers, gameCount){
         try{
             const cnt = Math.min(5, Math.max(1, parseInt(gameCount)||5));
             const saturdayStr = sajuGetSaturdayStr();
             const now = new Date();
             const genTimeStr = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0')+' '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0')+'.'+String(now.getMilliseconds()).padStart(3,'0');
-            const genTimeSeed = Date.now()+'_'+Math.floor(Math.random()*1000000);
-            // 50만명 중 1등 + 시주 포함
-            let h=2166136261; const satSeed = saturdayStr + '_SAT_500K_TIME_'+genTimeSeed+'_'+now.getMilliseconds();
+            const genTimeSeed = Date.now()+'_'+Math.floor(Math.random()*1000000)+'_'+now.getMilliseconds();
+            let h=2166136261; const satSeed = saturdayStr + '_SAT_500K_TIME_'+genTimeSeed;
             for(let i=0;i<satSeed.length;i++){ h^=satSeed.charCodeAt(i); h=Math.imul(h,16777619);} h>>>=0;
             let s=h; const rngSat=function(){ s=(s*1664525+1013904223)>>>0; return s/4294967296; };
             const gans = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
@@ -3777,7 +4063,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             const mapTime = { '子':[1,11,21], '丑':[2,12,22], '寅':[3,13,23], '卯':[4,14,24], '辰':[5,15,25], '巳':[6,16,26], '午':[7,17,27], '未':[8,18,28], '申':[9,19,29], '酉':[10,20,30], '戌':[11,21,31], '亥':[12,22,32] };
             const allGames = [];
             for(let g=0; g<cnt; g++){
-                let h2=2166136261; const todaySeed = seedStr + '_' + best.year + '_' + best.gan + '_' + best.timeBranch + '_' + genTimeSeed + '_GAME'+g+'_'+(Date.now()+g*7919+Math.random()*1000);
+                let h2=2166136261; const todaySeed = seedStr + '_' + best.year + '_' + best.gan + '_' + best.timeBranch + '_' + genTimeSeed + '_GAME'+g+'_'+(Date.now()+g*7919+Math.random()*10000);
                 for(let i=0;i<todaySeed.length;i++){ h2^=todaySeed.charCodeAt(i); h2=Math.imul(h2,16777619);} h2>>>=0;
                 let s2=h2; const rng=function(){ s2=(s2*1664525+1013904223)>>>0; return s2/4294967296; };
                 const pool = new Set();
@@ -3786,7 +4072,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 (mapTime[best.timeBranch]||[]).forEach(n=>pool.add(n));
                 pool.add((best.score % 45)+1);
                 pool.add(((best.year + best.timeIdx + g*7) % 45)+1);
-                pool.add((parseInt(genTimeSeed.slice(-3)) + g*13) % 45 + 1);
+                pool.add((parseInt(String(genTimeSeed).slice(-4)) + g*13) % 45 + 1);
                 let arr = Array.from(pool);
                 while(arr.length<6){ const n=Math.floor(rng()*45)+1; if(!arr.includes(n)) arr.push(n); }
                 for(let i=arr.length-1;i>0;i--){ const j=Math.floor(rng()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
@@ -3802,7 +4088,9 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                     if(el&&best){ el.textContent = best.saturday+' 추첨 50만명 중 1등 '+best.year+'년 '+best.timeBranch+'시('+best.timeHour+')생 '+best.gan+'간 '+best.tenGod+' '+best.score+'점 · '+best.genTime+' 생성 · '+cnt+'게임'; }
                     const lottoNumEl = document.getElementById('fortune-lotto-numbers');
                     if(lottoNumEl){
-                        let html = '';
+                        let html = '<div style="display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap; align-items:center;"><span style="font-size:12px; color:#aaa; margin-right:4px;">몇게임?</span>';
+                        for(let k=1;k<=5;k++){ const sel = (k===cnt); html+='<button id="lotto-btn-'+k+'" onclick="sajuGenerateLottoNumbers(getTodayStr(), null, '+k+')" style="width:32px; height:32px; border-radius:50%; border:1px solid '+(sel?'#ffcc00':'#555')+'; background:'+(sel?'#ffcc00':'#222')+'; color:'+(sel?'#000':'#fff')+'; font-weight:bold; cursor:pointer;">'+k+'</button>'; }
+                        html+='</div>';
                         for(let i=0;i<allGames.length;i++){
                             const nums = allGames[i];
                             html += '<div style="margin:5px 0; display:flex; gap:6px; align-items:center; flex-wrap:wrap;"><span style="font-size:11px; color:#888; min-width:38px; font-weight:bold;">'+(i+1)+'게임</span>';
@@ -3811,8 +4099,6 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                         }
                         lottoNumEl.innerHTML = html;
                     }
-                    // 선택 버튼 하이라이트
-                    for(let k=1;k<=5;k++){ const b=document.getElementById('lotto-btn-'+k); if(b){ b.style.background = (k===cnt ? '#ffcc00' : '#222'); b.style.color = (k===cnt ? '#000' : '#fff'); } }
                 }catch(e){}
             }, 120);
             return { main: allGames[0], allGames: allGames, bonus: null, luckiest: best, count: cnt };
@@ -3822,6 +4108,10 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         }
     }
 
+    // ----- 📅 이번주(월~토) 행운번호 누적 저장
+    // ----- 📅 이번주(월~토) 행운번호 누적 저장
+    // ----- 📅 이번주(월~토) 행운번호 누적 저장
+    // ----- 📅 이번주(월~토) 행운번호 누적 저장
     // ----- 📅 이번주(월~토) 행운번호 누적 저장
     // ----- 📅 이번주(월~토) 행운번호 누적 저장: 월요일마다 자동 리셋 -----
     function sajuGetMondayOfWeek(dateStr) {
@@ -4100,7 +4390,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     let isMoneySummaryVisible = localStorage.getItem('smartDiaryMoneySummaryVisible') !== 'false';
     let isCategoryStatsVisible = localStorage.getItem('smartDiaryCategoryStatsVisible') !== 'false';
     let isSearchFilterVisible = localStorage.getItem('smartDiarySearchFilterVisible') !== 'false';
-    let isCalendarPhotoVisible = localStorage.getItem('smartDiaryCalendarPhotoVisible') !== 'false';
+    let isCalendarPhotoVisible = false;
 
     let currentMoneyType = 'expense';
 
@@ -5980,7 +6270,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 
     // ❤️ 건강 기록 입력 사용 여부 (설정에서 켜고 끌 수 있음, 기본값 true)
     function getShowHealth() {
-        return localStorage.getItem('smartDiaryShowHealth') !== 'false';
+        return false; // V185 건강기능 완전 제거
     }
     function onShowHealthToggle() {
         const checked = document.getElementById('settings-show-health').checked;
@@ -5988,11 +6278,10 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         applyShowHealthVisibility();
     }
     function applyShowHealthVisibility() {
-        const show = getShowHealth();
         const inputSection = document.getElementById('health-input-section');
-        if (inputSection) inputSection.style.display = show ? '' : 'none';
+        if (inputSection) inputSection.style.display = 'none';
         const statsBtn = document.getElementById('health-stats-open-btn');
-        if (statsBtn) statsBtn.style.display = show ? '' : 'none';
+        if (statsBtn) statsBtn.style.display = 'none';
     }
 
     function onSajuTimeUnknownToggle() {
@@ -6023,9 +6312,32 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         const subEl = document.getElementById('fortune-teaser-sub');
         if (!textEl) return;
         if (teaserEl) teaserEl.style.display = getShowFortune() ? '' : 'none';
+        try{
+            if (sajuBirthInfo && sajuBirthInfo.date && typeof sajuGetEnhancedFortune==='function') {
+                const enh = sajuGetEnhancedFortune();
+                if(enh){
+                    const tenGod = enh.tenGodGan;
+                    const oneLiners = {
+                        '비견': '내 고집대로 가도 괜찮은 날, 근데 옆도 한번 봐줘요',
+                        '겁재': '경쟁심이 올라와요, 비교 말고 내 페이스대로',
+                        '식신': '아이디어가 맛있게 떠오르는 날이에요',
+                        '상관': '하고 싶은 말이 많아지는 날이에요',
+                        '편재': '작은 기회가 톡톡 들어오는 날이에요',
+                        '정재': '차곡차곡, 실속 챙기는 날이에요',
+                        '편관': '조금 부담돼도 해내면 레벨업하는 날',
+                        '정관': '믿을 만한 사람으로 보이는 날이에요',
+                        '편인': '번뜩이는 영감이 오는 날, 메모해둬요',
+                        '정인': '누가 나를 챙겨주고, 나도 배우는 날이에요'
+                    };
+                    textEl.textContent = '오늘의 운세';
+                    subEl.textContent = oneLiners[tenGod] || (enh.base ? enh.base.total.split('.')[0] : '오늘 하루, 나에게 맞는 기운 확인하기');
+                    return;
+                }
+            }
+        }catch(e){}
         if (sajuBirthInfo && sajuBirthInfo.date) {
-            textEl.textContent = '오늘의 운세 보기';
-            subEl.textContent = '오늘 하루, 나에게 맞는 기운 확인하기';
+            textEl.textContent = '오늘의 운세';
+            subEl.textContent = '아이디어가 맛있게 떠오르는 날이에요';
         } else {
             textEl.textContent = '오늘의 운세 시작하기';
             subEl.textContent = '생년월일 입력하고 매일 아침 운세 받아보기';
@@ -6051,12 +6363,38 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         return { gz: todayGz, elem: sajuElementOfGan(todayGz[0]), dateObj: today };
     }
 
+    
+    // V208 - 친근한 운세 헬퍼
+    const FRIENDLY_TEN_GOD = {
+        '비견': { name:'내 편', desc:'나랑 비슷한 에너지', emoji:'👥' },
+        '겁재': { name:'경쟁', desc:'부딪히면서 배우는', emoji:'⚔️' },
+        '식신': { name:'아이디어', desc:'맛있는 생각', emoji:'💡' },
+        '상관': { name:'표현', desc:'하고 싶은 말', emoji:'🎤' },
+        '편재': { name:'기회', desc:'들어오는 돈', emoji:'💸' },
+        '정재': { name:'실속', desc:'차곡차곡 모으는', emoji:'🐷' },
+        '편관': { name:'도전', desc:'나를 키우는', emoji:'🏔️' },
+        '정관': { name:'책임', desc:'믿고 맡기는', emoji:'🏢' },
+        '편인': { name:'영감', desc:'번뜩이는', emoji:'✨' },
+        '정인': { name:'배움', desc:'챙겨주는', emoji:'📚' }
+    };
+    const FRIENDLY_COLORS = ['미스트 그린','코랄 핑크','스카이 블루','버터 옐로우','라벤더 퍼플','피치 오렌지','민트','크림 베이지'];
+    const FRIENDLY_ACTIONS = [
+        '오전 10분 산책하기','책상 위 물건 3개만 정리','좋아하는 노래 1곡 크게 듣기','물 한 컵 천천히 마시기',
+        '안 쓰는 물건 1개 버리기','친구에게 안부 한 마디','5분 스트레칭','좋아하는 향 맡기'
+    ];
+    const FRIENDLY_AVOIDS = [
+        '오후 늦게 중요한 결정','단톡방에서 논쟁','밤늦게 쇼핑','빈 속으로 커피',
+        '같은 얘기 세 번 이상 반복','갑자기 큰돈 쓰기'
+    ];
+    function getDailySeed(str){ let h=0; for(let i=0;i<str.length;i++) h=(h*31+str.charCodeAt(i))%100000; return h; }
+    function pickBySeed(arr, seed, offset=0){ return arr[(seed+offset)%arr.length]; }
+
+
     function openFortunePopup() {
         const bodyEl = document.getElementById('fortune-popup-body');
         if (!bodyEl) return;
 
         if (!sajuBirthInfo || !sajuBirthInfo.date || !sajuDayMasterElem) {
-            // 아직 생년월일이 없는 경우: 설정 유도 화면
             bodyEl.innerHTML = `
                 <div class="fp-hero">
                     <div class="fp-eyebrow">🔮 오늘 하루 브리핑</div>
@@ -6073,94 +6411,129 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         const enhanced = sajuGetEnhancedFortune();
         const f = enhanced ? enhanced.base : SAJU_FORTUNE['비겁'];
         const score = enhanced ? enhanced.score : f.score;
+        // 어제 점수 비교
+        const yKey = 'fortuneScore_' + (enhanced ? enhanced.dateObj.toISOString().slice(0,10) : new Date().toISOString().slice(0,10));
+        const prevScore = parseInt(localStorage.getItem('fortuneScore_prev')||'0');
+        const delta = prevScore ? score - prevScore : 0;
+        localStorage.setItem('fortuneScore_prev', score);
+        localStorage.setItem(yKey, score);
+
         const weekday = ['일','월','화','수','목','금','토'][enhanced.dateObj.getDay()];
-        const dateLabel = `${enhanced.dateObj.getMonth()+1}월 ${enhanced.dateObj.getDate()}일 (${weekday}) ${enhanced.todayGz}`;
-        const tenGodLabel = enhanced ? `${enhanced.todayGan}(${enhanced.tenGodGan})` : '';
-        const hapChungHTML = enhanced && enhanced.hapChung.length > 0 ? enhanced.hapChung.map(h => `<div class="fp-hap-item">${h.type === '충' ? '⚡' : '💞'} ${h.text}</div>`).join('') : '<div class="fp-hap-item">오늘은 특별한 합충 없이 무난한 흐름이에요</div>';
-        
-        // 개인화된 상세 운세 - 10신 기준
+        const dateLabel = `${enhanced.dateObj.getMonth()+1}월 ${enhanced.dateObj.getDate()}일 (${weekday})`;
+        const tenGod = enhanced ? enhanced.tenGodGan : '비견';
+        const friendly = FRIENDLY_TEN_GOD[tenGod] || {name:tenGod, desc:'', emoji:'🔮'};
+
+        // 씨드 기반 랜덤 - 날짜+일간으로 매일 같음
+        const seedStr = (enhanced ? enhanced.dateObj.toISOString().slice(0,10) : '') + (sajuPillars?.day?.gan||'');
+        const seed = getDailySeed(seedStr);
+        const color = pickBySeed(FRIENDLY_COLORS, seed, 0);
+        const action = pickBySeed(FRIENDLY_ACTIONS, seed, 1);
+        const avoid = pickBySeed(FRIENDLY_AVOIDS, seed, 2);
+        const num1 = (seed % 9) + 1;
+        const num2 = ((seed+3) % 9) + 1;
+        const goodTime = pickBySeed(['09:00~11:00','11:00~13:00','14:00~16:00','19:00~21:00','07:00~09:00'], seed, 3);
+
+        // 친근한 한줄
+        const oneLiners = {
+            '비견': '내 고집대로 가도 괜찮은 날, 근데 옆도 한번 봐줘요',
+            '겁재': '경쟁심이 올라와요, 비교 말고 내 페이스대로',
+            '식신': '아이디어가 맛있게 떠오르는 날이에요',
+            '상관': '하고 싶은 말이 많아지는 날, 말하기 전에 한 번만 더',
+            '편재': '작은 기회가 톡톡 들어와요, 가볍게 잡아봐요',
+            '정재': '차곡차곡, 오늘은 실속 챙기는 날',
+            '편관': '조금 부담돼도 해내면 레벨업하는 날',
+            '정관': '믿을 만한 사람으로 보이는 날이에요',
+            '편인': '번뜩이는 영감이 오는 날, 메모해둬요',
+            '정인': '누가 나를 챙겨주고, 나도 배우는 날'
+        };
+        const oneLine = oneLiners[tenGod] || f.total.split('.')[0];
+
+        // 4대 운세 친근하게 재작성
         let detailTotal = f.total, detailMoney = f.money, detailLove = f.love;
-        if(enhanced && SAJU_FORTUNE_DETAIL[enhanced.tenGodGan]){
-            const dmGanName = sajuPillars.day.gan;
+        if(enhanced && SAJU_FORTUNE_DETAIL[tenGod]){
+            const dm = sajuPillars.day.gan;
             const strength = enhanced.strength;
-            try {
-                detailTotal = SAJU_FORTUNE_DETAIL[enhanced.tenGodGan].total(dmGanName, strength);
-                detailMoney = SAJU_FORTUNE_DETAIL[enhanced.tenGodGan].money(dmGanName);
-                detailLove = SAJU_FORTUNE_DETAIL[enhanced.tenGodGan].love(dmGanName);
-                // 합충 있으면 추가 문구
-                if(enhanced.hapChung.some(h=>h.type==='육합'||h.type==='삼합')){
-                    detailLove += ' 게다가 오늘 삼합/육합으로 인연이 붙는 날이라 만남이 더 기대돼요!';
-                }
-                if(enhanced.hapChung.some(h=>h.type==='충')){
-                    detailTotal += ' 오늘 충이 있어 변동이 있을 수 있으니 무리한 이동보다 정리에 집중하세요.';
-                }
-                if(enhanced.todayGz && enhanced.useful && enhanced.todayGz[0] && sajuElementOfGan(enhanced.todayGz[0]) === enhanced.useful.god){
-                    detailTotal += ` 오늘 ${enhanced.useful.god}(${enhanced.useful.reason}) 기운이 들어와서 당신에게 특히 좋은 날이에요!`;
-                }
-            } catch(e){}
+            try{
+                detailTotal = SAJU_FORTUNE_DETAIL[tenGod].total(dm, strength);
+                detailMoney = SAJU_FORTUNE_DETAIL[tenGod].money(dm);
+                detailLove = SAJU_FORTUNE_DETAIL[tenGod].love(dm);
+            }catch(e){}
         }
-        const showLotto = getShowLotto();
-        const lottoMain = showLotto ? sajuGetTodayLottoMain() : null;
-        const lottoBallsHTML = lottoMain ? lottoMain.map(n => `<div class="lotto-ball" style="background:${sajuLottoBallColor(n)}">${n}</div>`).join('') : '';
-        const lottoCardHTML = showLotto ? `
-            <div class="fp-lotto-card" onclick="closeFortunePopup(); openLottoDrawModal();">
-                <div class="fp-lotto-title">🎱 오늘의 행운 로또번호</div>
-                <div class="lotto-balls-row">${lottoBallsHTML}</div>
-                <div class="fp-lotto-note">당신의 행운 번호로 만들었어요</div>
-                <div class="fp-lotto-link">🎲 이 번호로 직접 뽑아보기 →</div>
-            </div>` : '';
+        // 친근하게 요약
+        const friendlyTotal = detailTotal.replace(/비견|겁재|식신|상관|편재|정재|편관|정관|편인|정인/g, '').replace(/일간|일주/g,'나').substring(0,90);
+        
+        // 어제 일기 연동
+        let diaryHint = '';
+        try{
+            const all = getAllDiaries();
+            const yDate = new Date(enhanced.dateObj); yDate.setDate(yDate.getDate()-1);
+            const yStr = yDate.toISOString().slice(0,10);
+            const yDiaries = all.filter(d=>normalizeDateStr(d.date)===yStr && d.text);
+            if(yDiaries.length>0){
+                const txt = yDiaries[0].text.slice(0,30);
+                if(txt.includes('회사')||txt.includes('일')||txt.includes('직장')) diaryHint = "어제 '회사' 얘기 썼죠? 오늘 오전에 실마리 보여요";
+                else if(txt.includes('돈')||txt.includes('월급')) diaryHint = "어제 돈 고민 썼죠? 오늘은 지출 전에 한 번만 더 생각해봐요";
+                else if(txt.includes('연애')||txt.includes('사랑')||txt.includes('남친')||txt.includes('여친')) diaryHint = "어제 마음 썼던 그 얘기, 오늘은 가볍게 연락해도 좋아요";
+                else diaryHint = `어제 쓴 "${txt}..." 그 마음, 오늘은 좀 가볍게 가져가도 돼요`;
+            }
+        }catch(e){}
+
+        const deltaHTML = delta>0 ? `<span style="color:#7CFF9B;font-size:12px;">▲ ${delta} 어제보다 좋아요</span>` : delta<0 ? `<span style="color:#FF9AA2;font-size:12px;">▼ ${Math.abs(delta)} 살짝 내려감</span>` : `<span style="color:rgba(255,255,255,0.5);font-size:12px;">어제와 비슷</span>`;
 
         bodyEl.innerHTML = `
             <div class="fp-hero">
-                <div class="fp-hero-top">
-                    <div class="fp-eyebrow">🔮 오늘 하루 브리핑 - ${tenGodLabel} 들어오는 날</div>
-                </div>
-                <div class="fp-date">${dateLabel}</div>
-                <div class="fp-hero-row">
-                    <div class="fp-mood-block">
-                        <div class="fp-mini-label">오늘의 분위기</div>
-                        <div class="fp-mood">${f.mood}</div>
-                    </div>
-                    <div class="fp-hero-divider"></div>
-                    <div class="fp-score-block">
-                        <div class="fp-mini-label">기운 지수</div>
-                        <div class="fp-score">${score}</div>
-                    </div>
-                </div>
-                <div style="margin-top:8px; font-size:11px; color:#8a7a6a;">신강/신약: ${enhanced.strength} / 용신: ${enhanced.useful.god}(${enhanced.useful.reason})</div>
+                <div class="fp-eyebrow" style="background:linear-gradient(120deg,#FFD98E,#FF9AC2);color:#2A2340;">${friendly.emoji} 오늘은 ${friendly.name}의 날</div>
+                <div style="margin-top:10px;font-size:20px;font-weight:800;line-height:1.3;color:#fff;">${oneLine}</div>
+                <div class="fp-date">${dateLabel} · ${friendly.desc}</div>
             </div>
-            <div class="fp-mantra-card">
-                <div class="fp-mantra-mark">"</div>
-                <div class="fp-mantra-text">${f.mantra}</div>
-            </div>
-            <div class="fp-cards">
-                <div class="fp-card"><div class="fpc-label">✅ 총운 - ${enhanced.tenGodGan}</div><div class="fpc-text">${detailTotal}</div></div>
-                <div class="fp-card"><div class="fpc-label">💰 재물운 - ${enhanced.tenGodGan}</div><div class="fpc-text">${detailMoney}</div></div>
-                <div class="fp-card"><div class="fpc-label">💗 애정운 - ${enhanced.tenGodGan}</div><div class="fpc-text">${detailLove}</div></div>
-            </div>
-            <div style="background:#fff8f0; border-radius:12px; padding:10px 12px; margin:10px 0; border:1px solid #ffe0b2;">
-                <div style="font-size:14px; font-weight:800; margin-bottom:6px; color:#5d4037;">🔗 합충형파 - 오늘의 인연/변동</div>
-                <div style="color:#3e2723; font-size:14px; line-height:1.5;">${hapChungHTML}</div>
-            </div>
-            <div style="background:#f5f8ff; border-radius:12px; padding:10px 12px; margin:10px 0; display:flex; gap:12px; border:1px solid #c5cae9;">
-                <div style="flex:1"><div style="font-size:12px; color:#666;">🎨 행운컬러</div><div style="font-size:14px; font-weight:700; color:#1a237e;">${enhanced.luckColor}</div></div>
-                <div style="flex:1"><div style="font-size:12px; color:#666;">📍 행운장소</div><div style="font-size:14px; font-weight:700; color:#1a237e;">${enhanced.luckPlace}</div></div>
-            </div>
-            <div style="background:#f0fff4; border-radius:12px; padding:10px 12px; margin:10px 0; border:1px dashed #4CAF50;">
-                <div style="font-size:14px; font-weight:800; color:#1b5e20;">📸 오늘의 포토미션</div>
-                <div style="font-size:14px; margin-top:4px; color:#2e7d32; line-height:1.5;">행운컬러 <b>${enhanced.luckColor}</b>(${enhanced.luckColorHex})가 들어간 사진 1장을 찍어보세요! ${enhanced.hapChung.some(h=>h.type==='육합'||h.type==='삼합') ? '인연이 들어오는 날이니 사람과 함께 찍으면 더 좋아요!' : '오늘의 기운을 담아보세요.'}</div>
-            </div>
-            <div class="fp-my-saju-link-big" onclick="closeFortunePopup(); openSajuDetailModal();">📜 내 사주 자세히 보기 →</div>
-            ${lottoCardHTML}
-            <div class="fp-exit-btn" onclick="closeFortunePopup()">종료</div>
-        `;
 
-        fortunePopupOverlay.classList.add('active');
-        lockBodyScroll();
+            <div style="margin-top:16px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:14px;display:flex;align-items:center;justify-content:space-between;">
+                <div><div style="font-size:12px;color:rgba(255,255,255,0.5);">오늘의 점수</div><div style="font-size:28px;font-weight:900;color:#FFD98E;">${score}<span style="font-size:14px;font-weight:600;opacity:0.7;">/100</span></div></div>
+                <div style="text-align:right;">${deltaHTML}<div style="margin-top:6px;display:flex;gap:6px;justify-content:flex-end;"><span style="background:rgba(255,255,255,0.12);padding:4px 8px;border-radius:999px;font-size:11px;">#${color.split(' ')[0]}</span><span style="background:rgba(255,255,255,0.12);padding:4px 8px;border-radius:999px;font-size:11px;">#${action.split(' ')[0]}</span></div></div>
+            </div>
 
-        // 오늘 하루 한 번 더 자동으로 뜨지 않도록 표시 기록
-        localStorage.setItem('smartDiarySajuLastShown', getTodayStr());
+            ${diaryHint ? `<div style="margin-top:12px;background:linear-gradient(135deg,rgba(255,217,142,0.15),rgba(255,154,194,0.12));border:1px dashed rgba(255,217,142,0.4);border-radius:12px;padding:10px 12px;font-size:13px;color:#FFE9C2;">📔 ${diaryHint}</div>` : ''}
+
+            <div style="margin-top:14px;display:grid;gap:10px;">
+                <div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:12px;">
+                    <div style="font-size:12px;color:#FFD98E;font-weight:700;margin-bottom:4px;">🌟 총운</div>
+                    <div style="font-size:13.5px;line-height:1.5;color:rgba(255,255,255,0.85);">${friendlyTotal}..</div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                    <div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:10px;">
+                        <div style="font-size:11px;color:#7CFF9B;font-weight:700;">💰 재물운</div>
+                        <div style="font-size:12.5px;line-height:1.4;margin-top:3px;color:rgba(255,255,255,0.8);">${detailMoney.substring(0,60)}..</div>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:10px;">
+                        <div style="font-size:11px;color:#FF9AC2;font-weight:700;">💗 애정운</div>
+                        <div style="font-size:12.5px;line-height:1.4;margin-top:3px;color:rgba(255,255,255,0.8);">${detailLove.substring(0,60)}..</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top:14px;display:none;background:linear-gradient(135deg,#2A2E5E,#24274D);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:14px;">
+                <div style="font-size:12px;font-weight:800;color:#FFD98E;margin-bottom:8px;">💊 오늘의 처방전</div>
+                <div style="display:grid;gap:6px;font-size:13px;color:rgba(255,255,255,0.85);">
+                    <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">행운색</span><span>🎨 ${color}</span></div>
+                    <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">행운숫자</span><span>🔢 ${num1}, ${num2}</span></div>
+                    <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">좋은 시간</span><span>⏰ ${goodTime}</span></div>
+                    <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">하면 좋은 것</span><span>✅ ${action}</span></div>
+                    <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">조심할 것</span><span>⚠️ ${avoid}</span></div>
+                </div>
+            </div>
+
+            <div class="fp-lotto-card" onclick="closeFortunePopup(); setTimeout(()=>openLottoDrawModal(), 150);" style="margin-top:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:13px 14px;text-align:center;cursor:pointer;"><div class="fp-lotto-title">🎱 이번 주 토요일 1등 노리는 번호</div><div class="lotto-balls-row" id="fortune-lotto-balls"></div><div id="fortune-lotto-story" style="font-size:11px;color:#FFD98E;margin-top:8px;font-weight:700;"></div><div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:3px;">50만명 중 1등 + 시주 포함 + 생성타임 고유 · 5게임 5천원 · 로또 1등</div></div><div style="margin-top:12px;display:none;"><button onclick="saveFortuneCard()" style="flex:1;background:#fff;color:#23264A;border:none;padding:10px;border-radius:10px;font-weight:800;font-size:13px;">📸 이미지 저장</button>
+                </div><div style="margin-top:14px;"><button onclick="closeFortunePopup()" style="width:100%;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:14px;border-radius:14px;font-weight:800;font-size:15px;">✖ 종료</button></div>`;
+
+        try{ const lottoNumbers = typeof sajuGetLottoNumbers==='function' ? sajuGetLottoNumbers() : [3,11,23,28,34,41]; const ballsEl = document.getElementById('fortune-lotto-balls'); if(ballsEl){ const colors=['#FFD98E','#FF9AC2','#8EC5FC','#A0E7A0','#C7B8FF','#FFB07C']; ballsEl.innerHTML = lottoNumbers.map((n,i)=>`<div class="lotto-ball" style="background:${colors[i%colors.length]}">${n}</div>`).join(''); } }catch(e){} fortunePopupOverlay.classList.add('active'); lockBodyScroll(); } function saveFortuneCard_DISABLED(){
+        alert('캡처해서 저장해보세요! (이미지 저장 기능은 다음 버전에서 자동 저장으로 업그레이드할게요)');
     }
+    function shareFortune_DISABLED(){
+        const text = document.getElementById('fortune-popup-body').innerText.slice(0,200);
+        if(navigator.share){ navigator.share({title:'오늘의 운세', text:text}).catch(()=>{}); }
+        else { navigator.clipboard.writeText(text).then(()=>alert('복사됐어요! 카톡에 붙여넣기 해보세요')).catch(()=>alert(text)); }
+    }
+
 
     function closeFortunePopup() {
         if (fortunePopupOverlay) fortunePopupOverlay.classList.remove('active');
@@ -6711,6 +7084,26 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         if (fontSizeDisplay) fontSizeDisplay.textContent = `${currentMemoFontSize}px`;
     }
 
+    
+    // V153: 4자 넘으면 2줄로 나누는 스마트 포맷
+    function formatCalLabel(text) {
+        if (!text) return '';
+        const clean = String(text).trim();
+        if (clean.length <= 4) return clean;
+        // 5자 이상: 2~3자 + 나머지
+        if (clean.length === 5) {
+            return clean.slice(0,2) + '<br>' + clean.slice(2);
+        }
+        if (clean.length === 6) {
+            return clean.slice(0,3) + '<br>' + clean.slice(3);
+        }
+        // 7자 이상: 3자 + 3자 + 나머지
+        if (clean.length >= 7) {
+            return clean.slice(0,3) + '<br>' + clean.slice(3,6);
+        }
+        return clean;
+    }
+
     function renderCalendar() {
         const title = document.getElementById('cal-month-title');
         const grid = document.getElementById('cal-days-grid');
@@ -6755,7 +7148,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             }
         }
         const rowExtra = new Array(totalRows).fill(maxExtra);
-        const rowHeights = new Array(totalRows).fill(cellSize); // v59 정사각형, 2줄이어도 같은 크기
+        const rowHeights = new Array(totalRows).fill(cellSize * 1.25); // V155 A안: 3줄 보이게 세로 25% 늘림
         const rowTops = [];
         let currentTop = 0;
 
@@ -6789,10 +7182,10 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             const annivText = getAnniversaryForDate(dateStr);
             let indicatorHTML = '';
             if (specialInfo) {
-                indicatorHTML += `<div class="cal-special-label cal-special-${specialInfo.type}">${specialInfo.label}</div>`;
+                indicatorHTML += `<div class="cal-special-label cal-special-${specialInfo.type}">${formatCalLabel(specialInfo.label)}</div>`;
             }
             if (annivText) {
-                indicatorHTML += `<div class="cal-anniv-label">${annivText}</div>`;
+                indicatorHTML += `<div class="cal-anniv-label">${formatCalLabel(annivText)}</div>`;
             }
             cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>`;
             cell.onclick = () => {
@@ -6845,34 +7238,31 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             let indicatorHTML = '';
 
             if (specialInfo) {
-                indicatorHTML += `<div class="cal-special-label cal-special-${specialInfo.type}">${specialInfo.label}</div>`;
+                indicatorHTML += `<div class="cal-special-label cal-special-${specialInfo.type}">${formatCalLabel(specialInfo.label)}</div>`;
             }
             if (annivText) {
-                indicatorHTML += `<div class="cal-anniv-label">${annivText}</div>`;
+                indicatorHTML += `<div class="cal-anniv-label">${formatCalLabel(annivText)}</div>`;
             }
 
-            // v67 사진 썸네일 - 설정 온/오프 (localStorage 직접 체크)
-            let photoSrc = '';
-            let photoImgHTML = '';
-            const showPhotoBg = (typeof isCalendarPhotoVisible !== 'undefined' ? isCalendarPhotoVisible : localStorage.getItem('smartDiaryCalendarPhotoVisible') !== 'false');
-            if(showPhotoBg){
-                try {
-                    const allDiaries = getAllDiaries();
-                    const photoEntry = allDiaries.find(d => normalizeDateStr(d.date) === dateStr && d.photo);
-                    if(photoEntry){
-                        const src = getPhotoSrc(photoEntry.photo);
-                        if(src) photoSrc = src;
-                    }
-                } catch(e){}
-                if(photoSrc){
-                    cell.classList.add('has-photo');
-                    photoImgHTML = `<img class="cal-photo-img" src="${photoSrc}" alt="">`;
+                                    // V200 - 세모 + 안전한 async 로드
+            let photoListCount = 0;
+            try {
+                const allDiaries = getAllDiaries();
+                photoListCount = allDiaries.filter(d => normalizeDateStr(d.date) === dateStr && d.photo).length;
+            } catch(e){}
+            const hasPhotoFlag = photoListCount > 0;
+            if(hasPhotoFlag) cell.classList.add('has-photo');
+            cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + (hasPhotoFlag ? `<div class="cal-photo-corner" data-date="${dateStr}" data-count="${photoListCount}"><span class="corner-count">${photoListCount > 1 ? photoListCount : ''}</span></div>` : '');
+            cell.onclick = async (e) => {
+                const target = e.target.closest('.cal-photo-corner');
+                if(target){
+                    e.stopPropagation();
+                    const dStr = target.getAttribute('data-date');
+                    await showPhotosForDate(dStr);
+                    return;
                 }
-            }
-            cell.innerHTML =
-                `<div class="cal-cell-inner">${photoImgHTML}<span>${day}</span>${indicatorHTML}</div>`;
-
-            cell.onclick = () => selectDiaryDate(dateStr);
+                selectDiaryDate(dateStr);
+            };
             grid.appendChild(cell);
         }
 
@@ -7230,18 +7620,19 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             toggleDiv.id = 'diary-view-toggle';
             toggleDiv.className = 'diary-view-toggle';
             toggleDiv.style.cssText = 'display:flex; gap:4px; margin-left:auto;';
-            toggleDiv.innerHTML = `<button id="btn-view-list" class="active" onclick="setDiaryViewMode('list')" style="padding:3px 7px; font-size:11px;">📝</button><button id="btn-view-gallery" onclick="setDiaryViewMode('gallery')" style="padding:3px 7px; font-size:11px;">🖼️</button>`;
+            toggleDiv.innerHTML = `<button id="btn-view-list" class="active" onclick="setDiaryViewMode('list')" style="padding:3px 7px; font-size:11px;">1</button><button id="btn-view-gallery" onclick="setDiaryViewMode('gallery')" style="padding:3px 7px; font-size:11px;">3</button>`;
         }
 
-        if (titleEl) {
+                        if (titleEl) {
             const badge = isReservedDate ? `<span style="background:var(--primary-color); color:white; padding:1px 5px; border-radius:4px; font-size:10px; margin-right:4px; font-weight:bold;">예약</span>` : '';
             const lunarLabel = getLunarLabel(dateStr);
-            const lunarHTML = lunarLabel ? `<span style="font-size:11px; font-weight:normal; color:var(--text-sub); margin-left:6px;">${lunarLabel}</span>` : '';
+            const lunarHTML = lunarLabel ? `<div style="font-size:11px; font-weight:normal; color:var(--text-sub); margin-top:2px; text-align:left;">${lunarLabel}</div>` : '';
             const specialInfo = getSpecialDayLabel(dateStr);
-            const specialHTML = specialInfo ? `<span class="cal-special-title-badge cal-special-${specialInfo.type}" style="font-size:11px;">${specialInfo.label}</span>` : '';
+            const specialHTML = specialInfo ? `<span style="font-size:11px; margin-left:6px; color:#d35400;" class="cal-special-title-badge cal-special-${specialInfo.type}">${specialInfo.label}</span>` : '';
             const annivText = getAnniversaryForDate(dateStr);
-            const annivLineHTML = annivText ? `<div style="font-size:12.5px; font-weight:700; color:#9C6ADE; margin-top:3px;">제목 : ${annivText}</div>` : '';
-            titleEl.innerHTML = `<div style="font-size:13px;">${badge}${dateLabel}${lunarHTML}${specialHTML}</div>${annivLineHTML}`;
+            const annivLineHTML = annivText ? `<div style="font-size:11px; font-weight:700; color:#9C6ADE; margin-top:2px; text-align:left;">제목 : ${annivText}</div>` : '';
+            // V150: 양력 옆에 절기/기념일, 음력은 밑으로 좌측정렬 - 입력은 리스트/앨범 3 밑으로
+            titleEl.innerHTML = `<div style="text-align:left;"><div style="font-size: var(--base-font-size); text-align:left;">${badge}${dateLabel}${specialHTML}</div>${lunarHTML}${annivLineHTML}</div>`;
         }
 
         const diaries = getAllDiaries();
@@ -7294,7 +7685,26 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 </div>
                 ${textContentHTML}
             `;
-            itemBox.addEventListener('click', () => openDiaryForm(dateStr, item));
+            
+            // V204 - 사진 클릭만 확대, 전체 클릭은 수정폼 안 열림
+            const _photoArea = itemBox.querySelector('.diary-photo-wrap, .diary-photo');
+            if(_photoArea){
+                _photoArea.style.cursor='zoom-in';
+                _photoArea.addEventListener('click', async (e)=>{
+                    e.preventDefault(); e.stopPropagation();
+                    let src=''; try{ src=await getPhotoSrcAsyncSafe(item.photo); }catch(e){}
+                    if(!src) try{ src=getPhotoSrc(item.photo); }catch(e){}
+                    if(src){ 
+                        let ov=document.getElementById('photo-lightbox-overlay');
+                        if(!ov){ ov=document.createElement('div'); ov.id='photo-lightbox-overlay'; ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:99999;padding:20px;'; document.body.appendChild(ov); }
+                        const cal=document.getElementById('calendar-card'); let w=cal?cal.getBoundingClientRect().width:360; w=Math.min(w*0.95, innerWidth*0.92);
+                        ov.innerHTML=`<div style="background:#fff;padding:12px;border-radius:16px;position:relative;"><img src="${src}" style="width:${w}px;max-width:92vw;max-height:70vh;border-radius:10px;object-fit:contain;"><div onclick="this.closest('#photo-lightbox-overlay').style.display='none'" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.75);color:#fff;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.2);cursor:pointer;">✖</div></div>`;
+                        ov.style.display='flex'; ov.onclick=(ev)=>{ if(ev.target===ov) ov.style.display='none'; };
+                    }
+                });
+            }
+            // 전체 박스 클릭으로는 수정폼 안 열림 - 수정 버튼으로만
+
             listEl.appendChild(itemBox);
         });
     }
@@ -7363,13 +7773,16 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         const isTodayDate = dateStr === getTodayStr();
         const dateLabel = `${dObj.getMonth() + 1}월 ${dObj.getDate()}일(${dayName})`;
 
-        if (titleEl) {
-            const badge = isReservedDate ? `<span style="background:var(--primary-color); color:white; padding:1px 5px; border-radius:4px; font-size:11px; margin-right:4px; font-weight:bold;">예약</span>` : '';
-            const todayTag = isTodayDate ? ' (오늘)' : '';
+                if (titleEl) {
+            const badge = isReservedDate ? `<span style="background:var(--primary-color); color:white; padding:1px 5px; border-radius:4px; font-size:10px; margin-right:4px; font-weight:bold;">예약</span>` : '';
+            const lunarLabel = getLunarLabel(dateStr);
+            const lunarHTML = lunarLabel ? `<div style="font-size:11px; font-weight:normal; color:var(--text-sub); margin-top:2px; text-align:left;">${lunarLabel}</div>` : '';
             const specialInfo = getSpecialDayLabel(dateStr);
-            const specialIcon = specialInfo ? (specialInfo.type === 'holiday' ? '🎊' : specialInfo.type === 'term' ? '🍃' : '🌡️') : '';
-            const specialHTML = specialInfo ? `<span class="cal-special-title-badge cal-special-${specialInfo.type}">${specialIcon} ${specialInfo.label}</span>` : '';
-            titleEl.innerHTML = `💰 ${badge}${dateLabel}${todayTag}${specialHTML}`;
+            const specialHTML = specialInfo ? `<span style="font-size:11px; margin-left:6px; color:#d35400;" class="cal-special-title-badge cal-special-${specialInfo.type}">${specialInfo.label}</span>` : '';
+            const annivText = getAnniversaryForDate(dateStr);
+            const annivLineHTML = annivText ? `<div style="font-size:11px; font-weight:700; color:#9C6ADE; margin-top:2px; text-align:left;">제목 : ${annivText}</div>` : '';
+            // V150: 양력 옆에 절기/기념일, 음력은 밑으로 좌측정렬 - 입력은 리스트/앨범 3 밑으로
+            titleEl.innerHTML = `<div style="text-align:left;"><div style="font-size: var(--base-font-size); text-align:left;">${badge}${dateLabel}${specialHTML}</div>${lunarHTML}${annivLineHTML}</div>`;
         }
 
         const diaries = getAllDiaries();
@@ -7420,7 +7833,26 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 ${healthHTML}
                 ${textContentHTML}
             `;
-            itemBox.addEventListener('click', () => openDiaryForm(dateStr, item));
+            
+            // V204 - 사진 클릭만 확대, 전체 클릭은 수정폼 안 열림
+            const _photoArea = itemBox.querySelector('.diary-photo-wrap, .diary-photo');
+            if(_photoArea){
+                _photoArea.style.cursor='zoom-in';
+                _photoArea.addEventListener('click', async (e)=>{
+                    e.preventDefault(); e.stopPropagation();
+                    let src=''; try{ src=await getPhotoSrcAsyncSafe(item.photo); }catch(e){}
+                    if(!src) try{ src=getPhotoSrc(item.photo); }catch(e){}
+                    if(src){ 
+                        let ov=document.getElementById('photo-lightbox-overlay');
+                        if(!ov){ ov=document.createElement('div'); ov.id='photo-lightbox-overlay'; ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:99999;padding:20px;'; document.body.appendChild(ov); }
+                        const cal=document.getElementById('calendar-card'); let w=cal?cal.getBoundingClientRect().width:360; w=Math.min(w*0.95, innerWidth*0.92);
+                        ov.innerHTML=`<div style="background:#fff;padding:12px;border-radius:16px;position:relative;"><img src="${src}" style="width:${w}px;max-width:92vw;max-height:70vh;border-radius:10px;object-fit:contain;"><div onclick="this.closest('#photo-lightbox-overlay').style.display='none'" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.75);color:#fff;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.2);cursor:pointer;">✖</div></div>`;
+                        ov.style.display='flex'; ov.onclick=(ev)=>{ if(ev.target===ov) ov.style.display='none'; };
+                    }
+                });
+            }
+            // 전체 박스 클릭으로는 수정폼 안 열림 - 수정 버튼으로만
+
             listEl.appendChild(itemBox);
         });
     }
@@ -7436,6 +7868,68 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     const PHOTO_DB_NAME = 'SmartDiaryPhotoDB';
     const PHOTO_STORE_NAME = 'photos';
     let __photoDbPromise = null;
+
+async function getPhotoSrcAsyncSafe(key){
+  if(!key) return '';
+  if(key.startsWith('data:image') || key.startsWith('data:video')) return key;
+  try{ if(typeof photoCache!=='undefined' && photoCache[key]) return photoCache[key]; }catch(e){}
+  try{ if(window.photoCache && window.photoCache[key]) return window.photoCache[key]; }catch(e){}
+  // IDB 직접
+  try{
+    const db = await openPhotoDB();
+    const rec = await new Promise((res, rej)=>{
+      const tx = db.transaction(PHOTO_STORE_NAME, 'readonly');
+      const st = tx.objectStore(PHOTO_STORE_NAME);
+      const r = st.get(key);
+      r.onsuccess = ()=>res(r.result);
+      r.onerror = ()=>rej(r.error);
+    });
+    if(rec && rec.data){ 
+      try{ photoCache[key]=rec.data; }catch(e){}
+      try{ window.photoCache[key]=rec.data; }catch(e){}
+      return rec.data; 
+    }
+  }catch(e){ console.log('IDB fail', e); }
+  return '';
+}
+async function showPhotosForDate(dateStr){
+  try{
+    const all = getAllDiaries();
+    const items = all.filter(d=>normalizeDateStr(d.date)===dateStr && d.photo);
+    if(items.length===0){ alert('이 날짜에 사진 데이터가 없습니다: '+dateStr); return; }
+    const list = [];
+    for(const it of items){
+      const src = await getPhotoSrcAsyncSafe(it.photo);
+      if(src) list.push(src);
+      else console.log('no src for key', it.photo);
+    }
+    if(list.length===0){
+      alert('사진 키는 있는데 데이터를 못 찾음\n키: '+items.map(i=>i.photo).join(',')+'\nphotoCache 키수: '+(typeof photoCache!=='undefined'?Object.keys(photoCache).length:0)+'\nIDB에서 직접 읽기도 실패. IndexedDB가 비어있거나 다른 브라우저/시크릿모드일 수 있어요.');
+      return;
+    }
+    // 라이트박스
+    let overlay = document.getElementById('photo-lightbox-overlay');
+    if(!overlay){
+      overlay = document.createElement('div');
+      overlay.id='photo-lightbox-overlay';
+      overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:99999;overflow-y:auto;padding:20px;';
+      document.body.appendChild(overlay);
+    }
+    const calCard = document.getElementById('calendar-card');
+    let calW = calCard ? calCard.getBoundingClientRect().width : 360;
+    calW = Math.min(calW*0.95, window.innerWidth*0.92);
+    let html = `<div style="background:#fff;padding:12px;border-radius:16px;max-height:85vh;overflow-y:auto;position:relative;"><div style="text-align:center;color:#888;font-size:13px;margin-bottom:8px;">📷 ${list.length}장 - 바깥 클릭하면 닫힘</div>`;
+    for(const src of list){
+      html += `<img src="${src}" style="display:block;width:${calW}px;max-width:92vw;max-height:60vh;height:auto;border-radius:10px;margin-bottom:10px;object-fit:contain;background:#f5f5f5;">`;
+    }
+    html += `<div onclick="document.getElementById('photo-lightbox-overlay').style.display='none'" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.75);color:#fff;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.2);cursor:pointer;">✖</div></div>`;
+    overlay.innerHTML = html;
+    overlay.style.display='flex';
+    overlay.onclick = (e)=>{ if(e.target===overlay) overlay.style.display='none'; };
+  }catch(err){ alert('오류: '+err.message); console.error(err); }
+}
+
+
 
     function openPhotoDB() {
         if (__photoDbPromise) return __photoDbPromise;
@@ -7514,6 +8008,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     }
 
     // 📷 사진만 표시 (확대보기/저장 기능은 수정폼으로 옮김 - 메인 목록에서는 항목을 터치하면 바로 수정폼이 열림)
+    function _blockedVideoCheck(item){ if(item && item.photo && item.photo.startsWith('data:video/')) return ''; }
     function renderPhotoHTML(item) {
         if (!item.photo) return '';
         const _src=getPhotoSrc(item.photo); if(_src && _src.indexOf('data:video')===0){ return `<div class="diary-photo-wrap"><video src="${_src}" controls style="width:100%; border-radius:10px;"></video></div>`; }
@@ -7709,20 +8204,22 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     function previewImage(event) {
         const file = event.target.files[0];
         if (!file) return;
+        if (file.type.startsWith('video/') || /\.(mp4|mov|avi|mkv|webm|3gp)$/i.test(file.name)) {
+            alert('동영상은 저장되지 않습니다. 사진만 선택해주세요! 📷');
+            event.target.value = '';
+            currentPhotoBase64 = null;
+            const wrap = document.getElementById('photo-preview-wrap');
+            if(wrap) wrap.style.display='none';
+            return;
+        }
         const reader = new FileReader();
         reader.onload = function(e) {
             const result = e.target.result;
-            if (file.type.startsWith('video/')) {
-                currentPhotoBase64 = result;
-                if (typeof currentMediaType !== 'undefined') currentMediaType = 'video';
+            compressImageForStorage(result, function(compressedDataUrl) {
+                currentPhotoBase64 = compressedDataUrl;
+                if (typeof currentMediaType !== 'undefined') currentMediaType = 'image';
                 updatePhotoPreview();
-            } else {
-                compressImageForStorage(result, function(compressedDataUrl) {
-                    currentPhotoBase64 = compressedDataUrl;
-                    if (typeof currentMediaType !== 'undefined') currentMediaType = 'image';
-                    updatePhotoPreview();
-                });
-            }
+            });
         };
         reader.readAsDataURL(file);
     }  // 📷 사진 첨부 시 용량을 줄여 localStorage 메모리 문제를 방지 (최대 폭/높이 제한 + JPEG 압축)
@@ -7767,7 +8264,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             img.src = currentPhotoBase64;
             wrap.style.display = 'block';
             // ✏️ 기존 항목을 "수정" 중일 때만 사진을 눌러 크게 볼 수 있음.
-            // (사진은 촬영/첨부 시점에 이미 갤러리에 원본이 저장되어 있으므로, 앱에서 별도로 다시 저장하는
+            // (사진은 촬영/첨부 시점에 이미 앨범 3에 원본이 저장되어 있으므로, 앱에서 별도로 다시 저장하는
             //  기능은 두지 않음 - 중복 저장을 막기 위함)
             if (editingDiaryId) {
                 img.style.cursor = 'default';
@@ -7791,7 +8288,10 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         if (fileInput) fileInput.value = '';
     }
 
+    function _orig_manualSaveDiary_block_check(){ if(currentPhotoBase64 && (currentPhotoBase64.startsWith('data:video/') || currentPhotoBase64.includes('video/'))){ alert('동영상은 저장할 수 없습니다!'); return; } }
     function manualSaveDiary() {
+        if(currentPhotoBase64 && (currentPhotoBase64.startsWith('data:video/') || currentPhotoBase64.includes('video/'))){ alert('동영상은 저장할 수 없습니다! 사진만 가능합니다.'); currentPhotoBase64=null; return; }
+        if(typeof currentMediaType!=='undefined' && currentMediaType==='video'){ alert('동영상은 저장할 수 없습니다!'); currentMediaType='image'; currentPhotoBase64=null; return; }
         const content = (currentFormMode === 'money')
             ? (moneyNoteInput ? moneyNoteInput.value.trim() : '')
             : textOutput.innerHTML.trim();
@@ -8274,34 +8774,86 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 </script>
 <script>
 
-        /* v134 PWA 오프라인 + 자동업데이트 */
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.register('./sw.js').then(reg => {
-            console.log('PWA 등록됨');
-            reg.addEventListener('updatefound', () => {
-              const newWorker = reg.installing;
-              newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  if (confirm('새 버전이 있어요! 업데이트할까요?')) {
-                    newWorker.postMessage({action:'skipWaiting'});
-                    window.location.reload();
-                  }
-                }
-              });
-            });
-          });
-          navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
-        }
-        
-        // 온라인되면 자동 버전 체크
-        window.addEventListener('online', () => {
-          console.log('온라인 - 업데이트 확인');
-          if (navigator.serviceWorker.controller) {
-            navigator.serviceWorker.controller.postMessage({action:'checkUpdate'});
+                (function(){
+          const swCode = `
+            const CACHE_NAME='smartdiary-V149-SINGLE';
+            self.addEventListener('install', e=>{ self.skipWaiting(); e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(['./']))); });
+            self.addEventListener('activate', e=>{ e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))).then(()=>self.clients.claim())); });
+            self.addEventListener('fetch', e=>{ e.respondWith(fetch(e.request,{cache:'no-store'}).then(r=>{ const cl=r.clone(); caches.open(CACHE_NAME).then(c=>c.put(e.request,cl)); return r; }).catch(()=>caches.match(e.request).then(c=>c||caches.match('./')))); });
+          `;
+          if('serviceWorker' in navigator){
+            try{
+              const blob = new Blob([swCode], {type:'text/javascript'});
+              const url = URL.createObjectURL(blob);
+              navigator.serviceWorker.register(url);
+            }catch(e){}
           }
-        });
-
+        })();
 </script>
+</script>
+
+
+<script>
+(function(){
+  function focusAnniv(){ var el=document.getElementById('anniv-input'); if(el){ setTimeout(function(){ el.focus(); },200); } }
+  var mo=document.getElementById('memo-modal-overlay');
+  if(mo){ var obs=new MutationObserver(function(){ if(mo.classList.contains('active')) focusAnniv(); }); obs.observe(mo,{attributes:true, attributeFilter:['class']}); }
+})();
+</script>
+
+
+<script>
+(function(){
+  function setupPhotoButtons(){
+    const origInput = document.getElementById('diary-photo-input');
+    const camInput = document.getElementById('diary-photo-input-camera');
+    const galInput = document.getElementById('diary-photo-input-gallery');
+    const camBtn = document.getElementById('camera-btn');
+    const galBtn = document.getElementById('gallery-btn');
+    if(!origInput || !camInput || !galInput || camInput.dataset.wired) return;
+    camInput.dataset.wired='1';
+    function handleFile(e){
+      const file = e.target.files[0]; if(!file) return;
+      if(file.type.startsWith('video/') || /\.(mp4|mov|avi|mkv|webm|3gp)$/i.test(file.name)){ alert('동영상은 저장되지 않습니다. 사진만 선택해주세요! 📷'); e.target.value=''; return; }
+      const dt = new DataTransfer(); dt.items.add(file);
+      origInput.files = dt.files;
+      if(typeof previewImage==='function'){ previewImage({target: origInput}); }
+    }
+    camInput.addEventListener('change', handleFile);
+    galInput.addEventListener('change', handleFile);
+    camBtn.addEventListener('click', ()=> camInput.click());
+    galBtn.addEventListener('click', ()=> galInput.click());
+  }
+  document.addEventListener('DOMContentLoaded', setupPhotoButtons);
+  setTimeout(setupPhotoButtons, 600);
+})();
+</script>
+
+
+<script>
+// V188 가로/세로 자동 리사이즈
+(function(){
+  function autoResizeCalendar(){
+    // 강제 리플로우
+    document.body.style.display='none';
+    document.body.offsetHeight;
+    document.body.style.display='';
+    // 달력 다시 그리기 있으면 호출
+    if(typeof renderCalendar==='function'){ try{ renderCalendar(); }catch(e){} }
+    if(typeof updateCalendarView==='function'){ try{ updateCalendarView(); }catch(e){} }
+    // 컨테이너 너비 강제 재계산
+    const cal = document.getElementById('calendar-card');
+    if(cal){ cal.style.display='none'; cal.offsetHeight; cal.style.display=''; }
+  }
+  window.addEventListener('orientationchange', function(){
+    setTimeout(autoResizeCalendar, 100);
+    setTimeout(autoResizeCalendar, 400);
+  });
+  window.addEventListener('resize', function(){
+    clearTimeout(window._resizeTimer);
+    window._resizeTimer = setTimeout(autoResizeCalendar, 150);
+  });
+})();
 </script>
 
 </body>
