@@ -4633,7 +4633,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     }
 
 
-    function generateGame_ConsecutiveChallenge(){
+    function generateGame_ConsecutiveChallenge_DISABLED(){
         // 5) 2주 연속 나온 번호가 3주에도 나올까? 도전 게임
         try{
             let recentDraws = [
@@ -4710,7 +4710,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         }catch(e){ return {nums:[13,22,32,18,28,38], type:'2주 연속 도전', report:'2주 연속 13,32가 3주 연속 나올까?'}; }
     }
     
-    function generateGame_RareButDue(){
+    function generateGame_RareButDue_DISABLED(){
         // 6) 자주 안 나오는 번호인데 이번주 추천 애매한 번호 - 이제 나올 때 된 번호
         try{
             let recentDraws = [
@@ -4800,6 +4800,34 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 mid: midFreq
             };
         }catch(e){ return {nums:[5,12,19,24,35,41], type:'희귀 번호', report:'3개월 미출현 5,12 등 이제 나올 때?'}; }
+    }
+
+
+    function generateGame_ExcludeLastWeek(){
+        try{
+            let recentDraws = [
+                {r:1239, n:[11,13,22,32,33,36], b:8},
+                {r:1238, n:[2,13,18,32,38,42], b:41},
+                {r:1237, n:[10,20,23,34,37,40], b:36},
+            ];
+            const today=new Date(); let diff=6-today.getDay(); if(diff<0) diff+=7;
+            const sat=new Date(today); sat.setDate(today.getDate()+diff);
+            const satStr=sat.getFullYear()+'-'+String(sat.getMonth()+1).padStart(2,'0')+'-'+String(sat.getDate()).padStart(2,'0');
+            const lastWeek=recentDraws[0];
+            const excluded=[...lastWeek.n, lastWeek.b].filter(n=>n>=1&&n<=45);
+            const allNums=Array.from({length:45}, (_,i)=>i+1);
+            const available=allNums.filter(n=>!excluded.includes(n));
+            const seed=parseInt(satStr.replace(/-/g,''))*7919;
+            const nums=[]; let idx=0;
+            while(nums.length<6 && idx<500){
+                const n=available[(seed+idx*37)%available.length];
+                if(!nums.includes(n)) nums.push(n);
+                idx++;
+            }
+            nums.sort((a,b)=>a-b);
+            const report=`• 전주 ${lastWeek.r}회: ${lastWeek.n.join(',')} + 보너스 ${lastWeek.b}<br>• 제외 7개: ${excluded.join(',')} → 전주 나왔으니 이번주는 제외!<br>• 남은 38개 중 6개 선택 - 전주 번호 안 겹치면 1등 독식 가능성 UP?`;
+            return {nums:nums, type:'전주 제외', report:report, excluded:excluded, lastWeek:lastWeek};
+        }catch(e){ return {nums:[1,5,12,19,25,33], type:'전주 제외', report:'전주 제외'}; }
     }
 
     function sajuGenerateNewLottoManual(){
@@ -7633,14 +7661,14 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 let diff = 6 - day; if(diff<0) diff+=7;
                 const sat = new Date(today); sat.setDate(today.getDate()+diff);
                 const satStr = sat.getFullYear()+'-'+String(sat.getMonth()+1).padStart(2,'0')+'-'+String(sat.getDate()).padStart(2,'0');
-                const storedKey = 'lotto6Games_'+satStr;
-                let g1,g2,g3,g4,g5,g6, fromAPI=false;
+                const storedKey = 'lotto5Games_'+satStr;
+                let g1,g2,g3,g4,g5, fromAPI=false;
                 
                 const stored = localStorage.getItem(storedKey);
                 if(stored){
                     try{
                         const p = JSON.parse(stored);
-                        if(p.g1 && p.g2 && p.g3 && p.g4 && p.g5 && p.g6){ g1=p.g1; g2=p.g2; g3=p.g3; g4=p.g4; g5=p.g5; g6=p.g6; fromAPI=p.fromAPI||false; }
+                        if(p.g1 && p.g2 && p.g3 && p.g4 && p.g5){ g1=p.g1; g2=p.g2; g3=p.g3; g4=p.g4; g5=p.g5; g6=p.g6; fromAPI=p.fromAPI||false; }
                     }catch(e){}
                 }
                 
@@ -7658,8 +7686,8 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                     g2 = generateGame_100ManPlusMySaju();
                     g3 = generateGame_Past3Months();
                     g4 = generateGame_LeastLikely();
-                    g5 = generateGame_ConsecutiveChallenge();
-                    g6 = generateGame_RareButDue();
+                    g5 = generateGame_ExcludeLastWeek();
+                    ;
                     localStorage.setItem(storedKey, JSON.stringify({g1:g1,g2:g2,g3:g3,g4:g4,g5:g5,g6:g6, fromAPI:fromAPI, sat:satStr}));
                 }
                 
@@ -7676,7 +7704,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                     
                     let html = `<div style="background:linear-gradient(135deg, rgba(0,0,0,0.4), rgba(30,30,60,0.4)); border:1.5px solid rgba(255,215,0,0.3); border-radius:14px; padding:12px; margin-bottom:10px;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                            <div style="font-size:13px; font-weight:800; color:#FFD98E;">🎯 이번주 6가지 추천 (${satStr} 추첨까지 유지)${apiBadge}</div>
+                            <div style="font-size:13px; font-weight:800; color:#FFD98E;">🎯 이번주 5가지 추천 (${satStr} 추첨까지 유지)${apiBadge}</div>
                             <div style="font-size:10px; color:rgba(255,255,255,0.5); background:rgba(0,0,0,0.3); padding:3px 7px; border-radius:10px;">토요일 고정</div>
                         </div>`;
                     
@@ -7725,11 +7753,11 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                         </div>
                     </div>`;
                     
-                    // 5번째 게임 - 2주 연속 3주 도전
-                    html+=`<div style="background:rgba(255,200,87,0.08); border:1px solid rgba(255,200,87,0.25); border-radius:10px; padding:10px; margin-bottom:8px;">
+                    // 5번째 게임 - 전주 제외
+                    html+=`<div style="background:rgba(100,200,255,0.08); border:1px solid rgba(100,200,255,0.25); border-radius:10px; padding:10px; margin-bottom:8px;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                            <div style="font-size:12px; font-weight:700; color:#FFC857;">5️⃣ 2주 연속 → 3주 연속 나올까? 도전! 🔥</div>
-                            <button onclick="applyRecToFixed([${g5.nums.join(',')}])" style="font-size:10px; padding:3px 8px; border-radius:10px; background:#FFC857; color:#000; border:none; font-weight:700; cursor:pointer;">고정수에 넣기</button>
+                            <div style="font-size:12px; font-weight:700; color:#64C8FF;">5️⃣ 전주 6개+보너스 제외하고 이번주 예측 🚫</div>
+                            <button onclick="applyRecToFixed([${g5.nums.join(',')}])" style="font-size:10px; padding:3px 8px; border-radius:10px; background:#64C8FF; color:#000; border:none; font-weight:700; cursor:pointer;">고정수에 넣기</button>
                         </div>
                         <div style="display:flex; gap:5px; flex-wrap:wrap;">${ballsHtml(g5.nums)}</div>
                         <div style="font-size:10px; color:rgba(255,255,255,0.6); margin-top:5px; line-height:1.4;">
@@ -7737,21 +7765,9 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                         </div>
                     </div>`;
                     
-                    // 6번째 게임 - 희귀 번호 이제 나올 때?
-                    html+=`<div style="background:rgba(180,150,255,0.08); border:1px solid rgba(180,150,255,0.25); border-radius:10px; padding:10px; margin-bottom:8px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                            <div style="font-size:12px; font-weight:700; color:#B496FF;">6️⃣ 자주 안 나오는 번호 - 이제 나올 때? ⏰</div>
-                            <button onclick="applyRecToFixed([${g6.nums.join(',')}])" style="font-size:10px; padding:3px 8px; border-radius:10px; background:#B496FF; color:#000; border:none; font-weight:700; cursor:pointer;">고정수에 넣기</button>
-                        </div>
-                        <div style="display:flex; gap:5px; flex-wrap:wrap;">${ballsHtml(g6.nums)}</div>
-                        <div style="font-size:10px; color:rgba(255,255,255,0.6); margin-top:5px; line-height:1.4;">
-                            ${g6.report}
-                        </div>
-                    </div>`;
-                    
                     html+=`<div style="background:rgba(0,0,0,0.25); border-radius:8px; padding:8px 10px; font-size:11px; color:rgba(255,255,255,0.6); line-height:1.4;">
                         💡 각 게임의 [고정수에 넣기]를 누르면 고정칸에 자동 입력! 그 후 생성하기로 100만 귀인 방식으로 더 뽑아보세요!<br>
-                        <span style="color:#FFD98E;">토요일까지 6게임 고정 유지!</span> ${fromAPI ? '✅ 동행복권 API 자동 체크 완료' : '⚠️ 오프라인 데이터 (인터넷 연결시 자동 최신 반영)'}<br>
+                        <span style="color:#FFD98E;">토요일까지 5게임 고정 유지!</span> ${fromAPI ? '✅ 동행복권 API 자동 체크 완료' : '⚠️ 오프라인 데이터 (인터넷 연결시 자동 최신 반영)'}<br>
                         <span style="color:#FF6B6B;">4번은 고민되는 번호! 추천하기 애매하지만 그래서 더 고민되는 번호들. 확신은 없지만 한 번쯤 고려해볼 만한!</span>
                     </div></div>`;
                     
