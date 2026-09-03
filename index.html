@@ -4148,20 +4148,230 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         for(let i=candidates.length-1;i>0;i--){ const j=Math.floor(rng()*(i+1)); [candidates[i],candidates[j]]=[candidates[j],candidates[i]]; }
         const need=6-fixed.length; const picked=candidates.slice(0, need); const result=[...fixed, ...picked].sort((a,b)=>a-b); while(result.length<6){ const n=Math.floor(rng()*45)+1; if(!result.includes(n)) result.push(n); result.sort((a,b)=>a-b); } return result;
     }
-    function sajuGetHot3Numbers(){
+
+
+
+    // V261: 동행복권 공식 API로 지난 로또 번호 자동 체크
+    async function fetchRecentLottoFromAPI(){
+        const results = [];
         try{
-            const best = sajuGetBestGwainForLotto();
-            const pool = sajuBuildLottoPool(best);
-            const arr = Array.from(pool);
-            // 내 사주 일간 오행 기반 3개 추출
-            const today = new Date();
-            let h = today.getDate()*7919 + today.getMonth()*1009;
-            const hot = [];
-            for(let k=0;k<3;k++){ const idx = (h + k*1337 + best.score + k*best.timeIdx) % arr.length; const n = arr[idx]; if(!hot.includes(n)) hot.push(n); }
-            while(hot.length<3){ const n = Math.floor(Math.random()*45)+1; if(!hot.includes(n)) hot.push(n); }
-            return {nums: hot.sort((a,b)=>a-b), reason: best.year+'년 '+best.gan+'간 '+best.tenGod+' '+best.timeBranch+'시 귀인 '+best.score+'점 + 내 사주 일간 기운 + 생성시각 '+best.genTime.slice(11,19)};
-        }catch(e){ return {nums:[7,17,27], reason:'기본 추천'}; }
+            // 최신 회차 추정: 2002년 12월 7일 1회 시작, 매주 토요일
+            // 2026-09-03 기준 약 1239회, 3개월 = 12회 정도
+            const latestRound = 1240; // 추정, API에서 실패하면 1씩 감소하며 찾기
+            let foundLatest = null;
+            // 최신 회차 찾기 (최대 5회 시도)
+            for(let r=latestRound; r>=latestRound-10; r--){
+                try{
+                    const res = await fetch(`https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo=${r}`);
+                    const data = await res.json();
+                    if(data.returnValue === 'success'){
+                        foundLatest = r;
+                        break;
+                    }
+                }catch(e){}
+            }
+            if(!foundLatest) return null;
+            
+            // 최근 12회(3개월) 가져오기
+            for(let r=foundLatest; r>foundLatest-12; r--){
+                try{
+                    const res = await fetch(`https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo=${r}`);
+                    const data = await res.json();
+                    if(data.returnValue === 'success'){
+                        results.push({
+                            r: data.drwNo,
+                            n: [data.drwtNo1, data.drwtNo2, data.drwtNo3, data.drwtNo4, data.drwtNo5, data.drwtNo6],
+                            bonus: data.bnusNo,
+                            date: data.drwNoDate
+                        });
+                    }
+                }catch(e){}
+                await new Promise(r=>setTimeout(r, 100)); // 100ms 딜레이
+            }
+            return results;
+        }catch(e){
+            console.error('lotto API fetch fail', e);
+            return null;
+        }
     }
+    
+    async function sajuGetWeeklyFixedRecommendationAsync(){
+        // localStorage 이번주 추천이 있고, 24시간 이내면 재사용
+        const today = new Date();
+        const day = today.getDay();
+        let diff = 6 - day; if(diff < 0) diff += 7;
+        const sat = new Date(today); sat.setDate(today.getDate() + diff);
+        const satStr = sat.getFullYear()+'-'+String(sat.getMonth()+1).padStart(2,'0')+'-'+String(sat.getDate()).padStart(2,'0');
+        const storedKey = 'lottoWeeklyRec_'+satStr;
+        const stored = localStorage.getItem(storedKey);
+        if(stored){
+            try{ 
+                const parsed = JSON.parse(stored);
+                // API 데이터가 이미 있으면 재사용
+                if(parsed.fromAPI) return parsed;
+            }catch(e){}
+        }
+        
+        // API로 자동 체크 시도
+        let recentDraws = null;
+        try{
+            const apiData = await fetchRecentLottoFromAPI();
+            if(apiData && apiData.length >= 3){
+                recentDraws = apiData.map(d=>({r:d.r, n:d.n}));
+                console.log('로또 API 자동 체크 성공!', recentDraws.length+'회');
+            }
+        }catch(e){}
+        
+        // API 실패시 하드코딩 데이터 사용
+        if(!recentDraws){
+            recentDraws = [
+                {r:1239, n:[11,13,22,32,33,36]},
+                {r:1238, n:[2,13,18,32,38,42]},
+                {r:1237, n:[10,20,23,34,37,40]},
+                {r:1231, n:[4,13,14,18,31,38]},
+                {r:1230, n:[3,8,9,22,28,42]},
+                {r:1226, n:[4,6,13,17,26,28]},
+            ];
+        }
+        
+        const freq = {};
+        recentDraws.forEach(d=>d.n.forEach(n=>{ freq[n]=(freq[n]||0)+1; }));
+        const hotNums = Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,8).map(x=>parseInt(x[0]));
+        const allNums = Array.from({length:45}, (_,i)=>i+1);
+        const coldNums = allNums.filter(n=>!freq[n]).slice(0,10);
+        const sortedByFreq = allNums.map(n=>({n:n, f:freq[n]||0})).sort((a,b)=>a.f - b.f);
+        const lowFreq = sortedByFreq.slice(0,8).map(x=>x.n);
+        
+        let sajuNums = [3,11,23];
+        try{
+            if(typeof sajuPillars!=='undefined' && sajuPillars && sajuPillars.day){
+                const gan = sajuPillars.day.gan;
+                const ganMap = {'甲':[3,13,23,33,43], '乙':[5,15,25,35,45], '丙':[2,12,22,32,42], '丁':[7,17,27,37], '戊':[8,18,28,38], '己':[1,11,21,31,41], '庚':[9,19,29,39], '辛':[4,14,24,34,44], '壬':[6,16,26,36], '癸':[10,20,30,40]};
+                sajuNums = ganMap[gan] || sajuNums;
+            }
+        }catch(e){}
+        
+        const seed = parseInt(satStr.replace(/-/g,'')) + (freq[13]||0)*100;
+        const pick = (arr, off) => arr[(seed + off*37) % arr.length];
+        const rec = [];
+        rec.push(pick(hotNums,0));
+        rec.push(pick(hotNums,1));
+        rec.push(pick(lowFreq,2));
+        rec.push(pick(coldNums.length?coldNums:lowFreq,3));
+        rec.push(pick(sajuNums,4));
+        rec.push(pick(sajuNums,5));
+        let uniq = [...new Set(rec)];
+        let idx=0;
+        while(uniq.length<6){
+            const cand = allNums[(seed + idx*97)%45];
+            if(!uniq.includes(cand)) uniq.push(cand);
+            idx++;
+        }
+        uniq = uniq.slice(0,6).sort((a,b)=>a-b);
+        
+        const result = {
+            nums: uniq,
+            sat: satStr,
+            reason: `자동 체크 ${recentDraws.length}회 분석: 핫번호 ${hotNums.slice(0,3).join(',')} 다수출현, 콜드번호 ${coldNums.slice(0,2).join(',')} 장기미출현, 내 사주 일간 기반 ${sajuNums.slice(0,2).join(',')}`,
+            hot: hotNums.slice(0,3),
+            cold: coldNums.slice(0,2),
+            saju: sajuNums.slice(0,2),
+            freq: freq,
+            recent: recentDraws.slice(0,3),
+            fromAPI: recentDraws.length > 6 ? true : false
+        };
+        localStorage.setItem(storedKey, JSON.stringify(result));
+        return result;
+    }
+
+    function sajuGetWeeklyFixedRecommendation(){ // 동기 버전 (호환용, 하드코딩 데이터 사용)
+
+        try{
+            // 지난 3개월 실제 당첨번호 기반 분석 (고정 데이터)
+            const recentDraws = [
+                {r:1239, n:[11,13,22,32,33,36]},
+                {r:1238, n:[2,13,18,32,38,42]},
+                {r:1237, n:[10,20,23,34,37,40]},
+                {r:1231, n:[4,13,14,18,31,38]},
+                {r:1230, n:[3,8,9,22,28,42]},
+                {r:1226, n:[4,6,13,17,26,28]},
+            ];
+            // 이번주 토요일 계산
+            const today = new Date();
+            const day = today.getDay();
+            let diff = 6 - day;
+            if(diff < 0) diff += 7;
+            const sat = new Date(today);
+            sat.setDate(today.getDate() + diff);
+            const satStr = sat.getFullYear()+'-'+String(sat.getMonth()+1).padStart(2,'0')+'-'+String(sat.getDate()).padStart(2,'0');
+            
+            // localStorage에서 이번주 추천이 이미 있으면 재사용 (토요일까지 유지)
+            const storedKey = 'lottoWeeklyRec_'+satStr;
+            const stored = localStorage.getItem(storedKey);
+            if(stored){
+                try{ return JSON.parse(stored); }catch(e){}
+            }
+            
+            // 빈도 분석
+            const freq = {};
+            recentDraws.forEach(d=>d.n.forEach(n=>{ freq[n]=(freq[n]||0)+1; }));
+            // 핫넘버: 최근 3개월 많이 나온 수
+            const hotNums = Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,8).map(x=>parseInt(x[0]));
+            // 콜드넘버: 안 나온 수 중에서
+            const allNums = Array.from({length:45}, (_,i)=>i+1);
+            const coldNums = allNums.filter(n=>!freq[n]).slice(0,10);
+            // 45개 중 빈도 낮은 순
+            const sortedByFreq = allNums.map(n=>({n:n, f:freq[n]||0})).sort((a,b)=>a.f.f - b.f.f);
+            const lowFreq = sortedByFreq.slice(0,8).map(x=>x.n);
+            
+            // 내 사주 기반 번호
+            let sajuNums = [3,11,23];
+            try{
+                if(typeof sajuPillars!=='undefined' && sajuPillars && sajuPillars.day){
+                    const gan = sajuPillars.day.gan;
+                    const ganMap = {'甲':[3,13,23,33,43], '乙':[5,15,25,35,45], '丙':[2,12,22,32,42], '丁':[7,17,27,37], '戊':[8,18,28,38], '己':[1,11,21,31,41], '庚':[9,19,29,39], '辛':[4,14,24,34,44], '壬':[6,16,26,36], '癸':[10,20,30,40]};
+                    sajuNums = ganMap[gan] || sajuNums;
+                }
+            }catch(e){}
+            
+            // 이번주 추천 6개 조합: 핫 2 + 콜드 2 + 사주 2, 토요일까지 고정
+            const seed = parseInt(satStr.replace(/-/g,'')) + (freq[13]||0)*100;
+            const pick = (arr, off) => arr[(seed + off*37) % arr.length];
+            const rec = [];
+            rec.push(pick(hotNums,0));
+            rec.push(pick(hotNums,1));
+            rec.push(pick(lowFreq,2));
+            rec.push(pick(coldNums.length?coldNums:lowFreq,3));
+            rec.push(pick(sajuNums,4));
+            rec.push(pick(sajuNums,5));
+            // 중복 제거
+            let uniq = [...new Set(rec)];
+            let idx=0;
+            while(uniq.length<6){
+                const cand = allNums[(seed + idx*97)%45];
+                if(!uniq.includes(cand)) uniq.push(cand);
+                idx++;
+            }
+            uniq = uniq.slice(0,6).sort((a,b)=>a-b);
+            
+            const result = {
+                nums: uniq,
+                sat: satStr,
+                reason: `지난 3개월(1230~1239회) 분석: 핫번호 ${hotNums.slice(0,3).join(',')} 다수출현, 콜드번호 ${coldNums.slice(0,2).join(',')} 장기미출현, 내 사주 일간 기반 ${sajuNums.slice(0,2).join(',')}`,
+                hot: hotNums.slice(0,3),
+                cold: coldNums.slice(0,2),
+                saju: sajuNums.slice(0,2),
+                freq: freq
+            };
+            localStorage.setItem(storedKey, JSON.stringify(result));
+            return result;
+        }catch(e){ return {nums:[7,13,23,32,38,42], sat:'', reason:'기본 추천', hot:[], cold:[], saju:[]}; }
+    }
+    function sajuGetHot3Numbers(){
+        const w = sajuGetWeeklyFixedRecommendation();
+        return {nums: w.nums.slice(0,3), reason: w.reason};
+    }
+
     function sajuGenerateNewLottoManual(){
         try{
             const cntEl=document.getElementById('ldt-new-game-count'); const cnt=Math.min(5, Math.max(1, parseInt(cntEl?cntEl.value:'5')||5));
@@ -6612,6 +6822,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     function closeFortunePopup() {
         if (fortunePopupOverlay) fortunePopupOverlay.classList.remove('active');
         unlockBodyScroll();
+        try{ localStorage.setItem('smartDiarySajuLastShown', getTodayStr()); }catch(e){}
     }
 
     function handleFortunePopupBackgroundClick(event) {
@@ -6983,17 +7194,43 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 
         try{ if(typeof ldtRenderWeeklyBox==='function') ldtRenderWeeklyBox(); }catch(e){}
         
-        // V259: 추천 3개 먼저 표시
-        try{
-            const hot = sajuGetHot3Numbers();
-            const ballsEl = document.getElementById('ldt-new-balls');
-            if(ballsEl){
-                let hotHtml = `<div style="background:linear-gradient(135deg, rgba(0,255,136,0.12), rgba(255,215,0,0.12)); border:1px solid rgba(0,255,136,0.3); border-radius:12px; padding:12px; margin-bottom:8px;"><div style="font-size:13px; font-weight:800; color:#8AFFB0; margin-bottom:8px;">🔥 앞으로 나올만한 번호 3개 추천</div><div style="display:flex; gap:8px; margin-bottom:8px;">`;
-                hot.nums.forEach(n=>{ const col=typeof sajuLottoBallColor==='function'?sajuLottoBallColor(n):'#00ff88'; hotHtml+=`<div style="width:38px; height:38px; border-radius:50%; background:${col}; color:#000; font-weight:800; font-size:15px; display:flex; align-items:center; justify-content:center; border:2px solid rgba(255,255,255,0.3);">${n}</div>`; });
-                hotHtml+=`</div><div style="font-size:11px; color:rgba(255,255,255,0.6); line-height:1.4;">기준: ${hot.reason}<br>💡 이 3개 중 1~2개를 고정수에 넣고 생성해보세요!</div></div>`;
-                ballsEl.innerHTML = hotHtml + `<div style="text-align:center; color:rgba(255,255,255,0.35); font-size:12px; padding:8px;">👇 고정수 선택 → 내 사주 반영 → 생성하기!</div>`;
-            }
-        }catch(e){ console.error('hot3', e); }
+        // V261: 자동 체크 + 이번주 고정 추천
+        (async ()=>{
+            try{
+                const weekRec = await sajuGetWeeklyFixedRecommendationAsync();
+                const ballsEl = document.getElementById('ldt-new-balls');
+                if(ballsEl){
+                    const apiBadge = weekRec.fromAPI ? '<span style="background:#00ff88; color:#000; font-size:9px; padding:2px 5px; border-radius:8px; margin-left:6px;">자동 체크✓</span>' : '<span style="background:rgba(255,255,255,0.2); color:rgba(255,255,255,0.6); font-size:9px; padding:2px 5px; border-radius:8px; margin-left:6px;">오프라인 데이터</span>';
+                    const recentTxt = weekRec.recent ? weekRec.recent.map(r=>`${r.r}회 [${r.n.join(',')}]`).join(', ') : '1239회 [11,13,22,32,33,36] 등';
+                    let recHtml = `<div style="background:linear-gradient(135deg, rgba(255,215,0,0.12), rgba(138,255,176,0.12)); border:1.5px solid rgba(255,215,0,0.35); border-radius:14px; padding:14px; margin-bottom:10px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <div style="font-size:13px; font-weight:800; color:#FFD98E;">📊 이번주 로또 예상 (${weekRec.sat} 추첨까지 유지)${apiBadge}</div>
+                            <div style="font-size:10px; color:rgba(255,255,255,0.5); background:rgba(0,0,0,0.3); padding:3px 7px; border-radius:10px;">토요일까지 고정</div>
+                        </div>
+                        <div style="display:flex; gap:7px; margin-bottom:10px; flex-wrap:wrap;">`;
+                    weekRec.nums.forEach(n=>{ 
+                        const col=typeof sajuLottoBallColor==='function'?sajuLottoBallColor(n):'#FFD98E'; 
+                        let tag='';
+                        if(weekRec.hot.includes(n)) tag='🔥핫';
+                        else if(weekRec.cold.includes(n)) tag='❄️콜드';
+                        else if(weekRec.saju.includes(n)) tag='🔮사주';
+                        recHtml+=`<div style="text-align:center;"><div style="width:40px; height:40px; border-radius:50%; background:${col}; color:#000; font-weight:800; font-size:15px; display:flex; align-items:center; justify-content:center; border:2px solid rgba(255,255,255,0.4);">${n}</div><div style="font-size:9px; color:rgba(255,255,255,0.6); margin-top:2px;">${tag}</div></div>`; 
+                    });
+                    recHtml+=`</div>
+                        <div style="background:rgba(0,0,0,0.25); border-radius:8px; padding:8px 10px; font-size:11px; color:rgba(255,255,255,0.7); line-height:1.5;">
+                            <div style="color:#FFD98E; font-weight:700; margin-bottom:3px;">📈 자동 분석 기준 ${weekRec.fromAPI ? '(동행복권 API 실시간)' : '(오프라인)'}</div>
+                            • 최근: ${recentTxt}<br>
+                            • 핫(자주 나온 수): ${weekRec.hot.join(', ')} → 최근 3개월 최다<br>
+                            • 콜드(장기 미출현): ${weekRec.cold.join(', ')} → 이제 나올 때<br>
+                            • 사주(내 일간): ${weekRec.saju.join(', ')}<br>
+                            <div style="margin-top:6px; color:#8AFFB0;">💡 이 6개로 1게임 구성하거나, 2~3개 고정수에 넣고 생성! 토요일까지 유지됩니다.</div>
+                            ${weekRec.fromAPI ? '<div style="margin-top:4px; font-size:10px; color:rgba(255,255,255,0.4);">✅ 앱이 동행복권 API에서 지난 번호를 자동으로 체크했습니다!</div>' : '<div style="margin-top:4px; font-size:10px; color:rgba(255,255,255,0.4);">⚠️ 인터넷 연결시 자동으로 최신 당첨번호를 가져옵니다. 지금은 저장된 데이터로 분석했습니다.</div>'}
+                        </div>
+                    </div>`;
+                    ballsEl.innerHTML = recHtml + `<div style="text-align:center; color:rgba(255,255,255,0.35); font-size:12px; padding:8px;">👇 고정수에 위 번호 넣고 → 내 사주 반영 체크 → 생성하기!</div>`;
+                }
+            }catch(e){ console.error('weekRec async', e); }
+        })();
 
         ldtValidateInputs();
         lottoDrawModalOverlay.classList.add('active');
