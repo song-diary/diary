@@ -6618,10 +6618,11 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         if (event.target === fortunePopupOverlay) closeFortunePopup();
     }
 
-    // V258: 앱 킬 때마다 자동 팝업 뜨던 문제 수정 - 설정에서 켠 경우에만 하루 1번 자동 표시
+    // V259: 하루 1번, 처음 앱 켰을 때만 자동 표시 (기본 ON)
     function maybeAutoShowFortunePopup() {
-        const autoEnabled = localStorage.getItem('smartDiaryFortuneAuto') === '1'; // 기본 꺼짐
-        if (!autoEnabled) return; // 자동 꺼져있으면 절대 안 뜸
+        const autoSetting = localStorage.getItem('smartDiaryFortuneAuto');
+        const autoEnabled = autoSetting === null ? true : autoSetting === '1'; // 기본 켜짐, 0이면 끔
+        if (!autoEnabled) return;
         if (!getShowFortune()) return;
         if (!sajuBirthInfo || !sajuBirthInfo.date || !sajuDayMasterElem) return;
         const urlParams = new URLSearchParams(window.location.search);
@@ -6967,33 +6968,34 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 
     function openLottoDrawModal() {
         const keys = ldtStorageKeys();
-        const savedGames = localStorage.getItem(keys.games);
         const savedFavs = localStorage.getItem(keys.favs);
-        const todayMain = null; // V246: 자동 생성 금지
-
-        if (savedGames) {
-            try{ ldtGames = JSON.parse(savedGames); }catch(e){ ldtGames=[]; }
-            ldtFavs = savedFavs ? JSON.parse(savedFavs) : [];
-            ldtGames = []; // V246: 자동 표시 금지, 빈 상태 시작
-        } else {
-            ldtGames = [];
-            ldtFavs = savedFavs ? JSON.parse(savedFavs) : [];
-        }
+        // V259: 항상 빈 상태로 시작, 고정수는 유지
+        ldtGames = [];
+        ldtFavs = savedFavs ? JSON.parse(savedFavs) : [];
 
         const subtitleEl = document.getElementById('ldt-subtitle');
-        if (subtitleEl) {
-            subtitleEl.textContent = ldtGames.length ? '오늘의 행운 번호로 시작했어요' : '수량을 고르고 번호를 뽑아보세요';
-        }
+        if (subtitleEl) subtitleEl.style.display='none';
 
         for (let i = 1; i <= 6; i++) {
             const el = document.getElementById(`ldt-fav${i}`);
             if (el) el.value = ldtFavs[i - 1] || '';
         }
 
-        ldtRenderResults();
-        ldtValidateInputs();
-        ldtRenderWeeklyBox();
+        try{ if(typeof ldtRenderWeeklyBox==='function') ldtRenderWeeklyBox(); }catch(e){}
+        
+        // V259: 추천 3개 먼저 표시
+        try{
+            const hot = sajuGetHot3Numbers();
+            const ballsEl = document.getElementById('ldt-new-balls');
+            if(ballsEl){
+                let hotHtml = `<div style="background:linear-gradient(135deg, rgba(0,255,136,0.12), rgba(255,215,0,0.12)); border:1px solid rgba(0,255,136,0.3); border-radius:12px; padding:12px; margin-bottom:8px;"><div style="font-size:13px; font-weight:800; color:#8AFFB0; margin-bottom:8px;">🔥 앞으로 나올만한 번호 3개 추천</div><div style="display:flex; gap:8px; margin-bottom:8px;">`;
+                hot.nums.forEach(n=>{ const col=typeof sajuLottoBallColor==='function'?sajuLottoBallColor(n):'#00ff88'; hotHtml+=`<div style="width:38px; height:38px; border-radius:50%; background:${col}; color:#000; font-weight:800; font-size:15px; display:flex; align-items:center; justify-content:center; border:2px solid rgba(255,255,255,0.3);">${n}</div>`; });
+                hotHtml+=`</div><div style="font-size:11px; color:rgba(255,255,255,0.6); line-height:1.4;">기준: ${hot.reason}<br>💡 이 3개 중 1~2개를 고정수에 넣고 생성해보세요!</div></div>`;
+                ballsEl.innerHTML = hotHtml + `<div style="text-align:center; color:rgba(255,255,255,0.35); font-size:12px; padding:8px;">👇 고정수 선택 → 내 사주 반영 → 생성하기!</div>`;
+            }
+        }catch(e){ console.error('hot3', e); }
 
+        ldtValidateInputs();
         lottoDrawModalOverlay.classList.add('active');
         lockBodyScroll();
     }
