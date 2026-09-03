@@ -7504,7 +7504,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         try{ if(typeof ldtRenderWeeklyBox==='function') ldtRenderWeeklyBox(); }catch(e){}
         
         // V272: 5게임 자동 추천 - 버튼으로 수동 생성
-        window.generate5GamesAuto = async function(forceRegen=false){
+        window.generate5GamesAuto = async function(forceRegen=false){ console.log('generate5GamesAuto called', forceRegen);
             try{
                 // 이번주 토요일
                 const today = new Date();
@@ -7512,7 +7512,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 let diff = 6 - day; if(diff<0) diff+=7;
                 const sat = new Date(today); sat.setDate(today.getDate()+diff);
                 const satStr = sat.getFullYear()+'-'+String(sat.getMonth()+1).padStart(2,'0')+'-'+String(sat.getDate()).padStart(2,'0');
-                const storedKey = 'lotto5GamesV3_'+satStr;
+                const storedKey = 'lotto5GamesV4_'+satStr;
                 let g1,g2,g3,g4,g5, fromAPI=false;
                 
                 if(!forceRegen){
@@ -7645,28 +7645,16 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         window.initLottoAutoSection = function(){
             const ballsEl = document.getElementById('ldt-new-balls');
             if(!ballsEl) return;
-            const today = new Date();
-            const day = today.getDay();
-            let diff = 6 - day; if(diff<0) diff+=7;
-            const sat = new Date(today); sat.setDate(today.getDate()+diff);
-            const satStr = sat.getFullYear()+'-'+String(sat.getMonth()+1).padStart(2,'0')+'-'+String(sat.getDate()).padStart(2,'0');
-            const storedKey = 'lotto5GamesV3_'+satStr;
-            const stored = localStorage.getItem(storedKey);
-            if(stored){
-                // 저장된 게 있으면 바로 표시
-                window.generate5GamesAuto(false);
-            } else {
-                ballsEl.innerHTML = `<div style="background:linear-gradient(135deg, rgba(0,0,0,0.4), rgba(30,30,60,0.4)); border:1.5px dashed rgba(255,215,0,0.35); border-radius:14px; padding:20px; text-align:center; margin-bottom:10px;">
-                    <div style="font-size:13px; font-weight:700; color:rgba(255,255,255,0.6); margin-bottom:12px;">🎯 이번주 5가지 추천 게임이 아직 생성되지 않았습니다</div>
-                    <div style="font-size:11px; color:rgba(255,255,255,0.4); margin-bottom:16px;">아래 버튼을 누르면 5게임이 자동 생성됩니다 (토요일까지 유지)</div>
-                    <button onclick="window.generate5GamesAuto(true)" style="background:linear-gradient(135deg, #FFD98E, #FF8A65); color:#000; border:none; padding:12px 24px; border-radius:20px; font-weight:800; font-size:13px; cursor:pointer; box-shadow:0 4px 12px rgba(255,217,142,0.3);">🎲 자동 추천게임(5) 생성하기</button>
-                    <div style="margin-top:12px; font-size:10px; color:rgba(255,255,255,0.3);">100만 귀인 / 100만+내사주 / 과거3개월 / 애매한 번호 / 전주 제외 5게임</div>
-                </div>`;
-            }
+            ballsEl.innerHTML = `<div style="background:linear-gradient(135deg, rgba(0,0,0,0.4), rgba(30,30,60,0.4)); border:1.5px dashed rgba(255,215,0,0.35); border-radius:14px; padding:20px; text-align:center; margin-bottom:10px;">
+                <div style="font-size:13px; font-weight:700; color:rgba(255,255,255,0.6); margin-bottom:12px;">🎯 이번주 5가지 추천 게임이 아직 생성되지 않았습니다</div>
+                <div style="font-size:11px; color:rgba(255,255,255,0.4); margin-bottom:16px;">아래 버튼을 누르면 5게임이 자동 생성됩니다 (토요일까지 유지)</div>
+                <button onclick="window.generate5GamesAuto(true)" style="background:linear-gradient(135deg, #FFD98E, #FF8A65); color:#000; border:none; padding:12px 24px; border-radius:20px; font-weight:800; font-size:13px; cursor:pointer; box-shadow:0 4px 12px rgba(255,217,142,0.3);">🎲 자동 추천게임(5) 생성하기</button>
+                <div style="margin-top:12px; font-size:10px; color:rgba(255,255,255,0.3);">100만 귀인 / 100만+내사주 / 과거3개월 / 애매한 번호 / 전주 제외 5게임</div>
+            </div>`;
         };
         
         // 페이지 로드시 초기화 (자동 생성 안 함, 버튼만)
-        setTimeout(()=>{ try{ window.initLottoAutoSection(); }catch(e){} }, 500);
+        setTimeout(()=>{ try{ window.initLottoAutoSection(); }catch(e){ console.log(e); } }, 800);
         
         window.applyRecToFixed = function(nums){
             try{
