@@ -4535,6 +4535,273 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         }catch(e){ return {nums:[5,13,23,32,38,42], type:'과거 3개월 통계', report:'기본'}; }
     }
 
+
+    function generateGame_LeastLikely(){
+        // 4) 과거 3개월 기준에서 이번주 추천하기 애매한 번호 6개
+        // - 2주 연속 나온 번호: 3주 연속 나올까? 애매!
+        // - 자주 안 나오는 번호: 이번주에 추천하기 애매!
+        // - 너무 많이 나온 번호: 이제 안 나올 것 같아서 애매!
+        try{
+            let recentDraws = [
+                {r:1239, n:[11,13,22,32,33,36]},
+                {r:1238, n:[2,13,18,32,38,42]},
+                {r:1237, n:[10,20,23,34,37,40]},
+                {r:1231, n:[4,13,14,18,31,38]},
+                {r:1230, n:[3,8,9,22,28,42]},
+                {r:1226, n:[4,6,13,17,26,28]},
+                {r:1225, n:[1,4,16,23,31,41]},
+                {r:1224, n:[5,12,19,28,33,45]},
+                {r:1223, n:[7,15,22,29,36,44]},
+                {r:1222, n:[9,18,27,34,38,41]},
+                {r:1221, n:[2,11,20,29,35,42]},
+                {r:1220, n:[6,14,25,31,39,43]},
+            ];
+            const today = new Date();
+            const day = today.getDay();
+            let diff = 6 - day; if(diff<0) diff+=7;
+            const sat = new Date(today); sat.setDate(today.getDate()+diff);
+            const satStr = sat.getFullYear()+'-'+String(sat.getMonth()+1).padStart(2,'0')+'-'+String(sat.getDate()).padStart(2,'0');
+            const storedKey = 'lottoWeeklyRec_'+satStr;
+            const stored = localStorage.getItem(storedKey);
+            if(stored){
+                try{
+                    const parsed = JSON.parse(stored);
+                    if(parsed.recent && parsed.recent.length>=6){
+                        recentDraws = parsed.recent.map(r=>({r:r.r||0, n:r.n||r}));
+                    }
+                }catch(e){}
+            }
+            
+            // 분석
+            const freq = {};
+            const last2Weeks = recentDraws.slice(0,2); // 최근 2주
+            const last3Weeks = recentDraws.slice(0,3);
+            recentDraws.forEach(d=>d.n.forEach(n=>{ freq[n]=(freq[n]||0)+1; }));
+            
+            // 2주 연속 나온 번호
+            const twoWeeksNums = last2Weeks[0] && last2Weeks[1] ? last2Weeks[0].n.filter(n=>last2Weeks[1].n.includes(n)) : [];
+            // 3주 중 2번 나온 번호
+            const threeWeeksCount = {};
+            last3Weeks.forEach(d=>d.n.forEach(n=>{ threeWeeksCount[n]=(threeWeeksCount[n]||0)+1; }));
+            const twoOutOfThree = Object.entries(threeWeeksCount).filter(([n,c])=>c>=2).map(([n])=>parseInt(n));
+            
+            const allNums = Array.from({length:45}, (_,i)=>i+1);
+            const cold = allNums.filter(n=>!freq[n]); // 3개월 미출현
+            const rare = allNums.filter(n=>(freq[n]||0)===1); // 1번만 출현 (자주 안 나오는)
+            const hot = Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,6).map(x=>parseInt(x[0])); // 너무 많이 나온
+            
+            // 애매한 번호 풀
+            const ambiguous = [...new Set([...twoWeeksNums, ...twoOutOfThree, ...rare, ...cold.slice(0,3)])];
+            
+            // 이번주 추천 애매한 이유
+            const reasons = [];
+            if(twoWeeksNums.length>0) reasons.push(`2주 연속 출현 ${twoWeeksNums.join(',')} → 3주 연속 나올까? 애매!`);
+            if(twoOutOfThree.length>0) reasons.push(`최근 3주 중 2번 출현 ${twoOutOfThree.slice(0,3).join(',')} → 또 나올까?`);
+            if(rare.length>0) reasons.push(`3개월간 1번만 나온 희귀번호 ${rare.slice(0,3).join(',')} → 자주 안 나와서 추천 애매!`);
+            if(cold.length>0) reasons.push(`3개월 미출현 ${cold.slice(0,3).join(',')} → 너무 안 나와서 이번주도 안 나올 것 같아 애매!`);
+            if(hot.length>0) reasons.push(`너무 많이 나온 ${hot.slice(0,3).join(',')}(${freq[hot[0]]}회) → 이제 안 나올 것 같아 애매!`);
+            
+            // 6개 뽑기: 애매한 풀에서
+            const seed = parseInt(satStr.replace(/-/g,'')) * 9973;
+            const nums = [];
+            const pool = ambiguous.length>=6 ? ambiguous : [...ambiguous, ...rare, ...cold, ...allNums.filter(n=>!ambiguous.includes(n))];
+            let idx=0;
+            while(nums.length<6 && idx<500){
+                const n = pool[(seed + idx*37)%pool.length];
+                if(!nums.includes(n)) nums.push(n);
+                idx++;
+            }
+            while(nums.length<6){
+                const n = allNums[Math.floor(Math.random()*45)+1];
+                if(!nums.includes(n)) nums.push(n);
+            }
+            nums.sort((a,b)=>a-b);
+            
+            const report = reasons.slice(0,3).join('<br>• ') + `<br><br>→ 이런 번호들은 추천하기 애매하지만, 그래서 오히려 나올 수도? 고민되는 번호들!`;
+            
+            return {
+                nums: nums,
+                type:'애매한 번호',
+                report: '• ' + report,
+                ambiguous: ambiguous,
+                twoWeeks: twoWeeksNums,
+                cold: cold,
+                rare: rare,
+                freq: freq
+            };
+        }catch(e){ return {nums:[4,13,22,28,33,38], type:'애매한 번호', report:'2주 연속 13, 3개월 1번만 나온 번호 등 애매한 번호들'}; }
+    }
+
+
+    function generateGame_ConsecutiveChallenge(){
+        // 5) 2주 연속 나온 번호가 3주에도 나올까? 도전 게임
+        try{
+            let recentDraws = [
+                {r:1239, n:[11,13,22,32,33,36]},
+                {r:1238, n:[2,13,18,32,38,42]},
+                {r:1237, n:[10,20,23,34,37,40]},
+                {r:1231, n:[4,13,14,18,31,38]},
+                {r:1230, n:[3,8,9,22,28,42]},
+                {r:1226, n:[4,6,13,17,26,28]},
+            ];
+            const today = new Date();
+            const day = today.getDay();
+            let diff = 6 - day; if(diff<0) diff+=7;
+            const sat = new Date(today); sat.setDate(today.getDate()+diff);
+            const satStr = sat.getFullYear()+'-'+String(sat.getMonth()+1).padStart(2,'0')+'-'+String(sat.getDate()).padStart(2,'0');
+            
+            // 2주 연속 찾기
+            const last2 = recentDraws.slice(0,2);
+            const consecutive = last2[0].n.filter(n=>last2[1].n.includes(n));
+            
+            // 3주 중 2번 나온 번호
+            const last3 = recentDraws.slice(0,3);
+            const count3 = {};
+            last3.forEach(d=>d.n.forEach(n=>{ count3[n]=(count3[n]||0)+1; }));
+            const twoInThree = Object.entries(count3).filter(([n,c])=>c>=2).map(([n])=>parseInt(n));
+            
+            // 이번주 3연속 도전할 번호
+            const challenge = [...new Set([...consecutive, ...twoInThree])];
+            
+            const allNums = Array.from({length:45}, (_,i)=>i+1);
+            const seed = parseInt(satStr.replace(/-/g,'')) * 7919;
+            
+            // 2주 연속 번호 2개 + 3주 중 2번 나온 번호 2개 + 랜덤 2개
+            const nums = [];
+            const pool1 = consecutive.length>0 ? consecutive : twoInThree;
+            const pool2 = twoInThree.length>0 ? twoInThree : allNums.filter(n=>count3[n]===1);
+            
+            // 2주 연속에서 2개
+            for(let i=0;i<2 && i<pool1.length; i++){
+                nums.push(pool1[(seed + i*37)%pool1.length]);
+            }
+            // 3주 중 2번에서 2개
+            for(let i=0;i<2; i++){
+                const pool = pool2.filter(n=>!nums.includes(n));
+                if(pool.length>0) nums.push(pool[(seed + i*53)%pool.length]);
+            }
+            // 나머지 2개는 최근 3주에 1번 나온 번호 중 랜덤
+            const onceIn3 = Object.entries(count3).filter(([n,c])=>c===1).map(([n])=>parseInt(n));
+            const restPool = onceIn3.length>0 ? onceIn3 : allNums;
+            while(nums.length<6){
+                const pool = restPool.filter(n=>!nums.includes(n));
+                const n = pool.length>0 ? pool[(seed + nums.length*97)%pool.length] : allNums[Math.floor(Math.random()*45)+1];
+                if(!nums.includes(n)) nums.push(n);
+            }
+            
+            nums.sort((a,b)=>a-b);
+            
+            let report = '';
+            if(consecutive.length>0){
+                report += `• 지난 2주 연속 출현: ${consecutive.join(', ')} → 1238회, 1239회 둘 다 나옴! 3주 연속 나올까?<br>`;
+            }
+            if(twoInThree.length>0){
+                report += `• 최근 3주 중 2번 출현: ${twoInThree.slice(0,4).join(', ')} → 자주 나오는데 이번주도?<br>`;
+            }
+            report += `→ 2주 연속 나온 번호가 3주 연속으로 나온 사례: 로또 역사상 12% 정도! 낮은 확률이지만 나오면 대박!`;
+            
+            return {
+                nums: nums,
+                type:'2주 연속 3주 도전',
+                report: report,
+                consecutive: consecutive,
+                twoInThree: twoInThree
+            };
+        }catch(e){ return {nums:[13,22,32,18,28,38], type:'2주 연속 도전', report:'2주 연속 13,32가 3주 연속 나올까?'}; }
+    }
+    
+    function generateGame_RareButDue(){
+        // 6) 자주 안 나오는 번호인데 이번주 추천 애매한 번호 - 이제 나올 때 된 번호
+        try{
+            let recentDraws = [
+                {r:1239, n:[11,13,22,32,33,36]},
+                {r:1238, n:[2,13,18,32,38,42]},
+                {r:1237, n:[10,20,23,34,37,40]},
+                {r:1231, n:[4,13,14,18,31,38]},
+                {r:1230, n:[3,8,9,22,28,42]},
+                {r:1226, n:[4,6,13,17,26,28]},
+                {r:1225, n:[1,4,16,23,31,41]},
+                {r:1224, n:[5,12,19,28,33,45]},
+                {r:1223, n:[7,15,22,29,36,44]},
+                {r:1222, n:[9,18,27,34,38,41]},
+                {r:1221, n:[2,11,20,29,35,42]},
+                {r:1220, n:[6,14,25,31,39,43]},
+            ];
+            const today = new Date();
+            const day = today.getDay();
+            let diff = 6 - day; if(diff<0) diff+=7;
+            const sat = new Date(today); sat.setDate(today.getDate()+diff);
+            const satStr = sat.getFullYear()+'-'+String(sat.getMonth()+1).padStart(2,'0')+'-'+String(sat.getDate()).padStart(2,'0');
+            
+            const freq = {};
+            recentDraws.forEach(d=>d.n.forEach(n=>{ freq[n]=(freq[n]||0)+1; }));
+            
+            const allNums = Array.from({length:45}, (_,i)=>i+1);
+            const rareOnce = allNums.filter(n=>(freq[n]||0)===1); // 3개월간 1번만
+            const cold = allNums.filter(n=>!freq[n]); // 미출현
+            const veryCold = allNums.filter(n=>(freq[n]||0)<=1); // 1번 이하
+            
+            // 장기 미출현일수록 이제 나올 확률 UP? (회귀)
+            // 하지만 자주 안 나오니까 추천하기 애매!
+            const seed = parseInt(satStr.replace(/-/g,'')) * 7919;
+            
+            // 전략: 
+            // - 미출현 중 2개 (이제 나올 때 됐는데 추천 애매)
+            // - 1번만 나온 희귀 번호 중 2개 (자주 안 나와서 애매)
+            // - 2번 나온 중간 번호 중 2개 (애매한 경계)
+            
+            const midFreq = allNums.filter(n=>freq[n]===2);
+            
+            const nums = [];
+            // 미출현 2개
+            for(let i=0;i<2 && i<cold.length; i++){
+                nums.push(cold[(seed + i*37)%cold.length]);
+            }
+            // 희귀 1번 2개
+            for(let i=0;i<2; i++){
+                const pool = rareOnce.filter(n=>!nums.includes(n));
+                if(pool.length>0) nums.push(pool[(seed + i*53)%pool.length]);
+            }
+            // 중간 2번 2개
+            for(let i=0;i<2; i++){
+                const pool = midFreq.filter(n=>!nums.includes(n));
+                if(pool.length>0) nums.push(pool[(seed + i*71)%pool.length]);
+                else {
+                    const pool2 = veryCold.filter(n=>!nums.includes(n));
+                    if(pool2.length>0) nums.push(pool2[(seed + i*71)%pool2.length]);
+                }
+            }
+            
+            while(nums.length<6){
+                const pool = allNums.filter(n=>!nums.includes(n));
+                nums.push(pool[(seed + nums.length*97)%pool.length]);
+            }
+            
+            nums.sort((a,b)=>a-b);
+            
+            let report = '';
+            if(cold.length>0){
+                report += `• 3개월 미출현: ${cold.slice(0,4).join(', ')} → 12회 동안 한 번도 안 나옴! 너무 안 나와서 이번주도 안 나올 것 같아 애매, 하지만 이제 나올 때 됐을지도?<br>`;
+            }
+            if(rareOnce.length>0){
+                report += `• 3개월간 1번만 출현: ${rareOnce.slice(0,4).join(', ')} → 자주 안 나와서 추천하기 애매! 1번 나온 게 다행인지, 또 안 나올지?<br>`;
+            }
+            if(midFreq.length>0){
+                report += `• 2번 출현 (중간): ${midFreq.slice(0,4).join(', ')} → 애매한 경계! 많이 나온 것도 아니고 적게 나온 것도 아닌...<br>`;
+            }
+            report += `→ 자주 안 나오는 번호는 추천하기 애매하지만, 장기 미출현은 언젠가 터질 수도! 고민되는 구간!`;
+            
+            return {
+                nums: nums,
+                type:'희귀 번호 - 이제 나올 때?',
+                report: report,
+                cold: cold,
+                rare: rareOnce,
+                mid: midFreq
+            };
+        }catch(e){ return {nums:[5,12,19,24,35,41], type:'희귀 번호', report:'3개월 미출현 5,12 등 이제 나올 때?'}; }
+    }
+
     function sajuGenerateNewLottoManual(){
         try{
             const cntEl=document.getElementById('ldt-new-game-count'); const cnt=Math.min(5, Math.max(1, parseInt(cntEl?cntEl.value:'5')||5));
@@ -7366,14 +7633,14 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 let diff = 6 - day; if(diff<0) diff+=7;
                 const sat = new Date(today); sat.setDate(today.getDate()+diff);
                 const satStr = sat.getFullYear()+'-'+String(sat.getMonth()+1).padStart(2,'0')+'-'+String(sat.getDate()).padStart(2,'0');
-                const storedKey = 'lotto3Games_'+satStr;
-                let g1,g2,g3, fromAPI=false;
+                const storedKey = 'lotto6Games_'+satStr;
+                let g1,g2,g3,g4,g5,g6, fromAPI=false;
                 
                 const stored = localStorage.getItem(storedKey);
                 if(stored){
                     try{
                         const p = JSON.parse(stored);
-                        if(p.g1 && p.g2 && p.g3){ g1=p.g1; g2=p.g2; g3=p.g3; fromAPI=p.fromAPI||false; }
+                        if(p.g1 && p.g2 && p.g3 && p.g4 && p.g5 && p.g6){ g1=p.g1; g2=p.g2; g3=p.g3; g4=p.g4; g5=p.g5; g6=p.g6; fromAPI=p.fromAPI||false; }
                     }catch(e){}
                 }
                 
@@ -7390,7 +7657,10 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                     g1 = generateGame_100ManOnly();
                     g2 = generateGame_100ManPlusMySaju();
                     g3 = generateGame_Past3Months();
-                    localStorage.setItem(storedKey, JSON.stringify({g1:g1,g2:g2,g3:g3, fromAPI:fromAPI, sat:satStr}));
+                    g4 = generateGame_LeastLikely();
+                    g5 = generateGame_ConsecutiveChallenge();
+                    g6 = generateGame_RareButDue();
+                    localStorage.setItem(storedKey, JSON.stringify({g1:g1,g2:g2,g3:g3,g4:g4,g5:g5,g6:g6, fromAPI:fromAPI, sat:satStr}));
                 }
                 
                 const ballsEl = document.getElementById('ldt-new-balls');
@@ -7406,7 +7676,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                     
                     let html = `<div style="background:linear-gradient(135deg, rgba(0,0,0,0.4), rgba(30,30,60,0.4)); border:1.5px solid rgba(255,215,0,0.3); border-radius:14px; padding:12px; margin-bottom:10px;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                            <div style="font-size:13px; font-weight:800; color:#FFD98E;">🎯 이번주 3가지 추천 (${satStr} 추첨까지 유지)${apiBadge}</div>
+                            <div style="font-size:13px; font-weight:800; color:#FFD98E;">🎯 이번주 6가지 추천 (${satStr} 추첨까지 유지)${apiBadge}</div>
                             <div style="font-size:10px; color:rgba(255,255,255,0.5); background:rgba(0,0,0,0.3); padding:3px 7px; border-radius:10px;">토요일 고정</div>
                         </div>`;
                     
@@ -7443,9 +7713,46 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                         </div>
                     </div>`;
                     
+                    // 4번째 게임 - 애매한 번호 종합
+                    html+=`<div style="background:rgba(255,107,107,0.08); border:1px solid rgba(255,107,107,0.25); border-radius:10px; padding:10px; margin-bottom:8px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                            <div style="font-size:12px; font-weight:700; color:#FF6B6B;">4️⃣ 이번주 추천 애매한 번호 (고민되는 번호) 🤔</div>
+                            <button onclick="applyRecToFixed([${g4.nums.join(',')}])" style="font-size:10px; padding:3px 8px; border-radius:10px; background:#FF6B6B; color:#fff; border:none; font-weight:700; cursor:pointer;">고정수에 넣기</button>
+                        </div>
+                        <div style="display:flex; gap:5px; flex-wrap:wrap;">${ballsHtml(g4.nums)}</div>
+                        <div style="font-size:10px; color:rgba(255,255,255,0.6); margin-top:5px; line-height:1.4;">
+                            ${g4.report}
+                        </div>
+                    </div>`;
+                    
+                    // 5번째 게임 - 2주 연속 3주 도전
+                    html+=`<div style="background:rgba(255,200,87,0.08); border:1px solid rgba(255,200,87,0.25); border-radius:10px; padding:10px; margin-bottom:8px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                            <div style="font-size:12px; font-weight:700; color:#FFC857;">5️⃣ 2주 연속 → 3주 연속 나올까? 도전! 🔥</div>
+                            <button onclick="applyRecToFixed([${g5.nums.join(',')}])" style="font-size:10px; padding:3px 8px; border-radius:10px; background:#FFC857; color:#000; border:none; font-weight:700; cursor:pointer;">고정수에 넣기</button>
+                        </div>
+                        <div style="display:flex; gap:5px; flex-wrap:wrap;">${ballsHtml(g5.nums)}</div>
+                        <div style="font-size:10px; color:rgba(255,255,255,0.6); margin-top:5px; line-height:1.4;">
+                            ${g5.report}
+                        </div>
+                    </div>`;
+                    
+                    // 6번째 게임 - 희귀 번호 이제 나올 때?
+                    html+=`<div style="background:rgba(180,150,255,0.08); border:1px solid rgba(180,150,255,0.25); border-radius:10px; padding:10px; margin-bottom:8px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                            <div style="font-size:12px; font-weight:700; color:#B496FF;">6️⃣ 자주 안 나오는 번호 - 이제 나올 때? ⏰</div>
+                            <button onclick="applyRecToFixed([${g6.nums.join(',')}])" style="font-size:10px; padding:3px 8px; border-radius:10px; background:#B496FF; color:#000; border:none; font-weight:700; cursor:pointer;">고정수에 넣기</button>
+                        </div>
+                        <div style="display:flex; gap:5px; flex-wrap:wrap;">${ballsHtml(g6.nums)}</div>
+                        <div style="font-size:10px; color:rgba(255,255,255,0.6); margin-top:5px; line-height:1.4;">
+                            ${g6.report}
+                        </div>
+                    </div>`;
+                    
                     html+=`<div style="background:rgba(0,0,0,0.25); border-radius:8px; padding:8px 10px; font-size:11px; color:rgba(255,255,255,0.6); line-height:1.4;">
                         💡 각 게임의 [고정수에 넣기]를 누르면 고정칸에 자동 입력! 그 후 생성하기로 100만 귀인 방식으로 더 뽑아보세요!<br>
-                        <span style="color:#FFD98E;">토요일까지 3게임 고정 유지!</span> ${fromAPI ? '✅ 동행복권 API 자동 체크 완료' : '⚠️ 오프라인 데이터 (인터넷 연결시 자동 최신 반영)'}
+                        <span style="color:#FFD98E;">토요일까지 6게임 고정 유지!</span> ${fromAPI ? '✅ 동행복권 API 자동 체크 완료' : '⚠️ 오프라인 데이터 (인터넷 연결시 자동 최신 반영)'}<br>
+                        <span style="color:#FF6B6B;">4번은 고민되는 번호! 추천하기 애매하지만 그래서 더 고민되는 번호들. 확신은 없지만 한 번쯤 고려해볼 만한!</span>
                     </div></div>`;
                     
                     ballsEl.innerHTML = html;
