@@ -4649,16 +4649,25 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             const available=allNums.filter(n=>!excluded.includes(n));
             const seed=parseInt(satStr.replace(/-/g,''))*7919;
             function hasConsec3(arr){ const s=[...arr].sort((a,b)=>a-b); for(let i=0;i<s.length-2;i++){ if(s[i+1]===s[i]+1 && s[i+2]===s[i]+2) return true; } return false; }
-            let nums=[]; let attempts=0;
-            while(attempts<200){
-                nums=[]; let idx=attempts*7;
-                while(nums.length<6 && idx<1000){
-                    const n=available[(seed+idx*37+attempts*101)%available.length];
-                    if(!nums.includes(n)) nums.push(n);
-                    idx++;
+            function getSpread(arr){ const s=[...arr].sort((a,b)=>a-b); return s[s.length-1]-s[0]; }
+            function seededShuffle(array, seedVal){
+                let s=seedVal; 
+                const arr=[...array];
+                function rng(){ s=(s*1664525+1013904223)>>>0; return s/4294967296; }
+                for(let i=arr.length-1;i>0;i--){
+                    const j=Math.floor(rng()*(i+1));
+                    [arr[i],arr[j]]=[arr[j],arr[i]];
                 }
-                nums.sort((a,b)=>a-b);
-                if(!hasConsec3(nums)) break;
+                return arr;
+            }
+            let nums=[]; let attempts=0;
+            while(attempts<500){
+                const shuffled = seededShuffle(available, seed + attempts*9973);
+                nums = shuffled.slice(0,6).sort((a,b)=>a-b);
+                // 연속 3개 없고, 퍼짐이 20 이상 (7,9,10,12,14,15 같은 좁은 범위 방지)
+                if(!hasConsec3(nums) && getSpread(nums)>=20){
+                    break;
+                }
                 attempts++;
             }
             while(nums.length<6){
@@ -7502,7 +7511,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 let diff = 6 - day; if(diff<0) diff+=7;
                 const sat = new Date(today); sat.setDate(today.getDate()+diff);
                 const satStr = sat.getFullYear()+'-'+String(sat.getMonth()+1).padStart(2,'0')+'-'+String(sat.getDate()).padStart(2,'0');
-                const storedKey = 'lotto5GamesV2_'+satStr;
+                const storedKey = 'lotto5GamesV3_'+satStr;
                 let g1,g2,g3,g4,g5, fromAPI=false;
                 
                 const stored = localStorage.getItem(storedKey);
