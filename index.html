@@ -7504,9 +7504,9 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         try{ if(typeof ldtRenderWeeklyBox==='function') ldtRenderWeeklyBox(); }catch(e){}
         
         // V272: 5게임 자동 추천 - 버튼으로 수동 생성
-        window.generate5GamesAuto = async function(forceRegen=false){ console.log('generate5GamesAuto called', forceRegen);
+        window.generate5GamesAuto = function(forceRegen=false){
+            console.log('generate5GamesAuto called', forceRegen);
             try{
-                // 이번주 토요일
                 const today = new Date();
                 const day = today.getDay();
                 let diff = 6 - day; if(diff<0) diff+=7;
@@ -7526,121 +7526,94 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 }
                 
                 if(!g1 || forceRegen){
-                    // API로 최근 데이터 자동 체크 시도
-                    try{
-                        const apiData = await fetchRecentLottoFromAPI();
-                        if(apiData && apiData.length>=6){
-                            fromAPI = true;
-                            localStorage.setItem('lottoWeeklyRec_'+satStr, JSON.stringify({recent: apiData, fromAPI:true}));
-                        }
-                    }catch(e){}
-                    
                     g1 = generateGame_100ManOnly();
                     g2 = generateGame_100ManPlusMySaju();
                     g3 = generateGame_Past3Months();
                     g4 = generateGame_LeastLikely();
                     g5 = generateGame_ExcludeLastWeek();
-                    localStorage.setItem(storedKey, JSON.stringify({g1:g1,g2:g2,g3:g3,g4:g4,g5:g5, fromAPI:fromAPI, sat:satStr}));
+                    localStorage.setItem(storedKey, JSON.stringify({g1:g1,g2:g2,g3:g3,g4:g4,g5:g5, fromAPI:false, sat:satStr}));
+                    // API는 백그라운드로
+                    try{ fetchRecentLottoFromAPI().then(apiData=>{ if(apiData && apiData.length>=6){ localStorage.setItem('lottoWeeklyRec_'+satStr, JSON.stringify({recent: apiData, fromAPI:true})); } }); }catch(e){}
                 }
                 
                 const ballsEl = document.getElementById('ldt-new-balls');
-                if(ballsEl){
-                    const apiBadge = fromAPI ? '<span style="background:#00ff88; color:#000; font-size:9px; padding:2px 5px; border-radius:8px; margin-left:6px;">자동 체크✓</span>' : '<span style="background:rgba(255,255,255,0.2); color:rgba(255,255,255,0.5); font-size:9px; padding:2px 5px; border-radius:8px; margin-left:6px;">오프라인</span>';
-                    
-                    function ballsHtml(nums){
-                        return nums.map(n=>{
-                            const col=typeof sajuLottoBallColor==='function'?sajuLottoBallColor(n):'#FFD98E';
-                            return `<div style="width:32px; height:32px; border-radius:50%; background:${col}; color:#000; font-weight:800; font-size:13px; display:flex; align-items:center; justify-content:center; border:1.5px solid rgba(255,255,255,0.3);">${n}</div>`;
-                        }).join('');
-                    }
-                    
-                    let html = `<div style="background:linear-gradient(135deg, rgba(0,0,0,0.4), rgba(30,30,60,0.4)); border:1.5px solid rgba(255,215,0,0.3); border-radius:14px; padding:12px; margin-bottom:10px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                            <div style="font-size:13px; font-weight:800; color:#FFD98E;">🎯 이번주 5가지 추천 (${satStr} 추첨까지 유지)${apiBadge}</div>
-                            <div style="font-size:10px; color:rgba(255,255,255,0.5); background:rgba(0,0,0,0.3); padding:3px 7px; border-radius:10px;">토요일 고정</div>
-                        </div>`;
-                    
-                    // 게임1
-                    html+=`<div style="background:rgba(255,215,0,0.08); border:1px solid rgba(255,215,0,0.25); border-radius:10px; padding:10px; margin-bottom:8px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                            <div style="font-size:12px; font-weight:700; color:#FFD98E;">1️⃣ 100만명 귀인 사주 ${g1.best ? g1.best.year+'년 '+g1.best.gan+'간 '+g1.best.tenGod+' '+g1.best.score+'점' : ''}</div>
-                            <button onclick="applyRecToFixed([${g1.nums.join(',')}])" style="font-size:10px; padding:3px 8px; border-radius:10px; background:#FFD98E; color:#000; border:none; font-weight:700; cursor:pointer;">고정수에 넣기</button>
-                        </div>
-                        <div style="display:flex; gap:5px; flex-wrap:wrap;">${ballsHtml(g1.nums)}</div>
-                        <div style="font-size:10px; color:rgba(255,255,255,0.5); margin-top:5px;">100만명 중 최고 점수 귀인(${g1.best?g1.best.timeBranch+'시':''})의 사주 풀 기반 · 생성시각 ${g1.best?g1.best.genTime.slice(11,19):''}</div>
-                    </div>`;
-                    
-                    // 게임2
-                    html+=`<div style="background:rgba(138,255,176,0.08); border:1px solid rgba(138,255,176,0.25); border-radius:10px; padding:10px; margin-bottom:8px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                            <div style="font-size:12px; font-weight:700; color:#8AFFB0;">2️⃣ 100만명 귀인 + 내 사주</div>
-                            <button onclick="applyRecToFixed([${g2.nums.join(',')}])" style="font-size:10px; padding:3px 8px; border-radius:10px; background:#8AFFB0; color:#000; border:none; font-weight:700; cursor:pointer;">고정수에 넣기</button>
-                        </div>
-                        <div style="display:flex; gap:5px; flex-wrap:wrap;">${ballsHtml(g2.nums)}</div>
-                        <div style="font-size:10px; color:rgba(255,255,255,0.5); margin-top:5px;">100만 귀인 3개 + 내 일간(${g2.myGanNums?g2.myGanNums.slice(0,2).join(','):''}) 기반 3개 조합 · 내 사주 반영</div>
-                    </div>`;
-                    
-                    // 게임3
-                    html+=`<div style="background:rgba(142,197,252,0.08); border:1px solid rgba(142,197,252,0.25); border-radius:10px; padding:10px; margin-bottom:8px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                            <div style="font-size:12px; font-weight:700; color:#8EC5FC;">3️⃣ 과거 3개월 1등 당첨번호 통계 (사주 무관)</div>
-                            <button onclick="applyRecToFixed([${g3.nums.join(',')}])" style="font-size:10px; padding:3px 8px; border-radius:10px; background:#8EC5FC; color:#000; border:none; font-weight:700; cursor:pointer;">고정수에 넣기</button>
-                        </div>
-                        <div style="display:flex; gap:5px; flex-wrap:wrap;">${ballsHtml(g3.nums)}</div>
-                        <div style="font-size:10px; color:rgba(255,255,255,0.6); margin-top:5px; line-height:1.4;">
-                            ${g3.report}<br>
-                            전략: 핫(다수출현) 2개 + 중간빈도 2개 + 콜드(미출현) 2개 → 균형 조합
-                        </div>
-                    </div>`;
-                    
-                    // 4번째 게임 - 역설
-                    html+=`<div style="background:rgba(255,107,107,0.08); border:1px solid rgba(255,107,107,0.25); border-radius:10px; padding:10px; margin-bottom:8px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                            <div style="font-size:12px; font-weight:700; color:#FF6B6B;">4️⃣ 이번주 추천 애매한 번호 (고민되는 번호) 🤔</div>
-                            <button onclick="applyRecToFixed([${g4.nums.join(',')}])" style="font-size:10px; padding:3px 8px; border-radius:10px; background:#FF6B6B; color:#fff; border:none; font-weight:700; cursor:pointer;">고정수에 넣기</button>
-                        </div>
-                        <div style="display:flex; gap:5px; flex-wrap:wrap;">${ballsHtml(g4.nums)}</div>
-                        <div style="font-size:10px; color:rgba(255,255,255,0.6); margin-top:5px; line-height:1.4;">
-                            ${g4.report}<br>
-                            <span style="color:#FF6B6B;">💭 2주 연속 나온 번호가 3주에도 나올까? 자주 안 나오는 번호를 이번주에 추천해야 할까? 고민되는 번호들!</span>
-                        </div>
-                    </div>`;
-                    
-                    // 5번째 - 전주 제외
-                    html+=`<div style="background:rgba(100,200,255,0.08); border:1px solid rgba(100,200,255,0.25); border-radius:10px; padding:10px; margin-bottom:8px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                            <div style="font-size:12px; font-weight:700; color:#64C8FF;">5️⃣ 전주 6개+보너스 제외하고 이번주 예측 🚫</div>
-                            <button onclick="applyRecToFixed([${g5.nums.join(',')}])" style="font-size:10px; padding:3px 8px; border-radius:10px; background:#64C8FF; color:#000; border:none; font-weight:700; cursor:pointer;">고정수에 넣기</button>
-                        </div>
-                        <div style="display:flex; gap:5px; flex-wrap:wrap;">${ballsHtml(g5.nums)}</div>
-                        <div style="font-size:10px; color:rgba(255,255,255,0.6); margin-top:5px; line-height:1.4;">
-                            ${g5.report}
-                        </div>
-                    </div>`;
-                    
-                    html+=`<div style="background:rgba(0,0,0,0.25); border-radius:8px; padding:8px 10px; font-size:11px; color:rgba(255,255,255,0.6); line-height:1.4; margin-bottom:10px;">
-                        💡 각 게임의 [고정수에 넣기]를 누르면 고정칸에 자동 입력!<br>
-                        <span style="color:#FFD98E;">토요일까지 5게임 고정 유지!</span> ${fromAPI ? '✅ 동행복권 API 자동 체크 완료' : '⚠️ 오프라인 데이터'}<br>
-                    </div>
-                    <div style="text-align:center; margin-top:12px;">
-                        <button onclick="window.generate5GamesAuto(true)" style="background:linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05)); color:#FFD98E; border:1.5px solid rgba(255,217,142,0.4); padding:10px 20px; border-radius:20px; font-weight:700; font-size:12px; cursor:pointer;">🔄 자동 추천게임(5) 다시 생성하기</button>
-                        <div style="font-size:10px; color:rgba(255,255,255,0.3); margin-top:6px;">새로운 5게임으로 교체 (토요일까지 유지)</div>
-                    </div>
-                    </div>`;
-                    // 수동 생성 영역 확보
-                    if(!document.getElementById('ldt-manual-balls')){
-                        const manualDiv = document.createElement('div');
-                        manualDiv.id='ldt-manual-balls';
-                        manualDiv.style.marginTop='16px';
-                        ballsEl.parentNode.insertBefore(manualDiv, ballsEl.nextSibling);
-                    }
-                    
-                    ballsEl.innerHTML = html;
+                if(!ballsEl){ console.error('ldt-new-balls not found'); return; }
+                
+                const apiBadge = fromAPI ? '<span style="background:#00ff88; color:#000; font-size:9px; padding:2px 5px; border-radius:8px; margin-left:6px;">자동 체크✓</span>' : '<span style="background:rgba(255,255,255,0.2); color:rgba(255,255,255,0.5); font-size:9px; padding:2px 5px; border-radius:8px; margin-left:6px;">오프라인</span>';
+                
+                function ballsHtml(nums){
+                    return nums.map(n=>{
+                        const col=typeof sajuLottoBallColor==='function'?sajuLottoBallColor(n):'#FFD98E';
+                        return `<div style="width:32px; height:32px; border-radius:50%; background:${col}; color:#000; font-weight:800; font-size:13px; display:flex; align-items:center; justify-content:center; border:1.5px solid rgba(255,255,255,0.3);">${n}</div>`;
+                    }).join('');
                 }
-            }catch(e){ console.error('5games', e); }
+                
+                let html = `<div style="background:linear-gradient(135deg, rgba(0,0,0,0.4), rgba(30,30,60,0.4)); border:1.5px solid rgba(255,215,0,0.3); border-radius:14px; padding:12px; margin-bottom:10px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <div style="font-size:13px; font-weight:800; color:#FFD98E;">🎯 이번주 5가지 추천 (${satStr} 추첨까지 유지)${apiBadge}</div>
+                        <div style="font-size:10px; color:rgba(255,255,255,0.5); background:rgba(0,0,0,0.3); padding:3px 7px; border-radius:10px;">토요일 고정</div>
+                    </div>`;
+                
+                html+=`<div style="background:rgba(255,215,0,0.08); border:1px solid rgba(255,215,0,0.25); border-radius:10px; padding:10px; margin-bottom:8px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <div style="font-size:12px; font-weight:700; color:#FFD98E;">1️⃣ 100만명 귀인 사주 ${g1.best ? g1.best.year+'년 '+g1.best.gan+'간 '+g1.best.tenGod+' '+g1.best.score+'점' : ''}</div>
+                        <button onclick="applyRecToFixed([${g1.nums.join(',')}])" style="font-size:10px; padding:3px 8px; border-radius:10px; background:#FFD98E; color:#000; border:none; font-weight:700; cursor:pointer;">고정수에 넣기</button>
+                    </div>
+                    <div style="display:flex; gap:5px; flex-wrap:wrap;">${ballsHtml(g1.nums)}</div>
+                    <div style="font-size:10px; color:rgba(255,255,255,0.5); margin-top:5px;">100만명 중 최고 점수 귀인(${g1.best?g1.best.timeBranch+'시':''})의 사주 풀 기반</div>
+                </div>`;
+                
+                html+=`<div style="background:rgba(138,255,176,0.08); border:1px solid rgba(138,255,176,0.25); border-radius:10px; padding:10px; margin-bottom:8px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <div style="font-size:12px; font-weight:700; color:#8AFFB0;">2️⃣ 100만명 귀인 + 내 사주</div>
+                        <button onclick="applyRecToFixed([${g2.nums.join(',')}])" style="font-size:10px; padding:3px 8px; border-radius:10px; background:#8AFFB0; color:#000; border:none; font-weight:700; cursor:pointer;">고정수에 넣기</button>
+                    </div>
+                    <div style="display:flex; gap:5px; flex-wrap:wrap;">${ballsHtml(g2.nums)}</div>
+                    <div style="font-size:10px; color:rgba(255,255,255,0.5); margin-top:5px;">100만 귀인 3개 + 내 일간 기반 3개 조합</div>
+                </div>`;
+                
+                html+=`<div style="background:rgba(142,197,252,0.08); border:1px solid rgba(142,197,252,0.25); border-radius:10px; padding:10px; margin-bottom:8px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <div style="font-size:12px; font-weight:700; color:#8EC5FC;">3️⃣ 과거 3개월 1등 통계</div>
+                        <button onclick="applyRecToFixed([${g3.nums.join(',')}])" style="font-size:10px; padding:3px 8px; border-radius:10px; background:#8EC5FC; color:#000; border:none; font-weight:700; cursor:pointer;">고정수에 넣기</button>
+                    </div>
+                    <div style="display:flex; gap:5px; flex-wrap:wrap;">${ballsHtml(g3.nums)}</div>
+                    <div style="font-size:10px; color:rgba(255,255,255,0.6); margin-top:5px;">${g3.report}</div>
+                </div>`;
+                
+                html+=`<div style="background:rgba(255,107,107,0.08); border:1px solid rgba(255,107,107,0.25); border-radius:10px; padding:10px; margin-bottom:8px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <div style="font-size:12px; font-weight:700; color:#FF6B6B;">4️⃣ 이번주 추천 애매한 번호 🤔</div>
+                        <button onclick="applyRecToFixed([${g4.nums.join(',')}])" style="font-size:10px; padding:3px 8px; border-radius:10px; background:#FF6B6B; color:#fff; border:none; font-weight:700; cursor:pointer;">고정수에 넣기</button>
+                    </div>
+                    <div style="display:flex; gap:5px; flex-wrap:wrap;">${ballsHtml(g4.nums)}</div>
+                    <div style="font-size:10px; color:rgba(255,255,255,0.6); margin-top:5px;">${g4.report}</div>
+                </div>`;
+                
+                html+=`<div style="background:rgba(100,200,255,0.08); border:1px solid rgba(100,200,255,0.25); border-radius:10px; padding:10px; margin-bottom:8px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <div style="font-size:12px; font-weight:700; color:#64C8FF;">5️⃣ 전주 제외 예측 🚫</div>
+                        <button onclick="applyRecToFixed([${g5.nums.join(',')}])" style="font-size:10px; padding:3px 8px; border-radius:10px; background:#64C8FF; color:#000; border:none; font-weight:700; cursor:pointer;">고정수에 넣기</button>
+                    </div>
+                    <div style="display:flex; gap:5px; flex-wrap:wrap;">${ballsHtml(g5.nums)}</div>
+                    <div style="font-size:10px; color:rgba(255,255,255,0.6); margin-top:5px;">${g5.report}</div>
+                </div>`;
+                
+                html+=`<div style="background:rgba(0,0,0,0.25); border-radius:8px; padding:8px 10px; font-size:11px; color:rgba(255,255,255,0.6); line-height:1.4; margin-bottom:10px;">
+                    💡 각 게임의 [고정수에 넣기]를 누르면 고정칸에 자동 입력!<br>
+                    <span style="color:#FFD98E;">토요일까지 5게임 고정 유지!</span>
+                </div>
+                <div style="text-align:center; margin-top:12px;">
+                    <button onclick="window.generate5GamesAuto(true)" style="background:linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05)); color:#FFD98E; border:1.5px solid rgba(255,217,142,0.4); padding:10px 20px; border-radius:20px; font-weight:700; font-size:12px; cursor:pointer;">🔄 자동 추천게임(5) 다시 생성하기</button>
+                    <div style="font-size:10px; color:rgba(255,255,255,0.3); margin-top:6px;">새로운 5게임으로 교체</div>
+                </div>
+                </div>`;
+                
+                ballsEl.innerHTML = html;
+                console.log('5games rendered');
+            }catch(e){ console.error('5games error', e); alert('5게임 생성 오류: '+e.message); }
         };
         
-        // 고정수에 추천 넣는 함수
         // 초기 로또 입장시 자동 생성 안 하고 버튼만 표시
         window.initLottoAutoSection = function(){
             const ballsEl = document.getElementById('ldt-new-balls');
