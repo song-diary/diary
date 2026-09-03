@@ -4138,8 +4138,23 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         }catch(e){ return { year:1990, gan:'甲', tenGod:'편재', timeBranch:'午', timeHour:'11-13시', timeIdx:6, score:99, saturday:'2026-09-06', genTime:'', genSeed:'' }; }
     }
     function sajuBuildLottoPool(best){
-        const mapGan={'甲':[3,8,13,23,33],'乙':[3,8,18,28,38],'丙':[2,7,12,27,37],'丁':[2,7,17,22,42],'戊':[5,10,15,25,35],'己':[5,10,20,30,40],'庚':[4,9,14,29,39],'辛':[4,9,19,34,44],'壬':[1,6,11,26,36],'癸':[1,6,16,21,41]}; const mapTG={'비견':[11,22,33],'겁재':[12,23,34],'식신':[3,13,23],'상관':[7,17,27],'편재':[8,18,28],'정재':[5,15,25],'편관':[9,19,29],'정관':[6,16,26],'편인':[2,12,22],'정인':[4,14,24]}; const mapTime={'子':[1,11,21],'丑':[2,12,22],'寅':[3,13,23],'卯':[4,14,24],'辰':[5,15,25],'巳':[6,16,26],'午':[7,17,27],'未':[8,18,28],'申':[9,19,29],'酉':[10,20,30],'戌':[11,21,31],'亥':[12,22,32]};
-        const pool=new Set(); (mapGan[best.gan]||[]).forEach(n=>pool.add(n)); (mapTG[best.tenGod]||[]).forEach(n=>pool.add(n)); (mapTime[best.timeBranch]||[]).forEach(n=>pool.add(n)); pool.add((best.score%45)+1); pool.add(((best.year+best.timeIdx)%45)+1); return pool;
+        // V264: 자연스러운 분포, 편중 OK, 인위적 균형 없음, 1~45 전체 커버
+        const mapGan={'甲':[3,13,23,33,43],'乙':[5,15,25,35,45],'丙':[2,12,22,32,42],'丁':[7,17,27,37,44],'戊':[8,18,28,38,41],'己':[1,11,21,31,40],'庚':[9,19,29,39,45],'辛':[4,14,24,34,44],'壬':[6,16,26,36,43],'癸':[10,20,30,40,42]};
+        const mapTG={'비견':[11,22,33,44],'겁재':[12,23,34,45],'식신':[3,13,23,33],'상관':[7,17,27,37],'편재':[8,18,28,38],'정재':[5,15,25,35],'편관':[9,19,29,39],'정관':[6,16,26,36],'편인':[2,12,22,32],'정인':[4,14,24,34]};
+        const mapTime={'子':[1,11,21,31,41],'丑':[2,12,22,32,42],'寅':[3,13,23,33,43],'卯':[4,14,24,34,44],'辰':[5,15,25,35,45],'巳':[6,16,26,36,40],'午':[7,17,27,37,41],'未':[8,18,28,38,42],'申':[9,19,29,39,43],'酉':[10,20,30,40,44],'戌':[11,21,31,41,45],'亥':[12,22,32,42,45]};
+        const pool=new Set();
+        (mapGan[best.gan]||[]).forEach(n=>pool.add(n));
+        (mapTG[best.tenGod]||[]).forEach(n=>pool.add(n));
+        (mapTime[best.timeBranch]||[]).forEach(n=>pool.add(n));
+        pool.add((best.score%45)+1);
+        pool.add(((best.year+best.timeIdx)%45)+1);
+        const genSeedNum = best.genSeed ? parseInt(String(best.genSeed).slice(-4)) || 0 : 0;
+        pool.add((genSeedNum + best.score)%45+1);
+        // 자연스럽게 1~45 전체에서 시드 기반 5개 추가 (편중 방지용, 균형 강제 아님)
+        for(let k=0;k<5;k++){
+            pool.add(((best.score* (k+1) + best.year*7 + k*13) %45)+1);
+        }
+        return pool;
     }
     function sajuGenerateWithFixedGuaranteed(favs, best, gameIdx){
         let h2=2166136261; const seed=getTodayStr()+'_'+best.year+'_'+best.gan+'_'+best.timeBranch+'_'+best.genSeed+'_G'+gameIdx+'_'+(Date.now()+gameIdx*7919+Math.random()*10000); for(let i=0;i<seed.length;i++){ h2^=seed.charCodeAt(i); h2=Math.imul(h2,16777619);} h2>>>=0; let s2=h2; const rng=function(){ s2=(s2*1664525+1013904223)>>>0; return s2/4294967296; };
@@ -4374,24 +4389,24 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 
 
     function generateGame_100ManOnly(){
-        // 1) 100만명 귀인만
+        // 1) 100만명 귀인만 - 자연스러운 랜덤, 편중 OK
         try{
             const best = sajuGetBestGwainForLotto();
             const pool = sajuBuildLottoPool(best);
             const arr = Array.from(pool);
             const nums = [];
-            let h = best.score + best.timeIdx*997;
+            let h = best.score + best.timeIdx*997 + (best.genSeed?parseInt(String(best.genSeed).slice(-3)):0);
             for(let k=0;k<6;k++){
-                let n;
-                let tries=0;
+                let tries=0, n;
                 do{
                     n = arr[(h + k*137 + tries*53) % arr.length];
                     tries++;
-                }while(nums.includes(n) && tries<100);
+                    if(tries>100) n = Math.floor(Math.random()*45)+1;
+                }while(nums.includes(n));
                 nums.push(n);
             }
             return {nums: nums.sort((a,b)=>a-b), best: best, type:'100만 귀인'};
-        }catch(e){ return {nums:[3,11,23,32,38,42], best:null, type:'100만 귀인'}; }
+        }catch(e){ return {nums:[5,16,23,32,38,44], best:null, type:'100만 귀인'}; }
     }
     function generateGame_100ManPlusMySaju(){
         // 2) 100만명 + 내사주
@@ -4431,9 +4446,8 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         }catch(e){ return {nums:[7,13,23,32,38,42], best:null, type:'100만+내사주'}; }
     }
     function generateGame_Past3Months(){
-        // 3) 과거 3개월 로또 1등 기준 예측 (사주 상관없이 순수 통계)
+        // 3) 과거 3개월 로또 1등 기준 예측 - 저중고 균형
         try{
-            // 최근 데이터 (API 실패시 하드코딩)
             let recentDraws = [
                 {r:1239, n:[11,13,22,32,33,36]},
                 {r:1238, n:[2,13,18,32,38,42]},
@@ -4485,25 +4499,20 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             const cold = allNums.filter(n=>!freq[n]);
             const mid = allNums.filter(n=>freq[n]===1);
             
-            // 균형 있게 6개 뽑기
+            // 자연스러운 랜덤 - 편중 OK, 인위적 균형 없음
             const seed = parseInt(satStr.replace(/-/g,'')) * 7919;
-            const pickUnique = (arr, count, existing) => {
-                const res=[];
-                let idx=0;
-                while(res.length<count && idx<200){
-                    const n = arr[(seed + idx*37 + existing.length*97)%arr.length];
-                    if(!existing.includes(n) && !res.includes(n)) res.push(n);
-                    idx++;
-                }
-                return res;
-            };
-            
+            const combinedPool = [...new Set([...hot, ...mid, ...cold, ...allNums])];
             const nums = [];
-            nums.push(...pickUnique(hot, 2, nums));
-            nums.push(...pickUnique(mid.length>=4?mid:allNums, 2, nums));
-            // 콜드가 있으면 콜드에서, 없으면 저빈도에서
-            const coldPool = cold.length>=2?cold:allNums.filter(n=>!nums.includes(n) && (freq[n]||0)<=1);
-            nums.push(...pickUnique(coldPool, 2, nums));
+            let idx=0;
+            while(nums.length<6 && idx<500){
+                const n = combinedPool[(seed + idx*37)%combinedPool.length];
+                if(!nums.includes(n)) nums.push(n);
+                idx++;
+            }
+            while(nums.length<6){
+                const n = allNums[Math.floor(Math.random()*45)];
+                if(!nums.includes(n)) nums.push(n);
+            }
             
             while(nums.length<6){
                 const n = allNums[(seed + nums.length*101)%45];
