@@ -2807,9 +2807,30 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             <div class="settings-section">
                 <label>🔮 오늘의 운세 (사주팔자 설정)</label>
                 <div style="font-size:12px; color: var(--text-sub); margin-bottom:6px;">📅 생년월일은 <b>양력</b> 기준으로 입력해주세요</div>
-                <div style="display: flex; gap: 6px; margin-bottom: 6px;">
-                    <input type="date" id="saju-birth-date" style="flex:1; padding:6px; border:1px solid var(--border-color); border-radius:6px; font-size:15px;">
-                    <input type="time" id="saju-birth-time" disabled style="flex:1; padding:6px; border:1px solid var(--border-color); border-radius:6px; font-size:15px;">
+                <div style="display:flex; gap:6px; margin-bottom:8px; align-items:center;">
+                    <button type="button" id="btn-ymd-mode" onclick="setSajuInputMode('ymd')" style="flex:1; padding:8px; border:2px solid #ff6b9d; border-radius:8px; background:#fff0f3; font-size:13px; font-weight:bold; color:#ff6b9d;">⌨️ 숫자 직접입력</button>
+                    <button type="button" id="btn-calendar-mode" onclick="setSajuInputMode('calendar')" style="flex:1; padding:8px; border:1px solid #ddd; border-radius:8px; background:#f8f8f8; font-size:13px; color:#666;">📅 달력으로 선택</button>
+                </div>
+                <div id="saju-ymd-box" style="display:flex; gap:6px; margin-bottom:6px; align-items:center; flex-wrap:wrap;">
+                    <div style="display:flex; gap:4px; align-items:center; flex:2; background:#fff; border:1px solid var(--border-color); border-radius:8px; padding:6px 8px;">
+                        <input type="number" inputmode="numeric" id="saju-birth-year" placeholder="1965" min="1900" max="2100" style="width:70px; border:none; font-size:16px; text-align:center; outline:none;" oninput="syncSajuDateFromYMD()">
+                        <span style="font-size:14px;">년</span>
+                        <input type="number" inputmode="numeric" id="saju-birth-month" placeholder="5" min="1" max="12" style="width:45px; border:none; font-size:16px; text-align:center; outline:none;" oninput="syncSajuDateFromYMD()">
+                        <span style="font-size:14px;">월</span>
+                        <input type="number" inputmode="numeric" id="saju-birth-day" placeholder="12" min="1" max="31" style="width:45px; border:none; font-size:16px; text-align:center; outline:none;" oninput="syncSajuDateFromYMD()">
+                        <span style="font-size:14px;">일</span>
+                    </div>
+                    <input type="hidden" id="saju-birth-date">
+                    <input type="time" id="saju-birth-time" style="flex:1; min-width:100px; padding:8px; border:1px solid var(--border-color); border-radius:8px; font-size:15px;">
+                </div>
+                <div id="saju-calendar-box" style="display:none; gap:6px; margin-bottom:6px;">
+                    <input type="date" id="saju-birth-date-calendar" style="flex:2; padding:8px; border:1px solid var(--border-color); border-radius:8px; font-size:16px;" onchange="syncSajuDateFromCalendar()">
+                    <input type="time" id="saju-birth-time-calendar" style="flex:1; padding:8px; border:1px solid var(--border-color); border-radius:8px; font-size:15px;">
+                </div>
+                <div id="saju-quick-btns" style="display:flex; gap:6px; margin-bottom:8px;">
+                    <button type="button" onclick="document.getElementById('saju-birth-year').value=1965; syncSajuDateFromYMD()" style="flex:1; padding:6px; border:1px solid #ddd; border-radius:20px; background:#f8f8f8; font-size:12px;">1960년대</button>
+                    <button type="button" onclick="document.getElementById('saju-birth-year').value=1970; syncSajuDateFromYMD()" style="flex:1; padding:6px; border:1px solid #ddd; border-radius:20px; background:#f8f8f8; font-size:12px;">1970년대</button>
+                    <button type="button" onclick="document.getElementById('saju-birth-year').value=new Date().getFullYear()-60; syncSajuDateFromYMD()" style="flex:1; padding:6px; border:1px solid #ffd6e0; border-radius:20px; background:#fff0f3; font-size:12px;">만 60세</button>
                 </div>
                 <div style="display: flex; align-items:center; gap:6px; margin-bottom:8px;">
                     <input type="checkbox" id="saju-time-unknown" checked onchange="onSajuTimeUnknownToggle()" style="width:15px; height:15px;">
@@ -6831,6 +6852,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 
         if (sajuBirthInfo && sajuBirthInfo.date) {
             dateInput.value = sajuBirthInfo.date;
+            try{populateYMDFromDateStr(sajuBirthInfo.date);}catch(e){}
             if (sajuBirthInfo.time) {
                 unknownChk.checked = false;
                 timeInput.disabled = false;
@@ -6877,6 +6899,75 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     function onSajuTimeUnknownToggle() {
         const unknown = document.getElementById('saju-time-unknown').checked;
         document.getElementById('saju-birth-time').disabled = unknown;
+    }
+
+
+    function setSajuInputMode(mode){
+        const ymdBox=document.getElementById('saju-ymd-box');
+        const calBox=document.getElementById('saju-calendar-box');
+        const quickBtns=document.getElementById('saju-quick-btns');
+        const btnYmd=document.getElementById('btn-ymd-mode');
+        const btnCal=document.getElementById('btn-calendar-mode');
+        if(mode==='ymd'){
+            if(ymdBox) ymdBox.style.display='flex';
+            if(calBox) calBox.style.display='none';
+            if(quickBtns) quickBtns.style.display='flex';
+            if(btnYmd){ btnYmd.style.border='2px solid #ff6b9d'; btnYmd.style.background='#fff0f3'; btnYmd.style.color='#ff6b9d'; }
+            if(btnCal){ btnCal.style.border='1px solid #ddd'; btnCal.style.background='#f8f8f8'; btnCal.style.color='#666'; }
+        }else{
+            if(ymdBox) ymdBox.style.display='none';
+            if(calBox) calBox.style.display='flex';
+            if(quickBtns) quickBtns.style.display='none';
+            if(btnCal){ btnCal.style.border='2px solid #ff6b9d'; btnCal.style.background='#fff0f3'; btnCal.style.color='#ff6b9d'; }
+            if(btnYmd){ btnYmd.style.border='1px solid #ddd'; btnYmd.style.background='#f8f8f8'; btnYmd.style.color='#666'; }
+            const dateEl=document.getElementById('saju-birth-date');
+            const calDateEl=document.getElementById('saju-birth-date-calendar');
+            if(dateEl && calDateEl && dateEl.value) calDateEl.value=dateEl.value;
+        }
+        try{localStorage.setItem('sajuInputMode',mode);}catch(e){}
+    }
+    function syncSajuDateFromYMD(){
+        const y=document.getElementById('saju-birth-year')?.value;
+        const m=document.getElementById('saju-birth-month')?.value;
+        const d=document.getElementById('saju-birth-day')?.value;
+        if(y && m && d){
+            const mm=String(m).padStart(2,'0');
+            const dd=String(d).padStart(2,'0');
+            const dateEl=document.getElementById('saju-birth-date');
+            if(dateEl) dateEl.value=`${y}-${mm}-${dd}`;
+            const calEl=document.getElementById('saju-birth-date-calendar');
+            if(calEl) calEl.value=`${y}-${mm}-${dd}`;
+        }
+    }
+    function syncSajuDateFromCalendar(){
+        const calEl=document.getElementById('saju-birth-date-calendar');
+        const hiddenEl=document.getElementById('saju-birth-date');
+        if(calEl && hiddenEl && calEl.value){
+            hiddenEl.value=calEl.value;
+            const parts=calEl.value.split('-');
+            if(parts.length===3){
+                const yEl=document.getElementById('saju-birth-year');
+                const mEl=document.getElementById('saju-birth-month');
+                const dEl=document.getElementById('saju-birth-day');
+                if(yEl) yEl.value=parseInt(parts[0],10);
+                if(mEl) mEl.value=parseInt(parts[1],10);
+                if(dEl) dEl.value=parseInt(parts[2],10);
+            }
+        }
+    }
+    function populateYMDFromDateStr(dateStr){
+        if(!dateStr) return;
+        const parts=dateStr.split('-');
+        if(parts.length===3){
+            const yEl=document.getElementById('saju-birth-year');
+            const mEl=document.getElementById('saju-birth-month');
+            const dEl=document.getElementById('saju-birth-day');
+            if(yEl) yEl.value=parseInt(parts[0],10);
+            if(mEl) mEl.value=parseInt(parts[1],10);
+            if(dEl) dEl.value=parseInt(parts[2],10);
+            const calEl=document.getElementById('saju-birth-date-calendar');
+            if(calEl) calEl.value=dateStr;
+        }
     }
 
     function saveSajuBirthInfo() {
