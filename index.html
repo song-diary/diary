@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes"><title>다이어리&가계부 V198 SINGLE - 5가지 수정반영</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes"><title>다이어리&가계부 V199 SINGLE - 원형게이지 미니처방전</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -6255,8 +6255,38 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 <!-- V198: 날짜·설명 삭제 요청으로 숨김 -->
             </div>
 
-            <div style="margin-top:16px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:14px;text-align:center;">
-                <div style="font-size:12px;color:rgba(255,255,255,0.5);">오늘의 점수</div><div style="font-size:32px;font-weight:900;color:#FFD98E;margin-top:4px;">${score}<span style="font-size:14px;font-weight:600;opacity:0.7;">/100</span></div>
+            <div style="margin-top:16px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:18px;padding:16px;">
+                <div style="display:flex;align-items:center;gap:16px;">
+                    <div style="position:relative;width:88px;height:88px;flex-shrink:0;">
+                        <svg width="88" height="88" viewBox="0 0 88 88" style="transform:rotate(-90deg);">
+                            <circle cx="44" cy="44" r="36" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="7"/>
+                            <circle cx="44" cy="44" r="36" fill="none" stroke="url(#gradScore)" stroke-width="7" stroke-linecap="round"
+                                stroke-dasharray="${2*Math.PI*36}" stroke-dashoffset="${2*Math.PI*36 * (1-score/100)}"
+                                style="transition: stroke-dashoffset 0.8s ease;"/>
+                            <defs><linearGradient id="gradScore" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FFD98E"/><stop offset="100%" stop-color="#FF9AC2"/></linearGradient></defs>
+                        </svg>
+                        <div style="position:absolute;left:0;top:0;width:88px;height:88px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                            <div style="font-size:26px;font-weight:900;color:#FFD98E;line-height:1;">${score}</div>
+                            <div style="font-size:11px;color:rgba(255,255,255,0.6);margin-top:2px;">/100</div>
+                        </div>
+                    </div>
+                    <div style="flex:1;">
+                        <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:3px;">오늘의 점수</div>
+                        <div style="font-size:15px;font-weight:800;color:#fff;line-height:1.3;">
+                            ${score>=90?'최고의 날이에요! 하고 싶은 거 다 해요':score>=75?'좋은 흐름이에요, 가볍게 밀어봐요':score>=55?'무난한 날, 기본에 충실해요':'쉬어가도 괜찮아요, 내일을 위해 충전해요'}
+                        </div>
+                        <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
+                            <span style="background:rgba(255,217,142,0.15);border:1px solid rgba(255,217,142,0.25);padding:3px 8px;border-radius:999px;font-size:11px;color:#FFE9C2;">🎨 ${color.split(' ')[0]}</span>
+                            <span style="background:rgba(255,255,255,0.08);padding:3px 8px;border-radius:999px;font-size:11px;color:rgba(255,255,255,0.8);">⏰ ${goodTime}</span>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.08);display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;">
+                    <div><span style="color:rgba(255,255,255,0.45);">행운숫자</span> <span style="color:#fff;font-weight:700;margin-left:4px;">🔢 ${num1}, ${num2}</span></div>
+                    <div><span style="color:rgba(255,255,255,0.45);">하면 좋은 것</span> <span style="color:#7CFF9B;font-weight:700;margin-left:4px;">✅ ${action}</span></div>
+                    <div><span style="color:rgba(255,255,255,0.45);">행운색</span> <span style="color:#FFE9C2;font-weight:600;margin-left:4px;">${color}</span></div>
+                    <div><span style="color:rgba(255,255,255,0.45);">조심할 것</span> <span style="color:#FF9AA2;font-weight:600;margin-left:4px;">⚠️ ${avoid}</span></div>
+                </div>
             </div>
 
             <!-- V197: diaryHint 삭제됨 -->
@@ -8343,7 +8373,7 @@ async function showPhotosForDate(dateStr){
 
                 (function(){
           const swCode = `
-            const CACHE_NAME='smartdiary-V198-SINGLE';
+            const CACHE_NAME='smartdiary-V199-SINGLE';
             self.addEventListener('install', e=>{ self.skipWaiting(); e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(['./']))); });
             self.addEventListener('activate', e=>{ e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))).then(()=>self.clients.claim())); });
             self.addEventListener('fetch', e=>{ 
