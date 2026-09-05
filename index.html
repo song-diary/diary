@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 V201 SINGLE - 핀치줌 확대 추가</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 V203 SINGLE - 사진+메모 크게보기 수정</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -1484,33 +1484,66 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(0, 0, 0, 0.88);
             z-index: 2000;
             justify-content: center;
             align-items: center;
             padding: 20px;
+            overflow-y: auto;
         }
 
         .photo-lightbox-overlay.active {
             display: flex;
-            touch-action: none;
+            touch-action: pan-y pinch-zoom;
+        }
+
+        .photo-lightbox-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            max-width: 92vw;
+            max-height: 90vh;
+            overflow-y: auto;
+            touch-action: pan-y pinch-zoom;
         }
 
         .photo-lightbox-img {
-            width: 88vmin;
-            height: 88vmin;
-            max-width: 94vw;
-            max-height: 84vh;
-            border-radius: 12px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+            width: min(88vmin, 600px);
+            height: auto;
+            max-width: 92vw;
+            max-height: 62vh;
+            border-radius: 14px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.6);
             object-fit: contain;
             background: rgba(255,255,255,0.06);
-            -webkit-touch-callout: none; /* 길게 눌러도 브라우저 기본 "이미지 저장" 메뉴가 뜨지 않도록 */
+            -webkit-touch-callout: none;
             -webkit-user-select: none;
             user-select: none;
-            touch-action: none; /* 브라우저 기본 제스처 대신 JS 커스텀 핀치줌/팬이 전담 처리 */
+            touch-action: pan-y pinch-zoom;
             transform-origin: center center;
             will-change: transform;
+        }
+
+        .photo-lightbox-memo {
+            background: rgba(255,255,255,0.96);
+            color: #2A241C;
+            border-radius: 14px;
+            padding: 18px 20px;
+            font-size: 18px;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-width: 600px;
+            width: 92vw;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            touch-action: pan-y pinch-zoom;
+        }
+
+        .photo-lightbox-date {
+            color: rgba(255,255,255,0.6);
+            font-size: 13px;
+            text-align: center;
         }
 
         .photo-lightbox-close {
@@ -2829,7 +2862,11 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 <!-- 📝 입력 폼 모달 팝업 -->
 <div class="photo-lightbox-overlay" id="photo-lightbox-overlay" onclick="closePhotoLightbox(event)">
     <button type="button" class="photo-lightbox-close" onclick="closePhotoLightbox(event)" title="닫기">✖</button>
-    <img id="photo-lightbox-img" class="photo-lightbox-img" src="" alt="사진 확대보기" onclick="event.stopPropagation()" oncontextmenu="return false;" ondragstart="return false;">
+    <div id="photo-lightbox-content" class="photo-lightbox-content" onclick="event.stopPropagation()">
+        <img id="photo-lightbox-img" class="photo-lightbox-img" src="" alt="사진 확대보기" oncontextmenu="return false;" ondragstart="return false;" style="display:none;">
+        <div id="photo-lightbox-memo" class="photo-lightbox-memo" style="display:none;"></div>
+        <div id="photo-lightbox-date" class="photo-lightbox-date"></div>
+    </div>
 </div>
 
 <div class="modal-overlay" id="memo-modal-overlay" onclick="handleModalBackgroundClick(event)">
@@ -7628,21 +7665,40 @@ async function showPhotosForDate(dateStr){
     }
 
     // 📷 사진 확대보기(라이트박스) 열기/닫기 - 항상 동일한 크기 규칙(화면의 90%/85%)으로 표시됨
-    function openPhotoLightbox(photoKeyOrData) {
-        const src = getPhotoSrc(photoKeyOrData);
-        if (!src) {
-            alert('사진을 불러올 수 없습니다.');
-            return;
+    function openPhotoLightbox(photoKeyOrData, diaryItemOrText) {
+        const imgEl = document.getElementById('photo-lightbox-img');
+        const memoEl = document.getElementById('photo-lightbox-memo');
+        const dateEl = document.getElementById('photo-lightbox-date');
+        let src = null;
+        let memoText = '';
+        let dateText = '';
+        try { src = getPhotoSrc(photoKeyOrData); } catch(e){ src = null; }
+        if (!src && typeof photoKeyOrData === 'string' && photoKeyOrData.startsWith('data:image')) src = photoKeyOrData;
+        if (!src && typeof photoKeyOrData === 'string' && photoKeyOrData.startsWith('blob:')) src = photoKeyOrData;
+        if (diaryItemOrText) {
+            if (typeof diaryItemOrText === 'string') {
+                memoText = diaryItemOrText;
+            } else if (typeof diaryItemOrText === 'object') {
+                memoText = diaryItemOrText.text || '';
+                if (diaryItemOrText.date) {
+                    try { const d = parseDateObj(diaryItemOrText.date); dateText = d.getFullYear()+'년 '+(d.getMonth()+1)+'월 '+d.getDate()+'일 ('+getDayOfWeekStr(diaryItemOrText.date)+')' + (diaryItemOrText.time ? ' '+diaryItemOrText.time : ''); } catch(e){ dateText = diaryItemOrText.date; }
+                }
+            }
         }
-        document.getElementById('photo-lightbox-img').src = src;
+        if (src) { imgEl.src = src; imgEl.style.display = 'block'; } else { imgEl.style.display='none'; imgEl.src=''; }
+        if (memoText) { memoEl.textContent = memoText; memoEl.style.display='block'; memoEl.style.fontSize = src ? '17px' : '22px'; } else { memoEl.style.display='none'; }
+        dateEl.textContent = dateText;
         document.getElementById('photo-lightbox-overlay').classList.add('active');
         resetPhotoZoom();
     }
-
+    function openMemoLightboxOnly(text, diaryItem){ openPhotoLightbox(null, diaryItem || text); }
     function closePhotoLightbox(event) {
         if (event) event.stopPropagation();
         document.getElementById('photo-lightbox-overlay').classList.remove('active');
-        document.getElementById('photo-lightbox-img').src = '';
+        const imgEl = document.getElementById('photo-lightbox-img');
+        const memoEl = document.getElementById('photo-lightbox-memo');
+        if (imgEl) { imgEl.src = ''; imgEl.style.display='none'; }
+        if (memoEl) { memoEl.style.display='none'; }
         resetPhotoZoom();
     }
 
@@ -8378,7 +8434,7 @@ async function showPhotosForDate(dateStr){
 
                 (function(){
           const swCode = `
-            const CACHE_NAME='smartdiary-V201-SINGLE';
+            const CACHE_NAME='smartdiary-V203-SINGLE';
             self.addEventListener('install', e=>{ self.skipWaiting(); e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(['./']))); });
             self.addEventListener('activate', e=>{ e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))).then(()=>self.clients.claim())); });
             self.addEventListener('fetch', e=>{ 
