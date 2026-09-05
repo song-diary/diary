@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes"><title>다이어리&가계부 V200 SINGLE - 사주보기 다크톤 통일</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 V201 SINGLE - 핀치줌 확대 추가</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -858,6 +858,7 @@
 
         .fortune-popup-card {
             width: 100%; max-width: 420px; max-height: 92vh; overflow-y: auto;
+            touch-action: pan-y pinch-zoom;
             border-radius: 22px; padding: 22px 20px 20px;
             background: linear-gradient(165deg, #23264A 0%, #171933 60%, #14152B 100%);
             color: #F2EFFF;
@@ -923,8 +924,9 @@
             background: linear-gradient(165deg, #23264A 0%, #171933 60%, #14152B 100%);
             color: #F2EFFF;
             box-shadow: 0 20px 50px rgba(0,0,0,0.45); position: relative; animation: fadeIn 0.25s ease;
-            touch-action: pan-y;
+            touch-action: pan-y pinch-zoom;
             border: 1px solid rgba(255,255,255,0.08);
+            touch-action: pan-y pinch-zoom;
         }
         .saju-detail-card .sd-title { font-size: 18px; font-weight: 800; color:#fff; }
         .sd-title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
@@ -1061,7 +1063,7 @@
         }
 
         /* 오늘의 운세 팝업은 손가락으로 확대(핀치줌)할 수 있게 예외 허용 */
-        #fortune-popup-overlay.active {
+        #fortune-popup-overlay.active, #saju-detail-modal-overlay.active {
             touch-action: pan-y pinch-zoom;
         }
 
@@ -1072,7 +1074,7 @@
         #card-pending-card,
         #balance-location-card,
         #settings-card {
-            touch-action: pan-y;
+            touch-action: pan-y pinch-zoom;
         }
 
         /* 다이어리 입력 폼 (팝업창 버전) */
@@ -8376,7 +8378,7 @@ async function showPhotosForDate(dateStr){
 
                 (function(){
           const swCode = `
-            const CACHE_NAME='smartdiary-V200-SINGLE';
+            const CACHE_NAME='smartdiary-V201-SINGLE';
             self.addEventListener('install', e=>{ self.skipWaiting(); e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(['./']))); });
             self.addEventListener('activate', e=>{ e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))).then(()=>self.clients.claim())); });
             self.addEventListener('fetch', e=>{ 
