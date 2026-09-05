@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 V207 SINGLE - 빈사진클릭도 메모보기</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 V208 SINGLE - 가로모드 달력 크게</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -1926,16 +1926,31 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         #health-toggle-icon, #health-input-body { display:none !important; }
 
 
-        /* === 가로모드 달력 반응형 fix (v96) === */
+        /* === 가로모드 달력 반응형 fix (v96 + v208 개선) === */
         @media screen and (orientation: landscape) {
-            #calendar-card { width:100% !important; max-width:100% !important; }
+            #calendar-card { width:100% !important; max-width:100% !important; min-height: auto !important; }
             #cal-days-grid { width:100% !important; }
             .calendar-sticky-wrap { width:100% !important; max-width:100% !important; }
             .container { max-width: 95% !important; width:95% !important; }
+            .cal-cell { min-height: 62px !important; font-size: 15px !important; }
         }
         @media screen and (max-width: 900px) and (orientation: landscape) {
-            .container { max-width: 95vw !important; }
-            #calendar-card { transform: none !important; }
+            .container { max-width: 95vw !important; width: 98vw !important; }
+            #calendar-card { transform: none !important; width:100% !important; padding:12px 10px !important; }
+            #cal-days-grid { gap:6px !important; }
+            .cal-cell { min-height: 58px !important; aspect-ratio:auto !important; padding:8px 0 !important; }
+        }
+        /* V208 - 핸드폰 가로모드 전용: 달력 크게 */
+        @media screen and (orientation: landscape) and (max-height: 500px) {
+            .container { max-width: 96vw !important; width:96vw !important; margin:0 auto !important; }
+            #calendar-card { width:100% !important; max-width:100% !important; padding:10px !important; }
+            #cal-days-grid { grid-template-columns: repeat(7, 1fr) !important; gap:5px !important; }
+            .cal-cell { min-height: 48px !important; height:auto !important; aspect-ratio: 1.2/1 !important; font-size:16px !important; display:flex !important; align-items:center !important; justify-content:center !important; }
+            .cal-cell-inner { font-size:16px !important; }
+            .calendar-header { font-size:18px !important; padding:8px 0 !important; }
+            #cal-days-name-grid { font-size:13px !important; }
+            /* 가로모드에서는 다이어리 리스트를 옆으로? 아니면 달력만 크게 */
+            #diary-around-today-card { margin-top:12px !important; }
         }
         /* 일반 반응형 - 컨테이너가 화면에 맞게 늘어나도록 */
         .container {
@@ -8536,7 +8551,7 @@ async function showPhotosForDate(dateStr){
 
                 (function(){
           const swCode = `
-            const CACHE_NAME='smartdiary-V207-SINGLE';
+            const CACHE_NAME='smartdiary-V208-SINGLE';
             self.addEventListener('install', e=>{ self.skipWaiting(); e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(['./']))); });
             self.addEventListener('activate', e=>{ e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))).then(()=>self.clients.claim())); });
             self.addEventListener('fetch', e=>{ 
