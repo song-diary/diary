@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 V210 SINGLE - 로또방 분리 + 100만귀인 의미부여</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 V212 SINGLE - <div>태그 노출 fix</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -2546,6 +2546,47 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         .btn-row .btn { flex:1; text-align:center; margin-top:0; }
         .fp-lotto-note { font-size:11.5px; color:rgba(242,239,255,0.5); margin-top:10px; line-height:1.5; }
 
+
+        /* === V211 APK 스크롤 fix - WebView에서 메인 화면 스크롤 안되는 문제 해결 === */
+        html {
+            height: auto !important;
+            min-height: 100% !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            -webkit-overflow-scrolling: touch !important;
+            overscroll-behavior-y: auto !important;
+        }
+        body {
+            height: auto !important;
+            min-height: 100vh !important;
+            min-height: -webkit-fill-available !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            -webkit-overflow-scrolling: touch !important;
+            overscroll-behavior-y: auto !important;
+            touch-action: pan-y pinch-zoom !important;
+            position: relative !important;
+        }
+        .app-container {
+            height: auto !important;
+            min-height: auto !important;
+            overflow: visible !important;
+            touch-action: pan-y !important;
+        }
+        /* 모달이 아닐 때는 touch-action none 금지 */
+        .modal-overlay {
+            touch-action: pan-y pinch-zoom !important;
+        }
+        .modal-overlay.active {
+            touch-action: pan-y pinch-zoom !important;
+            overscroll-behavior: contain !important;
+        }
+        /* APK WebView에서 100vh 문제 해결 */
+        @supports (-webkit-touch-callout: none) {
+            body { min-height: -webkit-fill-available; }
+        }
+        /* GitHub 기반앱은 이미 되는 이유: 여기는 iframe이 아니라 top window 스크롤이라 됨 - APK는 WebView 내부 스크롤이라 막혔던 것 */
+
 </style>
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#f59e0b">
@@ -4283,23 +4324,40 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     function lockBodyScroll() {
         if (modalLockCount === 0) {
             modalLockedScrollY = window.scrollY || document.documentElement.scrollTop || 0;
-            document.body.style.position = 'fixed';
-            document.body.style.top = `-${modalLockedScrollY}px`;
-            document.body.style.left = '0';
-            document.body.style.right = '0';
-            document.body.style.width = '100%';
+            // APK WebView에서는 position:fixed가 스크롤을 완전히 죽여버림 - overflow hidden 방식으로 변경
+            const isApk = /wv|WebView|Android.*Version/.test(navigator.userAgent) || window.Capacitor || window.cordova;
+            if(isApk){
+                document.documentElement.style.overflow = 'hidden';
+                document.body.style.overflow = 'hidden';
+                document.body.style.touchAction = 'none';
+            } else {
+                document.body.style.position = 'fixed';
+                document.body.style.top = `-${modalLockedScrollY}px`;
+                document.body.style.left = '0';
+                document.body.style.right = '0';
+                document.body.style.width = '100%';
+            }
         }
         modalLockCount++;
     }
     function unlockBodyScroll() {
         modalLockCount = Math.max(0, modalLockCount - 1);
         if (modalLockCount === 0) {
-            document.body.style.position = '';
-            document.body.style.top = '';
-            document.body.style.left = '';
-            document.body.style.right = '';
-            document.body.style.width = '';
-            window.scrollTo(0, modalLockedScrollY);
+            const isApk = /wv|WebView|Android.*Version/.test(navigator.userAgent) || window.Capacitor || window.cordova;
+            if(isApk){
+                document.documentElement.style.overflow = '';
+                document.body.style.overflow = '';
+                document.body.style.touchAction = '';
+            } else {
+                document.body.style.position = '';
+                document.body.style.top = '';
+                document.body.style.left = '';
+                document.body.style.right = '';
+                document.body.style.width = '';
+                window.scrollTo(0, modalLockedScrollY);
+            }
+            // 강제 리플로우로 WebView 스크롤 복구
+            setTimeout(()=>{ document.body.style.overflow = ''; document.documentElement.style.overflow = ''; }, 50);
         }
     }
 
@@ -5606,7 +5664,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             }
 
             let timeBadgeInline = item.time ? `⏰ ${item.time}` : '';
-            let textContentHTML = item.text ? `<div class="diary-text">${item.text}</div>` : '';
+            let _cleanText = sanitizeDiaryTextForDisplay(item.text); let textContentHTML = _cleanText ? `<div class="diary-text">${escapeHtmlForDiary(_cleanText)}</div>` : '';
             let photoHTML = renderPhotoHTML(item);
             let healthHTML = renderHealthBadgeHTML(item);
             subItem.classList.add(item.photo ? 'has-photo' : 'no-photo');
@@ -5775,7 +5833,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             </div>`;
 
             let timeBadgeInline = item.time ? `⏰ ${item.time}` : '';
-            let textContentHTML = item.text ? `<div class="diary-text">${item.text}</div>` : '';
+            let _cleanText = sanitizeDiaryTextForDisplay(item.text); let textContentHTML = _cleanText ? `<div class="diary-text">${escapeHtmlForDiary(_cleanText)}</div>` : '';
             let photoHTML = renderPhotoHTML(item);
             let healthHTML = renderHealthBadgeHTML(item);
             subItem.classList.add(item.photo ? 'has-photo' : 'no-photo');
@@ -7702,7 +7760,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         }
 
         if (existingItem) {
-            textOutput.innerHTML = existingItem.text || '';
+            textOutput.innerText = (existingItem.text ? existingItem.text.replace(/<[^>]+>/g, '').replace(/<div>/g,'\n') : '') || '';
             if (moneyNoteInput) moneyNoteInput.value = existingItem.text || '';
             reservationTimeInput.value = existingItem.time || '';
             currentPhotoBase64 = existingItem.photo ? (getPhotoSrc(existingItem.photo) || null) : null;
@@ -7728,7 +7786,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             document.getElementById('anniv-cal-solar').checked = (existingItem.annivCalType || 'solar') === 'solar';
             document.getElementById('anniv-cal-lunar').checked = existingItem.annivCalType === 'lunar';
         } else {
-            textOutput.innerHTML = '';
+            textOutput.innerText = '';
             if (moneyNoteInput) moneyNoteInput.value = '';
             // ⏰ 예약(미래 날짜)일 때는 '지금 입력하는 시간'이 아니라 기본값 오전 8시로 설정
             reservationTimeInput.value = isFutureDate(selectedReservationDate) ? '08:00' : getCurrentTimeStr();
@@ -7827,13 +7885,13 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 
         filtered.forEach(item => {
             const timeBadgeInline = item.time ? `⏰ ${item.time}` : '';
-            const textContentHTML = item.text ? `<div class="diary-text">${item.text}</div>` : '';
+            let _cleanText2 = sanitizeDiaryTextForDisplay(item.text); const textContentHTML = _cleanText2 ? `<div class="diary-text">${escapeHtmlForDiary(_cleanText2)}</div>` : '';
             const photoHTML = renderPhotoHTML(item);
             const healthHTML = renderHealthBadgeHTML(item);
 
             const itemBox = document.createElement('div');
             itemBox.className = 'sub-memo-item memo-only-box' + (item.photo ? ' has-photo' : ' no-photo');
-            const previewText = (item.text || '').substring(0,20);
+            const _previewClean = sanitizeDiaryTextForDisplay(item.text||''); const previewText = (item.text || '').substring(0,20);
             itemBox.setAttribute('data-text-preview', previewText);
             if (isReservedDate) itemBox.classList.add('is-reserved');
 
@@ -7983,7 +8041,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 💰 ${typeSign}${amountStr}${catStr}${pendingBadge}
             </div>`;
             const timeBadgeInline = item.time ? `⏰ ${item.time}` : '';
-            const textContentHTML = item.text ? `<div class="diary-text">${item.text}</div>` : '';
+            let _cleanText2 = sanitizeDiaryTextForDisplay(item.text); const textContentHTML = _cleanText2 ? `<div class="diary-text">${escapeHtmlForDiary(_cleanText2)}</div>` : '';
             const photoHTML = renderPhotoHTML(item);
             const healthHTML = renderHealthBadgeHTML(item);
 
@@ -8193,6 +8251,24 @@ async function showPhotosForDate(dateStr){
     }
 
     // 📷 사진 확대보기(라이트박스) 열기/닫기 - 항상 동일한 크기 규칙(화면의 90%/85%)으로 표시됨
+
+    function sanitizeDiaryTextForDisplay(raw){
+        if(!raw) return '';
+        let t = String(raw);
+        // contenteditable에서 들어온 <div>, <br> 등을 줄바꿈으로 변환
+        t = t.replace(/<div[^>]*>/gi, '\n').replace(/<\/div>/gi, '');
+        t = t.replace(/<br[^>]*>/gi, '\n');
+        t = t.replace(/<[^>]+>/g, '');
+        // HTML 엔티티 디코딩
+        t = t.replace(/&nbsp;/g, ' ').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');
+        return t.trim();
+    }
+    function escapeHtmlForDiary(raw){
+        const d = document.createElement('div');
+        d.textContent = raw;
+        return d.innerHTML;
+    }
+
     function openPhotoLightbox(photoKeyOrData, diaryItemOrText) {
         const imgEl = document.getElementById('photo-lightbox-img');
         const memoEl = document.getElementById('photo-lightbox-memo');
@@ -8204,9 +8280,9 @@ async function showPhotosForDate(dateStr){
         if (!src && typeof photoKeyOrData === 'string' && photoKeyOrData.indexOf('data:image')===0) src = photoKeyOrData;
         if (!src && typeof photoKeyOrData === 'string' && photoKeyOrData.indexOf('blob:')===0) src = photoKeyOrData;
         if (diaryItemOrText) {
-            if (typeof diaryItemOrText === 'string') memoText = diaryItemOrText;
+            if (typeof diaryItemOrText === 'string') memoText = sanitizeDiaryTextForDisplay(diaryItemOrText);
             else if (typeof diaryItemOrText === 'object') {
-                memoText = diaryItemOrText.text || '';
+                memoText = sanitizeDiaryTextForDisplay(diaryItemOrText.text || '');
                 if (diaryItemOrText.date) {
                     try { const d = parseDateObj(diaryItemOrText.date); dateText = d.getFullYear()+'년 '+(d.getMonth()+1)+'월 '+d.getDate()+'일 ('+getDayOfWeekStr(diaryItemOrText.date)+')' + (diaryItemOrText.time ? ' '+diaryItemOrText.time : ''); } catch(e){ dateText = diaryItemOrText.date; }
                 }
@@ -8492,7 +8568,7 @@ async function showPhotosForDate(dateStr){
         if(typeof currentMediaType!=='undefined' && currentMediaType==='video'){ alert('동영상은 저장할 수 없습니다!'); currentMediaType='image'; currentPhotoBase64=null; return; }
         const content = (currentFormMode === 'money')
             ? (moneyNoteInput ? moneyNoteInput.value.trim() : '')
-            : textOutput.innerHTML.trim();
+            : (textOutput.innerText || textOutput.textContent || '').trim();
         const timeVal = reservationTimeInput.value;
         const moneyCategory = moneyCategorySelect.value;
         const rawAmount = moneyAmountInput.value.replace(/[^0-9]/g, '').trim();
@@ -8617,7 +8693,7 @@ async function showPhotosForDate(dateStr){
             // 매번 전체 결과를 새로 조립(누적 더하기 X)하여, 브라우저가 이미 확정된 구간을
             // 다시 전달하는 경우에도 텍스트가 중복되지 않도록 함
             sessionFinalText = finalText;
-            if (textOutput) textOutput.innerHTML = recordingBaseText + finalText + interimText;
+            if (textOutput) textOutput.innerText = recordingBaseText + finalText + interimText;
         };
 
         recognition.onend = () => {
@@ -8640,7 +8716,7 @@ async function showPhotosForDate(dateStr){
         if (recordBtn) {
             recordBtn.onclick = () => {
                 if (!isRecording) {
-                    recordingBaseText = textOutput.innerHTML.trim() ? textOutput.innerHTML + ' ' : '';
+                    recordingBaseText = (textOutput.innerText||'').trim() ? (textOutput.innerText+' ') : '';
                     sessionFinalText = '';
                     shouldRestart = true;
                     try { recognition.start(); } catch (e) { console.error(e); }
@@ -9047,7 +9123,7 @@ async function showPhotosForDate(dateStr){
 
                 (function(){
           const swCode = `
-            const CACHE_NAME='smartdiary-V210-SINGLE';
+            const CACHE_NAME='smartdiary-V212-SINGLE';
             self.addEventListener('install', e=>{ self.skipWaiting(); e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(['./']))); });
             self.addEventListener('activate', e=>{ e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))).then(()=>self.clients.claim())); });
             self.addEventListener('fetch', e=>{ 
