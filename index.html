@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 V205 SINGLE - 사진+메모 크게보기 최종</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 V206 SINGLE - 글폭동일+글만보기 수정</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -1530,20 +1530,24 @@
             line-height: 1.75;
             white-space: pre-wrap;
             word-break: break-word;
-            max-width: 600px;
-            width: 92vw;
+            width: min(88vmin, 600px);
+            max-width: 92vw;
             box-shadow: 0 6px 24px rgba(0,0,0,0.35);
             touch-action: pan-y pinch-zoom;
             max-height: 45vh;
             overflow-y: auto;
+            box-sizing: border-box;
         }
         .photo-lightbox-memo.no-photo-mode {
             font-size: 24px;
             line-height: 1.8;
             padding: 28px 26px;
             max-height: 70vh;
+            width: min(88vmin, 600px);
+            max-width: 92vw;
             background: #fff;
             font-weight: 500;
+            box-sizing: border-box;
         }
         .photo-lightbox-date {
             color: rgba(255,255,255,0.6);
@@ -8217,44 +8221,57 @@ async function showPhotosForDate(dateStr){
         initPhotoZoomHandlers();
         initPhotoPreviewPinchOpen();
 
-    (function(){
+        (function(){
+        function attachNoPhotoHandlers(){
+            // 메인 그리드 + 오늘 상세 + 검색결과 모든 no-photo 텍스트에 클릭 핸들러 강제 부착
+            document.querySelectorAll('.sub-memo-item.no-photo .diary-text').forEach(txtEl=>{
+                if(txtEl.dataset.bigviewAttached) return;
+                txtEl.dataset.bigviewAttached='1';
+                txtEl.style.cursor='zoom-in';
+                txtEl.addEventListener('click', function(e){
+                    e.preventDefault(); e.stopPropagation();
+                    const itemEl = this.closest('.sub-memo-item');
+                    let diaryItem = null;
+                    const m = itemEl ? itemEl.innerHTML.match(/deleteDiary\('([^']+)'\)/) : null;
+                    if(m){
+                        const all = (typeof getAllDiaries==='function')?getAllDiaries():[];
+                        diaryItem = all.find(d=>d.id===m[1]);
+                    }
+                    const text = diaryItem ? diaryItem.text : this.textContent;
+                    openMemoLightboxOnly(text, diaryItem || {text: this.textContent, date: new Date().toISOString().slice(0,10)});
+                });
+            });
+        }
         const list = document.getElementById('diary-around-today-list');
-        if(!list) return;
-        list.addEventListener('click', async function(e){
-            const photo = e.target.closest('.diary-photo');
-            if(photo){
-                const itemEl = photo.closest('.sub-memo-item');
-                if(itemEl){
-                    const m = itemEl.innerHTML.match(/deleteDiary\('([^']+)'\)/);
-                    if(m){
-                        const all = (typeof getAllDiaries==='function')?getAllDiaries():[];
-                        const it = all.find(d=>d.id===m[1]);
-                        if(it){
-                            e.preventDefault(); e.stopPropagation();
-                            let src=''; try{ src=await getPhotoSrcAsyncSafe(it.photo); }catch(err){}
-                            if(!src) try{ src=getPhotoSrc(it.photo); }catch(err){}
-                            openPhotoLightbox(src || photo.src, it);
-                            return;
+        if(list){
+            list.addEventListener('click', async function(e){
+                const photo = e.target.closest('.diary-photo');
+                if(photo){
+                    const itemEl = photo.closest('.sub-memo-item');
+                    if(itemEl){
+                        const m = itemEl.innerHTML.match(/deleteDiary\('([^']+)'\)/);
+                        if(m){
+                            const all = (typeof getAllDiaries==='function')?getAllDiaries():[];
+                            const it = all.find(d=>d.id===m[1]);
+                            if(it){
+                                e.preventDefault(); e.stopPropagation();
+                                let src=''; try{ src=await getPhotoSrcAsyncSafe(it.photo); }catch(err){}
+                                if(!src) try{ src=getPhotoSrc(it.photo); }catch(err){}
+                                openPhotoLightbox(src || photo.src, it);
+                                return;
+                            }
                         }
                     }
                 }
-            }
-            const txt = e.target.closest('.diary-text');
-            if(txt){
-                const itemEl = txt.closest('.sub-memo-item.no-photo');
-                if(itemEl){
-                    const m = itemEl.innerHTML.match(/deleteDiary\('([^']+)'\)/);
-                    if(m){
-                        const all = (typeof getAllDiaries==='function')?getAllDiaries():[];
-                        const it = all.find(d=>d.id===m[1]);
-                        if(it && it.text){
-                            e.preventDefault(); e.stopPropagation();
-                            openMemoLightboxOnly(it.text, it);
-                        }
-                    }
-                }
-            }
-        });
+            });
+        }
+        // DOM 변경 시마다 no-photo 핸들러 재부착 (render 후에도 동작)
+        const observer = new MutationObserver(()=>attachNoPhotoHandlers());
+        observer.observe(document.body, {childList:true, subtree:true});
+        attachNoPhotoHandlers();
+        // 초기 + 1초 후 재시도 (renderCalendar가 비동기로 그릴 때 대비)
+        setTimeout(attachNoPhotoHandlers, 500);
+        setTimeout(attachNoPhotoHandlers, 1500);
     })();
 
         applyShowHealthVisibility();
@@ -8492,7 +8509,7 @@ async function showPhotosForDate(dateStr){
 
                 (function(){
           const swCode = `
-            const CACHE_NAME='smartdiary-V205-SINGLE';
+            const CACHE_NAME='smartdiary-V206-SINGLE';
             self.addEventListener('install', e=>{ self.skipWaiting(); e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(['./']))); });
             self.addEventListener('activate', e=>{ e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))).then(()=>self.clients.claim())); });
             self.addEventListener('fetch', e=>{ 
