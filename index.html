@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 V203 SINGLE - 사진+메모 크게보기 수정</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 V204 SINGLE - 메모 가시성 개선</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -1512,7 +1512,7 @@
             width: min(88vmin, 600px);
             height: auto;
             max-width: 92vw;
-            max-height: 62vh;
+            max-height: 52vh;
             border-radius: 14px;
             box-shadow: 0 8px 30px rgba(0,0,0,0.6);
             object-fit: contain;
@@ -1526,18 +1526,29 @@
         }
 
         .photo-lightbox-memo {
-            background: rgba(255,255,255,0.96);
+            background: rgba(255,255,255,0.97);
             color: #2A241C;
-            border-radius: 14px;
-            padding: 18px 20px;
-            font-size: 18px;
-            line-height: 1.7;
+            border-radius: 16px;
+            padding: 20px 22px;
+            font-size: 19px;
+            line-height: 1.75;
             white-space: pre-wrap;
             word-break: break-word;
             max-width: 600px;
             width: 92vw;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            box-shadow: 0 6px 24px rgba(0,0,0,0.35);
             touch-action: pan-y pinch-zoom;
+            max-height: 45vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .photo-lightbox-memo.no-photo-mode {
+            font-size: 24px;
+            line-height: 1.8;
+            padding: 28px 26px;
+            max-height: 70vh;
+            background: #fff;
+            font-weight: 500;
         }
 
         .photo-lightbox-date {
@@ -7686,10 +7697,27 @@ async function showPhotosForDate(dateStr){
             }
         }
         if (src) { imgEl.src = src; imgEl.style.display = 'block'; } else { imgEl.style.display='none'; imgEl.src=''; }
-        if (memoText) { memoEl.textContent = memoText; memoEl.style.display='block'; memoEl.style.fontSize = src ? '17px' : '22px'; } else { memoEl.style.display='none'; }
+        if (memoText) {
+            memoEl.textContent = memoText;
+            memoEl.style.display='block';
+            if(src){
+                memoEl.classList.remove('no-photo-mode');
+                memoEl.style.fontSize = '19px';
+            } else {
+                memoEl.classList.add('no-photo-mode');
+                memoEl.style.fontSize = '24px';
+            }
+        } else { memoEl.style.display='none'; memoEl.classList.remove('no-photo-mode'); }
         dateEl.textContent = dateText;
         document.getElementById('photo-lightbox-overlay').classList.add('active');
         resetPhotoZoom();
+        // 메모가 보이도록 살짝 위로 스크롤
+        setTimeout(()=>{
+            const content = document.getElementById('photo-lightbox-content');
+            if(content && memoEl.style.display!=='none'){
+                memoEl.scrollIntoView({behavior:'smooth', block:'start'});
+            }
+        }, 100);
     }
     function openMemoLightboxOnly(text, diaryItem){ openPhotoLightbox(null, diaryItem || text); }
     function closePhotoLightbox(event) {
@@ -8434,7 +8462,7 @@ async function showPhotosForDate(dateStr){
 
                 (function(){
           const swCode = `
-            const CACHE_NAME='smartdiary-V203-SINGLE';
+            const CACHE_NAME='smartdiary-V204-SINGLE';
             self.addEventListener('install', e=>{ self.skipWaiting(); e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(['./']))); });
             self.addEventListener('activate', e=>{ e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))).then(()=>self.clients.claim())); });
             self.addEventListener('fetch', e=>{ 
