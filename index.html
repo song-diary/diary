@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 V206 SINGLE - 글폭동일+글만보기 수정</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 V207 SINGLE - 빈사진클릭도 메모보기</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -8223,22 +8223,49 @@ async function showPhotosForDate(dateStr){
 
         (function(){
         function attachNoPhotoHandlers(){
-            // 메인 그리드 + 오늘 상세 + 검색결과 모든 no-photo 텍스트에 클릭 핸들러 강제 부착
-            document.querySelectorAll('.sub-memo-item.no-photo .diary-text').forEach(txtEl=>{
-                if(txtEl.dataset.bigviewAttached) return;
-                txtEl.dataset.bigviewAttached='1';
-                txtEl.style.cursor='zoom-in';
-                txtEl.addEventListener('click', function(e){
-                    e.preventDefault(); e.stopPropagation();
-                    const itemEl = this.closest('.sub-memo-item');
-                    let diaryItem = null;
-                    const m = itemEl ? itemEl.innerHTML.match(/deleteDiary\('([^']+)'\)/) : null;
-                    if(m){
-                        const all = (typeof getAllDiaries==='function')?getAllDiaries():[];
-                        diaryItem = all.find(d=>d.id===m[1]);
+            // 메인 그리드 + 오늘 상세 + 검색결과 모든 no-photo 항목의 글씨 + 빈사진 영역 둘 다 클릭 시 크게 보기
+            document.querySelectorAll('.sub-memo-item.no-photo').forEach(itemEl=>{
+                // 글씨 영역
+                const txtEl = itemEl.querySelector('.diary-text');
+                if(txtEl && !txtEl.dataset.bigviewAttached){
+                    txtEl.dataset.bigviewAttached='1';
+                    txtEl.style.cursor='zoom-in';
+                    txtEl.addEventListener('click', function(e){
+                        e.preventDefault(); e.stopPropagation();
+                        const m = itemEl.innerHTML.match(/deleteDiary\('([^']+)'\)/);
+                        let diaryItem = null;
+                        if(m){
+                            const all = (typeof getAllDiaries==='function')?getAllDiaries():[];
+                            diaryItem = all.find(d=>d.id===m[1]);
+                        }
+                        const text = diaryItem ? diaryItem.text : this.textContent;
+                        openMemoLightboxOnly(text, diaryItem || {text: this.textContent, date: new Date().toISOString().slice(0,10)});
+                    });
+                }
+                // 빈사진 자리 (empty-photo-placeholder, diary-photo-wrap 등)
+                const emptySelectors = ['.empty-photo-placeholder', '.diary-photo-wrap', '.diary-photo', '.photo-title-area'];
+                emptySelectors.forEach(sel=>{
+                    const emptyEl = itemEl.querySelector(sel);
+                    if(emptyEl && !emptyEl.dataset.bigviewEmptyAttached){
+                        // 사진이 실제로 없는 경우에만
+                        const hasRealImg = itemEl.querySelector('.diary-photo[src], .diary-photo-wrap img[src]');
+                        if(hasRealImg) return;
+                        emptyEl.dataset.bigviewEmptyAttached='1';
+                        emptyEl.style.cursor='zoom-in';
+                        emptyEl.addEventListener('click', function(e){
+                            // 수정/삭제 버튼은 제외
+                            if(e.target.closest('.memo-action-btns, .edit-btn-hidden, .delete-btn')) return;
+                            e.preventDefault(); e.stopPropagation();
+                            const m = itemEl.innerHTML.match(/deleteDiary\('([^']+)'\)/);
+                            let diaryItem = null;
+                            if(m){
+                                const all = (typeof getAllDiaries==='function')?getAllDiaries():[];
+                                diaryItem = all.find(d=>d.id===m[1]);
+                            }
+                            const text = diaryItem ? diaryItem.text : (itemEl.querySelector('.diary-text')?.textContent || '');
+                            if(text) openMemoLightboxOnly(text, diaryItem || {text: text, date: new Date().toISOString().slice(0,10)});
+                        });
                     }
-                    const text = diaryItem ? diaryItem.text : this.textContent;
-                    openMemoLightboxOnly(text, diaryItem || {text: this.textContent, date: new Date().toISOString().slice(0,10)});
                 });
             });
         }
@@ -8509,7 +8536,7 @@ async function showPhotosForDate(dateStr){
 
                 (function(){
           const swCode = `
-            const CACHE_NAME='smartdiary-V206-SINGLE';
+            const CACHE_NAME='smartdiary-V207-SINGLE';
             self.addEventListener('install', e=>{ self.skipWaiting(); e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(['./']))); });
             self.addEventListener('activate', e=>{ e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))).then(()=>self.clients.claim())); });
             self.addEventListener('fetch', e=>{ 
