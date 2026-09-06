@@ -2527,11 +2527,18 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         .ldt-game-label{ min-width:56px !important; margin-right:8px !important; }
 
         
+        #fortune-popup-overlay{
+            align-items:flex-start !important;
+            padding-top:20px !important;
+            overflow-y:auto !important;
+        }
         #lotto-generator-modal-overlay{
             align-items:flex-start !important;
             justify-content:center !important;
-            padding-top:20px !important;
+            padding-top:12px !important;
+            padding-bottom:20px !important;
             overflow-y:auto !important;
+            display:none;
         }
         #lotto-generator-modal-overlay.active{
             display:flex !important;
@@ -2540,10 +2547,9 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         .lotto-generator-card{
             margin:0 auto !important;
             margin-top:0 !important;
-            padding-top:18px !important;
-            max-height:none !important;
-            overflow:visible !important;
         }
+        #ldt-fav-grid2{ display:grid !important; }
+        .ldt-fav-box{ display:block !important; }
 
         /* === V209 로또 - 팝업 안 풀기능 === */
         .lotto-section { margin-top:18px; background: linear-gradient(165deg, rgba(35,38,74,0.6), rgba(20,21,43,0.8)); border:1px solid rgba(255,255,255,0.1); border-radius:18px; padding:16px; }
@@ -2947,7 +2953,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 
 <!-- 🎱 사주기반 로또 생성기 (V210) -->
 <div class="modal-overlay" id="lotto-generator-modal-overlay" style="display:none;" onclick="handleLottoGeneratorModalBackgroundClick(event)">
-  <div class="lotto-generator-card" id="lotto-generator-card" onclick="event.stopPropagation()" style="width:100%; max-width:460px; max-height:92vh; overflow-y:auto; border-radius:22px; padding:22px 18px 20px; background:linear-gradient(165deg, #23264A 0%, #171933 60%, #14152B 100%); border:1px solid rgba(255,255,255,0.12); box-shadow:0 20px 50px rgba(0,0,0,0.5); position:relative; touch-action:pan-y pinch-zoom;">
+  <div class="lotto-generator-card" id="lotto-generator-card" onclick="event.stopPropagation()" style="width:100%; max-width:460px; margin:0 auto; border-radius:22px; padding:22px 18px 20px; background:linear-gradient(165deg, #23264A 0%, #171933 60%, #14152B 100%); border:1px solid rgba(255,255,255,0.12); box-shadow:0 20px 50px rgba(0,0,0,0.5); position:relative;">
     <button class="fortune-popup-close" onclick="closeLottoGeneratorModal()" style="position:absolute; top:14px; right:14px; background:rgba(255,255,255,0.1); border:none; color:#F2EFFF; width:30px; height:30px; border-radius:50%;">✖</button>
     <div style="text-align:center; margin-bottom:14px;">
       <div style="display:inline-flex; align-items:center; gap:6px; font-size:18px; font-weight:900; letter-spacing:-0.02em; color:#2A2340; background:linear-gradient(120deg, #FFD98E, #FF9AC2); padding:10px 22px; border-radius:999px; box-shadow:0 4px 12px rgba(255,154,194,0.3);">🎱 사주기반 로또 생성기</div>
@@ -2980,9 +2986,9 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 <label style="font-size:12px; display:flex; align-items:center; gap:6px;"><input type="checkbox" id="ldt-no-consec2"> 연속 3개 이상 제외</label>
             </div>
         </div>
-        <div class="ldt-fav-box" style="margin-top:12px;">
+        <div class="ldt-fav-box" style="margin-top:12px; display:block !important;">
             <div class="ldt-fav-label">🎯 고정하고 싶은 번호 (선택)</div>
-            <div class="ldt-fav-grid" id="ldt-fav-grid2"></div>
+            <div class="ldt-fav-grid" id="ldt-fav-grid2" style="display:grid; grid-template-columns:repeat(6,1fr); gap:6px; margin-top:8px;"></div>
             <div style="text-align:center; margin-top:8px;"><button onclick="clearFixedNumbers2()" style="background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.2); padding:6px 12px; border-radius:8px; font-size:12px;">🧹 고정수 지우기</button></div>
         </div>
         <div id="ldt-manual-story2" class="fp-lotto-note" style="display:none; margin-top:10px;"></div>
@@ -2991,8 +2997,13 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             <button onclick="sajuGenerateNewLottoManual2()" style="flex:1; background:linear-gradient(120deg, #FFD98E, #FF9AC2); color:#2A2340; border:none; padding:12px; border-radius:12px; font-weight:800; font-size:14px;">🎱 번호 생성</button>
             <button onclick="resetManualResults2()" style="flex:1; background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.2); padding:12px; border-radius:12px; font-weight:700; font-size:13px;">↺ 결과 초기화</button>
         </div>
+        <div style="margin-top:14px;">
+            <button onclick="closeLottoGeneratorModal()" style="width:100%; background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.2); padding:14px; border-radius:14px; font-weight:800; font-size:15px;">종료</button>
+        </div>
     </div>
   </div>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -6625,11 +6636,14 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     function openLottoGeneratorModal(){
         const overlay = document.getElementById('lotto-generator-modal-overlay');
         if(!overlay) return;
-        // 기존 운세 팝업이 열려있으면 닫지 않고 위에 겹쳐서 보여주기 (z-index 높임)
         overlay.classList.add('active');
         overlay.style.display='flex';
         overlay.style.zIndex = '1200';
+        overlay.style.alignItems='flex-start';
+        overlay.style.justifyContent='center';
+        overlay.style.paddingTop='12px';
         lockBodyScroll();
+        try{ if(typeof renderFavGrid2==='function') renderFavGrid2(); }catch(e){}
         try{ renderAccumulated2(); }catch(e){}
         try{ renderLottoWeeklyBox2(); }catch(e){}
         try{ renderLottoWeeklyBox(); }catch(e){}
