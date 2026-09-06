@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 V213 SINGLE - 로또 버튼 위치 조정</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"><title>다이어리&가계부 V213 SINGLE - 로또 버튼 위치 조정</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -2681,26 +2681,6 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             position:sticky !important;
             bottom:0 !important;
         }
-
-
-        /* V248 - 가로모드 일자만 키우기, 나머지는 건드리지 않음 */
-        @media (orientation: landscape) {
-            .cal-cell span{ font-size:18px !important; }
-        }
-
-
-        /* V249 - 가로 일자만 키우기 + 빈칸 방지 */
-        @media (orientation: landscape) {
-            .cal-cell span{ font-size:17px !important; }
-            .calendar-grid{ gap:2px !important; }
-        }
-        /* 세로 확실한 리셋 */
-        @media (orientation: portrait) {
-            .cal-cell span{ font-size:calc(var(--base-font-size) + 2px) !important; }
-            .calendar-grid{ gap:4px !important; }
-        }
-        /* 핀치줌으로 커지는 것 방지 */
-        html, body{ touch-action: manipulation; }
 
 </style></head>
 <body>
@@ -9262,38 +9242,6 @@ async function showPhotosForDate(dateStr){
 
 <script>
 // V195: 중복 autoResize 제거 - 첫 번째 IIFE에서 통합 처리
-</script>
-
-
-<script>
-// V249 - 가로/세로 회전 시 확대/빈칸 버그 방지
-(function(){
-  // 뷰포트 고정
-  let vp = document.querySelector('meta[name="viewport"]');
-  if(vp){
-    vp.setAttribute('content','width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
-  }
-  // 회전 시 확대 초기화
-  window.addEventListener('orientationchange', function(){
-    setTimeout(function(){
-      document.body.style.zoom = '1';
-      window.scrollTo(0,1);
-      // 강제 리플로우로 달력 원래 크기로
-      let grid = document.querySelector('.calendar-grid');
-      if(grid){ grid.style.display='none'; grid.offsetHeight; grid.style.display=''; }
-    }, 200);
-  });
-  // 핀치 줌 방지 (요일 칸 벌어짐 방지)
-  document.addEventListener('touchmove', function(e){
-    if(e.touches.length > 1){ e.preventDefault(); }
-  }, {passive:false});
-  let lastTouch = 0;
-  document.addEventListener('touchend', function(e){
-    let now = Date.now();
-    if(now - lastTouch <= 300){ e.preventDefault(); }
-    lastTouch = now;
-  }, {passive:false});
-})();
 </script>
 
 </body>
