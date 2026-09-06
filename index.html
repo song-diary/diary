@@ -2517,6 +2517,37 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         .fp-prescription-hidden{display:none !important;}
         
         /* === V209 로또 - 팝업 안 풀기능 === */
+
+        .ldt-game { 
+            background:rgba(255,255,255,0.06); 
+            border:1px solid rgba(255,255,255,0.08); 
+            border-radius:14px; 
+            padding:10px 12px; 
+            margin-top:8px; 
+            display:flex; 
+            align-items:center; 
+            gap:10px;
+            flex-wrap:nowrap;
+        }
+        .ldt-game-label { 
+            font-size:12.5px; 
+            font-weight:700; 
+            color:#C7B8FF; 
+            margin-bottom:0; 
+            white-space:nowrap; 
+            min-width:44px;
+        }
+        .lotto-balls-row { 
+            display:flex; 
+            align-items:center; 
+            gap:4px; 
+            flex-wrap:nowrap; 
+            overflow-x:auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .lotto-balls-row::-webkit-scrollbar { display:none; }
+        .lotto-ball { flex-shrink:0; }
+
         .lotto-section { margin-top:18px; background: linear-gradient(165deg, rgba(35,38,74,0.6), rgba(20,21,43,0.8)); border:1px solid rgba(255,255,255,0.1); border-radius:18px; padding:16px; }
         .lotto-section-title { font-size:14.5px; font-weight:800; color:#FFD98E; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
         .lotto-balls-row { display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
@@ -2528,7 +2559,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         .ldt-input::placeholder { color:rgba(242,239,255,0.3); }
         .ldt-input.ldt-error { border-color:#FF7272; background:rgba(255,114,114,0.1); }
         .ldt-error-msg { display:none; color:#FF9A9A; font-size:12.5px; font-weight:700; margin-top:8px; text-align:center; }
-        .ldt-game { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:12px 14px; margin-top:10px; }
+        
         .ldt-game-label { font-size:12.5px; font-weight:700; color:#C7B8FF; margin-bottom:8px; }
         .ldt-game .lotto-ball.ldt-fav-ball { box-shadow:0 0 0 2px #FFD98E, 0 0 10px rgba(255,217,142,0.5); }
         .ldt-empty { text-align:center; color:rgba(242,239,255,0.4); font-size:13.5px; padding:12px 0; }
@@ -2933,15 +2964,27 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             <div id="lotto-best-detail" style="font-size:13px; color:#F2EFFF; line-height:1.5;"></div>
         </div>
 
-        <div class="use-saju-row">
-            <label><input type="checkbox" id="ldt-use-my-saju2" checked> ✨ 내 사주 반영 (내 일간·용신 가중)</label>
-            <select id="ldt-new-game-count2">
-                <option value="1">1게임</option>
-                <option value="2">2게임</option>
-                <option value="3">3게임</option>
-                <option value="4">4게임</option>
-                <option value="5" selected>5게임</option>
-            </select>
+        <div class="use-saju-row" style="flex-direction:column; align-items:stretch;">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+                <label><input type="checkbox" id="ldt-use-my-saju2" checked> ✨ 내 사주 반영</label>
+                <select id="ldt-new-game-count2">
+                    <option value="1">1게임</option>
+                    <option value="2">2게임</option>
+                    <option value="3">3게임</option>
+                    <option value="4">4게임</option>
+                    <option value="5" selected>5게임</option>
+                </select>
+            </div>
+            <div style="display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;">
+                <select id="ldt-filter-mode2" style="flex:1; min-width:120px; background:#222; color:#fff; border:1px solid #555; border-radius:8px; padding:7px; font-size:12.5px;">
+                    <option value="all">🎲 전체 랜덤 (기본)</option>
+                    <option value="gte10">🔟 10 이상만 (10~45)</option>
+                    <option value="gte20">2️⃣0️⃣ 20 이상만 (20~45)</option>
+                    <option value="high4">⬆️ 고번호 위주 (30~45에서 4개↑)</option>
+                    <option value="oddEven33">⚖️ 홀짝 3:3 밸런스</option>
+                    <option value="noConsec">🚫 연속번호 제외 + 용신강화</option>
+                </select>
+            </div>
         </div>
 
         <div class="ldt-fav-box">
@@ -6427,12 +6470,97 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         for(let k=0;k<5;k++){ pool.add(((best.score* (k+1) + best.year*7 + k*13) %45)+1); }
         return pool;
     }
-    function sajuGenerateWithFixedGuaranteed(favs, best, gameIdx){
+    function sajuGenerateWithFixedGuaranteed(favs, best, gameIdx, filterMode){
         let h2=2166136261; const seed=getTodayStr()+'_'+best.year+'_'+best.gan+'_'+best.timeBranch+'_'+best.genSeed+'_G'+gameIdx+'_'+(Date.now()+gameIdx*7919+Math.random()*10000); for(let i=0;i<seed.length;i++){ h2^=seed.charCodeAt(i); h2=Math.imul(h2,16777619);} h2>>>=0; let s2=h2; const rng=function(){ s2=(s2*1664525+1013904223)>>>0; return s2/4294967296; };
         const poolBase=sajuBuildLottoPool(best); const pool=new Set(poolBase); pool.add((parseInt(String(best.genSeed).replace(/[^0-9]/g,'').slice(-4)||'1234')+gameIdx*13)%45+1); pool.add(((best.year+best.timeIdx+gameIdx*7)%45)+1);
-        const fixed=(favs||[]).filter(n=>n>=1&&n<=45); const candidates=Array.from(pool).filter(n=>!fixed.includes(n));
+        const fixed=(favs||[]).filter(n=>n>=1&&n<=45);
+        let candidates=Array.from(pool).filter(n=>!fixed.includes(n));
+        // 필터 모드 적용
+        const mode = filterMode || (document.getElementById('ldt-filter-mode2') ? document.getElementById('ldt-filter-mode2').value : 'all');
+        if(mode==='gte10'){
+            candidates = candidates.filter(n=>n>=10);
+            // pool이 부족하면 10~45 전체로 보충
+            if(candidates.length < (6-fixed.length)){
+                for(let n=10;n<=45;n++) if(!fixed.includes(n) && !candidates.includes(n)) candidates.push(n);
+            }
+        } else if(mode==='gte20'){
+            candidates = candidates.filter(n=>n>=20);
+            if(candidates.length < (6-fixed.length)){
+                for(let n=20;n<=45;n++) if(!fixed.includes(n) && !candidates.includes(n)) candidates.push(n);
+            }
+        }
         for(let i=candidates.length-1;i>0;i--){ const j=Math.floor(rng()*(i+1)); [candidates[i],candidates[j]]=[candidates[j],candidates[i]]; }
-        const need=6-fixed.length; const picked=candidates.slice(0, need); const result=[...fixed, ...picked].sort((a,b)=>a-b); while(result.length<6){ const n=Math.floor(rng()*45)+1; if(!result.includes(n)) result.push(n); result.sort((a,b)=>a-b); } return result;
+        let need=6-fixed.length; let picked=candidates.slice(0, need);
+        let result=[...fixed, ...picked].sort((a,b)=>a-b);
+        while(result.length<6){ 
+            let n; 
+            if(mode==='gte10') n=Math.floor(rng()*36)+10;
+            else if(mode==='gte20') n=Math.floor(rng()*26)+20;
+            else n=Math.floor(rng()*45)+1;
+            if(!result.includes(n)) result.push(n); 
+            result.sort((a,b)=>a-b); 
+        }
+        // 추가 필터: 고번호 위주, 홀짝, 연속제외
+        const tryApplyAdvancedFilter = (arr)=>{
+            if(mode==='high4'){
+                let high = arr.filter(n=>n>=30).length;
+                let attempts=0;
+                while(high<4 && attempts<50){
+                    // 30~45에서 랜덤으로 교체
+                    const idx = arr.findIndex(n=>n<30 && !fixed.includes(n));
+                    if(idx===-1) break;
+                    let nn; do{ nn=Math.floor(rng()*16)+30; }while(arr.includes(nn));
+                    arr[idx]=nn; arr.sort((a,b)=>a-b); high=arr.filter(n=>n>=30).length; attempts++;
+                }
+            } else if(mode==='oddEven33'){
+                let odd = arr.filter(n=>n%2===1).length;
+                let attempts=0;
+                while((odd!==3) && attempts<80){
+                    if(odd>3){
+                        const idx = arr.findIndex(n=>n%2===1 && !fixed.includes(n));
+                        if(idx===-1) break;
+                        let nn; do{ nn=Math.floor(rng()*22)*2+2; }while(arr.includes(nn));
+                        arr[idx]=nn;
+                    } else {
+                        const idx = arr.findIndex(n=>n%2===0 && !fixed.includes(n));
+                        if(idx===-1) break;
+                        let nn; do{ nn=Math.floor(rng()*23)*2+1; }while(arr.includes(nn));
+                        arr[idx]=nn;
+                    }
+                    arr.sort((a,b)=>a-b); odd=arr.filter(n=>n%2===1).length; attempts++;
+                }
+            } else if(mode==='noConsec'){
+                let attempts=0;
+                while(attempts<100){
+                    let hasConsec=false;
+                    for(let i=0;i<arr.length-1;i++){ if(arr[i+1]-arr[i]===1){ hasConsec=true; break; } }
+                    if(!hasConsec) break;
+                    // 연속된 것 중 하나 교체
+                    for(let i=0;i<arr.length-1;i++){
+                        if(arr[i+1]-arr[i]===1 && !fixed.includes(arr[i+1])){
+                            let nn; do{ nn=Math.floor(rng()*45)+1; }while(arr.includes(nn) || arr.includes(nn-1) || arr.includes(nn+1));
+                            arr[i+1]=nn; arr.sort((a,b)=>a-b); break;
+                        }
+                    }
+                    attempts++;
+                }
+                // 용신 강화: best가 있으면 용신 오행 번호로 1개 교체
+                if(best && best.useful && best.useful.elem){
+                    const mapElemNums = { '목':[3,8,13,23,33,43], '화':[2,7,12,22,32,42], '토':[5,10,15,25,35,45], '금':[4,9,14,24,34,44], '수':[1,6,11,21,31,41] };
+                    const usefulNums = mapElemNums[best.useful.elem] || mapElemNums[best.useful] || [];
+                    if(usefulNums.length>0 && !arr.some(n=>usefulNums.includes(n))){
+                        const idx = arr.findIndex(n=>!fixed.includes(n));
+                        if(idx!==-1){
+                            const pick = usefulNums[Math.floor(rng()*usefulNums.length)];
+                            if(!arr.includes(pick)){ arr[idx]=pick; arr.sort((a,b)=>a-b); }
+                        }
+                    }
+                }
+            }
+            return arr;
+        };
+        result = tryApplyAdvancedFilter(result);
+        return result;
     }
     function sajuGetMondayOfWeek(dateStr) {
         const d = parseDateObj(dateStr);
@@ -6664,7 +6792,8 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             const favs = ldtGetFavoriteNumbers2();
             const best = sajuGetBestGwainForLotto();
             const allGames = [];
-            for (let g = 0; g < cnt; g++) allGames.push(sajuGenerateWithFixedGuaranteed(favs, best, g));
+            const filterMode = document.getElementById('ldt-filter-mode2') ? document.getElementById('ldt-filter-mode2').value : (document.getElementById('ldt-filter-mode') ? document.getElementById('ldt-filter-mode').value : 'all');
+            for (let g = 0; g < cnt; g++) allGames.push(sajuGenerateWithFixedGuaranteed(favs, best, g, filterMode));
 
             const resultsEl = document.getElementById('ldt-manual-results2');
             const storyEl = document.getElementById('ldt-manual-story2');
@@ -6698,7 +6827,8 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             const favs = ldtGetFavoriteNumbers();
             const best = sajuGetBestGwainForLotto();
             const allGames = [];
-            for (let g = 0; g < cnt; g++) allGames.push(sajuGenerateWithFixedGuaranteed(favs, best, g));
+            const filterMode = document.getElementById('ldt-filter-mode2') ? document.getElementById('ldt-filter-mode2').value : 'all';
+            for (let g = 0; g < cnt; g++) allGames.push(sajuGenerateWithFixedGuaranteed(favs, best, g, filterMode));
 
             const resultsEl = document.getElementById('ldt-manual-results');
             const storyEl = document.getElementById('ldt-manual-story');
