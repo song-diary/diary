@@ -3016,28 +3016,20 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     </div>
     <div class="lotto-section" style="margin-top:0; background:rgba(255,255,255,0.05);">
         <div class="lotto-section-title">🔮 100만명 사주분석(최고사주 기반 추천번호)</div>
-        
+
         <div id="lotto-6month-analysis" style="margin:12px 0; background:rgba(255,255,255,0.06); border:1px solid rgba(255,217,142,0.25); border-radius:14px; padding:12px;">
           <div style="font-size:13px; font-weight:800; color:#FFD98E; margin-bottom:8px;">📊 9/5(1240회) 6개월 과학적 통계 분석</div>
           <div style="font-size:11px; color:#ccc; line-height:1.5;">
-            <div>• 1240회: 11,13,19,20,31,44 (합 138, 홀4:짝2, 11~20 4개 몰빵)</div>
-            <div>• 6개월 Hot: 27(5회), 30/1/17/38/31(3회)</div>
+            <div>• 1240회: 11,13,19,20,31,44 (합 138)</div>
+            <div>• Hot: 27(5회), 30/1/17/38/31(3회)</div>
             <div>• Cold 해소: 44는 10회 미출현 후 터짐</div>
-            <div>• 구간 쏠림 보정 필요 → 다음주는 분산 예상</div>
           </div>
           <div style="margin-top:8px; display:flex; gap:6px;">
-            <button id="btn-apply-6month" type="button" style="flex:1; background:rgba(255,217,142,0.2); border:1px solid rgba(255,217,142,0.4); color:#FFD98E; padding:8px; border-radius:10px; font-size:12px; font-weight:700; cursor:pointer;">📈 6개월 통계 필터 적용</button>
+            <button id="btn-apply-6month" type="button" style="flex:1; background:rgba(255,217,142,0.2); border:1px solid rgba(255,217,142,0.4); color:#FFD98E; padding:8px; border-radius:10px; font-size:12px; font-weight:700; cursor:pointer;">📈 통계 필터 적용</button>
             <button id="btn-detail-6month" type="button" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:8px 12px; border-radius:10px; font-size:11px; cursor:pointer;">자세히</button>
           </div>
           <div id="lotto-6month-detail" style="display:none; margin-top:10px; font-size:11px; color:#ddd; background:rgba(0,0,0,0.2); padding:10px; border-radius:10px; line-height:1.6;">
-            <b>과학적 통계 접근 7가지 기준:</b><br>
-            1) 합계 130~160 필터 (6개월 평균 138.3 수렴)<br>
-            2) 홀짝 3:3 균형 (직전 4:2 → 보정)<br>
-            3) 구간 분산: 1~10 1개, 11~20 1~2개, 21~30 2개, 31~45 2~3개<br>
-            4) 연속수 1쌍 포함 (6개월 60% 패턴)<br>
-            5) Hot(27,30,1,17,38,31) 중 1개 + Cold(2,9,5,14 등) 중 1개 포함<br>
-            6) 끝수 중복 0~1개 제한<br>
-            7) 사주 길수 2개 + 통계 필터 4개 결합<br>
+            <b>과학적 통계 7가지 기준:</b><br>1) 합계 130~160<br>2) 홀짝 3:3<br>3) 구간 분산<br>4) 연속 1쌍<br>5) Hot+Cold<br>6) 끝수 중복 제한<br>7) 사주 길수 결합
           </div>
           <div id="lotto-6month-log" style="display:none; margin-top:8px; font-size:11px; color:#FFD98E; background:rgba(0,0,0,0.3); padding:8px; border-radius:8px;"></div>
         </div>
@@ -9272,84 +9264,40 @@ async function showPhotosForDate(dateStr){
 
 
 <script>
-// V253 - 6개월 과학적 통계 필터 - 완전 재작성
 (function(){
-  function init6Month(){
-    const btnApply = document.getElementById('btn-apply-6month');
-    const btnDetail = document.getElementById('btn-detail-6month');
-    const detail = document.getElementById('lotto-6month-detail');
-    const log = document.getElementById('lotto-6month-log');
-    if(!btnApply) return;
-    
-    btnDetail?.addEventListener('click', function(){
-      if(!detail) return;
-      detail.style.display = detail.style.display==='none' ? 'block' : 'none';
+  function init6(){
+    var btnA=document.getElementById('btn-apply-6month');
+    var btnD=document.getElementById('btn-detail-6month');
+    var det=document.getElementById('lotto-6month-detail');
+    var log=document.getElementById('lotto-6month-log');
+    if(!btnA) return;
+    if(btnA._inited) return;
+    btnA._inited=true;
+    btnD.addEventListener('click', function(){
+      if(!det) return;
+      det.style.display = det.style.display==='none' ? 'block' : 'none';
     });
-    
-    btnApply.addEventListener('click', function(){
-      const filterSel = document.getElementById('ldt-filter-mode2');
-      const noConsec = document.getElementById('ldt-no-consec2');
-      const fav1 = document.getElementById('ldt-fav1-2');
-      const fav2 = document.getElementById('ldt-fav2-2');
-      
-      if(filterSel) filterSel.value = 'oddEven33';
-      if(noConsec) noConsec.checked = true;
-      if(fav1 && !fav1.value) fav1.value = '27';
-      if(fav2 && !fav2.value) fav2.value = '2';
-      
+    btnA.addEventListener('click', function(){
+      var f=document.getElementById('ldt-filter-mode2');
+      var c=document.getElementById('ldt-no-consec2');
+      var f1=document.getElementById('ldt-fav1-2');
+      var f2=document.getElementById('ldt-fav2-2');
+      if(f) f.value='oddEven33';
+      if(c) c.checked=true;
+      if(f1 && !f1.value) f1.value='27';
+      if(f2 && !f2.value) f2.value='2';
       if(log){
-        log.style.display = 'block';
-        log.innerHTML = '✅ 6개월 통계 필터 적용됨!<br>• 홀짝 3:3 설정<br>• 연속 3개이상 제외 ON<br>• Hot 27 + Cold 2 고정 제안<br>• 합계 130~160, 구간 분산 자동 보정<br><br>아래 [🎱 번호 생성]을 눌러보세요!';
+        log.style.display='block';
+        log.innerHTML='✅ 통계 필터 적용!<br>홀짝 3:3, 연속제외 ON, Hot27 Cold2 제안<br>이제 번호생성 눌러!';
       }
-      // 살짝 진동
-      try{ navigator.vibrate && navigator.vibrate(50); }catch(e){}
     });
   }
-  
-  // 페이지 로드 후 실행
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', init6Month);
-  } else {
-    init6Month();
-  }
-  
-  // 모달 열릴 때마다 다시 초기화 (동적 생성 대응)
-  const origOpen = window.openLottoGeneratorModal;
-  if(origOpen){
-    window.openLottoGeneratorModal = function(){
-      origOpen.apply(this, arguments);
-      setTimeout(init6Month, 100);
-    };
-  }
-  
-  // 생성 로직 후킹 - 합계 필터
-  function hookGenerate(){
-    if(!window.sajuGenerateWithFixedGuaranteed) {
-      setTimeout(hookGenerate, 500);
-      return;
-    }
-    if(window._hooked6Month) return;
-    window._hooked6Month = true;
-    const orig = window.sajuGenerateWithFixedGuaranteed;
-    window.sajuGenerateWithFixedGuaranteed = function(favs, best, gameIdx, filterMode){
-      let tries = 0;
-      while(tries < 100){
-        const nums = orig.call(this, favs, best, gameIdx, filterMode);
-        if(!nums || !Array.isArray(nums)) return nums;
-        const filterSel = document.getElementById('ldt-filter-mode2');
-        const isStatMode = filterSel && filterSel.value === 'oddEven33';
-        if(isStatMode){
-          const sum = nums.reduce((a,b)=>a+b,0);
-          if(sum < 110 || sum > 170){ tries++; continue; }
-          const g2 = nums.filter(n=>n>=11 && n<=20).length;
-          if(g2 >= 4){ tries++; continue; }
-        }
-        return nums;
-      }
-      return orig.call(this, favs, best, gameIdx, filterMode);
-    };
-  }
-  hookGenerate();
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(init6, 500); });
+  var orig=window.openLottoGeneratorModal;
+  window.openLottoGeneratorModal=function(){
+    if(orig) orig.apply(this, arguments);
+    setTimeout(init6, 200);
+  };
 })();
 </script>
 
