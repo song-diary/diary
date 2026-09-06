@@ -2516,6 +2516,11 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         .fp-save-btn-hidden{display:none !important;}
         .fp-prescription-hidden{display:none !important;}
         
+        
+        #ldt-no-consec-toggle:checked + #ldt-no-consec-slider { background:#9C6ADE; }
+        #ldt-no-consec-slider:before { content:''; position:absolute; width:18px; height:18px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:0.2s; }
+        #ldt-no-consec-toggle:checked + #ldt-no-consec-slider:before { transform:translateX(20px); }
+
         /* === V209 로또 - 팝업 안 풀기능 === */
         .lotto-section { margin-top:18px; background: linear-gradient(165deg, rgba(35,38,74,0.6), rgba(20,21,43,0.8)); border:1px solid rgba(255,255,255,0.1); border-radius:18px; padding:16px; }
         .lotto-section-title { font-size:14.5px; font-weight:800; color:#FFD98E; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
@@ -2933,52 +2938,32 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             <div id="lotto-best-detail" style="font-size:13px; color:#F2EFFF; line-height:1.5;"></div>
         </div>
 
-                <div class="use-saju-row" style="flex-direction:column;"><div style="display:flex;justify-content:space-between;"><label><input type="checkbox" id="ldt-use-my-saju2" checked> ✨ 내 사주 반영</label><select id="ldt-new-game-count2"><option value="1">1게임</option><option value="2">2게임</option><option value="3">3게임</option><option value="4">4게임</option><option value="5" selected>5게임</option></select></div><div style="margin-top:8px;"><select id="ldt-filter-mode2" style="width:100%; background:#222; color:#fff; border:1px solid #555; border-radius:8px; padding:7px;"><option value="all">🎲 전체 랜덤</option><option value="gte10">🔟 10 이상만</option><option value="gte20">2️⃣0️⃣ 20 이상만</option><option value="high4">⬆️ 고번호 위주</option><option value="oddEven33">⚖️ 홀짝 3:3</option><option value="noConsec">🚫 연속제외+용신</option></select></div></div>
-        <div class="use-saju-row" >
-            <label><input type="checkbox" id="ldt-use-my-saju2" checked> ✨ 내 사주 반영 (내 일간·용신 가중)</label>
-            <select id="ldt-new-game-count2">
-                <option value="1">1게임</option>
-                <option value="2">2게임</option>
-                <option value="3">3게임</option>
-                <option value="4">4게임</option>
-                <option value="5" selected>5게임</option>
-            </select>
-        </div>
-
-        <div class="ldt-fav-box">
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
-                <div class="ldt-fav-label" style="margin-bottom:0;">🎯 고정하고 싶은 번호 (선택)</div>
-                <button onclick="clearFixedNumbers2()" style="font-size:11.5px; color:rgba(242,239,255,0.6); background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); padding:4px 10px; border-radius:999px; cursor:pointer;">지우기</button>
+                        <div class="use-saju-row" style="flex-direction:column; gap:8px; background:rgba(255,255,255,0.04); padding:10px; border-radius:10px;">
+            <div style="display:flex; align-items:center; justify-content:space-between;">
+                <label style="font-size:13px;"><input type="checkbox" id="ldt-use-my-saju2" checked> ✨ 내 사주 반영 <span style="font-size:11px; color:#aaa;">(내 기운 기반)</span></label>
+                <select id="ldt-new-game-count2" style="background:#222; color:#fff; border:1px solid #555; border-radius:8px; padding:6px 10px;">
+                    <option value="1">1게임</option>
+                    <option value="2">2게임</option>
+                    <option value="3">3게임</option>
+                    <option value="4">4게임</option>
+                    <option value="5" selected>5게임</option>
+                </select>
             </div>
-            <div class="ldt-fav-grid">
-                <input type="number" id="ldt-fav1-2" class="ldt-input" placeholder="고정1" min="1" max="45" oninput="ldtValidateInputs2()">
-                <input type="number" id="ldt-fav2-2" class="ldt-input" placeholder="고정2" min="1" max="45" oninput="ldtValidateInputs2()">
-                <input type="number" id="ldt-fav3-2" class="ldt-input" placeholder="고정3" min="1" max="45" oninput="ldtValidateInputs2()">
-                <input type="number" id="ldt-fav4-2" class="ldt-input" placeholder="고정4" min="1" max="45" oninput="ldtValidateInputs2()">
-                <input type="number" id="ldt-fav5-2" class="ldt-input" placeholder="고정5" min="1" max="45" oninput="ldtValidateInputs2()">
-                <input type="number" id="ldt-fav6-2" class="ldt-input" placeholder="고정6" min="1" max="45" oninput="ldtValidateInputs2()">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:4px;">
+                <span style="font-size:12.5px; color:#ccc;">번호 조건</span>
+                <select id="ldt-filter-mode2" style="flex:1; margin-left:8px; background:#222; color:#fff; border:1px solid #555; border-radius:8px; padding:7px; font-size:12.5px;">
+                    <option value="all">🎲 전체 랜덤 (기본)</option>
+                    <option value="gte10">🔟 10 이상만 (10~45)</option>
+                    <option value="gte20">2️⃣0️⃣ 20 이상만 (20~45)</option>
+                    <option value="high4">⬆️ 고번호 위주 (30~45에서 4개↑)</option>
+                    <option value="oddEven33">⚖️ 홀짝 3:3 밸런스</option>
+                </select>
             </div>
-            <div id="ldt-error-msg2" class="ldt-error-msg"></div>
-        </div>
-
-        <div class="btn-row">
-            <button class="btn" onclick="sajuGenerateNewLottoManual2()" style="flex:1;">🎱 번호생성</button>
-            <button class="btn btn-secondary" onclick="resetManualResults2()" style="flex:1;">↺ 초기화</button>
-        </div>
-
-        <div id="ldt-manual-story2" class="fp-lotto-note" style="display:none; margin-top:10px;"></div>
-        <div id="ldt-manual-results2" style="margin-top:6px;"><div class="ldt-empty">고정수 선택 → 게임수 선택 → 생성하기!</div></div>
-
-        <div class="ldt-week-box">
-            <div style="font-size:12.5px; font-weight:700; color:#C7B8FF; margin-bottom:6px;">📅 이번주 행운번호 누적 (월요일 리셋)</div>
-            <div id="ldt-week-area2"></div>
-        </div>
-        <div style="margin-top:8px; text-align:center; display:flex; gap:8px; justify-content:center;">
-<button class="btn btn-secondary" style="width:100%; padding:12px; font-size:14px; border-radius:12px;" onclick="closeLottoGeneratorModal()">종료</button>
-            
-        </div>
-    </div>
-  </div>
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-top:4px; background:rgba(255,255,255,0.03); padding:6px 8px; border-radius:8px;">
+                <label style="font-size:12.5px; display:flex; align-items:center; gap:6px;"><span>🚫 연속번호 제외</span><span style="font-size:10px; color:#999;">(11,12 같은 붙은 번호 안 나오게)</span></label>
+                <label style="position:relative; display:inline-block; width:44px; height:24px;"><input type="checkbox" id="ldt-no-consec-toggle" style="opacity:0; width:0; height:0;"><span id="ldt-no-consec-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:#444; border-radius:999px; transition:0.2s;"></span></label>
+            </div>
+        </div></div>
 </div>
 
 <!-- 📜 나의 사주 풀이 모달 -->
@@ -6434,6 +6419,9 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         const fixed=(favs||[]).filter(n=>n>=1&&n<=45);
         let candidates=Array.from(pool).filter(n=>!fixed.includes(n));
         const mode = filterMode || 'all';
+        const noConsecToggle = document.getElementById('ldt-no-consec-toggle');
+        const noConsecOn = noConsecToggle ? noConsecToggle.checked : false;
+        if(noConsecOn && mode==='all'){ /* 연속제외 토글 ON이면 all이어도 연속제외 적용 */ }
         if(mode==='gte10'){ candidates=candidates.filter(n=>n>=10); if(candidates.length<6) for(let n=10;n<=45;n++) if(!candidates.includes(n) && !fixed.includes(n)) candidates.push(n); }
         if(mode==='gte20'){ candidates=candidates.filter(n=>n>=20); if(candidates.length<6) for(let n=20;n<=45;n++) if(!candidates.includes(n) && !fixed.includes(n)) candidates.push(n); }
         for(let i=candidates.length-1;i>0;i--){ const j=Math.floor(rng()*(i+1)); [candidates[i],candidates[j]]=[candidates[j],candidates[i]]; }
@@ -6441,6 +6429,12 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         while(result.length<6){ let n=mode==='gte10'?Math.floor(rng()*36)+10:mode==='gte20'?Math.floor(rng()*26)+20:Math.floor(rng()*45)+1; if(!result.includes(n)) result.push(n); result.sort((a,b)=>a-b); }
         if(mode==='high4'){ let high=result.filter(n=>n>=30).length,at=0; while(high<4&&at<50){ let idx=result.findIndex(n=>n<30&&!fixed.includes(n)); if(idx<0) break; let nn; do{nn=Math.floor(rng()*16)+30;}while(result.includes(nn)); result[idx]=nn; result.sort((a,b)=>a-b); high=result.filter(n=>n>=30).length; at++; } }
         if(mode==='oddEven33'){ let odd=result.filter(n=>n%2).length,at=0; while(odd!==3&&at<80){ if(odd>3){ let idx=result.findIndex(n=>n%2&&!fixed.includes(n)); if(idx<0) break; let nn; do{nn=Math.floor(rng()*22)*2+2;}while(result.includes(nn)); result[idx]=nn; }else{ let idx=result.findIndex(n=>!(n%2)&&!fixed.includes(n)); if(idx<0) break; let nn; do{nn=Math.floor(rng()*23)*2+1;}while(result.includes(nn)); result[idx]=nn; } result.sort((a,b)=>a-b); odd=result.filter(n=>n%2).length; at++; } }
+        // 연속번호 제외 토글 ON이면 추가 적용
+        const noConsecToggle2 = document.getElementById('ldt-no-consec-toggle');
+        const shouldNoConsec = (noConsecToggle2 && noConsecToggle2.checked) || mode==='noConsec';
+        if(shouldNoConsec){
+            let at=0; while(at<100){ let has=false; for(let i=0;i<result.length-1;i++) if(result[i+1]-result[i]===1){ has=true; break; } if(!has) break; for(let i=0;i<result.length-1;i++){ if(result[i+1]-result[i]===1 && !fixed.includes(result[i+1])){ let nn; do{ nn=Math.floor(rng()*45)+1; }while(result.includes(nn) || result.includes(nn-1) || result.includes(nn+1)); result[i+1]=nn; result.sort((a,b)=>a-b); break; } } at++; }
+        }
         return result;
     }
     function sajuGetMondayOfWeek(dateStr) {
@@ -6517,7 +6511,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                     usefulGod = sajuGetUsefulGod ? sajuGetUsefulGod(sajuPillars, myElem, myStrength) : null;
                 }catch(e){}
             }
-            // 용신 오행 매핑
+            // 행운기운 오행 매핑
             const usefulElemMap = {'목':'목','화':'화','토':'토','금':'금','수':'수'};
             const ganElem = {'甲':'목','乙':'목','丙':'화','丁':'화','戊':'토','己':'토','庚':'금','辛':'금','壬':'수','癸':'수'};
             const branchElem = {'寅':'목','卯':'목','巳':'화','午':'화','辰':'토','戌':'토','丑':'토','未':'토','申':'금','酉':'금','亥':'수','子':'수'};
@@ -6537,9 +6531,9 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 let sc=(baseScore[tg]||70)+Math.floor(rngSat()*20)+(timeBonus[tb]||0);
                 // 내 사주 기반 가산점
                 if(finalUse && myGan){
-                    // 1) 내 일간과 같은 간이면 +10 (비견=내 편)
+                    // 1) 나를 나타내는 기운과 같은 간이면 +10 (비견=내 편)
                     if(gan===myGan) sc+=12;
-                    // 2) 용신 오행과 귀인 간/지지 오행이 같으면 +15
+                    // 2) 행운기운 오행과 귀인 간/지지 오행이 같으면 +15
                     if(usefulGod){
                         const uElem = usefulGod.elem || usefulGod;
                         if(ganElem[gan]===uElem) sc+=15;
@@ -6906,9 +6900,9 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 <div class="lotto-section" id="lotto-section-in-fortune" >
                 <div class="lotto-section-title">🎱 사주기반 로또 생성기</div>
                 
-                        <div class="use-saju-row" style="flex-direction:column;"><div style="display:flex;justify-content:space-between;"><label><input type="checkbox" id="ldt-use-my-saju2" checked> ✨ 내 사주 반영</label><select id="ldt-new-game-count2"><option value="1">1게임</option><option value="2">2게임</option><option value="3">3게임</option><option value="4">4게임</option><option value="5" selected>5게임</option></select></div><div style="margin-top:8px;"><select id="ldt-filter-mode2" style="width:100%; background:#222; color:#fff; border:1px solid #555; border-radius:8px; padding:7px;"><option value="all">🎲 전체 랜덤</option><option value="gte10">🔟 10 이상만</option><option value="gte20">2️⃣0️⃣ 20 이상만</option><option value="high4">⬆️ 고번호 위주</option><option value="oddEven33">⚖️ 홀짝 3:3</option><option value="noConsec">🚫 연속제외+용신</option></select></div></div>
+                        <div class="use-saju-row" style="flex-direction:column;"><div style="display:flex;justify-content:space-between;"><label><input type="checkbox" id="ldt-use-my-saju2" checked> ✨ 내 사주 반영</label><select id="ldt-new-game-count2"><option value="1">1게임</option><option value="2">2게임</option><option value="3">3게임</option><option value="4">4게임</option><option value="5" selected>5게임</option></select></div><div style="margin-top:8px;"><select id="ldt-filter-mode2" style="width:100%; background:#222; color:#fff; border:1px solid #555; border-radius:8px; padding:7px;"><option value="all">🎲 전체 랜덤</option><option value="gte10">🔟 10 이상만</option><option value="gte20">2️⃣0️⃣ 20 이상만</option><option value="high4">⬆️ 고번호 위주</option><option value="oddEven33">⚖️ 홀짝 3:3</option><option value="noConsec">🚫 연속제외+행운기운</option></select></div></div>
         <div class="use-saju-row" >
-                    <label><input type="checkbox" id="ldt-use-my-saju" checked> ✨ 내 사주 반영 (30% 확률로 내 일간 포함)</label>
+                    <label><input type="checkbox" id="ldt-use-my-saju" checked> ✨ 내 사주 반영 (30% 확률로 나를 나타내는 기운 포함)</label>
                     <select id="ldt-new-game-count">
                         <option value="1">1게임</option>
                         <option value="2">2게임</option>
@@ -6941,7 +6935,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 
                 <div class="ldt-week-box">
                     <div style="font-size:12.5px; font-weight:700; color:#C7B8FF; margin-bottom:6px;">📅 이번주 행운번호 누적 (월요일마다 리셋)</div>
-                    <div id="ldt-week-area"></div>
+                    <div id="ldt-week-area" style="display:none;"></div>
                 </div>
                 <div style="margin-top:8px; text-align:center;">
                     <button class="btn btn-secondary" style="font-size:12px; padding:6px 12px;" onclick="resetManualResults()">↺ 결과 초기화</button>
