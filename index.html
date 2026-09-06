@@ -2528,7 +2528,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         .ldt-input::placeholder { color:rgba(242,239,255,0.3); }
         .ldt-input.ldt-error { border-color:#FF7272; background:rgba(255,114,114,0.1); }
         .ldt-error-msg { display:none; color:#FF9A9A; font-size:12.5px; font-weight:700; margin-top:8px; text-align:center; }
-        .ldt-game { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:12px 14px; margin-top:10px; }
+        .ldt-game { display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:12px 14px; margin-top:10px; }
         .ldt-game-label { font-size:12.5px; font-weight:700; color:#C7B8FF; margin-bottom:8px; }
         .ldt-game .lotto-ball.ldt-fav-ball { box-shadow:0 0 0 2px #FFD98E, 0 0 10px rgba(255,217,142,0.5); }
         .ldt-empty { text-align:center; color:rgba(242,239,255,0.4); font-size:13.5px; padding:12px 0; }
@@ -2665,7 +2665,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                     <button class="view-select-btn" id="diary-filter-period-all" onclick="setDiaryPeriodFilter('all')">기간별 조회</button>
                 </div>
 
-                <div id="diary-custom-period-box" class="search-row" style="display:none;">
+                <div id="diary-custom-period-box" class="search-row" >
                     <input type="date" id="diary-custom-start-date" style="flex:1;" onchange="filterDiaryCustomList()">
                     <span style="font-size:12px; font-weight:bold; color:var(--text-sub);">~</span>
                     <input type="date" id="diary-custom-end-date" style="flex:1;" onchange="filterDiaryCustomList()">
@@ -2933,7 +2933,8 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             <div id="lotto-best-detail" style="font-size:13px; color:#F2EFFF; line-height:1.5;"></div>
         </div>
 
-        <div class="use-saju-row">
+                <div class="use-saju-row" style="flex-direction:column;"><div style="display:flex;justify-content:space-between;"><label><input type="checkbox" id="ldt-use-my-saju2" checked> ✨ 내 사주 반영</label><select id="ldt-new-game-count2"><option value="1">1게임</option><option value="2">2게임</option><option value="3">3게임</option><option value="4">4게임</option><option value="5" selected>5게임</option></select></div><div style="margin-top:8px;"><select id="ldt-filter-mode2" style="width:100%; background:#222; color:#fff; border:1px solid #555; border-radius:8px; padding:7px;"><option value="all">🎲 전체 랜덤</option><option value="gte10">🔟 10 이상만</option><option value="gte20">2️⃣0️⃣ 20 이상만</option><option value="high4">⬆️ 고번호 위주</option><option value="oddEven33">⚖️ 홀짝 3:3</option><option value="noConsec">🚫 연속제외+용신</option></select></div></div>
+        <div class="use-saju-row" >
             <label><input type="checkbox" id="ldt-use-my-saju2" checked> ✨ 내 사주 반영 (내 일간·용신 가중)</label>
             <select id="ldt-new-game-count2">
                 <option value="1">1게임</option>
@@ -3024,8 +3025,8 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 <div class="photo-lightbox-overlay" id="photo-lightbox-overlay" onclick="closePhotoLightbox(event)">
     <button type="button" class="photo-lightbox-close" onclick="closePhotoLightbox(event)" title="닫기">✖</button>
     <div id="photo-lightbox-content" class="photo-lightbox-content" onclick="event.stopPropagation()">
-        <img id="photo-lightbox-img" class="photo-lightbox-img" src="" alt="사진 확대보기" oncontextmenu="return false;" ondragstart="return false;" style="display:none;">
-        <div id="photo-lightbox-memo" class="photo-lightbox-memo" style="display:none;"></div>
+        <img id="photo-lightbox-img" class="photo-lightbox-img" src="" alt="사진 확대보기" oncontextmenu="return false;" ondragstart="return false;" >
+        <div id="photo-lightbox-memo" class="photo-lightbox-memo" ></div>
         <div id="photo-lightbox-date" class="photo-lightbox-date"></div>
     </div>
 </div>
@@ -3037,7 +3038,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             <button class="close-form-btn" onclick="closeDiaryFormPanel()" title="입력창 닫기">✖</button>
         </div>
 
-        <div class="reservation-box" id="reservation-box" style="display:none;">
+        <div class="reservation-box" id="reservation-box" >
             <span style="font-size: 12px;">⏰ 알림 받을 시간:</span>
             <input type="time" id="reservation-time-input" style="border:1px solid var(--border-color); border-radius:4px; background:#fff;">
         </div>
@@ -3069,7 +3070,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 <span>❤️ 오늘의 건강 (선택사항)</span>
                 <span id="health-toggle-icon">▼</span>
             </div>
-            <div id="health-input-body" style="display:none;">
+            <div id="health-input-body" >
                 <div class="health-row">
                     <label class="health-row-label">혈압</label>
                     <input type="number" inputmode="numeric" id="health-systolic" class="health-num-input" placeholder="수축기" onfocus="scrollToInput(this)">
@@ -3138,9 +3139,9 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     <button class="btn btn-secondary" type="button" onclick="closeDiaryFormPanel()" style="width:100%; height:48px; padding:0; font-size:14px; border-radius:8px; display:flex; align-items:center; justify-content:center; background:#f0f0f0; border:1px solid var(--border-color);">종료</button>
   </div>
 </div>
-<input type="file" id="diary-photo-input-camera" accept="image/*" capture="environment" style="display:none;">
-<input type="file" id="diary-photo-input-gallery" accept="image/*" style="display:none;">
-<input type="file" id="diary-photo-input" accept="image/*" style="display:none;" onchange="previewImage(event)">
+<input type="file" id="diary-photo-input-camera" accept="image/*" capture="environment" >
+<input type="file" id="diary-photo-input-gallery" accept="image/*" >
+<input type="file" id="diary-photo-input" accept="image/*"  onchange="previewImage(event)">
     </div>
 </div>
 
@@ -6480,14 +6481,14 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     // V219 누적 + 진짜100만
     let accumulatedLottoGames2 = [];
     try{ accumulatedLottoGames2 = JSON.parse(localStorage.getItem('lottoAccumulated2') || '[]'); }catch(e){ accumulatedLottoGames2=[]; }
-    function saveAccumulated2(){ try{ localStorage.setItem('lottoAccumulated2', JSON.stringify(accumulatedLottoGames2.slice(-50))); }catch(e){} }
+    function saveAccumulated2(){ try{ localStorage.setItem('lottoAccumulated2', JSON.stringify(accumulatedLottoGames2.slice(-20))); }catch(e){} }
     function renderAccumulated2(){
         const el = document.getElementById('ldt-manual-results2');
         if(!el) return;
         if(accumulatedLottoGames2.length===0){ el.innerHTML = '<div class="ldt-empty">고정수 선택 → 게임수 선택 → 생성하기!</div>'; return; }
         let out='';
         accumulatedLottoGames2.forEach((nums,i)=>{
-            out += '<div class="ldt-game"><div class="ldt-game-label">'+(i+1)+'게임</div><div class="lotto-balls-row">'+nums.map(n=>ballHtmlLotto(n,false)).join('')+'</div><button onclick="removeAccumulatedGame2('+i+')" style="margin-left:auto; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#fff; width:26px; height:26px; border-radius:50%; font-size:11px; flex-shrink:0;">✕</button></div>';
+            out += '<div class="ldt-game"><div class="ldt-game-label">'+(i+1)+'게임</div><div class="lotto-balls-row">'+nums.map(n=>ballHtmlLotto(n,false)).join('')+'</div><button onclick="removeAccumulatedGame2('+i+')" style="margin-left:auto; position:sticky; right:0; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.15); color:#fff; width:26px; height:26px; border-radius:50%; font-size:11px; flex-shrink:0;">✕</button></div>';
         });
         el.innerHTML=out;
     }
@@ -6692,7 +6693,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 const allGames=[];
                 for(let g=0; g<cnt; g++) allGames.push(sajuGenerateWithFixedGuaranteed(favs,best,g,mode));
                 accumulatedLottoGames2.push(...allGames);
-                if(accumulatedLottoGames2.length>50) accumulatedLottoGames2 = accumulatedLottoGames2.slice(-50);
+                if(accumulatedLottoGames2.length>20) accumulatedLottoGames2 = accumulatedLottoGames2.slice(-20);
                 saveAccumulated2();
                 renderAccumulated2();
                 try{ sajuRecordTodayLottoWeekly(allGames[0]); }catch(e){}
@@ -6902,10 +6903,11 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             <div class="fp-my-saju-link-big" onclick="openSajuDetailModal()">📜 나의 사주 풀이 자세히 보기</div>
 
             <div style="margin-top:16px; text-align:center;"><button onclick="openLottoGeneratorModal()" style="width:100%; background:linear-gradient(120deg, #FFD98E, #FF9AC2); color:#2A2340; border:none; padding:14px; border-radius:14px; font-weight:800; font-size:14.5px; box-shadow:0 4px 14px rgba(255,154,194,0.25);">🎱 사주기반 로또 생성기 입장하기 →</button><div style="font-size:11.5px; color:rgba(242,239,255,0.5); margin-top:6px;">나의 사주풀이처럼 별도 방에서 풀기능으로 생성해요</div></div>
-                <div class="lotto-section" id="lotto-section-in-fortune" style="display:none;">
+                <div class="lotto-section" id="lotto-section-in-fortune" >
                 <div class="lotto-section-title">🎱 사주기반 로또 생성기</div>
                 
-                <div class="use-saju-row">
+                        <div class="use-saju-row" style="flex-direction:column;"><div style="display:flex;justify-content:space-between;"><label><input type="checkbox" id="ldt-use-my-saju2" checked> ✨ 내 사주 반영</label><select id="ldt-new-game-count2"><option value="1">1게임</option><option value="2">2게임</option><option value="3">3게임</option><option value="4">4게임</option><option value="5" selected>5게임</option></select></div><div style="margin-top:8px;"><select id="ldt-filter-mode2" style="width:100%; background:#222; color:#fff; border:1px solid #555; border-radius:8px; padding:7px;"><option value="all">🎲 전체 랜덤</option><option value="gte10">🔟 10 이상만</option><option value="gte20">2️⃣0️⃣ 20 이상만</option><option value="high4">⬆️ 고번호 위주</option><option value="oddEven33">⚖️ 홀짝 3:3</option><option value="noConsec">🚫 연속제외+용신</option></select></div></div>
+        <div class="use-saju-row" >
                     <label><input type="checkbox" id="ldt-use-my-saju" checked> ✨ 내 사주 반영 (30% 확률로 내 일간 포함)</label>
                     <select id="ldt-new-game-count">
                         <option value="1">1게임</option>
