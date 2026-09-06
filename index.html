@@ -2683,31 +2683,30 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         }
 
 
-        /* V245 - 핸드폰 옆으로 했을 때 달력 일자 크게 */
-        .cal-cell{
-            font-size:15px !important;
-        }
-        .cal-cell-inner{
-            font-size:14px !important;
-            font-weight:600 !important;
-        }
-        @media (orientation: landscape) and (max-width: 932px) {
-            .cal-cell {
-                min-height:52px !important;
+        /* V246 - 가로 모드 달력 일자만 크게, 빈칸 없게 */
+        @media screen and (orientation: landscape) and (max-height: 500px) {
+            /* 일자 숫자만 크게 - 전체 화면은 건드리지 않음 */
+            .cal-cell span{
+                font-size:19px !important;
+                font-weight:700 !important;
+                line-height:1.1 !important;
             }
-            .cal-cell-inner {
-                font-size:20px !important;
-                font-weight:800 !important;
+            /* 셀 높이 조금만 늘리고, 빈칸 없게 gap 유지 */
+            .cal-cell{
+                min-height:46px !important;
+                padding:2px 0 !important;
             }
-            .cal-day-name {
-                font-size:14px !important;
+            .calendar-grid{
+                gap:2px !important;
+                row-gap:2px !important;
             }
-        }
-        @media (orientation: landscape) and (min-width: 933px) {
-            .cal-cell-inner {
-                font-size:16px !important;
+            /* 요일간 빈칸 생기는거 방지 */
+            .cal-day-name{
+                padding:4px 0 !important;
+                margin:0 !important;
             }
         }
+        /* 일반 세로모드에서는 기존 그대로 */
 
 </style></head>
 <body>
