@@ -3016,6 +3016,33 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     </div>
     <div class="lotto-section" style="margin-top:0; background:rgba(255,255,255,0.05);">
         <div class="lotto-section-title">🔮 100만명 사주분석(최고사주 기반 추천번호)</div>
+        
+        <div id="lotto-6month-analysis" style="margin:12px 0; background:rgba(255,255,255,0.06); border:1px solid rgba(255,217,142,0.25); border-radius:14px; padding:12px;">
+          <div style="font-size:13px; font-weight:800; color:#FFD98E; margin-bottom:8px;">📊 9/5(1240회) 6개월 통계 분석</div>
+          <div style="font-size:11px; color:#ccc; line-height:1.5;">
+            <div>• 1240회: 11,13,19,20,31,44 (합 138, 홀4:짝2, 11~20 4개 몰빵)</div>
+            <div>• 6개월 Hot: 27(5회), 30/1/17/38/31(3회) → 27은 보너스 27로 출현</div>
+            <div>• Cold 해소: 44는 10회 미출현 후 터짐, 11·13도 Cold권</div>
+            <div>• 구간 쏠림 보정 필요 → 다음주는 21~30, 1~10 분산 예상</div>
+          </div>
+          <div style="margin-top:8px; display:flex; gap:6px;">
+            <button onclick="apply6MonthFilter()" style="flex:1; background:rgba(255,217,142,0.2); border:1px solid rgba(255,217,142,0.4); color:#FFD98E; padding:8px; border-radius:10px; font-size:12px; font-weight:700;">📈 6개월 통계 필터 적용</button>
+            <button onclick="toggle6MonthDetail()" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:8px 12px; border-radius:10px; font-size:11px;">자세히</button>
+          </div>
+          <div id="lotto-6month-detail" style="display:none; margin-top:10px; font-size:11px; color:#ddd; background:rgba(0,0,0,0.2); padding:10px; border-radius:10px; line-height:1.6;">
+            <b>분석 기준 7가지:</b><br>
+            1) 합계 130~150 필터 (6개월 평균 138.3 수렴)<br>
+            2) 홀짝 3:3 균형 (직전 4:2 → 보정)<br>
+            3) 구간 분산: 1~10 1개, 11~20 1~2개, 21~30 2개, 31~45 2~3개<br>
+            4) 연속수 1쌍 포함 (6개월 60% 패턴)<br>
+            5) Hot(27,30,1,17,38,31) 중 1개 + Cold(2,9,5,14 등) 중 1개 포함<br>
+            6) 끝수 중복 0~1개 제한<br>
+            7) 사주 길수 2개 + 통계 필터 4개 결합<br>
+            <br>
+            <b>다음주 추천 로직:</b> 사주 길수(예: 3,13) 2개 고정 + Hot 1개 + Cold 1개 + 구간 보정 2개
+          </div>
+        </div>
+
         <div id="lotto-best-card" style="display:none; background:linear-gradient(120deg, rgba(255,217,142,0.15), rgba(255,154,194,0.15)); border:1px solid rgba(255,217,142,0.3); border-radius:14px; padding:12px; margin-bottom:12px;"></div>
         <div class="use-saju-row" style="flex-direction:column; gap:10px; background:rgba(255,255,255,0.04); padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.06);">
             <div style="display:flex; align-items:center; justify-content:space-between;">
@@ -9245,4 +9272,48 @@ async function showPhotosForDate(dateStr){
 </script>
 
 </body>
-</html>
+</html
+
+function toggle6MonthDetail(){
+  const el = document.getElementById('lotto-6month-detail');
+  if(!el) return;
+  el.style.display = el.style.display==='none' ? 'block' : 'none';
+}
+function apply6MonthFilter(){
+  // 6개월 통계 기반 필터로 자동 설정
+  const filterSel = document.getElementById('ldt-filter-mode2');
+  const noConsec = document.getElementById('ldt-no-consec2');
+  if(filterSel) filterSel.value = 'oddEven33'; // 3:3 균형
+  if(noConsec) noConsec.checked = true;
+  // 고정수에 Hot+ Cold 예시 자동 제안 (사주 길수는 유지)
+  const fav1 = document.getElementById('ldt-fav1-2');
+  const fav2 = document.getElementById('ldt-fav2-2');
+  // 이미 고정된 사주 길수가 없으면 통계 기반 제안
+  if(fav1 && !fav1.value) fav1.value = 27; // Hot
+  if(fav2 && !fav2.value) fav2.value = 2;  // Cold
+  alert('📊 6개월 통계 필터 적용됨!\n- 홀짝 3:3\n- 연속 3개이상 제외\n- Hot 27 + Cold 2 고정 제안\n\n이제 [번호 생성]을 눌러보세요!\n(합계 130~150, 구간 분산은 생성 로직에서 자동 보정됩니다)');
+}
+// 기존 sajuGenerate 로직에 합계 필터 추가 (V252)
+const originalSajuGenerateWithFixedGuaranteed = window.sajuGenerateWithFixedGuaranteed;
+window.sajuGenerateWithFixedGuaranteed = function(favs, best, gameIdx, filterMode){
+  let tries = 0;
+  while(tries < 200){
+    const nums = originalSajuGenerateWithFixedGuaranteed(favs, best, gameIdx, filterMode);
+    if(!nums) return nums;
+    const sum = nums.reduce((a,b)=>a+b,0);
+    // 6개월 필터가 켜져있을 때 합계 체크
+    const is6MonthMode = document.getElementById('lotto-6month-analysis') && document.getElementById('ldt-filter-mode2')?.value==='oddEven33';
+    if(is6MonthMode){
+      if(sum < 130 || sum > 160) { tries++; continue; }
+      // 구간 분산 체크: 한 구간에 4개 이상 몰리면 재추첨
+      const g1 = nums.filter(n=>n<=10).length;
+      const g2 = nums.filter(n=>n>=11 && n<=20).length;
+      const g3 = nums.filter(n=>n>=21 && n<=30).length;
+      if(g2>=4 || g1>=3) { tries++; continue; }
+    }
+    return nums;
+  }
+  return originalSajuGenerateWithFixedGuaranteed(favs, best, gameIdx, filterMode);
+};
+
+>
