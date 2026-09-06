@@ -6622,7 +6622,11 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             }
         }catch(err){
             console.log('크롤링 에러', err);
-            if(statusEl) statusEl.innerHTML = `📅 1241회 예측 번호 - 1240회 데이터 기반`; const latest = localStorage.getItem('lotto_latest_round'); if(latest && parseInt(latest)>1240){ const nums = JSON.parse(localStorage.getItem('lotto_latest_nums')||'[]'); statusEl.innerHTML = `✅ ${latest}회 수동 입력됨: ${nums.join(',')} - 통계 업데이트됨`; statusEl.style.background='linear-gradient(90deg, #4CAF50, #8BC34A)'; statusEl.style.color='#fff'; } else { const baseDate = new Date('2025-09-06'); const today = new Date(); const weeksDiff = Math.floor((today - baseDate)/ (7*24*60*60*1000)) + 1; const targetRound = 1240 + weeksDiff; if(weeksDiff>=1) showManualInputPopup(targetRound); }
+            if(statusEl) statusEl.innerHTML = `📅 1241회 예측 번호 - 1240회 데이터 기반`; const latest = localStorage.getItem('lotto_latest_round'); if(latest && parseInt(latest)>1240){ const nums = JSON.parse(localStorage.getItem('lotto_latest_nums')||'[]'); statusEl.innerHTML = `✅ ${latest}회 수동 입력됨: ${nums.join(',')} - 통계 업데이트됨`; statusEl.style.background='linear-gradient(90deg, #4CAF50, #8BC34A)'; statusEl.style.color='#fff'; } else { const drawDate = new Date('2025-09-12T20:45:00'); const now = new Date(); 
+            if(now >= drawDate){
+                const baseDate = new Date('2025-09-06'); const weeksDiff = Math.floor((now - baseDate)/ (7*24*60*60*1000)) + 1; const targetRound = 1240 + weeksDiff;
+                showManualInputPopup(targetRound);
+            } }
         }
     }
     setTimeout(autoCrawlLotto, 1500);
@@ -6638,7 +6642,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             const diff = Math.floor((today - target)/86400000);
             const badge = document.getElementById('v257-date-badge');
             if(!badge) return;
-            if(diff >= 1){
+            if(diff >= 1){ const now = new Date(); const drawTime = new Date(V257_TARGET_DRAW+'T20:45:00'); if(now < drawTime){ badge.innerHTML = '📅 1241회 예측 번호 (D0일) - 오늘 20:45 추첨'; badge.style.background = 'rgba(255,255,255,0.1)'; return; }
                 badge.innerHTML = '⚠️ 1241회 추첨 완료! V258 업데이트 필요';
                 badge.style.background = 'linear-gradient(90deg, #ff4d4d, #ff8a8a)';
                 badge.style.color = '#fff';
