@@ -2521,6 +2521,9 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         #ldt-no-consec-slider:before { content:''; position:absolute; width:20px; height:20px; left:2px; bottom:2px; background:#fff; border-radius:50%; transition:0.25s; }
         #ldt-no-consec-toggle:checked + #ldt-no-consec-slider:before { transform:translateX(22px); }
 
+        
+        #ldt-week-area{ display:none !important; }
+        .ldt-week-box{ display:none !important; }
         /* === V209 로또 - 팝업 안 풀기능 === */
         .lotto-section { margin-top:18px; background: linear-gradient(165deg, rgba(35,38,74,0.6), rgba(20,21,43,0.8)); border:1px solid rgba(255,255,255,0.1); border-radius:18px; padding:16px; }
         .lotto-section-title { font-size:14.5px; font-weight:800; color:#FFD98E; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
@@ -6470,6 +6473,21 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         while(result.length<6){ let n=mode==='gte10'?Math.floor(rng()*36)+10:mode==='gte20'?Math.floor(rng()*26)+20:Math.floor(rng()*45)+1; if(!result.includes(n)) result.push(n); result.sort((a,b)=>a-b); }
         if(mode==='high4'){ let high=result.filter(n=>n>=30).length,at=0; while(high<4&&at<50){ let idx=result.findIndex(n=>n<30&&!fixed.includes(n)); if(idx<0) break; let nn; do{nn=Math.floor(rng()*16)+30;}while(result.includes(nn)); result[idx]=nn; result.sort((a,b)=>a-b); high=result.filter(n=>n>=30).length; at++; } }
         if(mode==='oddEven33'){ let odd=result.filter(n=>n%2).length,at=0; while(odd!==3&&at<80){ if(odd>3){ let idx=result.findIndex(n=>n%2&&!fixed.includes(n)); if(idx<0) break; let nn; do{nn=Math.floor(rng()*22)*2+2;}while(result.includes(nn)); result[idx]=nn; }else{ let idx=result.findIndex(n=>!(n%2)&&!fixed.includes(n)); if(idx<0) break; let nn; do{nn=Math.floor(rng()*23)*2+1;}while(result.includes(nn)); result[idx]=nn; } result.sort((a,b)=>a-b); odd=result.filter(n=>n%2).length; at++; } }
+        // 연속 3개 이상 제외 토글 (2개는 허용)
+        const noConsecToggle = document.getElementById('ldt-no-consec-toggle');
+        if(noConsecToggle && noConsecToggle.checked){
+            function hasThree(arr){ for(let i=0;i<arr.length-2;i++) if(arr[i+1]-arr[i]===1 && arr[i+2]-arr[i+1]===1) return true; return false; }
+            let at=0; while(hasThree(result) && at<150){
+                for(let i=0;i<result.length-2;i++){
+                    if(result[i+1]-result[i]===1 && result[i+2]-result[i+1]===1){
+                        let idx = !fixed.includes(result[i+2]) ? i+2 : !fixed.includes(result[i+1]) ? i+1 : !fixed.includes(result[i]) ? i : -1;
+                        if(idx!==-1){ let nn; do{ nn=Math.floor(rng()*45)+1; }while(result.includes(nn)); result[idx]=nn; result.sort((a,b)=>a-b); }
+                        break;
+                    }
+                }
+                at++;
+            }
+        }
         return result;
     }
     function sajuGetMondayOfWeek(dateStr) {
@@ -6523,7 +6541,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     }
     function removeAccumulatedGame2(idx){ accumulatedLottoGames2.splice(idx,1); saveAccumulated2(); renderAccumulated2(); }
 
-    function sajuGetBestGwainForLotto(){
+    function sajuGetBestGwainForLotto(){ // V227 재물운 최고조 - 편재95 정재88 최우선 + 생성시점 고려
         try{
             const useMySaju = document.getElementById('ldt-use-my-saju') ? document.getElementById('ldt-use-my-saju').checked : true;
             const useMySaju2 = document.getElementById('ldt-use-my-saju2') ? document.getElementById('ldt-use-my-saju2').checked : useMySaju;
@@ -6534,7 +6552,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             const genTimeSeed=Date.now()+'_'+Math.floor(Math.random()*1000000);
             let h=2166136261; const satSeed=saturdayStr+'_SAT_500K_TIME_'+genTimeSeed; for(let i=0;i<satSeed.length;i++){ h^=satSeed.charCodeAt(i); h=Math.imul(h,16777619);} h>>>=0; let s=h; const rngSat=function(){ s=(s*1664525+1013904223)>>>0; return s/4294967296; };
             const gans=['甲','乙','丙','丁','戊','己','庚','辛','壬','癸']; const tenGods=['비견','겁재','식신','상관','편재','정재','편관','정관','편인','정인']; const timeBranches=['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥']; const timeHours=['23-01시','01-03시','03-05시','05-07시','07-09시','09-11시','11-13시','13-15시','15-17시','17-19시','19-21시','21-23시'];
-            const baseScore={'비견':68,'겁재':62,'식신':78,'상관':65,'편재':82,'정재':75,'편관':60,'정관':72,'편인':70,'정인':80}; const timeBonus={'子':5,'丑':2,'寅':8,'卯':8,'辰':3,'巳':6,'午':7,'未':3,'申':4,'酉':4,'戌':2,'亥':6};
+            const baseScore={'비견':50,'겁재':45,'식신':78,'상관':55,'편재':95,'정재':88,'편관':48,'정관':60,'편인':52,'정인':70}; const timeBonus={'子':5,'丑':2,'寅':8,'卯':8,'辰':3,'巳':6,'午':7,'未':3,'申':4,'酉':4,'戌':2,'亥':6};
             // 내 사주 정보
             let myGan = null, myElem = null, myStrength = null, usefulGod = null, myDayZhi = null;
             if(finalUse && sajuBirthInfo && sajuBirthInfo.date && sajuPillars && sajuPillars.day){
