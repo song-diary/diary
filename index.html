@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 V212 SINGLE - <div>태그 노출 fix</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 V213 SINGLE - 로또 버튼 위치 조정</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -2916,18 +2916,18 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 </div>
 
 
-<!-- 🎱 사주기반 로또 생성기 방 (V210) -->
+<!-- 🎱 사주기반 로또 생성기 (V210) -->
 <div class="modal-overlay" id="lotto-generator-modal-overlay" onclick="handleLottoGeneratorModalBackgroundClick(event)">
   <div class="lotto-generator-card" id="lotto-generator-card" onclick="event.stopPropagation()" style="width:100%; max-width:460px; max-height:92vh; overflow-y:auto; border-radius:22px; padding:22px 18px 20px; background:linear-gradient(165deg, #23264A 0%, #171933 60%, #14152B 100%); border:1px solid rgba(255,255,255,0.12); box-shadow:0 20px 50px rgba(0,0,0,0.5); position:relative; touch-action:pan-y pinch-zoom;">
     <button class="fortune-popup-close" onclick="closeLottoGeneratorModal()" style="position:absolute; top:14px; right:14px; background:rgba(255,255,255,0.1); border:none; color:#F2EFFF; width:30px; height:30px; border-radius:50%;">✖</button>
     <div style="text-align:center; margin-bottom:14px;">
-      <div style="display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:800; letter-spacing:0.05em; color:#2A2340; background:linear-gradient(120deg, #FFD98E, #FF9AC2); padding:7px 18px; border-radius:999px;">🎱 사주기반 로또 생성기 방</div>
-      <div style="margin-top:10px; font-size:13px; color:rgba(242,239,255,0.55); line-height:1.6;">내 사주와 오늘의 일진을 씨앗으로<br>매일 다른 행운번호를 뽑아드려요</div>
+      <div style="display:inline-flex; align-items:center; gap:6px; font-size:18px; font-weight:900; letter-spacing:-0.02em; color:#2A2340; background:linear-gradient(120deg, #FFD98E, #FF9AC2); padding:10px 22px; border-radius:999px; box-shadow:0 4px 12px rgba(255,154,194,0.3);">🎱 사주기반 로또 생성기</div>
+      
     </div>
 
     <div class="lotto-section" style="margin-top:0; background:rgba(255,255,255,0.05);">
         <div class="lotto-section-title">🔮 100만 귀인 중 내 짝꿍 찾기</div>
-        <div id="lotto-best-story" style="font-size:12.5px; color:rgba(242,239,255,0.6); line-height:1.6; background:rgba(0,0,0,0.2); padding:10px; border-radius:10px; margin-bottom:10px;">생년월일을 기반으로 100만명의 가상 귀인 중 나와 가장 잘 맞는 1명을 찾아 로또 풀을 만들어요. (용신·합충 기반 점수)</div>
+        
         <div id="lotto-best-card" style="display:none; background:linear-gradient(120deg, rgba(255,217,142,0.15), rgba(255,154,194,0.15)); border:1px solid rgba(255,217,142,0.3); border-radius:14px; padding:12px; margin-bottom:12px;">
             <div style="font-size:12px; color:#FFD98E; font-weight:700; margin-bottom:4px;">오늘의 귀인</div>
             <div id="lotto-best-detail" style="font-size:13px; color:#F2EFFF; line-height:1.5;"></div>
@@ -2945,7 +2945,10 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         </div>
 
         <div class="ldt-fav-box">
-            <div class="ldt-fav-label">🎯 고정하고 싶은 번호 (선택)</div>
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+                <div class="ldt-fav-label" style="margin-bottom:0;">🎯 고정하고 싶은 번호 (선택)</div>
+                <button onclick="clearFixedNumbers2()" style="font-size:11.5px; color:rgba(242,239,255,0.6); background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); padding:4px 10px; border-radius:999px; cursor:pointer;">지우기</button>
+            </div>
             <div class="ldt-fav-grid">
                 <input type="number" id="ldt-fav1-2" class="ldt-input" placeholder="고정1" min="1" max="45" oninput="ldtValidateInputs2()">
                 <input type="number" id="ldt-fav2-2" class="ldt-input" placeholder="고정2" min="1" max="45" oninput="ldtValidateInputs2()">
@@ -2958,8 +2961,8 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         </div>
 
         <div class="btn-row">
-            <button class="btn" onclick="sajuGenerateNewLottoManual2()" style="flex:1.2;">🎱 번호 생성</button>
-            <button class="btn btn-secondary" onclick="clearFixedNumbers2()" style="flex:0.8;">🧹 지우기</button>
+            <button class="btn" onclick="sajuGenerateNewLottoManual2()" style="flex:1.2;">🎱 번호생성</button>
+            <button class="btn btn-secondary" onclick="resetManualResults2()" style="flex:0.8;">↺ 초기화</button>
         </div>
 
         <div id="ldt-manual-story2" class="fp-lotto-note" style="display:none; margin-top:10px;"></div>
@@ -2970,7 +2973,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             <div id="ldt-week-area2"></div>
         </div>
         <div style="margin-top:8px; text-align:center; display:flex; gap:8px; justify-content:center;">
-            <button class="btn btn-secondary" style="font-size:12px; padding:6px 12px;" onclick="resetManualResults2()">↺ 초기화</button>
+<button class="btn btn-secondary" style="width:100%; padding:12px; font-size:14px; border-radius:12px;" onclick="closeLottoGeneratorModal()">종료</button>
             <button class="btn btn-secondary" style="font-size:12px; padding:6px 12px;" onclick="closeLottoGeneratorModal()">닫기</button>
         </div>
     </div>
@@ -6668,23 +6671,17 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             const bestCard = document.getElementById('lotto-best-card');
             const bestDetail = document.getElementById('lotto-best-detail');
             const mySajuTxt = (sajuBirthInfo && sajuBirthInfo.date) ? `내 사주(${sajuBirthInfo.date}) 반영` : '내 사주 미설정';
-            if(storyEl){
-                storyEl.textContent = `${best.saturday} 추첨 · 20만 탐색 중 최고 ${best.year}년 ${best.timeBranch}시(${best.timeHour})생 ${best.gan}간 ${best.tenGod} ${best.score}점 · ${mySajuTxt} · ${cnt}게임 (100만 귀인 로직 기반)`;
-                storyEl.style.display = 'block';
-            }
-            if(bestCard && bestDetail){
-                const usefulTxt = best.useful ? `용신 ${best.useful.elem||best.useful} 보완` : '용신 미상';
-                const strengthTxt = best.strength ? `${best.strength}` : '';
-                bestDetail.innerHTML = `<b>${best.year}년 ${best.timeBranch}시 ${best.timeHour}</b>생 <b>${best.gan}${best.timeBranch}</b> · ${best.tenGod} · <span style="color:#FFD98E;">${best.score}점</span><br><span style="font-size:11.5px; color:rgba(255,255,255,0.6);">내 일간 ${best.myGan||'-'} 대비 ${usefulTxt} ${strengthTxt} · ${best.is100man ? '20만 탐색으로 100만 효과' : ''}</span>`;
-                bestCard.style.display='block';
-            }
+            if(storyEl){ storyEl.style.display='none'; }
+            // 귀인설명 숨김 - 요청사항
+            if(bestCard) bestCard.style.display='none';
+            
             try{ sajuRecordTodayLottoWeekly(allGames[0]); }catch(e){}
             renderLottoWeeklyBox2();
             renderLottoWeeklyBox();
 
             let html = '';
             allGames.forEach((nums, i) => {
-                html += `<div class="ldt-game"><div class="ldt-game-label">${i+1}게임 (고정 ${favs.length}개 보장)</div><div class="lotto-balls-row">${nums.map(n=>ballHtmlLotto(n, favs.includes(n))).join('')}</div></div>`;
+                html += `<div class="ldt-game"><div class="ldt-game-label">${i+1}게임</div><div class="lotto-balls-row">${nums.map(n=>ballHtmlLotto(n, favs.includes(n))).join('')}</div></div>`;
             });
             if(resultsEl) resultsEl.innerHTML = html;
         }catch(e){
@@ -6706,16 +6703,13 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             const resultsEl = document.getElementById('ldt-manual-results');
             const storyEl = document.getElementById('ldt-manual-story');
             const mySajuTxt = (sajuBirthInfo && sajuBirthInfo.date) ? `내 사주(${sajuBirthInfo.date}) 반영` : '내 사주 미설정';
-            if(storyEl){
-                storyEl.textContent = `${best.saturday} 추첨 · 100만명 귀인 중 ${best.year}년 ${best.timeBranch}시(${best.timeHour})생 ${best.gan}간 ${best.tenGod} ${best.score}점 · ${mySajuTxt} · ${cnt}게임`;
-                storyEl.style.display = 'block';
-            }
+            if(storyEl){ storyEl.style.display='none'; }
             try{ sajuRecordTodayLottoWeekly(allGames[0]); }catch(e){}
             renderLottoWeeklyBox();
 
             let html = '';
             allGames.forEach((nums, i) => {
-                html += `<div class="ldt-game"><div class="ldt-game-label">${i+1}게임 (고정 ${favs.length}개 보장)</div><div class="lotto-balls-row">${nums.map(n=>ballHtmlLotto(n, favs.includes(n))).join('')}</div></div>`;
+                html += `<div class="ldt-game"><div class="ldt-game-label">${i+1}게임</div><div class="lotto-balls-row">${nums.map(n=>ballHtmlLotto(n, favs.includes(n))).join('')}</div></div>`;
             });
             if(resultsEl) resultsEl.innerHTML = html;
         }catch(e){
@@ -6896,7 +6890,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 
             <div class="fp-my-saju-link-big" onclick="openSajuDetailModal()">📜 나의 사주 풀이 자세히 보기</div>
 
-            <div style="margin-top:16px; text-align:center;"><button onclick="openLottoGeneratorModal()" style="width:100%; background:linear-gradient(120deg, #FFD98E, #FF9AC2); color:#2A2340; border:none; padding:14px; border-radius:14px; font-weight:800; font-size:14.5px; box-shadow:0 4px 14px rgba(255,154,194,0.25);">🎱 사주기반 로또 생성기 방 입장하기 →</button><div style="font-size:11.5px; color:rgba(242,239,255,0.5); margin-top:6px;">나의 사주풀이처럼 별도 방에서 풀기능으로 생성해요</div></div>
+            <div style="margin-top:16px; text-align:center;"><button onclick="openLottoGeneratorModal()" style="width:100%; background:linear-gradient(120deg, #FFD98E, #FF9AC2); color:#2A2340; border:none; padding:14px; border-radius:14px; font-weight:800; font-size:14.5px; box-shadow:0 4px 14px rgba(255,154,194,0.25);">🎱 사주기반 로또 생성기 입장하기 →</button><div style="font-size:11.5px; color:rgba(242,239,255,0.5); margin-top:6px;">나의 사주풀이처럼 별도 방에서 풀기능으로 생성해요</div></div>
                 <div class="lotto-section" id="lotto-section-in-fortune" style="display:none;">
                 <div class="lotto-section-title">🎱 사주기반 로또 생성기</div>
                 
@@ -9123,7 +9117,7 @@ async function showPhotosForDate(dateStr){
 
                 (function(){
           const swCode = `
-            const CACHE_NAME='smartdiary-V212-SINGLE';
+            const CACHE_NAME='smartdiary-V213-SINGLE';
             self.addEventListener('install', e=>{ self.skipWaiting(); e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(['./']))); });
             self.addEventListener('activate', e=>{ e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))).then(()=>self.clients.claim())); });
             self.addEventListener('fetch', e=>{ 
