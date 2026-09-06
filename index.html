@@ -854,7 +854,6 @@
         .fortune-teaser .ft-sub { font-size: 13px; color: rgba(244,240,255,0.6); margin-top: 1px; }
         .fortune-teaser .ft-arrow { font-size: 17px; opacity: 0.7; }
 
-        #fortune-popup-overlay{ z-index:10000 !important; }
         #fortune-popup-overlay, #saju-detail-modal-overlay { z-index: 1100; }
 
         .fortune-popup-card {
@@ -1048,12 +1047,10 @@
             to { transform: translateY(0); }
         }
         /* Keep other modals centered (fortune etc) */
-        #fortune-popup-overlay{ z-index:10000 !important; }
         #fortune-popup-overlay.modal-overlay, #saju-detail-modal-overlay.modal-overlay, #health-stats-modal-overlay.modal-overlay, #photo-lightbox-overlay {
             align-items: center;
             padding: 15px;
         }
-        #fortune-popup-overlay{ z-index:10000 !important; }
         #fortune-popup-overlay .modal-card, #saju-detail-modal-overlay .card {
             border-radius: 22px;
             animation: fadeIn 0.25s ease;
@@ -1066,7 +1063,6 @@
         }
 
         /* 오늘의 운세 팝업은 손가락으로 확대(핀치줌)할 수 있게 예외 허용 */
-        #fortune-popup-overlay{ z-index:10000 !important; }
         #fortune-popup-overlay.active, #saju-detail-modal-overlay.active {
             touch-action: pan-y pinch-zoom;
         }
@@ -2521,24 +2517,14 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         .fp-prescription-hidden{display:none !important;}
         
         
-        #ldt-no-consec-toggle:checked + #ldt-no-consec-slider { background:#9C6ADE; border-color:#9C6ADE; }
-        #ldt-no-consec-slider:before { content:''; position:absolute; width:20px; height:20px; left:2px; bottom:2px; background:#fff; border-radius:50%; transition:0.25s; }
-        #ldt-no-consec-toggle:checked + #ldt-no-consec-slider:before { transform:translateX(22px); }
-
-        
-        #ldt-week-area{ display:none !important; }
-        .ldt-week-box{ display:none !important; }
-        
-        .fortune-open #lotto-generator-modal-overlay{ display:none !important; }
-        #lotto-generator-card{ margin-top:0; padding-top:16px; }
+        #fortune-popup-overlay{ z-index:1100 !important; background:rgba(0,0,0,0.85) !important; }
+        #lotto-generator-modal-overlay{ z-index:1200 !important; }
+        #lotto-generator-modal-overlay.active{ display:flex !important; }
+        .lotto-generator-card{ margin-top:0 !important; padding-top:18px !important; }
         .use-saju-row{ margin-top:8px !important; }
-
-        
-        #fortune-popup-overlay{ background:rgba(0,0,0,0.85) !important; backdrop-filter:blur(8px); }
-        #fortune-popup{ background:#1a1c3a !important; }
-        #lotto-generator-modal-overlay{ z-index:9999; }
-        #fortune-popup-overlay{ z-index:10000; }
-        .lotto-generator-card{ margin-top:0 !important; }
+        #ldt-week-area, .ldt-week-box{ display:none !important; }
+        .ldt-game{ justify-content:flex-start !important; gap:16px !important; }
+        .ldt-game-label{ min-width:56px !important; margin-right:8px !important; }
 
         /* === V209 로또 - 팝업 안 풀기능 === */
         .lotto-section { margin-top:18px; background: linear-gradient(165deg, rgba(35,38,74,0.6), rgba(20,21,43,0.8)); border:1px solid rgba(255,255,255,0.1); border-radius:18px; padding:16px; }
@@ -2957,40 +2943,10 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             <div id="lotto-best-detail" style="font-size:13px; color:#F2EFFF; line-height:1.5;"></div>
         </div>
 
-                        <div class="use-saju-row" style="margin-top:8px;" style="flex-direction:column; gap:10px; background:rgba(255,255,255,0.04); padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.06);">
-            <div style="display:flex; align-items:center; justify-content:space-between;">
-                <label style="font-size:13px; display:flex; align-items:center; gap:6px;"><input type="checkbox" id="ldt-use-my-saju2" checked> ✨ 내 사주 반영 <span style="font-size:11px; color:#aaa;">(내 기운 기반)</span></label>
-                <select id="ldt-new-game-count2" style="background:#222; color:#fff; border:1px solid #555; border-radius:8px; padding:6px 10px; font-size:13px;">
-                    <option value="1">1게임</option>
-                    <option value="2">2게임</option>
-                    <option value="3">3게임</option>
-                    <option value="4">4게임</option>
-                    <option value="5" selected>5게임</option>
-                </select>
-            </div>
-            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
-                <span style="font-size:12.5px; color:#ccc; white-space:nowrap;">번호 조건</span>
-                <select id="ldt-filter-mode2" style="flex:1; background:#222; color:#fff; border:1px solid #555; border-radius:8px; padding:7px; font-size:12.5px;">
-                    <option value="all">🎲 전체 랜덤 (기본)</option>
-                    <option value="gte10">🔟 10 이상만 (10~45)</option>
-                    <option value="gte20">2️⃣0️⃣ 20 이상만 (20~45)</option>
-                    <option value="high4">⬆️ 고번호 위주 (30~45에서 4개↑)</option>
-                    <option value="oddEven33">⚖️ 홀짝 3:3 밸런스</option>
-                </select>
-            </div>
-            <div style="display:flex; align-items:center; justify-content:space-between; background:rgba(0,0,0,0.25); padding:8px 10px; border-radius:10px; border:1px solid rgba(255,255,255,0.06);">
-                <div style="display:flex; flex-direction:column;">
-                    <span style="font-size:12.5px; color:#fff;">🚫 연속 3개 이상 제외</span>
-                    <span style="font-size:10.5px; color:#999; margin-top:2px;">11,12는 허용 / 11,12,13은 제외</span>
-                </div>
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <span id="ldt-no-consec-label" style="font-size:11px; color:#888; min-width:28px; text-align:right;">OFF</span>
-                    <label style="position:relative; display:inline-block; width:48px; height:26px; flex-shrink:0;">
-                        <input type="checkbox" id="ldt-no-consec-toggle" style="opacity:0; width:0; height:0;">
-                        <span id="ldt-no-consec-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:#3a3a3a; border-radius:999px; transition:0.25s; border:1px solid #555;"></span>
-                    </label>
-                </div>
-            </div>
+                <div class="use-saju-row" style="flex-direction:column;"><div style="display:flex;justify-content:space-between;"><label><input type="checkbox" id="ldt-use-my-saju2" checked> ✨ 내 사주 반영</label></div><div style="margin-top:8px;"></div></div>
+        <div class="use-saju-row" >
+            <label><input type="checkbox" id="ldt-use-my-saju2" checked> ✨ 내 사주 반영 (내 일간·용신 가중)</label>
+            
         </div>
 
         <div class="ldt-fav-box">
@@ -6489,21 +6445,6 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         while(result.length<6){ let n=mode==='gte10'?Math.floor(rng()*36)+10:mode==='gte20'?Math.floor(rng()*26)+20:Math.floor(rng()*45)+1; if(!result.includes(n)) result.push(n); result.sort((a,b)=>a-b); }
         if(mode==='high4'){ let high=result.filter(n=>n>=30).length,at=0; while(high<4&&at<50){ let idx=result.findIndex(n=>n<30&&!fixed.includes(n)); if(idx<0) break; let nn; do{nn=Math.floor(rng()*16)+30;}while(result.includes(nn)); result[idx]=nn; result.sort((a,b)=>a-b); high=result.filter(n=>n>=30).length; at++; } }
         if(mode==='oddEven33'){ let odd=result.filter(n=>n%2).length,at=0; while(odd!==3&&at<80){ if(odd>3){ let idx=result.findIndex(n=>n%2&&!fixed.includes(n)); if(idx<0) break; let nn; do{nn=Math.floor(rng()*22)*2+2;}while(result.includes(nn)); result[idx]=nn; }else{ let idx=result.findIndex(n=>!(n%2)&&!fixed.includes(n)); if(idx<0) break; let nn; do{nn=Math.floor(rng()*23)*2+1;}while(result.includes(nn)); result[idx]=nn; } result.sort((a,b)=>a-b); odd=result.filter(n=>n%2).length; at++; } }
-        // 연속 3개 이상 제외 토글 (2개는 허용)
-        const noConsecToggle = document.getElementById('ldt-no-consec-toggle');
-        if(noConsecToggle && noConsecToggle.checked){
-            function hasThree(arr){ for(let i=0;i<arr.length-2;i++) if(arr[i+1]-arr[i]===1 && arr[i+2]-arr[i+1]===1) return true; return false; }
-            let at=0; while(hasThree(result) && at<150){
-                for(let i=0;i<result.length-2;i++){
-                    if(result[i+1]-result[i]===1 && result[i+2]-result[i+1]===1){
-                        let idx = !fixed.includes(result[i+2]) ? i+2 : !fixed.includes(result[i+1]) ? i+1 : !fixed.includes(result[i]) ? i : -1;
-                        if(idx!==-1){ let nn; do{ nn=Math.floor(rng()*45)+1; }while(result.includes(nn)); result[idx]=nn; result.sort((a,b)=>a-b); }
-                        break;
-                    }
-                }
-                at++;
-            }
-        }
         return result;
     }
     function sajuGetMondayOfWeek(dateStr) {
@@ -6557,7 +6498,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     }
     function removeAccumulatedGame2(idx){ accumulatedLottoGames2.splice(idx,1); saveAccumulated2(); renderAccumulated2(); }
 
-    function sajuGetBestGwainForLotto(){ // V227 재물운 최고조 - 편재95 정재88 최우선 + 생성시점 고려
+    function sajuGetBestGwainForLotto(){
         try{
             const useMySaju = document.getElementById('ldt-use-my-saju') ? document.getElementById('ldt-use-my-saju').checked : true;
             const useMySaju2 = document.getElementById('ldt-use-my-saju2') ? document.getElementById('ldt-use-my-saju2').checked : useMySaju;
@@ -6669,25 +6610,12 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     }
 
     // V210 로또 방 전용
-    
-    (function(){
-        function initToggleLabel(){
-            const tog = document.getElementById('ldt-no-consec-toggle');
-            const lab = document.getElementById('ldt-no-consec-label');
-            if(!tog || !lab) return;
-            const upd = ()=>{ lab.textContent = tog.checked ? 'ON' : 'OFF'; lab.style.color = tog.checked ? '#FFD98E' : '#888'; };
-            tog.addEventListener('change', upd);
-            upd();
-        }
-        document.addEventListener('DOMContentLoaded', initToggleLabel);
-        setTimeout(initToggleLabel, 500);
-    })();
-
     function openLottoGeneratorModal(){
         const overlay = document.getElementById('lotto-generator-modal-overlay');
         if(!overlay) return;
         // 기존 운세 팝업이 열려있으면 닫지 않고 위에 겹쳐서 보여주기 (z-index 높임)
         overlay.classList.add('active');
+        overlay.style.display='flex';
         overlay.style.zIndex = '1200';
         lockBodyScroll();
         try{ renderAccumulated2(); }catch(e){}
@@ -6695,6 +6623,8 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         try{ renderLottoWeeklyBox(); }catch(e){}
     }
     function closeLottoGeneratorModal(){
+        const ov=document.getElementById('lotto-generator-modal-overlay'); if(ov){ ov.classList.remove('active'); ov.style.display='none'; } unlockBodyScroll(); return; }
+    function closeLottoGeneratorModal_dup(){
         const overlay = document.getElementById('lotto-generator-modal-overlay');
         if(overlay) overlay.classList.remove('active');
         unlockBodyScroll();
@@ -6741,13 +6671,6 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         saveAccumulated2();
         renderAccumulated2();
     }
-    function resetAllIncludingFixed2(){
-        if(!confirm('고정번호 포함 전체 초기화할까요?')) return;
-        accumulatedLottoGames2=[];
-        saveAccumulated2();
-        clearFixedNumbers2();
-        renderAccumulated2();
-    }
     function renderLottoWeeklyBox2(){
         const el = document.getElementById('ldt-week-area2');
         if (!el) return;
@@ -6766,9 +6689,9 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     function sajuGenerateNewLottoManual2(){
         try{
             if (!ldtValidateInputs2()) return;
-            const cntEl = document.getElementById('ldt-new-game-count2'); const cnt = Math.min(5, Math.max(1, parseInt(cntEl ? cntEl.value : '5') || 5)); console.log('생성 게임수:', cnt);
+            const cnt = Math.min(5, Math.max(1, parseInt(document.getElementById('ldt-new-game-count2').value||'5')));
             const favs = ldtGetFavoriteNumbers2();
-            const modeEl = document.getElementById('ldt-filter-mode2'); const mode = modeEl ? modeEl.value : 'all'; console.log('필터 모드:', mode);
+            const mode = document.getElementById('ldt-filter-mode2') ? document.getElementById('ldt-filter-mode2').value : 'all';
             const resultsEl = document.getElementById('ldt-manual-results2');
             if(resultsEl) resultsEl.innerHTML = '<div class="ldt-empty">⏳ 100만명 사주분석 중... (1~2초)</div>';
             setTimeout(()=>{
@@ -6989,7 +6912,8 @@ button[onclick="openBucketListModal()"] { display:none !important; }
                 <div class="lotto-section" id="lotto-section-in-fortune" >
                 <div class="lotto-section-title">🎱 사주기반 로또 생성기</div>
                 
-                        
+                        <div class="use-saju-row" style="flex-direction:column;"><div style="display:flex;justify-content:space-between;"><label><input type="checkbox" id="ldt-use-my-saju2" checked> ✨ 내 사주 반영</label><select id="ldt-new-game-count2"><option value="1">1게임</option><option value="2">2게임</option><option value="3">3게임</option><option value="4">4게임</option><option value="5" selected>5게임</option></select></div><div style="margin-top:8px;"><select id="ldt-filter-mode2" style="width:100%; background:#222; color:#fff; border:1px solid #555; border-radius:8px; padding:7px;"><option value="all">🎲 전체 랜덤</option><option value="gte10">🔟 10 이상만</option><option value="gte20">2️⃣0️⃣ 20 이상만</option><option value="high4">⬆️ 고번호 위주</option><option value="oddEven33">⚖️ 홀짝 3:3</option><option value="noConsec">🚫 연속제외+용신</option></select></div></div>
+        
 
                 <div class="btn-row">
                     <button class="btn" onclick="sajuGenerateNewLottoManual()" style="flex:1;">🎱 번호 생성</button>
