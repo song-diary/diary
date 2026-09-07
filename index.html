@@ -7354,6 +7354,33 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
         localStorage.setItem('smartDiaryBucketList', JSON.stringify(bucketListItems));
     }
 
+
+    // 💪 강력한 스크롤 잠금
+    let scrollY = 0;
+    function lockBodyScrollStrong(){
+        scrollY = window.scrollY;
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${scrollY}px`;
+        document.body.style.left = '0';
+        document.body.style.right = '0';
+        document.body.style.width = '100%';
+        document.body.style.overflow = 'hidden';
+        document.documentElement.style.overflow = 'hidden';
+    }
+    function unlockBodyScrollStrong(){
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.left = '';
+        document.body.style.right = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        document.documentElement.style.overflow = '';
+        window.scrollTo(0, scrollY);
+    }
+    // 기존 lockBodyScroll 덮어쓰기
+    const originalLock = typeof lockBodyScroll !== 'undefined' ? lockBodyScroll : null;
+    const originalUnlock = typeof unlockBodyScroll !== 'undefined' ? unlockBodyScroll : null;
+
     // 🔒 버킷리스트 비밀번호 기능
     function getBucketPassword(){ return localStorage.getItem('bucketListPassword') || ''; }
     function setBucketPassword(pw){ localStorage.setItem('bucketListPassword', pw); }
@@ -7381,22 +7408,41 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
         if (addBox) addBox.style.display = 'none';
         if (addIcon) addIcon.textContent = '➕';
         overlay.style.display = 'flex';
-        // 터치시 뒤에 폼 안 움직이게 - 오버레이에서 터치 이벤트 차단
-        overlay.addEventListener('touchmove', function(e){ e.stopPropagation(); }, {passive:false});
+        
+        // 💪 강력 잠금
+        lockBodyScrollStrong();
+        
+        // 오버레이 배경 터치하면 뒤로 전달 안 되게 preventDefault
+        overlay.addEventListener('touchmove', function(e){
+            if(e.target === overlay){
+                e.preventDefault();
+            }
+        }, {passive:false});
+        
         const card = document.getElementById('bucket-list-card');
         if(card){
-            card.addEventListener('touchmove', function(e){ e.stopPropagation(); }, {passive:true});
             card.style.overscrollBehavior = 'contain';
             card.style.touchAction = 'pan-y';
+            card.style.webkitOverflowScrolling = 'touch';
+            // 카드 내부 스크롤은 허용, 끝에서 바운스 방지
+            let startY = 0;
+            card.addEventListener('touchstart', function(e){ startY = e.touches[0].clientY; }, {passive:true});
+            card.addEventListener('touchmove', function(e){
+                const currentY = e.touches[0].clientY;
+                const diff = currentY - startY;
+                const isAtTop = card.scrollTop <= 0;
+                const isAtBottom = card.scrollTop + card.clientHeight >= card.scrollHeight - 1;
+                if((isAtTop && diff > 0) || (isAtBottom && diff < 0)){
+                    e.preventDefault();
+                }
+            }, {passive:false});
         }
+        
         // 다른 팝업 닫기
         const fortuneEl = document.getElementById('fortune-popup-overlay');
         if(fortuneEl) fortuneEl.classList.remove('active');
         const sajuEl = document.getElementById('saju-detail-modal-overlay');
         if(sajuEl) sajuEl.classList.remove('active');
-        document.body.style.overflow='hidden';
-        document.body.style.position='fixed';
-        document.body.style.width='100%';
     }
 
     function openBucketPwModal(isSetup){
@@ -7465,13 +7511,9 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
         try {
             const overlay = document.getElementById('bucket-list-modal-overlay');
             if (overlay) overlay.style.display = 'none';
-            document.body.style.overflow='';
-            document.body.style.position='';
-            document.body.style.width='';
-            // 비밀번호는 5분 후 다시 물어봄 (보안)
-            // setTimeout으로 5분 후 verified 해제
+            unlockBodyScrollStrong();
             setTimeout(()=>{ bucketPwVerified = false; }, 5*60*1000);
-        } catch(e){}
+        } catch(e){ unlockBodyScrollStrong(); }
     }
     function handleBucketListModalBackgroundClick(event) {
         if (event.target.id === 'bucket-list-modal-overlay') closeBucketListModal();
@@ -9675,7 +9717,7 @@ async function showPhotosForDate(dateStr){
 
 
 <!-- 🎯 버킷리스트 모달 - V271 무조건 작동 버전 -->
-<div id="bucket-list-modal-overlay" onclick="if(event.target===this) closeBucketListModal()" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:99999; align-items:center; justify-content:center; padding:15px; box-sizing:border-box;">
+<div id="bucket-list-modal-overlay" onclick="if(event.target===this) closeBucketListModal()" style="display:none; position:fixed; touch-action:none; overscroll-behavior:none; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:99999; align-items:center; justify-content:center; padding:15px; box-sizing:border-box;">
     <div id="bucket-list-card" onclick="event.stopPropagation()" style="width:100%; max-width:460px; max-height:85vh; overflow-y:auto; background:linear-gradient(165deg, #23264A 0%, #171933 60%, #14152B 100%); border-radius:22px; padding:20px; position:relative; border:1px solid rgba(255,255,255,0.12);">
         <button onclick="closeBucketListModal()" style="position:absolute; top:14px; right:14px; background:rgba(255,255,255,0.1); border:none; color:#fff; width:30px; height:30px; border-radius:50%; cursor:pointer;">✖</button>
         <div style="font-size:18px; font-weight:900; color:#FFD98E; margin-bottom:4px;">🎯 나의 버킷 리스트</div>
