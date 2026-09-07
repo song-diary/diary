@@ -6613,12 +6613,11 @@ button[onclick="openBucketListModal()"] { display:none !important; }
     async function autoCrawlLotto(){
         const statusEl = document.getElementById('v257-date-badge');
         try{
-            // 최신 회차 계산 (2025-09-05 기준 1240회)
-            const baseDate = new Date('2025-09-06'); // 1240회 다음주
+            // 최신 회차 계산 - localStorage 기반, 기본 1241회 고정 (2025-09-06 1240회 기준)
             const baseRound = 1240;
-            const today = new Date();
-            const weeksDiff = Math.floor((today - baseDate)/ (7*24*60*60*1000)) + 1;
-            const targetRound = baseRound + weeksDiff;
+            let latestSaved = parseInt(localStorage.getItem('lotto_latest_round') || baseRound);
+            if(isNaN(latestSaved) || latestSaved < baseRound) latestSaved = baseRound;
+            const targetRound = latestSaved + 1; // 다음 회차 = 마지막 저장된 회차 +1, 기본 1241회
             
             if(statusEl) statusEl.innerHTML = `🔍 ${targetRound}회 자동 조회 시도중...`;
             
@@ -6654,9 +6653,9 @@ button[onclick="openBucketListModal()"] { display:none !important; }
             }
         }catch(err){
             console.log('크롤링 에러', err);
-            if(statusEl) statusEl.innerHTML = `📅 1241회 예측 번호 - 1240회 데이터 기반`; const latest = localStorage.getItem('lotto_latest_round'); if(latest && parseInt(latest)>1240){ const nums = JSON.parse(localStorage.getItem('lotto_latest_nums')||'[]'); statusEl.innerHTML = `✅ ${latest}회 수동 입력됨: ${nums.join(',')} - 통계 업데이트됨`; statusEl.style.background='linear-gradient(90deg, #4CAF50, #8BC34A)'; statusEl.style.color='#fff'; } else { const drawDate = new Date('2025-09-12T20:45:00'); const now = new Date(); 
+            if(statusEl) statusEl.innerHTML = `📅 1241회 예측 번호 - 1240회 데이터 기반`; const latest = localStorage.getItem('lotto_latest_round'); if(latest && parseInt(latest)>1240){ const nums = JSON.parse(localStorage.getItem('lotto_latest_nums')||'[]'); statusEl.innerHTML = `✅ ${latest}회 수동 입력됨: ${nums.join(',')} - 통계 업데이트됨`; statusEl.style.background='linear-gradient(90deg, #4CAF50, #8BC34A)'; statusEl.style.color='#fff'; } else { const drawDate = new Date('2025-09-13T20:45:00'); // 1241회 토요일 const now = new Date(); 
             if(now >= drawDate){
-                const baseDate = new Date('2025-09-06'); const weeksDiff = Math.floor((now - baseDate)/ (7*24*60*60*1000)) + 1; const targetRound = 1240 + weeksDiff;
+                const latestSaved2 = parseInt(localStorage.getItem('lotto_latest_round') || 1240); const targetRound = (isNaN(latestSaved2)?1240:latestSaved2)+1;
                 showManualInputPopup(targetRound);
             } }
         }
@@ -6665,7 +6664,7 @@ button[onclick="openBucketListModal()"] { display:none !important; }
 
     // V257 자동 날짜 체크
     const V257_LAST_UPDATE = '2025-09-05';
-    const V257_TARGET_DRAW = '2025-09-12';
+    const V257_TARGET_DRAW = '2025-09-13';
     const V257_TARGET_ROUND = 1241;
     function v257CheckDate(){
         try{
