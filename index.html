@@ -7351,23 +7351,36 @@ body { touch-action: pan-x pan-y pinch-zoom !important; }
     }
 
     function openBucketListModal() {
+        // 모달 요소 동적으로 다시 찾기 (V269 HTML이 뒤에 추가된 경우 대비)
+        let overlay = document.getElementById('bucket-list-modal-overlay') || bucketListModalOverlay;
+        if(!overlay){
+            console.log('bucket modal not found');
+            alert('버킷리스트 모달을 찾을 수 없습니다. 페이지를 새로고침 해주세요!');
+            return;
+        }
+        // 전역 변수 업데이트
+        if(!bucketListModalOverlay) bucketListModalOverlay = overlay;
         bucketListItems = getBucketList();
         bucketEditingId = null;
         renderBucketList();
-        // 열 때마다 추가란은 항상 접힌 상태로 시작 (목록이 먼저 짠 보이게)
         const addBox = document.getElementById('bl-add-box');
         const addIcon = document.getElementById('bl-add-toggle-icon');
         if (addBox) addBox.style.display = 'none';
         if (addIcon) addIcon.textContent = '➕';
-        if (bucketListModalOverlay) bucketListModalOverlay.classList.add('active');
+        overlay.classList.add('active');
+        // fortune 팝업은 닫고 버킷만 열기
+        if(typeof fortunePopupOverlay !== 'undefined' && fortunePopupOverlay) fortunePopupOverlay.classList.remove('active');
+        if(typeof sajuDetailModalOverlay !== 'undefined' && sajuDetailModalOverlay) sajuDetailModalOverlay.classList.remove('active');
         lockBodyScroll();
     }
     function closeBucketListModal() {
-        if (bucketListModalOverlay) bucketListModalOverlay.classList.remove('active');
+        let overlay = document.getElementById('bucket-list-modal-overlay') || bucketListModalOverlay;
+        if (overlay) overlay.classList.remove('active');
         unlockBodyScroll();
     }
     function handleBucketListModalBackgroundClick(event) {
-        if (event.target === bucketListModalOverlay) closeBucketListModal();
+        let overlay = document.getElementById('bucket-list-modal-overlay') || bucketListModalOverlay;
+        if (event.target === overlay) closeBucketListModal();
     }
 
     function toggleBucketAddBox() {
