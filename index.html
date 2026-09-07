@@ -3032,18 +3032,25 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         <div class="lotto-section-title">🔮 100만명 사주분석(최고사주 기반 추천번호)</div>
 
         <div id="lotto-6month-analysis" style="margin:12px 0; background:rgba(255,255,255,0.06); border:1px solid rgba(255,217,142,0.25); border-radius:14px; padding:12px;">
-          <div style="font-size:13px; font-weight:800; color:#FFD98E; margin-bottom:8px;">📊 V259 자동+수동 하이브리드 - 1241회 예측 - 1240회까지 6개월 과학적 통계 분석</div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <div style="font-size:13px; font-weight:800; color:#FFD98E;">📊 1240회까지 6개월 통계</div>
+            <div id="v257-date-badge" style="font-size:10px; padding:4px 8px; border-radius:8px; background:rgba(255,255,255,0.1); color:#ccc;">📅 1241회 예측</div>
+          </div>
           <div style="font-size:11px; color:#ccc; line-height:1.5;">
-            <div>• 1240회: 11,13,19,20,31,44 → 1241회 예측 (합 138)</div>
+            <div>• 1240회: 11,13,19,20,31,44 (합 138)</div>
             <div>• Hot: 27(5회), 30/1/17/38/31(3회)</div>
             <div>• Cold 해소: 44는 10회 미출현 후 터짐</div>
           </div>
+          <!-- 상태 표시 -->
+          <div id="filter-status-box" style="margin-top:10px; padding:8px 10px; border-radius:10px; font-size:12px; font-weight:700; text-align:center; background:rgba(255,0,0,0.15); border:1px dashed #ff6b6b; color:#ff9a9a;">
+            🔴 통계 필터 OFF - 아래 버튼 눌러 적용하세요!
+          </div>
           <div style="margin-top:8px; display:flex; gap:6px;">
-            <button id="btn-apply-6month" type="button" style="flex:1; background:rgba(255,217,142,0.2); border:1px solid rgba(255,217,142,0.4); color:#FFD98E; padding:8px; border-radius:10px; font-size:12px; font-weight:700; cursor:pointer;">📈 통계 필터 적용</button>
+            <button id="btn-apply-6month" type="button" onclick="toggle6MonthFilter()" style="flex:1; background:linear-gradient(120deg, #FFD98E, #FF9AC2); color:#2A2340; border:none; padding:10px; border-radius:10px; font-size:13px; font-weight:800; cursor:pointer; box-shadow:0 2px 8px rgba(255,217,142,0.3);">📈 통계 필터 적용하기</button>
             <button id="btn-detail-6month" type="button" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:8px 12px; border-radius:10px; font-size:11px; cursor:pointer;">자세히</button>
           </div>
           <div id="lotto-6month-detail" style="display:none; margin-top:10px; font-size:11px; color:#ddd; background:rgba(0,0,0,0.2); padding:10px; border-radius:10px; line-height:1.6;">
-            <b>과학적 통계 7가지 기준:</b><br>1) 합계 130~160<br>2) 홀짝 3:3<br>3) 구간 분산<br>4) 연속 1쌍<br>5) Hot+Cold<br>6) 끝수 중복 제한<br>7) 사주 길수 결합
+            <b>과학적 통계 7가지 기준:</b><br>1) 합계 130~160<br>2) 홀짝 3:3<br>3) 구간 분산<br>4) 연속 1쌍<br>5) Hot+Cold<br>6) 끝수 중복 제한<br>7) 사주 길수 결합<br><br>버튼을 누르면 이 기준으로만 번호를 생성합니다!
           </div>
           <div id="lotto-6month-log" style="display:none; margin-top:8px; font-size:11px; color:#FFD98E; background:rgba(0,0,0,0.3); padding:8px; border-radius:8px;"></div>
         </div>
@@ -6682,6 +6689,36 @@ button[onclick="openBucketListModal()"] { display:none !important; }
         }catch(e){}
     }
     setTimeout(v257CheckDate, 500);
+
+    
+    let is6MonthFilterApplied = false;
+    function toggle6MonthFilter(){
+        is6MonthFilterApplied = !is6MonthFilterApplied;
+        const btn = document.getElementById('btn-apply-6month');
+        const statusBox = document.getElementById('filter-status-box');
+        const logEl = document.getElementById('lotto-6month-log');
+        if(is6MonthFilterApplied){
+            if(btn){ btn.innerHTML = '✅ 통계 필터 적용됨 (클릭시 해제)'; btn.style.background='linear-gradient(120deg, #4CAF50, #8BC34A)'; btn.style.color='#fff'; }
+            if(statusBox){ statusBox.innerHTML='🟢 통계 필터 ON - 과학적 통계 7가지 기준으로 생성됩니다!'; statusBox.style.background='rgba(76,175,80,0.15)'; statusBox.style.border='1px solid #4CAF50'; statusBox.style.color='#8BC34A'; }
+            if(logEl){ logEl.style.display='block'; logEl.innerHTML='✅ 통계 필터가 적용되었습니다! 이제 번호 생성하면 6개월 통계 기반으로 생성됩니다.'; }
+            // 기존 적용 로직 호출
+            if(typeof apply6MonthFilter === 'function') apply6MonthFilter();
+        } else {
+            if(btn){ btn.innerHTML='📈 통계 필터 적용하기'; btn.style.background='linear-gradient(120deg, #FFD98E, #FF9AC2)'; btn.style.color='#2A2340'; }
+            if(statusBox){ statusBox.innerHTML='🔴 통계 필터 OFF - 아래 버튼 눌러 적용하세요!'; statusBox.style.background='rgba(255,0,0,0.15)'; statusBox.style.border='1px dashed #ff6b6b'; statusBox.style.color='#ff9a9a'; }
+            if(logEl){ logEl.style.display='none'; }
+        }
+    }
+    // 자세히 버튼
+    document.addEventListener('DOMContentLoaded', ()=>{
+        const detailBtn = document.getElementById('btn-detail-6month');
+        if(detailBtn){
+            detailBtn.onclick = ()=>{
+                const d = document.getElementById('lotto-6month-detail');
+                if(d) d.style.display = d.style.display==='none' ? 'block' : 'none';
+            };
+        }
+    });
 
     function sajuBuildLottoPool(best){
         const mapGan={'甲':[3,13,23,33,43],'乙':[5,15,25,35,45],'丙':[2,12,22,32,42],'丁':[7,17,27,37,44],'戊':[8,18,28,38,41],'己':[1,11,21,31,40],'庚':[9,19,29,39,45],'辛':[4,14,24,34,44],'壬':[6,16,26,36,43],'癸':[10,20,30,40,42]};
