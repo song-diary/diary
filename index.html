@@ -9145,72 +9145,130 @@ async function showPhotosForDate(dateStr){
         if (isDiarySearchFilterOpen) filterDiaryCustomList();
     }
 
+    // 🆕 안드로이드 WebView 호환 음성메모
     function initSpeechRecognition() {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-            if (recordBtn) recordBtn.style.display = 'none';
+        
+        // CASE 1: 일반 브라우저 / PWA (Chrome, 삼성인터넷) - Web Speech API 사용
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.lang = 'ko-KR';
+            recognition.interimResults = true;
+            recognition.continuous = false;
+
+            recognition.onstart = () => {
+                isRecording = true;
+                if (recordBtn) { recordBtn.style.background = '#e74c3c'; recordBtn.textContent = '⏹️ 녹음 중지'; }
+            };
+
+            recognition.onresult = (event) => {
+                if (!isRecording) return;
+                let interimText = '';
+                let finalText = '';
+                for (let i = 0; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) finalText += transcript;
+                    else interimText += transcript;
+                }
+                sessionFinalText = finalText;
+                if (textOutput) textOutput.innerText = recordingBaseText + finalText + interimText;
+            };
+
+            recognition.onend = () => {
+                if (shouldRestart) {
+                    recordingBaseText = recordingBaseText + sessionFinalText;
+                    sessionFinalText = '';
+                    setTimeout(() => {
+                        if (!shouldRestart) return;
+                        try { recognition.start(); } catch (e) { console.error(e); }
+                    }, 200);
+                    return;
+                }
+                isRecording = false;
+                shouldRestart = false;
+                if (recordBtn) { recordBtn.style.background = ''; recordBtn.textContent = '🎤 음성메모'; }
+            };
+
+            recognition.onerror = (e) => {
+                console.error('Speech error', e);
+                // 권한 오류면 안내
+                if(e.error === 'not-allowed'){
+                    alert('🎤 마이크 권한이 거부되었습니다!\n\n안드로이드 앱이면:\n앱 정보 > 권한 > 마이크 허용\n\n브라우저면:\n주소창 왼쪽 자물쇠 > 마이크 허용으로 바꿔주세요');
+                }
+            };
+
+            if (recordBtn) {
+                recordBtn.onclick = () => {
+                    if (!isRecording) {
+                        recordingBaseText = (textOutput.innerText||'').trim() ? (textOutput.innerText+' ') : '';
+                        sessionFinalText = '';
+                        shouldRestart = true;
+                        try { recognition.start(); } catch (e) { 
+                            console.error(e);
+                            alert('음성 인식 시작 실패: '+e.message+'\n\n안드로이드 앱에서는 WebView 설정을 확인하세요');
+                        }
+                    } else {
+                        shouldRestart = false;
+                        try { recognition.stop(); } catch (e) {}
+                    }
+                };
+            }
             return;
         }
 
-        recognition = new SpeechRecognition();
-        recognition.lang = 'ko-KR';
-        recognition.interimResults = true;
-        // ⚠️ continuous:true는 안드로이드 크롬에서 이미 확정(final)된 문장을 다시 전달해
-        // 텍스트가 반복(이중입력)되는 알려진 버그가 있어, 대신 false로 두고
-        // onend에서 shouldRestart일 때 수동으로 재시작하여 끊김없이 이어지도록 처리한다.
-        recognition.continuous = false;
-
-        recognition.onstart = () => {
-            isRecording = true;
-            if (recordBtn) { recordBtn.style.background = '#e74c3c'; recordBtn.textContent = '⏹️ 녹음 중지'; }
-        };
-
-        recognition.onresult = (event) => {
-            if (!isRecording) return; // 강제 종료 이후 뒤늦게 도착하는 이벤트는 무시 (이중입력 방지)
-            let interimText = '';
-            let finalText = '';
-            for (let i = 0; i < event.results.length; i++) {
-                const transcript = event.results[i][0].transcript;
-                if (event.results[i].isFinal) finalText += transcript;
-                else interimText += transcript;
-            }
-            // 매번 전체 결과를 새로 조립(누적 더하기 X)하여, 브라우저가 이미 확정된 구간을
-            // 다시 전달하는 경우에도 텍스트가 중복되지 않도록 함
-            sessionFinalText = finalText;
-            if (textOutput) textOutput.innerText = recordingBaseText + finalText + interimText;
-        };
-
-        recognition.onend = () => {
-            if (shouldRestart) {
-                // 재시작 시, 확정된(final) 내용만 새 기준점으로 접어넣고 미확정(interim) 내용은 버림
-                recordingBaseText = recordingBaseText + sessionFinalText;
-                sessionFinalText = '';
-                // 너무 빨리 재시작하면 일부 브라우저에서 오류가 나므로 약간의 지연을 둠
-                setTimeout(() => {
-                    if (!shouldRestart) return;
-                    try { recognition.start(); } catch (e) { console.error(e); }
-                }, 200);
-                return;
-            }
-            isRecording = false;
-            shouldRestart = false;
-            if (recordBtn) { recordBtn.style.background = ''; recordBtn.textContent = '🎤 음성메모'; }
-        };
-
+        // CASE 2: 안드로이드 WebView (SpeechRecognition 없음) - Native Bridge 사용
+        // WebView에서 window.AndroidSpeech 인터페이스가 있으면 사용
         if (recordBtn) {
             recordBtn.onclick = () => {
-                if (!isRecording) {
-                    recordingBaseText = (textOutput.innerText||'').trim() ? (textOutput.innerText+' ') : '';
-                    sessionFinalText = '';
-                    shouldRestart = true;
-                    try { recognition.start(); } catch (e) { console.error(e); }
+                // 안드로이드 네이티브 브릿지가 있으면 호출
+                if (window.AndroidSpeech && window.AndroidSpeech.startSpeech) {
+                    if (!isRecording) {
+                        recordingBaseText = (textOutput.innerText||'').trim() ? (textOutput.innerText+' ') : '';
+                        isRecording = true;
+                        recordBtn.style.background = '#e74c3c';
+                        recordBtn.textContent = '⏹️ 듣는중...';
+                        try { window.AndroidSpeech.startSpeech('ko-KR'); } catch(e){ alert('네이티브 호출 실패: '+e.message); }
+                    } else {
+                        // 중지
+                        isRecording = false;
+                        recordBtn.style.background = '';
+                        recordBtn.textContent = '🎤 음성메모';
+                        if(window.AndroidSpeech.stopSpeech) window.AndroidSpeech.stopSpeech();
+                    }
                 } else {
-                    shouldRestart = false;
-                    try { recognition.stop(); } catch (e) { console.error(e); }
+                    // 브릿지 없으면 안내 + 대체 입력 (키보드 음성입력 유도)
+                    const isAndroidWebView = /wv|WebView/.test(navigator.userAgent) || /Android/.test(navigator.userAgent);
+                    if(isAndroidWebView){
+                        alert('🤖 안드로이드 앱에서 음성메모가 안 되는 이유:\n\nWebView는 기본적으로 음성 인식을 지원 안 합니다!\n\n아래 2가지 중 하나로 고쳐야 합니다:\n\n1) 앱 코드에 권한 추가 (권장)\n   MainActivity.java에 코드 추가 필요\n   → 아래 파일에 코드 넣어뒀어요!\n\n2) 임시 방법: 키보드에서 🎤 버튼 눌러서 입력\n   (Gboard 키보드의 마이크 버튼 사용)');
+                        // 대체: 키보드 포커스 유도
+                        if(textOutput) textOutput.focus();
+                    } else {
+                        alert('이 브라우저는 음성 인식을 지원하지 않습니다.\nChrome 브라우저를 사용해주세요!');
+                        if(recordBtn) recordBtn.style.display = 'none';
+                    }
                 }
             };
         }
     }
+
+    // 안드로이드 네이티브에서 호출할 콜백 (Java에서 호출)
+    window.onAndroidSpeechResult = function(text, isFinal){
+        if(!text) return;
+        if(isFinal){
+            if(textOutput) textOutput.innerText = recordingBaseText + text + ' ';
+            recordingBaseText = recordingBaseText + text + ' ';
+            isRecording = false;
+            if (recordBtn) { recordBtn.style.background = ''; recordBtn.textContent = '🎤 음성메모'; }
+        } else {
+            // interim
+            if(textOutput) textOutput.innerText = recordingBaseText + text;
+        }
+    };
+    window.onAndroidSpeechError = function(err){
+        isRecording = false;
+        if (recordBtn) { recordBtn.style.background = ''; recordBtn.textContent = '🎤 음성메모'; }
+        alert('음성 인식 오류: '+err);
+    };
 
     // 🎤 음성메모 녹음을 확실히 중지하고 상태를 초기화 (저장/닫기 시 이중입력·녹음 지속 방지)
     function stopVoiceRecording() {
