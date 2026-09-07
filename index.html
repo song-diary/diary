@@ -3186,6 +3186,11 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
         <!-- 💵 가계부 입력 영역: 가계부_입력폼 모드에서만 표시 -->
         <div class="money-input-box" id="money-input-section">
             <label style="font-size: 14px; font-weight: bold; color: #27ae60;" id="money-input-label">💰 가계부 입력</label>
+            <!-- 📅 날짜 입력란: 가계부 일자 바로 밑에 위치 (V284) -->
+            <div class="form-date-row" id="form-date-row-money" style="margin:8px 0; background:#fff; padding:8px 10px; border-radius:8px; border:1px solid #c2e8ce;">
+                <label class="form-date-label" for="form-date-input" style="font-weight:bold;">📅 가계부 일자</label>
+                <input type="date" id="form-date-input-money" onchange="onFormDateInputChangedMoney()" style="flex:1;">
+            </div>
             <div class="money-input-row">
                 <button type="button" class="money-type-btn expense active" id="type-expense-btn" onclick="setMoneyType('expense')">지출</button>
                 <button type="button" class="money-type-btn income" id="type-income-btn" onclick="setMoneyType('income')">수입</button>
@@ -3234,7 +3239,7 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
             </div>
         </div>
 
-        <!-- 📅 날짜 수정 입력란: 건강 섹션 바로 아래 위치 -->
+        <!-- 📅 날짜 수정 입력란: 다이어리 모드용 (가계부는 위에 별도로 있음) -->
         <div class="form-date-row" id="form-date-row">
             <label class="form-date-label" for="form-date-input">📅 날짜</label>
             <input type="date" id="form-date-input" onchange="onFormDateInputChanged()">
@@ -8068,6 +8073,11 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
         const recordBtnEl = document.getElementById('record-btn');
         const photoAttachLabel = document.getElementById('photo-attach-label');
         const moneyLabel = document.getElementById('money-input-label');
+        const annivRow = document.getElementById('anniv-input-row');
+        const formDateRowDiary = document.getElementById('form-date-row');
+        const cameraBtn = document.getElementById('camera-btn');
+        const galleryBtn = document.getElementById('gallery-btn');
+        const moneyDateRow = document.getElementById('form-date-row-money');
 
         if (mode === 'money') {
             if (moneySection) moneySection.style.display = '';
@@ -8075,14 +8085,41 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
             if (recordBtnEl) recordBtnEl.style.display = 'none';
             if (photoAttachLabel) photoAttachLabel.style.display = 'none';
             if (moneyLabel) moneyLabel.textContent = '💰 가계부 입력';
+            // V284: 가계부에서는 제목&기념일 + 반복/양력음력 숨김
+            if (annivRow) annivRow.style.display = 'none';
+            // V284: 다이어리용 날짜는 숨기고, 가계부용 날짜는 표시
+            if (formDateRowDiary) formDateRowDiary.style.display = 'none';
+            if (moneyDateRow) moneyDateRow.style.display = 'flex';
+            // V284: 카메라/갤러리 삭제
+            if (cameraBtn) cameraBtn.style.display = 'none';
+            if (galleryBtn) galleryBtn.style.display = 'none';
         } else {
             if (moneySection) moneySection.style.display = 'none';
             if (diarySection) diarySection.style.display = '';
             if (recordBtnEl) recordBtnEl.style.display = '';
             if (photoAttachLabel) photoAttachLabel.style.display = '';
             if (moneyLabel) moneyLabel.textContent = '💰 가계부 기록 (선택사항)';
+            // 다이어리에서는 다시 표시
+            if (annivRow) annivRow.style.display = '';
+            if (formDateRowDiary) formDateRowDiary.style.display = '';
+            if (moneyDateRow) moneyDateRow.style.display = 'none';
+            if (cameraBtn) cameraBtn.style.display = '';
+            if (galleryBtn) galleryBtn.style.display = '';
         }
     }
+    
+    // 가계부용 날짜 변경 핸들러 (다이어리용과 동기화)
+    function onFormDateInputChangedMoney(){
+        const moneyDateInput = document.getElementById('form-date-input-money');
+        const diaryDateInput = document.getElementById('form-date-input');
+        if(moneyDateInput && diaryDateInput){
+            diaryDateInput.value = moneyDateInput.value;
+        }
+        onFormDateInputChanged();
+    }
+    // 다이어리용 날짜 변경 시 가계부 날짜도 동기화
+    const _origOnFormDateInputChanged = typeof onFormDateInputChanged !== 'undefined' ? onFormDateInputChanged : null;
+    
 
     // mode: 'diary'(다이어리 입력폼) 또는 'money'(가계부 입력폼). 명시적으로 안 넘기면
     // 수정(기존 항목)일 때는 항목 종류로, 새 입력일 때는 현재 보고 있는 탭(다이어리/가계부)으로 자동 판단
@@ -8189,6 +8226,8 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
 
         const formDateInputEl = document.getElementById('form-date-input');
         if (formDateInputEl) formDateInputEl.value = selectedReservationDate;
+        const formDateInputMoneyEl = document.getElementById('form-date-input-money');
+        if (formDateInputMoneyEl) formDateInputMoneyEl.value = selectedReservationDate;
 
         // ⏰ 예약(미래 날짜)일 때만 시간 입력란을 표시
         const reservationBoxEl = document.getElementById('reservation-box');
