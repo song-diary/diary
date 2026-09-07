@@ -7351,36 +7351,34 @@ body { touch-action: pan-x pan-y pinch-zoom !important; }
     }
 
     function openBucketListModal() {
-        // 모달 요소 동적으로 다시 찾기 (V269 HTML이 뒤에 추가된 경우 대비)
-        let overlay = document.getElementById('bucket-list-modal-overlay') || bucketListModalOverlay;
-        if(!overlay){
-            console.log('bucket modal not found');
-            alert('버킷리스트 모달을 찾을 수 없습니다. 페이지를 새로고침 해주세요!');
-            return;
-        }
-        // 전역 변수 업데이트
-        if(!bucketListModalOverlay) bucketListModalOverlay = overlay;
-        bucketListItems = getBucketList();
-        bucketEditingId = null;
-        renderBucketList();
-        const addBox = document.getElementById('bl-add-box');
-        const addIcon = document.getElementById('bl-add-toggle-icon');
-        if (addBox) addBox.style.display = 'none';
-        if (addIcon) addIcon.textContent = '➕';
-        overlay.classList.add('active');
-        // fortune 팝업은 닫고 버킷만 열기
-        if(typeof fortunePopupOverlay !== 'undefined' && fortunePopupOverlay) fortunePopupOverlay.classList.remove('active');
-        if(typeof sajuDetailModalOverlay !== 'undefined' && sajuDetailModalOverlay) sajuDetailModalOverlay.classList.remove('active');
-        lockBodyScroll();
+        try {
+            const overlay = document.getElementById('bucket-list-modal-overlay');
+            if(!overlay){ alert('버킷 모달을 찾을 수 없습니다!'); return; }
+            bucketListItems = getBucketList();
+            bucketEditingId = null;
+            renderBucketList();
+            const addBox = document.getElementById('bl-add-box');
+            const addIcon = document.getElementById('bl-add-toggle-icon');
+            if (addBox) addBox.style.display = 'none';
+            if (addIcon) addIcon.textContent = '➕';
+            overlay.style.display = 'flex';
+            // 다른 팝업 닫기
+            const fortuneEl = document.getElementById('fortune-popup-overlay');
+            if(fortuneEl) fortuneEl.classList.remove('active');
+            const sajuEl = document.getElementById('saju-detail-modal-overlay');
+            if(sajuEl) sajuEl.classList.remove('active');
+            document.body.style.overflow='hidden';
+        } catch(e){ alert('버킷 열기 오류: '+e.message); }
     }
     function closeBucketListModal() {
-        let overlay = document.getElementById('bucket-list-modal-overlay') || bucketListModalOverlay;
-        if (overlay) overlay.classList.remove('active');
-        unlockBodyScroll();
+        try {
+            const overlay = document.getElementById('bucket-list-modal-overlay');
+            if (overlay) overlay.style.display = 'none';
+            document.body.style.overflow='';
+        } catch(e){}
     }
     function handleBucketListModalBackgroundClick(event) {
-        let overlay = document.getElementById('bucket-list-modal-overlay') || bucketListModalOverlay;
-        if (event.target === overlay) closeBucketListModal();
+        if (event.target.id === 'bucket-list-modal-overlay') closeBucketListModal();
     }
 
     function toggleBucketAddBox() {
@@ -9562,40 +9560,34 @@ async function showPhotosForDate(dateStr){
 
 
 <!-- 🎯 버킷리스트 모달 -->
-<div class="modal-overlay" id="bucket-list-modal-overlay" onclick="handleBucketListModalBackgroundClick(event)">
-    <div class="saju-detail-card" id="bucket-list-card" onclick="event.stopPropagation()" style="max-width:460px;">
-        <button class="close-form-btn" style="position:absolute; top:14px; right:14px;" onclick="closeBucketListModal()">✖</button>
-        <div class="sd-title" style="margin-bottom:14px;">🎯 나의 버킷 리스트</div>
-        <div style="font-size:12px; color:#8A8071; margin-bottom:10px;">이루고 싶은 목표를 적어보세요! 클릭하면 수정, 완료하면 체크!</div>
+
+
+
+
+
+<!-- 🎯 버킷리스트 모달 - V271 무조건 작동 버전 -->
+<div id="bucket-list-modal-overlay" onclick="if(event.target===this) closeBucketListModal()" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:99999; align-items:center; justify-content:center; padding:15px; box-sizing:border-box;">
+    <div id="bucket-list-card" onclick="event.stopPropagation()" style="width:100%; max-width:460px; max-height:85vh; overflow-y:auto; background:linear-gradient(165deg, #23264A 0%, #171933 60%, #14152B 100%); border-radius:22px; padding:20px; position:relative; border:1px solid rgba(255,255,255,0.12);">
+        <button onclick="closeBucketListModal()" style="position:absolute; top:14px; right:14px; background:rgba(255,255,255,0.1); border:none; color:#fff; width:30px; height:30px; border-radius:50%; cursor:pointer;">✖</button>
+        <div style="font-size:18px; font-weight:900; color:#FFD98E; margin-bottom:4px;">🎯 나의 버킷 리스트</div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.5); margin-bottom:12px;">이루고 싶은 목표를 적어보세요!</div>
         
         <div style="display:flex; gap:6px; margin-bottom:12px;">
-            <button onclick="toggleBucketAddBox()" style="flex:1; background:linear-gradient(120deg, #A8EDEA, #FED6E3); border:none; padding:10px; border-radius:10px; font-weight:800; font-size:13px; color:#2A2340; display:flex; align-items:center; justify-content:center; gap:6px;">
+            <button id="bl-add-toggle-btn" onclick="toggleBucketAddBox()" style="flex:1; background:linear-gradient(120deg, #A8EDEA, #FED6E3); border:none; padding:12px; border-radius:10px; font-weight:800; font-size:13px; color:#2A2340; cursor:pointer;">
                 <span id="bl-add-toggle-icon">➕</span> 목표 추가하기
             </button>
         </div>
         
         <div id="bl-add-box" style="display:none; gap:6px; margin-bottom:12px;">
-            <input type="text" id="bl-new-input" placeholder="예: 제주도 한달살기" style="flex:1; padding:10px; border:1px solid #ddd; border-radius:10px; font-size:14px;">
-            <button onclick="addBucketListItem()" style="background:#FF9AC2; color:#fff; border:none; padding:10px 16px; border-radius:10px; font-weight:700;">추가</button>
+            <input type="text" id="bl-new-input" placeholder="예: 제주도 한달살기" style="flex:1; padding:12px; border:1px solid #555; border-radius:10px; font-size:14px; background:#222; color:#fff;" onkeydown="if(event.key==='Enter') addBucketListItem()">
+            <button onclick="addBucketListItem()" style="background:#FF9AC2; color:#fff; border:none; padding:12px 18px; border-radius:10px; font-weight:700; cursor:pointer;">추가</button>
         </div>
         
-        <div id="bl-list-area"></div>
+        <div id="bl-list-area" style="min-height:100px;"></div>
         
-        <div style="margin-top:18px;"><button onclick="closeBucketListModal()" style="width:100%;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:14px;border-radius:14px;font-weight:800;font-size:15px;">종료</button></div>
+        <div style="margin-top:18px;"><button onclick="closeBucketListModal()" style="width:100%;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:14px;border-radius:14px;font-weight:800;font-size:15px; cursor:pointer;">종료</button></div>
     </div>
 </div>
-
-<style>
-.bl-item { display:flex; align-items:center; gap:8px; padding:10px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:10px; margin-bottom:6px; }
-.bl-rank { width:24px; height:24px; background:#FFD98E; color:#2A2340; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; flex-shrink:0; }
-.bl-text { flex:1; font-size:13px; color:#fff; cursor:pointer; }
-.bl-edit-hint { opacity:0.5; font-size:11px; }
-.bl-edit-input { flex:1; padding:6px; border:1px solid #FFD98E; border-radius:6px; font-size:13px; background:#222; color:#fff; }
-.bl-btn { background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; width:26px; height:26px; border-radius:6px; font-size:11px; cursor:pointer; }
-.bl-btn:disabled { opacity:0.3; }
-.bl-btn.bl-done { background:rgba(76,175,80,0.2); border-color:#4CAF50; color:#8BC34A; width:auto; padding:0 8px; font-size:12px; }
-.bl-empty { text-align:center; padding:20px; color:#aaa; font-size:13px; }
-</style>
 
 </body>
 </html>
