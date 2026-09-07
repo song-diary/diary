@@ -2623,6 +2623,10 @@ body { touch-action: pan-x pan-y pinch-zoom !important; }
         }
         /* GitHub 기반앱은 이미 되는 이유: 여기는 iframe이 아니라 top window 스크롤이라 됨 - APK는 WebView 내부 스크롤이라 막혔던 것 */
 
+
+#bucket-list-modal-overlay { overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
+#bucket-list-card { overscroll-behavior:contain; -webkit-overflow-scrolling:touch; touch-action:pan-y; }
+body.modal-open { overflow:hidden; position:fixed; width:100%; }
 </style>
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#f59e0b">
@@ -7350,31 +7354,123 @@ body { touch-action: pan-x pan-y pinch-zoom !important; }
         localStorage.setItem('smartDiaryBucketList', JSON.stringify(bucketListItems));
     }
 
+    // 🔒 버킷리스트 비밀번호 기능
+    function getBucketPassword(){ return localStorage.getItem('bucketListPassword') || ''; }
+    function setBucketPassword(pw){ localStorage.setItem('bucketListPassword', pw); }
+    let bucketPwVerified = false;
+
     function openBucketListModal() {
         try {
-            const overlay = document.getElementById('bucket-list-modal-overlay');
-            if(!overlay){ alert('버킷 모달을 찾을 수 없습니다!'); return; }
-            bucketListItems = getBucketList();
-            bucketEditingId = null;
-            renderBucketList();
-            const addBox = document.getElementById('bl-add-box');
-            const addIcon = document.getElementById('bl-add-toggle-icon');
-            if (addBox) addBox.style.display = 'none';
-            if (addIcon) addIcon.textContent = '➕';
-            overlay.style.display = 'flex';
-            // 다른 팝업 닫기
-            const fortuneEl = document.getElementById('fortune-popup-overlay');
-            if(fortuneEl) fortuneEl.classList.remove('active');
-            const sajuEl = document.getElementById('saju-detail-modal-overlay');
-            if(sajuEl) sajuEl.classList.remove('active');
-            document.body.style.overflow='hidden';
+            const savedPw = getBucketPassword();
+            if(savedPw && !bucketPwVerified){
+                openBucketPwModal(false);
+                return;
+            }
+            actuallyOpenBucketList();
         } catch(e){ alert('버킷 열기 오류: '+e.message); }
+    }
+
+    function actuallyOpenBucketList(){
+        const overlay = document.getElementById('bucket-list-modal-overlay');
+        if(!overlay){ alert('버킷 모달을 찾을 수 없습니다!'); return; }
+        bucketListItems = getBucketList();
+        bucketEditingId = null;
+        renderBucketList();
+        const addBox = document.getElementById('bl-add-box');
+        const addIcon = document.getElementById('bl-add-toggle-icon');
+        if (addBox) addBox.style.display = 'none';
+        if (addIcon) addIcon.textContent = '➕';
+        overlay.style.display = 'flex';
+        // 터치시 뒤에 폼 안 움직이게 - 오버레이에서 터치 이벤트 차단
+        overlay.addEventListener('touchmove', function(e){ e.stopPropagation(); }, {passive:false});
+        const card = document.getElementById('bucket-list-card');
+        if(card){
+            card.addEventListener('touchmove', function(e){ e.stopPropagation(); }, {passive:true});
+            card.style.overscrollBehavior = 'contain';
+            card.style.touchAction = 'pan-y';
+        }
+        // 다른 팝업 닫기
+        const fortuneEl = document.getElementById('fortune-popup-overlay');
+        if(fortuneEl) fortuneEl.classList.remove('active');
+        const sajuEl = document.getElementById('saju-detail-modal-overlay');
+        if(sajuEl) sajuEl.classList.remove('active');
+        document.body.style.overflow='hidden';
+        document.body.style.position='fixed';
+        document.body.style.width='100%';
+    }
+
+    function openBucketPwModal(isSetup){
+        const modal = document.getElementById('bucket-pw-modal');
+        const msg = document.getElementById('bucket-pw-msg');
+        const setupArea = document.getElementById('bucket-pw-setup-area');
+        const input = document.getElementById('bucket-pw-input');
+        if(!modal) return;
+        if(isSetup){
+            msg.textContent = '처음 사용! 비밀번호를 설정하세요';
+            setupArea.style.display='block';
+            input.style.display='none';
+        } else {
+            const hasPw = !!getBucketPassword();
+            if(!hasPw){
+                msg.textContent = '처음 사용! 비밀번호를 설정하세요';
+                setupArea.style.display='block';
+                input.style.display='none';
+            } else {
+                msg.textContent = '비밀번호를 입력하세요';
+                setupArea.style.display='none';
+                input.style.display='block';
+                input.value='';
+                setTimeout(()=>input.focus(),100);
+            }
+        }
+        modal.style.display='flex';
+    }
+    function closeBucketPwModal(){
+        const modal = document.getElementById('bucket-pw-modal');
+        if(modal) modal.style.display='none';
+    }
+    function checkBucketPassword(){
+        const input = document.getElementById('bucket-pw-input');
+        const saved = getBucketPassword();
+        if(input.value === saved){
+            bucketPwVerified = true;
+            closeBucketPwModal();
+            actuallyOpenBucketList();
+        } else {
+            alert('비밀번호가 틀렸습니다!');
+            input.value='';
+            input.focus();
+        }
+    }
+    function saveBucketPassword(){
+        const pw1 = document.getElementById('bucket-pw-new').value;
+        const pw2 = document.getElementById('bucket-pw-confirm').value;
+        if(!pw1){ alert('비밀번호를 입력하세요'); return; }
+        if(pw1 !== pw2){ alert('비밀번호가 일치하지 않습니다'); return; }
+        setBucketPassword(pw1);
+        bucketPwVerified = true;
+        alert('비밀번호가 설정되었습니다! 🎉');
+        closeBucketPwModal();
+        actuallyOpenBucketList();
+    }
+    function resetBucketPassword(){
+        if(confirm('비밀번호를 초기화하고 모든 버킷리스트는 유지됩니다. 초기화할까요?')){
+            localStorage.removeItem('bucketListPassword');
+            bucketPwVerified = false;
+            alert('비밀번호가 초기화되었습니다. 새 비밀번호를 설정하세요.');
+            openBucketPwModal(true);
+        }
     }
     function closeBucketListModal() {
         try {
             const overlay = document.getElementById('bucket-list-modal-overlay');
             if (overlay) overlay.style.display = 'none';
             document.body.style.overflow='';
+            document.body.style.position='';
+            document.body.style.width='';
+            // 비밀번호는 5분 후 다시 물어봄 (보안)
+            // setTimeout으로 5분 후 verified 해제
+            setTimeout(()=>{ bucketPwVerified = false; }, 5*60*1000);
         } catch(e){}
     }
     function handleBucketListModalBackgroundClick(event) {
@@ -9583,7 +9679,7 @@ async function showPhotosForDate(dateStr){
     <div id="bucket-list-card" onclick="event.stopPropagation()" style="width:100%; max-width:460px; max-height:85vh; overflow-y:auto; background:linear-gradient(165deg, #23264A 0%, #171933 60%, #14152B 100%); border-radius:22px; padding:20px; position:relative; border:1px solid rgba(255,255,255,0.12);">
         <button onclick="closeBucketListModal()" style="position:absolute; top:14px; right:14px; background:rgba(255,255,255,0.1); border:none; color:#fff; width:30px; height:30px; border-radius:50%; cursor:pointer;">✖</button>
         <div style="font-size:18px; font-weight:900; color:#FFD98E; margin-bottom:4px;">🎯 나의 버킷 리스트</div>
-        <div style="font-size:12px; color:rgba(255,255,255,0.5); margin-bottom:12px;">이루고 싶은 목표를 적어보세요!</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;"><div style="font-size:12px; color:rgba(255,255,255,0.5);">이루고 싶은 목표를 적어보세요!</div><button onclick="openBucketPwModal(true)" style="font-size:11px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:rgba(255,255,255,0.7); padding:4px 8px; border-radius:6px;">🔒 비밀번호 설정</button></div>
         
         <div style="display:flex; gap:6px; margin-bottom:12px;">
             <button id="bl-add-toggle-btn" onclick="toggleBucketAddBox()" style="flex:1; background:linear-gradient(120deg, #A8EDEA, #FED6E3); border:none; padding:12px; border-radius:10px; font-weight:800; font-size:13px; color:#2A2340; cursor:pointer;">
@@ -9604,6 +9700,30 @@ async function showPhotosForDate(dateStr){
 
 
 
+
+
+<!-- 🔒 버킷리스트 비밀번호 모달 -->
+<div id="bucket-pw-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:1000000; align-items:center; justify-content:center; padding:15px; box-sizing:border-box;">
+    <div style="width:100%; max-width:340px; background:#fff; border-radius:20px; padding:24px; text-align:center; box-shadow:0 20px 50px rgba(0,0,0,0.3);">
+        <div style="font-size:32px; margin-bottom:8px;">🔒</div>
+        <div style="font-size:17px; font-weight:800; color:#222; margin-bottom:4px;">버킷리스트 잠금</div>
+        <div style="font-size:12px; color:#888; margin-bottom:16px;" id="bucket-pw-msg">비밀번호를 입력하세요</div>
+        <input type="password" id="bucket-pw-input" placeholder="비밀번호 입력" style="width:100%; padding:14px; border:2px solid #FFD98E; border-radius:12px; font-size:16px; text-align:center; box-sizing:border-box; outline:none;" onkeydown="if(event.key==='Enter') checkBucketPassword()">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px;">
+            <button onclick="closeBucketPwModal()" style="padding:12px; background:#f5f5f5; border:1px solid #ddd; border-radius:12px; font-weight:700; color:#666;">취소</button>
+            <button onclick="checkBucketPassword()" style="padding:12px; background:linear-gradient(120deg, #FFD98E, #FF9AC2); border:none; border-radius:12px; font-weight:800; color:#2A2340;">확인</button>
+        </div>
+        <div style="margin-top:12px; font-size:11px; color:#aaa;">
+            <span onclick="resetBucketPassword()" style="text-decoration:underline; cursor:pointer;">비밀번호 잊었나요? 초기화</span>
+        </div>
+        <div id="bucket-pw-setup-area" style="display:none; margin-top:14px; padding-top:14px; border-top:1px solid #eee;">
+            <div style="font-size:12px; color:#666; margin-bottom:8px;">새 비밀번호 설정</div>
+            <input type="password" id="bucket-pw-new" placeholder="새 비밀번호" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-bottom:6px; box-sizing:border-box;">
+            <input type="password" id="bucket-pw-confirm" placeholder="비밀번호 확인" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box;">
+            <button onclick="saveBucketPassword()" style="width:100%; margin-top:8px; padding:10px; background:#4CAF50; color:#fff; border:none; border-radius:8px; font-weight:700;">비밀번호 설정</button>
+        </div>
+    </div>
+</div>
 
 </body>
 </html>
