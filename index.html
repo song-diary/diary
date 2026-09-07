@@ -2627,11 +2627,11 @@ body { touch-action: pan-x pan-y pinch-zoom !important; }
 #bucket-list-modal-overlay { overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
 #bucket-list-card { overscroll-behavior:contain; -webkit-overflow-scrolling:touch; touch-action:pan-y; }
 body.modal-open { overflow:hidden; position:fixed; width:100%; }
-</style>
+#record-btn{display:none !important;} </style>
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#f59e0b">
 <style>
-</style><style>.fp-diary-box, .fp-yesterday-box{display:none !important;}
+#record-btn{display:none !important;} </style><style>.fp-diary-box, .fp-yesterday-box{display:none !important;}
         /* V238 - 1게임 6개 숫자 2줄 → 1줄 fix (왼쪽으로 조금 이동) */
         #ldt-manual-results2 .ldt-game{
             gap:8px !important;
@@ -2687,11 +2687,11 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
             bottom:0 !important;
         }
 
-</style>
+#record-btn{display:none !important;} </style>
     <style>
     input[type="file"]{ display:none !important; }
     #manual-lotto-popup input[type="number"]{ display:block !important; }
-    </style>
+    #record-btn{display:none !important;} </style>
 
         <style>
         /* V262: 앨범 모드에서도 수정/삭제 버튼 항상 보이게 + 텍스트 클릭시 수정 */
@@ -2700,7 +2700,7 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
         #diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .delete-btn { font-size:11px !important; padding:4px 8px !important; display:inline-flex !important; }
         /* 라이트박스 액션 버튼 */
         #photo-lightbox-actions { position:sticky; bottom:0; background:rgba(255,255,255,0.95); padding:10px; border-radius:12px; backdrop-filter:blur(4px); }
-        </style>
+        #record-btn{display:none !important;} </style>
 </head>
 <body>
 
@@ -3269,8 +3269,8 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
         </div>
 
         <div style="display:flex; flex-direction:column; gap:6px; width:100%; margin-bottom:0;">
-  <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:6px; width:100%;">
-    <button class="btn btn-secondary" id="record-btn" type="button" style="width:100%; height:46px; padding:0; font-size:13px; border-radius:8px; display:flex; align-items:center; justify-content:center;">🎤 음성메모</button>
+  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; width:100%;">
+    
     <button class="btn btn-secondary" id="camera-btn" type="button" style="width:100%; height:46px; padding:0; font-size:13px; border-radius:8px; display:flex; align-items:center; justify-content:center;">📷 카메라</button>
     <button class="btn btn-secondary" id="gallery-btn" type="button" style="width:100%; height:46px; padding:0; font-size:13px; border-radius:8px; display:flex; align-items:center; justify-content:center;">🖼️ 갤러리</button>
   </div>
@@ -9145,8 +9145,29 @@ async function showPhotosForDate(dateStr){
         if (isDiarySearchFilterOpen) filterDiaryCustomList();
     }
 
+
+    // 페이지 로드 시 마이크 권한 상태 체크
+    async function checkMicPermissionStatus(){
+        if(navigator.permissions && navigator.permissions.query){
+            try{
+                const status = await navigator.permissions.query({name:'microphone'});
+                console.log('Mic permission:', status.state);
+                if(status.state === 'denied'){
+                    if(recordBtn){
+                        recordBtn.title = '마이크 권한이 거부되었습니다. 브라우저 설정에서 허용하세요';
+                    }
+                }
+                status.onchange = () => {
+                    console.log('Mic permission changed:', status.state);
+                };
+            }catch(e){ console.log('Permission query not supported', e); }
+        }
+    }
+    checkMicPermissionStatus();
+
     // 🆕 안드로이드 WebView 호환 음성메모
-    function initSpeechRecognition() {
+    function initSpeechRecognition() { return; /* 음성메모 기능 제거됨 */ }
+    function initSpeechRecognition_disabled() {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         
         // CASE 1: 일반 브라우저 / PWA (Chrome, 삼성인터넷) - Web Speech API 사용
@@ -9158,7 +9179,7 @@ async function showPhotosForDate(dateStr){
 
             recognition.onstart = () => {
                 isRecording = true;
-                if (recordBtn) { recordBtn.style.background = '#e74c3c'; recordBtn.textContent = '⏹️ 녹음 중지'; }
+                if (recordBtn) { recordBtn.style.background = '#e74c3c'; /* removed */; }
             };
 
             recognition.onresult = (event) => {
@@ -9186,15 +9207,37 @@ async function showPhotosForDate(dateStr){
                 }
                 isRecording = false;
                 shouldRestart = false;
-                if (recordBtn) { recordBtn.style.background = ''; recordBtn.textContent = '🎤 음성메모'; }
+                if (recordBtn) { recordBtn.style.background = ''; /* removed */; }
             };
 
             recognition.onerror = (e) => {
                 console.error('Speech error', e);
-                // 권한 오류면 안내
-                if(e.error === 'not-allowed'){
-                    alert('🎤 마이크 권한이 거부되었습니다!\n\n안드로이드 앱이면:\n앱 정보 > 권한 > 마이크 허용\n\n브라우저면:\n주소창 왼쪽 자물쇠 > 마이크 허용으로 바꿔주세요');
+                isRecording = false;
+                if (recordBtn) { recordBtn.style.background = ''; /* removed */; }
+                let msg = '';
+                if(e.error === 'not-allowed' || e.error === 'permission-denied'){
+                    msg = '🎤 마이크 권한 거부됨!\n\n해결:\n1. 주소창 왼쪽 🔒 클릭\n2. 마이크 > 허용으로 변경\n3. 새로고침\n\n안드로이드 앱이면:\n설정 > 앱 > Smart Diary > 권한 > 마이크 허용';
+                } else if(e.error === 'no-speech'){
+                    msg = '음성이 감지되지 않았습니다.\n다시 시도해보세요!\n(조용한 곳에서 크게 말해보세요)';
+                } else if(e.error === 'audio-capture'){
+                    msg = '마이크를 찾을 수 없습니다.\n다른 앱이 마이크를 사용 중인지 확인하세요.';
+                } else if(e.error === 'network'){
+                    msg = '네트워크 오류!\n인터넷 연결 확인하고 다시 시도하세요.\n(음성 인식은 인터넷 필요)';
+                } else if(e.error === 'not-allowed' || e.error === 'service-not-allowed'){
+                    msg = '음성 인식 서비스가 허용되지 않았습니다.\nChrome 브라우저로 열어보세요.';
+                } else {
+                    msg = '음성 인식 실패: ' + e.error + '\n\n해결 방법:\n1. 크롬 브라우저 사용\n2. https:// 주소인지 확인\n3. 마이크 권한 허용';
                 }
+                // network나 no-speech는 alert 안 띄우고 조용히
+                if(e.error !== 'no-speech' && e.error !== 'aborted'){
+                    alert(msg);
+                }
+            };
+            
+            recognition.onnomatch = () => {
+                alert('음성을 인식하지 못했습니다. 다시 말해보세요!');
+                isRecording = false;
+                if (recordBtn) { recordBtn.style.background = ''; /* removed */; }
             };
 
             if (recordBtn) {
@@ -9217,34 +9260,49 @@ async function showPhotosForDate(dateStr){
         }
 
         // CASE 2: 안드로이드 WebView (SpeechRecognition 없음) - Native Bridge 사용
-        // WebView에서 window.AndroidSpeech 인터페이스가 있으면 사용
         if (recordBtn) {
             recordBtn.onclick = () => {
-                // 안드로이드 네이티브 브릿지가 있으면 호출
                 if (window.AndroidSpeech && window.AndroidSpeech.startSpeech) {
                     if (!isRecording) {
                         recordingBaseText = (textOutput.innerText||'').trim() ? (textOutput.innerText+' ') : '';
                         isRecording = true;
                         recordBtn.style.background = '#e74c3c';
-                        recordBtn.textContent = '⏹️ 듣는중...';
-                        try { window.AndroidSpeech.startSpeech('ko-KR'); } catch(e){ alert('네이티브 호출 실패: '+e.message); }
+                        /* removed */;
+                        try { window.AndroidSpeech.startSpeech('ko-KR'); } catch(e){ 
+                            alert('네이티브 호출 실패: '+e.message+'\n\nMainActivity.java 코드를 추가했는지 확인하세요!');
+                            isRecording = false;
+                            recordBtn.style.background = '';
+                            /* removed */;
+                        }
                     } else {
-                        // 중지
                         isRecording = false;
                         recordBtn.style.background = '';
-                        recordBtn.textContent = '🎤 음성메모';
+                        /* removed */;
                         if(window.AndroidSpeech.stopSpeech) window.AndroidSpeech.stopSpeech();
                     }
                 } else {
-                    // 브릿지 없으면 안내 + 대체 입력 (키보드 음성입력 유도)
-                    const isAndroidWebView = /wv|WebView/.test(navigator.userAgent) || /Android/.test(navigator.userAgent);
+                    const isTWA = window.matchMedia('(display-mode: standalone)').matches || document.referrer.includes('android-app://');
+                    const isWebView = /wv/.test(navigator.userAgent) || (window.AndroidSpeech !== undefined);
+                    const isAndroidWebView = isWebView && !isTWA;
+                    const isSecure = window.isSecureContext;
+                    const hasMic = navigator.mediaDevices && navigator.mediaDevices.getUserMedia;
+                    let debugInfo = `\n\n[디버그]\nSecure: ${isSecure}\nMic API: ${!!hasMic}\nUA: ${navigator.userAgent.slice(0,60)}`;
+                    
                     if(isAndroidWebView){
-                        alert('🤖 안드로이드 앱에서 음성메모가 안 되는 이유:\n\nWebView는 기본적으로 음성 인식을 지원 안 합니다!\n\n아래 2가지 중 하나로 고쳐야 합니다:\n\n1) 앱 코드에 권한 추가 (권장)\n   MainActivity.java에 코드 추가 필요\n   → 아래 파일에 코드 넣어뒀어요!\n\n2) 임시 방법: 키보드에서 🎤 버튼 눌러서 입력\n   (Gboard 키보드의 마이크 버튼 사용)');
-                        // 대체: 키보드 포커스 유도
+                        if(!isSecure){
+                            alert('🔒 보안 연결이 아닙니다!\n\nhttps:// 로 접속해야 음성 인식이 됩니다!\nfile:// 로 열면 안 됩니다!'+debugInfo);
+                        } else if(!hasMic){
+                            alert('마이크 API 없음!\nWebView 설정에서 setMediaPlaybackRequiresUserGesture(false) 확인하세요!'+debugInfo);
+                        } else {
+                            alert('🤖 안드로이드 앱 WebView 감지!\n\n하지만 네이티브 브릿지가 없습니다!\n\n해결:\n1. MainActivity.java 코드 추가\n2. 앱 다시 빌드\n\n임시로 키보드 🎤 버튼 사용하세요!'+debugInfo);
+                        }
                         if(textOutput) textOutput.focus();
                     } else {
-                        alert('이 브라우저는 음성 인식을 지원하지 않습니다.\nChrome 브라우저를 사용해주세요!');
-                        if(recordBtn) recordBtn.style.display = 'none';
+                        if(!isSecure){
+                            alert('🔒 https:// 주소로 접속해야 합니다!\n현재: '+location.protocol+'//'+location.host);
+                        } else {
+                            alert('이 브라우저는 음성 인식을 지원하지 않습니다.\nChrome 최신 버전으로 열어보세요!'+debugInfo);
+                        }
                     }
                 }
             };
@@ -9258,7 +9316,7 @@ async function showPhotosForDate(dateStr){
             if(textOutput) textOutput.innerText = recordingBaseText + text + ' ';
             recordingBaseText = recordingBaseText + text + ' ';
             isRecording = false;
-            if (recordBtn) { recordBtn.style.background = ''; recordBtn.textContent = '🎤 음성메모'; }
+            if (recordBtn) { recordBtn.style.background = ''; /* removed */; }
         } else {
             // interim
             if(textOutput) textOutput.innerText = recordingBaseText + text;
@@ -9266,7 +9324,7 @@ async function showPhotosForDate(dateStr){
     };
     window.onAndroidSpeechError = function(err){
         isRecording = false;
-        if (recordBtn) { recordBtn.style.background = ''; recordBtn.textContent = '🎤 음성메모'; }
+        if (recordBtn) { recordBtn.style.background = ''; /* removed */; }
         alert('음성 인식 오류: '+err);
     };
 
@@ -9279,7 +9337,7 @@ async function showPhotosForDate(dateStr){
         isRecording = false;
         recordingBaseText = '';
         sessionFinalText = '';
-        if (recordBtn) { recordBtn.style.background = ''; recordBtn.textContent = '🎤 음성메모'; }
+        if (recordBtn) { recordBtn.style.background = ''; /* removed */; }
     }
 
     // ===================== 📵 아래로 당겨서 새로고침(초기화) 방지 =====================
