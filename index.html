@@ -8598,13 +8598,13 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
                         if (titleEl) {
             const badge = isReservedDate ? `<span style="background:var(--primary-color); color:white; padding:1px 5px; border-radius:4px; font-size:10px; margin-right:4px; font-weight:bold;">예약</span>` : '';
             const lunarLabel = getLunarLabel(dateStr);
-            const lunarHTML = lunarLabel ? `<div style="font-size:11px; font-weight:normal; color:var(--text-sub); margin-top:2px; text-align:left;">${lunarLabel}</div>` : '';
+            const lunarHTML = lunarLabel ? `<div style="font-size:9px; font-weight:normal; color:var(--text-sub); margin-top:2px; text-align:left;">${lunarLabel}</div>` : '';
             const specialInfo = getSpecialDayLabel(dateStr);
             const specialHTML = specialInfo ? `<span style="font-size:11px; margin-left:6px; color:#d35400;" class="cal-special-title-badge cal-special-${specialInfo.type}">${specialInfo.label}</span>` : '';
             const annivText = getAnniversaryForDate(dateStr);
-            const annivLineHTML = annivText ? `<div style="font-size:11px; font-weight:700; color:#9C6ADE; margin-top:2px; text-align:left;">제목 : ${annivText}</div>` : '';
+            const annivLineHTML = '';
             // V150: 양력 옆에 절기/기념일, 음력은 밑으로 좌측정렬 - 입력은 리스트/앨범 3 밑으로
-            titleEl.innerHTML = `<div style="text-align:left;"><div style="font-size: var(--base-font-size); text-align:left;">${badge}${dateLabel}${specialHTML}</div>${lunarHTML}${annivLineHTML}</div>`;
+            titleEl.innerHTML = `<div style="text-align:left;"><div style="font-size: var(--base-font-size); text-align:left;">${badge}${dateLabel}${specialHTML}</div>${lunarHTML}</div>`;
         }
 
         const diaries = getAllDiaries();
@@ -8757,7 +8757,7 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
                 if (titleEl) {
             const badge = isReservedDate ? `<span style="background:var(--primary-color); color:white; padding:1px 5px; border-radius:4px; font-size:10px; margin-right:4px; font-weight:bold;">예약</span>` : '';
             const lunarLabel = getLunarLabel(dateStr);
-            const lunarHTML = lunarLabel ? `<div style="font-size:11px; font-weight:normal; color:var(--text-sub); margin-top:2px; text-align:left;">${lunarLabel}</div>` : '';
+            const lunarHTML = lunarLabel ? `<div style="font-size:9px; font-weight:normal; color:var(--text-sub); margin-top:2px; text-align:left;">${lunarLabel}</div>` : '';
             // V285 수정: 가계부에서는 제목만 삭제, 음력은 유지
             titleEl.innerHTML = `<div style="text-align:left;"><div style="font-size: var(--base-font-size); text-align:left;">${badge}${dateLabel}</div>${lunarHTML}</div>`;
         }
@@ -10360,6 +10360,13 @@ async function showPhotosForDate(dateStr){
 .cal-cell span { font-size:17px !important; font-weight:800 !important; }
 .cal-special-label, .cal-anniv-label, .cal-holiday-label { font-size:9px !important; font-weight:600 !important; line-height:1.1 !important; }
 #selected-date-title, .feature-title, .feature-title span, .sub-feature-card .feature-title { font-size:12px !important; }
+</style>
+
+
+<style id="lunar9-no-title">
+/* 아래 업로드 부분 - 음력 9px, 제목 숨김 */
+#selected-date-title + div div[style*="음력"] { font-size:9px !important; }
+div[style*="제목 :"] { display:none !important; }
 </style>
 
 </body>
