@@ -1935,232 +1935,796 @@ body { touch-action: pan-x pan-y pinch-zoom !important; }
             .container { max-width: 95% !important; width:95% !important; }
             .cal-cell { min-height: 62px !important; font-size: 15px !important; }
         }
-        
-            .calendar-grid, #calendar-grid {
-                font-size: 15px !important;
-            }
+        @media screen and (max-width: 900px) and (orientation: landscape) {
+            .container { max-width: 95vw !important; width: 98vw !important; }
+            #calendar-card { transform: none !important; width:100% !important; padding:12px 10px !important; }
+            #cal-days-grid { gap:6px !important; }
+            .cal-cell { min-height: 58px !important; aspect-ratio:auto !important; padding:8px 0 !important; }
+        }
+        /* V208 - 핸드폰 가로모드 전용: 달력 크게 */
+        @media screen and (orientation: landscape) and (max-height: 500px) {
+            .container { max-width: 96vw !important; width:96vw !important; margin:0 auto !important; }
+            #calendar-card { width:100% !important; max-width:100% !important; padding:10px !important; }
+            #cal-days-grid { grid-template-columns: repeat(7, 1fr) !important; gap:5px !important; }
+            .cal-cell { min-height: 48px !important; height:auto !important; aspect-ratio: 1.2/1 !important; font-size:16px !important; display:flex !important; align-items:center !important; justify-content:center !important; }
+            .cal-cell-inner { font-size:16px !important; }
+            .calendar-header { font-size:18px !important; padding:8px 0 !important; }
+            #cal-days-name-grid { font-size:13px !important; }
+            /* 가로모드에서는 다이어리 리스트를 옆으로? 아니면 달력만 크게 */
+            #diary-around-today-card { margin-top:12px !important; }
+        }
+        /* 일반 반응형 - 컨테이너가 화면에 맞게 늘어나도록 */
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            transition: max-width 0.2s ease;
+        }
+        @media screen and (min-width: 700px) {
+            .container { max-width: 90%; }
         }
 
 
-        /* V304 - 가로모드 7일이 딱 맞게 */
+        /* v97 자동 리사이즈 */
+        html, body { width:100%; overflow-x:hidden; }
+        .container { width:100%; max-width:600px; margin:0 auto; box-sizing:border-box; }
+        #calendar-card, #diary-panel, #money-panel { width:100%; box-sizing:border-box; }
         @media (orientation: landscape) {
-            body { overflow-x: hidden; margin:0; }
-            .app-container {
-                max-width: 100vw !important;
-                width: 100vw !important;
-                padding: 0 2px !important;
-                box-sizing: border-box !important;
-            }
-            #calendar-card {
-                max-width: 99vw !important;
-                width: 99vw !important;
-                margin: 0 auto !important;
-                padding: 8px 4px !important;
-                box-sizing: border-box !important;
-            }
-            #cal-days-name-grid {
-                display: grid !important;
-                grid-template-columns: repeat(7, 1fr) !important;
-                width: 100% !important;
-                gap: 3px !important;
-                box-sizing: border-box !important;
-            }
-            #cal-days-grid {
-                width: 100% !important;
-                max-width: 100% !important;
-                box-sizing: border-box !important;
-                overflow: hidden !important;
-            }
-            .cal-cell {
-                font-size: 15px !important;
-                box-sizing: border-box !important;
-            }
-            .cal-cell span {
-                font-size: 17px !important;
-                font-weight: 700 !important;
-            }
-            .cal-day-name {
-                font-size: 13px !important;
-                text-align: center !important;
-            }
+            .container { max-width: 95vw !important; width: 95vw !important; }
+            #calendar-card { max-width: 100% !important; }
         }
 
 
-        /* V305 - 요일 정렬 정중앙 + 달력 칸과 딱 맞게 */
-        #calendar-card {
-            position: relative !important;
-        }
-        .calendar-header {
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            width: 100% !important;
-            box-sizing: border-box !important;
-            padding: 10px 8px !important;
-        }
-        #cal-month-title {
-            flex: 1 !important;
-            text-align: center !important;
-            font-size: 18px !important;
-            font-weight: 800 !important;
-        }
-        #cal-days-name-grid {
-            display: grid !important;
-            grid-template-columns: repeat(7, 1fr) !important;
-            gap: 2px !important;
-            width: 100% !important;
-            box-sizing: border-box !important;
-            padding: 0 !important;
-            margin: 0 0 4px 0 !important;
-            text-align: center !important;
-        }
-        .cal-day-name {
-            text-align: center !important;
-            display: flex !important;
-            justify-content: center !important;
-            align-items: center !important;
-            font-size: 14px !important;
-            font-weight: 700 !important;
-            padding: 6px 0 !important;
-            width: 100% !important;
-            box-sizing: border-box !important;
-        }
-        #cal-days-grid {
-            width: 100% !important;
-            box-sizing: border-box !important;
-        }
-        /* 가로모드에서도 요일 딱 맞게 */
-        @media (orientation: landscape) {
-            #cal-days-name-grid {
-                gap: 3px !important;
-                width: 100% !important;
-            }
-            .cal-day-name {
-                font-size: 13px !important;
-                padding: 4px 0 !important;
-            }
-        }
-
-
-        /* V315 - 최소 수정: 상단 통일 + 달력 폰트 크게 + 앨범 한줄 + 로또 1줄 */
-        /* 1) 상단 년월 + 요일 같은 색 통일 */
-        .calendar-sticky-wrap, .calendar-header, #cal-days-name-grid {
-            background: #fff8f8 !important;
-            margin:0 !important;
-            border:none !important;
-        }
-        .calendar-header { padding:12px 8px 6px !important; border-radius:12px 12px 0 0 !important; }
-        #cal-days-name-grid { padding:0 0 6px 0 !important; border-radius:0 !important; gap:2px !important; }
-        .cal-day-name { background:transparent !important; }
-
-        /* 2) 달력 폰트 원래대로 + 조금 크게 */
-        #cal-month-title{ font-size:20px !important; font-weight:900 !important; }
-        .cal-day-name{ font-size:15px !important; font-weight:800 !important; padding:8px 0 !important; text-align:center !important; }
-        .cal-cell span{ font-size:19px !important; font-weight:800 !important; }
-        .cal-special-label, .cal-anniv-label{ font-size:11px !important; font-weight:600 !important; }
-
-        /* 3) 앨범1, 앨범3 폰트 한줄 + 입력 버튼 아래 */
-        
-        
-        #diary-around-today-card button {
-            font-size:10px !important;
-            padding:5px 7px !important;
-            white-space:nowrap !important;
-            line-height:1.1 !important;
-        }
-
-        /* 4) 로또 1게임 1줄 + 종료 고정 (기존 규칙 유지) */
-        #ldt-manual-results2 .ldt-game-row{
+        /* v101: 앨범 3 수정 왼쪽/삭제 오른쪽, 사각박스 */
+        #diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns {
             display:flex !important;
-            flex-direction:row !important;
-            align-items:center !important;
-            gap:8px !important;
-            flex-wrap:nowrap !important;
-        }
-        #ldt-manual-results2 .lotto-balls-row{
-            display:flex !important;
-            flex-wrap:nowrap !important;
-            gap:5px !important;
-            flex:1 !important;
-        }
-        #ldt-manual-results2 .lotto-ball{
-            width:32px !important;
-            height:32px !important;
-            font-size:13px !important;
-        }
-        /* 로또 모달 기본 숨김 - 기존 규칙 유지 */
-        #lotto-generator-modal-overlay{
-            position:fixed !important;
-            top:0; left:0; right:0; bottom:0;
-            background:rgba(0,0,0,0.8) !important;
-            z-index:1200 !important;
-            display:flex !important;
-            align-items:center !important;
-            justify-content:center !important;
-        }
-        #lotto-generator-modal-overlay:not(.active){
-            display:none !important;
-        }
-        /* 로또 카드 - 기존 높이 유지 + 종료 고정 */
-        .lotto-generator-card{
-            max-height:92vh !important;
-            display:flex !important;
-            flex-direction:column !important;
-            overflow:hidden !important;
-        }
-        .lotto-generator-card .lotto-section{
-            flex:1 !important;
-            overflow-y:auto !important;
-        }
-        .lotto-generator-card .lotto-exit-sticky,
-        .lotto-generator-card > div:last-child{
-            flex-shrink:0 !important;
-            position:sticky !important;
-            bottom:0 !important;
-            background:#1A1C3A !important;
-            padding:12px 0 !important;
-        }
-
-
-        /* V316 - 입력 버튼 원래대로: 앨범1+앨범3 합친 크기 밑에 */
-        #diary-view-toggle {
-            display:grid !important;
-            grid-template-columns:1fr 1fr !important;
-            gap:4px !important;
-            width:112px !important;
-            margin-left:auto !important;
-        }
-        #diary-view-toggle #btn-view-list,
-        #diary-view-toggle #btn-view-gallery {
-            font-size:10px !important;
-            padding:4px 2px !important;
-            white-space:nowrap !important;
-            border-radius:6px !important;
-            line-height:1.1 !important;
-        }
-        #diary-view-toggle button[onclick*="openDiaryForm"] {
-            grid-column:1 / -1 !important;
-            padding:10px 2px !important;
-            font-size:15px !important;
-            font-weight:900 !important;
-            border-radius:10px !important;
-            border:2px solid #e06d6d !important;
-            background:linear-gradient(135deg, #ff6b6b, #e06d6d) !important;
-            color:#fff !important;
-            letter-spacing:1px !important;
-            white-space:nowrap !important;
-            line-height:1.2 !important;
-            width:100% !important;
-            box-sizing:border-box !important;
-        }
-        /* 9월 8일 카드 헤더 */
-        #diary-around-today-card .feature-title {
-            display:flex !important;
-            align-items:flex-start !important;
             justify-content:space-between !important;
             width:100% !important;
         }
-        #selected-date-title { font-size:13px !important; flex-shrink:0 !important; }
+        #diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .edit-btn-hidden {
+            margin-right:auto !important;
+        }
+        #diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .delete-btn {
+            margin-left:auto !important;
+        }
+        .edit-btn-hidden, .delete-btn {
+            border:1px solid #888 !important;
+            border-radius:4px !important;
+            padding:4px 10px !important;
+            background:#fff !important;
+            font-size:12px !important;
+            min-width:40px;
+            text-align:center;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+        }
+        .edit-btn-hidden { border-color:#3498db !important; color:#3498db !important; }
+        .delete-btn { border-color:#e74c3c !important; color:#e74c3c !important; }
+
+
+        /* v102: 제목 영역 고정 높이로 사진 정렬 일정하게 */
+        .photo-title-area { height:20px !important; line-height:20px; }
+        .sub-memo-item.has-photo .diary-photo { margin-top:0 !important; }
+        .sub-memo-item { display:flex; flex-direction:column; }
+        /* 사진 위 아이콘 제거 - photo-title-area 외에는 사진 위에 아무것도 없도록 */
+        .sub-memo-item .health-badge, .sub-memo-item [class*="anniv"] { display:none !important; }
+        .photo-title-area { order:1; }
+        .diary-photo-wrap { order:2; }
+        .item-top-row { order:3; }
+        .diary-text { order:4; }
+
+
+        /* v105: 사진 없는 칸 빈 공간 확보 + 버튼은 사진 밑으로 */
+        .sub-memo-item.no-photo .empty-photo-placeholder {
+            width:100%;
+            aspect-ratio:1/1;
+            background:#f5f0f0;
+            border-radius:10px;
+            min-height:100px;
+            order:2;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            color:#bbb;
+            font-size:20px;
+        }
+        #diary-around-today-list:not(.gallery-mode) .sub-memo-item.no-photo .empty-photo-placeholder {
+            min-height:80px;
+            aspect-ratio:auto;
+        }
+
+
+        /* v106: 위로 정렬 - 가운데 정렬 해제 */
+        #diary-around-today-list {
+            align-items:flex-start !important;
+        }
+        #diary-around-today-list.gallery-mode {
+            align-items:flex-start !important;
+        }
+        .sub-memo-item {
+            justify-content:flex-start !important;
+            align-items:flex-start !important;
+            align-self:flex-start !important;
+            vertical-align:top !important;
+        }
+        #diary-around-today-list.gallery-mode .sub-memo-item {
+            justify-content:flex-start !important;
+            height:auto !important;
+        }
+        .sub-memo-item .photo-title-area {
+            align-self:flex-start !important;
+            width:100%;
+        }
+        .sub-memo-item .empty-photo-placeholder,
+        .sub-memo-item .diary-photo-wrap,
+        .sub-memo-item .diary-photo {
+            align-self:flex-start !important;
+        }
+        .sub-memo-item .item-top-row,
+        .sub-memo-item .diary-text {
+            align-self:flex-start !important;
+            width:100%;
+        }
+
+
+        
+
+        /* v121: 스크롤 확실 + 사진터치 완전 삭제 */
+
+        /* v122: 메인 화면 사진 확대는 유지, 수정폼 사진만 터치 차단 */
+        .diary-photo-wrap img, .diary-photo-wrap video {
+            pointer-events: auto !important;
+            cursor: pointer !important;
+        }
+        #photo-preview-wrap #image-preview {
+            pointer-events: none !important;
+            cursor: default !important;
+        }
+
+        #memo-modal-overlay {
+            position: fixed !important;
+            inset: 0 !important;
+            align-items: flex-start !important;
+            justify-content: center !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            -webkit-overflow-scrolling: touch !important;
+            overscroll-behavior: contain !important;
+            touch-action: pan-x pan-y pinch-zoom !important;
+            padding: 0 !important;
+        }
+        #memo-form-card {
+            width: 100% !important;
+            max-width: 600px !important;
+            height: auto !important;
+            min-height: 100dvh !important;
+            max-height: none !important;
+            overflow: visible !important;
+            margin: 0 auto !important;
+            flex-shrink: 0 !important;
+            touch-action: pan-x pan-y pinch-zoom !important;
+        }
+        /* 사진 터치 완전 차단 */
+        #image-preview {
+            pointer-events: none !important;
+            cursor: default !important;
+        }
+        #photo-preview-wrap {
+            pointer-events: none !important;
+        }
+        #photo-preview-wrap button {
+            pointer-events: auto !important;
+        }
+
+
+        /* v123: 손가락 화면 확대 복구 - pinch-zoom 허용 */
+        html, body {
+            touch-action: auto !important;
+            overscroll-behavior: auto !important;
+            -webkit-text-size-adjust: 100% !important;
+        }
+        body {
+            touch-action: pan-x pan-y pinch-zoom !important;
+        }
+        #memo-modal-overlay, #memo-form-card, .diary-photo-wrap, .diary-card, #calendar-card {
+            touch-action: pan-x pan-y pinch-zoom !important;
+        }
+        /* 수정폼 사진 미리보기만 터치 차단, 확대는 전체 화면 pinch로 가능 */
+        #photo-preview-wrap #image-preview {
+            pointer-events: none !important;
+        }
+        /* 이미지 확대 라이트박스는 pinch-zoom 가능하게 */
+        #photo-lightbox {
+            touch-action: pan-x pan-y pinch-zoom !important;
+        }
+        #photo-lightbox img {
+            touch-action: pan-x pan-y pinch-zoom !important;
+        }
+
+
+        /* v127: 수정폼 사진 축소 가운데 + 버튼 크기 축소 */
+        #photo-preview-wrap {
+            display: none;
+            width: 100%;
+            margin: 8px 0 !important;
+            justify-content: center !important;
+            align-items: center !important;
+            text-align: center !important;
+        }
+        #photo-preview-wrap[style*="block"] {
+            display: flex !important;
+        }
+        #image-preview {
+            max-width: 55% !important;
+            max-height: 28vh !important;
+            width: auto !important;
+            height: auto !important;
+            margin: 0 auto !important;
+            display: block !important;
+            border-radius: 10px !important;
+            object-fit: contain !important;
+        }
+        #video-preview {
+            max-width: 55% !important;
+            max-height: 28vh !important;
+            margin: 0 auto !important;
+        }
+        /* 밑에 버튼들 작게 */
+        #memo-form-card .fp-bottom-bar {
+            gap: 6px !important;
+            padding: 8px 8px !important;
+        }
+        #memo-form-card .fp-bottom-bar .btn,
+        #memo-form-card .fp-bottom-bar label.btn {
+            font-size: 12px !important;
+            padding: 6px 10px !important;
+            height: 32px !important;
+            line-height: 1.2 !important;
+            flex: 1 !important;
+            min-width: 0 !important;
+        }
+        #memo-form-card .fp-bottom-bar .btn-primary {
+            flex: 1.2 !important;
+            font-size: 13px !important;
+            font-weight: 700 !important;
+        }
+        #memo-form-card .fp-exit-btn {
+            font-size: 12px !important;
+            padding: 6px !important;
+            margin-top: 4px !important;
+        }
+
+
+        /* v128: 버튼 반으로 + 종료 크게 + 사진 1.5배 */
+        #image-preview {
+            max-width: 82% !important; /* 55% * 1.5 = 82% */
+            max-height: 42vh !important; /* 28vh * 1.5 */
+        }
+        #video-preview {
+            max-width: 82% !important;
+            max-height: 42vh !important;
+        }
+        /* 음성/사진/저장 버튼 반으로 */
+        #memo-form-card .fp-bottom-bar .btn,
+        #memo-form-card .fp-bottom-bar label.btn {
+            font-size: 10px !important;
+            padding: 4px 6px !important;
+            height: 24px !important;
+            line-height: 1 !important;
+        }
+        #memo-form-card .fp-bottom-bar .btn-primary {
+            font-size: 10px !important;
+            height: 24px !important;
+        }
+        /* 종료 버튼은 더 크게 */
+        #memo-form-card .fp-exit-btn {
+            font-size: 16px !important;
+            padding: 10px 12px !important;
+            height: 44px !important;
+            margin-top: 6px !important;
+            font-weight: 700 !important;
+        }
+
+
+        /* v132: 수정폼 더블탭 삭제, 핀치줌만 유지 */
+        #image-preview {
+            pointer-events: none !important;
+            touch-action: pan-x pan-y pinch-zoom !important;
+        }
+        #photo-preview-wrap {
+            touch-action: pan-x pan-y pinch-zoom !important;
+        }
+
+
+        /* v133: 메인 사진 클릭 = 확대, 수정폼 이동 삭제 */
+        .diary-photo-wrap img {
+            pointer-events: auto !important;
+            cursor: zoom-in !important;
+            touch-action: pan-x pan-y pinch-zoom !important;
+        }
+        #photo-lightbox {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 99999;
+            align-items: center;
+            justify-content: center;
+            touch-action: pan-x pan-y pinch-zoom !important;
+        }
+        #photo-lightbox.show {
+            display: flex !important;
+        }
+        #photo-lightbox img {
+            max-width: 100vw !important;
+            max-height: 100vh !important;
+            object-fit: contain !important;
+            touch-action: pan-x pan-y pinch-zoom !important;
+        }
+
+
+/* ===== V149 SINGLE - 절기/기념일 좌측정렬 고정 ===== */
+#diary-around-today-list.gallery-mode .sub-memo-item { display:flex !important; flex-direction:column !important; align-items:center !important; }
+#diary-around-today-list.gallery-mode .sub-memo-item .diary-photo-wrap { width:100% !important; margin:0 auto !important; }
+#diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns {
+    display:flex !important; justify-content:center !important; align-items:center !important;
+    gap:6px !important; width:85% !important; max-width:85% !important;
+    margin:6px auto 2px auto !important;
+}
+#diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .edit-btn-hidden,
+#diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .delete-btn {
+    margin:0 !important; flex:0 0 auto !important; min-width:36px !important;
+    padding:3px 8px !important; font-size:11px !important;
+    display:inline-flex !important; justify-content:center !important; align-items:center !important;
+}
+#diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .edit-btn-hidden { margin-right:0 !important; }
+#diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .delete-btn { margin-left:0 !important; }
+
+#diary-around-today-card { position:relative !important; }
+#diary-around-today-card .feature-title {
+    display:flex !important; flex-wrap:nowrap !important;
+    justify-content:space-between !important; align-items:flex-start !important; gap:8px !important;
+}
+#selected-date-title { 
+    flex:1 1 auto !important; min-width:0 !important; 
+    text-align:left !important; align-items:flex-start !important;
+}
+#selected-date-title > div { text-align:left !important; align-items:flex-start !important; }
+#diary-view-toggle { display:flex !important; flex-shrink:0 !important; gap:4px !important; margin-left:auto !important; align-self:flex-start !important; }
+
+#calendar-card { overflow:visible !important; }
+#calendar-card .calendar-sticky-wrap {
+    position:sticky !important; top:0 !important; z-index:300 !important;
+    background:#ffffff !important; margin:0 !important;
+    padding:12px 15px 8px 15px !important; border-radius:12px 12px 0 0 !important;
+    border-bottom:1px solid #f0e6e6 !important;
+}
+#calendar-card .calendar-sticky-wrap .calendar-header,
+#calendar-card .calendar-sticky-wrap #cal-days-name-grid {
+    background:transparent !important; margin:0 !important; border:none !important; box-shadow:none !important;
+}
+#memo-form-card .btn-group { display:grid !important; grid-template-columns:1fr 1fr 1fr !important; gap:6px !important; width:100% !important; }
+#memo-form-card .btn-group .btn,
+#memo-form-card .btn-group label.btn,
+#memo-form-card #record-btn,
+#memo-form-card #photo-attach-label,
+#memo-form-card .btn-group .btn-primary {
+    height:44px !important; min-height:44px !important; font-size:12px !important; font-weight:700 !important;
+    padding:0 4px !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important;
+    min-width:0 !important; display:flex !important; align-items:center !important; justify-content:center !important;
+}
+#memo-form-card .fp-exit-btn { grid-column:1 / -1 !important; width:100% !important; max-width:200px !important; margin:10px auto 0 auto !important; height:44px !important; display:flex !important; align-items:center !important; justify-content:center !important; }
+
+/* 절기/기념일 좌측정렬 */
+.cal-special-title-badge { display:inline-block !important; text-align:left !important; margin-left:0 !important; }
+
+
+/* V150: 입력 버튼 리스트/앨범 3 밑으로 - 주의해서 수정 */
+#diary-around-today-card .feature-title {
+    display:flex !important;
+    justify-content:space-between !important;
+    align-items:flex-start !important;
+    gap:8px !important;
+}
+#selected-date-title { flex:1 1 auto !important; text-align:left !important; min-width:0 !important; }
+#diary-view-toggle {
+    display:grid !important;
+    grid-template-columns:1fr 1fr !important;
+    gap:4px !important;
+    width:112px !important;
+    flex-shrink:0 !important;
+    margin-left:auto !important;
+    align-self:flex-start !important;
+}
+#diary-view-toggle #btn-view-list,
+#diary-view-toggle #btn-view-gallery { width:100% !important; }
+#diary-view-toggle button[onclick*="openDiaryForm"] {
+    grid-column:1 / -1 !important;
+    width:100% !important;
+}
+
+
+/* V151: A안 - 달력 요일/일자 폰트 살짝 키우기 */
+.cal-day-name {
+    font-size: 16px !important;
+    font-weight: 800 !important;
+}
+#cal-days-name-grid div {
+    font-size: 16px !important;
+}
+.cal-cell span {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    line-height: 1.15 !important;
+}
+.cal-cell-inner span {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+}
+
+
+/* V152 B안: 일자에 나타나는 제목 색깔을 일자색과 비슷한 진회색으로 */
+.cal-anniv-label {
+    color: #34495e !important;
+    font-weight: 700 !important;
+}
+.cal-cell .cal-anniv-label {
+    color: #34495e !important;
+}
+#cal-days-grid .cal-anniv-label {
+    color: #34495e !important;
+}
+/* 달력 셀 안의 제목 span */
+.cal-cell-inner .cal-anniv-label {
+    color: #34495e !important;
+    font-weight: 700 !important;
+}
+
+
+
+/* V154: 일자 위쪽 정렬 버그 수정 - 다시 가운데 정렬 */
+.cal-cell-inner {
+    justify-content: center !important;
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+}
+.cal-cell-inner span {
+    margin-bottom: 1px !important;
+}
+
+/* V153: 폴더폰용 제목/절기 폰트 키우고 2줄 표시 */
+.cal-anniv-label, .cal-special-label {
+    font-size: 10px !important;
+    line-height: 1.15 !important;
+    font-weight: 700 !important;
+    color: #34495e !important;
+    white-space: normal !important;
+    word-break: break-all !important;
+    overflow-wrap: anywhere !important;
+    max-height: 28px !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    text-align: center !important;
+    padding: 0 1px !important;
+}
+.cal-anniv-label { color: #34495e !important; }
+.cal-special-label.cal-special-holiday { color: #E0685C !important; }
+.cal-special-label.cal-special-term { color: #4C7FD1 !important; }
+.cal-special-label.cal-special-bok { color: #C2820A !important; }
+
+/* 4자 넘어 2줄일 때도 셀 높이 유지 - 정사각형 유지하면서 내부 정렬 */
+.cal-cell-inner {
+    justify-content: flex-start !important;
+    padding-top: 3px !important;
+}
+.cal-cell-inner span { margin-bottom: 1px !important; }
+
+/* 폰트 키웠으므로 인접월은 9px */
+.cal-cell.adjacent-month .cal-anniv-label,
+.cal-cell.adjacent-month .cal-special-label {
+    font-size: 9px !important;
+}
+
+
+/* V155 A안: 일자 칸 아래로 25% 늘려서 3줄까지 보이게 */
+.cal-cell {
+    aspect-ratio: auto !important;
+}
+.cal-cell-inner {
+    justify-content: center !important;
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+}
+.cal-anniv-label, .cal-special-label {
+    -webkit-line-clamp: 3 !important;
+    max-height: 38px !important;
+}
+
+
+/* V171 fix main not opening */
+#anniv-input::placeholder { color:#bbb !important; opacity:1; }
+#anniv-input:focus { outline:none; border-color: var(--primary-color) !important; }
+#anniv-input, #textOutput.diary-textarea { font-size:14.5px !important; }
+
+
+/* V172 - 왼쪽정렬 + 메모 3-4줄 */
+#anniv-input-row { align-items:flex-start !important; text-align:left !important; }
+#diary-content-section { text-align:left !important; }
+#textOutput.diary-textarea {
+    min-height: 90px !important; /* 3-4줄 */
+    height: auto !important;
+    line-height: 1.5 !important;
+    padding: 10px 12px !important;
+}
+
+
+/* V179 - 완전 동일 정렬 */
+
+
+/* V180 FIX 1 - 빈 상태 문구 압축 방지: 항상 전체 너비 */
+#diary-around-today-list .empty-state-hint,
+#diary-around-today-list.gallery-mode .empty-state-hint {
+  grid-column: 1 / -1 !important;
+  width: 100% !important;
+  white-space: normal !important;
+  word-break: keep-all !important;
+  font-size: var(--memo-font-size) !important;
+}
+
+/* V180 FIX 2 - 날짜 폰트 달력과 동일 */
+.form-date-row { font-size: var(--base-font-size) !important; }
+#form-date-input, #form-date-label, .form-date-label,
+#selected-date-title, #selected-date-title div {
+  font-size: var(--base-font-size) !important;
+}
+#selected-date-title div div:first-child {
+  font-size: var(--base-font-size) !important; /* dateLabel */
+}
+/* 달력 셀 폰트와 동일하게 */
+.cal-cell { font-size: var(--base-font-size) !important; }
+.form-date-row .form-date-label { font-size: var(--base-font-size) !important; }
+
+/* 3. 4버튼 유지 */
+
+
+/* V187 가로모드 - 달력 크게 */
+@media screen and (orientation: landscape) {
+  .container { max-width: 95vw !important; width: 95vw !important; }
+  #calendar-card { max-width: 100% !important; }
+  .cal-cell { min-height: 62px !important; }
+}
+@media screen and (max-width: 900px) and (orientation: landscape) {
+  #calendar { zoom: 1.15; }
+}
+
+
+/* V188 자동 전환 애니메이션 */
+.container, #calendar-card, .cal-cell { transition: all 0.25s ease !important; }
+
+
+/* V194 세모 위 숫자 */
+.cal-photo-corner .corner-count {
+  position: absolute !important;
+  top: 1px !important;
+  right: 2px !important;
+  font-size: 9px !important;
+  font-weight: 800 !important;
+  color: #6a4a8a !important;
+}
+
+        /* V226 hides */
+        .fp-save-btn-hidden{display:none !important;}
+        .fp-prescription-hidden{display:none !important;}
+        
+        
+        #fortune-popup-overlay{ z-index:1100 !important; background:rgba(0,0,0,0.85) !important; }
+        #lotto-generator-modal-overlay{ z-index:1200 !important; }
+        #lotto-generator-modal-overlay.active{ display:flex !important; }
+        .lotto-generator-card{ margin-top:0 !important; padding-top:18px !important; }
+        .use-saju-row{ margin-top:8px !important; }
+        #ldt-week-area, .ldt-week-box{ display:none !important; }
+        .ldt-game{ justify-content:flex-start !important; gap:16px !important; }
+        .ldt-game-label{ min-width:56px !important; margin-right:8px !important; }
+
+        
+        #fortune-popup-overlay{
+            align-items:flex-start !important;
+            padding-top:20px !important;
+            overflow-y:auto !important;
+        }
+        #lotto-generator-modal-overlay{
+            align-items:flex-start !important;
+            justify-content:center !important;
+            padding-top:12px !important;
+            padding-bottom:20px !important;
+            overflow-y:auto !important;
+            display:none;
+        }
+        #lotto-generator-modal-overlay.active{
+            display:flex !important;
+            align-items:flex-start !important;
+        }
+        .lotto-generator-card{
+            margin:0 auto !important;
+            margin-top:0 !important;
+        }
+        #ldt-fav-grid2{ display:grid !important; }
+        .ldt-fav-box{ display:block !important; }
+
+        /* === V209 로또 - 팝업 안 풀기능 === */
+        .lotto-section { margin-top:18px; background: linear-gradient(165deg, rgba(35,38,74,0.6), rgba(20,21,43,0.8)); border:1px solid rgba(255,255,255,0.1); border-radius:18px; padding:16px; }
+        .lotto-section-title { font-size:14.5px; font-weight:800; color:#FFD98E; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+        .lotto-balls-row { display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
+        .lotto-ball { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; color:#2A2340; box-shadow:0 2px 4px rgba(0,0,0,0.25) inset, 0 2px 3px rgba(0,0,0,0.3); }
+        .ldt-fav-box { margin-top:4px; }
+        .ldt-fav-label { font-size:12.5px; font-weight:700; color:#C7B8FF; margin-bottom:8px; }
+        .ldt-fav-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+        .ldt-input { width:100%; padding:10px 2px; border-radius:10px; text-align:center; border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.06); color:#F2EFFF; font-size:14.5px; }
+        .ldt-input::placeholder { color:rgba(242,239,255,0.3); }
+        .ldt-input.ldt-error { border-color:#FF7272; background:rgba(255,114,114,0.1); }
+        .ldt-error-msg { display:none; color:#FF9A9A; font-size:12.5px; font-weight:700; margin-top:8px; text-align:center; }
+        .ldt-game { display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:12px 14px; margin-top:10px; }
+        .ldt-game-label { font-size:12.5px; font-weight:700; color:#C7B8FF; margin-bottom:8px; }
+        .ldt-game .lotto-ball.ldt-fav-ball { box-shadow:0 0 0 2px #FFD98E, 0 0 10px rgba(255,217,142,0.5); }
+        .ldt-empty { text-align:center; color:rgba(242,239,255,0.4); font-size:13.5px; padding:12px 0; }
+        .use-saju-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:12px 0; background:rgba(0,0,0,0.2); padding:10px; border-radius:10px; }
+        .use-saju-row label { display:flex; align-items:center; gap:5px; font-size:13px; color:#8AFFB0; font-weight:700; cursor:pointer; }
+        .use-saju-row select { background:#222; color:#fff; border:1px solid #555; border-radius:8px; padding:6px; font-size:13px; }
+        .ldt-week-box { margin-top:12px; background:rgba(255,255,255,0.05); border-radius:12px; padding:10px 12px; }
+        .ldt-week-row { display:flex; align-items:center; gap:8px; padding:4px 0; }
+        .ldt-week-day { width:22px; flex-shrink:0; font-size:12.5px; font-weight:700; color:#C7B8FF; }
+        .ldt-week-day.is-today { color:#FFD98E; }
+        .ldt-week-balls { display:flex; gap:4px; flex-wrap:wrap; }
+        .ldt-mini-ball { width:22px; height:22px; font-size:10px; }
+        .ldt-week-empty { font-size:12px; color:rgba(242,239,255,0.3); }
+        .btn-row { display:flex; gap:8px; margin-top:12px; }
+        .btn-row .btn { flex:1; text-align:center; margin-top:0; }
+        .fp-lotto-note { font-size:11.5px; color:rgba(242,239,255,0.5); margin-top:10px; line-height:1.5; }
+
+
+        /* === V211 APK 스크롤 fix - WebView에서 메인 화면 스크롤 안되는 문제 해결 === */
+        html {
+            height: auto !important;
+            min-height: 100% !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            -webkit-overflow-scrolling: touch !important;
+            overscroll-behavior-y: auto !important;
+        }
+        body {
+            height: auto !important;
+            min-height: 100vh !important;
+            min-height: -webkit-fill-available !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            -webkit-overflow-scrolling: touch !important;
+            overscroll-behavior-y: auto !important;
+            touch-action: pan-y pinch-zoom !important;
+            position: relative !important;
+        }
+        .app-container {
+            height: auto !important;
+            min-height: auto !important;
+            overflow: visible !important;
+            touch-action: pan-y !important;
+        }
+        /* 모달이 아닐 때는 touch-action none 금지 */
+        .modal-overlay {
+            touch-action: pan-y pinch-zoom !important;
+        }
+        .modal-overlay.active {
+            touch-action: pan-y pinch-zoom !important;
+            overscroll-behavior: contain !important;
+        }
+        /* APK WebView에서 100vh 문제 해결 */
+        @supports (-webkit-touch-callout: none) {
+            body { min-height: -webkit-fill-available; }
+        }
+        /* GitHub 기반앱은 이미 되는 이유: 여기는 iframe이 아니라 top window 스크롤이라 됨 - APK는 WebView 내부 스크롤이라 막혔던 것 */
+
+
+#bucket-list-modal-overlay { overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
+#bucket-list-card { overscroll-behavior:contain; -webkit-overflow-scrolling:touch; touch-action:pan-y; }
+body.modal-open { overflow:hidden; position:fixed; width:100%; }
+#record-btn{display:none !important;} 
+        /* V291 - 종료 버튼 항상 맨밑 고정 (로또 생성기처럼) */
+        .fortune-popup-card, .saju-detail-card {
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 0 !important;
+        }
+        .fortune-popup-card #fortune-popup-body {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 10px;
+        }
+        .saju-detail-card {
+            padding-bottom: 0 !important;
+        }
+        .fp-exit-sticky, .sd-exit-sticky {
+            position: sticky;
+            bottom: 0;
+            background: linear-gradient(165deg, #23264A 0%, #171933 60%, #14152B 100%);
+            padding: 14px 0 18px;
+            margin-top: 12px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            z-index: 10;
+        }
+        .saju-detail-card .sd-exit-sticky {
+            background: linear-gradient(165deg, #23264A 0%, #171933 60%, #14152B 100%);
+        }
+
+
+        
+
+
+        /* V300 - 완전 복구 */
+        #settings-card {
+            max-width: 560px !important;
+            width: 92% !important;
+            height: 90vh !important;
+            max-height: 90vh !important;
+            border-radius: 16px !important;
+            border: 2px solid var(--primary-color) !important;
+            background: #fff8f8 !important;
+            display:flex !important;
+            flex-direction:column !important;
+        }
+        #settings-modal-overlay {
+            background: rgba(0,0,0,0.75) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        #settings-modal-overlay:not(.active) { display: none !important; }
+        .settings-scroll-content { flex:1 !important; overflow-y:auto !important; min-height:0 !important; -webkit-overflow-scrolling:touch; }
+        .settings-scroll-content::-webkit-scrollbar { width:6px; }
+        .settings-scroll-content::-webkit-scrollbar-thumb { background:#ddd; border-radius:3px; }
+        @media (max-width:600px){
+            #settings-card { max-width:100% !important; width:100% !important; height:100vh !important; max-height:100vh !important; border-radius:0 !important; border:none !important; }
+        }
+
+
+        
+        /* V301 - v320 진한 핑크 + 달력 폰트 크게 (달력만) */
+        .calendar-sticky-wrap{
+            background:#fde8e8 !important;
+        }
+        .calendar-header{
+            background:#fde8e8 !important;
+        }
+        #cal-days-name-grid{
+            background:#fde8e8 !important;
+        }
+        #calendar-card{
+            background:#fff8f8 !important;
+        }
+        /* 달력 폰트 - 연월, 요일, 일자, 절기만 크게 */
+        #cal-month-title{
+            font-size:22px !important;
+            font-weight:900 !important;
+        }
+        .cal-day-name, #cal-days-name-grid .cal-day-name{
+            font-size:16px !important;
+            font-weight:800 !important;
+            padding:10px 0 !important;
+        }
+        .cal-cell{
+            font-size:16px !important;
+        }
+        .cal-cell span{
+            font-size:20px !important;
+            font-weight:800 !important;
+        }
+        .cal-cell.enlarged-date .cal-cell-inner span{
+            font-size:21px !important;
+        }
+        .cal-special-label, .cal-anniv-label, .cal-holiday-label{
+            font-size:12px !important;
+            font-weight:600 !important;
+            line-height:1.2 !important;
+        }
 
 </style>
   <link rel="manifest" href="./manifest.json">
@@ -2226,281 +2790,44 @@ body { touch-action: pan-x pan-y pinch-zoom !important; }
 
 
         
-        
-            .cal-cell {
-                min-height: unset !important;
-            }
-            .calendar-header {
-                margin-bottom: 6px !important;
-                padding: 4px 0 !important;
-            }
+        /* V301 - v320 진한 핑크 + 달력 폰트 크게 (달력만) */
+        .calendar-sticky-wrap{
+            background:#fde8e8 !important;
         }
-
-                    .calendar-grid {
-                gap: 6px !important;
-            }
-            .calendar-day {
-                min-height: 55px !important;
-                font-size: 14px !important;
-            }
-            .main-header {
-                padding: 6px 12px !important;
-            }
-            .card {
-                padding: 12px !important;
-            }
+        .calendar-header{
+            background:#fde8e8 !important;
         }
-        @media (orientation: landscape) {
-            .calendar-wrapper {
-                display: flex;
-                justify-content: center;
-            }
-            #calendar-container, .calendar-container {
-                width: 100% !important;
-                max-width: 90vw !important;
-                margin: 0 auto !important;
-            }
-            .calendar-day {
-                aspect-ratio: 1.5 !important;
-                min-height: 60px !important;
-            }
-            /* 가로모드에서 전체 앱이 넓게 보이게 */
-            .app-container {
-                max-width: 95vw !important;
-            }
-            /* 달력 날짜 칸 크게 */
-            .day-cell {
-                padding: 8px !important;
-                min-height: 65px !important;
-            }
+        #cal-days-name-grid{
+            background:#fde8e8 !important;
         }
-        /* 일반 모바일 가로모드 추가 확대 */
-        
-            .calendar-grid, #calendar-grid {
-                font-size: 15px !important;
-            }
+        #calendar-card{
+            background:#fff8f8 !important;
         }
-
-
-        /* V304 - 가로모드 7일이 딱 맞게 */
-        @media (orientation: landscape) {
-            body { overflow-x: hidden; margin:0; }
-            .app-container {
-                max-width: 100vw !important;
-                width: 100vw !important;
-                padding: 0 2px !important;
-                box-sizing: border-box !important;
-            }
-            #calendar-card {
-                max-width: 99vw !important;
-                width: 99vw !important;
-                margin: 0 auto !important;
-                padding: 8px 4px !important;
-                box-sizing: border-box !important;
-            }
-            #cal-days-name-grid {
-                display: grid !important;
-                grid-template-columns: repeat(7, 1fr) !important;
-                width: 100% !important;
-                gap: 3px !important;
-                box-sizing: border-box !important;
-            }
-            #cal-days-grid {
-                width: 100% !important;
-                max-width: 100% !important;
-                box-sizing: border-box !important;
-                overflow: hidden !important;
-            }
-            .cal-cell {
-                font-size: 15px !important;
-                box-sizing: border-box !important;
-            }
-            .cal-cell span {
-                font-size: 17px !important;
-                font-weight: 700 !important;
-            }
-            .cal-day-name {
-                font-size: 13px !important;
-                text-align: center !important;
-            }
-        }
-
-
-        /* V305 - 요일 정렬 정중앙 + 달력 칸과 딱 맞게 */
-        #calendar-card {
-            position: relative !important;
-        }
-        .calendar-header {
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            width: 100% !important;
-            box-sizing: border-box !important;
-            padding: 10px 8px !important;
-        }
-        #cal-month-title {
-            flex: 1 !important;
-            text-align: center !important;
-            font-size: 18px !important;
-            font-weight: 800 !important;
-        }
-        #cal-days-name-grid {
-            display: grid !important;
-            grid-template-columns: repeat(7, 1fr) !important;
-            gap: 2px !important;
-            width: 100% !important;
-            box-sizing: border-box !important;
-            padding: 0 !important;
-            margin: 0 0 4px 0 !important;
-            text-align: center !important;
-        }
-        .cal-day-name {
-            text-align: center !important;
-            display: flex !important;
-            justify-content: center !important;
-            align-items: center !important;
-            font-size: 14px !important;
-            font-weight: 700 !important;
-            padding: 6px 0 !important;
-            width: 100% !important;
-            box-sizing: border-box !important;
-        }
-        #cal-days-grid {
-            width: 100% !important;
-            box-sizing: border-box !important;
-        }
-        /* 가로모드에서도 요일 딱 맞게 */
-        @media (orientation: landscape) {
-            #cal-days-name-grid {
-                gap: 3px !important;
-                width: 100% !important;
-            }
-            .cal-day-name {
-                font-size: 13px !important;
-                padding: 4px 0 !important;
-            }
-        }
-
-
-        /* V315 - 최소 수정: 상단 통일 + 달력 폰트 크게 + 앨범 한줄 + 로또 1줄 */
-        /* 1) 상단 년월 + 요일 같은 색 통일 */
-        .calendar-sticky-wrap, .calendar-header, #cal-days-name-grid {
-            background: #fff8f8 !important;
-            margin:0 !important;
-            border:none !important;
-        }
-        .calendar-header { padding:12px 8px 6px !important; border-radius:12px 12px 0 0 !important; }
-        #cal-days-name-grid { padding:0 0 6px 0 !important; border-radius:0 !important; gap:2px !important; }
-        .cal-day-name { background:transparent !important; }
-
-        /* 2) 달력 폰트 원래대로 + 조금 크게 */
-        #cal-month-title{ font-size:20px !important; font-weight:900 !important; }
-        .cal-day-name{ font-size:15px !important; font-weight:800 !important; padding:8px 0 !important; text-align:center !important; }
-        .cal-cell span{ font-size:19px !important; font-weight:800 !important; }
-        .cal-special-label, .cal-anniv-label{ font-size:11px !important; font-weight:600 !important; }
-
-        /* 3) 앨범1, 앨범3 폰트 한줄 + 입력 버튼 아래 */
-        
-        
-        #diary-around-today-card button {
-            font-size:10px !important;
-            padding:5px 7px !important;
-            white-space:nowrap !important;
-            line-height:1.1 !important;
-        }
-
-        /* 4) 로또 1게임 1줄 + 종료 고정 (기존 규칙 유지) */
-        #ldt-manual-results2 .ldt-game-row{
-            display:flex !important;
-            flex-direction:row !important;
-            align-items:center !important;
-            gap:8px !important;
-            flex-wrap:nowrap !important;
-        }
-        #ldt-manual-results2 .lotto-balls-row{
-            display:flex !important;
-            flex-wrap:nowrap !important;
-            gap:5px !important;
-            flex:1 !important;
-        }
-        #ldt-manual-results2 .lotto-ball{
-            width:32px !important;
-            height:32px !important;
-            font-size:13px !important;
-        }
-        /* 로또 모달 기본 숨김 - 기존 규칙 유지 */
-        #lotto-generator-modal-overlay{
-            position:fixed !important;
-            top:0; left:0; right:0; bottom:0;
-            background:rgba(0,0,0,0.8) !important;
-            z-index:1200 !important;
-            display:flex !important;
-            align-items:center !important;
-            justify-content:center !important;
-        }
-        #lotto-generator-modal-overlay:not(.active){
-            display:none !important;
-        }
-        /* 로또 카드 - 기존 높이 유지 + 종료 고정 */
-        .lotto-generator-card{
-            max-height:92vh !important;
-            display:flex !important;
-            flex-direction:column !important;
-            overflow:hidden !important;
-        }
-        .lotto-generator-card .lotto-section{
-            flex:1 !important;
-            overflow-y:auto !important;
-        }
-        .lotto-generator-card .lotto-exit-sticky,
-        .lotto-generator-card > div:last-child{
-            flex-shrink:0 !important;
-            position:sticky !important;
-            bottom:0 !important;
-            background:#1A1C3A !important;
-            padding:12px 0 !important;
-        }
-
-
-        /* V316 - 입력 버튼 원래대로: 앨범1+앨범3 합친 크기 밑에 */
-        #diary-view-toggle {
-            display:grid !important;
-            grid-template-columns:1fr 1fr !important;
-            gap:4px !important;
-            width:112px !important;
-            margin-left:auto !important;
-        }
-        #diary-view-toggle #btn-view-list,
-        #diary-view-toggle #btn-view-gallery {
-            font-size:10px !important;
-            padding:4px 2px !important;
-            white-space:nowrap !important;
-            border-radius:6px !important;
-            line-height:1.1 !important;
-        }
-        #diary-view-toggle button[onclick*="openDiaryForm"] {
-            grid-column:1 / -1 !important;
-            padding:10px 2px !important;
-            font-size:15px !important;
+        /* 달력 폰트 - 연월, 요일, 일자, 절기만 크게 */
+        #cal-month-title{
+            font-size:22px !important;
             font-weight:900 !important;
-            border-radius:10px !important;
-            border:2px solid #e06d6d !important;
-            background:linear-gradient(135deg, #ff6b6b, #e06d6d) !important;
-            color:#fff !important;
-            letter-spacing:1px !important;
-            white-space:nowrap !important;
+        }
+        .cal-day-name, #cal-days-name-grid .cal-day-name{
+            font-size:16px !important;
+            font-weight:800 !important;
+            padding:10px 0 !important;
+        }
+        .cal-cell{
+            font-size:16px !important;
+        }
+        .cal-cell span{
+            font-size:20px !important;
+            font-weight:800 !important;
+        }
+        .cal-cell.enlarged-date .cal-cell-inner span{
+            font-size:21px !important;
+        }
+        .cal-special-label, .cal-anniv-label, .cal-holiday-label{
+            font-size:12px !important;
+            font-weight:600 !important;
             line-height:1.2 !important;
-            width:100% !important;
-            box-sizing:border-box !important;
         }
-        /* 9월 8일 카드 헤더 */
-        #diary-around-today-card .feature-title {
-            display:flex !important;
-            align-items:flex-start !important;
-            justify-content:space-between !important;
-            width:100% !important;
-        }
-        #selected-date-title { font-size:13px !important; flex-shrink:0 !important; }
 
 </style><style>.fp-diary-box, .fp-yesterday-box{display:none !important;}
         /* V238 - 1게임 6개 숫자 2줄 → 1줄 fix (왼쪽으로 조금 이동) */
@@ -2618,281 +2945,44 @@ body { touch-action: pan-x pan-y pinch-zoom !important; }
 
 
         
-        
-            .cal-cell {
-                min-height: unset !important;
-            }
-            .calendar-header {
-                margin-bottom: 6px !important;
-                padding: 4px 0 !important;
-            }
+        /* V301 - v320 진한 핑크 + 달력 폰트 크게 (달력만) */
+        .calendar-sticky-wrap{
+            background:#fde8e8 !important;
         }
-
-                    .calendar-grid {
-                gap: 6px !important;
-            }
-            .calendar-day {
-                min-height: 55px !important;
-                font-size: 14px !important;
-            }
-            .main-header {
-                padding: 6px 12px !important;
-            }
-            .card {
-                padding: 12px !important;
-            }
+        .calendar-header{
+            background:#fde8e8 !important;
         }
-        @media (orientation: landscape) {
-            .calendar-wrapper {
-                display: flex;
-                justify-content: center;
-            }
-            #calendar-container, .calendar-container {
-                width: 100% !important;
-                max-width: 90vw !important;
-                margin: 0 auto !important;
-            }
-            .calendar-day {
-                aspect-ratio: 1.5 !important;
-                min-height: 60px !important;
-            }
-            /* 가로모드에서 전체 앱이 넓게 보이게 */
-            .app-container {
-                max-width: 95vw !important;
-            }
-            /* 달력 날짜 칸 크게 */
-            .day-cell {
-                padding: 8px !important;
-                min-height: 65px !important;
-            }
+        #cal-days-name-grid{
+            background:#fde8e8 !important;
         }
-        /* 일반 모바일 가로모드 추가 확대 */
-        
-            .calendar-grid, #calendar-grid {
-                font-size: 15px !important;
-            }
+        #calendar-card{
+            background:#fff8f8 !important;
         }
-
-
-        /* V304 - 가로모드 7일이 딱 맞게 */
-        @media (orientation: landscape) {
-            body { overflow-x: hidden; margin:0; }
-            .app-container {
-                max-width: 100vw !important;
-                width: 100vw !important;
-                padding: 0 2px !important;
-                box-sizing: border-box !important;
-            }
-            #calendar-card {
-                max-width: 99vw !important;
-                width: 99vw !important;
-                margin: 0 auto !important;
-                padding: 8px 4px !important;
-                box-sizing: border-box !important;
-            }
-            #cal-days-name-grid {
-                display: grid !important;
-                grid-template-columns: repeat(7, 1fr) !important;
-                width: 100% !important;
-                gap: 3px !important;
-                box-sizing: border-box !important;
-            }
-            #cal-days-grid {
-                width: 100% !important;
-                max-width: 100% !important;
-                box-sizing: border-box !important;
-                overflow: hidden !important;
-            }
-            .cal-cell {
-                font-size: 15px !important;
-                box-sizing: border-box !important;
-            }
-            .cal-cell span {
-                font-size: 17px !important;
-                font-weight: 700 !important;
-            }
-            .cal-day-name {
-                font-size: 13px !important;
-                text-align: center !important;
-            }
-        }
-
-
-        /* V305 - 요일 정렬 정중앙 + 달력 칸과 딱 맞게 */
-        #calendar-card {
-            position: relative !important;
-        }
-        .calendar-header {
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            width: 100% !important;
-            box-sizing: border-box !important;
-            padding: 10px 8px !important;
-        }
-        #cal-month-title {
-            flex: 1 !important;
-            text-align: center !important;
-            font-size: 18px !important;
-            font-weight: 800 !important;
-        }
-        #cal-days-name-grid {
-            display: grid !important;
-            grid-template-columns: repeat(7, 1fr) !important;
-            gap: 2px !important;
-            width: 100% !important;
-            box-sizing: border-box !important;
-            padding: 0 !important;
-            margin: 0 0 4px 0 !important;
-            text-align: center !important;
-        }
-        .cal-day-name {
-            text-align: center !important;
-            display: flex !important;
-            justify-content: center !important;
-            align-items: center !important;
-            font-size: 14px !important;
-            font-weight: 700 !important;
-            padding: 6px 0 !important;
-            width: 100% !important;
-            box-sizing: border-box !important;
-        }
-        #cal-days-grid {
-            width: 100% !important;
-            box-sizing: border-box !important;
-        }
-        /* 가로모드에서도 요일 딱 맞게 */
-        @media (orientation: landscape) {
-            #cal-days-name-grid {
-                gap: 3px !important;
-                width: 100% !important;
-            }
-            .cal-day-name {
-                font-size: 13px !important;
-                padding: 4px 0 !important;
-            }
-        }
-
-
-        /* V315 - 최소 수정: 상단 통일 + 달력 폰트 크게 + 앨범 한줄 + 로또 1줄 */
-        /* 1) 상단 년월 + 요일 같은 색 통일 */
-        .calendar-sticky-wrap, .calendar-header, #cal-days-name-grid {
-            background: #fff8f8 !important;
-            margin:0 !important;
-            border:none !important;
-        }
-        .calendar-header { padding:12px 8px 6px !important; border-radius:12px 12px 0 0 !important; }
-        #cal-days-name-grid { padding:0 0 6px 0 !important; border-radius:0 !important; gap:2px !important; }
-        .cal-day-name { background:transparent !important; }
-
-        /* 2) 달력 폰트 원래대로 + 조금 크게 */
-        #cal-month-title{ font-size:20px !important; font-weight:900 !important; }
-        .cal-day-name{ font-size:15px !important; font-weight:800 !important; padding:8px 0 !important; text-align:center !important; }
-        .cal-cell span{ font-size:19px !important; font-weight:800 !important; }
-        .cal-special-label, .cal-anniv-label{ font-size:11px !important; font-weight:600 !important; }
-
-        /* 3) 앨범1, 앨범3 폰트 한줄 + 입력 버튼 아래 */
-        
-        
-        #diary-around-today-card button {
-            font-size:10px !important;
-            padding:5px 7px !important;
-            white-space:nowrap !important;
-            line-height:1.1 !important;
-        }
-
-        /* 4) 로또 1게임 1줄 + 종료 고정 (기존 규칙 유지) */
-        #ldt-manual-results2 .ldt-game-row{
-            display:flex !important;
-            flex-direction:row !important;
-            align-items:center !important;
-            gap:8px !important;
-            flex-wrap:nowrap !important;
-        }
-        #ldt-manual-results2 .lotto-balls-row{
-            display:flex !important;
-            flex-wrap:nowrap !important;
-            gap:5px !important;
-            flex:1 !important;
-        }
-        #ldt-manual-results2 .lotto-ball{
-            width:32px !important;
-            height:32px !important;
-            font-size:13px !important;
-        }
-        /* 로또 모달 기본 숨김 - 기존 규칙 유지 */
-        #lotto-generator-modal-overlay{
-            position:fixed !important;
-            top:0; left:0; right:0; bottom:0;
-            background:rgba(0,0,0,0.8) !important;
-            z-index:1200 !important;
-            display:flex !important;
-            align-items:center !important;
-            justify-content:center !important;
-        }
-        #lotto-generator-modal-overlay:not(.active){
-            display:none !important;
-        }
-        /* 로또 카드 - 기존 높이 유지 + 종료 고정 */
-        .lotto-generator-card{
-            max-height:92vh !important;
-            display:flex !important;
-            flex-direction:column !important;
-            overflow:hidden !important;
-        }
-        .lotto-generator-card .lotto-section{
-            flex:1 !important;
-            overflow-y:auto !important;
-        }
-        .lotto-generator-card .lotto-exit-sticky,
-        .lotto-generator-card > div:last-child{
-            flex-shrink:0 !important;
-            position:sticky !important;
-            bottom:0 !important;
-            background:#1A1C3A !important;
-            padding:12px 0 !important;
-        }
-
-
-        /* V316 - 입력 버튼 원래대로: 앨범1+앨범3 합친 크기 밑에 */
-        #diary-view-toggle {
-            display:grid !important;
-            grid-template-columns:1fr 1fr !important;
-            gap:4px !important;
-            width:112px !important;
-            margin-left:auto !important;
-        }
-        #diary-view-toggle #btn-view-list,
-        #diary-view-toggle #btn-view-gallery {
-            font-size:10px !important;
-            padding:4px 2px !important;
-            white-space:nowrap !important;
-            border-radius:6px !important;
-            line-height:1.1 !important;
-        }
-        #diary-view-toggle button[onclick*="openDiaryForm"] {
-            grid-column:1 / -1 !important;
-            padding:10px 2px !important;
-            font-size:15px !important;
+        /* 달력 폰트 - 연월, 요일, 일자, 절기만 크게 */
+        #cal-month-title{
+            font-size:22px !important;
             font-weight:900 !important;
-            border-radius:10px !important;
-            border:2px solid #e06d6d !important;
-            background:linear-gradient(135deg, #ff6b6b, #e06d6d) !important;
-            color:#fff !important;
-            letter-spacing:1px !important;
-            white-space:nowrap !important;
+        }
+        .cal-day-name, #cal-days-name-grid .cal-day-name{
+            font-size:16px !important;
+            font-weight:800 !important;
+            padding:10px 0 !important;
+        }
+        .cal-cell{
+            font-size:16px !important;
+        }
+        .cal-cell span{
+            font-size:20px !important;
+            font-weight:800 !important;
+        }
+        .cal-cell.enlarged-date .cal-cell-inner span{
+            font-size:21px !important;
+        }
+        .cal-special-label, .cal-anniv-label, .cal-holiday-label{
+            font-size:12px !important;
+            font-weight:600 !important;
             line-height:1.2 !important;
-            width:100% !important;
-            box-sizing:border-box !important;
         }
-        /* 9월 8일 카드 헤더 */
-        #diary-around-today-card .feature-title {
-            display:flex !important;
-            align-items:flex-start !important;
-            justify-content:space-between !important;
-            width:100% !important;
-        }
-        #selected-date-title { font-size:13px !important; flex-shrink:0 !important; }
 
 </style>
     <style>
@@ -2958,281 +3048,44 @@ body { touch-action: pan-x pan-y pinch-zoom !important; }
 
 
         
-        
-            .cal-cell {
-                min-height: unset !important;
-            }
-            .calendar-header {
-                margin-bottom: 6px !important;
-                padding: 4px 0 !important;
-            }
+        /* V301 - v320 진한 핑크 + 달력 폰트 크게 (달력만) */
+        .calendar-sticky-wrap{
+            background:#fde8e8 !important;
         }
-
-                    .calendar-grid {
-                gap: 6px !important;
-            }
-            .calendar-day {
-                min-height: 55px !important;
-                font-size: 14px !important;
-            }
-            .main-header {
-                padding: 6px 12px !important;
-            }
-            .card {
-                padding: 12px !important;
-            }
+        .calendar-header{
+            background:#fde8e8 !important;
         }
-        @media (orientation: landscape) {
-            .calendar-wrapper {
-                display: flex;
-                justify-content: center;
-            }
-            #calendar-container, .calendar-container {
-                width: 100% !important;
-                max-width: 90vw !important;
-                margin: 0 auto !important;
-            }
-            .calendar-day {
-                aspect-ratio: 1.5 !important;
-                min-height: 60px !important;
-            }
-            /* 가로모드에서 전체 앱이 넓게 보이게 */
-            .app-container {
-                max-width: 95vw !important;
-            }
-            /* 달력 날짜 칸 크게 */
-            .day-cell {
-                padding: 8px !important;
-                min-height: 65px !important;
-            }
+        #cal-days-name-grid{
+            background:#fde8e8 !important;
         }
-        /* 일반 모바일 가로모드 추가 확대 */
-        
-            .calendar-grid, #calendar-grid {
-                font-size: 15px !important;
-            }
+        #calendar-card{
+            background:#fff8f8 !important;
         }
-
-
-        /* V304 - 가로모드 7일이 딱 맞게 */
-        @media (orientation: landscape) {
-            body { overflow-x: hidden; margin:0; }
-            .app-container {
-                max-width: 100vw !important;
-                width: 100vw !important;
-                padding: 0 2px !important;
-                box-sizing: border-box !important;
-            }
-            #calendar-card {
-                max-width: 99vw !important;
-                width: 99vw !important;
-                margin: 0 auto !important;
-                padding: 8px 4px !important;
-                box-sizing: border-box !important;
-            }
-            #cal-days-name-grid {
-                display: grid !important;
-                grid-template-columns: repeat(7, 1fr) !important;
-                width: 100% !important;
-                gap: 3px !important;
-                box-sizing: border-box !important;
-            }
-            #cal-days-grid {
-                width: 100% !important;
-                max-width: 100% !important;
-                box-sizing: border-box !important;
-                overflow: hidden !important;
-            }
-            .cal-cell {
-                font-size: 15px !important;
-                box-sizing: border-box !important;
-            }
-            .cal-cell span {
-                font-size: 17px !important;
-                font-weight: 700 !important;
-            }
-            .cal-day-name {
-                font-size: 13px !important;
-                text-align: center !important;
-            }
-        }
-
-
-        /* V305 - 요일 정렬 정중앙 + 달력 칸과 딱 맞게 */
-        #calendar-card {
-            position: relative !important;
-        }
-        .calendar-header {
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            width: 100% !important;
-            box-sizing: border-box !important;
-            padding: 10px 8px !important;
-        }
-        #cal-month-title {
-            flex: 1 !important;
-            text-align: center !important;
-            font-size: 18px !important;
-            font-weight: 800 !important;
-        }
-        #cal-days-name-grid {
-            display: grid !important;
-            grid-template-columns: repeat(7, 1fr) !important;
-            gap: 2px !important;
-            width: 100% !important;
-            box-sizing: border-box !important;
-            padding: 0 !important;
-            margin: 0 0 4px 0 !important;
-            text-align: center !important;
-        }
-        .cal-day-name {
-            text-align: center !important;
-            display: flex !important;
-            justify-content: center !important;
-            align-items: center !important;
-            font-size: 14px !important;
-            font-weight: 700 !important;
-            padding: 6px 0 !important;
-            width: 100% !important;
-            box-sizing: border-box !important;
-        }
-        #cal-days-grid {
-            width: 100% !important;
-            box-sizing: border-box !important;
-        }
-        /* 가로모드에서도 요일 딱 맞게 */
-        @media (orientation: landscape) {
-            #cal-days-name-grid {
-                gap: 3px !important;
-                width: 100% !important;
-            }
-            .cal-day-name {
-                font-size: 13px !important;
-                padding: 4px 0 !important;
-            }
-        }
-
-
-        /* V315 - 최소 수정: 상단 통일 + 달력 폰트 크게 + 앨범 한줄 + 로또 1줄 */
-        /* 1) 상단 년월 + 요일 같은 색 통일 */
-        .calendar-sticky-wrap, .calendar-header, #cal-days-name-grid {
-            background: #fff8f8 !important;
-            margin:0 !important;
-            border:none !important;
-        }
-        .calendar-header { padding:12px 8px 6px !important; border-radius:12px 12px 0 0 !important; }
-        #cal-days-name-grid { padding:0 0 6px 0 !important; border-radius:0 !important; gap:2px !important; }
-        .cal-day-name { background:transparent !important; }
-
-        /* 2) 달력 폰트 원래대로 + 조금 크게 */
-        #cal-month-title{ font-size:20px !important; font-weight:900 !important; }
-        .cal-day-name{ font-size:15px !important; font-weight:800 !important; padding:8px 0 !important; text-align:center !important; }
-        .cal-cell span{ font-size:19px !important; font-weight:800 !important; }
-        .cal-special-label, .cal-anniv-label{ font-size:11px !important; font-weight:600 !important; }
-
-        /* 3) 앨범1, 앨범3 폰트 한줄 + 입력 버튼 아래 */
-        
-        
-        #diary-around-today-card button {
-            font-size:10px !important;
-            padding:5px 7px !important;
-            white-space:nowrap !important;
-            line-height:1.1 !important;
-        }
-
-        /* 4) 로또 1게임 1줄 + 종료 고정 (기존 규칙 유지) */
-        #ldt-manual-results2 .ldt-game-row{
-            display:flex !important;
-            flex-direction:row !important;
-            align-items:center !important;
-            gap:8px !important;
-            flex-wrap:nowrap !important;
-        }
-        #ldt-manual-results2 .lotto-balls-row{
-            display:flex !important;
-            flex-wrap:nowrap !important;
-            gap:5px !important;
-            flex:1 !important;
-        }
-        #ldt-manual-results2 .lotto-ball{
-            width:32px !important;
-            height:32px !important;
-            font-size:13px !important;
-        }
-        /* 로또 모달 기본 숨김 - 기존 규칙 유지 */
-        #lotto-generator-modal-overlay{
-            position:fixed !important;
-            top:0; left:0; right:0; bottom:0;
-            background:rgba(0,0,0,0.8) !important;
-            z-index:1200 !important;
-            display:flex !important;
-            align-items:center !important;
-            justify-content:center !important;
-        }
-        #lotto-generator-modal-overlay:not(.active){
-            display:none !important;
-        }
-        /* 로또 카드 - 기존 높이 유지 + 종료 고정 */
-        .lotto-generator-card{
-            max-height:92vh !important;
-            display:flex !important;
-            flex-direction:column !important;
-            overflow:hidden !important;
-        }
-        .lotto-generator-card .lotto-section{
-            flex:1 !important;
-            overflow-y:auto !important;
-        }
-        .lotto-generator-card .lotto-exit-sticky,
-        .lotto-generator-card > div:last-child{
-            flex-shrink:0 !important;
-            position:sticky !important;
-            bottom:0 !important;
-            background:#1A1C3A !important;
-            padding:12px 0 !important;
-        }
-
-
-        /* V316 - 입력 버튼 원래대로: 앨범1+앨범3 합친 크기 밑에 */
-        #diary-view-toggle {
-            display:grid !important;
-            grid-template-columns:1fr 1fr !important;
-            gap:4px !important;
-            width:112px !important;
-            margin-left:auto !important;
-        }
-        #diary-view-toggle #btn-view-list,
-        #diary-view-toggle #btn-view-gallery {
-            font-size:10px !important;
-            padding:4px 2px !important;
-            white-space:nowrap !important;
-            border-radius:6px !important;
-            line-height:1.1 !important;
-        }
-        #diary-view-toggle button[onclick*="openDiaryForm"] {
-            grid-column:1 / -1 !important;
-            padding:10px 2px !important;
-            font-size:15px !important;
+        /* 달력 폰트 - 연월, 요일, 일자, 절기만 크게 */
+        #cal-month-title{
+            font-size:22px !important;
             font-weight:900 !important;
-            border-radius:10px !important;
-            border:2px solid #e06d6d !important;
-            background:linear-gradient(135deg, #ff6b6b, #e06d6d) !important;
-            color:#fff !important;
-            letter-spacing:1px !important;
-            white-space:nowrap !important;
+        }
+        .cal-day-name, #cal-days-name-grid .cal-day-name{
+            font-size:16px !important;
+            font-weight:800 !important;
+            padding:10px 0 !important;
+        }
+        .cal-cell{
+            font-size:16px !important;
+        }
+        .cal-cell span{
+            font-size:20px !important;
+            font-weight:800 !important;
+        }
+        .cal-cell.enlarged-date .cal-cell-inner span{
+            font-size:21px !important;
+        }
+        .cal-special-label, .cal-anniv-label, .cal-holiday-label{
+            font-size:12px !important;
+            font-weight:600 !important;
             line-height:1.2 !important;
-            width:100% !important;
-            box-sizing:border-box !important;
         }
-        /* 9월 8일 카드 헤더 */
-        #diary-around-today-card .feature-title {
-            display:flex !important;
-            align-items:flex-start !important;
-            justify-content:space-between !important;
-            width:100% !important;
-        }
-        #selected-date-title { font-size:13px !important; flex-shrink:0 !important; }
 
 </style>
 
@@ -3303,281 +3156,44 @@ body { touch-action: pan-x pan-y pinch-zoom !important; }
 
 
         
-        
-            .cal-cell {
-                min-height: unset !important;
-            }
-            .calendar-header {
-                margin-bottom: 6px !important;
-                padding: 4px 0 !important;
-            }
+        /* V301 - v320 진한 핑크 + 달력 폰트 크게 (달력만) */
+        .calendar-sticky-wrap{
+            background:#fde8e8 !important;
         }
-
-                    .calendar-grid {
-                gap: 6px !important;
-            }
-            .calendar-day {
-                min-height: 55px !important;
-                font-size: 14px !important;
-            }
-            .main-header {
-                padding: 6px 12px !important;
-            }
-            .card {
-                padding: 12px !important;
-            }
+        .calendar-header{
+            background:#fde8e8 !important;
         }
-        @media (orientation: landscape) {
-            .calendar-wrapper {
-                display: flex;
-                justify-content: center;
-            }
-            #calendar-container, .calendar-container {
-                width: 100% !important;
-                max-width: 90vw !important;
-                margin: 0 auto !important;
-            }
-            .calendar-day {
-                aspect-ratio: 1.5 !important;
-                min-height: 60px !important;
-            }
-            /* 가로모드에서 전체 앱이 넓게 보이게 */
-            .app-container {
-                max-width: 95vw !important;
-            }
-            /* 달력 날짜 칸 크게 */
-            .day-cell {
-                padding: 8px !important;
-                min-height: 65px !important;
-            }
+        #cal-days-name-grid{
+            background:#fde8e8 !important;
         }
-        /* 일반 모바일 가로모드 추가 확대 */
-        
-            .calendar-grid, #calendar-grid {
-                font-size: 15px !important;
-            }
+        #calendar-card{
+            background:#fff8f8 !important;
         }
-
-
-        /* V304 - 가로모드 7일이 딱 맞게 */
-        @media (orientation: landscape) {
-            body { overflow-x: hidden; margin:0; }
-            .app-container {
-                max-width: 100vw !important;
-                width: 100vw !important;
-                padding: 0 2px !important;
-                box-sizing: border-box !important;
-            }
-            #calendar-card {
-                max-width: 99vw !important;
-                width: 99vw !important;
-                margin: 0 auto !important;
-                padding: 8px 4px !important;
-                box-sizing: border-box !important;
-            }
-            #cal-days-name-grid {
-                display: grid !important;
-                grid-template-columns: repeat(7, 1fr) !important;
-                width: 100% !important;
-                gap: 3px !important;
-                box-sizing: border-box !important;
-            }
-            #cal-days-grid {
-                width: 100% !important;
-                max-width: 100% !important;
-                box-sizing: border-box !important;
-                overflow: hidden !important;
-            }
-            .cal-cell {
-                font-size: 15px !important;
-                box-sizing: border-box !important;
-            }
-            .cal-cell span {
-                font-size: 17px !important;
-                font-weight: 700 !important;
-            }
-            .cal-day-name {
-                font-size: 13px !important;
-                text-align: center !important;
-            }
-        }
-
-
-        /* V305 - 요일 정렬 정중앙 + 달력 칸과 딱 맞게 */
-        #calendar-card {
-            position: relative !important;
-        }
-        .calendar-header {
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            width: 100% !important;
-            box-sizing: border-box !important;
-            padding: 10px 8px !important;
-        }
-        #cal-month-title {
-            flex: 1 !important;
-            text-align: center !important;
-            font-size: 18px !important;
-            font-weight: 800 !important;
-        }
-        #cal-days-name-grid {
-            display: grid !important;
-            grid-template-columns: repeat(7, 1fr) !important;
-            gap: 2px !important;
-            width: 100% !important;
-            box-sizing: border-box !important;
-            padding: 0 !important;
-            margin: 0 0 4px 0 !important;
-            text-align: center !important;
-        }
-        .cal-day-name {
-            text-align: center !important;
-            display: flex !important;
-            justify-content: center !important;
-            align-items: center !important;
-            font-size: 14px !important;
-            font-weight: 700 !important;
-            padding: 6px 0 !important;
-            width: 100% !important;
-            box-sizing: border-box !important;
-        }
-        #cal-days-grid {
-            width: 100% !important;
-            box-sizing: border-box !important;
-        }
-        /* 가로모드에서도 요일 딱 맞게 */
-        @media (orientation: landscape) {
-            #cal-days-name-grid {
-                gap: 3px !important;
-                width: 100% !important;
-            }
-            .cal-day-name {
-                font-size: 13px !important;
-                padding: 4px 0 !important;
-            }
-        }
-
-
-        /* V315 - 최소 수정: 상단 통일 + 달력 폰트 크게 + 앨범 한줄 + 로또 1줄 */
-        /* 1) 상단 년월 + 요일 같은 색 통일 */
-        .calendar-sticky-wrap, .calendar-header, #cal-days-name-grid {
-            background: #fff8f8 !important;
-            margin:0 !important;
-            border:none !important;
-        }
-        .calendar-header { padding:12px 8px 6px !important; border-radius:12px 12px 0 0 !important; }
-        #cal-days-name-grid { padding:0 0 6px 0 !important; border-radius:0 !important; gap:2px !important; }
-        .cal-day-name { background:transparent !important; }
-
-        /* 2) 달력 폰트 원래대로 + 조금 크게 */
-        #cal-month-title{ font-size:20px !important; font-weight:900 !important; }
-        .cal-day-name{ font-size:15px !important; font-weight:800 !important; padding:8px 0 !important; text-align:center !important; }
-        .cal-cell span{ font-size:19px !important; font-weight:800 !important; }
-        .cal-special-label, .cal-anniv-label{ font-size:11px !important; font-weight:600 !important; }
-
-        /* 3) 앨범1, 앨범3 폰트 한줄 + 입력 버튼 아래 */
-        
-        
-        #diary-around-today-card button {
-            font-size:10px !important;
-            padding:5px 7px !important;
-            white-space:nowrap !important;
-            line-height:1.1 !important;
-        }
-
-        /* 4) 로또 1게임 1줄 + 종료 고정 (기존 규칙 유지) */
-        #ldt-manual-results2 .ldt-game-row{
-            display:flex !important;
-            flex-direction:row !important;
-            align-items:center !important;
-            gap:8px !important;
-            flex-wrap:nowrap !important;
-        }
-        #ldt-manual-results2 .lotto-balls-row{
-            display:flex !important;
-            flex-wrap:nowrap !important;
-            gap:5px !important;
-            flex:1 !important;
-        }
-        #ldt-manual-results2 .lotto-ball{
-            width:32px !important;
-            height:32px !important;
-            font-size:13px !important;
-        }
-        /* 로또 모달 기본 숨김 - 기존 규칙 유지 */
-        #lotto-generator-modal-overlay{
-            position:fixed !important;
-            top:0; left:0; right:0; bottom:0;
-            background:rgba(0,0,0,0.8) !important;
-            z-index:1200 !important;
-            display:flex !important;
-            align-items:center !important;
-            justify-content:center !important;
-        }
-        #lotto-generator-modal-overlay:not(.active){
-            display:none !important;
-        }
-        /* 로또 카드 - 기존 높이 유지 + 종료 고정 */
-        .lotto-generator-card{
-            max-height:92vh !important;
-            display:flex !important;
-            flex-direction:column !important;
-            overflow:hidden !important;
-        }
-        .lotto-generator-card .lotto-section{
-            flex:1 !important;
-            overflow-y:auto !important;
-        }
-        .lotto-generator-card .lotto-exit-sticky,
-        .lotto-generator-card > div:last-child{
-            flex-shrink:0 !important;
-            position:sticky !important;
-            bottom:0 !important;
-            background:#1A1C3A !important;
-            padding:12px 0 !important;
-        }
-
-
-        /* V316 - 입력 버튼 원래대로: 앨범1+앨범3 합친 크기 밑에 */
-        #diary-view-toggle {
-            display:grid !important;
-            grid-template-columns:1fr 1fr !important;
-            gap:4px !important;
-            width:112px !important;
-            margin-left:auto !important;
-        }
-        #diary-view-toggle #btn-view-list,
-        #diary-view-toggle #btn-view-gallery {
-            font-size:10px !important;
-            padding:4px 2px !important;
-            white-space:nowrap !important;
-            border-radius:6px !important;
-            line-height:1.1 !important;
-        }
-        #diary-view-toggle button[onclick*="openDiaryForm"] {
-            grid-column:1 / -1 !important;
-            padding:10px 2px !important;
-            font-size:15px !important;
+        /* 달력 폰트 - 연월, 요일, 일자, 절기만 크게 */
+        #cal-month-title{
+            font-size:22px !important;
             font-weight:900 !important;
-            border-radius:10px !important;
-            border:2px solid #e06d6d !important;
-            background:linear-gradient(135deg, #ff6b6b, #e06d6d) !important;
-            color:#fff !important;
-            letter-spacing:1px !important;
-            white-space:nowrap !important;
+        }
+        .cal-day-name, #cal-days-name-grid .cal-day-name{
+            font-size:16px !important;
+            font-weight:800 !important;
+            padding:10px 0 !important;
+        }
+        .cal-cell{
+            font-size:16px !important;
+        }
+        .cal-cell span{
+            font-size:20px !important;
+            font-weight:800 !important;
+        }
+        .cal-cell.enlarged-date .cal-cell-inner span{
+            font-size:21px !important;
+        }
+        .cal-special-label, .cal-anniv-label, .cal-holiday-label{
+            font-size:12px !important;
+            font-weight:600 !important;
             line-height:1.2 !important;
-            width:100% !important;
-            box-sizing:border-box !important;
         }
-        /* 9월 8일 카드 헤더 */
-        #diary-around-today-card .feature-title {
-            display:flex !important;
-            align-items:flex-start !important;
-            justify-content:space-between !important;
-            width:100% !important;
-        }
-        #selected-date-title { font-size:13px !important; flex-shrink:0 !important; }
 
 </style>
 </head>
@@ -3852,17 +3468,6 @@ body { touch-action: pan-x pan-y pinch-zoom !important; }
                     <input type="date" id="saju-birth-date-calendar" style="flex:2; padding:8px; border:1px solid var(--border-color); border-radius:8px; font-size:16px;" onchange="syncSajuDateFromCalendar()">
                     <input type="time" id="saju-birth-time-calendar" style="flex:1; padding:8px; border:1px solid var(--border-color); border-radius:8px; font-size:15px;">
                 </div>
-                <div style="display:flex; gap:6px; margin-bottom:8px; align-items:center; flex-wrap:wrap;">
-                    <button type="button" id="btn-man-60" onclick="setSajuMan60()" style="flex:1; padding:6px; border:1px solid #ffd6e0; border-radius:20px; background:#fff0f3; font-size:12px;">만 60세</button>
-                    <button type="button" id="btn-man-50" onclick="setSajuMan50()" style="flex:1; padding:6px; border:1px solid #ffd6e0; border-radius:20px; background:#fff0f3; font-size:12px;">만 50세</button>
-                    <button type="button" id="btn-man-40" onclick="setSajuMan40()" style="flex:1; padding:6px; border:1px solid #ffd6e0; border-radius:20px; background:#fff0f3; font-size:12px;">만 40세</button>
-                </div>
-                <div style="display: flex; align-items:center; gap:6px; margin-bottom:8px;">
-                    <input type="checkbox" id="saju-time-unknown" checked onchange="onSajuTimeUnknownToggle()" style="width:15px; height:15px;">
-                    <label for="saju-time-unknown" style="font-size:14px; font-weight:normal; color: var(--text-sub);">태어난 시각을 몰라요</label>
-                </div>
-                <button class="action-btn" style="width:100%; padding:12px; font-size:14px; font-weight:800; border-radius:10px;" onclick="saveSajuBirthInfo()">💾 저장하고 오늘의 운세 보기</button>
-                <div id="saju-saved-info" style="font-size:13.5px; color: var(--text-sub); margin-top:8px; padding:8px; background:#fff; border-radius:8px; border:1px dashed #e6d8d8;"></div>
                 </div>
             <div class="settings-section" style="padding-top: 5px;">
                 <button class="action-btn" style="background-color: var(--accent-today); width:100%; font-size:14px; padding:6px;" onclick="resetAllData()">⚠️ 데이터 초기화 (새로 시작)</button>
@@ -3885,79 +3490,89 @@ body { touch-action: pan-x pan-y pinch-zoom !important; }
 
 
 <!-- 🎱 사주기반 로또 생성기 (V210) -->
-
 <div class="modal-overlay" id="lotto-generator-modal-overlay" style="display:none;" onclick="handleLottoGeneratorModalBackgroundClick(event)">
-  <div class="lotto-generator-card" id="lotto-generator-card" onclick="event.stopPropagation()" style="width:100%; max-width:460px; max-height:92vh; overflow:hidden; border-radius:22px; padding:22px 18px 0; background:linear-gradient(165deg, #23264A 0%, #171933 60%, #14152B 100%); border:1px solid rgba(255,255,255,0.12); box-shadow:0 20px 50px rgba(0,0,0,0.5); position:relative; display:flex; flex-direction:column;">
+  <div class="lotto-generator-card" id="lotto-generator-card" onclick="event.stopPropagation()" style="width:100%; max-width:460px; margin:0 auto; border-radius:22px; padding:22px 18px 20px; background:linear-gradient(165deg, #23264A 0%, #171933 60%, #14152B 100%); border:1px solid rgba(255,255,255,0.12); box-shadow:0 20px 50px rgba(0,0,0,0.5); position:relative;">
     <button class="fortune-popup-close" onclick="closeLottoGeneratorModal()" style="position:absolute; top:14px; right:14px; background:rgba(255,255,255,0.1); border:none; color:#F2EFFF; width:30px; height:30px; border-radius:50%;">✖</button>
-    <div style="text-align:center; margin-bottom:14px; flex-shrink:0;">
-      <div style="display:inline-flex; align-items:center; gap:6px; font-size:18px; font-weight:900; color:#2A2340; background:linear-gradient(120deg, #FFD98E, #FF9AC2); padding:10px 22px; border-radius:999px;">🎱 사주기반 로또 생성기</div>
-      <div style="margin-top:10px; font-size:12px; color:rgba(242,239,255,0.6);">내 사주와 통계로 행운번호를 만들어드려요</div>
+    <div style="text-align:center; margin-bottom:14px;">
+      <div style="display:inline-flex; align-items:center; gap:6px; font-size:18px; font-weight:900; letter-spacing:-0.02em; color:#2A2340; background:linear-gradient(120deg, #FFD98E, #FF9AC2); padding:10px 22px; border-radius:999px; box-shadow:0 4px 12px rgba(255,154,194,0.3);">🎱 사주기반 로또 생성기</div>
     </div>
+    <div class="lotto-section" style="margin-top:0; background:rgba(255,255,255,0.05);">
+        <div class="lotto-section-title">🔮 100만명 사주분석(최고사주 기반 추천번호)</div>
 
-    <div class="lotto-section" style="flex:1; overflow-y:auto; min-height:0; padding-bottom:10px; background:transparent;">
-        <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:12px; margin-bottom:12px;">
-            <div style="font-size:13px; font-weight:800; color:#FFD98E; margin-bottom:6px;">📊 1240회까지 6개월 통계</div>
-            <div style="font-size:11px; color:#ccc; line-height:1.5;">
-                <div>• 1240회: 11,13,19,20,31,44 (합 138)</div>
-                <div>• Hot: 27(5회), 30/1/17/38/31(3회)</div>
-                <div>• Cold 해소: 44는 10회 미출현 후 터짐</div>
-            </div>
-            <div id="filter-status-box" style="margin-top:8px; padding:8px 10px; border-radius:10px; font-size:12px; font-weight:700; text-align:center; background:rgba(255,80,80,0.15); border:1px dashed #ff6b6b; color:#ff9a9a;">🔴 통계 필터 OFF - 아래 버튼 눌러 적용하세요!</div>
-            <div style="margin-top:8px; display:flex; gap:6px;">
-                <button id="btn-apply-6month" type="button" onclick="toggle6MonthFilter()" style="flex:1; background:linear-gradient(120deg, #FFD98E, #FF9AC2); color:#2A2340; border:none; padding:10px; border-radius:10px; font-size:13px; font-weight:800; cursor:pointer;">📈 통계 필터 적용하기</button>
-                <button id="btn-detail-6month" type="button" onclick="document.getElementById('lotto-6month-detail').style.display = document.getElementById('lotto-6month-detail').style.display==='none' ? 'block' : 'none'" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:8px 12px; border-radius:10px; font-size:11px;">자세히</button>
-            </div>
-            <div id="lotto-6month-detail" style="display:none; margin-top:8px; font-size:11px; color:#ddd; background:rgba(0,0,0,0.3); padding:8px; border-radius:8px;">합계 130~160, 홀짝 3:3, 구간분산, 연속1쌍, Hot+Cold, 끝수중복제한, 사주길수 결합</div>
-            <div id="lotto-6month-log" style="display:none; margin-top:8px; font-size:11px; color:#FFD98E; background:rgba(0,0,0,0.3); padding:8px; border-radius:8px;"></div>
+        <div id="lotto-6month-analysis" style="margin:12px 0; background:rgba(255,255,255,0.06); border:1px solid rgba(255,217,142,0.25); border-radius:14px; padding:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <div style="font-size:13px; font-weight:800; color:#FFD98E;">📊 1240회까지 6개월 통계</div>
+            <div id="v257-date-badge" style="font-size:10px; padding:4px 8px; border-radius:8px; background:rgba(255,255,255,0.1); color:#ccc;">📅 1241회 예측</div>
+          </div>
+          <div style="font-size:11px; color:#ccc; line-height:1.5;">
+            <div>• 1240회: 11,13,19,20,31,44 (합 138)</div>
+            <div>• Hot: 27(5회), 30/1/17/38/31(3회)</div>
+            <div>• Cold 해소: 44는 10회 미출현 후 터짐</div>
+          </div>
+          <!-- 상태 표시 -->
+          <div id="filter-status-box" style="margin-top:10px; padding:8px 10px; border-radius:10px; font-size:12px; font-weight:700; text-align:center; background:rgba(255,0,0,0.15); border:1px dashed #ff6b6b; color:#ff9a9a;">
+            🔴 통계 필터 OFF - 아래 버튼 눌러 적용하세요!
+          </div>
+          <div style="margin-top:8px; display:flex; gap:6px;">
+            <button id="btn-apply-6month" type="button" onclick="toggle6MonthFilter()" style="flex:1; background:linear-gradient(120deg, #FFD98E, #FF9AC2); color:#2A2340; border:none; padding:10px; border-radius:10px; font-size:13px; font-weight:800; cursor:pointer; box-shadow:0 2px 8px rgba(255,217,142,0.3);">📈 통계 필터 적용하기</button>
+            <button id="btn-detail-6month" type="button" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:8px 12px; border-radius:10px; font-size:11px; cursor:pointer;">자세히</button>
+          </div>
+          <div id="lotto-6month-detail" style="display:none; margin-top:10px; font-size:11px; color:#ddd; background:rgba(0,0,0,0.2); padding:10px; border-radius:10px; line-height:1.6;">
+            <b>과학적 통계 7가지 기준:</b><br>1) 합계 130~160<br>2) 홀짝 3:3<br>3) 구간 분산<br>4) 연속 1쌍<br>5) Hot+Cold<br>6) 끝수 중복 제한<br>7) 사주 길수 결합<br><br>버튼을 누르면 이 기준으로만 번호를 생성합니다!
+          </div>
+          <div id="lotto-6month-log" style="display:none; margin-top:8px; font-size:11px; color:#FFD98E; background:rgba(0,0,0,0.3); padding:8px; border-radius:8px;"></div>
         </div>
 
         <div id="lotto-best-card" style="display:none; background:linear-gradient(120deg, rgba(255,217,142,0.15), rgba(255,154,194,0.15)); border:1px solid rgba(255,217,142,0.3); border-radius:14px; padding:12px; margin-bottom:12px;"></div>
-
-        <div style="background:rgba(255,255,255,0.05); border-radius:12px; padding:12px; margin-bottom:12px;">
-            <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:#F2EFFF; margin-bottom:8px; cursor:pointer;"><input type="checkbox" id="ldt-use-my-saju2" checked> ✨ 내 사주 반영 (재물운 최고조)</label>
-            <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:#F2EFFF; cursor:pointer;"><input type="checkbox" id="ldt-no-consec2" checked> 연속번호 3개 이상 제외</label>
-            <select id="ldt-filter-mode2" style="width:100%; margin-top:8px; background:#1E1F3D; color:#fff; border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:8px; font-size:13px;">
-                <option value="all">🎲 전체 랜덤</option>
-                <option value="gte10">🔟 10 이상만</option>
-                <option value="gte20">2️⃣0️⃣ 20 이상만</option>
-                <option value="high4">⬆️ 고번호 위주</option>
-            </select>
-        </div>
-
-        <div style="background:rgba(255,255,255,0.04); border-radius:12px; padding:12px; margin-bottom:12px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                <span style="font-size:13px; font-weight:700; color:#FFD98E;">🎯 고정하고 싶은 번호 (선택)</span>
-                <button onclick="for(let i=1;i<=6;i++){let e=document.getElementById('ldt-fixed-'+i); if(e) e.value='';}" style="background:rgba(255,255,255,0.08); border:none; color:#ccc; padding:4px 8px; border-radius:6px; font-size:11px;">지우기</button>
-            </div>
-            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px;">
-                <input type="number" id="ldt-fixed-1" placeholder="고정1" min="1" max="45" style="background:#1E1F3D; border:1px solid rgba(255,255,255,0.15); color:#fff; padding:8px; border-radius:8px; text-align:center;">
-                <input type="number" id="ldt-fixed-2" placeholder="고정2" min="1" max="45" style="background:#1E1F3D; border:1px solid rgba(255,255,255,0.15); color:#fff; padding:8px; border-radius:8px; text-align:center;">
-                <input type="number" id="ldt-fixed-3" placeholder="고정3" min="1" max="45" style="background:#1E1F3D; border:1px solid rgba(255,255,255,0.15); color:#fff; padding:8px; border-radius:8px; text-align:center;">
-                <input type="number" id="ldt-fixed-4" placeholder="고정4" min="1" max="45" style="background:#1E1F3D; border:1px solid rgba(255,255,255,0.15); color:#fff; padding:8px; border-radius:8px; text-align:center;">
-                <input type="number" id="ldt-fixed-5" placeholder="고정5" min="1" max="45" style="background:#1E1F3D; border:1px solid rgba(255,255,255,0.15); color:#fff; padding:8px; border-radius:8px; text-align:center;">
-                <input type="number" id="ldt-fixed-6" placeholder="고정6" min="1" max="45" style="background:#1E1F3D; border:1px solid rgba(255,255,255,0.15); color:#fff; padding:8px; border-radius:8px; text-align:center;">
+        <div class="use-saju-row" style="flex-direction:column; gap:10px; background:rgba(255,255,255,0.04); padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.06);">
+            <!-- 1) 내 사주 반영 -->
+            <label style="font-size:13px; display:flex; align-items:center; gap:6px; padding:8px; background:rgba(255,217,142,0.08); border-radius:8px;"><input type="checkbox" id="ldt-use-my-saju2" checked> 1) ✨ 내 사주 반영 <span style="font-size:11px; color:#aaa;">(재물운 최고조)</span></label>
+            <!-- 2) 연속번호 제외 -->
+            <label style="font-size:12px; display:flex; align-items:center; gap:6px; padding:8px; background:rgba(255,255,255,0.04); border-radius:8px;"><input type="checkbox" id="ldt-no-consec2" checked> 2) 연속번호 3개 이상 제외</label>
+            <!-- 전체랜덤 -->
+            <div style="display:flex; align-items:center; gap:6px;">
+                <select id="ldt-filter-mode2" style="flex:1; background:#222; color:#fff; border:1px solid #555; border-radius:8px; padding:8px; font-size:13px;">
+                    <option value="all">🎲 전체 랜덤</option>
+                    <option value="gte10">🔟 10 이상만</option>
+                    <option value="gte20">2️⃣0️⃣ 20 이상만</option>
+                    <option value="high4">⬆️ 고번호 위주</option>
+                    <option value="oddEven33">⚖️ 홀짝 3:3</option>
+                </select>
             </div>
         </div>
-
-        <div style="display:flex; gap:6px; margin-bottom:12px;">
-            <select id="ldt-game-count2" style="background:#1E1F3D; color:#fff; border:1px solid rgba(255,255,255,0.15); border-radius:10px; padding:10px; font-size:13px; min-width:70px;">
+        <div class="ldt-fav-box" style="margin-top:12px; display:block !important;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+                <div class="ldt-fav-label" style="margin-bottom:0;">🎯 고정하고 싶은 번호 (선택)</div>
+                <button onclick="clearFixedNumbers2()" style="background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.2); padding:4px 10px; border-radius:8px; font-size:11px; white-space:nowrap;">🧹 고정수 지우기</button>
+            </div>
+            <div class="ldt-fav-grid" id="ldt-fav-grid2" style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:8px;">
+                <input type="number" id="ldt-fav1-2" class="ldt-input" placeholder="고정1" min="1" max="45">
+                <input type="number" id="ldt-fav2-2" class="ldt-input" placeholder="고정2" min="1" max="45">
+                <input type="number" id="ldt-fav3-2" class="ldt-input" placeholder="고정3" min="1" max="45">
+                <input type="number" id="ldt-fav4-2" class="ldt-input" placeholder="고정4" min="1" max="45">
+                <input type="number" id="ldt-fav5-2" class="ldt-input" placeholder="고정5" min="1" max="45">
+                <input type="number" id="ldt-fav6-2" class="ldt-input" placeholder="고정6" min="1" max="45">
+            </div>
+            <div id="ldt-error-msg2" class="ldt-error-msg"></div>
+        </div>
+        <div id="ldt-manual-story2" class="fp-lotto-note" style="display:none; margin-top:10px;"></div>
+        <div style="margin-top:12px; display:grid; grid-template-columns: 90px 1fr 1fr; gap:8px; align-items:center;">
+            <select id="ldt-new-game-count2" style="background:#222; color:#fff; border:1px solid #555; border-radius:12px; padding:12px 6px; font-size:13px; font-weight:700; text-align:center; height:100%;">
                 <option value="1">1게임</option>
+                <option value="2">2게임</option>
+                <option value="3">3게임</option>
+                <option value="4">4게임</option>
                 <option value="5" selected>5게임</option>
-                <option value="10">10게임</option>
             </select>
-            <button type="button" onclick="generateLottoNumbers()" style="flex:1; background:linear-gradient(120deg, #FFD98E, #FF9AC2); color:#2A2340; border:none; padding:10px; border-radius:10px; font-size:14px; font-weight:800;">🎱 번호 생성</button>
-            <button type="button" onclick="clearLottoResults()" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#fff; padding:10px; border-radius:10px; font-size:12px;">🔄 초기화</button>
+            <button onclick="sajuGenerateNewLottoManual2()" style="background:linear-gradient(120deg, #FFD98E, #FF9AC2); color:#2A2340; border:none; padding:12px; border-radius:12px; font-weight:800; font-size:14px;">🎱 번호 생성</button>
+            <button onclick="resetManualResults2()" style="background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.2); padding:12px; border-radius:12px; font-weight:700; font-size:13px;">↺ 결과 초기화</button>
         </div>
-
-        <div id="ldt-manual-results2" style="min-height:80px;"><div class="ldt-empty" style="text-align:center; padding:20px 0; color:rgba(255,255,255,0.4); font-size:13px;">번호 생성 버튼을 눌러주세요!</div></div>
-    </div>
-
-    <div style="flex-shrink:0; background:#13142A; padding:12px 0 18px; border-top:1px solid rgba(255,255,255,0.08);">
-        <button onclick="closeLottoGeneratorModal()" style="width:100%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#fff; padding:12px; border-radius:12px; font-weight:700;">✖ 종료</button>
+        <div id="ldt-manual-results2" style="margin-top:12px;"><div class="ldt-empty">고정수 선택 → 게임수 선택 → 생성하기!</div></div>
+        <div style="margin-top:14px;">
+            <button onclick="closeLottoGeneratorModal()" style="width:100%; background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.2); padding:14px; border-radius:14px; font-weight:800; font-size:15px;">종료</button>
+        </div>
     </div>
   </div>
-</div>
-
 </div>
 </div>
 </div>
@@ -8649,10 +8264,8 @@ body { touch-action: pan-x pan-y pinch-zoom !important; }
         // v36:
         // 현재 달 앞쪽에는 전월 말일, 뒤쪽에는 다음 달 초 날짜를 희미하게 표시한다.
         // 7열 달력의 한 주 단위가 끊기지 않도록 마지막 행까지 채운다.
-        const isLandscapeNow = window.innerWidth > window.innerHeight;
-        const gap = isLandscapeNow ? 3 : 2;
-        const gridWidth = grid.getBoundingClientRect().width || grid.parentElement.clientWidth || grid.parentElement.getBoundingClientRect().width;
-        // 가로모드에서도 gridWidth 그대로 사용 - 부모가 이미 넓음
+        const gap = 2;
+        const gridWidth = grid.getBoundingClientRect().width || grid.parentElement.getBoundingClientRect().width;
         const cellSize = (gridWidth - gap * 6) / 7;
         const compactHeight = cellSize; // v59 정사각형 // v58 더 줄임
 
@@ -10919,34 +10532,7 @@ async function showPhotosForDate(dateStr){
     };
 })();
 </script>
-
-
-
-
-<script>
-// V304 - 가로모드 7일 딱 맞게 + 자동 재계산
-(function(){
-    let resizeTimer;
-    function handleLandscapeResize(){
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(function(){
-            if(typeof renderCalendar === 'function'){
-                try{ renderCalendar(); }catch(e){}
-            }
-        }, 200);
-    }
-    window.addEventListener('orientationchange', function(){
-        setTimeout(handleLandscapeResize, 350);
-        setTimeout(handleLandscapeResize, 700);
-    });
-    window.addEventListener('resize', handleLandscapeResize);
-})();
-</script>
 </body>
-
-
-
-
 
 
 
