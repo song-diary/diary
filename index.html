@@ -9918,5 +9918,121 @@ async function showPhotosForDate(dateStr){
     </div>
 </div>
 
+
+<script>
+// V289 - 뒤로가기 정상화: 운세/설정 팝업에서 뒤로가기하면 메인으로, 다음날 켜면 메인에서 시작
+(function(){
+    function closeAllModalsToMain(){
+        try{
+            document.querySelectorAll('.modal-overlay.active').forEach(el=>el.classList.remove('active'));
+            const fo = document.getElementById('fortune-popup-overlay'); if(fo) fo.classList.remove('active');
+            const so = document.getElementById('saju-detail-modal-overlay'); if(so) so.classList.remove('active');
+            const setO = document.getElementById('settings-modal-overlay'); if(setO) setO.classList.remove('active');
+            if(typeof closeDiaryFormPanel==='function') try{closeDiaryFormPanel();}catch(e){}
+            if(typeof closeFortunePopup==='function') try{closeFortunePopup();}catch(e){}
+            if(typeof closeSajuDetailModal==='function') try{closeSajuDetailModal();}catch(e){}
+            if(typeof closeSettingsModal==='function') try{closeSettingsModal();}catch(e){}
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow='';
+            if(typeof switchMainTab==='function') try{switchMainTab('diary');}catch(e){}
+        }catch(e){}
+    }
+    // 앱이 다시 보일 때 날짜 바뀌면 메인으로 리셋
+    document.addEventListener('visibilitychange', function(){
+        if(document.visibilityState==='visible'){
+            const today = new Date().toISOString().slice(0,10);
+            const last = localStorage.getItem('lastVisibleDate');
+            if(last && last!==today){
+                closeAllModalsToMain();
+                if(typeof updateFortuneTeaser==='function') try{updateFortuneTeaser();}catch(e){}
+                if(typeof renderCalendar==='function') try{renderCalendar();}catch(e){}
+            }
+            localStorage.setItem('lastVisibleDate', today);
+        }
+    });
+    localStorage.setItem('lastVisibleDate', new Date().toISOString().slice(0,10));
+    
+    // 뒤로가기: 모달 열려있으면 닫고 메인으로, 아니면 히스토리 유지
+    history.pushState(null,'',location.href);
+    window.addEventListener('popstate', function(){
+        const hasModal = document.querySelector('.modal-overlay.active, #fortune-popup-overlay.active, #saju-detail-modal-overlay.active');
+        if(hasModal){
+            closeAllModalsToMain();
+            history.pushState(null,'',location.href);
+        }
+    });
+    
+    // 시작할 때 혹시 모달이 열려있으면 닫고 메인에서 시작 (어제 운세 화면 방지)
+    window.addEventListener('load', function(){
+        setTimeout(closeAllModalsToMain, 200);
+    });
+})();
+</script>
+
+<script>
+// V290 - 메인 화면에서 "아직 준비 전이에요" 자동 팝업 방지
+(function(){
+    // 기존 openFortunePopup 가로채서, 메인에서 자동 호출되는 경우 차단
+    const origOpenFortunePopup = window.openFortunePopup;
+    let userClickedFortune = false;
+    
+    // 운세 버튼 클릭 시에만 userClickedFortune = true
+    document.addEventListener('click', function(e){
+        const t = e.target.closest('[onclick*="Fortune"], #fortune-teaser, #open-fortune-btn, .fortune-btn');
+        if(t){
+            userClickedFortune = true;
+        }
+    }, true);
+    
+    // 생년월일 없을 때 뜨는 팝업의 X 버튼이 제대로 닫히게
+    window.closeFortunePopup = function(){
+        const fo = document.getElementById('fortune-popup-overlay');
+        if(fo) fo.classList.remove('active');
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow='';
+        userClickedFortune = false;
+    };
+    
+    // 자동 호출 방지: 페이지 로드 후 2초 이내 자동 openFortunePopup 호출은 차단
+    let pageLoadTime = Date.now();
+    window.openFortunePopup = function(){
+        const elapsed = Date.now() - pageLoadTime;
+        // 사용자가 직접 누른 게 아니고, 로드 후 3초 이내 자동 호출이면 차단
+        if(!userClickedFortune && elapsed < 3000){
+            console.log('메인 자동 팝업 차단');
+            return;
+        }
+        if(origOpenFortunePopup) return origOpenFortunePopup.apply(this, arguments);
+    };
+    
+    // 메인 시작시 혹시 열려있는 운세 팝업 강제 닫기
+    window.addEventListener('load', function(){
+        setTimeout(function(){
+            const fo = document.getElementById('fortune-popup-overlay');
+            if(fo && fo.classList.contains('active')){
+                // 사용자가 누른 게 아니면 닫기
+                if(!userClickedFortune){
+                    fo.classList.remove('active');
+                    document.body.classList.remove('modal-open');
+                }
+            }
+            userClickedFortune = false;
+            pageLoadTime = Date.now() - 5000; // 이후부터는 사용자 클릭으로 인정
+        }, 500);
+    });
+    
+    // X 버튼이 안 먹을 때 대비
+    document.addEventListener('click', function(e){
+        if(e.target.closest('#fortune-popup-overlay .close-form-btn, #fortune-popup-overlay [onclick*="closeFortune"]')){
+            const fo = document.getElementById('fortune-popup-overlay');
+            if(fo) fo.classList.remove('active');
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow='';
+        }
+    });
+})();
+</script>
 </body>
+
+
 </html>
