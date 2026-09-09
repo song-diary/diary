@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 다이어리&가계부 V301-AF 검은바+아이콘 완전삭제 - Swing2App+NodeAPK 통합 최종</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 다이어리&가계부 V301-AG 성능개선+검은바제거 - Swing2App+NodeAPK 통합 최종</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -3002,7 +3002,7 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
 
 
 <style id="v301h-final-core">
-/* V301-AF 검은바+아이콘 완전삭제 Core - 전체 통합 */
+/* V301-AG 성능개선+검은바제거 Core - 전체 통합 */
 :root { --safe-bottom: env(safe-area-inset-bottom, 0px); }
 
 /* 달력 */
@@ -10336,7 +10336,7 @@ async function showPhotosForDate(dateStr){
 
 
 <script>
-// V301-AF 검은바+아이콘 완전삭제 Core - Swing2App(1차) + Node.js APK(2차) 통합 안정화 - 뒤로가기 제외
+// V301-AG 성능개선+검은바제거 Core - Swing2App(1차) + Node.js APK(2차) 통합 안정화 - 뒤로가기 제외
 (function(){
   console.log('[V301-H] Final Core 시작 - 뒤로가기 제외');
 
@@ -11995,209 +11995,71 @@ async function showPhotosForDate(dateStr){
 </script>
 
 
-<style id="v301ae-fix-bottom">
-/* V301-AE 위 타이틀은 살리고, 밑에 아이콘+흐린 '내용 확대보기' 삭제 */
-/* 타이틀 다시 살리기 */
-#photo-lightbox-title {
-  display:block !important;
-  color: rgba(255,255,255,0.85) !important;
-  font-size:13px !important;
-  font-weight:700 !important;
-  text-align:center !important;
-  padding:14px 18px 12px !important;
-  background: transparent !important;
-}
-#photo-lightbox-overlay.no-photo #photo-lightbox-title {
-  display:block !important;
-  color: #2A241C !important;
-  background: #fff !important;
-  border-bottom: 1px solid rgba(0,0,0,0.06) !important;
-  text-align:left !important;
-  font-size:15px !important;
-  padding:16px 20px 14px !important;
-}
-
-/* 밑에 흐리게 나오는 중복 요소들 삭제 - 사진 없을 때 */
-#photo-lightbox-overlay.no-photo #photo-lightbox-date,
-#photo-lightbox-content.no-photo #photo-lightbox-date {
-  display:none !important;
-}
-/* 혹시 memo 안에 들어가는 아이콘/흐린 텍스트 - 두번째 타이틀 방지 */
-#photo-lightbox-memo .photo-lightbox-title-duplicate,
-#photo-lightbox-memo [data-role="faint-title"],
-#photo-lightbox-content.no-photo .lightbox-faint,
-#photo-lightbox-content.no-photo .icon-row {
-  display:none !important;
-}
-
-/* 내용만 일기형일 때 - 위 타이틀만 있고 밑에는 깔끔하게 내용만 */
-#photo-lightbox-overlay.no-photo #photo-lightbox-content {
-  background:#fff !important;
-}
-#photo-lightbox-overlay.no-photo #photo-lightbox-memo.no-photo-mode {
-  padding-top: 8px !important;
-  border-top: none !important;
-}
-</style>
-<script>
-// V301-AE 밑에 흐릿한 중복 삭제, 위 타이틀 복구
-(function(){
-  function cleanup(){
-    const overlay=document.getElementById('photo-lightbox-overlay');
-    const img=document.getElementById('photo-lightbox-img');
-    const title=document.getElementById('photo-lightbox-title');
-    const dateEl=document.getElementById('photo-lightbox-date');
-    if(!overlay) return;
-    const isNoPhoto = !img || !img.src || img.style.display==='none' || img.getAttribute('src')==='';
-    if(isNoPhoto){
-      overlay.classList.add('no-photo');
-      document.getElementById('photo-lightbox-content')?.classList.add('no-photo');
-      if(title) title.style.display='block';
-      // 밑에 흐릿한 중복 - date 영역이나 actions에 있는 흐린 텍스트 제거
-      if(dateEl){
-        // date는 숨김 (밑에 흐린거)
-        if(dateEl.textContent.includes('내용 확대보기') || dateEl.textContent.includes('사진 확대보기')){
-          dateEl.style.display='none';
-        }
-      }
-      // memo 안에 혹시 들어간 아이콘 텍스트 제거
-      const memo=document.getElementById('photo-lightbox-memo');
-      if(memo){
-        // 흐린 텍스트 노드 제거
-        memo.querySelectorAll('*').forEach(el=>{
-          const t=(el.textContent||'').trim();
-          if((t==='내용 확대보기' || t==='사진 확대보기') && el!==title){
-            el.style.display='none';
-          }
-        });
-      }
-    } else {
-      overlay.classList.remove('no-photo');
-      document.getElementById('photo-lightbox-content')?.classList.remove('no-photo');
-      if(title) title.style.display='block';
-      if(dateEl) dateEl.style.display='block';
-    }
-  }
-  const origOpen=window.openPhotoLightbox;
-  if(origOpen){
-    window.openPhotoLightbox=function(){
-      const r=origOpen.apply(this, arguments);
-      setTimeout(cleanup, 30);
-      setTimeout(cleanup, 200);
-      return r;
-    };
-  }
-  const origMemo=window.openMemoLightboxOnly;
-  if(origMemo){
-    const wrapped=function(){
-      const r=origMemo.apply(this, arguments);
-      setTimeout(cleanup, 30);
-      setTimeout(cleanup, 200);
-      return r;
-    };
-    window.openMemoLightboxOnly=wrapped;
-    // 기존 AC에서 이미 래핑했을 수도 있으니 이중 래핑 방지 위해 재설정
-  }
-  const overlay=document.getElementById('photo-lightbox-overlay');
-  if(overlay){
-    const obs=new MutationObserver(()=>setTimeout(cleanup,15));
-    obs.observe(overlay, {attributes:true, attributeFilter:['class']});
-  }
-  console.log('[V301-AE] 위 살리고 밑 삭제');
-})();
-</script>
-
-
-<style id="v301af-blackbar-fix">
-/* V301-AF 검은바 + 아이콘 + 흐린 글씨 완전 삭제 */
-/* 사진 없을 때 이미지 태그 자체를 완전히 제거 수준으로 숨김 */
-#photo-lightbox-overlay.no-photo #photo-lightbox-img,
-#photo-lightbox-content.no-photo #photo-lightbox-img,
-#photo-lightbox-img[src=""],
-#photo-lightbox-img:not([src]),
-#photo-lightbox-img[src="null"] {
+<style id="v301ag-perf-fix">
+/* V301-AG 성능개선 + 검은바 제거 - 가벼운 CSS만 */
+/* 사진 없을 때 img 완전 숨김 - JS 없이도 */
+#photo-lightbox-img[src=""], #photo-lightbox-img:not([src]), #photo-lightbox-img[src="null"] {
   display:none !important;
   height:0 !important;
-  min-height:0 !important;
-  max-height:0 !important;
-  padding:0 !important;
-  margin:0 !important;
-  border:none !important;
-  background: transparent !important;
-  visibility: hidden !important;
-  opacity: 0 !important;
 }
+#photo-lightbox-overlay.no-photo { background:#fff !important; }
+#photo-lightbox-overlay.no-photo #photo-lightbox-content { background:#fff !important; margin-top:0 !important; }
+#photo-lightbox-title { display:block !important; }
+#photo-lightbox-overlay.no-photo #photo-lightbox-title { background:#fff !important; color:#2A241C !important; border-bottom:1px solid rgba(0,0,0,0.06) !important; }
 
-/* 검은 바탕 자체도 제거 - content 배경이 검은거 */
-#photo-lightbox-overlay.no-photo {
-  background: #fff !important;
-}
-#photo-lightbox-overlay.no-photo #photo-lightbox-content {
-  background: #fff !important;
-}
+/* 터치 성능 복구 */
+#photo-lightbox-img { touch-action: manipulation !important; }
+#photo-lightbox-overlay { touch-action: pan-y !important; }
+#photo-lightbox-content { touch-action: pan-y !important; will-change: auto !important; }
 
-/* 혹시 alt 텍스트로 나오는 '내용 확대보기' - 이미지 깨짐 아이콘 영역 */
-#photo-lightbox-img::before,
-#photo-lightbox-img::after {
-  display:none !important;
-}
-
-/* V301-P에서 생성하는 alt 배경 - img가 숨겨지면 같이 숨겨짐 */
-#photo-lightbox-content.no-photo {
-  padding-top: 0 !important;
-}
-#photo-lightbox-content.no-photo #photo-lightbox-title {
-  background:#fff !important;
-  color:#2A241C !important;
-  border-bottom:1px solid rgba(0,0,0,0.06) !important;
-}
+/* 버튼 터치 개선 - will-change 제거로 렉 방지 */
+button, .sub-memo-item, .diary-photo-wrap, .cal-cell { will-change: auto !important; }
 </style>
 <script>
-// V301-AF 검은바 즉시 제거
+// V301-AG 가벼운 검은바 제거 - MutationObserver 최소화
 (function(){
-  function nukeBlackBar(){
-    const img=document.getElementById('photo-lightbox-img');
-    const overlay=document.getElementById('photo-lightbox-overlay');
-    const content=document.getElementById('photo-lightbox-content');
-    if(!img) return;
-    const src=(img.getAttribute('src')||'').trim();
-    const isEmpty = !src || src==='' || src==='null' || img.style.display==='none' || src.startsWith('data:')===false && src.length<5;
-    // 더 정확히: 사진이 없는 상태면 무조건 숨김
-    const isNoPhotoMode = !src || src.length < 10;
-    if(isNoPhotoMode){
-      img.style.display='none';
-      img.removeAttribute('src');
-      img.style.height='0';
-      img.style.minHeight='0';
-      if(overlay) overlay.classList.add('no-photo');
-      if(content) content.classList.add('no-photo');
-      // 검은바 역할을 하는 img 부모의 배경 제거
-      // 혹시 img 대신에 broken icon이 보이는 걸 방지
-      img.alt='';
-    }
+  let ticking=false;
+  function hideBlackBar(){
+    if(ticking) return;
+    ticking=true;
+    requestAnimationFrame(()=>{
+      const img=document.getElementById('photo-lightbox-img');
+      if(img){
+        const src=img.getAttribute('src')||'';
+        if(!src || src.length<10){
+          img.style.display='none';
+          img.alt='';
+          const ov=document.getElementById('photo-lightbox-overlay');
+          const ct=document.getElementById('photo-lightbox-content');
+          if(ov) ov.classList.add('no-photo');
+          if(ct) ct.classList.add('no-photo');
+        } else {
+          const ov=document.getElementById('photo-lightbox-overlay');
+          const ct=document.getElementById('photo-lightbox-content');
+          if(ov) ov.classList.remove('no-photo');
+          if(ct) ct.classList.remove('no-photo');
+          img.style.display='block';
+        }
+      }
+      ticking=false;
+    });
   }
-  // open 함수 래핑
-  ['openPhotoLightbox','openMemoLightboxOnly','openPhotoLightboxSafe'].forEach(fnName=>{
-    const orig=window[fnName];
-    if(orig && !orig._afWrapped){
-      const wrapped=function(){
-        const r=orig.apply(this, arguments);
-        setTimeout(nukeBlackBar, 10);
-        setTimeout(nukeBlackBar, 100);
-        setTimeout(nukeBlackBar, 300);
-        return r;
-      };
-      wrapped._afWrapped=true;
-      window[fnName]=wrapped;
+  // open 할 때만 체크 - 무거운 감시 제거
+  const fns=['openPhotoLightbox','openMemoLightboxOnly'];
+  fns.forEach(name=>{
+    const orig=window[name];
+    if(orig && !orig._ag){
+      window[name]=function(){ const r=orig.apply(this, arguments); setTimeout(hideBlackBar, 20); return r; };
+      window[name]._ag=true;
     }
   });
-  // mutation 감시
-  const overlay=document.getElementById('photo-lightbox-overlay');
-  if(overlay){
-    const obs=new MutationObserver(()=>nukeBlackBar());
-    obs.observe(overlay, {attributes:true, subtree:true, attributeFilter:['class','src','style']});
+  // overlay class 변화만 감시 (subtree 감시 제거 - 렉 원인)
+  const ov=document.getElementById('photo-lightbox-overlay');
+  if(ov){
+    const obs=new MutationObserver(hideBlackBar);
+    obs.observe(ov, {attributes:true, attributeFilter:['class']});
   }
-  console.log('[V301-AF] 검은바 제거 세팅');
+  console.log('[V301-AG] 성능개선 완료');
 })();
 </script>
 
