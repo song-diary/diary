@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 다이어리&가계부 V301-AC 싱글클릭+자연스러운 일기형 라이트박스 - Swing2App+NodeAPK 통합 최종</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 다이어리&가계부 V301-AD 타이틀/아이콘 삭제 - 내용만 일기형 - Swing2App+NodeAPK 통합 최종</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -3002,7 +3002,7 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
 
 
 <style id="v301h-final-core">
-/* V301-AC 싱글클릭+자연스러운 일기형 라이트박스 Core - 전체 통합 */
+/* V301-AD 타이틀/아이콘 삭제 - 내용만 일기형 Core - 전체 통합 */
 :root { --safe-bottom: env(safe-area-inset-bottom, 0px); }
 
 /* 달력 */
@@ -10336,7 +10336,7 @@ async function showPhotosForDate(dateStr){
 
 
 <script>
-// V301-AC 싱글클릭+자연스러운 일기형 라이트박스 Core - Swing2App(1차) + Node.js APK(2차) 통합 안정화 - 뒤로가기 제외
+// V301-AD 타이틀/아이콘 삭제 - 내용만 일기형 Core - Swing2App(1차) + Node.js APK(2차) 통합 안정화 - 뒤로가기 제외
 (function(){
   console.log('[V301-H] Final Core 시작 - 뒤로가기 제외');
 
@@ -11991,6 +11991,74 @@ async function showPhotosForDate(dateStr){
       return r;
     };
   }
+})();
+</script>
+
+
+<style id="v301ad-no-title">
+/* V301-AD 내용만 있을때 타이틀/아이콘/흐린 글씨 삭제 */
+#photo-lightbox-title { display:none !important; } /* 타이틀 전체 삭제 - 사진/내용 모두 */
+#photo-lightbox-overlay.no-photo #photo-lightbox-title,
+#photo-lightbox-content.no-photo #photo-lightbox-title { display:none !important; }
+
+/* 내용만 확대보기일 때 아이콘, 흐릿한 텍스트 제거 */
+#photo-lightbox-overlay.no-photo,
+#photo-lightbox-content.no-photo {
+  background: #fff !important;
+}
+#photo-lightbox-overlay.no-photo #photo-lightbox-content,
+#photo-lightbox-content.no-photo {
+  background: #fff !important;
+  padding-top: 50px !important; /* 닫기버튼 공간만 */
+}
+
+/* 혹시 남아있는 타이틀용 요소들 전부 숨김 */
+#photo-lightbox-title,
+.photo-lightbox-header,
+.lightbox-header-icon {
+  display:none !important;
+}
+</style>
+<script>
+// V301-AD 타이틀 삭제 + no-photo 클래스 관리
+(function(){
+  function updateNoPhotoClass(){
+    const overlay=document.getElementById('photo-lightbox-overlay');
+    const content=document.getElementById('photo-lightbox-content');
+    const img=document.getElementById('photo-lightbox-img');
+    const title=document.getElementById('photo-lightbox-title');
+    if(!overlay||!img) return;
+    const isNoPhoto = !img.src || img.style.display==='none' || img.getAttribute('src')==='';
+    if(isNoPhoto){
+      overlay.classList.add('no-photo');
+      if(content) content.classList.add('no-photo');
+      if(title) title.style.display='none';
+    } else {
+      overlay.classList.remove('no-photo');
+      if(content) content.classList.remove('no-photo');
+      // 타이틀은 어차피 CSS로 전체 숨김
+    }
+  }
+  // open 함수들 래핑
+  const origOpen = window.openPhotoLightbox;
+  if(origOpen){
+    window.openPhotoLightbox = function(){
+      const r=origOpen.apply(this, arguments);
+      setTimeout(updateNoPhotoClass, 20);
+      return r;
+    };
+  }
+  const origMemo = window.openMemoLightboxOnly;
+  if(origMemo){
+    // 이미 위에서 래핑했지만 한번 더
+  }
+  // overlay 변화 감지
+  const overlay=document.getElementById('photo-lightbox-overlay');
+  if(overlay){
+    const obs=new MutationObserver(()=>setTimeout(updateNoPhotoClass,10));
+    obs.observe(overlay, {attributes:true, attributeFilter:['class']});
+  }
+  console.log('[V301-AD] 타이틀 삭제 완료');
 })();
 </script>
 
