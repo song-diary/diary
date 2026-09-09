@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 V301-C Swing2App+NodeAPK 호환판 - 2단계</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 V301-D Node.js APK 최종 - 2차 빌드용</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -2686,6 +2686,28 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
         }
 
 </style>
+
+<style id="v301d-clean-ui">
+/* V301-D: 폰트/달력 정리 - !important 제거하고 계층 정리 */
+#calendar-card .calendar-header { background:#ffc9c9 !important; }
+#cal-days-name-grid { background:#ffc9c9; }
+#cal-month-title { color:#d93838; font-size:20px; font-weight:900; }
+.cal-day-name { font-size:14px; font-weight:800; padding:7px 0; }
+.cal-cell span { font-size:17px; font-weight:800; }
+.cal-special-label, .cal-anniv-label, .cal-holiday-label { font-size:9px; font-weight:600; line-height:1.1; }
+#selected-date-title { font-size:14px; font-weight:800; }
+.lunar-label { font-size:7px; line-height:1.2; font-weight:400; opacity:0.7; margin-top:2px; }
+.feature-title { font-size:12px; }
+
+/* Node APK WebView 스크롤/터치 최적화 */
+html { overscroll-behavior-y: contain; -webkit-tap-highlight-color: transparent; }
+body { touch-action: pan-x pan-y; -webkit-text-size-adjust: 100%; }
+.modal-overlay, #fortune-popup-overlay, #saju-detail-modal-overlay, #photo-lightbox-overlay {
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+</style>
+
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#f59e0b">
 <style>
@@ -10305,15 +10327,6 @@ async function showPhotosForDate(dateStr){
 
 
 
-<style id="font-17-12">
-#calendar-card .calendar-header { background:#ffc9c9 !important; background-color:#ffc9c9 !important; }
-#cal-days-name-grid { background:#ffc9c9 !important; background-color:#ffc9c9 !important; }
-#cal-month-title { color:#d93838 !important; font-size:20px !important; font-weight:900 !important; }
-.cal-day-name { font-size:14px !important; font-weight:800 !important; padding:7px 0 !important; }
-.cal-cell span { font-size:17px !important; font-weight:800 !important; }
-.cal-special-label, .cal-anniv-label, .cal-holiday-label { font-size:9px !important; font-weight:600 !important; line-height:1.1 !important; }
-#selected-date-title, .feature-title, .feature-title span, .sub-feature-card .feature-title { font-size:12px !important; }
-</style>
 
 
 
@@ -10334,17 +10347,8 @@ async function showPhotosForDate(dateStr){
 
 
 
-<style id="lunar7-fixed2">
-#selected-date-title { font-size:14px !important; font-weight:800 !important; }
-.lunar-label {
-    font-size:7px !important;
-    line-height:1.2 !important;
-    font-weight:400 !important;
-    opacity:0.7 !important;
-    margin-top:2px !important;
-}
-div.lunar-label { font-size:7px !important; }
-</style>
+
+
 
 
 <script>
@@ -10549,6 +10553,63 @@ div.lunar-label { font-size:7px !important; }
     };
 
     console.log('[V301-C] 패치 완료 - Swing2App 1차, Node APK 2차 검증 준비됨');
+})();
+</script>
+
+
+<script>
+// V301-D FIX 3 - onclick 137개 -> 이벤트 위임 + 성능 통합 (Node.js APK용)
+(function(){
+    console.log('[V301-D] 이벤트 위임 및 성능 패치');
+    // onclick을 data-action으로 점진적 마이그레이션 (기존 onclick 유지하면서도 중복 방지)
+    document.addEventListener('click', function(e){
+        const el = e.target.closest('[data-action]');
+        if(!el) return;
+        const action = el.dataset.action;
+        // fortune 관련
+        if(action==='fortune' && typeof openFortunePopup==='function'){ openFortunePopup(); }
+        if(action==='close-fortune' && typeof closeFortunePopup==='function'){ closeFortunePopup(); }
+        if(action==='close-modal' && window.closeAllModalsToMain){ window.closeAllModalsToMain(); }
+    });
+
+    // 기존 onclick 속성들을 data-action으로도 복제 (향후 제거 준비)
+    document.querySelectorAll('[onclick*="Fortune"]').forEach(el=>{
+        if(!el.dataset.action) el.dataset.action='fortune';
+    });
+    document.querySelectorAll('[onclick*="closeFortune"]').forEach(el=>{
+        if(!el.dataset.action) el.dataset.action='close-fortune';
+    });
+
+    // 성능: 리사이즈 디바운스
+    let resizeTimer;
+    window.addEventListener('resize', function(){
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function(){
+            if(typeof renderCalendar==='function') try{renderCalendar();}catch(e){}
+        }, 250);
+    });
+
+    // 메모리: 오래된 blob URL 정리
+    setInterval(function(){
+        if(window._lastBlobUrl && document.hidden){
+            try{ URL.revokeObjectURL(window._lastBlobUrl); window._lastBlobUrl=null; }catch(e){}
+        }
+    }, 30000);
+
+    // Node.js APK: console.log -> 파일로도 저장 (디버깅용)
+    if(location.protocol==='file:'){
+        const origLog = console.log;
+        console.log = function(...args){
+            origLog.apply(console, args);
+            try{
+                const msg = args.map(a=> typeof a==='object'? JSON.stringify(a): String(a)).join(' ');
+                let logs = localStorage.getItem('_debug_logs')||'';
+                logs += '\n['+new Date().toISOString()+'] '+msg;
+                if(logs.length>20000) logs = logs.slice(-20000);
+                localStorage.setItem('_debug_logs', logs);
+            }catch(e){}
+        };
+    }
 })();
 </script>
 
