@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 다이어리&가계부 V301-O 사진없는글 글씨만 확대 - Swing2App+NodeAPK 통합 최종</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 다이어리&가계부 V301-P 내용이없어요 + 타이틀 내용확대보기 - Swing2App+NodeAPK 통합 최종</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -3002,7 +3002,7 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
 
 
 <style id="v301h-final-core">
-/* V301-O 사진없는글 글씨만 확대 Core - 전체 통합 */
+/* V301-P 내용이없어요 + 타이틀 내용확대보기 Core - 전체 통합 */
 :root { --safe-bottom: env(safe-area-inset-bottom, 0px); }
 
 /* 달력 */
@@ -10336,7 +10336,7 @@ async function showPhotosForDate(dateStr){
 
 
 <script>
-// V301-O 사진없는글 글씨만 확대 Core - Swing2App(1차) + Node.js APK(2차) 통합 안정화 - 뒤로가기 제외
+// V301-P 내용이없어요 + 타이틀 내용확대보기 Core - Swing2App(1차) + Node.js APK(2차) 통합 안정화 - 뒤로가기 제외
 (function(){
   console.log('[V301-H] Final Core 시작 - 뒤로가기 제외');
 
@@ -10844,6 +10844,130 @@ async function showPhotosForDate(dateStr){
 .sub-memo-item.no-photo { cursor:pointer !important; }
 .sub-memo-item.no-photo .diary-text { cursor:pointer !important; }
 </style>
+
+
+<style id="v301p-title-fix">
+#photo-lightbox-title {
+  color:#fff !important;
+  font-size:13px !important;
+  font-weight:800 !important;
+  text-align:center !important;
+  margin-bottom:8px !important;
+  letter-spacing:0.5px !important;
+}
+</style>
+<script>
+// V301-P - 빈내용 처리 + 타이틀 변경
+(function(){
+  console.log('[V301-P] 빈내용 & 타이틀 수정');
+
+  const _origSanitize = window.sanitizeDiaryTextForDisplay;
+  window.sanitizeDiaryTextForDisplay = function(raw){
+    if(!raw) return '';
+    let t = String(raw);
+    // 원래 로직
+    t = t.replace(/<div[^>]*>/gi, '\n').replace(/<\/div>/gi, '');
+    t = t.replace(/<br[^>]*>/gi, '\n');
+    t = t.replace(/<[^>]+>/g, '');
+    t = t.replace(/&nbsp;/g, ' ').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');
+    return t.trim();
+  };
+
+  // openPhotoLightbox 래핑 - 빈 내용 & 타이틀
+  const _origOpenP = window.openPhotoLightbox;
+  window.openPhotoLightbox = function(photoKeyOrData, diaryItemOrText){
+    const imgEl = document.getElementById('photo-lightbox-img');
+    const memoEl = document.getElementById('photo-lightbox-memo');
+    const dateEl = document.getElementById('photo-lightbox-date');
+    const overlay = document.getElementById('photo-lightbox-overlay');
+    const content = document.getElementById('photo-lightbox-content');
+    
+    // 타이틀 요소가 없으면 생성
+    let titleEl = document.getElementById('photo-lightbox-title');
+    if(!titleEl && content){
+      titleEl = document.createElement('div');
+      titleEl.id='photo-lightbox-title';
+      content.prepend(titleEl);
+    }
+
+    let src = null;
+    let memoText = '';
+    let isBrOnly = false;
+
+    // 원본 raw 체크 - <br>만 있는지
+    let rawText = '';
+    if(diaryItemOrText && typeof diaryItemOrText==='object') rawText = diaryItemOrText.text || '';
+    else if(typeof diaryItemOrText==='string') rawText = diaryItemOrText;
+    
+    // <br>만 있는지 체크
+    if(rawText){
+      const stripped = String(rawText).replace(/<[^>]*>/g,'').trim();
+      const onlyBr = String(rawText).trim().toLowerCase()==='<br>' || String(rawText).trim().toLowerCase()==='<br/>' || String(rawText).trim().toLowerCase()==='<br />' || stripped==='';
+      if(onlyBr) isBrOnly = true;
+    }
+
+    try{ if(typeof getPhotoSrc==='function') src = getPhotoSrc(photoKeyOrData); }catch(e){}
+    if(!src && typeof photoKeyOrData==='string' && photoKeyOrData.indexOf('data:image')===0) src = photoKeyOrData;
+    if(!src && typeof photoKeyOrData==='string' && photoKeyOrData.indexOf('blob:')===0) src = photoKeyOrData;
+
+    if(diaryItemOrText){
+      if(typeof diaryItemOrText==='string') memoText = window.sanitizeDiaryTextForDisplay(diaryItemOrText);
+      else if(typeof diaryItemOrText==='object') memoText = window.sanitizeDiaryTextForDisplay(diaryItemOrText.text || '');
+    }
+
+    // 빈 내용이면 "내용이 없어요^^"
+    if(isBrOnly || memoText===''){
+      if(!src){ // 사진도 없으면
+        memoText = '내용이 없어요^^';
+      }
+      // 사진만 있고 글 없으면 memo는 숨김 (사진만 보기)
+      // 하지만 사진도 없고 글도 <br>이면 "내용이 없어요^^" 표시
+    }
+
+    // 타이틀 변경
+    if(titleEl){
+      if(src){
+        titleEl.textContent = '사진 확대보기';
+        if(imgEl) imgEl.alt = '사진 확대보기';
+      }else{
+        titleEl.textContent = '내용 확대보기';
+        if(imgEl) imgEl.alt = '내용 확대보기';
+      }
+    }
+
+    // 실제 렌더
+    if(imgEl){
+      if(src){ imgEl.src=src; imgEl.style.display='block'; }
+      else { imgEl.src=''; imgEl.style.display='none'; }
+    }
+    if(memoEl){
+      if(memoText){
+        memoEl.textContent = memoText;
+        memoEl.style.display='block';
+        if(src) memoEl.classList.remove('no-photo-mode');
+        else memoEl.classList.add('no-photo-mode');
+      }else{
+        memoEl.style.display='none';
+      }
+    }
+    if(dateEl && diaryItemOrText && diaryItemOrText.date){
+      try{
+        const d = typeof parseDateObj==='function'?parseDateObj(diaryItemOrText.date):new Date(diaryItemOrText.date);
+        dateEl.textContent = d.getFullYear()+'년 '+(d.getMonth()+1)+'월 '+d.getDate()+'일';
+      }catch(e){ dateEl.textContent = diaryItemOrText.date; }
+    }
+
+    if(overlay){
+      overlay.classList.add('active');
+      overlay.style.display='flex';
+    }
+    document.body.classList.add('modal-open');
+    document.body.style.overflow='hidden';
+  };
+
+  console.log('[V301-P] 빈내용 & 타이틀 수정 완료');
+})();
+</script>
 
 </body>
 
