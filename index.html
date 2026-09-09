@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 다이어리&가계부 V301-K 달력세모 표시유지+클릭차단 - 의경 반영 - Swing2App+NodeAPK 통합 최종</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 다이어리&가계부 V301-L 세모클릭 완전차단 + 줄간격 1.32 - Swing2App+NodeAPK 통합 최종</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -3002,7 +3002,7 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
 
 
 <style id="v301h-final-core">
-/* V301-K 달력세모 표시유지+클릭차단 - 의경 반영 Core - 전체 통합 */
+/* V301-L 세모클릭 완전차단 + 줄간격 1.32 Core - 전체 통합 */
 :root { --safe-bottom: env(safe-area-inset-bottom, 0px); }
 
 /* 달력 */
@@ -10336,7 +10336,7 @@ async function showPhotosForDate(dateStr){
 
 
 <script>
-// V301-K 달력세모 표시유지+클릭차단 - 의경 반영 Core - Swing2App(1차) + Node.js APK(2차) 통합 안정화 - 뒤로가기 제외
+// V301-L 세모클릭 완전차단 + 줄간격 1.32 Core - Swing2App(1차) + Node.js APK(2차) 통합 안정화 - 뒤로가기 제외
 (function(){
   console.log('[V301-H] Final Core 시작 - 뒤로가기 제외');
 
@@ -10732,6 +10732,78 @@ async function showPhotosForDate(dateStr){
 #photo-lightbox-date { font-size:11px !important; color:rgba(255,255,255,0.6) !important; text-align:center !important; flex-shrink:0 !important; }
 #photo-lightbox-actions { flex-shrink:0 !important; }
 </style>
+
+
+<style id="v301l-tight">
+#photo-lightbox-memo {
+  font-size:13.5px !important;
+  line-height:1.32 !important; /* 더 좁게 1.45 -> 1.32 */
+  padding:12px 14px !important;
+  letter-spacing:-0.1px !important;
+}
+</style>
+<script>
+// V301-L - 달력 세모 클릭 완전 차단 + 줄간격 더 좁게
+(function(){
+  console.log('[V301-L] 달력 세모 완전 차단 시도');
+
+  // 기존 renderCalendar를 래핑해서 셀 클릭에서 세모 영역 무시
+  const _origRender = window.renderCalendar;
+  if(_origRender && !_origRender._patchedL){
+    window.renderCalendar = function(){
+      const result = _origRender.apply(this, arguments);
+      // 렌더 후 모든 셀의 onclick 재정의
+      setTimeout(()=>{
+        document.querySelectorAll('.cal-cell.has-photo').forEach(cell=>{
+          const origClick = cell.onclick;
+          if(origClick && !cell._patchedL){
+            cell._patchedL = true;
+            const oldHandler = origClick;
+            cell.onclick = function(e){
+              // 세모 영역 클릭이면 무시 - 셀 선택도 안 하고, 사진도 안 열고
+              const rect = this.getBoundingClientRect();
+              const x = e.clientX - rect.left;
+              const y = e.clientY - rect.top;
+              // 왼쪽 위 36x36 영역 = 세모 표시 영역
+              if(x < 36 && y < 36){
+                console.log('[V301-L] 세모 영역 클릭 무시');
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+              }
+              // 그 외 영역은 원래 날짜 선택 동작만
+              return oldHandler.call(this, e);
+            };
+          }
+        });
+      }, 50);
+      return result;
+    };
+    window.renderCalendar._patchedL = true;
+  }
+
+  // window 레벨에서도 혹시 모를 호출 차단
+  window.showPhotosForDate = function(){ console.log('[V301-L] 차단됨'); return; };
+  window.showPhotosForDateFixed = function(){ console.log('[V301-L] 차단됨'); return; };
+
+  // 추가로 document 레벨 capture에서 세모 클릭을 먼저 잡아서 stop
+  document.addEventListener('click', function(e){
+    const cell = e.target.closest('.cal-cell.has-photo');
+    if(cell){
+      const rect = cell.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      if(x < 36 && y < 36){
+        e.stopImmediatePropagation();
+        e.preventDefault();
+        console.log('[V301-L] capture 차단 - 세모');
+        return false;
+      }
+    }
+  }, true);
+
+})();
+</script>
 
 </body>
 
