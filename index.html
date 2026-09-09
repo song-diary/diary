@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 V213 SINGLE - 로또 버튼 위치 조정</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 V301-C Swing2App+NodeAPK 호환판 - 2단계</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -2992,7 +2992,7 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
 
 </style>
 
-<style id="node-fix-lightbox">
+<style id="node-fix-lightbox-v301b">
 /* Node.js Electron에서도 라이트박스 확실히 뜨게 */
 #photo-lightbox-overlay {
     position: fixed !important;
@@ -6400,17 +6400,17 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
                 <div class="money-box income" onclick="selectMoneySummaryStat('income')">
                     <span class="tap-hint">👆</span>
                     <div class="m-label">총 수입</div>
-                    <div class="m-value" id="summary-income">0원</div>
+                    <div class="m-value" id="summary-income-2">0원</div>
                 </div>
                 <div class="money-box expense" onclick="selectMoneySummaryStat('expense')">
                     <span class="tap-hint">👆</span>
                     <div class="m-label">총 지출</div>
-                    <div class="m-value" id="summary-expense">0원</div>
+                    <div class="m-value" id="summary-expense-2">0원</div>
                 </div>
                 <div class="money-box balance" onclick="selectMoneySummaryStat('balance')">
                     <span class="tap-hint">👆</span>
                     <div class="m-label">잔액/카드</div>
-                    <div class="m-value" id="summary-balance">0원</div>
+                    <div class="m-value" id="summary-balance-2">0원</div>
                 </div>
             `;
         }
@@ -10286,155 +10286,12 @@ async function showPhotosForDate(dateStr){
 </div>
 
 
-<script>
-// V289 - 뒤로가기 정상화: 운세/설정 팝업에서 뒤로가기하면 메인으로, 다음날 켜면 메인에서 시작
-(function(){
-    function closeAllModalsToMain(){
-        try{
-            document.querySelectorAll('.modal-overlay.active').forEach(el=>el.classList.remove('active'));
-            const fo = document.getElementById('fortune-popup-overlay'); if(fo) fo.classList.remove('active');
-            const so = document.getElementById('saju-detail-modal-overlay'); if(so) so.classList.remove('active');
-            const setO = document.getElementById('settings-modal-overlay'); if(setO) setO.classList.remove('active');
-            if(typeof closeDiaryFormPanel==='function') try{closeDiaryFormPanel();}catch(e){}
-            if(typeof closeFortunePopup==='function') try{closeFortunePopup();}catch(e){}
-            if(typeof closeSajuDetailModal==='function') try{closeSajuDetailModal();}catch(e){}
-            if(typeof closeSettingsModal==='function') try{closeSettingsModal();}catch(e){}
-            document.body.classList.remove('modal-open');
-            document.body.style.overflow='';
-            if(typeof switchMainTab==='function') try{switchMainTab('diary');}catch(e){}
-        }catch(e){}
-    }
-    // 앱이 다시 보일 때 날짜 바뀌면 메인으로 리셋
-    document.addEventListener('visibilitychange', function(){
-        if(document.visibilityState==='visible'){
-            const today = new Date().toISOString().slice(0,10);
-            const last = localStorage.getItem('lastVisibleDate');
-            if(last && last!==today){
-                closeAllModalsToMain();
-                if(typeof updateFortuneTeaser==='function') try{updateFortuneTeaser();}catch(e){}
-                if(typeof renderCalendar==='function') try{renderCalendar();}catch(e){}
-            }
-            localStorage.setItem('lastVisibleDate', today);
-        }
-    });
-    localStorage.setItem('lastVisibleDate', new Date().toISOString().slice(0,10));
-    
-    // 뒤로가기: 모달 열려있으면 닫고 메인으로, 아니면 히스토리 유지
-    history.pushState(null,'',location.href);
-    window.addEventListener('popstate', function(){
-        const hasModal = document.querySelector('.modal-overlay.active, #fortune-popup-overlay.active, #saju-detail-modal-overlay.active');
-        if(hasModal){
-            closeAllModalsToMain();
-            history.pushState(null,'',location.href);
-        }
-    });
-    
-    // 시작할 때 혹시 모달이 열려있으면 닫고 메인에서 시작 (어제 운세 화면 방지)
-    window.addEventListener('load', function(){
-        setTimeout(closeAllModalsToMain, 200);
-    });
-})();
-</script>
-
-<script>
-// V290 - 메인 화면에서 "아직 준비 전이에요" 자동 팝업 방지
-(function(){
-    // 기존 openFortunePopup 가로채서, 메인에서 자동 호출되는 경우 차단
-    const origOpenFortunePopup = window.openFortunePopup;
-    let userClickedFortune = false;
-    
-    // 운세 버튼 클릭 시에만 userClickedFortune = true
-    document.addEventListener('click', function(e){
-        const t = e.target.closest('[onclick*="Fortune"], #fortune-teaser, #open-fortune-btn, .fortune-btn');
-        if(t){
-            userClickedFortune = true;
-        }
-    }, true);
-    
-    // 생년월일 없을 때 뜨는 팝업의 X 버튼이 제대로 닫히게
-    window.closeFortunePopup = function(){
-        const fo = document.getElementById('fortune-popup-overlay');
-        if(fo) fo.classList.remove('active');
-        document.body.classList.remove('modal-open');
-        document.body.style.overflow='';
-        userClickedFortune = false;
-    };
-    
-    // 자동 호출 방지: 페이지 로드 후 2초 이내 자동 openFortunePopup 호출은 차단
-    let pageLoadTime = Date.now();
-    window.openFortunePopup = function(){
-        const elapsed = Date.now() - pageLoadTime;
-        // 사용자가 직접 누른 게 아니고, 로드 후 3초 이내 자동 호출이면 차단
-        if(!userClickedFortune && elapsed < 3000){
-            console.log('메인 자동 팝업 차단');
-            return;
-        }
-        if(origOpenFortunePopup) return origOpenFortunePopup.apply(this, arguments);
-    };
-    
-    // 메인 시작시 혹시 열려있는 운세 팝업 강제 닫기
-    window.addEventListener('load', function(){
-        setTimeout(function(){
-            const fo = document.getElementById('fortune-popup-overlay');
-            if(fo && fo.classList.contains('active')){
-                // 사용자가 누른 게 아니면 닫기
-                if(!userClickedFortune){
-                    fo.classList.remove('active');
-                    document.body.classList.remove('modal-open');
-                }
-            }
-            userClickedFortune = false;
-            pageLoadTime = Date.now() - 5000; // 이후부터는 사용자 클릭으로 인정
-        }, 500);
-    });
-    
-    // X 버튼이 안 먹을 때 대비
-    document.addEventListener('click', function(e){
-        if(e.target.closest('#fortune-popup-overlay .close-form-btn, #fortune-popup-overlay [onclick*="closeFortune"]')){
-            const fo = document.getElementById('fortune-popup-overlay');
-            if(fo) fo.classList.remove('active');
-            document.body.classList.remove('modal-open');
-            document.body.style.overflow='';
-        }
-    });
-})();
-</script>
 
 
-<script>
-// V300 - 전체 섹션 복구 + 스크롤 수정
-(function(){
-    window.addEventListener('load', function(){
-        const overlay = document.getElementById('settings-modal-overlay');
-        if(overlay) overlay.classList.remove('active');
-        document.body.classList.remove('modal-open');
-        setTimeout(function(){
-            if(typeof renderCategoryLists === 'function') try{renderCategoryLists();}catch(e){}
-            if(typeof loadSajuBirthInfo === 'function') try{loadSajuBirthInfo();}catch(e){}
-        }, 300);
-    });
-    const origClose = window.closeSettingsModal;
-    window.closeSettingsModal = function(){
-        const overlay = document.getElementById('settings-modal-overlay');
-        if(overlay) overlay.classList.remove('active');
-        document.body.classList.remove('modal-open');
-        document.body.style.overflow='';
-        if(origClose && origClose !== window.closeSettingsModal){ try{origClose();}catch(e){} }
-    };
-    const origOpen = window.openSettingsModal;
-    window.openSettingsModal = function(){
-        const overlay = document.getElementById('settings-modal-overlay');
-        if(overlay) overlay.classList.add('active');
-        document.body.classList.add('modal-open');
-        setTimeout(function(){
-            if(typeof renderCategoryLists === 'function') try{renderCategoryLists();}catch(e){}
-            if(typeof loadSajuBirthInfo === 'function') try{loadSajuBirthInfo();}catch(e){}
-            if(typeof updateSajuSavedInfo === 'function') try{updateSajuSavedInfo();}catch(e){}
-        }, 100);
-        if(origOpen && origOpen !== window.openSettingsModal){ try{origOpen();}catch(e){} }
-    };
-})();
-</script>
+
+
+
+
 
 
 
@@ -10488,6 +10345,212 @@ async function showPhotosForDate(dateStr){
 }
 div.lunar-label { font-size:7px !important; }
 </style>
+
+
+<script>
+// V301-B FIX 1 - 통합 모달 매니저 + Node/Electron 안정화
+(function(){
+    const MODAL_SELECTORS = '.modal-overlay.active, #fortune-popup-overlay.active, #saju-detail-modal-overlay.active, #photo-lightbox-overlay.active, #bucket-list-modal-overlay[style*="display: block"], #bucket-list-modal-overlay[style*="display:block"]';
+    window.closeAllModalsToMain = function(){
+        try{
+            document.querySelectorAll('.modal-overlay.active, #fortune-popup-overlay.active, #saju-detail-modal-overlay.active, #photo-lightbox-overlay.active').forEach(el=>el.classList.remove('active'));
+            const bucket = document.getElementById('bucket-list-modal-overlay');
+            if(bucket) bucket.style.display='none';
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow='';
+            if(typeof closeDiaryFormPanel==='function') try{closeDiaryFormPanel();}catch(e){}
+            if(typeof closeFortunePopup==='function') try{closeFortunePopup();}catch(e){}
+            if(typeof closeSajuDetailModal==='function') try{closeSajuDetailModal();}catch(e){}
+            if(typeof closeSettingsModal==='function') try{closeSettingsModal();}catch(e){}
+            if(typeof switchMainTab==='function') try{switchMainTab('diary');}catch(e){}
+        }catch(e){ console.error('closeAllModals error', e); }
+    };
+    // 운세 팝업 - 사용자 클릭 추적 단일화
+    let userClickedFortune = false;
+    let pageLoadTime = Date.now();
+    document.addEventListener('click', function(e){
+        if(e.target.closest('[data-fortune], #fortune-teaser, #open-fortune-btn, .fortune-btn')){
+            userClickedFortune = true;
+        }
+    }, true);
+    const origOpenFortune = window.openFortunePopup;
+    window.openFortunePopup = function(){
+        if(!userClickedFortune && Date.now() - pageLoadTime < 3000){
+            console.log('[V301-B] 메인 자동 운세 팝업 차단');
+            return;
+        }
+        if(origOpenFortune) return origOpenFortune.apply(this, arguments);
+    };
+    window.closeFortunePopup = function(){
+        const fo = document.getElementById('fortune-popup-overlay');
+        if(fo) fo.classList.remove('active');
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow='';
+        userClickedFortune = false;
+    };
+    // 뒤로가기
+    try{ history.pushState(null,'',location.href); }catch(e){}
+    window.addEventListener('popstate', function(){
+        if(document.querySelector(MODAL_SELECTORS)){
+            window.closeAllModalsToMain();
+            try{ history.pushState(null,'',location.href); }catch(e){}
+        }
+    });
+    // 앱 재진입 시 날짜 변경되면 메인으로
+    document.addEventListener('visibilitychange', function(){
+        if(document.visibilityState==='visible'){
+            const today = new Date().toISOString().slice(0,10);
+            const last = localStorage.getItem('lastVisibleDate');
+            if(last && last!==today){
+                window.closeAllModalsToMain();
+                if(typeof updateFortuneTeaser==='function') try{updateFortuneTeaser();}catch(e){}
+                if(typeof renderCalendar==='function') try{renderCalendar();}catch(e){}
+            }
+            localStorage.setItem('lastVisibleDate', today);
+        }
+    });
+    localStorage.setItem('lastVisibleDate', new Date().toISOString().slice(0,10));
+    // 시작 시 모달 닫기
+    window.addEventListener('load', function(){
+        setTimeout(function(){
+            window.closeAllModalsToMain();
+            pageLoadTime = Date.now() - 5000;
+            if(typeof renderCategoryLists==='function') try{renderCategoryLists();}catch(e){}
+            if(typeof loadSajuBirthInfo==='function') try{loadSajuBirthInfo();}catch(e){}
+        }, 200);
+    });
+    // 요약 중복 ID 동기화
+    const origUpdateSummary = window.updateMoneySummary || window.renderMoneySummary;
+    window.syncDuplicateSummaries = function(){
+        const a = document.getElementById('summary-income');
+        const b = document.getElementById('summary-income-2');
+        const c = document.getElementById('summary-expense');
+        const d = document.getElementById('summary-expense-2');
+        const e = document.getElementById('summary-balance');
+        const f = document.getElementById('summary-balance-2');
+        if(a&&b) b.textContent = a.textContent;
+        if(c&&d) d.textContent = c.textContent;
+        if(e&&f) f.textContent = e.textContent;
+    };
+    setInterval(function(){ try{ window.syncDuplicateSummaries(); }catch(e){} }, 1000);
+})();
+</script>
+
+
+<script>
+// V301-C FIX 2 - Swing2App + Node.js APK 호환성 (file:// / WebView 대응)
+(function(){
+    console.log('[V301-C] Swing2App & Node APK 호환 패치 시작');
+
+    // 1. Storage 어댑터 - localStorage가 막힌 WebView/file:// 대응
+    const SafeStorage = {
+        _mem: {},
+        _isFileProtocol: location.protocol === 'file:',
+        set: function(k,v){
+            try{
+                localStorage.setItem(k,v);
+                return true;
+            }catch(e){
+                console.warn('[SafeStorage] localStorage 실패, memory로 fallback', k, e);
+                try{
+                    this._mem[k]=v;
+                    // IDB fallback 시도 (이미 앱에 IDB 로직 있음)
+                    if(window.idbSet) window.idbSet(k,v);
+                }catch(e2){}
+                return false;
+            }
+        },
+        get: function(k){
+            try{
+                const val = localStorage.getItem(k);
+                if(val!==null) return val;
+                if(this._mem[k]!==undefined) return this._mem[k];
+                return null;
+            }catch(e){
+                return this._mem[k]||null;
+            }
+        }
+    };
+    // 기존 localStorage 호출을 안전하게 감싸기 (원본 유지하되 에러 무시)
+    const _origSetItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = function(k,v){
+        try{ return _origSetItem.call(this,k,v); }catch(e){ SafeStorage._mem[k]=v; }
+    };
+
+    // 2. 이미지 src file:// 대응 - blob URL 정리
+    window._revokeOldBlobUrls = function(){
+        if(window._lastBlobUrl){
+            try{ URL.revokeObjectURL(window._lastBlobUrl); }catch(e){}
+        }
+    };
+
+    // 3. Android Back Button (Cordova / Capacitor / Swing2App WebView)
+    document.addEventListener('backbutton', function(e){
+        e.preventDefault();
+        if(window.closeAllModalsToMain){
+            const hasModal = document.querySelector('.modal-overlay.active, #fortune-popup-overlay.active, #saju-detail-modal-overlay.active, #photo-lightbox-overlay.active');
+            if(hasModal){
+                window.closeAllModalsToMain();
+                return;
+            }
+        }
+        // 메인에서는 2번 눌러 종료 패턴 (Swing2App에서 유용)
+        if(!window._lastBackPress) window._lastBackPress=0;
+        const now = Date.now();
+        if(now - window._lastBackPress < 2000){
+            if(navigator.app && navigator.app.exitApp) navigator.app.exitApp();
+        }else{
+            window._lastBackPress = now;
+            if(window.toast) toast('한번 더 누르면 종료됩니다');
+            console.log('뒤로가기 한번 - 종료하려면 한번 더');
+        }
+    }, false);
+
+    // 4. deviceready 대응 (Node.js APK / Cordova)
+    function onDeviceReady(){
+        console.log('[V301-C] deviceready / DOM ready');
+        // 상태바, 키보드 대응
+        if(window.StatusBar) try{ StatusBar.overlaysWebView(false); }catch(e){}
+        // file:// 에서 이미지 로드 에러 방지
+        document.addEventListener('error', function(e){
+            if(e.target.tagName==='IMG' && e.target.src.startsWith('file://')){
+                console.warn('file:// 이미지 로드 실패, data URL 필요', e.target);
+            }
+        }, true);
+    }
+    document.addEventListener('deviceready', onDeviceReady, false);
+    document.addEventListener('DOMContentLoaded', onDeviceReady);
+
+    // 5. Swing2App에서 history.pushState가 꼬이는 것 방지
+    if(SafeStorage._isFileProtocol){
+        console.log('[V301-C] file:// 프로토콜 감지 - history 조작 완화');
+        const origPush = history.pushState;
+        history.pushState = function(){
+            try{ return origPush.apply(this, arguments); }catch(e){ console.warn('pushState blocked in file://', e); }
+        };
+    }
+
+    // 6. 사진 라이트박스 - Node.js APK에서 src 없을 때 data-* 에서 복구
+    const origOpenLightbox = window.openPhotoLightbox;
+    window.openPhotoLightbox = function(src, extra){
+        if(!src){
+            const wrap = document.querySelector('[data-photo-src]');
+            if(wrap) src = wrap.getAttribute('data-photo-src');
+        }
+        if(origOpenLightbox) return origOpenLightbox.call(this, src, extra);
+        // fallback lightbox open
+        const ov = document.getElementById('photo-lightbox-overlay');
+        const img = document.getElementById('photo-lightbox-img');
+        if(ov && img && src){
+            img.src = src;
+            ov.classList.add('active');
+            document.body.classList.add('modal-open');
+        }
+    };
+
+    console.log('[V301-C] 패치 완료 - Swing2App 1차, Node APK 2차 검증 준비됨');
+})();
+</script>
 
 </body>
 
