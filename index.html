@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 다이어리&가계부 V301-AE 위타이틀살리고 밑흐린거 삭제 - Swing2App+NodeAPK 통합 최종</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 다이어리&가계부 V301-AF 검은바+아이콘 완전삭제 - Swing2App+NodeAPK 통합 최종</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -3002,7 +3002,7 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
 
 
 <style id="v301h-final-core">
-/* V301-AE 위타이틀살리고 밑흐린거 삭제 Core - 전체 통합 */
+/* V301-AF 검은바+아이콘 완전삭제 Core - 전체 통합 */
 :root { --safe-bottom: env(safe-area-inset-bottom, 0px); }
 
 /* 달력 */
@@ -10336,7 +10336,7 @@ async function showPhotosForDate(dateStr){
 
 
 <script>
-// V301-AE 위타이틀살리고 밑흐린거 삭제 Core - Swing2App(1차) + Node.js APK(2차) 통합 안정화 - 뒤로가기 제외
+// V301-AF 검은바+아이콘 완전삭제 Core - Swing2App(1차) + Node.js APK(2차) 통합 안정화 - 뒤로가기 제외
 (function(){
   console.log('[V301-H] Final Core 시작 - 뒤로가기 제외');
 
@@ -12104,6 +12104,100 @@ async function showPhotosForDate(dateStr){
     obs.observe(overlay, {attributes:true, attributeFilter:['class']});
   }
   console.log('[V301-AE] 위 살리고 밑 삭제');
+})();
+</script>
+
+
+<style id="v301af-blackbar-fix">
+/* V301-AF 검은바 + 아이콘 + 흐린 글씨 완전 삭제 */
+/* 사진 없을 때 이미지 태그 자체를 완전히 제거 수준으로 숨김 */
+#photo-lightbox-overlay.no-photo #photo-lightbox-img,
+#photo-lightbox-content.no-photo #photo-lightbox-img,
+#photo-lightbox-img[src=""],
+#photo-lightbox-img:not([src]),
+#photo-lightbox-img[src="null"] {
+  display:none !important;
+  height:0 !important;
+  min-height:0 !important;
+  max-height:0 !important;
+  padding:0 !important;
+  margin:0 !important;
+  border:none !important;
+  background: transparent !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+/* 검은 바탕 자체도 제거 - content 배경이 검은거 */
+#photo-lightbox-overlay.no-photo {
+  background: #fff !important;
+}
+#photo-lightbox-overlay.no-photo #photo-lightbox-content {
+  background: #fff !important;
+}
+
+/* 혹시 alt 텍스트로 나오는 '내용 확대보기' - 이미지 깨짐 아이콘 영역 */
+#photo-lightbox-img::before,
+#photo-lightbox-img::after {
+  display:none !important;
+}
+
+/* V301-P에서 생성하는 alt 배경 - img가 숨겨지면 같이 숨겨짐 */
+#photo-lightbox-content.no-photo {
+  padding-top: 0 !important;
+}
+#photo-lightbox-content.no-photo #photo-lightbox-title {
+  background:#fff !important;
+  color:#2A241C !important;
+  border-bottom:1px solid rgba(0,0,0,0.06) !important;
+}
+</style>
+<script>
+// V301-AF 검은바 즉시 제거
+(function(){
+  function nukeBlackBar(){
+    const img=document.getElementById('photo-lightbox-img');
+    const overlay=document.getElementById('photo-lightbox-overlay');
+    const content=document.getElementById('photo-lightbox-content');
+    if(!img) return;
+    const src=(img.getAttribute('src')||'').trim();
+    const isEmpty = !src || src==='' || src==='null' || img.style.display==='none' || src.startsWith('data:')===false && src.length<5;
+    // 더 정확히: 사진이 없는 상태면 무조건 숨김
+    const isNoPhotoMode = !src || src.length < 10;
+    if(isNoPhotoMode){
+      img.style.display='none';
+      img.removeAttribute('src');
+      img.style.height='0';
+      img.style.minHeight='0';
+      if(overlay) overlay.classList.add('no-photo');
+      if(content) content.classList.add('no-photo');
+      // 검은바 역할을 하는 img 부모의 배경 제거
+      // 혹시 img 대신에 broken icon이 보이는 걸 방지
+      img.alt='';
+    }
+  }
+  // open 함수 래핑
+  ['openPhotoLightbox','openMemoLightboxOnly','openPhotoLightboxSafe'].forEach(fnName=>{
+    const orig=window[fnName];
+    if(orig && !orig._afWrapped){
+      const wrapped=function(){
+        const r=orig.apply(this, arguments);
+        setTimeout(nukeBlackBar, 10);
+        setTimeout(nukeBlackBar, 100);
+        setTimeout(nukeBlackBar, 300);
+        return r;
+      };
+      wrapped._afWrapped=true;
+      window[fnName]=wrapped;
+    }
+  });
+  // mutation 감시
+  const overlay=document.getElementById('photo-lightbox-overlay');
+  if(overlay){
+    const obs=new MutationObserver(()=>nukeBlackBar());
+    obs.observe(overlay, {attributes:true, subtree:true, attributeFilter:['class','src','style']});
+  }
+  console.log('[V301-AF] 검은바 제거 세팅');
 })();
 </script>
 
