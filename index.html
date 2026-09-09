@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 다이어리&가계부 V301-H Final - Swing2App+NodeAPK 통합 최종</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 다이어리&가계부 V301-I 사진확대 최종 수정 - Swing2App+NodeAPK 통합 최종</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -3002,7 +3002,7 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
 
 
 <style id="v301h-final-core">
-/* V301-H Final Core - 전체 통합 */
+/* V301-I 사진확대 최종 수정 Core - 전체 통합 */
 :root { --safe-bottom: env(safe-area-inset-bottom, 0px); }
 
 /* 달력 */
@@ -10336,7 +10336,7 @@ async function showPhotosForDate(dateStr){
 
 
 <script>
-// V301-H Final Core - Swing2App(1차) + Node.js APK(2차) 통합 안정화 - 뒤로가기 제외
+// V301-I 사진확대 최종 수정 Core - Swing2App(1차) + Node.js APK(2차) 통합 안정화 - 뒤로가기 제외
 (function(){
   console.log('[V301-H] Final Core 시작 - 뒤로가기 제외');
 
@@ -10451,6 +10451,230 @@ async function showPhotosForDate(dateStr){
   });
 
   console.log('[V301-H] Final Core 완료 - 용량 최적화, 뒤로가기 제외');
+})();
+</script>
+
+
+<style id="v301i-photo-fix">
+/* V301-I 사진 확대 완전 수정 */
+.cal-photo-corner {
+  position:absolute !important; top:0 !important; left:0 !important;
+  width:36px !important; height:36px !important;
+  background:#d8c6e8 !important;
+  clip-path:polygon(0 0, 100% 0, 0 100%) !important;
+  z-index:10 !important;
+  cursor:pointer !important;
+  display:flex !important;
+  align-items:flex-start !important;
+  justify-content:flex-start !important;
+  pointer-events:auto !important;
+}
+.cal-photo-corner::after {
+  content:'📷' !important;
+  position:absolute !important; top:3px !important; left:3px !important;
+  font-size:13px !important;
+}
+.diary-photo, .diary-photo-wrap img {
+  pointer-events:auto !important;
+  cursor:zoom-in !important;
+  touch-action:manipulation !important;
+}
+#photo-lightbox-overlay {
+  touch-action:none !important;
+}
+</style>
+<script>
+// V301-I 사진 확대 완전 수정 - 2026.09.09
+(function(){
+  console.log('[V301-I] 사진 확대 수정 시작');
+
+  // 기존 중복 리스너 전부 제거를 위해 새로운 단일 위임으로 대체
+  // 1. 달력 사진 코너 클릭 - 이벤트 위임으로 단 한 번만 처리
+  document.addEventListener('click', async function(e){
+    const corner = e.target.closest('.cal-photo-corner');
+    if(corner){
+      e.preventDefault();
+      e.stopPropagation();
+      const dateStr = corner.getAttribute('data-date');
+      console.log('[Photo] 달력 코너 클릭', dateStr);
+      if(dateStr && typeof showPhotosForDate==='function'){
+        // 기존 showPhotosForDate는 innerHTML을 덮어서 버그 유발 -> 안전한 버전으로 래핑
+        try{
+          await showPhotosForDateFixed(dateStr);
+        }catch(err){
+          console.error(err);
+          try{ await showPhotosForDate(dateStr); }catch(e2){}
+        }
+      }
+      return;
+    }
+
+    // 2. 일기 사진 클릭 확대
+    const photoWrap = e.target.closest('.diary-photo-wrap, .diary-photo');
+    if(photoWrap && !e.target.closest('.memo-action-btns')){
+      // 수정/삭제 버튼 제외
+      const itemBox = photoWrap.closest('.sub-memo-item');
+      if(itemBox){
+        // 사진이 로딩중 placeholder면 무시
+        if(photoWrap.textContent.includes('로딩중')) return;
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('[Photo] 일기 사진 클릭');
+        // id 추출
+        const idMatch = itemBox.innerHTML.match(/deleteDiary\('([^']+)'\)/);
+        const all = typeof getAllDiaries==='function' ? getAllDiaries() : [];
+        let item = null;
+        if(idMatch) item = all.find(d=>d.id===idMatch[1]);
+        // data-item-id로도 시도
+        if(!item){
+          const itemId = photoWrap.getAttribute('data-item-id') || itemBox.getAttribute('data-item-id');
+          if(itemId) item = all.find(d=>d.id===itemId);
+        }
+        if(item){
+          let src = '';
+          try{ src = await getPhotoSrcAsyncSafe(item.photo); }catch(e){}
+          if(!src) try{ src = getPhotoSrc(item.photo); }catch(e){}
+          // IDB 직접 재시도
+          if(!src){
+            try{
+              const db = await openPhotoDB();
+              const tx = db.transaction(['photos'], 'readonly');
+              // store name 확인
+              const storeName = db.objectStoreNames.contains('photos') ? 'photos' : db.objectStoreNames[0];
+              const store = tx.objectStore(storeName);
+              const req = store.get(item.photo);
+              src = await new Promise(res=>{
+                req.onsuccess = ()=> res(req.result ? (req.result.data || req.result.dataUrl || '') : '');
+                req.onerror = ()=> res('');
+              });
+            }catch(e){ console.log('IDB direct fail', e); }
+          }
+          if(src){
+            openPhotoLightboxSafe(src, item);
+          }else{
+            alert('사진 데이터를 찾을 수 없습니다.\n키: '+item.photo);
+          }
+        }else{
+          // item 못 찾으면 img src로 직접
+          const img = photoWrap.querySelector('img') || (photoWrap.tagName==='IMG'?photoWrap:null);
+          if(img && img.src) openPhotoLightboxSafe(img.src, null);
+        }
+        return;
+      }
+    }
+  }, true); // capture로 먼저 잡기
+
+  // 기존 showPhotosForDate를 안전하게 래핑 - 라이트박스 구조 깨짐 방지
+  async function showPhotosForDateFixed(dateStr){
+    const all = typeof getAllDiaries==='function' ? getAllDiaries() : [];
+    const items = all.filter(d=> (d.date===dateStr || (d.date && d.date.slice(0,10)===dateStr)) && d.photo);
+    if(items.length===0){ alert('이 날짜에 사진이 없습니다'); return; }
+
+    const srcList = [];
+    for(const it of items){
+      let src='';
+      try{ src = await getPhotoSrcAsyncSafe(it.photo); }catch(e){}
+      if(!src) try{ src = getPhotoSrc(it.photo); }catch(e){}
+      if(src) srcList.push({src, item:it});
+    }
+    if(srcList.length===0){ alert('사진 키는 있는데 데이터를 못 찾았습니다\nIDB를 확인하세요'); return; }
+
+    // 기존 overlay 재사용 - innerHTML 덮지 않고 우리 구조 사용
+    const overlay = document.getElementById('photo-lightbox-overlay');
+    const imgEl = document.getElementById('photo-lightbox-img');
+    const memoEl = document.getElementById('photo-lightbox-memo');
+    const dateEl = document.getElementById('photo-lightbox-date');
+    if(!overlay || !imgEl) return;
+
+    // 여러 장이면 첫 장만 크게, 나머지는 아래에 썸네일처럼 (간단히 첫 장)
+    // 여기서는 첫 번째 사진으로 라이트박스 열기, 나머지는 순차 보기 가능하게
+    window._currentDatePhotos = srcList;
+    window._currentDatePhotoIndex = 0;
+    openPhotoLightboxSafe(srcList[0].src, srcList[0].item, dateStr, srcList.length);
+  }
+
+  function openPhotoLightboxSafe(src, item, dateStr, totalCount){
+    const overlay = document.getElementById('photo-lightbox-overlay');
+    const imgEl = document.getElementById('photo-lightbox-img');
+    const memoEl = document.getElementById('photo-lightbox-memo');
+    const dateEl = document.getElementById('photo-lightbox-date');
+    const actionsEl = document.getElementById('photo-lightbox-actions');
+    if(!overlay || !imgEl) return;
+
+    imgEl.src = src;
+    imgEl.style.display = 'block';
+    imgEl.style.transform = 'none';
+
+    if(item){
+      memoEl.textContent = item.text || '';
+      memoEl.style.display = item.text ? 'block' : 'none';
+      dateEl.textContent = (dateStr || item.date || '') + (totalCount>1 ? ` (1/${totalCount})` : '');
+      window.currentLightboxItemId = item.id;
+      if(actionsEl) actionsEl.style.display='flex';
+    }else{
+      memoEl.style.display='none';
+      dateEl.textContent = dateStr || '';
+      if(actionsEl) actionsEl.style.display='none';
+    }
+
+    overlay.classList.add('active');
+    overlay.style.display='flex';
+    document.body.classList.add('modal-open');
+    // 스크롤 잠금 해제시 렉 방지 - overflow만 제어
+    document.body.style.overflow='hidden';
+  }
+
+  // 기존 openPhotoLightbox를 안전 버전으로 교체 (Node.js 포함)
+  const _origOpen = window.openPhotoLightbox;
+  window.openPhotoLightbox = function(src, item){
+    if(!src && item && item.photo){
+      // 비동기로 시도하지만 동기 호출에서는 기존 로직 사용
+      openPhotoLightboxSafe(src || '', item);
+      // 비동기 보정
+      (async()=>{
+        let s = src;
+        if(!s){
+          try{ s = await getPhotoSrcAsyncSafe(item.photo); }catch(e){}
+          if(!s) try{ s = getPhotoSrc(item.photo); }catch(e){}
+        }
+        if(s){
+          const imgEl = document.getElementById('photo-lightbox-img');
+          if(imgEl) imgEl.src = s;
+        }
+      })();
+      return;
+    }
+    openPhotoLightboxSafe(src, item);
+  };
+
+  // 라이트박스 닫기 - 스크롤 렉 방지 (overflow 복구 확실)
+  window.closePhotoLightbox = function(e){
+    if(e) e.stopPropagation();
+    const overlay = document.getElementById('photo-lightbox-overlay');
+    if(overlay){
+      overlay.classList.remove('active');
+      overlay.style.display='none';
+    }
+    const imgEl = document.getElementById('photo-lightbox-img');
+    if(imgEl){ imgEl.src=''; imgEl.style.display='none'; imgEl.style.transform='none'; }
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow='';
+    // 중요: 터치 액션 복구
+    document.body.style.touchAction='';
+    setTimeout(()=>{ document.body.style.overflow=''; }, 100);
+  };
+
+  // 기존에 등록된 touchend, dblclick 리스너 제거를 위해 클론으로 교체는 불가하므로
+  // 우리는 capture 단계에서 이미 처리했고, 이후 버블링에서 또 열리는 것 방지
+  // photo-lightbox-overlay 클릭으로 닫기
+  const overlay = document.getElementById('photo-lightbox-overlay');
+  if(overlay){
+    overlay.addEventListener('click', function(e){
+      if(e.target===overlay) window.closePhotoLightbox(e);
+    });
+  }
+
+  console.log('[V301-I] 사진 수정 완료 - 단일 위임, 렉 제거');
 })();
 </script>
 
