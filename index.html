@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 다이어리&가계부 V301-Q 가로모드 달력폭 완전수정 - Swing2App+NodeAPK 통합 최종</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 다이어리&가계부 V301-R 요일헤더 간격정렬 빈공간 제거 - 최종 - Swing2App+NodeAPK 통합 최종</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -3002,7 +3002,7 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
 
 
 <style id="v301h-final-core">
-/* V301-Q 가로모드 달력폭 완전수정 Core - 전체 통합 */
+/* V301-R 요일헤더 간격정렬 빈공간 제거 - 최종 Core - 전체 통합 */
 :root { --safe-bottom: env(safe-area-inset-bottom, 0px); }
 
 /* 달력 */
@@ -10336,7 +10336,7 @@ async function showPhotosForDate(dateStr){
 
 
 <script>
-// V301-Q 가로모드 달력폭 완전수정 Core - Swing2App(1차) + Node.js APK(2차) 통합 안정화 - 뒤로가기 제외
+// V301-R 요일헤더 간격정렬 빈공간 제거 - 최종 Core - Swing2App(1차) + Node.js APK(2차) 통합 안정화 - 뒤로가기 제외
 (function(){
   console.log('[V301-H] Final Core 시작 - 뒤로가기 제외');
 
@@ -11058,6 +11058,246 @@ async function showPhotosForDate(dateStr){
   setTimeout(window.autoResizeCalendar, 300);
 
   console.log('[V301-Q] 가로모드 수정 완료');
+})();
+</script>
+
+
+<style id="v301r-weekday-gap-fix">
+/* V301-R 요일 헤더와 일자 사이 빈공간 제거 + 정렬 일치 */
+.calendar-sticky-wrap {
+  width:100% !important;
+  max-width:100% !important;
+  display:flex !important;
+  flex-direction:column !important;
+  gap:0 !important;
+  padding:0 !important;
+  margin:0 !important;
+}
+
+.calendar-grid#cal-days-name-grid {
+  width:100% !important;
+  max-width:100% !important;
+  display:grid !important;
+  grid-template-columns:repeat(7, 1fr) !important;
+  gap:2px !important; /* 일자 그리드와 동일한 gap */
+  margin:0 !important;
+  padding:2px 0 !important;
+  box-sizing:border-box !important;
+}
+
+#cal-days-grid {
+  width:100% !important;
+  max-width:100% !important;
+  margin:0 !important;
+  padding:2px 0 0 0 !important; /* 위 패딩 최소화 - 빈공간 제거 */
+  box-sizing:border-box !important;
+}
+
+@media screen and (orientation: landscape) {
+  .calendar-sticky-wrap { gap:0 !important; }
+  .calendar-grid#cal-days-name-grid { gap:4px !important; padding:4px 0 2px 0 !important; }
+  #cal-days-grid { padding:2px 0 0 0 !important; }
+}
+
+.cal-day-name {
+  width:100% !important;
+  box-sizing:border-box !important;
+  text-align:center !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+</style>
+<script>
+// V301-R 요일 간격 정렬 수정 + 셀 계산 gap 통일
+(function(){
+  console.log('[V301-R] 요일 빈공간 수정');
+
+  const _origRenderCal = window.renderCalendar;
+  if(_origRenderCal && !_origRenderCal._patchedR){
+    window.renderCalendar = function(){
+      // 요일 헤더와 일자 그리드 gap을 동일하게 강제
+      const isLandscape = window.innerWidth > window.innerHeight;
+      const gap = isLandscape ? 4 : 2; // 가로/세로 모두 동일 gap으로 통일
+
+      const nameGrid = document.getElementById('cal-days-name-grid');
+      const daysGrid = document.getElementById('cal-days-grid');
+      if(nameGrid){
+        nameGrid.style.gap = gap + 'px';
+        nameGrid.style.width = '100%';
+      }
+      if(daysGrid){
+        daysGrid.style.width = '100%';
+      }
+
+      // 원래 렌더 호출 전에 gap 값을 window에 저장해서 placeCell이 같은 gap 쓰게
+      window._currentCalGap = gap;
+      
+      return _origRenderCal.apply(this, arguments);
+    };
+    window.renderCalendar._patchedR = true;
+
+    // placeCell에서 쓰는 gap을 통일 - 원래 함수 내부에서 gap=2로 하드코딩 되어있어서 오버라이드
+    // renderCalendar 내부 로직을 패치: gap 변수를 window._currentCalGap으로 사용
+    // 가장 간단한 방법은 renderCalendar 재정의 전체를 복사해서 gap만 통일
+    const originalRender = _origRenderCal;
+    window.renderCalendar = function(){
+      const title = document.getElementById('cal-month-title');
+      const grid = document.getElementById('cal-days-grid');
+      if (!title || !grid) return;
+
+      title.textContent = `${calYear}년 ${calMonth + 1}월`;
+      grid.innerHTML = '';
+
+      const firstDay = new Date(calYear, calMonth, 1).getDay();
+      const lastDate = new Date(calYear, calMonth + 1, 0).getDate();
+      const prevYear = calMonth === 0 ? calYear - 1 : calYear;
+      const prevMonth = calMonth === 0 ? 11 : calMonth - 1;
+      const prevLastDate = new Date(prevYear, prevMonth + 1, 0).getDate();
+      const nextYear = calMonth === 11 ? calYear + 1 : calYear;
+      const nextMonth = calMonth === 11 ? 0 : calMonth + 1;
+
+      const holidays = getKoreanHolidays(calYear);
+      const todayStr = getTodayStr();
+
+      const isLandscapeNow = window.innerWidth > window.innerHeight;
+      const gap = isLandscapeNow ? 4 : 2; // 요일 헤더와 동일 gap
+      
+      // gridWidth를 부모 기준으로 정확히
+      const gridWidth = grid.clientWidth || grid.parentElement.clientWidth || grid.getBoundingClientRect().width;
+      const cellSize = (gridWidth - gap * 6) / 7;
+      const compactHeight = cellSize;
+
+      const totalCells = firstDay + lastDate;
+      const totalRows = Math.ceil(totalCells / 7);
+      const totalVisibleCells = totalRows * 7;
+
+      let maxExtra = 0;
+      for (let day = 1; day <= lastDate; day++) {
+          const mStr = String(calMonth + 1).padStart(2, '0');
+          const dStr = String(day).padStart(2, '0');
+          const dateStr = `${calYear}-${mStr}-${dStr}`;
+          const specialInfo = getSpecialDayLabel(dateStr);
+          const annivText = getAnniversaryForDate(dateStr);
+          if (specialInfo || annivText) {
+              maxExtra = Math.max(maxExtra, specialInfo && annivText ? 10 : 6);
+          }
+      }
+      const rowHeights = new Array(totalRows).fill(cellSize * 1.25);
+      const rowTops = [];
+      let currentTop = 0;
+      for (let r = 0; r < totalRows; r++) {
+          rowTops[r] = currentTop;
+          currentTop += rowHeights[r] + (r < totalRows - 1 ? gap : 0);
+      }
+      grid.style.height = `${currentTop}px`;
+
+      function placeCell(el, cellIndex, rowSpan = 1) {
+          const col = cellIndex % 7;
+          const row = Math.floor(cellIndex / 7);
+          el.style.left = `${col * (cellSize + gap)}px`;
+          el.style.top = `${rowTops[row]}px`;
+          el.style.width = `${cellSize}px`;
+          let height = rowHeights[row];
+          for (let r = 1; r < rowSpan && row + r < totalRows; r++) {
+              height += gap + rowHeights[row + r];
+          }
+          el.style.height = `${height}px`;
+      }
+
+      function makeAdjacentDateCell(dateStr, day, cellIndex) {
+          const cell = document.createElement('div');
+          cell.className = 'cal-cell adjacent-month';
+          placeCell(cell, cellIndex, 1);
+          const specialInfo = getSpecialDayLabel(dateStr);
+          const annivText = getAnniversaryForDate(dateStr);
+          let indicatorHTML = '';
+          if (specialInfo) {
+              indicatorHTML += `<div class="cal-special-label cal-special-${specialInfo.type}">${formatCalLabel(specialInfo.label)}</div>`;
+          }
+          if (annivText) {
+              indicatorHTML += `<div class="cal-anniv-label">${formatCalLabel(annivText)}</div>`;
+          }
+          cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>`;
+          cell.onclick = () => {
+              const target = normalizeDateStr(dateStr);
+              const targetObj = new Date(Number(target.slice(0, 4)), Number(target.slice(5, 7)) - 1, Number(target.slice(8, 10)));
+              calYear = targetObj.getFullYear();
+              calMonth = targetObj.getMonth();
+              calEnlargedDate = null;
+              selectedViewDate = target;
+              renderCalendar();
+              renderDiaryAroundToday();
+              renderMoneyAroundToday();
+              if (isDiarySearchFilterOpen) filterDiaryCustomList();
+          };
+          grid.appendChild(cell);
+      }
+
+      for (let i = 0; i < firstDay; i++) {
+          const day = prevLastDate - firstDay + i + 1;
+          const dateStr = `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+          makeAdjacentDateCell(dateStr, day, i);
+      }
+
+      for (let day = 1; day <= lastDate; day++) {
+          const mStr = String(calMonth + 1).padStart(2, '0');
+          const dStr = String(day).padStart(2, '0');
+          const dateStr = `${calYear}-${mStr}-${dStr}`;
+          const cell = document.createElement('div');
+          cell.className = 'cal-cell';
+          const dObj = new Date(calYear, calMonth, day);
+          const dayOfWeek = dObj.getDay();
+          const cellIndex = firstDay + (day - 1);
+          placeCell(cell, cellIndex, 1);
+          if (dateStr === todayStr) cell.classList.add('today-date');
+          if (selectedViewDate && dateStr === selectedViewDate) cell.classList.add('selected-date');
+          if (dayOfWeek === 0 || holidays.has(dateStr)) cell.classList.add('sunday');
+          else if (dayOfWeek === 6) cell.classList.add('saturday');
+          const specialInfo = getSpecialDayLabel(dateStr);
+          const annivText = getAnniversaryForDate(dateStr);
+          let indicatorHTML = '';
+          if (specialInfo) {
+              indicatorHTML += `<div class="cal-special-label cal-special-${specialInfo.type}">${formatCalLabel(specialInfo.label)}</div>`;
+          }
+          if (annivText) {
+              indicatorHTML += `<div class="cal-anniv-label">${formatCalLabel(annivText)}</div>`;
+          }
+          let photoListCount = 0;
+          try {
+              const allDiaries = getAllDiaries();
+              photoListCount = allDiaries.filter(d => normalizeDateStr(d.date) === dateStr && d.photo).length;
+          } catch(e){}
+          const hasPhotoFlag = photoListCount > 0;
+          if(hasPhotoFlag) cell.classList.add('has-photo');
+          cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + (hasPhotoFlag ? `<div class="cal-photo-corner" data-date="${dateStr}" data-count="${photoListCount}"><span class="corner-count">${photoListCount > 1 ? photoListCount : ''}</span></div>` : '');
+          cell.onclick = async (e) => {
+              const rect = cell.getBoundingClientRect();
+              const x = e.clientX - rect.left;
+              const y = e.clientY - rect.top;
+              if(x < 36 && y < 36 && hasPhotoFlag){
+                e.stopPropagation();
+                console.log('[V301-R] 세모 영역 무시');
+                return false;
+              }
+              selectDiaryDate(dateStr);
+          };
+          grid.appendChild(cell);
+      }
+
+      const trailingCount = totalVisibleCells - totalCells;
+      for (let i = 1; i <= trailingCount; i++) {
+          const dateStr = `${nextYear}-${String(nextMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+          const cellIndex = totalCells + (i - 1);
+          makeAdjacentDateCell(dateStr, i, cellIndex);
+      }
+
+      updateMoneySummary();
+    };
+    window.renderCalendar._patchedR = true;
+  }
+
+  console.log('[V301-R] 요일 빈공간 & 정렬 수정 완료');
 })();
 </script>
 
