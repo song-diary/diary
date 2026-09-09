@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 다이어리&가계부 V301-AH 안내문구 삭제 - Swing2App+NodeAPK 통합 최종</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 다이어리&가계부 V301-AI 핀치확대 유지 - Swing2App+NodeAPK 통합 최종</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -3002,7 +3002,7 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
 
 
 <style id="v301h-final-core">
-/* V301-AH 안내문구 삭제 Core - 전체 통합 */
+/* V301-AI 핀치확대 유지 Core - 전체 통합 */
 :root { --safe-bottom: env(safe-area-inset-bottom, 0px); }
 
 /* 달력 */
@@ -10336,7 +10336,7 @@ async function showPhotosForDate(dateStr){
 
 
 <script>
-// V301-AH 안내문구 삭제 Core - Swing2App(1차) + Node.js APK(2차) 통합 안정화 - 뒤로가기 제외
+// V301-AI 핀치확대 유지 Core - Swing2App(1차) + Node.js APK(2차) 통합 안정화 - 뒤로가기 제외
 (function(){
   console.log('[V301-H] Final Core 시작 - 뒤로가기 제외');
 
@@ -12065,9 +12065,102 @@ button, .sub-memo-item, .diary-photo-wrap, .cal-cell { will-change: auto !import
 
 
 <style id="v301ah-hint-remove">
-/* V301-AH 안내문구 삭제 - 싱글클릭이라 필요없음 */
+/* V301-AI 핀치확대 유지 - 싱글클릭이라 필요없음 */
 #photo-lightbox-overlay [style*="두번 탭"], #photo-lightbox-overlay [style*="확대/축소"] { display:none !important; }
 </style>
+
+
+<style id="v301ai-pinch-stay">
+/* V301-AI 핀치 확대 유지 */
+#photo-lightbox-img {
+  touch-action: pan-x pan-y pinch-zoom !important;
+  will-change: transform !important;
+}
+#photo-lightbox-overlay { touch-action: pan-x pan-y pinch-zoom !important; }
+#photo-lightbox-content { touch-action: pan-x pan-y pinch-zoom !important; }
+</style>
+<script>
+// V301-AI 핀치 확대 유지 - 손 떼도 원위치 안 돌아가게
+(function(){
+  console.log('[V301-AI] 핀치 유지 수정');
+
+  // 기존 initPhotoZoomHandlers를 덮어써서 원위치 복귀 로직 제거
+  window.initPhotoZoomHandlers = function(){
+    const img=document.getElementById('photo-lightbox-img');
+    if(!img) return;
+    let startDist=0, startScale=1;
+    let lastScale=1, isPinching=false;
+
+    function getDist(t){ return Math.hypot(t[0].clientX-t[1].clientX, t[0].clientY-t[1].clientY); }
+
+    img.addEventListener('touchstart', function(e){
+      if(e.touches.length===2){
+        e.preventDefault();
+        startDist=getDist(e.touches);
+        startScale=window.photoZoomScale||1;
+        if(startScale<1) startScale=1;
+        isPinching=true;
+      }
+    }, {passive:false});
+
+    img.addEventListener('touchmove', function(e){
+      if(e.touches.length===2 && isPinching){
+        e.preventDefault();
+        const curDist=getDist(e.touches);
+        if(startDist>0){
+          let newScale = startScale * (curDist/startDist);
+          newScale = Math.min(4, Math.max(1, newScale));
+          window.photoZoomScale=newScale;
+          if(window.applyPhotoZoomTransform) window.applyPhotoZoomTransform();
+          else img.style.transform=`translate(${window.photoZoomX||0}px, ${window.photoZoomY||0}px) scale(${newScale})`;
+          lastScale=newScale;
+        }
+      }
+    }, {passive:false});
+
+    img.addEventListener('touchend', function(e){
+      if(e.touches.length<2){
+        startDist=0;
+        isPinching=false;
+        // 손을 떼도 원위치로 안 돌아감! 확대 상태 유지
+        // 1 이하일 때만 원래대로
+        if((window.photoZoomScale||1) <= 1.05){
+          window.photoZoomScale=1;
+          window.photoZoomX=0; window.photoZoomY=0;
+          if(window.resetPhotoZoom) window.resetPhotoZoom();
+          else img.style.transform='scale(1)';
+          img.classList.remove('zoomed');
+        }
+      }
+    });
+
+    // 싱글클릭 토글은 그대로 유지 - but pinch와 충돌 없게
+    // 기존 클릭 리스너는 AG에서 이미 있음, 여기서는 건드리지 않음
+  };
+
+  // 즉시 재등록
+  setTimeout(()=>{ if(window.initPhotoZoomHandlers) window.initPhotoZoomHandlers(); }, 100);
+  
+  // reset 함수가 너무 자주 호출되는 것 방지
+  const origReset=window.resetPhotoZoom;
+  if(origReset && !origReset._ai){
+    window.resetPhotoZoom=function(){
+      // pinch 중에는 리셋 금지
+      const img=document.getElementById('photo-lightbox-img');
+      // 무조건 리셋하지 않고, scale이 1 근처일 때만
+      if((window.photoZoomScale||1) <= 1.1){
+        origReset.apply(this, arguments);
+      }
+    };
+    window.resetPhotoZoom._ai=true;
+    window.resetPhotoZoom._orig=origReset;
+    // 진짜 리셋이 필요할 때는 _orig 호출
+    window._realResetPhotoZoom=origReset;
+  }
+
+  console.log('[V301-AI] 핀치 유지 완료');
+})();
+</script>
 
 </body>
 
