@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 다이어리&가계부 V301-T 주간사이 빈공간 1px로 최소화 - Swing2App+NodeAPK 통합 최종</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 다이어리&가계부 V301-V 운세차단 + 달력크기 복구 1.18배 - Swing2App+NodeAPK 통합 최종</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -3002,7 +3002,7 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
 
 
 <style id="v301h-final-core">
-/* V301-T 주간사이 빈공간 1px로 최소화 Core - 전체 통합 */
+/* V301-V 운세차단 + 달력크기 복구 1.18배 Core - 전체 통합 */
 :root { --safe-bottom: env(safe-area-inset-bottom, 0px); }
 
 /* 달력 */
@@ -10336,7 +10336,7 @@ async function showPhotosForDate(dateStr){
 
 
 <script>
-// V301-T 주간사이 빈공간 1px로 최소화 Core - Swing2App(1차) + Node.js APK(2차) 통합 안정화 - 뒤로가기 제외
+// V301-V 운세차단 + 달력크기 복구 1.18배 Core - Swing2App(1차) + Node.js APK(2차) 통합 안정화 - 뒤로가기 제외
 (function(){
   console.log('[V301-H] Final Core 시작 - 뒤로가기 제외');
 
@@ -11609,6 +11609,199 @@ async function showPhotosForDate(dateStr){
 
   setTimeout(window.autoResizeCalendar, 100);
   console.log('[V301-T] gapV=1px로 빈공간 최소화');
+})();
+</script>
+
+
+<script>
+// V301-U 1) 종료 후 재진입시 운세 자동팝업 금지
+(function(){
+  console.log('[V301-U] 운세 자동팝업 완전 차단');
+
+  // 기존 maybeAutoShowFortunePopup 덮어쓰기 - 절대 자동 안 뜸, 수동 클릭시에만 뜸
+  window.maybeAutoShowFortunePopup = function(){
+    console.log('[V301-U] 자동 운세 팝업 차단됨 - 수동 클릭시에만 열림');
+    return;
+  };
+
+  // 혹시 다른 곳에서 직접 openFortunePopup 호출하는 타이머도 차단
+  const _origOpenFortune = window.openFortunePopup;
+  let _fortuneManuallyAllowed = false;
+
+  // 운세 배너 클릭 시에만 허용 플래그
+  document.addEventListener('click', function(e){
+    if(e.target.closest('#fortune-teaser')){
+      _fortuneManuallyAllowed = true;
+      console.log('[V301-U] 운세 수동 클릭 허용');
+      setTimeout(()=>{ _fortuneManuallyAllowed = false; }, 2000);
+    }
+  }, true);
+
+  // openFortunePopup을 감싸서 자동 호출은 차단하되, 수동은 허용
+  // 단, V301-H 로직이 이미 3초 이내 자동 차단하고 있으므로, 여기서는 maybeAutoShow만 차단하면 충분
+  // 추가 안전장치: DOMContentLoaded에서 자동 호출된 경우 lastShown이 오늘이라도 팝업 안 뜨게
+
+  // localStorage에 오늘 봤다고 미리 기록해서 maybeAutoShow가 뜨더라도 조건에서 걸리게? No, we already disabled.
+
+  // 앱 시작 시 메인 탭을 diary로 강제 + 운세 팝업 닫기
+  window.addEventListener('load', function(){
+    setTimeout(()=>{
+      const fortuneEl = document.getElementById('fortune-popup-overlay');
+      if(fortuneEl && fortuneEl.classList.contains('active')){
+        fortuneEl.classList.remove('active');
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow='';
+        console.log('[V301-U] 시작시 떠있는 운세 팝업 강제 닫기');
+      }
+      if(typeof switchMainTab==='function'){
+        switchMainTab('diary');
+      }
+    }, 500);
+  });
+
+  console.log('[V301-U] 1번 문제 수정 완료');
+})();
+</script>
+
+
+<script>
+// V301-V 달력 네모칸 크기 복구 + 빈공간 없음 유지
+(function(){
+  console.log('[V301-V] 달력 크기 복구');
+
+  window.renderCalendar = function(){
+    const title = document.getElementById('cal-month-title');
+    const grid = document.getElementById('cal-days-grid');
+    if (!title || !grid) return;
+    title.textContent = `${calYear}년 ${calMonth + 1}월`;
+    grid.innerHTML = '';
+
+    const firstDay = new Date(calYear, calMonth, 1).getDay();
+    const lastDate = new Date(calYear, calMonth + 1, 0).getDate();
+    const prevYear = calMonth === 0 ? calYear - 1 : calYear;
+    const prevMonth = calMonth === 0 ? 11 : calMonth - 1;
+    const prevLastDate = new Date(prevYear, prevMonth + 1, 0).getDate();
+    const nextYear = calMonth === 11 ? calYear + 1 : calYear;
+    const nextMonth = calMonth === 11 ? 0 : calMonth + 1;
+
+    const holidays = typeof getKoreanHolidays==='function'?getKoreanHolidays(calYear):new Set();
+    const todayStr = typeof getTodayStr==='function'?getTodayStr():'';
+
+    const isLandscapeNow = window.innerWidth > window.innerHeight;
+    const gapH = 2; // 가로 간격 원래대로 2px 통일 - 크기 복구 핵심
+    const gapV = 2; // 세로 간격도 2px로 - 빈공간 거의 없지만 너무 붙지 않게
+    
+    const gridWidth = grid.clientWidth || grid.parentElement.clientWidth || 320;
+    const cellSize = (gridWidth - gapH * 6) / 7;
+
+    const totalCells = firstDay + lastDate;
+    const totalRows = Math.ceil(totalCells / 7);
+    const totalVisibleCells = totalRows * 7;
+
+    // 크기 복구: 1.2배로 - 예전처럼 크게, 하지만 1.25보다 살짝 작게 해서 빈공간 덜 보이게
+    const rowHeights = new Array(totalRows).fill(cellSize * 1.18);
+    const rowTops = [];
+    let currentTop = 0;
+    for (let r = 0; r < totalRows; r++) {
+        rowTops[r] = currentTop;
+        currentTop += rowHeights[r] + (r < totalRows - 1 ? gapV : 0);
+    }
+    grid.style.height = `${currentTop}px`;
+
+    function placeCell(el, cellIndex){
+        const col = cellIndex % 7;
+        const row = Math.floor(cellIndex / 7);
+        el.style.left = `${col * (cellSize + gapH)}px`;
+        el.style.top = `${rowTops[row]}px`;
+        el.style.width = `${cellSize}px`;
+        el.style.height = `${rowHeights[row]}px`;
+        el.style.margin = '0';
+    }
+
+    function makeAdjacentDateCell(dateStr, day, cellIndex) {
+        const cell = document.createElement('div');
+        cell.className = 'cal-cell adjacent-month';
+        placeCell(cell, cellIndex);
+        const specialInfo = typeof getSpecialDayLabel==='function'?getSpecialDayLabel(dateStr):null;
+        const annivText = typeof getAnniversaryForDate==='function'?getAnniversaryForDate(dateStr):null;
+        let indicatorHTML = '';
+        if (specialInfo) indicatorHTML += `<div class="cal-special-label">${formatCalLabel(specialInfo.label)}</div>`;
+        if (annivText) indicatorHTML += `<div class="cal-anniv-label">${formatCalLabel(annivText)}</div>`;
+        cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>`;
+        cell.onclick = () => {
+            const target = normalizeDateStr(dateStr);
+            const targetObj = new Date(Number(target.slice(0,4)), Number(target.slice(5,7))-1, Number(target.slice(8,10)));
+            calYear = targetObj.getFullYear(); calMonth = targetObj.getMonth(); calEnlargedDate = null; selectedViewDate = target;
+            renderCalendar(); 
+            if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday();
+            if(typeof renderMoneyAroundToday==='function') renderMoneyAroundToday();
+        };
+        grid.appendChild(cell);
+    }
+
+    for (let i = 0; i < firstDay; i++) {
+        const day = prevLastDate - firstDay + i + 1;
+        const dateStr = `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        makeAdjacentDateCell(dateStr, day, i);
+    }
+
+    for (let day = 1; day <= lastDate; day++) {
+        const mStr = String(calMonth + 1).padStart(2, '0');
+        const dStr = String(day).padStart(2, '0');
+        const dateStr = `${calYear}-${mStr}-${dStr}`;
+        const cell = document.createElement('div');
+        cell.className = 'cal-cell';
+        const dObj = new Date(calYear, calMonth, day);
+        const dayOfWeek = dObj.getDay();
+        const cellIndex = firstDay + (day - 1);
+        placeCell(cell, cellIndex);
+        if (dateStr === todayStr) cell.classList.add('today-date');
+        if (typeof selectedViewDate!=='undefined' && selectedViewDate && dateStr === selectedViewDate) cell.classList.add('selected-date');
+        if (dayOfWeek === 0 || (holidays.has && holidays.has(dateStr))) cell.classList.add('sunday');
+        else if (dayOfWeek === 6) cell.classList.add('saturday');
+        const specialInfo = typeof getSpecialDayLabel==='function'?getSpecialDayLabel(dateStr):null;
+        const annivText = typeof getAnniversaryForDate==='function'?getAnniversaryForDate(dateStr):null;
+        let indicatorHTML = '';
+        if (specialInfo) indicatorHTML += `<div class="cal-special-label cal-special-${specialInfo.type}">${formatCalLabel(specialInfo.label)}</div>`;
+        if (annivText) indicatorHTML += `<div class="cal-anniv-label">${formatCalLabel(annivText)}</div>`;
+        let photoListCount = 0;
+        try {
+            const allDiaries = typeof getAllDiaries==='function'?getAllDiaries():[];
+            photoListCount = allDiaries.filter(d => (typeof normalizeDateStr==='function'?normalizeDateStr(d.date):d.date) === dateStr && d.photo).length;
+        } catch(e){}
+        const hasPhotoFlag = photoListCount > 0;
+        if(hasPhotoFlag) cell.classList.add('has-photo');
+        cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + (hasPhotoFlag ? `<div class="cal-photo-corner"></div>` : '');
+        cell.onclick = (e) => {
+            const rect = cell.getBoundingClientRect();
+            const x = e.clientX - rect.left; const y = e.clientY - rect.top;
+            if(x < 36 && y < 36 && hasPhotoFlag){ e.stopPropagation(); return false; }
+            if(typeof selectDiaryDate==='function') selectDiaryDate(dateStr);
+        };
+        grid.appendChild(cell);
+    }
+
+    const trailingCount = totalVisibleCells - totalCells;
+    for (let i = 1; i <= trailingCount; i++) {
+        const dateStr = `${nextYear}-${String(nextMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+        const cellIndex = totalCells + (i - 1);
+        makeAdjacentDateCell(dateStr, i, cellIndex);
+    }
+    if(typeof updateMoneySummary==='function') updateMoneySummary();
+  };
+
+  window.autoResizeCalendar = function(){
+    const container = document.querySelector('.container');
+    const isLandscape = window.innerWidth > window.innerHeight;
+    if(container){
+      if(isLandscape){ container.style.maxWidth='96vw'; container.style.width='96vw'; }
+      else { container.style.maxWidth='600px'; container.style.width='100%'; }
+    }
+    if(typeof renderCalendar==='function') renderCalendar();
+  };
+
+  setTimeout(window.autoResizeCalendar, 100);
+  console.log('[V301-V] 크기 복구 완료 - 1.18배 + gap 2px');
 })();
 </script>
 
