@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 다이어리&가계부 V301-N 폰트15px+수정삭제버튼제거 - Swing2App+NodeAPK 통합 최종</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 다이어리&가계부 V301-O 사진없는글 글씨만 확대 - Swing2App+NodeAPK 통합 최종</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -3002,7 +3002,7 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
 
 
 <style id="v301h-final-core">
-/* V301-N 폰트15px+수정삭제버튼제거 Core - 전체 통합 */
+/* V301-O 사진없는글 글씨만 확대 Core - 전체 통합 */
 :root { --safe-bottom: env(safe-area-inset-bottom, 0px); }
 
 /* 달력 */
@@ -10336,7 +10336,7 @@ async function showPhotosForDate(dateStr){
 
 
 <script>
-// V301-N 폰트15px+수정삭제버튼제거 Core - Swing2App(1차) + Node.js APK(2차) 통합 안정화 - 뒤로가기 제외
+// V301-O 사진없는글 글씨만 확대 Core - Swing2App(1차) + Node.js APK(2차) 통합 안정화 - 뒤로가기 제외
 (function(){
   console.log('[V301-H] Final Core 시작 - 뒤로가기 제외');
 
@@ -10806,6 +10806,45 @@ async function showPhotosForDate(dateStr){
 </script>
 
 <style>#photo-lightbox-actions{display:none !important;}</style>
+
+<script>
+// V301-O - 사진 없는 글 클릭시 글씨만 확대
+(function(){
+  console.log('[V301-O] 사진없는 글 글씨만 확대');
+  document.addEventListener('click', function(e){
+    if(e.target.closest('.memo-action-btns, .delete-btn, .edit-btn-hidden')) return;
+    const itemBox = e.target.closest('.sub-memo-item.no-photo, .sub-memo-item:not(.has-photo)');
+    if(!itemBox) return;
+    // 사진 있는 경우는 이미 처리됨
+    if(itemBox.classList.contains('has-photo')) return;
+    const textEl = itemBox.querySelector('.diary-text');
+    if(!textEl) return;
+    // 텍스트 영역이나 빈 영역 클릭시
+    if(e.target.closest('.diary-text') || e.target.closest('.sub-memo-item')){
+      const m = itemBox.innerHTML.match(/deleteDiary\('([^']+)'\)/);
+      const all = typeof getAllDiaries==='function'?getAllDiaries():[];
+      let item = null;
+      if(m) item = all.find(d=>d.id===m[1]);
+      if(item){
+        e.preventDefault(); e.stopPropagation();
+        console.log('[V301-O] 글씨만 확대', item.id);
+        if(typeof openMemoLightboxOnly==='function'){
+          openMemoLightboxOnly(item.text, item);
+        }else if(typeof openPhotoLightbox==='function'){
+          openPhotoLightbox(null, item);
+        }
+      }
+    }
+  }, true);
+
+  // 기존 openMemoLightboxOnly가 사진 없으면 memo만 보이게 이미 되어있음 - 폰트 15px 유지 확인
+})();
+</script>
+<style id="v301o-no-photo-cursor">
+.sub-memo-item.no-photo { cursor:pointer !important; }
+.sub-memo-item.no-photo .diary-text { cursor:pointer !important; }
+</style>
+
 </body>
 
 
