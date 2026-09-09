@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 다이어리&가계부 V301-I 사진확대 최종 수정 - Swing2App+NodeAPK 통합 최종</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 다이어리&가계부 V301-K 달력세모 표시유지+클릭차단 - 의경 반영 - Swing2App+NodeAPK 통합 최종</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -3002,7 +3002,7 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
 
 
 <style id="v301h-final-core">
-/* V301-I 사진확대 최종 수정 Core - 전체 통합 */
+/* V301-K 달력세모 표시유지+클릭차단 - 의경 반영 Core - 전체 통합 */
 :root { --safe-bottom: env(safe-area-inset-bottom, 0px); }
 
 /* 달력 */
@@ -10336,7 +10336,7 @@ async function showPhotosForDate(dateStr){
 
 
 <script>
-// V301-I 사진확대 최종 수정 Core - Swing2App(1차) + Node.js APK(2차) 통합 안정화 - 뒤로가기 제외
+// V301-K 달력세모 표시유지+클릭차단 - 의경 반영 Core - Swing2App(1차) + Node.js APK(2차) 통합 안정화 - 뒤로가기 제외
 (function(){
   console.log('[V301-H] Final Core 시작 - 뒤로가기 제외');
 
@@ -10677,6 +10677,61 @@ async function showPhotosForDate(dateStr){
   console.log('[V301-I] 사진 수정 완료 - 단일 위임, 렉 제거');
 })();
 </script>
+
+
+
+
+
+
+<style id="v301k-corner-show">
+/* V301-K - 달력 📷 세모는 보이되 클릭은 안 되게 (표시용) */
+.cal-cell.has-photo .cal-photo-corner,
+.cal-photo-corner {
+  display:flex !important;
+  position:absolute !important;
+  top:0 !important; left:0 !important;
+  width:28px !important; height:28px !important;
+  background:#d8c6e8 !important;
+  clip-path:polygon(0 0, 100% 0, 0 100%) !important;
+  border-top-left-radius:7px !important;
+  z-index:3 !important;
+  cursor:default !important;
+  pointer-events:none !important; /* 클릭 완전 차단 - 표시만 */
+  align-items:flex-start !important;
+  justify-content:flex-start !important;
+}
+.cal-cell.has-photo .cal-photo-corner::after,
+.cal-photo-corner::after {
+  content:'📷' !important;
+  position:absolute !important;
+  top:2px !important; left:2px !important;
+  font-size:12px !important;
+  line-height:1 !important;
+  pointer-events:none !important;
+}
+.cal-cell.has-photo.sunday .cal-photo-corner { background:#f2c9c9 !important; }
+.cal-cell.has-photo.saturday .cal-photo-corner { background:#c9daf2 !important; }
+.cal-cell.has-photo.today-date .cal-photo-corner { background:#b8e0d8 !important; }
+</style>
+<script>
+// V301-K - 세모 표시 유지, 클릭 차단
+(function(){
+  console.log('[V301-K] 세모 표시 유지, 클릭만 차단');
+  // 기존 차단 로직 유지하되, 혹시 남아있는 클릭 핸들러 정리
+  window.showPhotosForDate = function(){ return; };
+  window.showPhotosForDateFixed = function(){ return; };
+})();
+</script>
+
+<style id="v301k-lightbox-font">
+#photo-lightbox-overlay { display:none !important; position:fixed !important; inset:0 !important; background:rgba(0,0,0,0.88) !important; z-index:99999 !important; align-items:center !important; justify-content:center !important; padding:12px !important; overflow-y:auto !important; }
+#photo-lightbox-overlay.active { display:flex !important; }
+#photo-lightbox-content { display:flex !important; flex-direction:column !important; gap:12px !important; width:92vw !important; max-width:520px !important; max-height:90vh !important; overflow-y:auto !important; overscroll-behavior:contain !important; }
+#photo-lightbox-img { width:100% !important; max-width:88vmin !important; max-height:48vh !important; object-fit:contain !important; border-radius:12px !important; flex-shrink:0 !important; }
+#photo-lightbox-memo { background:#fff !important; color:#2A241C !important; border-radius:12px !important; padding:14px 16px !important; font-size:14px !important; line-height:1.45 !important; white-space:pre-wrap !important; word-break:break-word !important; width:100% !important; max-width:88vmin !important; box-sizing:border-box !important; max-height:45vh !important; overflow-y:auto !important; overscroll-behavior:contain !important; flex-shrink:1 !important; }
+#photo-lightbox-date { font-size:11px !important; color:rgba(255,255,255,0.6) !important; text-align:center !important; flex-shrink:0 !important; }
+#photo-lightbox-actions { flex-shrink:0 !important; }
+</style>
 
 </body>
 
