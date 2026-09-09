@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 다이어리&가계부 V301-P 내용이없어요 + 타이틀 내용확대보기 - Swing2App+NodeAPK 통합 최종</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 다이어리&가계부 V301-Q 가로모드 달력폭 완전수정 - Swing2App+NodeAPK 통합 최종</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -3002,7 +3002,7 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
 
 
 <style id="v301h-final-core">
-/* V301-P 내용이없어요 + 타이틀 내용확대보기 Core - 전체 통합 */
+/* V301-Q 가로모드 달력폭 완전수정 Core - 전체 통합 */
 :root { --safe-bottom: env(safe-area-inset-bottom, 0px); }
 
 /* 달력 */
@@ -10336,7 +10336,7 @@ async function showPhotosForDate(dateStr){
 
 
 <script>
-// V301-P 내용이없어요 + 타이틀 내용확대보기 Core - Swing2App(1차) + Node.js APK(2차) 통합 안정화 - 뒤로가기 제외
+// V301-Q 가로모드 달력폭 완전수정 Core - Swing2App(1차) + Node.js APK(2차) 통합 안정화 - 뒤로가기 제외
 (function(){
   console.log('[V301-H] Final Core 시작 - 뒤로가기 제외');
 
@@ -10966,6 +10966,98 @@ async function showPhotosForDate(dateStr){
   };
 
   console.log('[V301-P] 빈내용 & 타이틀 수정 완료');
+})();
+</script>
+
+
+<style id="v301q-landscape-fix">
+/* V301-Q 가로모드 달력 전체 폭 확장 */
+@media screen and (orientation: landscape) {
+  .container { max-width:96vw !important; width:96vw !important; }
+  #calendar-card { width:100% !important; max-width:100% !important; }
+  .calendar-sticky-wrap { width:100% !important; max-width:100% !important; }
+  #cal-days-grid { width:100% !important; max-width:100% !important; }
+  .calendar-grid#cal-days-name-grid { width:100% !important; gap:4px !important; }
+  .calendar-header { width:100% !important; max-width:100% !important; }
+}
+@media screen and (max-width: 900px) and (orientation: landscape) {
+  .container { max-width:98vw !important; width:98vw !important; padding:0 6px !important; }
+  #calendar-card { width:100% !important; }
+  #cal-days-grid { width:100% !important; }
+}
+</style>
+<script>
+// V301-Q 가로모드 달력 폭 버그 완전 수정
+(function(){
+  console.log('[V301-Q] 가로모드 수정 시작');
+
+  // 기존 autoResizeCalendar를 완전히 덮어쓰기 - 순서 수정: 컨테이너 폭 먼저, 그 다음 렌더
+  window.autoResizeCalendar = function(){
+    const isLandscape = window.innerWidth > window.innerHeight;
+    const container = document.querySelector('.container');
+    const card = document.getElementById('calendar-card');
+    const grid = document.getElementById('cal-days-grid');
+    
+    // 1. 먼저 컨테이너 폭을 확실히 설정
+    if(container){
+      if(isLandscape){
+        container.style.maxWidth = '96vw';
+        container.style.width = '96vw';
+        if(card){
+          card.style.width = '100%';
+          card.style.maxWidth = '100%';
+        }
+        if(grid){
+          grid.style.width = '100%';
+          grid.style.maxWidth = '100%';
+        }
+      }else{
+        container.style.maxWidth = '600px';
+        container.style.width = '100%';
+        if(card){
+          card.style.width = '';
+          card.style.maxWidth = '';
+        }
+        if(grid){
+          grid.style.width = '100%';
+          grid.style.maxWidth = '';
+        }
+      }
+    }
+
+    // 2. 강제 reflow
+    if(card) { void card.offsetWidth; }
+
+    // 3. 그 다음 달력 렌더 - 이제 gridWidth가 96vw 기준으로 계산됨
+    if(typeof renderCalendar === 'function'){
+      try{ renderCalendar(); }catch(e){ console.error(e); }
+    }
+  };
+
+  // orientationchange, resize 모두에 2번 렌더링으로 확실히
+  let resizeTimeout = null;
+  window.addEventListener('resize', function(){
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(()=>{
+      window.autoResizeCalendar();
+      setTimeout(window.autoResizeCalendar, 150);
+    }, 100);
+  });
+  
+  window.addEventListener('orientationchange', function(){
+    setTimeout(window.autoResizeCalendar, 100);
+    setTimeout(window.autoResizeCalendar, 400);
+    setTimeout(window.autoResizeCalendar, 800);
+  });
+
+  window.addEventListener('load', function(){
+    setTimeout(window.autoResizeCalendar, 200);
+  });
+
+  // 초기 실행
+  setTimeout(window.autoResizeCalendar, 300);
+
+  console.log('[V301-Q] 가로모드 수정 완료');
 })();
 </script>
 
