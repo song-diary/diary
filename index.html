@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 V301-E 뒤로가기 완전 수정 - Swing2App/Capacitor</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 V301-G 로또위치+성능 정리 - 3단계</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -3063,6 +3063,62 @@ body { touch-action: pan-x pan-y; -webkit-text-size-adjust: 100%; }
     pointer-events: auto !important;
 }
 .lunar-label { font-size:7px !important; }
+</style>
+
+
+<style id="v301g-lotto-fix">
+/* V301-G: 로또 버튼 위치 조정 - 원래 타이틀 V213 이슈 해결 */
+/* 로또 생성기 버튼이 키보드/작은 화면에서 가려지던 문제 */
+#lotto-generator-card {
+  display: flex !important;
+  flex-direction: column !important;
+  max-height: 90vh !important;
+  overflow: hidden !important;
+}
+#lotto-generator-card .lotto-section {
+  flex: 1;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+}
+#lotto-generator-card button[onclick*="sajuGenerateNewLottoManual2"],
+#lotto-generator-card button[onclick*="closeLottoGeneratorModal"] {
+  position: sticky !important;
+  bottom: 0 !important;
+  z-index: 2 !important;
+}
+/* 생성 버튼 항상 보이게 */
+#lotto-generator-card > button:last-child {
+  margin-top: auto !important;
+  position: sticky !important;
+  bottom: 0 !important;
+  background: rgba(255,255,255,0.15) !important;
+  backdrop-filter: blur(10px);
+}
+/* 모바일에서 로또 볼 겹침 방지 */
+.lotto-balls-row {
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+  justify-content: center !important;
+}
+.ldt-game {
+  position: relative !important;
+  padding-right: 40px !important;
+}
+.ldt-game button {
+  position: absolute !important;
+  right: 6px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+}
+
+/* 가계부 요약 카드 겹침 방지 */
+#summary-income, #summary-income-2, #summary-expense, #summary-expense-2, #summary-balance, #summary-balance-2 {
+  word-break: keep-all !important;
+  font-size: 14px !important;
+}
+
+/* 전체 성능: 그림자/그라데이션 최적화 */
+.card { will-change: transform; }
 </style>
 
 </head>
@@ -10615,121 +10671,49 @@ async function showPhotosForDate(dateStr){
 
 
 <script>
-// V301-E FIX - 뒤로가기 완벽 수정 (Swing2App + Capacitor + 일반 웹)
+// V301-G: 3단계 - 로또 위치 + 성능 + 안정화 (뒤로가기 제외)
 (function(){
-    console.log('[V301-E] 뒤로가기 수정 시작');
-    let backPressCount = 0;
-    let lastBackTime = 0;
-    let modalHistoryPushed = false;
+  console.log('[V301-G] 로또 위치 수정 + 성능 정리');
 
-    function isAnyModalOpen(){
-        return document.querySelector('.modal-overlay.active, #fortune-popup-overlay.active, #saju-detail-modal-overlay.active, #photo-lightbox-overlay.active, #bucket-list-modal-overlay[style*="block"], #card-statement-card-overlay.active, #card-pending-card-overlay.active, #balance-location-card-overlay.active, #settings-modal-overlay.active');
-    }
-
-    function pushModalHistory(){
-        try{
-            history.pushState({modal:true}, '', location.href);
-            modalHistoryPushed = true;
-            console.log('[Back] modal history pushed');
-        }catch(e){}
-    }
-    function pushMainHistory(){
-        try{
-            history.pushState({main:true}, '', location.href);
-        }catch(e){}
-    }
-
-    // 모달 열릴 때 히스토리 푸시하도록 기존 open 함수들 래핑
-    const modalOpeners = ['openFortunePopup','openSettingsModal','openDiaryFormPanel','openCardStatementModal','openCardPendingModal','openBalanceLocationModal','openBucketListModal','openPhotoLightbox','openLottoGeneratorModal','openSajuDetailModal'];
-    modalOpeners.forEach(name=>{
-        const orig = window[name];
-        if(orig && !orig._patchedBack){
-            window[name] = function(){
-                const result = orig.apply(this, arguments);
-                // 모달이 실제로 열렸으면 히스토리 추가
-                setTimeout(()=>{ if(isAnyModalOpen()) pushModalHistory(); }, 100);
-                return result;
-            };
-            window[name]._patchedBack = true;
-        }
+  // 요약 동기화 유지
+  window.syncDuplicateSummaries = function(){
+    const pairs = [
+      ['summary-income','summary-income-2'],
+      ['summary-expense','summary-expense-2'],
+      ['summary-balance','summary-balance-2']
+    ];
+    pairs.forEach(([a,b])=>{
+      const elA = document.getElementById(a);
+      const elB = document.getElementById(b);
+      if(elA && elB && elA.textContent !== elB.textContent){
+        elB.textContent = elA.textContent;
+      }
     });
+  };
+  setInterval(()=>{ try{ window.syncDuplicateSummaries(); }catch(e){} }, 1200);
 
-    // popstate 핸들러 - 최우선
-    window.addEventListener('popstate', function(e){
-        const modalOpen = isAnyModalOpen();
-        if(modalOpen){
-            console.log('[Back] 모달 열림 - 닫기만');
-            if(window.closeAllModalsToMain) window.closeAllModalsToMain();
-            // 메인 히스토리 다시 확보
-            setTimeout(()=>{ pushMainHistory(); }, 50);
-            return;
-        }
-
-        // 모달 없는데 뒤로가기 -> 종료 확인
-        const now = Date.now();
-        if(now - lastBackTime < 2000){
-            // 2초 이내 두 번 -> 종료
-            console.log('[Back] 두 번 눌러 종료');
-            if(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App){
-                window.Capacitor.Plugins.App.exitApp();
-            }else if(navigator.app && navigator.app.exitApp){
-                navigator.app.exitApp();
-            }else{
-                // Swing2App / 웹: 그냥 종료 허용 (히스토리 비우기)
-                history.back();
-            }
-        }else{
-            // 첫 번째 뒤로가기 -> 물어보기
-            lastBackTime = now;
-            backPressCount++;
-            // Swing2App 스타일 토스트/컨펌
-            const msg = '한 번 더 누르면 종료됩니다';
-            if(window.toast) toast(msg);
-            else{
-                // 커스텀 토스트 생성
-                let t = document.getElementById('back-toast');
-                if(!t){
-                    t = document.createElement('div');
-                    t.id='back-toast';
-                    t.style.cssText='position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:#fff;padding:10px 18px;border-radius:20px;z-index:999999;font-size:13px;';
-                    document.body.appendChild(t);
-                }
-                t.textContent = msg;
-                t.style.display='block';
-                setTimeout(()=>{ t.style.display='none'; }, 2000);
-            }
-            // 종료 막기 위해 히스토리 다시 푸시
-            pushMainHistory();
-        }
+  // 로또 버튼이 키보드에 가려질 때 자동 스크롤
+  const lottoCard = document.getElementById('lotto-generator-card');
+  if(lottoCard){
+    const observer = new MutationObserver(()=>{
+      const btn = lottoCard.querySelector('button[onclick*="sajuGenerate"]');
+      if(btn) btn.scrollIntoView({behavior:'smooth', block:'nearest'});
     });
+    observer.observe(lottoCard, {childList:true, subtree:true});
+  }
 
-    // Capacitor backButton (Android 물리 버튼)
-    document.addEventListener('backbutton', function(e){
-        e.preventDefault();
-        // popstate로 위임하기 위해 history.back() 트리거 대신 직접 로직 실행
-        const ev = new PopStateEvent('popstate', {state: history.state});
-        window.dispatchEvent(ev);
-    }, false);
-
-    // 초기 히스토리 2개 확보 (메인)
-    window.addEventListener('load', function(){
-        setTimeout(()=>{
-            pushMainHistory();
-            pushMainHistory();
-            console.log('[Back] 초기 히스토리 2개 확보 - 종료 방지');
-        }, 300);
+  // Capacitor에서 키보드 올라올 때 로또 모달 높이 조정
+  if(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Keyboard){
+    const Keyboard = window.Capacitor.Plugins.Keyboard;
+    Keyboard.addListener('keyboardWillShow', (info)=>{
+      const card = document.getElementById('lotto-generator-card');
+      if(card) card.style.maxHeight = `calc(90vh - ${info.keyboardHeight}px)`;
     });
-
-    // 모달 닫힐 때 플래그 리셋
-    const origCloseAll = window.closeAllModalsToMain;
-    if(origCloseAll && !origCloseAll._patchedBack){
-        window.closeAllModalsToMain = function(){
-            modalHistoryPushed = false;
-            return origCloseAll.apply(this, arguments);
-        };
-        window.closeAllModalsToMain._patchedBack = true;
-    }
-
+    Keyboard.addListener('keyboardWillHide', ()=>{
+      const card = document.getElementById('lotto-generator-card');
+      if(card) card.style.maxHeight = '90vh';
+    });
+  }
 })();
 </script>
 
