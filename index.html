@@ -3268,6 +3268,7 @@ body { touch-action:pan-x pan-y; -webkit-text-size-adjust:100%; padding-bottom:v
                 <div class="toggle-card"><span class="toggle-card-label">📊 카테고리 통계</span><label class="toggle-switch"><input type="checkbox" id="toggle-category-stats" checked onchange="setCategoryStatsVisibility(this.checked)"><span class="toggle-slider"></span></label></div>
                 <div class="toggle-card"><span class="toggle-card-label">🔍 검색/기간필터</span><label class="toggle-switch"><input type="checkbox" id="toggle-search-filter" checked onchange="setSearchFilterVisibility(this.checked)"><span class="toggle-slider"></span></label></div>
                 <div class="toggle-card"><span class="toggle-card-label">🔮 오늘의 운세</span><label class="toggle-switch"><input type="checkbox" id="settings-show-fortune" checked onchange="onShowFortuneToggle()"><span class="toggle-slider"></span></label></div>
+                <div class="toggle-card" id="fortune-auto-toggle-card"><span class="toggle-card-label">⏰ 운세 자동팝업</span><label class="toggle-switch"><input type="checkbox" id="settings-fortune-auto" checked onchange="onFortuneAutoToggle()"><span class="toggle-slider"></span></label></div>
             </div>
 
             <div class="settings-section">
@@ -6550,6 +6551,7 @@ body { touch-action:pan-x pan-y; -webkit-text-size-adjust:100%; padding-bottom:v
         populateSajuSettingsFields();
         const fortuneChk = document.getElementById('settings-show-fortune');
         if (fortuneChk) fortuneChk.checked = getShowFortune();
+        syncFortuneToggles();
         const healthChk = document.getElementById('settings-show-health');
         if (healthChk) healthChk.checked = getShowHealth();
         const moneySummaryChk = document.getElementById('toggle-money-summary');
@@ -6822,6 +6824,24 @@ body { touch-action:pan-x pan-y; -webkit-text-size-adjust:100%; padding-bottom:v
         const checked = document.getElementById('settings-show-fortune').checked;
         localStorage.setItem('smartDiaryShowFortune', checked ? 'true' : 'false');
         updateFortuneTeaser();
+        const autoCard = document.getElementById('fortune-auto-toggle-card');
+        if(autoCard) autoCard.style.opacity = checked ? '1' : '0.4';
+    }
+    function getFortuneAutoEnabled(){
+        const v = localStorage.getItem('smartDiaryFortuneAuto');
+        return v===null ? true : v==='1';
+    }
+    function onFortuneAutoToggle(){
+        const chk = document.getElementById('settings-fortune-auto');
+        if(!chk) return;
+        localStorage.setItem('smartDiaryFortuneAuto', chk.checked ? '1' : '0');
+    }
+    function syncFortuneToggles(){
+        const autoChk = document.getElementById('settings-fortune-auto');
+        if(autoChk) autoChk.checked = getFortuneAutoEnabled();
+        const showChk = document.getElementById('settings-show-fortune');
+        const autoCard = document.getElementById('fortune-auto-toggle-card');
+        if(showChk && autoCard) autoCard.style.opacity = showChk.checked ? '1' : '0.4';
     }
 
     // 오늘 날짜의 干支(일진) 및 오행을 계산
@@ -12024,160 +12044,248 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 </script>
 
 
-<style id="v301ak-two-features">
-/* 2) 사진/메모 확대보기 맨 밑 고정 종료버튼 */
+
+<style id="v305-final">
 #photo-lightbox-fixed-close {
-  position: fixed !important;
-  bottom: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  width: 100% !important;
-  max-width: 520px !important;
-  margin: 0 auto !important;
-  background: rgba(255,255,255,0.97) !important;
-  backdrop-filter: blur(12px) !important;
-  border-top: 1px solid rgba(0,0,0,0.08) !important;
-  padding: 12px 16px !important;
-  padding-bottom: calc(12px + env(safe-area-inset-bottom)) !important;
-  z-index: 2001 !important;
-  display: none !important;
-  box-sizing: border-box !important;
+  position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important;
+  width: 100% !important; max-width: 520px !important; margin: 0 auto !important;
+  background: rgba(255,255,255,0.92) !important; backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important; border-top: 1px solid rgba(0,0,0,0.08) !important;
+  padding: 12px 16px !important; padding-bottom: calc(12px + env(safe-area-inset-bottom)) !important;
+  z-index: 9999 !important; display: none !important; pointer-events: none !important;
 }
-#photo-lightbox-overlay.active #photo-lightbox-fixed-close {
-  display: block !important;
-}
-#photo-lightbox-overlay.no-photo #photo-lightbox-fixed-close {
-  background: #fff !important;
-  border-top: 1px solid rgba(0,0,0,0.06) !important;
-}
-#photo-lightbox-fixed-close button {
-  width: 100% !important;
-  padding: 14px !important;
-  border-radius: 12px !important;
-  border: none !important;
-  background: #1A1A1A !important;
-  color: #fff !important;
-  font-weight: 800 !important;
-  font-size: 15px !important;
-  letter-spacing: 0.3px !important;
-}
-#photo-lightbox-overlay.no-photo #photo-lightbox-fixed-close button {
-  background: #2A241C !important;
-}
-#photo-lightbox-content {
-  padding-bottom: 80px !important;
-}
+#photo-lightbox-overlay.active #photo-lightbox-fixed-close { display: block !important; }
+#photo-lightbox-fixed-close button { width: 100% !important; padding: 15px !important; border-radius: 14px !important; border: none !important; background: #111 !important; color: #fff !important; font-weight: 800 !important; font-size: 15px !important; pointer-events: auto !important; }
+#photo-lightbox-content { padding-bottom: 80px !important; }
+#photo-lightbox-memo { cursor: pointer !important; transition: all 0.2s; }
+#photo-lightbox-memo.memo-zoomed { font-size: 20px !important; line-height: 1.7 !important; }
+#photo-lightbox-img { cursor: zoom-in !important; }
+#photo-lightbox-img.img-zoomed { cursor: zoom-out !important; transform: scale(2.0) !important; transform-origin: center center !important; }
+/* 제목만 있는 글도 클릭 가능하게 */
+.photo-title-area { cursor: pointer !important; }
+.sub-memo-item { cursor: pointer !important; }
 </style>
 
 <div id="photo-lightbox-fixed-close" onclick="event.stopPropagation()">
-  <button onclick="closePhotoLightbox(event)">종료</button>
+  <button onclick="closePhotoLightbox(event)">✕ 종료</button>
 </div>
 
 <script>
-// V301-AK 1) 하루 처음 앱 시작시 오늘의 운세로 오픈 2) 맨 밑 고정 종료
+// V305 - 제목만 쓴 글도 열리게 완전 수정
 (function(){
-  console.log('[V301-AK] 2가지 기능 시작');
+  console.log('[V305] 제목만 있는 글 열림 수정 시작');
 
-  // === 1) 오늘의 운세 자동 오픈 - V301-U 차단 해제 ===
-  // 기존 차단 함수들 무력화
-  // maybeAutoShowFortunePopup을 다시 살림
-  function getTodayStr(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  // === 1) 메인 탭 복구 ===
+  window.switchMainTab = function(tabName){
+    try{
+      const diaryPanel = document.getElementById('diary-panel');
+      const moneyPanel = document.getElementById('money-panel');
+      const panels = { diary: diaryPanel, money: moneyPanel };
+      Object.keys(panels).forEach(function(key){ if(panels[key]) panels[key].classList.toggle('active', key===tabName); });
+      window.currentMainTab = tabName;
+      const topBtn = document.getElementById('top-toggle-btn');
+      if(topBtn){ if(tabName==='diary'){ topBtn.innerHTML='💰'; topBtn.title='가계부로 이동'; } else { topBtn.innerHTML='📔'; topBtn.title='다이어리로 이동'; } }
+      if(tabName==='diary' && typeof renderCalendar==='function') { try{ renderCalendar(); }catch(e){} }
+      if(tabName==='money'){ try{ if(typeof renderMoneyAroundToday==='function') renderMoneyAroundToday(); }catch(e){} try{ if(typeof updateMoneySummary==='function') updateMoneySummary(); }catch(e){} }
+      localStorage.setItem('smartDiaryMainTab', tabName);
+    }catch(e){ console.error(e); }
+  };
+  window.toggleMainTab = function(){ const cur = window.currentMainTab || localStorage.getItem('smartDiaryMainTab') || 'diary'; if(cur==='diary') window.switchMainTab('money'); else window.switchMainTab('diary'); };
 
-  function restoreFortuneAuto(){
-    // V301-H, V301-U 래퍼 제거하고 원본 복구 시도
-    // 가장 최신 원본을 다시 정의
-    window.maybeAutoShowFortunePopup = function(){
+  // === 2) openPhotoLightbox 개선 - 제목만 있어도 열리게 ===
+  window.closePhotoLightbox = function(event){
+    if(event) event.stopPropagation();
+    const overlay = document.getElementById('photo-lightbox-overlay');
+    if(overlay) overlay.classList.remove('active');
+    const imgEl = document.getElementById('photo-lightbox-img');
+    const memoEl = document.getElementById('photo-lightbox-memo');
+    if(imgEl){ imgEl.src=''; imgEl.style.display='none'; imgEl.classList.remove('img-zoomed'); imgEl.style.transform=''; }
+    if(memoEl){ memoEl.style.display='none'; memoEl.classList.remove('memo-zoomed'); }
+    if(typeof resetPhotoZoom==='function'){ try{ resetPhotoZoom(); }catch(e){} }
+  };
+
+  const origOpen = window.openPhotoLightbox;
+  window.openPhotoLightbox = function(photoKeyOrData, diaryItemOrText){
+    try{
+      const imgEl = document.getElementById('photo-lightbox-img');
+      const memoEl = document.getElementById('photo-lightbox-memo');
+      const dateEl = document.getElementById('photo-lightbox-date');
+      const actionEl = document.getElementById('photo-lightbox-actions');
+      let src = null;
+      let memoText = '';
+      let dateText = '';
+      window.currentLightboxItemId = null;
+      try { src = (typeof getPhotoSrc==='function') ? getPhotoSrc(photoKeyOrData) : null; } catch(e){ src=null; }
+      if (!src && typeof photoKeyOrData === 'string' && photoKeyOrData.indexOf('data:image')===0) src = photoKeyOrData;
+
+      if (diaryItemOrText) {
+        if (typeof diaryItemOrText === 'string'){
+          memoText = (typeof sanitizeDiaryTextForDisplay==='function') ? sanitizeDiaryTextForDisplay(diaryItemOrText) : diaryItemOrText;
+        } else if (typeof diaryItemOrText === 'object'){
+          // V305 핵심: 제목(anniversary)만 있어도 표시
+          let txtPart = diaryItemOrText.text ? ((typeof sanitizeDiaryTextForDisplay==='function') ? sanitizeDiaryTextForDisplay(diaryItemOrText.text) : diaryItemOrText.text) : '';
+          let titlePart = diaryItemOrText.anniversary || '';
+          if(!txtPart && titlePart){
+            memoText = '📌 ' + titlePart; // 제목만 있으면 제목을 내용처럼 보여줌
+          } else if(titlePart && txtPart){
+            memoText = '📌 ' + titlePart + '\n\n' + txtPart;
+          } else {
+            memoText = txtPart;
+          }
+          if(diaryItemOrText.id) window.currentLightboxItemId = diaryItemOrText.id;
+          if (diaryItemOrText.date && typeof parseDateObj==='function') {
+            try { const d = parseDateObj(diaryItemOrText.date); const dayName = (typeof getDayOfWeekStr==='function') ? getDayOfWeekStr(diaryItemOrText.date) : ''; dateText = d.getFullYear()+'년 '+(d.getMonth()+1)+'월 '+d.getDate()+'일 ('+dayName+')' + (diaryItemOrText.time ? ' '+diaryItemOrText.time : ''); } catch(e){ dateText = diaryItemOrText.date; }
+          }
+        }
+      }
+
+      // V305: src도 없고 memoText도 없으면 "내용 없음" 표시하고도 열리게
+      if (!src && !memoText){
+        memoText = '(내용 없음)\n수정 버튼을 눌러 내용을 추가하세요.';
+      }
+
+      if (src) { imgEl.src = src; imgEl.style.display='block'; } else { imgEl.style.display='none'; imgEl.src=''; }
+      if (memoText) {
+        memoEl.textContent = memoText;
+        memoEl.style.display='block';
+        if(src){ memoEl.classList.remove('no-photo-mode'); } else { memoEl.classList.add('no-photo-mode'); }
+      } else { memoEl.style.display='none'; }
+      dateEl.textContent = dateText;
+      if(actionEl){ actionEl.style.display = window.currentLightboxItemId ? 'flex' : 'none'; }
+
+      document.getElementById('photo-lightbox-overlay').classList.add('active');
+      if(typeof resetPhotoZoom==='function'){ try{ resetPhotoZoom(); }catch(e){} }
+      
+      // 확대 세팅
+      setTimeout(function(){
+        const fixedBtn = document.getElementById('photo-lightbox-fixed-close');
+        const overlay = document.getElementById('photo-lightbox-overlay');
+        if(overlay && fixedBtn && fixedBtn.parentElement!==overlay) overlay.appendChild(fixedBtn);
+        const mEl = document.getElementById('photo-lightbox-memo');
+        const iEl = document.getElementById('photo-lightbox-img');
+        if(mEl && !mEl._v305){
+          mEl._v305=true;
+          mEl.addEventListener('click', function(e){ e.stopPropagation(); this.classList.toggle('memo-zoomed'); });
+        }
+        if(iEl && !iEl._v305){
+          iEl._v305=true;
+          iEl.addEventListener('click', function(e){ e.stopPropagation(); this.classList.toggle('img-zoomed'); if(!this.classList.contains('img-zoomed')) this.style.transform=''; });
+        }
+      }, 80);
+      
+    }catch(e){
+      console.error('openPhotoLightbox V305 error', e);
+      if(origOpen) return origOpen.apply(this, arguments);
+    }
+  };
+  window.openPhotoLightbox._v305=true;
+
+  window.openMemoLightboxOnly = function(text, diaryItem){
+    return window.openPhotoLightbox(null, diaryItem || text);
+  };
+
+  // === 3) renderDiaryAroundToday 덮어쓰기 - 제목만 있는 글도 클릭되게 ===
+  const origRender = window.renderDiaryAroundToday;
+  window.renderDiaryAroundToday = function(){
+    try{
+      if(origRender) origRender.apply(this, arguments);
+    }catch(e){ console.error('origRender error', e); }
+    
+    // 추가: 제목 영역과 빈 박스에도 클릭 이벤트 부여
+    setTimeout(function(){
+      const listEl = document.getElementById('diary-around-today-list');
+      if(!listEl) return;
+      const items = listEl.querySelectorAll('.sub-memo-item');
+      items.forEach(function(itemBox){
+        // 이미 처리된 건 스킵
+        if(itemBox._v305) return;
+        itemBox._v305 = true;
+        
+        const diaryId = (itemBox.querySelector('.delete-btn')?.getAttribute('onclick')?.match(/'([^']+)'/) || [])[1];
+        let diaryItem = null;
+        if(diaryId && typeof getAllDiaries==='function'){
+          const all = getAllDiaries();
+          diaryItem = all.find(d=>d.id===diaryId);
+        }
+        if(!diaryItem) return;
+
+        const hasPhoto = !!diaryItem.photo;
+        const hasText = !!(diaryItem.text && diaryItem.text.trim());
+        const hasTitle = !!(diaryItem.anniversary && diaryItem.anniversary.trim());
+
+        // 제목 영역 클릭시 확대
+        const titleArea = itemBox.querySelector('.photo-title-area');
+        if(titleArea){
+          titleArea.style.cursor='pointer';
+          titleArea.addEventListener('click', function(e){
+            e.preventDefault(); e.stopPropagation();
+            window.openPhotoLightbox(hasPhoto ? diaryItem.photo : null, diaryItem);
+          });
+        }
+
+        // 텍스트도 없고 사진도 없고 제목만 있으면 전체 박스 클릭시 확대
+        if(!hasPhoto && !hasText && hasTitle){
+          itemBox.style.cursor='pointer';
+          itemBox.addEventListener('click', function(e){
+            // 수정/삭제 버튼 제외
+            if(e.target.closest('button')) return;
+            e.preventDefault(); e.stopPropagation();
+            window.openPhotoLightbox(null, diaryItem);
+          });
+          // 시각적 힌트
+          itemBox.title = '클릭하면 크게 보기';
+        }
+
+        // 빈 사진 플레이스홀더도 클릭 가능하게
+        const emptyPlaceholder = itemBox.querySelector('.empty-photo-placeholder');
+        if(emptyPlaceholder && !hasPhoto){
+          emptyPlaceholder.style.cursor='pointer';
+          emptyPlaceholder.addEventListener('click', function(e){
+            e.preventDefault(); e.stopPropagation();
+            window.openPhotoLightbox(null, diaryItem);
+          });
+        }
+      });
+    }, 100);
+  };
+
+  // === 4) 운세 자동팝업 ===
+  window.maybeAutoShowFortunePopup = function(){
+    try{
+      const autoV = localStorage.getItem('smartDiaryFortuneAuto');
+      if(autoV==='0') return;
+      if(typeof getShowFortune==='function' && !getShowFortune()) return;
+      let hasBirth=false;
       try{
-        const autoSetting = localStorage.getItem('smartDiaryFortuneAuto');
-        const autoEnabled = autoSetting === null ? true : autoSetting !== '0'; // 기본 ON
-        if(!autoEnabled){ console.log('[V301-AK] 운세 자동 꺼짐'); return; }
-        const showFortune = (typeof getShowFortune==='function') ? getShowFortune() : true;
-        if(!showFortune) return;
-        // 생년월일 체크
-        let hasBirth=false;
-        try{
-          const bi = (typeof sajuBirthInfo!=='undefined') ? sajuBirthInfo : JSON.parse(localStorage.getItem('smartDiarySajuBirth')||'null');
-          hasBirth = !!(bi && bi.date);
-        }catch(e){ hasBirth=false; }
-        if(!hasBirth){ console.log('[V301-AK] 생년월일 없음 - 운세 자동 스킵'); return; }
+        const bi = (typeof sajuBirthInfo!=='undefined' && sajuBirthInfo && sajuBirthInfo.date) ? sajuBirthInfo : JSON.parse(localStorage.getItem('smartDiarySajuBirth')||'null');
+        hasBirth = !!(bi && bi.date);
+      }catch(e){}
+      if(!hasBirth) return;
+      const today = new Date().toISOString().slice(0,10);
+      const lastShown = localStorage.getItem('smartDiarySajuLastShown');
+      const sess = sessionStorage.getItem('fortuneAutoShownSession');
+      const force = new URLSearchParams(window.location.search).get('autobrief')==='1';
+      if(!force && (lastShown===today || sess===today)) return;
+      if(typeof openFortunePopup==='function'){
+        setTimeout(function(){ openFortunePopup(); try{ sessionStorage.setItem('fortuneAutoShownSession', today); }catch(e){} }, 1000);
+      }
+    }catch(e){}
+  };
 
-        const lastShown = localStorage.getItem('smartDiarySajuLastShown');
-        const today = getTodayStr();
-        const urlParams = new URLSearchParams(window.location.search);
-        const forceOpen = urlParams.get('autobrief')==='1';
-
-        if(!forceOpen && lastShown===today){
-          console.log('[V301-AK] 오늘 이미 봤음 - 스킵');
-          return;
-        }
-        console.log('[V301-AK] 오늘 첫 시작 - 운세 자동 오픈!');
-        if(typeof openFortunePopup==='function'){
-          // 약간의 딜레이 후 오픈 (앱 로딩 후)
-          setTimeout(()=>{ openFortunePopup(); }, 900);
-        }
-      }catch(e){ console.error(e); }
-    };
-
-    // openFortunePopup의 차단 래퍼도 제거 - 원본이 있으면 그대로 사용, 없으면 새로 래핑 안 함
-    // V301-H에서 걸어둔 userClickedFortune 체크 제거
-    // openFortunePopup이 래핑되어 있으면, 내부 _orig가 있다면 복구
-    // 강제로 깔끔한 버전으로 재정의 시도
-    if(window.openFortunePopup && window.openFortunePopup._orig){
-      // 만약 _orig가 있으면 원본으로 복구
-      try{ window.openFortunePopup = window.openFortunePopup._orig; }catch(e){}
-    }
-  }
-
-  restoreFortuneAuto();
-
-  // 앱 시작시 1초 후 자동 체크 (DOMContentLoaded 이후)
   document.addEventListener('DOMContentLoaded', function(){
-    setTimeout(()=>{
-      console.log('[V301-AK] 앱 시작 - 운세 자동 체크');
-      if(typeof sajuRecomputeFromBirthInfo==='function'){
-        try{ sajuRecomputeFromBirthInfo(); }catch(e){}
-      }
-      if(typeof updateFortuneTeaser==='function'){
-        try{ updateFortuneTeaser(); }catch(e){}
-      }
-      if(typeof window.maybeAutoShowFortunePopup==='function'){
-        window.maybeAutoShowFortunePopup();
-      }
-    }, 1200);
+    setTimeout(function(){
+      try{ if(typeof sajuRecomputeFromBirthInfo==='function') sajuRecomputeFromBirthInfo(); }catch(e){}
+      try{ if(typeof updateFortuneTeaser==='function') updateFortuneTeaser(); }catch(e){}
+      try{ if(typeof syncFortuneToggles==='function') syncFortuneToggles(); }catch(e){}
+      const savedTab = localStorage.getItem('smartDiaryMainTab') || 'diary';
+      window.switchMainTab(savedTab);
+      if(typeof window.maybeAutoShowFortunePopup==='function') window.maybeAutoShowFortunePopup();
+      if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday();
+    }, 800);
   });
 
-  // 혹시 load 이벤트로 한 번 더
-  window.addEventListener('load', function(){
-    setTimeout(()=>{
-      if(typeof window.maybeAutoShowFortunePopup==='function'){
-        const lastShown = localStorage.getItem('smartDiarySajuLastShown');
-        if(lastShown !== getTodayStr()){
-          window.maybeAutoShowFortunePopup();
-        }
-      }
-    }, 1500);
-  });
-
-  // === 2) 맨 밑 고정 종료 버튼 - overlay에 붙이기 ===
-  function attachFixedClose(){
-    const overlay=document.getElementById('photo-lightbox-overlay');
-    const fixedBtn=document.getElementById('photo-lightbox-fixed-close');
-    if(!overlay || !fixedBtn) return;
-    // fixed 버튼을 overlay 안으로 이동 (position fixed라 바깥이어도 되지만 overlay 안이 안전)
-    if(fixedBtn.parentElement !== overlay){
-      overlay.appendChild(fixedBtn);
-    }
-  }
-  attachFixedClose();
-  setTimeout(attachFixedClose, 500);
-
-  console.log('[V301-AK] 2가지 기능 세팅 완료');
+  console.log('[V305] 완료 - 제목만 쓴 글도 열리게 수정');
 })();
 </script>
-
 </body>
-
-
-
-
 </html>
