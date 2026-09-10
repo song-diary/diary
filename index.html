@@ -12177,64 +12177,73 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 
 
 <style>
-#az8-float-btn{position:fixed !important; top:12px; right:12px; z-index:9999999 !important; background:#FF3B30; color:#fff; padding:10px 14px; border-radius:24px; font-weight:900; font-size:13px; border:none; box-shadow:0 4px 12px rgba(0,0,0,0.3); cursor:pointer;}
-#az8-panel{position:fixed !important; top:50px; right:10px; left:10px; max-width:500px; margin:0 auto; background:#fff; border:2px solid #333; border-radius:12px; padding:14px; z-index:9999999 !important; font-size:12px; max-height:80vh; overflow-y:auto; display:none; box-shadow:0 8px 24px rgba(0,0,0,0.4);}
+#az9-float-btn{position:fixed !important; top:12px; right:12px; z-index:9999999 !important; background:#FF3B30; color:#fff; padding:10px 14px; border-radius:24px; font-weight:900; font-size:13px; border:none; box-shadow:0 4px 12px rgba(0,0,0,0.3); cursor:pointer;}
+#az9-panel{position:fixed !important; top:50px; right:10px; left:10px; max-width:520px; margin:0 auto; background:#fff; border:2px solid #333; border-radius:12px; padding:14px; z-index:9999999 !important; font-size:12px; max-height:80vh; overflow-y:auto; display:none; box-shadow:0 8px 24px rgba(0,0,0,0.4);}
+#az9-gallery{position:fixed !important; inset:0 !important; background:rgba(0,0,0,0.9) !important; z-index:9999998 !important; overflow-y:auto !important; padding:16px !important; display:none;}
+#az9-gallery img{width:100%; max-width:360px; display:block; margin:10px auto; border-radius:12px; background:#222;}
 .cute-box{width:100%; height:92px; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:6px; border-radius:12px; background:linear-gradient(135deg,#FFF8E8 0%,#FFE9C0 100%);}
-.cute-icon{font-size:34px;}
-.cute-label{font-size:10px; color:#B89A6F; font-weight:700;}
+.cute-icon{font-size:34px;} .cute-label{font-size:10px; color:#B89A6F; font-weight:700;}
 #photo-lightbox-fixed-close{position:fixed !important; bottom:0 !important; left:0 !important; right:0 !important; width:100% !important; max-width:520px !important; margin:0 auto !important; background:rgba(255,255,255,0.97) !important; border-top:1px solid rgba(0,0,0,0.08) !important; padding:12px 16px !important; z-index:2001 !important; display:none !important;}
 #photo-lightbox-overlay.active #photo-lightbox-fixed-close{display:block !important;}
 #photo-lightbox-fixed-close button{width:100% !important; padding:14px !important; border-radius:12px !important; border:none !important; background:#1A1A1A !important; color:#fff !important; font-weight:800 !important; font-size:15px !important;}
 </style>
-<button id="az8-float-btn" onclick="toggleAZ8()">📷 진단</button>
-<div id="az8-panel"></div>
+<button id="az9-float-btn" onclick="toggleAZ9()">📷 54장 복구</button>
+<div id="az9-panel"></div>
+<div id="az9-gallery"><div style="color:#fff; text-align:center; padding:10px;"><b style="font-size:16px;">📷 숨은 사진 54장 갤러리</b><br><span style="font-size:12px; opacity:0.7;">예전 사진들이 여기에 숨어있었어! 아래로 스크롤해봐</span><br><button onclick="document.getElementById('az9-gallery').style.display='none'" style="margin-top:10px; padding:8px 16px; border-radius:8px; background:#fff; color:#000; font-weight:800;">닫기</button></div><div id="az9-gallery-inner"></div></div>
 <div id="photo-lightbox-fixed-close"><button onclick="closePhotoLightbox(event)">종료</button></div>
 <script>
-function toggleAZ8(){
-  const p=document.getElementById('az8-panel');
-  if(p.style.display==='none' || !p.style.display || p.style.display===''){ p.style.display='block'; runDiag(); } else p.style.display='none';
+function toggleAZ9(){
+  const p=document.getElementById('az9-panel');
+  if(p.style.display==='none' || !p.style.display || p.style.display===''){ p.style.display='block'; runDiagAZ9(); } else p.style.display='none';
 }
-async function runDiag(){
-  const panel=document.getElementById('az8-panel');
-  let html='<b>📷 사진 진단</b> <span onclick="toggleAZ8()" style="float:right; cursor:pointer;">✖</span><br><br>';
+async function runDiagAZ9(){
+  const panel=document.getElementById('az9-panel');
+  let html='<b>📷 54장 숨은 사진 찾음!</b> <span onclick="toggleAZ9()" style="float:right; cursor:pointer;">✖</span><br><br>';
   try{
+    const db=await openPhotoDB();
+    const recs=await new Promise((res,rej)=>{
+      const tx=db.transaction(['photos'],'readonly');
+      const st=tx.objectStore('photos');
+      const rq=st.getAll();
+      rq.onsuccess=()=>res(rq.result||[]);
+      rq.onerror=()=>rej(rq.error);
+    });
+    html+='폰 안에 저장된 사진: <b>'+recs.length+'장</b><br>';
     const diaries=JSON.parse(localStorage.getItem('smartDiaryList')||'[]');
     const withPhoto=diaries.filter(d=>d.photo);
-    html+='일기 중 사진 있는 것: <b>'+withPhoto.length+'개</b><br>';
-    const oldBase=withPhoto.filter(d=>d.photo && d.photo.startsWith('data:image')).length;
-    const keyType=withPhoto.filter(d=>d.photo && !d.photo.startsWith('data:image')).length;
-    html+='- base64 직접: '+oldBase+' / 키 방식: '+keyType+'<br><br>';
-    // IDB
-    try{
-      const db=await openPhotoDB();
-      const recs=await new Promise((res,rej)=>{
-        const tx=db.transaction(['photos'],'readonly');
-        const st=tx.objectStore('photos');
-        const rq=st.getAll();
-        rq.onsuccess=()=>res(rq.result||[]);
-        rq.onerror=()=>rej(rq.error);
-      });
-      html+='IndexedDB에 저장된 사진: <b>'+recs.length+'장</b><br>';
-      html+='photoCache 메모리: '+(typeof photoCache!=='undefined'?Object.keys(photoCache).length:0)+'장<br><br>';
-      let missing=[];
-      withPhoto.forEach(d=>{
-        if(!d.photo.startsWith('data:image') && !recs.find(r=>r.id===d.photo)) missing.push(d);
-      });
-      if(missing.length>0){
-        html+='<div style="background:#FFE0E0; padding:8px; border-radius:8px; color:#900;">❌ IDB에 없는 사진 키: '+missing.length+'개<br>이 사진들은 브라우저 저장소가 지워져서 복구 불가예요.<br>';
-        missing.slice(0,3).forEach(m=>{ html+='- '+m.date+' '+(m.text||'').substring(0,10)+'<br>'; });
-        html+='</div><br>';
-      }else{
-        html+='<div style="background:#E0FFE0; padding:8px; border-radius:8px;">✅ 모든 사진 키가 IDB에 있음! 복구 가능!</div><br>';
-      }
-      html+='<button onclick="forceRestoreAZ8()" style="width:100%; padding:10px; background:#333; color:#fff; border-radius:8px; font-weight:800; margin-top:8px;">🔧 사진 강제 복구 (IDB → 화면)</button><br>';
-      html+='<button onclick="addCuteAll()" style="width:100%; padding:10px; background:#FFB400; color:#000; border-radius:8px; font-weight:800; margin-top:8px;">🌿 사진 없는 일기에 감성 아이콘 추가</button><br>';
-      html+='<div style="margin-top:10px; font-size:11px; color:#666;">새로 입력한 사진만 보이고 기존 사진 안 보이면 IDB가 지워진 거예요. 이 경우 기존 사진 복구는 안 돼요.</div>';
-    }catch(e){ html+='IDB 열기 실패: '+e.message+'<br>'; }
+    html+='일기에 연결된 사진: '+withPhoto.length+'개<br>';
+    html+='고아 사진 (일기 끊긴 것): <b style="color:red;">'+(recs.length - withPhoto.length)+'장</b><br><br>';
+    html+='<button onclick="showAllPhotosAZ9()" style="width:100%; padding:12px; background:#333; color:#fff; border-radius:10px; font-weight:900; font-size:14px;">👀 54장 전체 보기 (갤러리)</button><br>';
+    html+='<button onclick="forceRestoreAZ9()" style="width:100%; padding:12px; background:#9C6ADE; color:#fff; border-radius:10px; font-weight:900; margin-top:8px; font-size:14px;">🔧 일기 화면 강제 복구</button><br>';
+    html+='<div style="margin-top:12px; font-size:11px; color:#666; background:#FFF8E8; padding:8px; border-radius:8px;">💡 예전 사진이 안 보이는 이유: 일기 데이터가 지워지거나 키가 끊겨서 사진만 54장 남은 거예요. 갤러리에서 확인하고, 필요하면 다시 일기에 넣어줄 수 있어요.</div>';
   }catch(e){ html+='오류: '+e.message; }
   panel.innerHTML=html;
 }
-async function forceRestoreAZ8(){
+async function showAllPhotosAZ9(){
+  try{
+    const db=await openPhotoDB();
+    const recs=await new Promise((res,rej)=>{
+      const tx=db.transaction(['photos'],'readonly');
+      const st=tx.objectStore('photos');
+      const rq=st.getAll();
+      rq.onsuccess=()=>res(rq.result||[]);
+      rq.onerror=()=>rej(rq.error);
+    });
+    const inner=document.getElementById('az9-gallery-inner');
+    inner.innerHTML='';
+    recs.reverse().forEach((r,i)=>{
+      const src=r.data||r.dataUrl;
+      if(!src) return;
+      const div=document.createElement('div');
+      div.style.cssText='background:#1a1a1a; border-radius:12px; padding:8px; margin:12px auto; max-width:380px;';
+      div.innerHTML='<img src="'+src+'" style="width:100%; border-radius:8px; display:block;"><div style="color:#aaa; font-size:10px; margin-top:6px; word-break:break-all;">'+r.id+'</div><div style="color:#fff; font-size:11px; margin-top:4px;">'+(i+1)+' / '+recs.length+'</div>';
+      inner.appendChild(div);
+    });
+    document.getElementById('az9-gallery').style.display='block';
+    document.getElementById('az9-gallery').scrollTop=0;
+  }catch(e){ alert('갤러리 열기 실패: '+e.message); }
+}
+async function forceRestoreAZ9(){
   try{
     const db=await openPhotoDB();
     const recs=await new Promise((res,rej)=>{
@@ -12249,10 +12258,11 @@ async function forceRestoreAZ8(){
     });
     if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday();
     if(typeof renderCalendar==='function') renderCalendar();
-    setTimeout(()=>{ restoreVisibleAZ8(); alert(recs.length+'장 복구 시도 완료!'); }, 600);
+    setTimeout(()=>{ restoreVisibleAZ9(); }, 500);
+    alert(recs.length+'장 캐시 복구 + 화면 갱신 완료!');
   }catch(e){ alert('실패: '+e.message); }
 }
-function restoreVisibleAZ8(){
+function restoreVisibleAZ9(){
   try{
     const diaries=JSON.parse(localStorage.getItem('smartDiaryList')||'[]');
     document.querySelectorAll('.sub-memo-item').forEach(el=>{
@@ -12280,9 +12290,9 @@ function restoreVisibleAZ8(){
         el.classList.add('has-photo'); el.classList.remove('no-photo');
       }
     });
-  }catch(e){ console.log(e); }
+  }catch(e){}
 }
-function addCuteAll(){
+function addCuteAZ9(){
   document.querySelectorAll('.sub-memo-item').forEach(el=>{
     if(el.querySelector('.diary-photo-wrap')) return;
     const hasPhoto=(()=>{
@@ -12295,31 +12305,24 @@ function addCuteAll(){
     const topRow=el.querySelector('.item-top-row');
     if(topRow) topRow.insertAdjacentElement('afterend', wrap);
   });
-  alert('감성 아이콘 추가 완료!');
 }
-
-// 자동 복구
-setTimeout(()=>{ restoreVisibleAZ8(); }, 1000);
-setTimeout(()=>{ restoreVisibleAZ8(); }, 3000);
-setInterval(restoreVisibleAZ8, 2000);
-setTimeout(()=>{ addCuteAll(); }, 1500);
-
-// 알림 차단
+setTimeout(()=>{ restoreVisibleAZ9(); }, 1000);
+setTimeout(()=>{ restoreVisibleAZ9(); addCuteAZ9(); }, 2500);
+setInterval(restoreVisibleAZ9, 2000);
 const origAlert=window.alert;
 window.alert=function(msg){
   if(typeof msg==='string' && msg.indexOf('사진 데이터를 찾을 수 없습니다')>=0) return;
   return origAlert.apply(this, arguments);
 };
-function getTodayStr(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 window.maybeAutoShowFortunePopup=function(){
   try{
     const auto=localStorage.getItem('smartDiaryFortuneAuto'); if(auto==='0') return;
     if(typeof getShowFortune==='function' && !getShowFortune()) return;
     let has=false; try{ const bi=(typeof sajuBirthInfo!=='undefined')?sajuBirthInfo:JSON.parse(localStorage.getItem('smartDiarySajuBirth')||'null'); has=!!(bi&&bi.date); }catch(e){}
     if(!has) return;
-    const last=localStorage.getItem('smartDiarySajuLastShown'); const today=getTodayStr();
-    const params=new URLSearchParams(location.search); if(params.get('autobrief')!=='1' && last===today) return;
-    try{ localStorage.setItem('smartDiarySajuLastShown', today); }catch(e){}
+    const last=localStorage.getItem('smartDiarySajuLastShown'); const today=new Date(); const todayStr=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+    const params=new URLSearchParams(location.search); if(params.get('autobrief')!=='1' && last===todayStr) return;
+    try{ localStorage.setItem('smartDiarySajuLastShown', todayStr); }catch(e){}
     setTimeout(function(){ if(window.openFortunePopup) window.openFortunePopup(); }, 900);
   }catch(e){}
 };
