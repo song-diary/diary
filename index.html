@@ -12032,7 +12032,7 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 
 
 
-<style id="v307-title-icon-only">
+<style id="v308-red-pin-only">
 #photo-lightbox-fixed-close {
   position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important;
   width: 100% !important; max-width: 520px !important; margin: 0 auto !important;
@@ -12049,7 +12049,7 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 #photo-lightbox-img { cursor: zoom-in !important; }
 #photo-lightbox-img.img-zoomed { cursor: zoom-out !important; transform: scale(2.0) !important; transform-origin: center center !important; }
 
-/* V307: 제목 아이콘 항상 표시, 내용 없어도 빈공간 유지 */
+/* V308: 빨간 핀 하나로 통일 */
 .photo-title-area {
   display: flex !important;
   align-items: center !important;
@@ -12061,25 +12061,25 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
   border-radius: 6px !important;
   padding: 5px 10px !important;
   margin-bottom: 6px !important;
-  background: #F8F5FF !important;
+  background: #FFF0F0 !important; /* 연한 빨강 배경 */
+  border: 1px solid #FFCDCD !important;
   color: #5D4E6D !important;
-  border: 1px solid #E8E0F5 !important;
 }
 .photo-title-area.has-title {
-  background: #F8F5FF !important;
-  border-color: #E8E0F5 !important;
-  color: #5D4E6D !important;
+  background: #FFF0F0 !important;
+  border-color: #FFCDCD !important;
 }
 .photo-title-area.no-title {
-  background: #FFF9C4 !important; /* 제목 없을 때 노란 배경으로 빈공간임을 표시 */
-  border: 1px dashed #FFD54F !important;
-  color: #8D6E00 !important;
+  background: #FFF8F8 !important;
+  border: 1px dashed #FFAAAA !important;
 }
 .photo-title-area .title-icon {
   font-size: 14px !important;
   flex-shrink: 0 !important;
   min-width: 18px !important;
   text-align: center !important;
+  color: #E74C3C !important; /* 빨간 핀 색상 */
+  filter: hue-rotate(0deg) saturate(1.5) !important;
 }
 .photo-title-area .title-text {
   flex: 1 !important;
@@ -12089,7 +12089,6 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
   min-height: 16px !important;
 }
 .photo-title-area .title-text.empty {
-  /* 빈공간이지만 높이 유지 */
   display: inline-block !important;
   min-width: 20px !important;
 }
@@ -12100,33 +12099,21 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 </div>
 
 <script>
-// V307 - 제목 아이콘 항상, 빈공간 유지
+// V308 - 제목 아이콘 항상 빨간 핀 하나로 통일
 (function(){
-  console.log('[V307] 제목 아이콘 항상 표시 + 빈공간');
+  console.log('[V308] 빨간 핀 하나로 통일');
 
   window.getDiaryIcon = function(item){
-    const hasTitle = !!(item.anniversary && item.anniversary.trim());
-    const hasText = !!(item.text && item.text.trim());
-    const hasPhoto = !!item.photo;
-    if(hasTitle && hasText && hasPhoto) return '📌📝📷';
-    if(hasTitle && hasText) return '📌📝';
-    if(hasTitle && hasPhoto) return '📌📷';
-    if(hasTitle) return '📌';
-    if(hasText && hasPhoto) return '📝📷';
-    if(hasText) return '📝';
-    if(hasPhoto) return '📷';
-    return '📄';
+    return '📌'; // 항상 빨간 핀 하나!
   };
 
-  // 제목 표시 - 제목 없으면 아이콘만 + 빈공간
-  window.getDiaryTitleDisplay_V307 = function(item){
+  window.getDiaryTitleDisplay_V308 = function(item){
     const hasTitle = !!(item.anniversary && item.anniversary.trim());
-    const icon = window.getDiaryIcon(item);
+    const icon = '📌';
     if(hasTitle){
-      return { icon: icon, text: item.anniversary, isEmpty: false, html: '<span class="title-icon">'+icon+'</span><span class="title-text">'+escapeHtmlForDiary(item.anniversary)+'</span>' };
+      return { icon: icon, text: item.anniversary, isEmpty: false, html: '<span class="title-icon">📌</span><span class="title-text">'+escapeHtmlForDiary(item.anniversary)+'</span>' };
     } else {
-      // 제목 없음: 아이콘만 + 빈공간 (&nbsp;)
-      return { icon: icon, text: '', isEmpty: true, html: '<span class="title-icon">'+icon+'</span><span class="title-text empty">&nbsp;</span>' };
+      return { icon: icon, text: '', isEmpty: true, html: '<span class="title-icon">📌</span><span class="title-text empty">&nbsp;</span>' };
     }
   };
 
@@ -12157,7 +12144,6 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
     if(typeof resetPhotoZoom==='function'){ try{ resetPhotoZoom(); }catch(e){} }
   };
 
-  // 확대 팝업 - 제목 영역도 항상 아이콘 + 빈공간 또는 제목
   window.openPhotoLightbox = function(photoKeyOrData, diaryItemOrText){
     try{
       const imgEl = document.getElementById('photo-lightbox-img');
@@ -12166,7 +12152,7 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
       const actionEl = document.getElementById('photo-lightbox-actions');
       let src = null;
       let memoText = '';
-      let titleHeader = ''; // 확대 상단에 제목 아이콘 영역
+      let titleHeader = '';
       let dateText = '';
       window.currentLightboxItemId = null;
       try { src = (typeof getPhotoSrc==='function') ? getPhotoSrc(photoKeyOrData) : null; } catch(e){ src=null; }
@@ -12175,25 +12161,23 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
       if (diaryItemOrText) {
         if (typeof diaryItemOrText === 'string'){
           memoText = (typeof sanitizeDiaryTextForDisplay==='function') ? sanitizeDiaryTextForDisplay(diaryItemOrText) : diaryItemOrText;
-          const icon = '📝';
-          titleHeader = icon + '  '; // 제목 아이콘만 + 빈공간
+          titleHeader = '📌  '; // 항상 빨간 핀 + 빈공간
         } else if (typeof diaryItemOrText === 'object'){
           const hasTitle = !!(diaryItemOrText.anniversary && diaryItemOrText.anniversary.trim());
           const hasText = !!(diaryItemOrText.text && diaryItemOrText.text.trim());
-          const icon = window.getDiaryIcon(diaryItemOrText);
+          const icon = '📌';
           let txtPart = diaryItemOrText.text ? ((typeof sanitizeDiaryTextForDisplay==='function') ? sanitizeDiaryTextForDisplay(diaryItemOrText.text) : diaryItemOrText.text) : '';
           
           if(hasTitle){
-            titleHeader = icon + ' ' + diaryItemOrText.anniversary; // 제목 있으면 아이콘 + 제목
+            titleHeader = icon + ' ' + diaryItemOrText.anniversary;
           } else {
-            titleHeader = icon + '  '; // 제목 없으면 아이콘만 + 빈공간 (2칸 공백)
+            titleHeader = icon + '  '; // 제목 없으면 빨간 핀만 + 빈공간
           }
           
-          // 본문은 글만
           if(hasText){
             memoText = txtPart;
           } else {
-            memoText = hasTitle ? '' : '(내용 없음 - 제목 아이콘만 표시)';
+            memoText = '';
           }
           
           if(diaryItemOrText.id) window.currentLightboxItemId = diaryItemOrText.id;
@@ -12203,13 +12187,13 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
         }
       }
 
-      // 제목 헤더와 본문을 합쳐서 memoEl에 표시 - 제목 영역을 분리해서 보여줌
       let finalDisplay = '';
       if(titleHeader){
         finalDisplay = titleHeader;
         if(memoText) finalDisplay += '\n\n' + memoText;
+        else if(!titleHeader.trim().replace('📌','').trim()) finalDisplay += '\n(제목 없음 - 빨간 핀만 표시)';
       } else {
-        finalDisplay = memoText || '📄 (내용 없음)';
+        finalDisplay = memoText || '📌  \n(내용 없음)';
       }
 
       if (src) { imgEl.src = src; imgEl.style.display='block'; } else { imgEl.style.display='none'; imgEl.src=''; }
@@ -12230,19 +12214,19 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
         if(overlay && fixedBtn && fixedBtn.parentElement!==overlay) overlay.appendChild(fixedBtn);
         const mEl = document.getElementById('photo-lightbox-memo');
         const iEl = document.getElementById('photo-lightbox-img');
-        if(mEl && !mEl._v307){
-          mEl._v307=true;
+        if(mEl && !mEl._v308){
+          mEl._v308=true;
           mEl.addEventListener('click', function(e){ e.stopPropagation(); this.classList.toggle('memo-zoomed'); });
         }
-        if(iEl && !iEl._v307){
-          iEl._v307=true;
+        if(iEl && !iEl._v308){
+          iEl._v308=true;
           iEl.addEventListener('click', function(e){ e.stopPropagation(); this.classList.toggle('img-zoomed'); if(!this.classList.contains('img-zoomed')) this.style.transform=''; });
         }
       }, 80);
       
-    }catch(e){ console.error('V307 error', e); }
+    }catch(e){ console.error('V308 error', e); }
   };
-  window.openPhotoLightbox._v307=true;
+  window.openPhotoLightbox._v308=true;
   window.openMemoLightboxOnly = function(text, diaryItem){ return window.openPhotoLightbox(null, diaryItem || text); };
 
   const origRender = window.renderDiaryAroundToday;
@@ -12253,8 +12237,8 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
       if(!listEl) return;
       const items = listEl.querySelectorAll('.sub-memo-item');
       items.forEach(function(itemBox){
-        if(itemBox._v307) return;
-        itemBox._v307 = true;
+        if(itemBox._v308) return;
+        itemBox._v308 = true;
         const diaryId = (itemBox.querySelector('.delete-btn')?.getAttribute('onclick')?.match(/'([^']+)'/) || [])[1];
         let diaryItem = null;
         if(diaryId && typeof getAllDiaries==='function'){
@@ -12265,7 +12249,7 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 
         const titleArea = itemBox.querySelector('.photo-title-area');
         if(titleArea){
-          const display = window.getDiaryTitleDisplay_V307(diaryItem);
+          const display = window.getDiaryTitleDisplay_V308(diaryItem);
           titleArea.className = 'photo-title-area' + (display.isEmpty ? ' no-title' : ' has-title');
           titleArea.innerHTML = display.html;
           titleArea.style.cursor='pointer';
@@ -12287,7 +12271,6 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
           }
         }
 
-        // 제목 없는 글도 전체 박스 클릭으로 확대 (아이콘만 있는 경우)
         const hasTitle = !!(diaryItem.anniversary && diaryItem.anniversary.trim());
         const hasText = !!(diaryItem.text && diaryItem.text.trim());
         if(!hasTitle && (hasText || hasPhoto)){
@@ -12338,7 +12321,7 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
     }, 800);
   });
 
-  console.log('[V307] 완료 - 제목 아이콘만 + 빈공간');
+  console.log('[V308] 완료 - 빨간 핀 하나로 통일');
 })();
 </script>
 </body>
