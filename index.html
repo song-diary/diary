@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 다이어리&가계부 V301-AL 빈공간 감성일러스트 - Swing2App+NodeAPK 통합 최종</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 다이어리&가계부 V301-AN 메인감성아이콘 - Swing2App+NodeAPK 통합 최종</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -3002,7 +3002,7 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
 
 
 <style id="v301h-final-core">
-/* V301-AL 빈공간 감성일러스트 Core - 전체 통합 */
+/* V301-AN 메인감성아이콘 Core - 전체 통합 */
 :root { --safe-bottom: env(safe-area-inset-bottom, 0px); }
 
 /* 달력 */
@@ -10336,7 +10336,7 @@ async function showPhotosForDate(dateStr){
 
 
 <script>
-// V301-AL 빈공간 감성일러스트 Core - Swing2App(1차) + Node.js APK(2차) 통합 안정화 - 뒤로가기 제외
+// V301-AN 메인감성아이콘 Core - Swing2App(1차) + Node.js APK(2차) 통합 안정화 - 뒤로가기 제외
 (function(){
   console.log('[V301-H] Final Core 시작 - 뒤로가기 제외');
 
@@ -12334,6 +12334,275 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
   });
 
   console.log('[V301-AL] 빈공간 꾸미기 완료');
+})();
+</script>
+
+
+<style id="v301am-title-gone-main-fix">
+/* V301-AM - 타이틀 삭제 + 메인 회색 박스 버그 수정 */
+
+/* 1) "내용 확대보기" "사진 확대보기" 타이틀 완전 삭제 */
+#photo-lightbox-title { display:none !important; height:0 !important; padding:0 !important; margin:0 !important; overflow:hidden !important; }
+#photo-lightbox-overlay.no-photo #photo-lightbox-title { display:none !important; }
+
+/* 2) 메인 사진 없는 일기의 회색 카메라 박스 완전 제거 */
+.sub-memo-item.no-photo .diary-photo-wrap {
+  display:none !important;
+  height:0 !important;
+  min-height:0 !important;
+  padding:0 !important;
+  margin:0 !important;
+  border:none !important;
+  background:transparent !important;
+}
+.sub-memo-item.no-photo .diary-photo-wrap img,
+.sub-memo-item.no-photo .diary-photo-wrap .diary-thumb-empty {
+  display:none !important;
+}
+
+/* 메인 no-photo 아이템 자체를 더 예쁘게 */
+.sub-memo-item.no-photo {
+  background: #FFFBF5 !important;
+  border: 1px solid #F0E0C0 !important;
+  border-left: 4px solid #E8C99A !important;
+  border-radius: 14px !important;
+  padding: 14px 16px 26px 16px !important;
+  min-height: 72px !important;
+}
+
+.sub-memo-item.no-photo .diary-text {
+  font-size: 15px !important;
+  line-height: 1.6 !important;
+  color: #3D3225 !important;
+}
+
+/* 빈공간 아트는 그대로 유지 - 더 깔끔하게 */
+#photo-lightbox-empty-art {
+  padding: 24px 20px 16px !important;
+}
+</style>
+
+<script>
+// V301-AM - 타이틀 삭제 로직 강화 + 메인 버그 수정
+(function(){
+  console.log('[V301-AM] 타이틀 삭제 + 메인 수정');
+
+  function removeTitle(){
+    const titleEl=document.getElementById('photo-lightbox-title');
+    if(titleEl){
+      titleEl.textContent='';
+      titleEl.style.display='none';
+      titleEl.innerHTML='';
+    }
+    // openPhotoLightboxSafe에서 텍스트 넣는 부분 무력화
+    const content=document.getElementById('photo-lightbox-content');
+    if(content){
+      // 첫 번째 자식이 타이틀일 수 있으니 체크
+      const first=content.firstElementChild;
+      if(first && first.id==='photo-lightbox-title'){
+        first.style.display='none';
+      }
+    }
+  }
+
+  // open 함수에서 타이틀 설정하는 부분을 덮어씀
+  const origSafe = window.openPhotoLightboxSafe;
+  if(origSafe && !origSafe._am){
+    window.openPhotoLightboxSafe = function(src, item){
+      const r=origSafe.apply(this, arguments);
+      setTimeout(removeTitle, 10);
+      setTimeout(removeTitle, 100);
+      return r;
+    };
+    window.openPhotoLightboxSafe._am=true;
+  }
+
+  // 기존 타이틀 로직도 무력화 - V301-P의 타이틀 변경 차단
+  // MutationObserver로 타이틀 텍스트 들어가면 바로 삭제
+  const titleEl=document.getElementById('photo-lightbox-title');
+  if(titleEl){
+    const obs=new MutationObserver(()=>{ removeTitle(); });
+    obs.observe(titleEl, {childList:true, characterData:true, subtree:true});
+  }
+
+  // 메인 회색 박스 제거 - 렌더 후에도 계속 제거
+  function cleanMainNoPhoto(){
+    document.querySelectorAll('.sub-memo-item.no-photo .diary-photo-wrap').forEach(el=>{
+      el.style.display='none';
+      el.innerHTML='';
+    });
+  }
+  setInterval(cleanMainNoPhoto, 1000);
+  document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(cleanMainNoPhoto, 500); });
+
+  // 초기 실행
+  removeTitle();
+  setTimeout(removeTitle, 300);
+  setTimeout(cleanMainNoPhoto, 300);
+
+  console.log('[V301-AM] 타이틀 삭제 완료, 메인 회색박스 제거');
+})();
+</script>
+
+
+<style id="v301an-cute-placeholder">
+/* V301-AN 메인 사진 없는 자리 - 감성 아이콘으로 대치 */
+
+/* no-photo 박스 다시 보이게 - 하지만 예쁘게 */
+.sub-memo-item.no-photo .diary-photo-wrap {
+  display: block !important;
+  height: auto !important;
+  min-height: 92px !important;
+  background: linear-gradient(135deg, #FFFBF2 0%, #FFF2D9 100%) !important;
+  border: 1px solid #F0DCC0 !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  position: relative !important;
+}
+
+.sub-memo-item.no-photo {
+  background: #fff !important;
+  border: 1px solid #F0E0C0 !important;
+  border-radius: 14px !important;
+  padding-bottom: 28px !important;
+}
+
+/* 기존 회색 박스 내부 숨기고 새로운 아이콘 영역 */
+.cute-placeholder-box {
+  width: 100%;
+  height: 92px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 6px;
+  background: linear-gradient(135deg, #FFFBF2 0%, #FFF2D9 100%);
+  position: relative;
+}
+
+.cute-placeholder-icon {
+  font-size: 36px;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.06));
+  animation: cuteFloat 3s ease-in-out infinite;
+}
+
+.cute-placeholder-label {
+  font-size: 10px;
+  color: #B89A6F;
+  letter-spacing: 0.4px;
+  font-weight: 700;
+  opacity: 0.8;
+}
+
+@keyframes cuteFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+/* 타입별 배경색 */
+.cute-type-coffee { background: linear-gradient(135deg, #FFF8E8 0%, #FFE9C0 100%) !important; }
+.cute-type-moon { background: linear-gradient(135deg, #F0F0FF 0%, #E0E2FF 100%) !important; }
+.cute-type-leaf { background: linear-gradient(135deg, #F0FFF0 0%, #D6F0D6 100%) !important; }
+.cute-type-star { background: linear-gradient(135deg, #FFF9E6 0%, #FFEFB0 100%) !important; }
+.cute-type-heart { background: linear-gradient(135deg, #FFF0F0 0%, #FFD6D6 100%) !important; }
+.cute-type-book { background: linear-gradient(135deg, #F5F0FF 0%, #E2D6FF 100%) !important; }
+</style>
+
+<script>
+// V301-AN 메인 빈자리 감성 아이콘으로 교체
+(function(){
+  console.log('[V301-AN] 감성 플레이스홀더 시작');
+
+  const PLACEHOLDERS = [
+    { icon: '☕', label: '오늘의 이야기', type: 'coffee', bg: 'coffee' },
+    { icon: '🌙', label: '마음 한 조각', type: 'moon', bg: 'moon' },
+    { icon: '🌿', label: '소소한 하루', type: 'leaf', bg: 'leaf' },
+    { icon: '⭐', label: '반짝인 순간', type: 'star', bg: 'star' },
+    { icon: '💛', label: '따뜻한 하루', type: 'heart', bg: 'heart' },
+    { icon: '📖', label: '오늘의 기록', type: 'book', bg: 'book' },
+    { icon: '🌤️', label: '그냥 그런 날도', type: 'coffee', bg: 'coffee' },
+    { icon: '✿', label: '꽃 같은 하루', type: 'leaf', bg: 'leaf' },
+    { icon: '🐾', label: '귀여운 하루', type: 'book', bg: 'book' },
+    { icon: '🍃', label: '바람처럼', type: 'leaf', bg: 'leaf' },
+    { icon: '✎', label: '쓰다 보니', type: 'star', bg: 'star' },
+    { icon: '🌸', label: '오늘도 수고했어요', type: 'heart', bg: 'heart' },
+  ];
+
+  function getRandomPlaceholder(id){
+    // id 기반으로 고정된 랜덤 (같은 일기는 항상 같은 아이콘)
+    let hash=0;
+    const str=String(id||Math.random());
+    for(let i=0;i<str.length;i++){ hash = ((hash<<5)-hash)+str.charCodeAt(i); hash|=0; }
+    const idx=Math.abs(hash) % PLACEHOLDERS.length;
+    return PLACEHOLDERS[idx];
+  }
+
+  function decorateNoPhotoItems(){
+    document.querySelectorAll('.sub-memo-item.no-photo').forEach(item=>{
+      const wrap=item.querySelector('.diary-photo-wrap');
+      if(!wrap) return;
+      
+      // 이미 꾸몄으면 스킵
+      if(wrap.querySelector('.cute-placeholder-box')) return;
+
+      const itemId=item.dataset.itemId || item.getAttribute('data-item-id') || item.id || Math.random();
+      const ph=getRandomPlaceholder(itemId);
+
+      // 기존 내용 제거
+      wrap.innerHTML='';
+      wrap.className='diary-photo-wrap';
+      
+      const box=document.createElement('div');
+      box.className=`cute-placeholder-box cute-type-${ph.bg}`;
+      box.innerHTML=`
+        <div class="cute-placeholder-icon">${ph.icon}</div>
+        <div class="cute-placeholder-label">${ph.label}</div>
+      `;
+      
+      // 클릭하면 확대보기 (기존 동작 유지)
+      box.style.cursor='pointer';
+      box.onclick=function(e){
+        e.stopPropagation();
+        const textEl=item.querySelector('.diary-text');
+        const text=textEl?textEl.textContent:'';
+        // 기존 라이트박스 열기 함수 호출
+        if(typeof openMemoLightboxOnly==='function'){
+          const id=item.dataset.itemId || itemId;
+          const all=(typeof getAllDiaries==='function')?getAllDiaries():[];
+          const diaryObj=all.find(d=>String(d.id)===String(id));
+          if(diaryObj) openMemoLightboxOnly('', diaryObj);
+          else openMemoLightboxOnly(text, null);
+        }
+      };
+
+      wrap.appendChild(box);
+    });
+  }
+
+  // 주기적으로 체크 + 렌더 후에도 체크
+  setInterval(decorateNoPhotoItems, 1000);
+
+  // renderDiaryAroundTodayList 같은 렌더 함수 후킹
+  const funcsToHook=['renderDiaryAroundTodayList','renderSearchResults','renderTodayDiary','renderCalendarDiaryList'];
+  funcsToHook.forEach(fnName=>{
+    const orig=window[fnName];
+    if(orig && !orig._an){
+      window[fnName]=function(){
+        const r=orig.apply(this, arguments);
+        setTimeout(decorateNoPhotoItems, 100);
+        setTimeout(decorateNoPhotoItems, 500);
+        return r;
+      };
+      window[fnName]._an=true;
+    }
+  });
+
+  document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(decorateNoPhotoItems, 800); });
+  setTimeout(decorateNoPhotoItems, 500);
+  setTimeout(decorateNoPhotoItems, 1500);
+
+  console.log('[V301-AN] 감성 플레이스홀더 완료');
 })();
 </script>
 
