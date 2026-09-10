@@ -12324,5 +12324,139 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
   console.log('[V308] 완료 - 빨간 핀 하나로 통일');
 })();
 </script>
+
+<style id="v309-content-emoji">
+/* V309 D안: 내용 기반 이모지 플레이스홀더 */
+.empty-photo-placeholder {
+  font-size: 28px !important;
+  background: linear-gradient(135deg, #FFF8F0 0%, #FFF0F0 100%) !important;
+  border: 1px dashed #FFD8B0 !important;
+  transition: all 0.2s ease !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+.empty-photo-placeholder::after {
+  content: attr(data-keyword);
+  position: absolute;
+  bottom: 6px;
+  font-size: 9px;
+  color: #AA8888;
+  background: rgba(255,255,255,0.8);
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+.empty-photo-placeholder:hover {
+  transform: scale(1.02);
+  background: linear-gradient(135deg, #FFF0F0 0%, #FFE8E0 100%) !important;
+}
+</style>
+
+<script>
+// V309 D안 - 내용 기반 이모지 (안전한 덧씌우기 방식 - 기존 함수 안 건드림)
+(function(){
+  console.log('[V309] D안 내용 기반 이모지 시작 - 안전한 방식');
+
+  // 키워드 → 이모지 매핑 (일기에서 자주 쓰는 단어)
+  window.getContentEmoji = function(item){
+    const text = ((item.text||'') + ' ' + (item.anniversary||'')).toLowerCase();
+    
+    // 우선순위대로 체크
+    const mapping = [
+      { keywords: ['밥','음식','맛있','먹','식사','점심','저녁','아침','라면','치킨','커피','카페'], emoji: '🍚', label: '맛있는 하루' },
+      { keywords: ['여행','휴가','비행','바다','산','캠핑','호텔','관광'], emoji: '✈️', label: '여행' },
+      { keywords: ['사랑','연애','데이트','좋아','그리워','보고싶'], emoji: '💕', label: '사랑' },
+      { keywords: ['가족','엄마','아빠','부모','아이','아들','딸'], emoji: '👨‍👩‍👧', label: '가족' },
+      { keywords: ['친구','만남','모임','술','맥주','파티'], emoji: '🎉', label: '친구' },
+      { keywords: ['운동','헬스','걷기','러닝','요가','건강','병원','아프'], emoji: '💪', label: '건강' },
+      { keywords: ['일','회사','업무','회의','야근','출근'], emoji: '💼', label: '일' },
+      { keywords: ['공부','책','독서','시험','학교','수업'], emoji: '📚', label: '공부' },
+      { keywords: ['돈','가계부','지출','수입','쇼핑','구매','월급'], emoji: '💰', label: '가계부' },
+      { keywords: ['비','우울','슬프','눈물','힘들','외로','짜증'], emoji: '🌧️', label: '감성' },
+      { keywords: ['행복','기쁘','좋다','즐거','신나','웃','꿀잠'], emoji: '😊', label: '행복' },
+      { keywords: ['잠','꿈','피곤','졸려','새벽'], emoji: '🌙', label: '휴식' },
+      { keywords: ['날씨','맑','흐리','추워','더워','봄','여름','가을','겨울','눈','꽃'], emoji: '🌤️', label: '날씨' },
+      { keywords: ['음악','노래','콘서트','영화','드라마','공연'], emoji: '🎵', label: '문화' },
+      { keywords: ['강아지','고양이','반려','펫','동물'], emoji: '🐾', label: '반려' },
+      { keywords: ['생일','축하','기념','기념일','선물'], emoji: '🎂', label: '기념일' },
+    ];
+
+    for(let map of mapping){
+      for(let kw of map.keywords){
+        if(text.includes(kw)){
+          return { emoji: map.emoji, label: map.label, keyword: kw };
+        }
+      }
+    }
+    
+    // 키워드 없으면 날짜 기반
+    const date = item.date || '';
+    const month = parseInt((date.split('-')[1]||'0'), 10);
+    if(month>=3 && month<=5) return { emoji: '🌸', label: '봄', keyword: '봄' };
+    if(month>=6 && month<=8) return { emoji: '🌊', label: '여름', keyword: '여름' };
+    if(month>=9 && month<=11) return { emoji: '🍂', label: '가을', keyword: '가을' };
+    if(month===12 || month<=2) return { emoji: '❄️', label: '겨울', keyword: '겨울' };
+    
+    // 기본
+    return { emoji: '📝', label: '일기', keyword: '일기' };
+  };
+
+  // 기존 renderDiaryAroundToday가 끝난 후 placeholder 교체 - 가장 안전한 방법
+  const origRender = window.renderDiaryAroundToday;
+  window.renderDiaryAroundToday = function(){
+    try{
+      if(origRender) origRender.apply(this, arguments);
+    }catch(e){ console.error('origRender error', e); }
+    
+    setTimeout(function(){
+      const listEl = document.getElementById('diary-around-today-list');
+      if(!listEl) return;
+      const items = listEl.querySelectorAll('.sub-memo-item');
+      
+      items.forEach(function(itemBox){
+        // V308에서 이미 처리한 건 유지, V309는 placeholder만 교체
+        const diaryId = (itemBox.querySelector('.delete-btn')?.getAttribute('onclick')?.match(/'([^']+)'/) || [])[1];
+        let diaryItem = null;
+        if(diaryId && typeof getAllDiaries==='function'){
+          const all = getAllDiaries();
+          diaryItem = all.find(d=>d.id===diaryId);
+        }
+        if(!diaryItem) return;
+        if(diaryItem.photo) return; // 사진 있는 건 건드리지 않음
+
+        const placeholder = itemBox.querySelector('.empty-photo-placeholder');
+        if(placeholder){
+          const contentEmoji = window.getContentEmoji(diaryItem);
+          placeholder.textContent = contentEmoji.emoji;
+          placeholder.setAttribute('data-keyword', contentEmoji.label);
+          placeholder.title = contentEmoji.keyword + ' - ' + contentEmoji.label;
+          
+          // 배경색을 이모지 종류별로 살짝 다르게
+          const bgMap = {
+            '🍚': 'linear-gradient(135deg, #FFF8E0 0%, #FFE8CC 100%)',
+            '✈️': 'linear-gradient(135deg, #E0F2FF 0%, #C2E8FF 100%)',
+            '💕': 'linear-gradient(135deg, #FFE0EC 0%, #FFC2D1 100%)',
+            '🎉': 'linear-gradient(135deg, #FFF0FF 0%, #E8D0FF 100%)',
+            '💪': 'linear-gradient(135deg, #E0FFE0 0%, #C2FFC2 100%)',
+            '😊': 'linear-gradient(135deg, #FFF8E0 0%, #FFF0CC 100%)',
+            '🌧️': 'linear-gradient(135deg, #E8E8F0 0%, #D0D0E8 100%)',
+          };
+          if(bgMap[contentEmoji.emoji]){
+            placeholder.style.background = bgMap[contentEmoji.emoji] + ' !important';
+          }
+        }
+      });
+      
+      console.log('[V309] 내용 기반 이모지 교체 완료');
+    }, 150);
+  };
+
+  // 초기 실행도
+  document.addEventListener('DOMContentLoaded', function(){
+    setTimeout(function(){ if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday(); }, 1000);
+  });
+
+  console.log('[V309] D안 완료 - 안전한 덧씌우기');
+})();
+</script>
 </body>
 </html>
