@@ -3268,7 +3268,7 @@ body { touch-action:pan-x pan-y; -webkit-text-size-adjust:100%; padding-bottom:v
                 <div class="toggle-card"><span class="toggle-card-label">📊 카테고리 통계</span><label class="toggle-switch"><input type="checkbox" id="toggle-category-stats" checked onchange="setCategoryStatsVisibility(this.checked)"><span class="toggle-slider"></span></label></div>
                 <div class="toggle-card"><span class="toggle-card-label">🔍 검색/기간필터</span><label class="toggle-switch"><input type="checkbox" id="toggle-search-filter" checked onchange="setSearchFilterVisibility(this.checked)"><span class="toggle-slider"></span></label></div>
                 <div class="toggle-card"><span class="toggle-card-label">🔮 오늘의 운세</span><label class="toggle-switch"><input type="checkbox" id="settings-show-fortune" checked onchange="onShowFortuneToggle()"><span class="toggle-slider"></span></label></div>
-                <div class="toggle-card" id="fortune-auto-toggle-card"><span class="toggle-card-label">⏰ 운세 자동팝업</span><label class="toggle-switch"><input type="checkbox" id="settings-fortune-auto" checked onchange="onFortuneAutoToggle()"><span class="toggle-slider"></span></label></div>
+                <div class="toggle-card" id="fortune-auto-toggle-card"><span class="toggle-card-label">⏰ 운세 자동팝업</span><label class="toggle-switch"><input type="checkbox" id="settings-fortune-auto" checked onchange="onFortuneAutoToggle()"><span class="toggle-slider"></span></label>                <div class="toggle-card" id="lotto-toggle-card"><span class="toggle-card-label">🎱 로또 생성기</span><label class="toggle-switch"><input type="checkbox" id="settings-show-lotto" checked onchange="onShowLottoToggle()"><span class="toggle-slider"></span></label></div>
             </div>
 
             <div class="settings-section">
@@ -3311,11 +3311,7 @@ body { touch-action:pan-x pan-y; -webkit-text-size-adjust:100%; padding-bottom:v
                     <input type="date" id="saju-birth-date-calendar" style="flex:2; padding:8px; border:1px solid var(--border-color); border-radius:8px; font-size:16px;" onchange="syncSajuDateFromCalendar()">
                     <input type="time" id="saju-birth-time-calendar" style="flex:1; padding:8px; border:1px solid var(--border-color); border-radius:8px; font-size:15px;">
                 </div>
-                <div style="display:flex; gap:6px; margin-bottom:8px; flex-wrap:wrap;">
-                    <button type="button" onclick="setSajuMan60()" style="flex:1; padding:6px; border:1px solid #ffd6e0; border-radius:20px; background:#fff0f3; font-size:12px;">만 60세</button>
-                    <button type="button" onclick="setSajuMan50()" style="flex:1; padding:6px; border:1px solid #ffd6e0; border-radius:20px; background:#fff0f3; font-size:12px;">만 50세</button>
-                    <button type="button" onclick="setSajuMan40()" style="flex:1; padding:6px; border:1px solid #ffd6e0; border-radius:20px; background:#fff0f3; font-size:12px;">만 40세</button>
-                </div>
+                <!-- V310: 만60/50/40 버튼 삭제됨 -->
                 <div style="display: flex; align-items:center; gap:6px; margin-bottom:8px;">
                     <input type="checkbox" id="saju-time-unknown" checked onchange="onSajuTimeUnknownToggle()" style="width:15px; height:15px;">
                     <label for="saju-time-unknown" style="font-size:14px; font-weight:normal; color: var(--text-sub);">태어난 시각을 몰라요</label>
@@ -6552,6 +6548,7 @@ body { touch-action:pan-x pan-y; -webkit-text-size-adjust:100%; padding-bottom:v
         const fortuneChk = document.getElementById('settings-show-fortune');
         if (fortuneChk) fortuneChk.checked = getShowFortune();
         syncFortuneToggles();
+        syncLottoToggle();
         const healthChk = document.getElementById('settings-show-health');
         if (healthChk) healthChk.checked = getShowHealth();
         const moneySummaryChk = document.getElementById('toggle-money-summary');
@@ -6830,6 +6827,17 @@ body { touch-action:pan-x pan-y; -webkit-text-size-adjust:100%; padding-bottom:v
     function getFortuneAutoEnabled(){ const v = localStorage.getItem('smartDiaryFortuneAuto'); return v===null ? true : v==='1'; }
     function onFortuneAutoToggle(){ const chk = document.getElementById('settings-fortune-auto'); if(!chk) return; localStorage.setItem('smartDiaryFortuneAuto', chk.checked ? '1' : '0'); }
     function syncFortuneToggles(){ const autoChk = document.getElementById('settings-fortune-auto'); if(autoChk) autoChk.checked = getFortuneAutoEnabled(); const showChk = document.getElementById('settings-show-fortune'); const autoCard = document.getElementById('fortune-auto-toggle-card'); if(showChk && autoCard) autoCard.style.opacity = showChk.checked ? '1' : '0.4'; }
+
+    function getShowLotto(){ const v = localStorage.getItem('smartDiaryShowLotto'); return v===null ? true : v==='true'; }
+    function onShowLottoToggle(){ const chk = document.getElementById('settings-show-lotto'); if(!chk) return; localStorage.setItem('smartDiaryShowLotto', chk.checked ? 'true' : 'false'); applyLottoVisibility(); }
+    function applyLottoVisibility(){
+        const show = getShowLotto();
+        // 운세 팝업 안에 로또 버튼 숨김 처리는 팝업 렌더시 처리, 여기서는 설정에서만
+        const lottoCard = document.getElementById('lotto-toggle-card');
+        if(lottoCard) lottoCard.style.opacity = '1';
+    }
+    function syncLottoToggle(){ const chk = document.getElementById('settings-show-lotto'); if(chk) chk.checked = getShowLotto(); }
+
 
     // 오늘 날짜의 干支(일진) 및 오행을 계산
     function sajuGetTodayInfo() {
@@ -12458,5 +12466,82 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
   console.log('[V309] D안 완료 - 안전한 덧씌우기');
 })();
 </script>
+
+<script id="v310-lotto-toggle-patch">
+// V310: 로또 ON/OFF + 만 나이 삭제 추가 패치
+(function(){
+  console.log('[V310] 로또 토글 패치 시작');
+
+  window.getShowLotto = window.getShowLotto || function(){ const v = localStorage.getItem('smartDiaryShowLotto'); return v===null ? true : v==='true'; };
+  window.onShowLottoToggle = window.onShowLottoToggle || function(){ const chk = document.getElementById('settings-show-lotto'); if(!chk) return; localStorage.setItem('smartDiaryShowLotto', chk.checked ? 'true' : 'false'); };
+  window.syncLottoToggle = window.syncLottoToggle || function(){ const chk = document.getElementById('settings-show-lotto'); if(chk) chk.checked = window.getShowLotto(); };
+
+  // 운세 팝업이 열릴 때 로또 버튼 숨김 처리
+  const origOpenFortune = window.openFortunePopup;
+  if(origOpenFortune && !origOpenFortune._v310){
+    window.openFortunePopup = function(){
+      const r = origOpenFortune.apply(this, arguments);
+      setTimeout(function(){
+        try{
+          const showLotto = window.getShowLotto();
+          // 운세 팝업 안의 로또 버튼 찾기 - 여러 가능한 셀렉터
+          const selectors = [
+            'button[onclick*="openLottoGeneratorModal"]',
+            'button[onclick*="Lotto"]',
+            '#fortune-popup-body button'
+          ];
+          const popupBody = document.getElementById('fortune-popup-body');
+          if(popupBody){
+            const btns = popupBody.querySelectorAll('button');
+            btns.forEach(function(btn){
+              if(btn.textContent && btn.textContent.includes('로또')){
+                btn.style.display = showLotto ? '' : 'none';
+                // 부모 div도 숨김
+                if(!showLotto && btn.parentElement && btn.parentElement.textContent.includes('로또')){
+                  // 버튼만 숨김, 부모는 유지
+                }
+              }
+            });
+          }
+          console.log('[V310] 로또 버튼 표시:', showLotto);
+        }catch(e){ console.error(e); }
+      }, 100);
+      return r;
+    };
+    window.openFortunePopup._v310 = true;
+    window.openFortunePopup._orig = origOpenFortune;
+  }
+
+  // openLottoGeneratorModal 자체를 막기 - OFF면 열리지 않게
+  const origOpenLotto = window.openLottoGeneratorModal;
+  if(origOpenLotto && !origOpenLotto._v310){
+    window.openLottoGeneratorModal = function(){
+      if(!window.getShowLotto()){
+        alert('설정에서 로또 생성기가 꺼져 있어요.\n설정 → 🎱 로또 생성기를 켜주세요.');
+        return;
+      }
+      return origOpenLotto.apply(this, arguments);
+    };
+    window.openLottoGeneratorModal._v310 = true;
+  }
+
+  // 설정 모달 열릴 때 로또 토글 동기화
+  document.addEventListener('DOMContentLoaded', function(){
+    setTimeout(function(){
+      try{ window.syncLottoToggle(); }catch(e){}
+      // 만 나이 버튼 혹시 남아있으면 제거
+      document.querySelectorAll('button').forEach(function(b){
+        if(b.textContent && b.textContent.includes('만 60세')){
+          const parent = b.parentElement;
+          if(parent) parent.style.display='none';
+        }
+      });
+    }, 800);
+  });
+
+  console.log('[V310] 로또 토글 패치 완료');
+})();
+</script>
+
 </body>
 </html>
