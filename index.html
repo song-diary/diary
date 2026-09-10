@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 다이어리&가계부 V301-AW 안정버전 문구없이 - Swing2App+NodeAPK 통합 최종</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 다이어리&가계부 V301-AX 3가지해결 - Swing2App+NodeAPK 통합 최종</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -3002,7 +3002,7 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
 
 
 <style id="v301h-final-core">
-/* V301-AW 안정버전 문구없이 Core - 전체 통합 */
+/* V301-AX 3가지해결 Core - 전체 통합 */
 :root { --safe-bottom: env(safe-area-inset-bottom, 0px); }
 
 /* 달력 */
@@ -10336,7 +10336,7 @@ async function showPhotosForDate(dateStr){
 
 
 <script>
-// V301-AW 안정버전 문구없이 Core - Swing2App(1차) + Node.js APK(2차) 통합 안정화 - 뒤로가기 제외
+// V301-AX 3가지해결 Core - Swing2App(1차) + Node.js APK(2차) 통합 안정화 - 뒤로가기 제외
 (function(){
   console.log('[V301-H] Final Core 시작 - 뒤로가기 제외');
 
@@ -12176,7 +12176,7 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 </script>
 
 
-<style id="v301aw-minimal">
+<style id="v301ax-allfix">
 #photo-lightbox-title{display:none !important;}
 #photo-lightbox-empty-art{display:none; text-align:center; padding:28px 20px 18px; background:linear-gradient(180deg,#FFFBF2 0%,#FFF6E6 100%);}
 #photo-lightbox-overlay.no-photo #photo-lightbox-empty-art{display:block !important;}
@@ -12196,12 +12196,14 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 .cute-type-star{background:linear-gradient(135deg,#FFF9E6 0%,#FFEFB0 100%) !important;}
 .cute-type-heart{background:linear-gradient(135deg,#FFF0F0 0%,#FFD6D6 100%) !important;}
 .cute-type-book{background:linear-gradient(135deg,#F5F0FF 0%,#E2D6FF 100%) !important;}
+/* 확대보기 닫기 버튼 항상 보이게 + 뒤로가기 영역 넓게 */
+#photo-lightbox-overlay{ touch-action: pan-y; }
 </style>
 <div id="photo-lightbox-fixed-close"><button onclick="closePhotoLightbox(event)">종료</button></div>
 <script>
-// V301-AW 최소, 안정 버전
+// V301-AX 3가지 모두 해결
 (function(){
-  console.log('[V301-AW] 시작');
+  console.log('[V301-AX] 3가지 수정 시작');
 
   const PH=[
     {icon:'☕',label:'오늘의 이야기',bg:'coffee'},
@@ -12231,25 +12233,41 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
     }catch(e){}
   };
 
+  // 1) 위아래 2개 아이콘 문제 - 깨진 테스트 데이터 완전 삭제
   function cleanBrokenData(){
     try{
       let diaries=null;
       try{ diaries=JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); }catch(e){ return; }
       let changed=false;
+      const cleaned=[];
       for(let i=0;i<diaries.length;i++){
         const item=diaries[i];
+        let isBroken=false;
         if(item.photo){
           let src='';
           try{ if(typeof getPhotoSrc==='function'){ src=getPhotoSrc(item.photo)||''; } }catch(e){}
-          if(!src || src.length<50){
-            item.photo=null;
-            changed=true;
-          }
+          if(!src || src.length<50) isBroken=true;
         }
+        // 테스트 글자 + 깨진 사진이면 아예 삭제 (위아래 2개 문제 해결)
+        const txt=(item.text||'').trim();
+        if(isBroken && (!txt || txt.length<=6 || txt==='테스트' || txt.indexOf('테스트')===0)){
+          console.log('[V301-AX] 깨진 테스트 일기 삭제:', item.id, txt);
+          changed=true;
+          continue; // 삭제
+        }
+        if(isBroken){
+          item.photo=null;
+          changed=true;
+        }
+        cleaned.push(item);
       }
       if(changed){
-        localStorage.setItem('smartDiaryList', JSON.stringify(diaries));
-        console.log('[V301-AW] 깨진 사진 제거됨');
+        localStorage.setItem('smartDiaryList', JSON.stringify(cleaned));
+        console.log('[V301-AX] 데이터 정리 완료');
+        setTimeout(function(){
+          if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday();
+          if(typeof renderCalendar==='function') renderCalendar();
+        }, 300);
       }
     }catch(e){ console.log(e); }
   }
@@ -12259,19 +12277,14 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
     for(let k=0;k<items.length;k++){
       const item=items[k];
       const wraps=item.querySelectorAll('.diary-photo-wrap');
-      // 2개 이상이면 첫 번째만 남김
       if(wraps.length>1){
-        for(let i=1;i<wraps.length;i++){
-          wraps[i].parentNode.removeChild(wraps[i]);
-        }
+        for(let i=1;i<wraps.length;i++){ wraps[i].parentNode.removeChild(wraps[i]); }
       }
       const wrap=item.querySelector('.diary-photo-wrap');
       if(!wrap) continue;
-
       const cute=wrap.querySelector('.cute-placeholder-box');
       const video=wrap.querySelector('video');
       if(cute || video) continue;
-
       const img=wrap.querySelector('img.diary-photo');
       if(img){
         if(!img.src || img.src.length<20 || img.src.indexOf('undefined')>=0){
@@ -12292,8 +12305,6 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
         }
         continue;
       }
-
-      // img 없고 cute 없고 video 없는 경우 -> 회색 div
       const div=wrap.querySelector('.diary-photo');
       if(div){
         const txt=div.textContent||'';
@@ -12307,33 +12318,115 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
     }
   }
 
-  // 기존 renderPhotoHTML도 같이 덮어쓰기 시도 (있으면)
-  try{
-    if(window.renderPhotoHTML){
-      const orig=window.renderPhotoHTML;
-      window.renderPhotoHTML=function(item){
-        if(!item) return '';
-        if(!item.photo){
-          return '<div class="diary-photo-wrap no-photo-wrap" data-item-id="'+item.id+'">'+makeCute(item.id)+'</div>';
-        }
-        let _src='';
-        try{ _src= (typeof getPhotoSrc==='function') ? (getPhotoSrc(item.photo)||'') : ''; }catch(e){}
-        if(!_src || _src.length<50){
-          return '<div class="diary-photo-wrap no-photo-wrap" data-item-id="'+item.id+'">'+makeCute(item.id)+'</div>';
-        }
-        if(_src.indexOf('data:video')===0){
-          return '<div class="diary-photo-wrap"><video src="'+_src+'" controls style="width:100%; border-radius:10px;"></video></div>';
-        }
-        return '<div class="diary-photo-wrap" data-item-id="'+item.id+'"><img src="'+_src+'" class="diary-photo" alt="사진" loading="lazy" onerror="fixBrokenImg(this)"></div>';
+  // 2) 운세 - 하루 1번만, 열 때 바로 기록
+  function getTodayStr(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  
+  // 원본 openFortunePopup을 래핑해서 열 때 바로 lastShown 기록
+  function wrapFortune(){
+    try{
+      if(!window.openFortunePopup || window.openFortunePopup._axWrapped) return;
+      const orig=window.openFortunePopup;
+      const wrapped=function(){
+        try{ localStorage.setItem('smartDiarySajuLastShown', getTodayStr()); }catch(e){}
+        return orig.apply(this, arguments);
       };
-    }
-  }catch(e){}
+      wrapped._axWrapped=true;
+      wrapped._orig=orig;
+      window.openFortunePopup=wrapped;
+      console.log('[V301-AX] 운세 래핑 - 열자마자 오늘 봤다고 기록');
+    }catch(e){}
+  }
 
-  setInterval(doFix, 600);
-  setTimeout(cleanBrokenData, 200);
-  setTimeout(doFix, 300);
-  setTimeout(doFix, 1000);
-  setTimeout(doFix, 2000);
+  function fixedMaybeAutoShow(){
+    try{
+      const autoSetting=localStorage.getItem('smartDiaryFortuneAuto');
+      const autoEnabled = autoSetting===null ? true : autoSetting!=='0';
+      if(!autoEnabled){ console.log('[V301-AX] 운세 자동 OFF'); return; }
+      if(typeof getShowFortune==='function' && !getShowFortune()) return;
+      let hasBirth=false;
+      try{ const bi=(typeof sajuBirthInfo!=='undefined')?sajuBirthInfo:JSON.parse(localStorage.getItem('smartDiarySajuBirth')||'null'); hasBirth=!!(bi&&bi.date); }catch(e){}
+      if(!hasBirth) return;
+      const last=localStorage.getItem('smartDiarySajuLastShown');
+      const today=getTodayStr();
+      const params=new URLSearchParams(window.location.search);
+      const force=params.get('autobrief')==='1';
+      if(!force && last===today){ console.log('[V301-AX] 오늘 이미 봤음 - 운세 안 뜸'); return; }
+      console.log('[V301-AX] 오늘 첫 오픈 - 운세 1번만 표시');
+      try{ localStorage.setItem('smartDiarySajuLastShown', today); }catch(e){}
+      if(typeof window.openFortunePopup==='function'){
+        setTimeout(function(){ window.openFortunePopup(); }, 900);
+      }
+    }catch(e){ console.log(e); }
+  }
+
+  window.maybeAutoShowFortunePopup = fixedMaybeAutoShow;
+
+  // 3) "<" 여러번 눌러야 종료 박스 뜨는 문제 - 스윙2앱 뒤로가기 대응
+  function fixCloseBox(){
+    const overlay=document.getElementById('photo-lightbox-overlay');
+    const fixedBtn=document.getElementById('photo-lightbox-fixed-close');
+    if(!overlay || !fixedBtn) return;
+    if(fixedBtn.parentElement!==overlay) overlay.appendChild(fixedBtn);
+
+    // 오버레이 클릭하면 닫히게
+    if(!overlay._axClick){
+      overlay._axClick=true;
+      overlay.addEventListener('click', function(e){
+        if(e.target===overlay){
+          if(typeof closePhotoLightbox==='function') closePhotoLightbox(e);
+        }
+      });
+    }
+
+    // 뒤로가기 버튼 1번만 눌러도 닫히게 - history 처리
+    if(!window._axHistory){
+      window._axHistory=true;
+      const origOpen=window.openPhotoLightbox || window.openPhotoLightboxSafe;
+      function pushHistory(){
+        try{ history.pushState({lightbox:true}, '', location.href); }catch(e){}
+      }
+      // 라이트박스 열 때 history push
+      const wrapOpen=function(origFn){
+        return function(){
+          const r=origFn.apply(this, arguments);
+          setTimeout(pushHistory, 100);
+          setTimeout(function(){
+            const fb=document.getElementById('photo-lightbox-fixed-close');
+            if(fb) fb.style.display='block';
+          }, 200);
+          return r;
+        };
+      };
+      if(window.openPhotoLightbox && !window.openPhotoLightbox._ax){
+        const o=window.openPhotoLightbox;
+        window.openPhotoLightbox=wrapOpen(o);
+        window.openPhotoLightbox._ax=true;
+      }
+      if(window.openPhotoLightboxSafe && !window.openPhotoLightboxSafe._ax){
+        const o=window.openPhotoLightboxSafe;
+        window.openPhotoLightboxSafe=wrapOpen(o);
+        window.openPhotoLightboxSafe._ax=true;
+      }
+      window.addEventListener('popstate', function(e){
+        const ov=document.getElementById('photo-lightbox-overlay');
+        if(ov && ov.classList.contains('active')){
+          if(typeof closePhotoLightbox==='function') closePhotoLightbox();
+          // fixed 버튼도 숨김
+          const fb=document.getElementById('photo-lightbox-fixed-close');
+          if(fb) fb.style.display='none';
+        }
+      });
+    }
+  }
+
+  // 실행
+  setInterval(doFix, 700);
+  setInterval(fixCloseBox, 1000);
+  setTimeout(cleanBrokenData, 300);
+  setTimeout(doFix, 500);
+  setTimeout(wrapFortune, 500);
+  setTimeout(fixCloseBox, 500);
+  setTimeout(doFix, 1500);
 
   function injectArt(){
     const content=document.getElementById('photo-lightbox-content');
@@ -12345,28 +12438,12 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
     if(memo) content.insertBefore(d, memo); else content.prepend(d);
   }
 
-  const obs=new MutationObserver(function(){ doFix(); });
-  obs.observe(document.body, {childList:true, subtree:true});
+  document.addEventListener('DOMContentLoaded', function(){
+    setTimeout(function(){ cleanBrokenData(); doFix(); injectArt(); fixCloseBox(); wrapFortune(); fixedMaybeAutoShow(); }, 700);
+  });
+  setTimeout(function(){ injectArt(); fixCloseBox(); }, 1300);
 
-  function getTodayStr(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
-  window.maybeAutoShowFortunePopup=function(){
-    try{
-      const a=localStorage.getItem('smartDiaryFortuneAuto'); if(a==='0') return;
-      if(typeof getShowFortune==='function' && !getShowFortune()) return;
-      let has=false; try{ const bi=(typeof sajuBirthInfo!=='undefined')?sajuBirthInfo:JSON.parse(localStorage.getItem('smartDiarySajuBirth')||'null'); has=!!(bi&&bi.date); }catch(e){}
-      if(!has) return; if(localStorage.getItem('smartDiarySajuLastShown')===getTodayStr()) return;
-      if(typeof openFortunePopup==='function') setTimeout(function(){ openFortunePopup(); }, 900);
-    }catch(e){}
-  };
-
-  const overlay=document.getElementById('photo-lightbox-overlay');
-  const fixedBtn=document.getElementById('photo-lightbox-fixed-close');
-  if(overlay && fixedBtn && fixedBtn.parentElement!==overlay) overlay.appendChild(fixedBtn);
-
-  document.addEventListener('DOMContentLoaded', function(){ setTimeout(function(){ cleanBrokenData(); doFix(); injectArt(); }, 600); });
-  setTimeout(function(){ injectArt(); if(window.maybeAutoShowFortunePopup) window.maybeAutoShowFortunePopup(); }, 1200);
-
-  console.log('[V301-AW] 세팅 완료');
+  console.log('[V301-AX] 3가지 수정 세팅 완료');
 })();
 </script>
 
