@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 다이어리&가계부 V301-AZ4 기존사진유지+감성1개 - Swing2App+NodeAPK 통합 최종</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 다이어리&가계부 V301-AZ5 기존사진절대유지 - Swing2App+NodeAPK 통합 최종</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -3002,7 +3002,7 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
 
 
 <style id="v301h-final-core">
-/* V301-AZ4 기존사진유지+감성1개 Core - 전체 통합 */
+/* V301-AZ5 기존사진절대유지 Core - 전체 통합 */
 :root { --safe-bottom: env(safe-area-inset-bottom, 0px); }
 
 /* 달력 */
@@ -8690,7 +8690,7 @@ body { touch-action:pan-x pan-y; -webkit-text-size-adjust:100%; padding-bottom:v
 
             const titleText = item.anniversary || '';
             const titleHTML = `<div class="photo-title-area" style="height:20px; font-size:12px; font-weight:bold; color:#9C6ADE; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; margin-bottom:4px; padding-left:6px;">${titleText ? titleText : '&nbsp;'}</div>`;
-            const emptyPhotoHTML = ''; // V301-AZ4: 이중 아이콘 방지
+            const emptyPhotoHTML = ''; // AZ5 이중 방지
             itemBox.innerHTML = `
                 ${titleHTML}
                 ${photoHTML}${emptyPhotoHTML}
@@ -10336,7 +10336,7 @@ async function showPhotosForDate(dateStr){
 
 
 <script>
-// V301-AZ4 기존사진유지+감성1개 Core - Swing2App(1차) + Node.js APK(2차) 통합 안정화 - 뒤로가기 제외
+// V301-AZ5 기존사진절대유지 Core - Swing2App(1차) + Node.js APK(2차) 통합 안정화 - 뒤로가기 제외
 (function(){
   console.log('[V301-H] Final Core 시작 - 뒤로가기 제외');
 
@@ -12176,7 +12176,7 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 </script>
 
 
-<style id="v301az4-fix">
+<style id="v301az5">
 #photo-lightbox-title{display:none !important;}
 #photo-lightbox-empty-art{display:none; text-align:center; padding:28px 20px 18px; background:linear-gradient(180deg,#FFFBF2 0%,#FFF6E6 100%);}
 #photo-lightbox-overlay.no-photo #photo-lightbox-empty-art{display:block !important;}
@@ -12199,7 +12199,7 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 </style>
 <div id="photo-lightbox-fixed-close"><button onclick="closePhotoLightbox(event)">종료</button></div>
 <script>
-// V301-AZ4 - 기존 사진 유지 + 깨진 것만 감성으로 + 알림 제거
+// V301-AZ5 - 기존 사진은 절대 감성으로 안 바꿈!
 (function(){
   const PH=[
     {icon:'☕',label:'오늘의 이야기',bg:'coffee'},
@@ -12223,46 +12223,68 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
       const wrap=imgEl.closest('.diary-photo-wrap');
       if(!wrap) return;
       const item=wrap.closest('.sub-memo-item');
-      const id=(item&&item.getAttribute('data-item-id'))||'0';
-      wrap.innerHTML=makeCute(id);
-      if(item){ item.classList.remove('has-photo'); item.classList.add('no-photo'); }
+      // has-photo인데 깨진 경우에만 감성으로, 아니면 유지
+      if(item && item.classList.contains('has-photo')){
+        // 진짜 깨진 사진이면 감성으로, 아니면 그대로 둠
+        // 일단 감성으로 교체하되, photo 키가 있으면 삭제하지 않음
+        const id=item.getAttribute('data-item-id')||'0';
+        wrap.innerHTML=makeCute(id);
+        item.classList.remove('has-photo'); item.classList.add('no-photo');
+      }
     }catch(e){}
   };
 
-  // 기존 사진은 유지, 진짜 깨진 것만 감성으로 - 2초 후 체크
-  function fixOnlyBroken(){
+  function fixList(){
     document.querySelectorAll('.sub-memo-item').forEach(item=>{
+      // 2개 이상이면 1개만
       const wraps=item.querySelectorAll('.diary-photo-wrap');
       if(wraps.length>1){
         for(let i=1;i<wraps.length;i++) wraps[i].remove();
       }
-      const wrap=item.querySelector('.diary-photo-wrap');
-      if(!wrap) {
-        // 사진 없는 일기는 감성 박스 1개 추가 (기존 사진 없는 경우)
-        // has-photo가 아니고 photo-wrap도 없으면 감성 추가
-        if(!item.classList.contains('has-photo') && !item.querySelector('.cute-placeholder-box')){
-          const id=item.getAttribute('data-item-id')||'0';
-          const div=document.createElement('div');
-          div.className='diary-photo-wrap no-photo-wrap';
-          div.setAttribute('data-item-id', id);
-          div.innerHTML=makeCute(id);
-          const topRow=item.querySelector('.item-top-row');
-          if(topRow) topRow.insertAdjacentElement('afterend', div);
+      const hasPhoto=item.classList.contains('has-photo') || item.getAttribute('data-has-photo')==='1';
+      const hasPhotoKey = (()=>{ try{ const id=item.getAttribute('data-item-id'); if(!id) return false; const all=(typeof getAllDiaries==='function')?getAllDiaries():[]; const it=all.find(d=>d.id==id); return !!(it && it.photo); }catch(e){ return false; } })();
+
+      let wrap=item.querySelector('.diary-photo-wrap');
+
+      if(!wrap){
+        // 사진 없는 일기면 감성 박스 추가
+        if(!hasPhoto && !hasPhotoKey){
+          if(!item.querySelector('.cute-placeholder-box')){
+            const id=item.getAttribute('data-item-id')||'0';
+            const div=document.createElement('div');
+            div.className='diary-photo-wrap no-photo-wrap';
+            div.setAttribute('data-item-id', id);
+            div.innerHTML=makeCute(id);
+            const topRow=item.querySelector('.item-top-row');
+            if(topRow) topRow.insertAdjacentElement('afterend', div);
+            else item.prepend(div);
+          }
         }
         return;
       }
+
+      // 이미 감성 박스면 유지
       if(wrap.querySelector('.cute-placeholder-box')) return;
       if(wrap.querySelector('video')) return;
+
       const img=wrap.querySelector('img.diary-photo');
       if(img){
-        // 정상 사진이면 유지
         const src=img.getAttribute('src')||'';
-        if(src.length>500 && !img.complete) return; // 로딩중이면 기다림
-        if(img.complete && img.naturalWidth>0) return; // 정상
-        if(img.complete && img.naturalWidth===0){
-          const id=item.getAttribute('data-item-id')||'0';
-          wrap.innerHTML=makeCute(id);
-          item.classList.remove('has-photo'); item.classList.add('no-photo');
+        // 정상 사진이면 절대 건드리지 않음
+        if(src && src.length>500){
+          if(!img.complete) return; // 로딩중
+          if(img.naturalWidth>0) return; // 정상
+          // complete인데 width 0이면 깨진 것
+          if(img.complete && img.naturalWidth===0){
+            // has-photo인데 깨진 경우만 감성으로
+            if(hasPhoto || hasPhotoKey){
+              // 3초 기다렸다가 그래도 안되면 감성으로
+              if(!img._t){
+                img._t=true;
+                setTimeout(()=>{ if(img.naturalWidth===0) window.fixBrokenImg(img); }, 2000);
+              }
+            }
+          }
         }
         if(!img.getAttribute('data-err')){
           img.setAttribute('data-err','1');
@@ -12270,55 +12292,70 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
         }
         return;
       }
-      // img 없고, 회색 div만 있는 경우 - 2초 후에도 그대로면 감성으로
+
+      // img 없고 회색 div만 있는 경우
       const div=wrap.querySelector('.diary-photo');
       if(div){
-        const txt=div.textContent||'';
-        const st=div.getAttribute('style')||'';
-        // 사진 로딩중인데 2초 지나도 그대로면 감성으로
-        // 즉시 교체하지 않고, 타이머로 체크
-        if(!div._timer){
-          div._timer=true;
-          setTimeout(function(){
-            const still=document.body.contains(div) ? div : null;
-            if(!still) return;
-            const parent=still.closest('.diary-photo-wrap');
-            if(!parent) return;
-            if(parent.querySelector('img')) return; // 그동안 img 생겼으면 유지
-            if(parent.querySelector('.cute-placeholder-box')) return;
-            const id=item.getAttribute('data-item-id')||'0';
-            parent.innerHTML=makeCute(id);
-            item.classList.remove('has-photo'); item.classList.add('no-photo');
-          }, 2500);
+        // has-photo인 경우 (기존 사진) -> 절대 감성으로 안 바꿈, 로딩 대기
+        if(hasPhoto || hasPhotoKey){
+          // 5초 후에도 div 그대로면, photoCache에서 src 가져와서 img로 교체 시도
+          if(!div._t){
+            div._t=true;
+            setTimeout(async ()=>{
+              try{
+                const id=item.getAttribute('data-item-id');
+                if(!id) return;
+                const all=(typeof getAllDiaries==='function')?getAllDiaries():[];
+                const it=all.find(d=>d.id==id);
+                if(!it || !it.photo) return;
+                let src='';
+                try{ if(typeof getPhotoSrc==='function') src=getPhotoSrc(it.photo)||''; }catch(e){}
+                if(!src && typeof getPhotoSrcAsyncSafe==='function'){
+                  try{ src=await getPhotoSrcAsyncSafe(it.photo); }catch(e){}
+                }
+                if(src && src.length>500){
+                  // src 찾음 -> img로 교체
+                  wrap.innerHTML='<img src="'+src+'" class="diary-photo" alt="사진" style="width:100%;border-radius:10px;" loading="lazy" onerror="fixBrokenImg(this)">';
+                }else{
+                  // 진짜 없음 -> 그때만 감성으로
+                  wrap.innerHTML=makeCute(id);
+                  item.classList.remove('has-photo'); item.classList.add('no-photo');
+                }
+              }catch(e){ console.log(e); }
+            }, 3500);
+          }
+          return;
+        }else{
+          // 사진 없는 일기의 회색 div -> 즉시 감성으로
+          const id=item.getAttribute('data-item-id')||'0';
+          wrap.innerHTML=makeCute(id);
+          item.classList.remove('has-photo'); item.classList.add('no-photo');
         }
       }
     });
   }
 
-  // 알림 대신 감성 뷰로
-  function patchAlerts(){
-    // 전역 alert 가로채기 - 사진 데이터 알림만 감성 뷰로
-    const origAlert=window.alert;
-    window.alert=function(msg){
-      if(typeof msg==='string' && msg.indexOf('사진 데이터를 찾을 수 없습니다')>=0){
-        console.log('[V301-AZ4] 사진 데이터 없음 알림 차단, 감성 뷰로 대체');
-        return;
-      }
-      return origAlert.apply(this, arguments);
-    };
-  }
+  // 알림 차단
+  const origAlert=window.alert;
+  window.alert=function(msg){
+    if(typeof msg==='string' && msg.indexOf('사진 데이터를 찾을 수 없습니다')>=0){
+      console.log('[AZ5] 사진 없음 알림 차단');
+      return;
+    }
+    return origAlert.apply(this, arguments);
+  };
 
   function fixClose(){
     const overlay=document.getElementById('photo-lightbox-overlay');
     const fixedBtn=document.getElementById('photo-lightbox-fixed-close');
     if(!overlay || !fixedBtn) return;
     if(fixedBtn.parentElement!==overlay) overlay.appendChild(fixedBtn);
-    if(!overlay._az4){ overlay._az4=true; overlay.addEventListener('click', function(e){ if(e.target===overlay && typeof closePhotoLightbox==='function') closePhotoLightbox(e); }); }
-    if(!window._az4Hist){
-      window._az4Hist=true;
+    if(!overlay._az5){ overlay._az5=true; overlay.addEventListener('click', function(e){ if(e.target===overlay && typeof closePhotoLightbox==='function') closePhotoLightbox(e); }); }
+    if(!window._az5Hist){
+      window._az5Hist=true;
       const wrapOpen=function(origFn){ return function(){ const r=origFn.apply(this, arguments); setTimeout(function(){ try{ history.pushState({lightbox:true}, '', location.href); }catch(e){} }, 100); setTimeout(function(){ const fb=document.getElementById('photo-lightbox-fixed-close'); if(fb) fb.style.display='block'; }, 200); return r; }; };
-      if(window.openPhotoLightbox && !window.openPhotoLightbox._az4){ const o=window.openPhotoLightbox; window.openPhotoLightbox=wrapOpen(o); window.openPhotoLightbox._az4=true; }
-      if(window.openPhotoLightboxSafe && !window.openPhotoLightboxSafe._az4){ const o=window.openPhotoLightboxSafe; window.openPhotoLightboxSafe=wrapOpen(o); window.openPhotoLightboxSafe._az4=true; }
+      if(window.openPhotoLightbox && !window.openPhotoLightbox._az5){ const o=window.openPhotoLightbox; window.openPhotoLightbox=wrapOpen(o); window.openPhotoLightbox._az5=true; }
+      if(window.openPhotoLightboxSafe && !window.openPhotoLightboxSafe._az5){ const o=window.openPhotoLightboxSafe; window.openPhotoLightboxSafe=wrapOpen(o); window.openPhotoLightboxSafe._az5=true; }
       window.addEventListener('popstate', function(){ const ov=document.getElementById('photo-lightbox-overlay'); if(ov && ov.classList.contains('active') && typeof closePhotoLightbox==='function'){ closePhotoLightbox(); const fb=document.getElementById('photo-lightbox-fixed-close'); if(fb) fb.style.display='none'; } });
     }
   }
@@ -12333,7 +12370,7 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
       const last=localStorage.getItem('smartDiarySajuLastShown'); const today=getTodayStr();
       const params=new URLSearchParams(location.search); if(params.get('autobrief')!=='1' && last===today) return;
       try{ localStorage.setItem('smartDiarySajuLastShown', today); }catch(e){}
-      if(typeof window.openPhotoLightbox==='function' || typeof window.openFortunePopup==='function'){ setTimeout(function(){ if(window.openFortunePopup) window.openFortunePopup(); }, 900); }
+      setTimeout(function(){ if(window.openFortunePopup) window.openFortunePopup(); }, 900);
     }catch(e){}
   }
   window.maybeAutoShowFortunePopup=fixedMaybe;
@@ -12347,35 +12384,14 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
     if(memo) content.insertBefore(d, memo); else content.prepend(d);
   }
 
-  function cleanOnlyTestBroken(){
-    try{
-      let diaries=JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); let changed=false; const cleaned=[];
-      for(let i=0;i<diaries.length;i++){
-        const item=diaries[i]; let isBroken=false;
-        if(item.photo){ let src=''; try{ if(typeof getPhotoSrc==='function'){ src=getPhotoSrc(item.photo)||''; } }catch(e){} if(!src || src.length<100) isBroken=true; }
-        const txt=(item.text||'').trim();
-        // 진짜 테스트 + 깨진 사진만 삭제 (기존 사진은 유지)
-        if(isBroken && txt && txt.length<=12 && txt.indexOf('테스트')===0){
-          // 단, 사진 키가 있는데 src가 없는 경우만 삭제, src가 긴 정상 사진은 유지
-          if(!item.photo || (function(){ try{ const s=getPhotoSrc(item.photo)||''; return !s || s.length<100; }catch(e){ return true; } })()){
-            changed=true; continue;
-          }
-        }
-        cleaned.push(item);
-      }
-      if(changed){ localStorage.setItem('smartDiaryList', JSON.stringify(cleaned)); setTimeout(function(){ if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday(); }, 400); }
-    }catch(e){}
-  }
-
-  setInterval(fixOnlyBroken, 800);
+  setInterval(fixList, 800);
   setInterval(fixClose, 1000);
-  setTimeout(patchAlerts, 200);
-  setTimeout(cleanOnlyTestBroken, 500);
-  setTimeout(fixOnlyBroken, 600);
+  setTimeout(fixList, 600);
   setTimeout(fixClose, 600);
-  setTimeout(fixOnlyBroken, 1800);
+  setTimeout(fixList, 2000);
+  setTimeout(fixList, 4000);
 
-  document.addEventListener('DOMContentLoaded', function(){ setTimeout(function(){ cleanOnlyTestBroken(); fixOnlyBroken(); injectArt(); fixClose(); patchAlerts(); fixedMaybe(); }, 900); });
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(function(){ fixList(); injectArt(); fixClose(); fixedMaybe(); }, 1000); });
   setTimeout(function(){ injectArt(); }, 1500);
 })();
 </script>
