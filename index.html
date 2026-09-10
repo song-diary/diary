@@ -7476,7 +7476,7 @@ body { touch-action:pan-x pan-y; -webkit-text-size-adjust:100%; padding-bottom:v
             }catch(e){}
         }
         // 친근하게 요약
-        const friendlyTotal = detailTotal.replace(/비견|겁재|식신|상관|편재|정재|편관|정관|편인|정인/g, '').replace(/일간|일주/g,'나').substring(0,90);
+        const friendlyTotal = detailTotal.replace(/비견|겁재|식신|상관|편재|정재|편관|정관|편인|정인/g, '').replace(/일간|일주/g,'나');
         
         // V197: 어제 일기 연동 기능 삭제 (요청사항)
 
@@ -7528,16 +7528,16 @@ body { touch-action:pan-x pan-y; -webkit-text-size-adjust:100%; padding-bottom:v
             <div style="margin-top:14px;display:grid;gap:10px;">
                 <div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:12px;">
                     <div style="font-size:12px;color:#FFD98E;font-weight:700;margin-bottom:4px;">🌟 총운</div>
-                    <div style="font-size:13.5px;line-height:1.5;color:rgba(255,255,255,0.85);">${friendlyTotal}..</div>
+                    <div style="font-size:13.5px;line-height:1.5;color:rgba(255,255,255,0.85);">${friendlyTotal}</div>
                 </div>
                 <div style="display:grid;gap:10px;">
                     <div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:12px;">
                         <div style="font-size:12px;color:#7CFF9B;font-weight:700;margin-bottom:4px;">💰 재물운</div>
-                        <div style="font-size:13.5px;line-height:1.5;color:rgba(255,255,255,0.85);">${detailMoney.substring(0,60)}..</div>
+                        <div style="font-size:13.5px;line-height:1.5;color:rgba(255,255,255,0.85);">${detailMoney}</div>
                     </div>
                     <div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:12px;">
                         <div style="font-size:12px;color:#FF9AC2;font-weight:700;margin-bottom:4px;">💗 애정운</div>
-                        <div style="font-size:13.5px;line-height:1.5;color:rgba(255,255,255,0.85);">${detailLove.substring(0,60)}..</div>
+                        <div style="font-size:13.5px;line-height:1.5;color:rgba(255,255,255,0.85);">${detailLove}</div>
                     </div>
                 </div>
             </div>
@@ -8700,7 +8700,7 @@ body { touch-action:pan-x pan-y; -webkit-text-size-adjust:100%; padding-bottom:v
 
             const itemBox = document.createElement('div');
             itemBox.className = 'sub-memo-item memo-only-box' + (item.photo ? ' has-photo' : ' no-photo');
-            const _previewClean = sanitizeDiaryTextForDisplay(item.text||''); const previewText = (item.text || '').substring(0,20);
+            const _previewClean = sanitizeDiaryTextForDisplay(item.text||''); const previewText = (item.text || '');
             itemBox.setAttribute('data-text-preview', previewText);
             if (isReservedDate) itemBox.classList.add('is-reserved');
 
@@ -12641,6 +12641,623 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
   border-color: #e8e0e0 !important;
 }
 </style>
+
+
+<style id="v323-rose">
+/* V323 - 로즈 티저 + 팝업 컨테이너만 로즈, 내부는 JS로 글자색 수정 */
+.fortune-teaser {
+  background: linear-gradient(120deg, #fff0f0 0%, #ffd6d6 55%, #ffc2c2 100%) !important;
+  color: #6b1f2a !important;
+  border: 1px solid #f0c0c0 !important;
+  box-shadow: 0 2px 10px rgba(224,109,109,0.18) !important;
+}
+.fortune-teaser .ft-text { color: #6b1f2a !important; font-weight:700 !important; }
+.fortune-teaser .ft-sub { color: #8a4a55 !important; }
+.fortune-teaser .ft-arrow { color: #b55a6a !important; }
+
+.fortune-popup-card,
+.saju-detail-card {
+  background: #ffffff !important;
+  color: #333 !important;
+  border: 1px solid #f0d0d0 !important;
+}
+.fortune-popup-close {
+  background: rgba(224,109,109,0.15) !important;
+  color: #6b1f2a !important;
+}
+</style>
+<script id="v323-fix">
+// V323: 원본 openFortunePopup 그대로 쓰고, 렌더 후 글자색만 로즈 라이트로 변환
+(function(){
+  const orig = window.openFortunePopup;
+  if(!orig || orig._v323) return;
+
+  function fixColors(){
+    const body = document.getElementById('fortune-popup-body');
+    if(!body) return;
+    // 모든 div, span
+    body.querySelectorAll('div, span').forEach(el=>{
+      const st = el.getAttribute('style') || '';
+      // 배경이 흰 반투명 -> 연핑크로
+      if(st.includes('rgba(255,255,255,0.07)') || st.includes('rgba(255,255,255,0.06)') || st.includes('rgba(255,255,255,0.08)')){
+        el.style.background = '#fff5f5';
+        el.style.border = '1px solid #ffe0e0';
+      }
+      if(st.includes('rgba(255,255,255,0.12)')){
+        el.style.background = '#fff0f0';
+      }
+      // 글자색 흰색 -> 진회색
+      if(st.includes('color:#fff') || st.includes('color: #fff') || st.includes('color:#F2EFFF') || st.includes('color: #F2EFFF') || st.includes('rgba(255,255,255,0.85)') || st.includes('rgba(255,255,255,0.8)') || st.includes('color:rgba(255,255,255')){
+        // 그라데이션 헤더 안의 흰 글자는 유지
+        if(el.closest('.fp-hero')) return;
+        el.style.color = '#333';
+      }
+      if(st.includes('color:rgba(255,255,255,0.5)') || st.includes('color: rgba(255,255,255,0.5)')){
+        el.style.color = '#888';
+      }
+      if(st.includes('color:rgba(255,255,255,0.45)') || st.includes('color: rgba(255,255,255,0.45)')){
+        el.style.color = '#999';
+      }
+      if(st.includes('color:#FFE9C2') || st.includes('color: #FFE9C2')){
+        el.style.color = '#6b1f2a';
+      }
+      if(st.includes('color:#FFD98E')){
+        // 점수 색은 로즈로
+        if(el.textContent && el.textContent.includes('/100') === false && !isNaN(parseInt(el.textContent)) === false){
+          // keep gold for score? change to rose
+          el.style.color = '#e06d6d';
+        }
+      }
+    });
+    // 종료 버튼들
+    body.querySelectorAll('button').forEach(btn=>{
+      const t = btn.textContent || '';
+      if(t.includes('종료')){
+        btn.style.background = '#f5f5f5';
+        btn.style.color = '#666';
+        btn.style.border = '1px solid #e0e0e0';
+      }
+      if(t.includes('로또')){
+        btn.style.background = 'linear-gradient(120deg, #e06d6d, #d45a7a)';
+        btn.style.color = 'white';
+      }
+    });
+  }
+
+  window.openFortunePopup = function(){
+    const r = orig.apply(this, arguments);
+    setTimeout(fixColors, 50);
+    setTimeout(fixColors, 300);
+    setTimeout(fixColors, 800);
+    return r;
+  };
+  window.openFortunePopup._v323 = true;
+  window.openFortunePopup._orig = orig;
+  console.log('V323 rose fix applied - original fortune kept');
+})();
+</script>
+
+
+<style id="v324-fixes">
+/* V324: 운세폼 상단 바로 밑 글씨 흰색 문제 + 종료 박스 사각/라운드 어색함 수정 */
+
+/* 1. 맨 위 히어로 바로 밑 글씨가 흰색이라 안보이는 문제 - 히어로 내부 흰 글자는 유지, 히어로 밖 첫 섹션 글자는 진하게 */
+.fp-hero + div,
+#fortune-popup-body > div:nth-child(2) {
+  color: #333 !important;
+}
+.fp-hero + div * {
+  color: #333 !important;
+}
+
+/* 2. 종료 박스 - 사각 컨테이너에 둥근 버튼 어색함 해결 */
+/* 스티키 컨테이너 자체를 둥글게 + 패딩 */
+.fp-exit-sticky,
+.sd-exit-sticky {
+  background: #ffffff !important;
+  border-top: 1px solid #f0e0e0 !important;
+  border-radius: 0 0 22px 22px !important; /* 팝업 카드 하단 라운드와 동일 */
+  padding: 12px 16px !important;
+  margin: 0 -20px -20px -20px !important; /* 카드 패딩 밖까지 채우기 */
+  width: calc(100% + 40px) !important;
+  box-sizing: border-box !important;
+}
+
+/* 종료 버튼 - 컨테이너와 어울리게, 라운드 일관되게, 색상 로즈 톤으로 통일 */
+.fp-exit-sticky button,
+.sd-exit-sticky button {
+  background: #f5f5f5 !important;
+  color: #666 !important;
+  border: 1px solid #e0e0e0 !important;
+  border-radius: 12px !important; /* 둥글지만 컨테이너 라운드와 조화 */
+  padding: 14px !important;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  width: 100% !important;
+  transition: all 0.2s !important;
+}
+.fp-exit-sticky button:hover,
+.sd-exit-sticky button:hover {
+  background: #ffe0e0 !important;
+  border-color: #f0c0c0 !important;
+  color: #6b1f2a !important;
+}
+
+/* 로또 버튼 위 종료 버튼이 있는 경우 - 로또 버튼과 종료 버튼 간격 */
+#fortune-popup-body > div:last-child button {
+  border-radius: 12px !important;
+}
+
+/* 팝업 카드 자체 하단 패딩 제거 (스티키가 채우도록) */
+.fortune-popup-card,
+.saju-detail-card {
+  padding-bottom: 0 !important;
+  overflow: hidden !important; /* 라운드 유지 */
+}
+#fortune-popup-body {
+  padding-bottom: 16px !important;
+}
+
+/* 히어로 바로 아래 첫 카드가 흰색 배경에서 흰 글자면 진회색으로 */
+#fortune-popup-body .fp-hero {
+  background: linear-gradient(120deg, #e06d6d, #d45a7a) !important;
+  color: white !important;
+  border-radius: 16px !important;
+}
+#fortune-popup-body .fp-hero * {
+  color: white !important;
+}
+/* 히어로 제외 모든 흰 글자 강제 수정 - 더 강력하게 */
+#fortune-popup-body div[style*="color:#fff"],
+#fortune-popup-body div[style*="color: #fff"],
+#fortune-popup-body div[style*="color:#F2EFFF"],
+#fortune-popup-body div[style*="color: #F2EFFF"],
+#fortune-popup-body div[style*="color:rgba(255,255,255,0.85)"],
+#fortune-popup-body div[style*="color: rgba(255,255,255,0.85)"],
+#fortune-popup-body div[style*="color:rgba(255,255,255,0.8)"] {
+  color: #333 !important;
+}
+/* 히어로 내부 제외 */
+#fortune-popup-body .fp-hero div[style*="color:#fff"],
+#fortune-popup-body .fp-hero div[style*="color: #fff"] {
+  color: white !important;
+}
+</style>
+<script id="v324-js">
+// V324 추가 색상 보정
+(function(){
+  function fixV324(){
+    const body = document.getElementById('fortune-popup-body');
+    if(!body) return;
+    
+    // 히어로 바로 다음 요소들의 흰 글자 수정
+    const hero = body.querySelector('.fp-hero');
+    if(hero){
+      let next = hero.nextElementSibling;
+      let count = 0;
+      while(next && count < 5){
+        if(next.querySelectorAll){
+          next.querySelectorAll('*').forEach(el=>{
+            const style = el.getAttribute('style') || '';
+            if(style.includes('color:#fff') || style.includes('color: #fff') || style.includes('color:rgba(255,255,255,0.85)')){
+              if(!el.closest('.fp-hero')){
+                el.style.color = '#333';
+              }
+            }
+          });
+        }
+        next = next.nextElementSibling;
+        count++;
+      }
+    }
+    
+    // 종료 박스 스타일 강제
+    document.querySelectorAll('.fp-exit-sticky, .sd-exit-sticky').forEach(box=>{
+      box.style.borderRadius = '0 0 22px 22px';
+      box.style.background = '#ffffff';
+      box.style.borderTop = '1px solid #f0e0e0';
+    });
+  }
+  
+  const orig = window.openFortunePopup;
+  if(orig && !orig._v324){
+    window.openFortunePopup = function(){
+      const r = orig.apply(this, arguments);
+      setTimeout(fixV324, 100);
+      setTimeout(fixV324, 500);
+      return r;
+    };
+    window.openFortunePopup._v324 = true;
+  }
+  setInterval(fixV324, 1500);
+})();
+</script>
+
+
+<style id="v325-fixes">
+/* V325: 원 색상 강화 + 생략 제거 */
+#fortune-popup-body svg circle:nth-child(2) {
+  stroke-width: 8px !important;
+}
+</style>
+<script id="v325-js">
+(function(){
+  function fixV325(){
+    const body = document.getElementById('fortune-popup-body');
+    if(!body) return;
+    body.querySelectorAll('svg').forEach(svg=>{
+      if(!svg.querySelector('#gradScoreStrong')){
+        let defs = svg.querySelector('defs');
+        if(!defs){
+          defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+          svg.appendChild(defs);
+        }
+        const grad = document.createElementNS('http://www.w3.org/2000/svg','linearGradient');
+        grad.setAttribute('id','gradScoreStrong');
+        grad.setAttribute('x1','0%'); grad.setAttribute('y1','0%');
+        grad.setAttribute('x2','100%'); grad.setAttribute('y2','100%');
+        const stop1 = document.createElementNS('http://www.w3.org/2000/svg','stop');
+        stop1.setAttribute('offset','0%'); stop1.setAttribute('stop-color','#c0392b');
+        const stop2 = document.createElementNS('http://www.w3.org/2000/svg','stop');
+        stop2.setAttribute('offset','100%'); stop2.setAttribute('stop-color','#7a0000');
+        grad.appendChild(stop1); grad.appendChild(stop2);
+        defs.appendChild(grad);
+        const circles = svg.querySelectorAll('circle');
+        if(circles.length >= 2){
+          circles[1].setAttribute('stroke','url(#gradScoreStrong)');
+          circles[1].setAttribute('stroke-width','8');
+        }
+      }
+      // 점수 숫자 색상 강화
+      svg.parentElement.querySelectorAll('div').forEach(d=>{
+        if(d.textContent && /^\d+$/.test(d.textContent.trim()) && parseInt(d.textContent) <= 100){
+          if(d.style.fontSize && d.style.fontSize.includes('24px')){
+            d.style.color = '#7a0000';
+            d.style.fontWeight = '900';
+          }
+        }
+      });
+    });
+    // 생략 .. 제거 및 전체 표시
+    body.querySelectorAll('div').forEach(div=>{
+      const style = div.getAttribute('style') || '';
+      if(style.includes('font-size:12.5px') || style.includes('font-size:13px') || style.includes('font-size:13.5px')){
+        div.style.whiteSpace = 'normal';
+        div.style.overflow = 'visible';
+        div.style.display = 'block';
+        div.style.height = 'auto';
+        div.style.webkitLineClamp = 'unset';
+        // 텍스트 끝에 .. 있으면 제거
+        if(div.textContent.trim().endsWith('..')){
+          // 실제 잘린 텍스트는 JS 변수에서 잘린거라 복구 불가, 하지만 .. 표시만 제거
+          div.textContent = div.textContent.replace(/\.\.\s*$/, '');
+        }
+      }
+    });
+  }
+  const orig = window.openFortunePopup;
+  if(orig && !orig._v325){
+    window.openFortunePopup = function(){
+      const r = orig.apply(this, arguments);
+      setTimeout(fixV325, 100);
+      setTimeout(fixV325, 500);
+      setTimeout(fixV325, 1000);
+      return r;
+    };
+    window.openFortunePopup._v325 = true;
+  }
+})();
+</script>
+
+
+<style id="v326-scroll-fix">
+/* V326: 총운 박스 잘림 + 스크롤 종료에 가려짐 수정 */
+
+/* 팝업 카드 - flex 구조로 스크롤 영역 분리 */
+.fortune-popup-card {
+  display: flex !important;
+  flex-direction: column !important;
+  max-height: 90vh !important;
+  overflow: hidden !important;
+  padding-bottom: 0 !important;
+}
+
+/* 바디 - 스크롤 가능한 영역, 하단에 종료 버튼 공간 확보 */
+#fortune-popup-body {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding-bottom: 80px !important; /* 종료 버튼에 가려지지 않게 80px 확보 */
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* 총운 박스 - 높이 제한 해제, 전체 내용 보이게 */
+#fortune-popup-body div[style*="background:#ffffff"][style*="border:1px solid #f0d0d0"],
+#fortune-popup-body div[style*="background:#fff5f5"],
+#fortune-popup-body div[style*="background:#fffaf5"],
+#fortune-popup-body div[style*="background:#fff5f8"] {
+  height: auto !important;
+  min-height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+  white-space: normal !important;
+  word-break: keep-all !important;
+  line-height: 1.7 !important;
+  display: block !important;
+}
+
+/* 총운 텍스트 - 줄바꿈, 생략 해제 */
+#fortune-popup-body div[style*="font-size:13px"][style*="line-height:1.5"],
+#fortune-popup-body div[style*="font-size:12.5px"][style*="line-height:1.4"],
+#fortune-popup-body div[style*="font-size:13.5px"] {
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  display: block !important;
+  -webkit-line-clamp: unset !important;
+  max-height: none !important;
+  height: auto !important;
+}
+
+/* 종료 버튼 영역 - 스크롤 가리지 않게 고정, 배경 확실히 */
+.fp-exit-sticky {
+  position: sticky !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  background: #ffffff !important;
+  border-top: 1px solid #f0e0e0 !important;
+  padding: 12px 16px 16px 16px !important;
+  margin: 0 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  z-index: 10 !important;
+  border-radius: 0 0 22px 22px !important;
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.05) !important;
+}
+
+/* 내부 그리드 간격 */
+#fortune-popup-body > div {
+  flex-shrink: 0 !important;
+}
+</style>
+<script id="v326-js">
+(function(){
+  function fixV326(){
+    const body = document.getElementById('fortune-popup-body');
+    const card = document.querySelector('.fortune-popup-card');
+    if(!body || !card) return;
+    
+    // 카드 flex 구조 강제
+    card.style.display = 'flex';
+    card.style.flexDirection = 'column';
+    card.style.maxHeight = '90vh';
+    card.style.overflow = 'hidden';
+    
+    // 바디 스크롤 + 하단 여백
+    body.style.flex = '1';
+    body.style.overflowY = 'auto';
+    body.style.paddingBottom = '90px';
+    
+    // 총운 박스들 높이 자동
+    body.querySelectorAll('div').forEach(div=>{
+      const st = div.getAttribute('style') || '';
+      if(st.includes('background:#ffffff') || st.includes('background:#fff5f5') || st.includes('background:#fffaf5') || st.includes('background:#fff5f8')){
+        div.style.height = 'auto';
+        div.style.maxHeight = 'none';
+        div.style.minHeight = 'auto';
+        div.style.overflow = 'visible';
+      }
+      // 텍스트 잘림 해제
+      if(st.includes('font-size:13px') || st.includes('font-size:12.5px') || st.includes('font-size:13.5px')){
+        if(st.includes('line-height')){
+          div.style.whiteSpace = 'normal';
+          div.style.overflow = 'visible';
+          div.style.height = 'auto';
+          div.style.maxHeight = 'none';
+          div.style.display = 'block';
+        }
+      }
+    });
+    
+    // 종료 버튼 영역
+    const exit = body.querySelector('.fp-exit-sticky') || document.querySelector('.fp-exit-sticky');
+    if(exit){
+      exit.style.position = 'sticky';
+      exit.style.bottom = '0';
+      exit.style.background = '#ffffff';
+      exit.style.paddingBottom = '16px';
+      exit.style.zIndex = '10';
+    }
+  }
+  
+  const orig = window.openFortunePopup;
+  if(orig && !orig._v326){
+    window.openFortunePopup = function(){
+      const r = orig.apply(this, arguments);
+      setTimeout(fixV326, 50);
+      setTimeout(fixV326, 300);
+      setTimeout(fixV326, 800);
+      return r;
+    };
+    window.openFortunePopup._v326 = true;
+  }
+  setInterval(fixV326, 2000);
+})();
+</script>
+
+
+<style id="v327-fixes">
+/* V327: 3가지 문제 해결 */
+
+/* 1) 맨 위 라운드 배경과 글씨 너무 약함 -> 더 진하고 강하게 */
+.fp-hero,
+#fortune-popup-body > div:first-child {
+  background: linear-gradient(135deg, #b71c1c 0%, #8b0000 50%, #6a0000 100%) !important;
+  color: white !important;
+  border: 2px solid #8b0000 !important;
+  box-shadow: 0 4px 16px rgba(139,0,0,0.3) !important;
+}
+.fp-hero div,
+#fortune-popup-body > div:first-child div {
+  color: white !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3) !important;
+}
+.fp-hero div[style*="font-size:19px"],
+#fortune-popup-body > div:first-child div[style*="font-size:19px"] {
+  font-size: 20px !important;
+  font-weight: 900 !important;
+  line-height: 1.4 !important;
+  letter-spacing: -0.02em !important;
+}
+.fp-hero div[style*="background:rgba(255,255,255,0.25)"] {
+  background: rgba(255,255,255,0.35) !important;
+  border: 1px solid rgba(255,255,255,0.5) !important;
+  font-weight: 800 !important;
+  font-size: 13px !important;
+  padding: 6px 12px !important;
+}
+
+/* 2) 나의 사주풀이 버튼 흰색이라 안보임 -> 진한 색으로 */
+#fortune-popup-body div[onclick="openSajuDetailModal()"],
+#fortune-popup-body .fp-my-saju-link-big {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #8b0000 !important;
+  border: 2px solid #c0392b !important;
+  font-weight: 800 !important;
+  font-size: 14px !important;
+  text-shadow: none !important;
+  box-shadow: 0 2px 8px rgba(192,57,43,0.15) !important;
+}
+#fortune-popup-body div[onclick="openSajuDetailModal()"]:hover {
+  background: #fff5f5 !important;
+  border-color: #8b0000 !important;
+}
+
+/* 버킷 리스트 버튼도 같이 강화 */
+#fortune-popup-body div[onclick="openBucketListModal()"] {
+  background: linear-gradient(135deg, #ffe0e0, #ffc2c2) !important;
+  color: #6a0000 !important;
+  border: 2px solid #e06d6d !important;
+  font-weight: 800 !important;
+  font-size: 14px !important;
+}
+
+/* 3) 총운 박스 작아서 내용 줄여져 보임 -> 완전히 풀기 */
+#fortune-popup-body > div:nth-child(3) > div:first-child,
+#fortune-popup-body div[style*="background:#ffffff"][style*="border:1px solid #f0d0d0"] {
+  min-height: 120px !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+  padding: 16px !important;
+}
+#fortune-popup-body > div:nth-child(3) > div:first-child div:last-child,
+#fortune-popup-body div[style*="background:#ffffff"] div[style*="font-size:13px"] {
+  white-space: normal !important;
+  word-break: keep-all !important;
+  line-height: 1.8 !important;
+  font-size: 14px !important;
+  overflow: visible !important;
+  display: block !important;
+  max-height: none !important;
+  height: auto !important;
+  -webkit-line-clamp: unset !important;
+  text-overflow: clip !important;
+}
+
+/* 재물운 애정운도 높이 자동 */
+#fortune-popup-body div[style*="background:#fffaf5"],
+#fortune-popup-body div[style*="background:#fff5f8"] {
+  height: auto !important;
+  min-height: 100px !important;
+  max-height: none !important;
+  padding: 14px !important;
+}
+</style>
+<script id="v327-js">
+(function(){
+  function fixV327(){
+    const body = document.getElementById('fortune-popup-body');
+    if(!body) return;
+    
+    // 1) 맨 위 라운드 강화
+    const hero = body.querySelector('div:first-child');
+    if(hero){
+      hero.style.background = 'linear-gradient(135deg, #b71c1c 0%, #8b0000 50%, #6a0000 100%)';
+      hero.style.border = '2px solid #8b0000';
+      hero.style.boxShadow = '0 4px 16px rgba(139,0,0,0.3)';
+      hero.querySelectorAll('div').forEach(d=>{
+        d.style.color = 'white';
+        d.style.textShadow = '0 1px 2px rgba(0,0,0,0.3)';
+      });
+      // 한줄 문구 더 굵게
+      body.querySelectorAll('div').forEach(d=>{
+        const st = d.getAttribute('style') || '';
+        if(st.includes('font-size:19px')){
+          d.style.fontSize = '20px';
+          d.style.fontWeight = '900';
+        }
+      });
+    }
+    
+    // 2) 나의 사주풀이 버튼
+    const sajuBtn = body.querySelector('div[onclick="openSajuDetailModal()"]');
+    if(sajuBtn){
+      sajuBtn.style.background = '#ffffff';
+      sajuBtn.style.color = '#8b0000';
+      sajuBtn.style.border = '2px solid #c0392b';
+      sajuBtn.style.fontWeight = '800';
+      sajuBtn.style.fontSize = '14px';
+      sajuBtn.style.boxShadow = '0 2px 8px rgba(192,57,43,0.15)';
+    }
+    const bucketBtn = body.querySelector('div[onclick="openBucketListModal()"]');
+    if(bucketBtn){
+      bucketBtn.style.background = 'linear-gradient(135deg, #ffe0e0, #ffc2c2)';
+      bucketBtn.style.color = '#6a0000';
+      bucketBtn.style.border = '2px solid #e06d6d';
+      bucketBtn.style.fontWeight = '800';
+    }
+    
+    // 3) 총운 박스 높이 자동 및 전체 텍스트
+    body.querySelectorAll('div').forEach(div=>{
+      const st = div.getAttribute('style') || '';
+      const txt = div.textContent || '';
+      // 총운, 재물운, 애정운 내용 div
+      if((st.includes('font-size:13px') || st.includes('font-size:14px') || st.includes('font-size:12.5px')) && st.includes('line-height')){
+        div.style.whiteSpace = 'normal';
+        div.style.wordBreak = 'keep-all';
+        div.style.lineHeight = '1.8';
+        div.style.height = 'auto';
+        div.style.maxHeight = 'none';
+        div.style.overflow = 'visible';
+        div.style.display = 'block';
+      }
+      // 카드 컨테이너
+      if(st.includes('background:#ffffff') && st.includes('border:1px solid #f0d0d0')){
+        div.style.minHeight = '120px';
+        div.style.height = 'auto';
+        div.style.maxHeight = 'none';
+        div.style.padding = '16px';
+      }
+    });
+  }
+  
+  const orig = window.openFortunePopup;
+  if(orig && !orig._v327){
+    window.openFortunePopup = function(){
+      const r = orig.apply(this, arguments);
+      setTimeout(fixV327, 50);
+      setTimeout(fixV327, 300);
+      setTimeout(fixV327, 800);
+      return r;
+    };
+    window.openFortunePopup._v327 = true;
+  }
+  setInterval(fixV327, 2000);
+})();
+</script>
 
 </body>
 </html>
