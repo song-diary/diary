@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 다이어리&가계부 V301-AJ 최종 깔끔 - 싱글클릭+자연스러운+성능 - Swing2App+NodeAPK 통합 최종</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 다이어리&가계부 V301-AK 오늘운세자동+맨밑고정종료 - Swing2App+NodeAPK 통합 최종</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -3002,7 +3002,7 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
 
 
 <style id="v301h-final-core">
-/* V301-AJ 최종 깔끔 - 싱글클릭+자연스러운+성능 Core - 전체 통합 */
+/* V301-AK 오늘운세자동+맨밑고정종료 Core - 전체 통합 */
 :root { --safe-bottom: env(safe-area-inset-bottom, 0px); }
 
 /* 달력 */
@@ -10336,7 +10336,7 @@ async function showPhotosForDate(dateStr){
 
 
 <script>
-// V301-AJ 최종 깔끔 - 싱글클릭+자연스러운+성능 Core - Swing2App(1차) + Node.js APK(2차) 통합 안정화 - 뒤로가기 제외
+// V301-AK 오늘운세자동+맨밑고정종료 Core - Swing2App(1차) + Node.js APK(2차) 통합 안정화 - 뒤로가기 제외
 (function(){
   console.log('[V301-H] Final Core 시작 - 뒤로가기 제외');
 
@@ -12020,6 +12020,158 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
   setTimeout(setupSimpleZoom, 500);
 
   console.log('[V301-AJ] 완료 - 싱글클릭만, 핀치는 브라우저 기본');
+})();
+</script>
+
+
+<style id="v301ak-two-features">
+/* 2) 사진/메모 확대보기 맨 밑 고정 종료버튼 */
+#photo-lightbox-fixed-close {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  max-width: 520px !important;
+  margin: 0 auto !important;
+  background: rgba(255,255,255,0.97) !important;
+  backdrop-filter: blur(12px) !important;
+  border-top: 1px solid rgba(0,0,0,0.08) !important;
+  padding: 12px 16px !important;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom)) !important;
+  z-index: 2001 !important;
+  display: none !important;
+  box-sizing: border-box !important;
+}
+#photo-lightbox-overlay.active #photo-lightbox-fixed-close {
+  display: block !important;
+}
+#photo-lightbox-overlay.no-photo #photo-lightbox-fixed-close {
+  background: #fff !important;
+  border-top: 1px solid rgba(0,0,0,0.06) !important;
+}
+#photo-lightbox-fixed-close button {
+  width: 100% !important;
+  padding: 14px !important;
+  border-radius: 12px !important;
+  border: none !important;
+  background: #1A1A1A !important;
+  color: #fff !important;
+  font-weight: 800 !important;
+  font-size: 15px !important;
+  letter-spacing: 0.3px !important;
+}
+#photo-lightbox-overlay.no-photo #photo-lightbox-fixed-close button {
+  background: #2A241C !important;
+}
+#photo-lightbox-content {
+  padding-bottom: 80px !important;
+}
+</style>
+
+<div id="photo-lightbox-fixed-close" onclick="event.stopPropagation()">
+  <button onclick="closePhotoLightbox(event)">종료</button>
+</div>
+
+<script>
+// V301-AK 1) 하루 처음 앱 시작시 오늘의 운세로 오픈 2) 맨 밑 고정 종료
+(function(){
+  console.log('[V301-AK] 2가지 기능 시작');
+
+  // === 1) 오늘의 운세 자동 오픈 - V301-U 차단 해제 ===
+  // 기존 차단 함수들 무력화
+  // maybeAutoShowFortunePopup을 다시 살림
+  function getTodayStr(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+
+  function restoreFortuneAuto(){
+    // V301-H, V301-U 래퍼 제거하고 원본 복구 시도
+    // 가장 최신 원본을 다시 정의
+    window.maybeAutoShowFortunePopup = function(){
+      try{
+        const autoSetting = localStorage.getItem('smartDiaryFortuneAuto');
+        const autoEnabled = autoSetting === null ? true : autoSetting !== '0'; // 기본 ON
+        if(!autoEnabled){ console.log('[V301-AK] 운세 자동 꺼짐'); return; }
+        const showFortune = (typeof getShowFortune==='function') ? getShowFortune() : true;
+        if(!showFortune) return;
+        // 생년월일 체크
+        let hasBirth=false;
+        try{
+          const bi = (typeof sajuBirthInfo!=='undefined') ? sajuBirthInfo : JSON.parse(localStorage.getItem('smartDiarySajuBirth')||'null');
+          hasBirth = !!(bi && bi.date);
+        }catch(e){ hasBirth=false; }
+        if(!hasBirth){ console.log('[V301-AK] 생년월일 없음 - 운세 자동 스킵'); return; }
+
+        const lastShown = localStorage.getItem('smartDiarySajuLastShown');
+        const today = getTodayStr();
+        const urlParams = new URLSearchParams(window.location.search);
+        const forceOpen = urlParams.get('autobrief')==='1';
+
+        if(!forceOpen && lastShown===today){
+          console.log('[V301-AK] 오늘 이미 봤음 - 스킵');
+          return;
+        }
+        console.log('[V301-AK] 오늘 첫 시작 - 운세 자동 오픈!');
+        if(typeof openFortunePopup==='function'){
+          // 약간의 딜레이 후 오픈 (앱 로딩 후)
+          setTimeout(()=>{ openFortunePopup(); }, 900);
+        }
+      }catch(e){ console.error(e); }
+    };
+
+    // openFortunePopup의 차단 래퍼도 제거 - 원본이 있으면 그대로 사용, 없으면 새로 래핑 안 함
+    // V301-H에서 걸어둔 userClickedFortune 체크 제거
+    // openFortunePopup이 래핑되어 있으면, 내부 _orig가 있다면 복구
+    // 강제로 깔끔한 버전으로 재정의 시도
+    if(window.openFortunePopup && window.openFortunePopup._orig){
+      // 만약 _orig가 있으면 원본으로 복구
+      try{ window.openFortunePopup = window.openFortunePopup._orig; }catch(e){}
+    }
+  }
+
+  restoreFortuneAuto();
+
+  // 앱 시작시 1초 후 자동 체크 (DOMContentLoaded 이후)
+  document.addEventListener('DOMContentLoaded', function(){
+    setTimeout(()=>{
+      console.log('[V301-AK] 앱 시작 - 운세 자동 체크');
+      if(typeof sajuRecomputeFromBirthInfo==='function'){
+        try{ sajuRecomputeFromBirthInfo(); }catch(e){}
+      }
+      if(typeof updateFortuneTeaser==='function'){
+        try{ updateFortuneTeaser(); }catch(e){}
+      }
+      if(typeof window.maybeAutoShowFortunePopup==='function'){
+        window.maybeAutoShowFortunePopup();
+      }
+    }, 1200);
+  });
+
+  // 혹시 load 이벤트로 한 번 더
+  window.addEventListener('load', function(){
+    setTimeout(()=>{
+      if(typeof window.maybeAutoShowFortunePopup==='function'){
+        const lastShown = localStorage.getItem('smartDiarySajuLastShown');
+        if(lastShown !== getTodayStr()){
+          window.maybeAutoShowFortunePopup();
+        }
+      }
+    }, 1500);
+  });
+
+  // === 2) 맨 밑 고정 종료 버튼 - overlay에 붙이기 ===
+  function attachFixedClose(){
+    const overlay=document.getElementById('photo-lightbox-overlay');
+    const fixedBtn=document.getElementById('photo-lightbox-fixed-close');
+    if(!overlay || !fixedBtn) return;
+    // fixed 버튼을 overlay 안으로 이동 (position fixed라 바깥이어도 되지만 overlay 안이 안전)
+    if(fixedBtn.parentElement !== overlay){
+      overlay.appendChild(fixedBtn);
+    }
+  }
+  attachFixedClose();
+  setTimeout(attachFixedClose, 500);
+
+  console.log('[V301-AK] 2가지 기능 세팅 완료');
 })();
 </script>
 
