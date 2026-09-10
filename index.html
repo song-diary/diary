@@ -12177,34 +12177,38 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 
 
 <style>
-#orig-restore-btn{position:fixed !important; bottom:20px; right:20px; z-index:9999999 !important; background:#00A651; color:#fff; padding:12px 18px; border-radius:28px; font-weight:900; font-size:14px; border:none; box-shadow:0 4px 16px rgba(0,0,0,0.3); cursor:pointer; display:none;}
-#orig-restore-panel{position:fixed !important; inset:0 !important; background:rgba(0,0,0,0.85) !important; z-index:9999998 !important; display:none; overflow-y:auto; padding:20px;}
+#match-fix-btn{position:fixed !important; bottom:20px; right:20px; z-index:9999999 !important; background:#FF3B30; color:#fff; padding:12px 18px; border-radius:28px; font-weight:900; font-size:14px; border:none; box-shadow:0 4px 16px rgba(0,0,0,0.3); cursor:pointer; display:block;}
+#match-fix-panel{position:fixed !important; inset:0 !important; background:rgba(0,0,0,0.9) !important; z-index:9999998 !important; display:none; overflow-y:auto; padding:16px;}
 #photo-lightbox-fixed-close{position:fixed !important; bottom:0 !important; left:0 !important; right:0 !important; width:100% !important; max-width:520px !important; margin:0 auto !important; background:rgba(255,255,255,0.97) !important; border-top:1px solid rgba(0,0,0,0.08) !important; padding:12px 16px !important; z-index:2001 !important; display:none !important;}
 #photo-lightbox-overlay.active #photo-lightbox-fixed-close{display:block !important;}
 #photo-lightbox-fixed-close button{width:100% !important; padding:14px !important; border-radius:12px !important; border:none !important; background:#1A1A1A !important; color:#fff !important; font-weight:800 !important; font-size:15px !important;}
 .cute-box{width:100%; height:92px; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:6px; border-radius:12px; background:linear-gradient(135deg,#FFF8E8 0%,#FFE9C0 100%);}
 </style>
-<button id="orig-restore-btn" onclick="openOrigPanel()">📷 원래대로 복원</button>
-<div id="orig-restore-panel">
-  <div style="background:#fff; border-radius:16px; max-width:520px; margin:20px auto; padding:20px;">
-    <h3 style="margin-bottom:12px;">📷 원래 날짜로 복원</h3>
-    <div id="orig-restore-info" style="font-size:13px; line-height:1.6;"></div>
-    <div id="orig-restore-list" style="max-height:50vh; overflow-y:auto; margin-top:12px;"></div>
-    <button id="orig-restore-do" onclick="doOriginalRestore()" style="width:100%; padding:14px; background:#00A651; color:#fff; border:none; border-radius:12px; font-weight:900; margin-top:16px; font-size:15px;">✨ 원래 날짜에 원래 사진으로 복원하기</button>
-    <button onclick="closeOrigPanel()" style="width:100%; padding:12px; background:#eee; border:none; border-radius:12px; margin-top:8px;">닫기</button>
+<button id="match-fix-btn" onclick="openMatchPanel()">🔧 사진 매칭 복구</button>
+<div id="match-fix-panel">
+  <div style="background:#fff; border-radius:16px; max-width:560px; margin:10px auto; padding:16px;">
+    <h3 style="margin-bottom:8px;">🔧 원래대로 사진 매칭 복구</h3>
+    <div style="font-size:12px; color:#666; background:#FFF8E8; padding:10px; border-radius:8px; margin-bottom:12px;">
+      현재 상태: 윗줄 3개는 사진 키가 끊겨서 카메라 아이콘만 뜨고, 아랫줄 3개는 복구된 사진이라 보이는 상태<br>
+      이 도구가 <b>날짜 기준으로 원래 사진 찾아서 다시 연결</b>해줘요!
+    </div>
+    <div id="match-info" style="font-size:13px;"></div>
+    <div id="match-list" style="margin-top:12px;"></div>
+    <button id="match-do" onclick="doAutoMatch()" style="width:100%; padding:14px; background:#00A651; color:#fff; border:none; border-radius:12px; font-weight:900; margin-top:12px; display:none;">✨ 날짜 기준으로 자동 매칭해서 원래대로 복원</button>
+    <button onclick="closeMatchPanel()" style="width:100%; padding:12px; background:#eee; border:none; border-radius:12px; margin-top:8px;">닫기</button>
   </div>
 </div>
 <div id="photo-lightbox-fixed-close"><button onclick="closePhotoLightbox(event)">종료</button></div>
 <script>
-// V301-AL - 원래 날짜에 원래 사진 복원
-let origPhotos=[];
-function openOrigPanel(){ document.getElementById('orig-restore-panel').style.display='block'; scanOrigPhotos(); }
-function closeOrigPanel(){ document.getElementById('orig-restore-panel').style.display='none'; }
+let allRecs=[], orphanRecs=[], brokenDiaries=[];
+function openMatchPanel(){ document.getElementById('match-fix-panel').style.display='block'; scanMatch(); }
+function closeMatchPanel(){ document.getElementById('match-fix-panel').style.display='none'; }
 
-async function scanOrigPhotos(){
-  const info=document.getElementById('orig-restore-info');
-  const list=document.getElementById('orig-restore-list');
+async function scanMatch(){
+  const info=document.getElementById('match-info');
+  const list=document.getElementById('match-list');
   info.innerHTML='스캔 중...';
+  list.innerHTML='';
   try{
     const db=await openPhotoDB();
     const recs=await new Promise((res,rej)=>{
@@ -12214,85 +12218,66 @@ async function scanOrigPhotos(){
       rq.onsuccess=()=>res(rq.result||[]);
       rq.onerror=()=>rej(rq.error);
     });
-    origPhotos=recs;
+    allRecs=recs;
     const diaries=JSON.parse(localStorage.getItem('smartDiaryList')||'[]');
-    const linked=new Set(diaries.filter(d=>d.photo).map(d=>d.photo));
-    const orphan=recs.filter(r=>!linked.has(r.id));
-    info.innerHTML='폰 안 전체 사진: <b>'+recs.length+'장</b><br>일기에 연결됨: '+ (recs.length-orphan.length) +'장<br>고아(원래 일기 끊김): <b style="color:#E74C3C;">'+orphan.length+'장</b><br><br>고아 사진들은 키에 저장된 타임스탬프로 원래 날짜를 복원할 수 있어요.<br>예: photo_..._172543... → 2024-09-04 같은 날짜로 복원.';
+    const linkedKeys=new Set(diaries.filter(d=>d.photo).map(d=>d.photo));
+    const dbKeys=new Set(recs.map(r=>r.id));
+    
+    // 고장난 일기: photo 키는 있는데 DB에 없는 것
+    brokenDiaries=diaries.filter(d=>d.photo && !dbKeys.has(d.photo));
+    // 고아 사진: DB에는 있는데 일기에 연결 안 된 것
+    orphanRecs=recs.filter(r=>!linkedKeys.has(r.id));
+    
+    // 복구된 사진은 제외 (id가 restored_ 또는 orig_로 시작)
+    const realBroken=brokenDiaries.filter(d=>!d.id.startsWith('restored_') && !d.id.startsWith('orig_'));
+    
+    info.innerHTML=
+      '전체 DB 사진: <b>'+recs.length+'장</b><br>'+
+      '일기에 연결된 키: '+linkedKeys.size+'개<br>'+
+      'DB에 없는 고장난 일기: <b style="color:red;">'+brokenDiaries.length+'개</b> (카메라 아이콘 뜨는 것)<br>'+
+      '연결 안 된 고아 사진: <b style="color:orange;">'+orphanRecs.length+'장</b><br><br>'+
+      '<div style="background:#FFE8E8; padding:8px; border-radius:8px;">윗줄 3개(버스퇴근 등)는 고장난 일기 '+realBroken.length+'개에 해당해요. 이 일기들의 날짜와 비슷한 날짜의 고아 사진을 찾아서 다시 연결하면 원래대로 복원됩니다!</div>';
+    
+    // 리스트 표시
     list.innerHTML='';
-    orphan.slice().reverse().slice(0,20).forEach(r=>{
-      let dateStr='날짜 미상';
-      try{
-        const parts=r.id.split('_');
-        let ts=null;
-        for(let i=parts.length-1;i>=0;i--){ const n=parseInt(parts[i]); if(n>1000000000000){ ts=n; break; } }
-        if(ts){ const d=new Date(ts); dateStr=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
-      }catch(e){}
-      const src=r.data||r.dataUrl;
+    realBroken.slice(0,10).forEach(d=>{
       const div=document.createElement('div');
-      div.style.cssText='display:flex; gap:8px; align-items:center; background:#f8f8f8; border-radius:10px; padding:8px; margin-bottom:8px;';
-      div.innerHTML='<img src="'+src+'" style="width:60px; height:60px; object-fit:cover; border-radius:8px;"><div style="flex:1; font-size:11px;"><div style="font-weight:800;">'+dateStr+'</div><div style="color:#888; word-break:break-all;">'+r.id.substring(0,40)+'</div></div>';
+      div.style.cssText='background:#FFF0F0; border-radius:10px; padding:10px; margin-bottom:8px; border:1px solid #FFCCCC;';
+      // 이 일기 날짜와 비슷한 고아 사진 찾기
+      let candidates=orphanRecs.filter(r=>{
+        try{
+          const parts=r.id.split('_');
+          let ts=null;
+          for(let i=parts.length-1;i>=0;i--){ const n=parseInt(parts[i]); if(n>1000000000000){ ts=n; break; } }
+          if(!ts) return false;
+          const pd=new Date(ts);
+          const pdStr=pd.getFullYear()+'-'+String(pd.getMonth()+1).padStart(2,'0')+'-'+String(pd.getDate()).padStart(2,'0');
+          return pdStr===d.date;
+        }catch(e){ return false; }
+      });
+      let candHtml='';
+      if(candidates.length>0){
+        candHtml=candidates.slice(0,3).map(r=>{
+          const src=r.data||r.dataUrl;
+          return '<div style="display:inline-block; margin:4px;"><img src="'+src+'" style="width:70px; height:70px; object-fit:cover; border-radius:6px; border:2px solid #00A651;"><div style="font-size:9px;">'+r.id.substring(0,20)+'</div></div>';
+        }).join('');
+      } else {
+        candHtml='<span style="font-size:11px; color:#888;">같은 날짜 고아 사진 없음 - 가장 가까운 날짜 사진으로 매칭 시도</span>';
+      }
+      div.innerHTML='<div style="font-weight:800; font-size:13px;">'+d.date+' - '+(d.text?d.text.substring(0,20):'')+' (키: '+d.photo.substring(0,30)+'...)</div><div style="font-size:11px; color:#666;">고장난 키: '+d.photo+'</div><div style="margin-top:6px;">후보 고아 사진:<br>'+candHtml+'</div>';
       list.appendChild(div);
     });
-    if(orphan.length>20) list.innerHTML+='<div style="text-align:center; font-size:11px; color:#888; padding:8px;">외 '+(orphan.length-20)+'장 더...</div>';
-    // 버튼 표시
-    if(orphan.length>0) document.getElementById('orig-restore-btn').style.display='block';
+    
+    if(realBroken.length>0) document.getElementById('match-do').style.display='block';
+    else document.getElementById('match-do').style.display='none';
+    
   }catch(e){ info.innerHTML='오류: '+e.message; }
 }
 
-async function doOriginalRestore(){
-  if(!confirm('고아 사진들을 원래 날짜로 복원할까요?\n원래 찍은 날짜에 사진이 다시 들어가요.\n(기존 일기는 그대로 유지, 중복 제외)')) return;
+async function doAutoMatch(){
+  if(!confirm('고장난 일기들의 사진을 원래 날짜 기준으로 자동 매칭해서 복원할까요?\n같은 날짜의 고아 사진을 찾아서 연결해줍니다.\n같은 날짜 없으면 가장 가까운 날짜 사진으로 연결합니다.')) return;
   try{
-    const diaries=JSON.parse(localStorage.getItem('smartDiaryList')||'[]');
-    const linked=new Set(diaries.filter(d=>d.photo).map(d=>d.photo));
-    const orphan=origPhotos.filter(r=>!linked.has(r.id));
-    let added=0;
-    orphan.forEach(r=>{
-      let dateStr=null;
-      try{
-        const parts=r.id.split('_');
-        let ts=null;
-        for(let i=parts.length-1;i>=0;i--){ const n=parseInt(parts[i]); if(n>1000000000000){ ts=n; break; } }
-        if(ts){ const d=new Date(ts); dateStr=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
-      }catch(e){}
-      if(!dateStr){ const d=new Date(); dateStr=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
-      // 중복 체크: 같은 날짜에 같은 사진 키가 이미 있는지
-      if(diaries.find(d=>d.photo===r.id)) return;
-      const newId='orig_'+Date.now()+'_'+Math.random().toString(36).substring(2,6)+'_'+added;
-      diaries.push({
-        id:newId,
-        date:dateStr,
-        time:'',
-        text:'[원래대로 복원] '+dateStr+' 사진',
-        photo:r.id,
-        anniversary:'',
-        health:null
-      });
-      added++;
-    });
-    localStorage.setItem('smartDiaryList', JSON.stringify(diaries));
-    // 캐시 재로딩
-    origPhotos.forEach(r=>{
-      try{ photoCache[r.id]=r.data||r.dataUrl; window.photoCache[r.id]=r.data||r.dataUrl; }catch(e){}
-    });
-    alert(added+'개 사진이 원래 날짜로 복원됐어요!\n이제 달력에서 원래 날짜에 사진이 들어가 있는 걸 확인할 수 있어요.\n필터를 "전체"로 바꿔서 확인해보세요!');
-    closeOrigPanel();
-    document.getElementById('orig-restore-btn').style.display='none';
-    if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday();
-    if(typeof renderCalendar==='function') renderCalendar();
-    // 1초 후 전체 필터로 강제 전환
-    setTimeout(()=>{
-      try{
-        if(typeof currentDiaryPeriodFilter!=='undefined'){ currentDiaryPeriodFilter='all'; localStorage.setItem('smartDiaryDiaryPeriod','all'); }
-        if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday();
-      }catch(e){}
-    }, 1000);
-  }catch(e){ alert('복원 실패: '+e.message); }
-}
-
-// 자동 스캔 - 고아 있으면 버튼 보이기
-setTimeout(async ()=>{
-  try{
+    let diaries=JSON.parse(localStorage.getItem('smartDiaryList')||'[]');
     const db=await openPhotoDB();
     const recs=await new Promise((res,rej)=>{
       const tx=db.transaction(['photos'],'readonly');
@@ -12301,18 +12286,92 @@ setTimeout(async ()=>{
       rq.onsuccess=()=>res(rq.result||[]);
       rq.onerror=()=>rej(rq.error);
     });
-    const diaries=JSON.parse(localStorage.getItem('smartDiaryList')||'[]');
-    const linked=new Set(diaries.filter(d=>d.photo).map(d=>d.photo));
-    const orphan=recs.filter(r=>!linked.has(r.id));
-    if(orphan.length>0){
-      document.getElementById('orig-restore-btn').style.display='block';
-      origPhotos=recs;
+    const dbKeys=new Set(recs.map(r=>r.id));
+    let broken=diaries.filter(d=>d.photo && !dbKeys.has(d.photo) && !d.id.startsWith('restored_') && !d.id.startsWith('orig_'));
+    const linkedKeys=new Set(diaries.filter(d=>d.photo).map(d=>d.photo));
+    let orphan=recs.filter(r=>!linkedKeys.has(r.id));
+    
+    // 타임스탬프 추출 함수
+    function getTsFromKey(key){
+      try{
+        const parts=key.split('_');
+        for(let i=parts.length-1;i>=0;i--){ const n=parseInt(parts[i]); if(n>1000000000000) return n; }
+      }catch(e){}
+      return null;
     }
-  }catch(e){}
-}, 2000);
+    
+    let fixed=0;
+    // 날짜별 고아 사진 그룹화
+    const orphanByDate={};
+    orphan.forEach(r=>{
+      const ts=getTsFromKey(r.id);
+      if(!ts) return;
+      const d=new Date(ts);
+      const ds=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      if(!orphanByDate[ds]) orphanByDate[ds]=[];
+      orphanByDate[ds].push({rec:r, ts:ts});
+    });
+    
+    for(let diary of broken){
+      const targetDate=diary.date; // YYYY-MM-DD
+      let candidates=orphanByDate[targetDate]||[];
+      let chosen=null;
+      if(candidates.length>0){
+        // 같은 날짜 중 시간 가장 가까운 것
+        candidates.sort((a,b)=>a.ts-b.ts);
+        chosen=candidates[0].rec;
+      } else {
+        // 같은 날짜 없으면 전체에서 날짜 차이 가장 적은 것
+        let bestDiff=Infinity;
+        let bestRec=null;
+        const targetTime=new Date(targetDate).getTime();
+        for(let r of orphan){
+          const ts=getTsFromKey(r.id);
+          if(!ts) continue;
+          const diff=Math.abs(ts-targetTime);
+          if(diff<bestDiff){ bestDiff=diff; bestRec=r; }
+        }
+        // 30일 이내만 매칭 (너무 먼 날짜는 제외)
+        if(bestRec && bestDiff < 30*24*60*60*1000) chosen=bestRec;
+      }
+      if(chosen){
+        console.log('[AutoMatch] 일기', diary.id, diary.date, '← 사진', chosen.id);
+        // 일기의 photo 키를 고아 사진 키로 교체
+        const idx=diaries.findIndex(d=>d.id===diary.id);
+        if(idx>=0){
+          diaries[idx].photo=chosen.id;
+          fixed++;
+          // 연결된 키셋 업데이트해서 중복 방지
+          linkedKeys.add(chosen.id);
+          // orphan 목록에서도 제거
+          orphan=orphan.filter(r=>r.id!==chosen.id);
+          // orphanByDate에서도 제거
+          for(let ds in orphanByDate){
+            orphanByDate[ds]=orphanByDate[ds].filter(x=>x.rec.id!==chosen.id);
+          }
+        }
+      }
+    }
+    
+    localStorage.setItem('smartDiaryList', JSON.stringify(diaries));
+    // 캐시 업데이트
+    recs.forEach(r=>{
+      try{ photoCache[r.id]=r.data||r.dataUrl; window.photoCache[r.id]=r.data||r.dataUrl; }catch(e){}
+    });
+    
+    alert(fixed+'개 일기의 사진이 원래 날짜 기준으로 복원됐어요!\n이제 윗줄 카메라 아이콘이 실제 사진으로 바뀔 거예요!\n창을 닫고 확인해보세요.');
+    closeMatchPanel();
+    document.getElementById('match-fix-btn').style.display='none';
+    // 재렌더
+    if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday();
+    if(typeof renderCalendar==='function') renderCalendar();
+    setTimeout(()=>{ if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday(); }, 800);
+    
+  }catch(e){ alert('실패: '+e.message); }
+}
 
-// 기존 복구 로직 - 사진 표시
-function restorePhotosAL(){
+// 기본 복구 로직
+function restoreAL(){
   try{
     const diaries=JSON.parse(localStorage.getItem('smartDiaryList')||'[]');
     document.querySelectorAll('.sub-memo-item').forEach(el=>{
@@ -12335,7 +12394,7 @@ function restorePhotosAL(){
           const topRow=el.querySelector('.item-top-row');
           if(topRow) topRow.insertAdjacentElement('afterend', wrap);
         }
-        if(!wrap.querySelector('img')){
+        if(!wrap.querySelector('img') || wrap.innerHTML.includes('로딩중') || wrap.innerHTML.includes('📷')){
           wrap.innerHTML='<img src="'+src+'" class="diary-photo" style="width:100%;border-radius:10px;max-height:320px;object-fit:contain;background:#f8f5f0;" data-key="'+diary.photo+'">';
         }
         el.classList.add('has-photo'); el.classList.remove('no-photo');
@@ -12343,24 +12402,8 @@ function restorePhotosAL(){
     });
   }catch(e){}
 }
-function addCuteAL(){
-  document.querySelectorAll('.sub-memo-item').forEach(el=>{
-    if(el.querySelector('.diary-photo-wrap')) return;
-    const hasPhoto=(()=>{
-      try{ const id=el.getAttribute('data-item-id'); const all=JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); const d=all.find(x=>x.id==id); return !!(d && d.photo); }catch(e){ return false; }
-    })();
-    if(hasPhoto) return;
-    const wrap=document.createElement('div');
-    wrap.className='diary-photo-wrap no-photo-wrap';
-    wrap.innerHTML='<div class="cute-box"><div style="font-size:34px;">🌿</div><div style="font-size:10px; color:#B89A6F; font-weight:700;">소소한 하루</div></div>';
-    const topRow=el.querySelector('.item-top-row');
-    if(topRow) topRow.insertAdjacentElement('afterend', wrap);
-  });
-}
-setTimeout(restorePhotosAL, 800);
-setTimeout(addCuteAL, 1100);
-setTimeout(restorePhotosAL, 2500);
-
+setTimeout(restoreAL, 800);
+setTimeout(restoreAL, 2000);
 const origAlert=window.alert;
 window.alert=function(msg){
   if(typeof msg==='string' && msg.indexOf('사진 데이터를 찾을 수 없습니다')>=0) return;
