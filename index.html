@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 다이어리&가계부 V301-AZ5 기존사진절대유지 - Swing2App+NodeAPK 통합 최종</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 다이어리&가계부 V301-AZ6 사진살리기최종 - Swing2App+NodeAPK 통합 최종</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -3002,7 +3002,7 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
 
 
 <style id="v301h-final-core">
-/* V301-AZ5 기존사진절대유지 Core - 전체 통합 */
+/* V301-AZ6 사진살리기최종 Core - 전체 통합 */
 :root { --safe-bottom: env(safe-area-inset-bottom, 0px); }
 
 /* 달력 */
@@ -8690,7 +8690,7 @@ body { touch-action:pan-x pan-y; -webkit-text-size-adjust:100%; padding-bottom:v
 
             const titleText = item.anniversary || '';
             const titleHTML = `<div class="photo-title-area" style="height:20px; font-size:12px; font-weight:bold; color:#9C6ADE; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; margin-bottom:4px; padding-left:6px;">${titleText ? titleText : '&nbsp;'}</div>`;
-            const emptyPhotoHTML = ''; // AZ5 이중 방지
+            const emptyPhotoHTML = ''; // AZ6
             itemBox.innerHTML = `
                 ${titleHTML}
                 ${photoHTML}${emptyPhotoHTML}
@@ -10336,7 +10336,7 @@ async function showPhotosForDate(dateStr){
 
 
 <script>
-// V301-AZ5 기존사진절대유지 Core - Swing2App(1차) + Node.js APK(2차) 통합 안정화 - 뒤로가기 제외
+// V301-AZ6 사진살리기최종 Core - Swing2App(1차) + Node.js APK(2차) 통합 안정화 - 뒤로가기 제외
 (function(){
   console.log('[V301-H] Final Core 시작 - 뒤로가기 제외');
 
@@ -12176,7 +12176,7 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 </script>
 
 
-<style id="v301az5">
+<style id="v301az6">
 #photo-lightbox-title{display:none !important;}
 #photo-lightbox-empty-art{display:none; text-align:center; padding:28px 20px 18px; background:linear-gradient(180deg,#FFFBF2 0%,#FFF6E6 100%);}
 #photo-lightbox-overlay.no-photo #photo-lightbox-empty-art{display:block !important;}
@@ -12187,9 +12187,9 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 #photo-lightbox-overlay.active #photo-lightbox-fixed-close{display:block !important;}
 #photo-lightbox-fixed-close button{width:100% !important; padding:14px !important; border-radius:12px !important; border:none !important; background:#1A1A1A !important; color:#fff !important; font-weight:800 !important; font-size:15px !important;}
 #photo-lightbox-content{padding-bottom:80px !important;}
-.cute-placeholder-box{width:100%; height:92px; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:6px; border-radius:12px; cursor:pointer;}
+.cute-placeholder-box{width:100%; height:92px; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:6px; border-radius:12px;}
 .cute-placeholder-icon{font-size:36px;}
-.cute-placeholder-label{font-size:10px; color:#B89A6F; font-weight:700; opacity:0.8;}
+.cute-placeholder-label{font-size:10px; color:#B89A6F; font-weight:700;}
 .cute-type-coffee{background:linear-gradient(135deg,#FFF8E8 0%,#FFE9C0 100%) !important;}
 .cute-type-moon{background:linear-gradient(135deg,#F0F0FF 0%,#E0E2FF 100%) !important;}
 .cute-type-leaf{background:linear-gradient(135deg,#F0FFF0 0%,#D6F0D6 100%) !important;}
@@ -12199,7 +12199,7 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 </style>
 <div id="photo-lightbox-fixed-close"><button onclick="closePhotoLightbox(event)">종료</button></div>
 <script>
-// V301-AZ5 - 기존 사진은 절대 감성으로 안 바꿈!
+// V301-AZ6 - 사진 살리기 최종 - IDB에서 직접 복구
 (function(){
   const PH=[
     {icon:'☕',label:'오늘의 이야기',bg:'coffee'},
@@ -12208,138 +12208,120 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
     {icon:'⭐',label:'반짝인 순간',bg:'star'},
     {icon:'💛',label:'따뜻한 하루',bg:'heart'},
     {icon:'📖',label:'오늘의 기록',bg:'book'},
-    {icon:'🌤️',label:'그냥 그런 날도',bg:'coffee'},
-    {icon:'✿',label:'꽃 같은 하루',bg:'leaf'},
-    {icon:'🐾',label:'귀여운 하루',bg:'book'},
-    {icon:'🍃',label:'바람처럼',bg:'leaf'},
-    {icon:'✎',label:'쓰다 보니',bg:'star'},
-    {icon:'🌸',label:'오늘도 수고했어요',bg:'heart'},
   ];
   function getPH(id){ let h=0; const s=String(id||''); for(let i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0; } return PH[Math.abs(h)%PH.length]; }
   function makeCute(id){ const ph=getPH(id); return '<div class="cute-placeholder-box cute-type-'+ph.bg+'"><div class="cute-placeholder-icon">'+ph.icon+'</div><div class="cute-placeholder-label">'+ph.label+'</div></div>'; }
 
-  window.fixBrokenImg=function(imgEl){
+  async function restoreAllPhotos(){
+    console.log('[AZ6] 사진 복구 시작');
+    let idbPhotos={};
     try{
-      const wrap=imgEl.closest('.diary-photo-wrap');
-      if(!wrap) return;
-      const item=wrap.closest('.sub-memo-item');
-      // has-photo인데 깨진 경우에만 감성으로, 아니면 유지
-      if(item && item.classList.contains('has-photo')){
-        // 진짜 깨진 사진이면 감성으로, 아니면 그대로 둠
-        // 일단 감성으로 교체하되, photo 키가 있으면 삭제하지 않음
-        const id=item.getAttribute('data-item-id')||'0';
-        wrap.innerHTML=makeCute(id);
-        item.classList.remove('has-photo'); item.classList.add('no-photo');
-      }
-    }catch(e){}
-  };
-
-  function fixList(){
-    document.querySelectorAll('.sub-memo-item').forEach(item=>{
-      // 2개 이상이면 1개만
-      const wraps=item.querySelectorAll('.diary-photo-wrap');
-      if(wraps.length>1){
-        for(let i=1;i<wraps.length;i++) wraps[i].remove();
-      }
-      const hasPhoto=item.classList.contains('has-photo') || item.getAttribute('data-has-photo')==='1';
-      const hasPhotoKey = (()=>{ try{ const id=item.getAttribute('data-item-id'); if(!id) return false; const all=(typeof getAllDiaries==='function')?getAllDiaries():[]; const it=all.find(d=>d.id==id); return !!(it && it.photo); }catch(e){ return false; } })();
-
-      let wrap=item.querySelector('.diary-photo-wrap');
-
-      if(!wrap){
-        // 사진 없는 일기면 감성 박스 추가
-        if(!hasPhoto && !hasPhotoKey){
-          if(!item.querySelector('.cute-placeholder-box')){
-            const id=item.getAttribute('data-item-id')||'0';
-            const div=document.createElement('div');
-            div.className='diary-photo-wrap no-photo-wrap';
-            div.setAttribute('data-item-id', id);
-            div.innerHTML=makeCute(id);
-            const topRow=item.querySelector('.item-top-row');
-            if(topRow) topRow.insertAdjacentElement('afterend', div);
-            else item.prepend(div);
-          }
+      const db = await (typeof openPhotoDB==='function' ? openPhotoDB() : Promise.reject('no openPhotoDB'));
+      const allRecs = await new Promise((res, rej)=>{
+        try{
+          const tx=db.transaction(['photos'], 'readonly');
+          const store=tx.objectStore('photos');
+          const req=store.getAll();
+          req.onsuccess=()=>res(req.result||[]);
+          req.onerror=()=>rej(req.error);
+        }catch(e){
+          try{
+            const tx=db.transaction(['photoStore'], 'readonly');
+            const store=tx.objectStore('photoStore');
+            const req=store.getAll();
+            req.onsuccess=()=>res(req.result||[]);
+            req.onerror=()=>rej(req.error);
+          }catch(e2){ res([]); }
         }
-        return;
-      }
+      });
+      allRecs.forEach(r=>{ if(r.id && (r.data||r.dataUrl)) idbPhotos[r.id]=r.data||r.dataUrl; });
+      console.log('[AZ6] IDB에서', Object.keys(idbPhotos).length, '장 찾음');
+      // photoCache에도 넣기
+      try{
+        Object.keys(idbPhotos).forEach(k=>{
+          if(typeof photoCache!=='undefined') photoCache[k]=idbPhotos[k];
+          if(window.photoCache) window.photoCache[k]=idbPhotos[k];
+        });
+      }catch(e){}
+    }catch(e){ console.log('[AZ6] IDB 열기 실패', e); }
 
-      // 이미 감성 박스면 유지
-      if(wrap.querySelector('.cute-placeholder-box')) return;
-      if(wrap.querySelector('video')) return;
+    // diary list에서 복구
+    try{
+      const allDiaries = (typeof getAllDiaries==='function') ? getAllDiaries() : JSON.parse(localStorage.getItem('smartDiaryList')||'[]');
+      let cacheCount=0;
+      try{ cacheCount=typeof photoCache!=='undefined'?Object.keys(photoCache).length:0; }catch(e){}
+      console.log('[AZ6] photoCache', cacheCount, '장, diaries', allDiaries.length);
 
-      const img=wrap.querySelector('img.diary-photo');
-      if(img){
-        const src=img.getAttribute('src')||'';
-        // 정상 사진이면 절대 건드리지 않음
+      document.querySelectorAll('.sub-memo-item').forEach(itemEl=>{
+        const id=itemEl.getAttribute('data-item-id');
+        if(!id) return;
+        const diary=allDiaries.find(d=>d.id==id);
+        if(!diary || !diary.photo) return; // 사진 없는 일기는 건드리지 않음
+
+        // 이미 정상 사진이면 유지
+        const existingImg=itemEl.querySelector('img.diary-photo');
+        if(existingImg && existingImg.src && existingImg.src.length>500 && existingImg.naturalWidth>0) return;
+
+        // src 찾기
+        let src='';
+        try{ if(typeof getPhotoSrc==='function') src=getPhotoSrc(diary.photo)||''; }catch(e){}
+        if(!src) src=idbPhotos[diary.photo]||'';
+        try{ if(!src && typeof photoCache!=='undefined' && photoCache[diary.photo]) src=photoCache[diary.photo]; }catch(e){}
+        try{ if(!src && window.photoCache && window.photoCache[diary.photo]) src=window.photoCache[diary.photo]; }catch(e){}
+
         if(src && src.length>500){
-          if(!img.complete) return; // 로딩중
-          if(img.naturalWidth>0) return; // 정상
-          // complete인데 width 0이면 깨진 것
-          if(img.complete && img.naturalWidth===0){
-            // has-photo인데 깨진 경우만 감성으로
-            if(hasPhoto || hasPhotoKey){
-              // 3초 기다렸다가 그래도 안되면 감성으로
-              if(!img._t){
-                img._t=true;
-                setTimeout(()=>{ if(img.naturalWidth===0) window.fixBrokenImg(img); }, 2000);
-              }
-            }
+          let wrap=itemEl.querySelector('.diary-photo-wrap');
+          if(!wrap){
+            wrap=document.createElement('div');
+            wrap.className='diary-photo-wrap';
+            wrap.setAttribute('data-photo-key', diary.photo);
+            wrap.setAttribute('data-item-id', id);
+            const topRow=itemEl.querySelector('.item-top-row');
+            if(topRow) topRow.insertAdjacentElement('afterend', wrap);
+            else itemEl.prepend(wrap);
           }
+          wrap.innerHTML='<img src="'+src+'" class="diary-photo" alt="사진" style="width:100%;border-radius:10px;max-height:320px;object-fit:contain;background:#f8f5f0;" loading="lazy">';
+          itemEl.classList.add('has-photo'); itemEl.classList.remove('no-photo');
+          console.log('[AZ6] 복구됨', id);
         }
-        if(!img.getAttribute('data-err')){
-          img.setAttribute('data-err','1');
-          img.onerror=function(){ window.fixBrokenImg(this); };
+      });
+    }catch(e){ console.log('[AZ6] 복구 에러', e); }
+  }
+
+  function fixNoPhoto(){
+    document.querySelectorAll('.sub-memo-item').forEach(itemEl=>{
+      const wraps=itemEl.querySelectorAll('.diary-photo-wrap');
+      if(wraps.length>1){ for(let i=1;i<wraps.length;i++) wraps[i].remove(); }
+      const hasPhotoKey = (()=>{
+        try{ const id=itemEl.getAttribute('data-item-id'); if(!id) return false; const all=(typeof getAllDiaries==='function')?getAllDiaries():[]; const d=all.find(x=>x.id==id); return !!(d && d.photo); }catch(e){ return false; }
+      })();
+      if(hasPhotoKey) return; // 사진 있는 건 건드리지 않음
+
+      let wrap=itemEl.querySelector('.diary-photo-wrap');
+      if(!wrap){
+        if(!itemEl.querySelector('.cute-placeholder-box')){
+          const id=itemEl.getAttribute('data-item-id')||'0';
+          const div=document.createElement('div');
+          div.className='diary-photo-wrap no-photo-wrap';
+          div.setAttribute('data-item-id', id);
+          div.innerHTML=makeCute(id);
+          const topRow=itemEl.querySelector('.item-top-row');
+          if(topRow) topRow.insertAdjacentElement('afterend', div);
         }
         return;
       }
-
-      // img 없고 회색 div만 있는 경우
-      const div=wrap.querySelector('.diary-photo');
-      if(div){
-        // has-photo인 경우 (기존 사진) -> 절대 감성으로 안 바꿈, 로딩 대기
-        if(hasPhoto || hasPhotoKey){
-          // 5초 후에도 div 그대로면, photoCache에서 src 가져와서 img로 교체 시도
-          if(!div._t){
-            div._t=true;
-            setTimeout(async ()=>{
-              try{
-                const id=item.getAttribute('data-item-id');
-                if(!id) return;
-                const all=(typeof getAllDiaries==='function')?getAllDiaries():[];
-                const it=all.find(d=>d.id==id);
-                if(!it || !it.photo) return;
-                let src='';
-                try{ if(typeof getPhotoSrc==='function') src=getPhotoSrc(it.photo)||''; }catch(e){}
-                if(!src && typeof getPhotoSrcAsyncSafe==='function'){
-                  try{ src=await getPhotoSrcAsyncSafe(it.photo); }catch(e){}
-                }
-                if(src && src.length>500){
-                  // src 찾음 -> img로 교체
-                  wrap.innerHTML='<img src="'+src+'" class="diary-photo" alt="사진" style="width:100%;border-radius:10px;" loading="lazy" onerror="fixBrokenImg(this)">';
-                }else{
-                  // 진짜 없음 -> 그때만 감성으로
-                  wrap.innerHTML=makeCute(id);
-                  item.classList.remove('has-photo'); item.classList.add('no-photo');
-                }
-              }catch(e){ console.log(e); }
-            }, 3500);
-          }
-          return;
-        }else{
-          // 사진 없는 일기의 회색 div -> 즉시 감성으로
-          const id=item.getAttribute('data-item-id')||'0';
-          wrap.innerHTML=makeCute(id);
-          item.classList.remove('has-photo'); item.classList.add('no-photo');
-        }
-      }
+      if(wrap.querySelector('.cute-placeholder-box')) return;
+      if(wrap.querySelector('img')) return;
+      // 회색 div면 감성으로
+      const id=itemEl.getAttribute('data-item-id')||'0';
+      wrap.innerHTML=makeCute(id);
     });
   }
 
-  // 알림 차단
   const origAlert=window.alert;
   window.alert=function(msg){
     if(typeof msg==='string' && msg.indexOf('사진 데이터를 찾을 수 없습니다')>=0){
-      console.log('[AZ5] 사진 없음 알림 차단');
+      console.log('[AZ6] 알림 차단');
       return;
     }
     return origAlert.apply(this, arguments);
@@ -12350,12 +12332,12 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
     const fixedBtn=document.getElementById('photo-lightbox-fixed-close');
     if(!overlay || !fixedBtn) return;
     if(fixedBtn.parentElement!==overlay) overlay.appendChild(fixedBtn);
-    if(!overlay._az5){ overlay._az5=true; overlay.addEventListener('click', function(e){ if(e.target===overlay && typeof closePhotoLightbox==='function') closePhotoLightbox(e); }); }
-    if(!window._az5Hist){
-      window._az5Hist=true;
+    if(!overlay._az6){ overlay._az6=true; overlay.addEventListener('click', function(e){ if(e.target===overlay && typeof closePhotoLightbox==='function') closePhotoLightbox(e); }); }
+    if(!window._az6Hist){
+      window._az6Hist=true;
       const wrapOpen=function(origFn){ return function(){ const r=origFn.apply(this, arguments); setTimeout(function(){ try{ history.pushState({lightbox:true}, '', location.href); }catch(e){} }, 100); setTimeout(function(){ const fb=document.getElementById('photo-lightbox-fixed-close'); if(fb) fb.style.display='block'; }, 200); return r; }; };
-      if(window.openPhotoLightbox && !window.openPhotoLightbox._az5){ const o=window.openPhotoLightbox; window.openPhotoLightbox=wrapOpen(o); window.openPhotoLightbox._az5=true; }
-      if(window.openPhotoLightboxSafe && !window.openPhotoLightboxSafe._az5){ const o=window.openPhotoLightboxSafe; window.openPhotoLightboxSafe=wrapOpen(o); window.openPhotoLightboxSafe._az5=true; }
+      if(window.openPhotoLightbox && !window.openPhotoLightbox._az6){ const o=window.openPhotoLightbox; window.openPhotoLightbox=wrapOpen(o); window.openPhotoLightbox._az6=true; }
+      if(window.openPhotoLightboxSafe && !window.openPhotoLightboxSafe._az6){ const o=window.openPhotoLightboxSafe; window.openPhotoLightboxSafe=wrapOpen(o); window.openPhotoLightboxSafe._az6=true; }
       window.addEventListener('popstate', function(){ const ov=document.getElementById('photo-lightbox-overlay'); if(ov && ov.classList.contains('active') && typeof closePhotoLightbox==='function'){ closePhotoLightbox(); const fb=document.getElementById('photo-lightbox-fixed-close'); if(fb) fb.style.display='none'; } });
     }
   }
@@ -12384,15 +12366,22 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
     if(memo) content.insertBefore(d, memo); else content.prepend(d);
   }
 
-  setInterval(fixList, 800);
+  // 실행
+  setTimeout(restoreAllPhotos, 800);
+  setTimeout(restoreAllPhotos, 2000);
+  setTimeout(restoreAllPhotos, 4000);
+  setTimeout(fixNoPhoto, 1000);
+  setInterval(fixNoPhoto, 1000);
   setInterval(fixClose, 1000);
-  setTimeout(fixList, 600);
   setTimeout(fixClose, 600);
-  setTimeout(fixList, 2000);
-  setTimeout(fixList, 4000);
+  setTimeout(injectArt, 800);
 
-  document.addEventListener('DOMContentLoaded', function(){ setTimeout(function(){ fixList(); injectArt(); fixClose(); fixedMaybe(); }, 1000); });
-  setTimeout(function(){ injectArt(); }, 1500);
+  document.addEventListener('DOMContentLoaded', function(){
+    setTimeout(()=>{ restoreAllPhotos(); fixNoPhoto(); injectArt(); fixClose(); fixedMaybe(); }, 1200);
+  });
+
+  // 전역에서 수동 복구 가능하도록
+  window.restorePhotosNow=restoreAllPhotos;
 })();
 </script>
 
