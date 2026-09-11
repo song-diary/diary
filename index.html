@@ -13572,922 +13572,191 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 </script>
 
 
-<style id="v331-outer-fix">
-/* V331: 오늘의 사주폼 외곽 검은색 보이는 문제 + 종료버튼 맨 아래 위치 */
+<style id="v336-clean-final">
+/* V336: 깔끔 최종 - 뒤 검은색, 중앙 모달, 종료버튼 폼 맨 아래 고정 */
 
-/* 오버레이 - 검은 배경이 외곽으로 비치는 문제 해결 */
-#fortune-popup-overlay {
-  background: rgba(0,0,0,0.6) !important; /* 0.85 -> 0.6으로 연하게 */
-  padding: 0 !important; /* 15px 패딩 제거 -> 외곽 검은색 안 보이게 꽉 채우기 */
-  align-items: flex-end !important; /* 아래에서 올라오는 시트 형태 */
-  justify-content: center !important;
-}
-
-/* 팝업 카드 - 바닥까지 꽉 채우고, 외곽 검은색 안 보이게 */
-.fortune-popup-card {
-  width: 100% !important;
-  max-width: 100% !important; /* 420px 제한 제거 -> 화면 꽉 채우기 */
-  max-height: 92vh !important;
-  min-height: 70vh !important;
-  margin: 0 !important;
-  border-radius: 24px 24px 0 0 !important; /* 위만 라운드, 아래는 바닥에 붙어서 검은색 안 보임 */
-  padding: 20px 20px 0 20px !important; /* 하단 패딩 0 -> 종료버튼이 맨 아래 붙게 */
-  background: #ffffff !important;
-  box-shadow: 0 -10px 40px rgba(0,0,0,0.2) !important;
-  display: flex !important;
-  flex-direction: column !important;
-  overflow: hidden !important;
-}
-
-/* 바디 - 스크롤 영역 */
-#fortune-popup-body {
-  flex: 1 !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  padding-bottom: 20px !important;
-  padding-right: 2px !important;
-}
-
-/* 종료 버튼 - 맨 아래 바닥에 붙이기 */
-.fp-exit-sticky {
-  position: sticky !important;
-  bottom: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  width: calc(100% + 40px) !important; /* 카드 패딩까지 꽉 채우기 */
-  margin: 0 -20px 0 -20px !important;
-  padding: 16px 20px 24px 20px !important; /* 아래 24px -> 맨 아래 위치 */
-  background: #ffffff !important;
-  border-top: 1px solid #f0e0e0 !important;
-  border-radius: 0 !important; /* 아래 라운드 제거 -> 바닥에 붙어서 검은색 안 보임 */
-  box-shadow: 0 -4px 20px rgba(0,0,0,0.08) !important;
-  z-index: 20 !important;
-}
-
-.fp-exit-sticky button {
-  background: #8b0000 !important;
-  color: white !important;
-  border: none !important;
-  border-radius: 12px !important;
-  padding: 16px !important;
-  font-weight: 800 !important;
-  font-size: 15px !important;
-  width: 100% !important;
-  box-shadow: 0 4px 12px rgba(139,0,0,0.3) !important;
-}
-
-/* 사주 상세도 동일하게 */
+/* 오버레이 - 원래대로, 뒤 살짝 보이고 중앙 정렬 */
+#fortune-popup-overlay,
 #saju-detail-modal-overlay {
   background: rgba(0,0,0,0.6) !important;
-  padding: 0 !important;
-  align-items: flex-end !important;
-}
-
-.saju-detail-card {
-  width: 100% !important;
-  max-width: 100% !important;
-  max-height: 92vh !important;
-  min-height: 70vh !important;
-  margin: 0 !important;
-  border-radius: 24px 24px 0 0 !important;
-  padding: 20px 20px 0 20px !important;
-  background: #ffffff !important;
-  box-shadow: 0 -10px 40px rgba(0,0,0,0.2) !important;
-  display: flex !important;
-  flex-direction: column !important;
-  overflow: hidden !important;
-}
-
-.saju-detail-card > div:first-child {
-  flex: 1 !important;
-  overflow-y: auto !important;
-  padding-bottom: 20px !important;
-}
-
-.sd-exit-sticky {
-  position: sticky !important;
-  bottom: 0 !important;
-  width: calc(100% + 40px) !important;
-  margin: 0 -20px 0 -20px !important;
-  padding: 16px 20px 24px 20px !important;
-  background: #ffffff !important;
-  border-top: 1px solid #f0e0e0 !important;
-  border-radius: 0 !important;
-  box-shadow: 0 -4px 20px rgba(0,0,0,0.08) !important;
-  z-index: 20 !important;
-}
-
-.sd-exit-sticky button {
-  background: #8b0000 !important;
-  color: white !important;
-  border: none !important;
-  border-radius: 12px !important;
   padding: 16px !important;
-  font-weight: 800 !important;
-  font-size: 15px !important;
-  width: 100% !important;
-}
-
-/* 닫기 X 버튼도 로즈로 */
-.fortune-popup-close,
-.saju-detail-close {
-  background: #fff0f0 !important;
-  color: #8b0000 !important;
-  border: 1px solid #f0c0c0 !important;
-}
-</style>
-<script id="v331-js">
-(function(){
-  function fixV331(){
-    const overlay = document.getElementById('fortune-popup-overlay');
-    const card = document.querySelector('.fortune-popup-card');
-    const body = document.getElementById('fortune-popup-body');
-    const exit = document.querySelector('.fp-exit-sticky');
-    
-    if(overlay){
-      overlay.style.background = 'rgba(0,0,0,0.6)';
-      overlay.style.padding = '0';
-      overlay.style.alignItems = 'flex-end';
-    }
-    if(card){
-      card.style.width = '100%';
-      card.style.maxWidth = '100%';
-      card.style.borderRadius = '24px 24px 0 0';
-      card.style.margin = '0';
-      card.style.paddingBottom = '0';
-    }
-    if(exit){
-      exit.style.position = 'sticky';
-      exit.style.bottom = '0';
-      exit.style.width = 'calc(100% + 40px)';
-      exit.style.margin = '0 -20px 0 -20px';
-      exit.style.padding = '16px 20px 24px 20px';
-      exit.style.borderRadius = '0';
-    }
-    
-    // 사주 상세도
-    const sajuOverlay = document.getElementById('saju-detail-modal-overlay');
-    const sajuCard = document.querySelector('.saju-detail-card');
-    const sajuExit = document.querySelector('.sd-exit-sticky');
-    if(sajuOverlay){
-      sajuOverlay.style.background = 'rgba(0,0,0,0.6)';
-      sajuOverlay.style.padding = '0';
-      sajuOverlay.style.alignItems = 'flex-end';
-    }
-    if(sajuCard){
-      sajuCard.style.width = '100%';
-      sajuCard.style.maxWidth = '100%';
-      sajuCard.style.borderRadius = '24px 24px 0 0';
-      sajuCard.style.margin = '0';
-      sajuCard.style.paddingBottom = '0';
-    }
-    if(sajuExit){
-      sajuExit.style.width = 'calc(100% + 40px)';
-      sajuExit.style.margin = '0 -20px 0 -20px';
-      sajuExit.style.padding = '16px 20px 24px 20px';
-      sajuExit.style.borderRadius = '0';
-    }
-  }
-  
-  const origOpen = window.openFortunePopup;
-  if(origOpen && !origOpen._v331){
-    window.openFortunePopup = function(){
-      const r = origOpen.apply(this, arguments);
-      setTimeout(fixV331, 50);
-      setTimeout(fixV331, 300);
-      return r;
-    };
-    window.openFortunePopup._v331 = true;
-  }
-  
-  const origSaju = window.openSajuDetailModal;
-  if(origSaju && !origSaju._v331){
-    window.openSajuDetailModal = function(){
-      const r = origSaju.apply(this, arguments);
-      setTimeout(fixV331, 50);
-      setTimeout(fixV331, 300);
-      return r;
-    };
-    window.openSajuDetailModal._v331 = true;
-  }
-  
-  setInterval(fixV331, 2000);
-})();
-</script>
-
-
-<style id="v332-exit-fix">
-/* V332: 종료 버튼 위치 애매함 해결 - 완전 바닥 고정 + 명확하게 */
-
-/* 오버레이 - 바텀시트 */
-#fortune-popup-overlay,
-#saju-detail-modal-overlay {
-  background: rgba(0,0,0,0.5) !important;
-  padding: 0 !important;
-  align-items: flex-end !important;
-  justify-content: center !important;
-}
-
-/* 카드 - 화면 하단에 딱 붙게, 검은색 외곽 안 보이게 */
-.fortune-popup-card,
-.saju-detail-card {
-  width: 100% !important;
-  max-width: 480px !important;
-  max-height: 88vh !important;
-  min-height: 60vh !important;
-  margin: 0 auto !important;
-  border-radius: 20px 20px 0 0 !important;
-  padding: 0 !important; /* 패딩 제거 - 내부에서 관리 */
-  background: #ffffff !important;
-  display: flex !important;
-  flex-direction: column !important;
-  overflow: hidden !important;
-  box-shadow: 0 -8px 30px rgba(0,0,0,0.2) !important;
-}
-
-/* 바디 - 스크롤, 종료버튼 공간 확보 */
-#fortune-popup-body {
-  flex: 1 !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  padding: 20px 20px 16px 20px !important;
-  -webkit-overflow-scrolling: touch !important;
-}
-
-/* 사주 상세 내부 스크롤 영역 */
-.saju-detail-card > div:not(.sd-exit-sticky):not(.saju-detail-close) {
-  flex: 1 !important;
-  overflow-y: auto !important;
-  padding: 20px 20px 16px 20px !important;
-}
-
-/* 종료 버튼 컨테이너 - 완전 바닥 고정, 명확한 구분 */
-.fp-exit-sticky,
-.sd-exit-sticky {
-  position: relative !important; /* sticky 대신 relative로 바닥에 고정된 느낌 */
-  flex-shrink: 0 !important;
-  width: 100% !important;
-  margin: 0 !important;
-  padding: 12px 20px max(20px, env(safe-area-inset-bottom)) 20px !important;
-  background: #ffffff !important;
-  border-top: 1px solid #f0e0e0 !important;
-  border-radius: 0 !important;
-  box-shadow: 0 -2px 10px rgba(0,0,0,0.06) !important;
-  z-index: 30 !important;
-}
-
-/* 종료 버튼 - 크고 명확하게, 맨 아래 위치 */
-.fp-exit-sticky button,
-.sd-exit-sticky button {
-  width: 100% !important;
-  height: 54px !important;
-  background: #1a1a1a !important; /* 검은색으로 명확하게 */
-  color: white !important;
-  border: none !important;
-  border-radius: 14px !important;
-  font-weight: 800 !important;
-  font-size: 16px !important;
-  letter-spacing: 0.02em !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  cursor: pointer !important;
-}
-
-.fp-exit-sticky button:active,
-.sd-exit-sticky button:active {
-  transform: scale(0.98) !important;
-  background: #000 !important;
-}
-
-/* 로즈 테마로 원하면 아래 주석 해제 - 지금은 검은색이 더 명확해서 검은색으로 */
-/*
-.fp-exit-sticky button,
-.sd-exit-sticky button {
-  background: linear-gradient(135deg, #8b0000, #6a0000) !important;
-}
-*/
-
-/* 닫기 X 버튼 */
-.fortune-popup-close {
-  top: 16px !important;
-  right: 16px !important;
-  width: 32px !important;
-  height: 32px !important;
-  background: #f5f5f5 !important;
-  color: #666 !important;
-  border: 1px solid #e0e0e0 !important;
-  border-radius: 50% !important;
-  font-size: 16px !important;
-  z-index: 40 !important;
-}
-</style>
-<script id="v332-js">
-(function(){
-  function fixV332(){
-    const card = document.querySelector('.fortune-popup-card');
-    const body = document.getElementById('fortune-popup-body');
-    const exit = document.querySelector('.fp-exit-sticky');
-    
-    if(card){
-      card.style.display = 'flex';
-      card.style.flexDirection = 'column';
-      card.style.padding = '0';
-      card.style.overflow = 'hidden';
-    }
-    if(body){
-      body.style.flex = '1';
-      body.style.overflowY = 'auto';
-    }
-    if(exit){
-      exit.style.flexShrink = '0';
-      exit.style.position = 'relative';
-      const btn = exit.querySelector('button');
-      if(btn){
-        btn.style.height = '54px';
-        btn.style.background = '#1a1a1a';
-        btn.style.color = 'white';
-      }
-    }
-    
-    const sajuCard = document.querySelector('.saju-detail-card');
-    const sajuExit = document.querySelector('.sd-exit-sticky');
-    if(sajuCard){
-      sajuCard.style.display = 'flex';
-      sajuCard.style.flexDirection = 'column';
-      sajuCard.style.padding = '0';
-      sajuCard.style.overflow = 'hidden';
-    }
-    if(sajuExit){
-      sajuExit.style.flexShrink = '0';
-      sajuExit.style.position = 'relative';
-    }
-  }
-  
-  const origOpen = window.openFortunePopup;
-  if(origOpen && !origOpen._v332){
-    window.openFortunePopup = function(){
-      const r = origOpen.apply(this, arguments);
-      setTimeout(fixV332, 30);
-      setTimeout(fixV332, 300);
-      return r;
-    };
-    window.openFortunePopup._v332 = true;
-  }
-  
-  const origSaju = window.openSajuDetailModal;
-  if(origSaju && !origSaju._v332){
-    window.openSajuDetailModal = function(){
-      const r = origSaju.apply(this, arguments);
-      setTimeout(fixV332, 30);
-      setTimeout(fixV332, 300);
-      return r;
-    };
-    window.openSajuDetailModal._v332 = true;
-  }
-  
-  setInterval(fixV332, 1500);
-})();
-</script>
-
-
-<style id="v333-fullscreen-fix">
-/* V333: 위 간격 제거 + 메인화면 흐리게 보이는 것 차단 + 종료버튼 화면 맨 밑 독자적 고정 */
-
-/* 오버레이 - 전체 화면 꽉 채우기, 메인화면 안 보이게 진한 배경 */
-#fortune-popup-overlay,
-#saju-detail-modal-overlay {
-  background: rgba(0,0,0,0.85) !important; /* 더 진하게 - 뒤 메인화면 안 보이게 */
-  padding: 0 !important;
-  align-items: center !important; /* flex-end -> center로 변경 - 위 간격 없애고 가운데 정렬 */
-  justify-content: center !important;
-  backdrop-filter: blur(8px) !important; /* 뒤 배경 흐리게 가리기 */
-}
-
-/* 카드 - 가운데 정렬, 위 간격 없이, 외곽 검은색 안 보이게 */
-.fortune-popup-card,
-.saju-detail-card {
-  width: 92% !important;
-  max-width: 420px !important;
-  max-height: calc(100vh - 100px) !important; /* 종료버튼 80px 공간 확보 */
-  min-height: auto !important;
-  margin: 0 auto !important;
-  border-radius: 20px !important; /* 전체 라운드 - 위 간격 없이 중앙 */
-  padding: 0 !important;
-  background: #ffffff !important;
-  display: flex !important;
-  flex-direction: column !important;
-  overflow: hidden !important;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.5) !important;
-  position: relative !important;
-  /* 중앙 정렬 */
-  position: absolute !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
-}
-
-/* 바디 - 스크롤 */
-#fortune-popup-body {
-  flex: 1 !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  padding: 20px 20px 20px 20px !important;
-  -webkit-overflow-scrolling: touch !important;
-}
-
-.saju-detail-card > div:not(.sd-exit-sticky):not(.saju-detail-close):not(.fortune-popup-close) {
-  flex: 1 !important;
-  overflow-y: auto !important;
-  padding: 20px !important;
-}
-
-/* 종료 버튼 - 화면 맨 밑에 독자적으로 고정 (폼과 분리) */
-.fp-exit-sticky,
-.sd-exit-sticky {
-  position: fixed !important; /* sticky -> fixed로 변경 - 화면 맨 밑 독자적 고정 */
-  bottom: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  width: 100% !important;
-  max-width: 420px !important;
-  margin: 0 auto !important; /* 가운데 정렬 */
-  padding: 12px 20px max(20px, env(safe-area-inset-bottom)) 20px !important;
-  background: #ffffff !important;
-  border-top: 1px solid #e0e0e0 !important;
-  border-radius: 0 !important;
-  box-shadow: 0 -4px 20px rgba(0,0,0,0.15) !important;
-  z-index: 1200 !important; /* 오버레이보다 높게 - 독자적 고정 */
-  display: block !important;
-}
-
-/* 종료 버튼 자체 */
-.fp-exit-sticky button,
-.sd-exit-sticky button {
-  width: 100% !important;
-  height: 52px !important;
-  background: #1a1a1a !important;
-  color: white !important;
-  border: none !important;
-  border-radius: 14px !important;
-  font-weight: 800 !important;
-  font-size: 16px !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
-}
-
-/* 카드가 fixed 종료버튼에 가려지지 않게 하단 여백 */
-.fortune-popup-card {
-  margin-bottom: 80px !important;
-}
-
-/* 닫기 X 버튼 */
-.fortune-popup-close,
-.saju-detail-close {
-  position: absolute !important;
-  top: 14px !important;
-  right: 14px !important;
-  z-index: 1300 !important;
-  background: #f5f5f5 !important;
-  color: #666 !important;
-  border: 1px solid #e0e0e0 !important;
-  width: 32px !important;
-  height: 32px !important;
-  border-radius: 50% !important;
-}
-
-/* 모바일 대응 - 화면 작을 때 */
-@media (max-width: 480px) {
-  .fortune-popup-card,
-  .saju-detail-card {
-    width: 94% !important;
-    max-height: calc(100vh - 90px) !important;
-  }
-  .fp-exit-sticky,
-  .sd-exit-sticky {
-    max-width: 100% !important;
-    border-radius: 0 !important;
-  }
-}
-</style>
-<script id="v333-js">
-(function(){
-  function fixV333(){
-    const overlay = document.getElementById('fortune-popup-overlay');
-    const card = document.querySelector('.fortune-popup-card');
-    const body = document.getElementById('fortune-popup-body');
-    const exit = document.querySelector('.fp-exit-sticky');
-    
-    if(overlay){
-      overlay.style.background = 'rgba(0,0,0,0.85)';
-      overlay.style.backdropFilter = 'blur(8px)';
-      overlay.style.alignItems = 'center';
-      overlay.style.justifyContent = 'center';
-      overlay.style.padding = '0';
-    }
-    if(card){
-      card.style.position = 'absolute';
-      card.style.top = '50%';
-      card.style.left = '50%';
-      card.style.transform = 'translate(-50%, -50%)';
-      card.style.width = '92%';
-      card.style.maxWidth = '420px';
-      card.style.maxHeight = 'calc(100vh - 100px)';
-      card.style.borderRadius = '20px';
-      card.style.marginBottom = '80px';
-    }
-    if(exit){
-      exit.style.position = 'fixed';
-      exit.style.bottom = '0';
-      exit.style.left = '0';
-      exit.style.right = '0';
-      exit.style.width = '100%';
-      exit.style.maxWidth = '420px';
-      exit.style.margin = '0 auto';
-      exit.style.zIndex = '1200';
-    }
-    
-    const sajuOverlay = document.getElementById('saju-detail-modal-overlay');
-    const sajuCard = document.querySelector('.saju-detail-card');
-    const sajuExit = document.querySelector('.sd-exit-sticky');
-    if(sajuOverlay){
-      sajuOverlay.style.background = 'rgba(0,0,0,0.85)';
-      sajuOverlay.style.backdropFilter = 'blur(8px)';
-      sajuOverlay.style.alignItems = 'center';
-    }
-    if(sajuCard){
-      sajuCard.style.position = 'absolute';
-      sajuCard.style.top = '50%';
-      sajuCard.style.left = '50%';
-      sajuCard.style.transform = 'translate(-50%, -50%)';
-      sajuCard.style.width = '92%';
-      sajuCard.style.maxWidth = '420px';
-      sajuCard.style.borderRadius = '20px';
-    }
-    if(sajuExit){
-      sajuExit.style.position = 'fixed';
-      sajuExit.style.bottom = '0';
-      sajuExit.style.left = '0';
-      sajuExit.style.right = '0';
-      sajuExit.style.maxWidth = '420px';
-      sajuExit.style.margin = '0 auto';
-      sajuExit.style.zIndex = '1200';
-    }
-  }
-  
-  const origOpen = window.openFortunePopup;
-  if(origOpen && !origOpen._v333){
-    window.openFortunePopup = function(){
-      const r = origOpen.apply(this, arguments);
-      setTimeout(fixV333, 30);
-      setTimeout(fixV333, 200);
-      setTimeout(fixV333, 600);
-      return r;
-    };
-    window.openFortunePopup._v333 = true;
-  }
-  
-  const origSaju = window.openSajuDetailModal;
-  if(origSaju && !origSaju._v333){
-    window.openSajuDetailModal = function(){
-      const r = origSaju.apply(this, arguments);
-      setTimeout(fixV333, 30);
-      setTimeout(fixV333, 200);
-      return r;
-    };
-    window.openSajuDetailModal._v333 = true;
-  }
-  
-  setInterval(fixV333, 1500);
-})();
-</script>
-
-
-<style id="v334-saju-top-fix">
-/* V334: 사주풀이도 위에 떠있는 문제 수정 - 운세와 동일하게 중앙 고정 */
-
-/* 사주 상세 오버레이 - 전체 화면, 뒤 배경 완전 차단 */
-#saju-detail-modal-overlay {
-  background: rgba(0,0,0,0.85) !important;
-  backdrop-filter: blur(8px) !important;
-  padding: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-/* 사주 상세 카드 - 중앙 고정, 위 간격 없음 */
-#saju-detail-modal-overlay .saju-detail-card,
-.saju-detail-card {
-  width: 92% !important;
-  max-width: 420px !important;
-  max-height: calc(100vh - 100px) !important;
-  min-height: auto !important;
-  margin: 0 !important;
-  border-radius: 20px !important;
-  padding: 0 !important;
-  background: #ffffff !important;
-  display: flex !important;
-  flex-direction: column !important;
-  overflow: hidden !important;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.5) !important;
-  /* 중앙 고정 - 가장 중요 */
-  position: absolute !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
-}
-
-/* 사주 상세 내부 스크롤 영역 */
-#saju-detail-modal-overlay .saju-detail-card > div:nth-child(1),
-#saju-detail-modal-overlay .saju-detail-card > div:nth-child(2),
-.saju-detail-card .sd-content,
-.saju-detail-card #sd-pillars,
-.saju-detail-card #sd-life-stages {
-  flex: 1 !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  padding: 20px !important;
-  max-height: none !important;
-}
-
-/* 사주 상세 종료 버튼 - 화면 맨 밑 독자적 고정 */
-#saju-detail-modal-overlay .sd-exit-sticky,
-.sd-exit-sticky {
-  position: fixed !important;
-  bottom: 0 !important;
-  left: 50% !important;
-  right: auto !important;
-  transform: translateX(-50%) !important;
-  width: 92% !important;
-  max-width: 420px !important;
-  margin: 0 !important;
-  padding: 12px 20px max(20px, env(safe-area-inset-bottom)) 20px !important;
-  background: #ffffff !important;
-  border-top: 1px solid #e0e0e0 !important;
-  border-radius: 0 0 20px 20px !important;
-  box-shadow: 0 -4px 20px rgba(0,0,0,0.15) !important;
-  z-index: 1200 !important;
-}
-
-/* 운세도 동일하게 다시 한번 확실히 */
-#fortune-popup-overlay .fortune-popup-card {
-  position: absolute !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
-}
-
-#fortune-popup-overlay .fp-exit-sticky {
-  position: fixed !important;
-  bottom: 0 !important;
-  left: 50% !important;
-  right: auto !important;
-  transform: translateX(-50%) !important;
-  width: 92% !important;
-  max-width: 420px !important;
-  margin: 0 !important;
-  z-index: 1200 !important;
-}
-</style>
-<script id="v334-js">
-(function(){
-  function fixV334(){
-    // 사주 상세
-    const sajuOverlay = document.getElementById('saju-detail-modal-overlay');
-    const sajuCard = document.querySelector('.saju-detail-card');
-    const sajuExit = document.querySelector('.sd-exit-sticky');
-    
-    if(sajuOverlay){
-      sajuOverlay.style.background = 'rgba(0,0,0,0.85)';
-      sajuOverlay.style.backdropFilter = 'blur(8px)';
-      sajuOverlay.style.display = 'flex';
-      sajuOverlay.style.alignItems = 'center';
-      sajuOverlay.style.justifyContent = 'center';
-      sajuOverlay.style.padding = '0';
-    }
-    if(sajuCard){
-      sajuCard.style.position = 'absolute';
-      sajuCard.style.top = '50%';
-      sajuCard.style.left = '50%';
-      sajuCard.style.transform = 'translate(-50%, -50%)';
-      sajuCard.style.width = '92%';
-      sajuCard.style.maxWidth = '420px';
-      sajuCard.style.maxHeight = 'calc(100vh - 100px)';
-      sajuCard.style.borderRadius = '20px';
-      sajuCard.style.margin = '0';
-      sajuCard.style.padding = '0';
-      sajuCard.style.display = 'flex';
-      sajuCard.style.flexDirection = 'column';
-      sajuCard.style.overflow = 'hidden';
-    }
-    if(sajuExit){
-      sajuExit.style.position = 'fixed';
-      sajuExit.style.bottom = '0';
-      sajuExit.style.left = '50%';
-      sajuExit.style.right = 'auto';
-      sajuExit.style.transform = 'translateX(-50%)';
-      sajuExit.style.width = '92%';
-      sajuExit.style.maxWidth = '420px';
-      sajuExit.style.margin = '0';
-      sajuExit.style.zIndex = '1200';
-    }
-    
-    // 운세도
-    const fortuneOverlay = document.getElementById('fortune-popup-overlay');
-    const fortuneCard = document.querySelector('.fortune-popup-card');
-    const fortuneExit = document.querySelector('.fp-exit-sticky');
-    if(fortuneOverlay){
-      fortuneOverlay.style.background = 'rgba(0,0,0,0.85)';
-      fortuneOverlay.style.backdropFilter = 'blur(8px)';
-    }
-    if(fortuneCard){
-      fortuneCard.style.position = 'absolute';
-      fortuneCard.style.top = '50%';
-      fortuneCard.style.left = '50%';
-      fortuneCard.style.transform = 'translate(-50%, -50%)';
-    }
-    if(fortuneExit){
-      fortuneExit.style.position = 'fixed';
-      fortuneExit.style.bottom = '0';
-      fortuneExit.style.left = '50%';
-      fortuneExit.style.transform = 'translateX(-50%)';
-      fortuneExit.style.width = '92%';
-      fortuneExit.style.maxWidth = '420px';
-    }
-  }
-  
-  const origSaju = window.openSajuDetailModal;
-  if(origSaju && !origSaju._v334){
-    window.openSajuDetailModal = function(){
-      const r = origSaju.apply(this, arguments);
-      setTimeout(fixV334, 30);
-      setTimeout(fixV334, 200);
-      setTimeout(fixV334, 600);
-      return r;
-    };
-    window.openSajuDetailModal._v334 = true;
-  }
-  
-  const origFortune = window.openFortunePopup;
-  if(origFortune && !origFortune._v334){
-    window.openFortunePopup = function(){
-      const r = origFortune.apply(this, arguments);
-      setTimeout(fixV334, 30);
-      setTimeout(fixV334, 200);
-      return r;
-    };
-    window.openFortunePopup._v334 = true;
-  }
-  
-  setInterval(fixV334, 1500);
-})();
-</script>
-
-
-<style id="v335-main-fix">
-/* V335: 메인화면에 사주풀이 뜨는 문제 수정 */
-
-/* 오버레이 기본은 숨김 - active일 때만 표시 */
-#fortune-popup-overlay,
-#saju-detail-modal-overlay {
   display: none !important;
-  background: rgba(0,0,0,0.85) !important;
-  backdrop-filter: blur(8px) !important;
-  padding: 0 !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 #fortune-popup-overlay.active,
 #saju-detail-modal-overlay.active {
   display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
 }
 
-/* 카드 - 중앙 고정 */
-#fortune-popup-overlay.active .fortune-popup-card,
-#saju-detail-modal-overlay.active .saju-detail-card {
+/* 카드 - 중앙, 하얀색, 라운드, 스크롤 구조 */
+.fortune-popup-card,
+.saju-detail-card {
+  width: 100% !important;
+  max-width: 420px !important;
+  max-height: 85vh !important;
+  margin: auto !important;
+  border-radius: 20px !important;
+  background: #ffffff !important;
+  color: #333 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.3) !important;
+  padding: 0 !important;
   position: relative !important;
   top: auto !important;
   left: auto !important;
   transform: none !important;
-  width: 92% !important;
-  max-width: 420px !important;
-  max-height: calc(100vh - 100px) !important;
-  margin: 0 auto !important;
-  border-radius: 20px !important;
-  background: #ffffff !important;
-  display: flex !important;
-  flex-direction: column !important;
-  overflow: hidden !important;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.5) !important;
 }
 
-/* 바디 스크롤 */
-#fortune-popup-overlay.active #fortune-popup-body,
-#saju-detail-modal-overlay.active .saju-detail-card > div:first-of-type {
+/* 바디 - 스크롤, 하단 여백 */
+#fortune-popup-body {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 20px 20px 16px 20px !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* 사주 상세 바디 */
+.saju-detail-card > div:not(.sd-exit-sticky):not(.saju-detail-close):first-child,
+.saju-detail-card > div:nth-child(2) {
   flex: 1 !important;
   overflow-y: auto !important;
   padding: 20px !important;
 }
 
-/* 종료 버튼 - active일 때만 fixed로 화면 맨 밑 고정 */
-#fortune-popup-overlay.active .fp-exit-sticky,
-#saju-detail-modal-overlay.active .sd-exit-sticky {
-  position: fixed !important;
+/* 종료 버튼 컨테이너 - 폼의 맨 아래에 고정 (sticky, 폼 안에서) */
+.fp-exit-sticky,
+.sd-exit-sticky {
+  position: sticky !important;
   bottom: 0 !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
-  width: 92% !important;
-  max-width: 420px !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
   margin: 0 !important;
-  padding: 12px 20px max(20px, env(safe-area-inset-bottom)) 20px !important;
+  padding: 12px 16px 16px 16px !important;
   background: #ffffff !important;
-  border-top: 1px solid #e0e0e0 !important;
-  z-index: 1200 !important;
+  border-top: 1px solid #f0e0e0 !important;
+  border-radius: 0 0 20px 20px !important;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.05) !important;
+  z-index: 10 !important;
+  flex-shrink: 0 !important;
+  transform: none !important;
 }
 
-/* 메인화면에서는 숨김 */
-#saju-detail-modal-overlay:not(.active),
-#fortune-popup-overlay:not(.active) {
-  display: none !important;
-  visibility: hidden !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
+/* 종료 버튼 - 검은색으로 명확하게 */
+.fp-exit-sticky button,
+.sd-exit-sticky button {
+  width: 100% !important;
+  height: 48px !important;
+  background: #1a1a1a !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 12px !important;
+  font-weight: 800 !important;
+  font-size: 15px !important;
 }
 
-#saju-detail-modal-overlay.active,
-#fortune-popup-overlay.active {
-  visibility: visible !important;
-  opacity: 1 !important;
-  pointer-events: auto !important;
+/* 닫기 X 버튼 */
+.fortune-popup-close {
+  position: absolute !important;
+  top: 12px !important;
+  right: 12px !important;
+  width: 30px !important;
+  height: 30px !important;
+  background: #f5f5f5 !important;
+  color: #666 !important;
+  border: 1px solid #e0e0e0 !important;
+  border-radius: 50% !important;
+  z-index: 20 !important;
+}
+
+/* 총운 박스 등 내용 전체 보이게 - 이전 수정 유지 */
+#fortune-popup-body div[style*="font-size:13px"] {
+  white-space: normal !important;
+  overflow: visible !important;
+  height: auto !important;
+  max-height: none !important;
+  line-height: 1.7 !important;
 }
 </style>
-<script id="v335-js">
+<script id="v336-js">
 (function(){
-  function fixV335(){
-    // 메인화면에서 오버레이가 떠있는지 체크 - active 아니면 강제 숨김
-    const sajuOverlay = document.getElementById('saju-detail-modal-overlay');
-    const fortuneOverlay = document.getElementById('fortune-popup-overlay');
+  function fixV336(){
+    const fOverlay = document.getElementById('fortune-popup-overlay');
+    const sOverlay = document.getElementById('saju-detail-modal-overlay');
     
-    if(sajuOverlay && !sajuOverlay.classList.contains('active')){
-      sajuOverlay.style.display = 'none';
-      sajuOverlay.style.visibility = 'hidden';
-      sajuOverlay.style.opacity = '0';
+    // active 아닐 때는 숨김
+    if(fOverlay && !fOverlay.classList.contains('active')){
+      fOverlay.style.display = 'none';
     }
-    if(fortuneOverlay && !fortuneOverlay.classList.contains('active')){
-      fortuneOverlay.style.display = 'none';
-      fortuneOverlay.style.visibility = 'hidden';
-      fortuneOverlay.style.opacity = '0';
+    if(sOverlay && !sOverlay.classList.contains('active')){
+      sOverlay.style.display = 'none';
     }
     
-    // active일 때만 중앙 정렬
-    if(sajuOverlay && sajuOverlay.classList.contains('active')){
-      sajuOverlay.style.display = 'flex';
-      sajuOverlay.style.visibility = 'visible';
-      sajuOverlay.style.opacity = '1';
-      sajuOverlay.style.alignItems = 'center';
-      sajuOverlay.style.justifyContent = 'center';
-      const card = sajuOverlay.querySelector('.saju-detail-card');
+    // active일 때는 flex center
+    if(fOverlay && fOverlay.classList.contains('active')){
+      fOverlay.style.display = 'flex';
+      fOverlay.style.alignItems = 'center';
+      fOverlay.style.justifyContent = 'center';
+      fOverlay.style.background = 'rgba(0,0,0,0.6)';
+      const card = fOverlay.querySelector('.fortune-popup-card');
       if(card){
         card.style.position = 'relative';
         card.style.top = 'auto';
         card.style.left = 'auto';
         card.style.transform = 'none';
-        card.style.margin = '0 auto';
-      }
-      const exit = sajuOverlay.querySelector('.sd-exit-sticky');
-      if(exit){
-        exit.style.position = 'fixed';
-        exit.style.bottom = '0';
-        exit.style.left = '50%';
-        exit.style.transform = 'translateX(-50%)';
+        card.style.margin = 'auto';
       }
     }
-    
-    if(fortuneOverlay && fortuneOverlay.classList.contains('active')){
-      fortuneOverlay.style.display = 'flex';
-      fortuneOverlay.style.visibility = 'visible';
-      fortuneOverlay.style.opacity = '1';
-      const card = fortuneOverlay.querySelector('.fortune-popup-card');
+    if(sOverlay && sOverlay.classList.contains('active')){
+      sOverlay.style.display = 'flex';
+      sOverlay.style.alignItems = 'center';
+      sOverlay.style.justifyContent = 'center';
+      sOverlay.style.background = 'rgba(0,0,0,0.6)';
+      const card = sOverlay.querySelector('.saju-detail-card');
       if(card){
         card.style.position = 'relative';
         card.style.top = 'auto';
         card.style.left = 'auto';
         card.style.transform = 'none';
-        card.style.margin = '0 auto';
+        card.style.margin = 'auto';
       }
     }
   }
   
-  // 앱 시작시 메인화면에 떠있는 것들 숨기기
   window.addEventListener('load', function(){
-    setTimeout(fixV335, 100);
-    setTimeout(fixV335, 500);
-    setTimeout(fixV335, 1000);
+    setTimeout(fixV336, 200);
+    setTimeout(fixV336, 800);
   });
   
-  setInterval(fixV335, 1000);
+  const origFortune = window.openFortunePopup;
+  if(origFortune && !origFortune._v336){
+    window.openFortunePopup = function(){
+      const r = origFortune.apply(this, arguments);
+      setTimeout(fixV336, 50);
+      setTimeout(fixV336, 300);
+      return r;
+    };
+    window.openFortunePopup._v336 = true;
+  }
+  
+  const origSaju = window.openSajuDetailModal;
+  if(origSaju && !origSaju._v336){
+    window.openSajuDetailModal = function(){
+      const r = origSaju.apply(this, arguments);
+      setTimeout(fixV336, 50);
+      setTimeout(fixV336, 300);
+      return r;
+    };
+    window.openSajuDetailModal._v336 = true;
+  }
+  
+  setInterval(fixV336, 2000);
 })();
 </script>
 
