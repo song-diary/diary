@@ -14344,5 +14344,152 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 })();
 </script>
 
+
+<style id="v335-main-fix">
+/* V335: 메인화면에 사주풀이 뜨는 문제 수정 */
+
+/* 오버레이 기본은 숨김 - active일 때만 표시 */
+#fortune-popup-overlay,
+#saju-detail-modal-overlay {
+  display: none !important;
+  background: rgba(0,0,0,0.85) !important;
+  backdrop-filter: blur(8px) !important;
+  padding: 0 !important;
+}
+
+#fortune-popup-overlay.active,
+#saju-detail-modal-overlay.active {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* 카드 - 중앙 고정 */
+#fortune-popup-overlay.active .fortune-popup-card,
+#saju-detail-modal-overlay.active .saju-detail-card {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  transform: none !important;
+  width: 92% !important;
+  max-width: 420px !important;
+  max-height: calc(100vh - 100px) !important;
+  margin: 0 auto !important;
+  border-radius: 20px !important;
+  background: #ffffff !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5) !important;
+}
+
+/* 바디 스크롤 */
+#fortune-popup-overlay.active #fortune-popup-body,
+#saju-detail-modal-overlay.active .saju-detail-card > div:first-of-type {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  padding: 20px !important;
+}
+
+/* 종료 버튼 - active일 때만 fixed로 화면 맨 밑 고정 */
+#fortune-popup-overlay.active .fp-exit-sticky,
+#saju-detail-modal-overlay.active .sd-exit-sticky {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: 92% !important;
+  max-width: 420px !important;
+  margin: 0 !important;
+  padding: 12px 20px max(20px, env(safe-area-inset-bottom)) 20px !important;
+  background: #ffffff !important;
+  border-top: 1px solid #e0e0e0 !important;
+  z-index: 1200 !important;
+}
+
+/* 메인화면에서는 숨김 */
+#saju-detail-modal-overlay:not(.active),
+#fortune-popup-overlay:not(.active) {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+#saju-detail-modal-overlay.active,
+#fortune-popup-overlay.active {
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+</style>
+<script id="v335-js">
+(function(){
+  function fixV335(){
+    // 메인화면에서 오버레이가 떠있는지 체크 - active 아니면 강제 숨김
+    const sajuOverlay = document.getElementById('saju-detail-modal-overlay');
+    const fortuneOverlay = document.getElementById('fortune-popup-overlay');
+    
+    if(sajuOverlay && !sajuOverlay.classList.contains('active')){
+      sajuOverlay.style.display = 'none';
+      sajuOverlay.style.visibility = 'hidden';
+      sajuOverlay.style.opacity = '0';
+    }
+    if(fortuneOverlay && !fortuneOverlay.classList.contains('active')){
+      fortuneOverlay.style.display = 'none';
+      fortuneOverlay.style.visibility = 'hidden';
+      fortuneOverlay.style.opacity = '0';
+    }
+    
+    // active일 때만 중앙 정렬
+    if(sajuOverlay && sajuOverlay.classList.contains('active')){
+      sajuOverlay.style.display = 'flex';
+      sajuOverlay.style.visibility = 'visible';
+      sajuOverlay.style.opacity = '1';
+      sajuOverlay.style.alignItems = 'center';
+      sajuOverlay.style.justifyContent = 'center';
+      const card = sajuOverlay.querySelector('.saju-detail-card');
+      if(card){
+        card.style.position = 'relative';
+        card.style.top = 'auto';
+        card.style.left = 'auto';
+        card.style.transform = 'none';
+        card.style.margin = '0 auto';
+      }
+      const exit = sajuOverlay.querySelector('.sd-exit-sticky');
+      if(exit){
+        exit.style.position = 'fixed';
+        exit.style.bottom = '0';
+        exit.style.left = '50%';
+        exit.style.transform = 'translateX(-50%)';
+      }
+    }
+    
+    if(fortuneOverlay && fortuneOverlay.classList.contains('active')){
+      fortuneOverlay.style.display = 'flex';
+      fortuneOverlay.style.visibility = 'visible';
+      fortuneOverlay.style.opacity = '1';
+      const card = fortuneOverlay.querySelector('.fortune-popup-card');
+      if(card){
+        card.style.position = 'relative';
+        card.style.top = 'auto';
+        card.style.left = 'auto';
+        card.style.transform = 'none';
+        card.style.margin = '0 auto';
+      }
+    }
+  }
+  
+  // 앱 시작시 메인화면에 떠있는 것들 숨기기
+  window.addEventListener('load', function(){
+    setTimeout(fixV335, 100);
+    setTimeout(fixV335, 500);
+    setTimeout(fixV335, 1000);
+  });
+  
+  setInterval(fixV335, 1000);
+})();
+</script>
+
 </body>
 </html>
