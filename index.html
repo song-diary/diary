@@ -13760,5 +13760,297 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 })();
 </script>
 
+
+<style id="v337-white-bg">
+/* V337: 전체 흰색으로 뒤 배경 완전 가리기 + 종료버튼 맨 밑에 붙이기 */
+
+/* 오버레이 - 전체 흰색으로 뒤 배경 완전 차단 */
+#fortune-popup-overlay,
+#saju-detail-modal-overlay {
+  background: #ffffff !important; /* 흰색으로 뒤 완전 가림 */
+  padding: 0 !important;
+  display: none !important;
+}
+
+#fortune-popup-overlay.active,
+#saju-detail-modal-overlay.active {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+  background: #ffffff !important;
+}
+
+/* 카드 - 전체 화면 흰색, 스크롤 */
+.fortune-popup-card,
+.saju-detail-card {
+  width: 100% !important;
+  max-width: 100% !important;
+  max-height: 100vh !important;
+  height: 100vh !important;
+  min-height: 100vh !important;
+  margin: 0 !important;
+  border-radius: 0 !important; /* 전체 화면이므로 라운드 제거 */
+  background: #ffffff !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  transform: none !important;
+}
+
+/* 바디 - 스크롤 영역, 종료버튼 공간 확보 */
+#fortune-popup-body {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 20px 16px 20px 16px !important;
+  padding-top: 50px !important; /* X버튼 공간 */
+  background: #ffffff !important;
+}
+
+.saju-detail-card > div:first-child {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  padding: 20px 16px 20px 16px !important;
+  padding-top: 50px !important;
+  background: #ffffff !important;
+}
+
+/* 종료 버튼 - 화면 맨 밑에 딱 붙이기, 독자적 고정 */
+.fp-exit-sticky,
+.sd-exit-sticky {
+  position: sticky !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 16px 16px max(16px, env(safe-area-inset-bottom)) 16px !important;
+  background: #ffffff !important;
+  border-top: 1px solid #f0f0f0 !important;
+  border-radius: 0 !important;
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.05) !important;
+  z-index: 100 !important;
+  flex-shrink: 0 !important;
+  transform: none !important;
+}
+
+.fp-exit-sticky button,
+.sd-exit-sticky button {
+  width: 100% !important;
+  height: 52px !important;
+  background: #1a1a1a !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 12px !important;
+  font-weight: 800 !important;
+  font-size: 16px !important;
+}
+
+/* X 버튼 - 상단 우측 고정 */
+.fortune-popup-close,
+.saju-detail-close {
+  position: fixed !important;
+  top: 12px !important;
+  right: 12px !important;
+  width: 36px !important;
+  height: 36px !important;
+  background: #f5f5f5 !important;
+  color: #333 !important;
+  border: 1px solid #e0e0e0 !important;
+  border-radius: 50% !important;
+  z-index: 200 !important;
+  font-size: 18px !important;
+}
+
+/* 뒤 배경 완전 흰색이므로 바깥 여백 없음 */
+#fortune-popup-overlay::before,
+#saju-detail-modal-overlay::before {
+  display: none !important;
+}
+</style>
+<script id="v337-js">
+(function(){
+  function fixV337(){
+    const fOverlay = document.getElementById('fortune-popup-overlay');
+    const sOverlay = document.getElementById('saju-detail-modal-overlay');
+    
+    if(fOverlay && fOverlay.classList.contains('active')){
+      fOverlay.style.background = '#ffffff';
+      fOverlay.style.display = 'flex';
+      fOverlay.style.flexDirection = 'column';
+      const card = fOverlay.querySelector('.fortune-popup-card');
+      if(card){
+        card.style.background = '#ffffff';
+        card.style.height = '100vh';
+        card.style.maxHeight = '100vh';
+        card.style.borderRadius = '0';
+        card.style.width = '100%';
+        card.style.maxWidth = '100%';
+      }
+      const exit = fOverlay.querySelector('.fp-exit-sticky');
+      if(exit){
+        exit.style.position = 'sticky';
+        exit.style.bottom = '0';
+        exit.style.background = '#ffffff';
+        exit.style.width = '100%';
+      }
+    }
+    if(sOverlay && sOverlay.classList.contains('active')){
+      sOverlay.style.background = '#ffffff';
+      sOverlay.style.display = 'flex';
+      const card = sOverlay.querySelector('.saju-detail-card');
+      if(card){
+        card.style.background = '#ffffff';
+        card.style.height = '100vh';
+        card.style.maxHeight = '100vh';
+        card.style.borderRadius = '0';
+      }
+    }
+  }
+  
+  const origFortune = window.openFortunePopup;
+  if(origFortune && !origFortune._v337){
+    window.openFortunePopup = function(){
+      const r = origFortune.apply(this, arguments);
+      setTimeout(fixV337, 30);
+      setTimeout(fixV337, 200);
+      setTimeout(fixV337, 600);
+      return r;
+    };
+    window.openFortunePopup._v337 = true;
+  }
+  
+  const origSaju = window.openSajuDetailModal;
+  if(origSaju && !origSaju._v337){
+    window.openSajuDetailModal = function(){
+      const r = origSaju.apply(this, arguments);
+      setTimeout(fixV337, 30);
+      setTimeout(fixV337, 200);
+      return r;
+    };
+    window.openSajuDetailModal._v337 = true;
+  }
+  
+  setInterval(fixV337, 1500);
+})();
+</script>
+
+
+<style id="v338-top-align">
+/* V338: 폼 정렬 맨 위로 */
+
+/* 오버레이 - 맨 위 정렬 */
+#fortune-popup-overlay.active,
+#saju-detail-modal-overlay.active {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important; /* 맨 위로 정렬 */
+  background: #ffffff !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+/* 카드 - 맨 위부터 시작, 전체 높이 */
+.fortune-popup-card,
+.saju-detail-card {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  min-height: 100vh !important;
+  margin: 0 !important; /* 중앙 margin 제거 -> 맨 위 */
+  border-radius: 0 !important;
+  background: #ffffff !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  position: relative !important;
+  top: 0 !important;
+  left: 0 !important;
+  transform: none !important;
+  align-self: flex-start !important; /* 맨 위 정렬 */
+}
+
+/* 바디 - 맨 위부터 시작 */
+#fortune-popup-body {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  padding: 16px 16px 20px 16px !important; /* 위 패딩 줄여서 맨 위로 */
+  margin: 0 !important;
+  background: #ffffff !important;
+  align-self: flex-start !important;
+  width: 100% !important;
+}
+
+/* 히어로 (아이디어의 날) - 맨 위에 붙이기 */
+#fortune-popup-body > div:first-child {
+  margin-top: 0 !important;
+  margin-bottom: 16px !important;
+}
+
+/* 종료 버튼 - 화면 맨 밑에 고정 */
+.fp-exit-sticky,
+.sd-exit-sticky {
+  position: fixed !important; /* sticky -> fixed로 화면 맨 밑 고정 */
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 12px 16px max(16px, env(safe-area-inset-bottom)) 16px !important;
+  background: #ffffff !important;
+  border-top: 1px solid #e8e8e8 !important;
+  z-index: 100 !important;
+}
+
+/* 카드가 종료버튼에 가려지지 않게 하단 패딩 */
+#fortune-popup-body {
+  padding-bottom: 80px !important;
+}
+</style>
+<script id="v338-js">
+(function(){
+  function fixV338(){
+    const fOverlay = document.getElementById('fortune-popup-overlay');
+    if(fOverlay && fOverlay.classList.contains('active')){
+      fOverlay.style.justifyContent = 'flex-start';
+      fOverlay.style.alignItems = 'stretch';
+      fOverlay.style.background = '#ffffff';
+      const card = fOverlay.querySelector('.fortune-popup-card');
+      if(card){
+        card.style.margin = '0';
+        card.style.alignSelf = 'flex-start';
+        card.style.justifyContent = 'flex-start';
+      }
+      const body = document.getElementById('fortune-popup-body');
+      if(body){
+        body.style.paddingTop = '16px';
+        body.style.marginTop = '0';
+      }
+    }
+  }
+  const orig = window.openFortunePopup;
+  if(orig && !orig._v338){
+    window.openFortunePopup = function(){
+      const r = orig.apply(this, arguments);
+      setTimeout(fixV338, 30);
+      setTimeout(fixV338, 200);
+      return r;
+    };
+    window.openFortunePopup._v338 = true;
+  }
+  setInterval(fixV338, 1500);
+})();
+</script>
+
 </body>
 </html>
