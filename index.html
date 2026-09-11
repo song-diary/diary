@@ -13259,5 +13259,141 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 })();
 </script>
 
+
+<script id="v328-back-and-auto-fix">
+// V328: 1) 오픈시 운세 자동팝업 완전 차단 2) 뒤로가기 여러번 눌러야 종료되는 문제 해결
+
+(function(){
+  console.log('V328: auto popup + back button fix');
+
+  // 1) 자동 팝업 완전 차단 - 모든 버전의 maybeAutoShow 덮어쓰기
+  window.maybeAutoShowFortunePopup = function(){
+    console.log('V328: 자동 운세 팝업 차단됨');
+    return;
+  };
+  
+  // 혹시 다른 이름으로 자동 호출하는 함수들도 차단
+  const autoFuncs = ['maybeAutoShowFortunePopup', 'autoShowFortune', 'checkAndShowFortune'];
+  autoFuncs.forEach(name=>{
+    if(window[name]){
+      window[name] = function(){ console.log('V328: '+name+' 차단'); return; };
+    }
+  });
+
+  // DOMContentLoaded, load 이벤트에서 자동 호출되는 타이머 제거
+  // 기존 setTimeout으로 걸린 자동 팝업 방지 - openFortunePopup을 3초 이내는 차단
+  let appStartTime = Date.now();
+  let userClickedFortune = false;
+  
+  document.addEventListener('click', function(e){
+    if(e.target.closest('#fortune-teaser, [onclick*="Fortune"], [data-fortune]')){
+      userClickedFortune = true;
+      console.log('V328: 운세 수동 클릭 감지');
+      setTimeout(()=>{ userClickedFortune = false; }, 3000);
+    }
+  }, true);
+
+  // 2) 뒤로가기 여러번 문제 해결 - history pushState 제거
+  // 기존 openFortunePopup이 history.pushState를 하면 뒤로가기 스택이 쌓임
+  const origOpen = window.openFortunePopup;
+  const origClose = window.closeFortunePopup;
+  
+  if(origOpen && !origOpen._v328){
+    window.openFortunePopup = function(){
+      // 3초 이내 자동 호출이면 차단 (앱 시작시)
+      if(!userClickedFortune && Date.now() - appStartTime < 5000){
+        console.log('V328: 앱 시작 5초 이내 자동 팝업 차단');
+        return;
+      }
+      
+      // 원본 호출하되, history.pushState가 있다면 제거된 버전으로
+      // 원본 함수의 history.pushState 부분을 임시로 막기
+      const origPushState = history.pushState;
+      history.pushState = function(){ 
+        console.log('V328: history.pushState 차단 - 뒤로가기 스택 쌓임 방지');
+        // pushState 안 함 - 뒤로가기 여러번 문제 해결
+        return;
+      };
+      
+      let result;
+      try{
+        result = origOpen.apply(this, arguments);
+      } finally {
+        // pushState 복원
+        setTimeout(()=>{ history.pushState = origPushState; }, 100);
+      }
+      
+      return result;
+    };
+    window.openFortunePopup._v328 = true;
+    window.openFortunePopup._orig = origOpen;
+  }
+  
+  if(origClose && !origClose._v328){
+    window.closeFortunePopup = function(){
+      // history.back() 호출 없이 그냥 닫기
+      const overlay = document.getElementById('fortune-popup-overlay');
+      if(overlay){
+        overlay.classList.remove('active');
+      }
+      document.body.classList.remove('modal-open');
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      
+      // 혹시 남아있는 history state 정리
+      try{
+        if(window.history && window.history.state && window.history.state.modal){
+          history.replaceState(null, '', location.pathname);
+        }
+      }catch(e){}
+      
+      console.log('V328: 운세 팝업 닫기 - history 정리');
+    };
+    window.closeFortunePopup._v328 = true;
+  }
+  
+  // 앱 시작 시 떠있는 팝업 있으면 강제로 닫기
+  window.addEventListener('load', function(){
+    setTimeout(function(){
+      const fortuneEl = document.getElementById('fortune-popup-overlay');
+      if(fortuneEl && fortuneEl.classList.contains('active')){
+        // 앱 시작 5초 이내에 떠있으면 자동 팝업이므로 닫기
+        if(Date.now() - appStartTime < 8000 && !userClickedFortune){
+          fortuneEl.classList.remove('active');
+          document.body.classList.remove('modal-open');
+          document.body.style.overflow = '';
+          console.log('V328: 시작시 자동 팝업 강제 닫기');
+        }
+      }
+    }, 800);
+  });
+  
+  // popstate 이벤트 - 뒤로가기 눌렀을 때 팝업만 닫고 페이지 안 나가게
+  window.addEventListener('popstate', function(e){
+    const fortuneEl = document.getElementById('fortune-popup-overlay');
+    const sajuEl = document.getElementById('saju-detail-modal-overlay');
+    if(fortuneEl && fortuneEl.classList.contains('active')){
+      e.preventDefault();
+      fortuneEl.classList.remove('active');
+      document.body.classList.remove('modal-open');
+      document.body.style.overflow = '';
+      console.log('V328: 뒤로가기로 운세 팝업 닫기');
+      // history에 다시 push해서 페이지 이탈 방지
+      try{ history.pushState(null, '', location.pathname); }catch(e){}
+    }
+    if(sajuEl && sajuEl.classList.contains('active')){
+      e.preventDefault();
+      sajuEl.classList.remove('active');
+      document.body.classList.remove('modal-open');
+      document.body.style.overflow = '';
+    }
+  });
+
+  console.log('V328: 자동팝업 차단 + 뒤로가기 수정 완료');
+})();
+</script>
+
 </body>
 </html>
