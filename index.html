@@ -14727,5 +14727,249 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 })();
 </script>
 
+
+<script id="v343-fix-persist">
+// V343: 설정 OFF인데 메인 가계부 아이콘이 다시 나타나는 버그 수정
+
+(function(){
+  console.log('V343: 가계부 OFF 지속성 버그 수정');
+  
+  function getFinanceOn(){
+    // localStorage가 최종 진실
+    const stored = localStorage.getItem('smartDiaryMoneySummaryVisible');
+    if(stored === 'false') return false;
+    if(stored === 'true') return true;
+    // 체크박스도 확인
+    const chk = document.getElementById('toggle-money-summary');
+    if(chk) return chk.checked;
+    if(typeof isMoneySummaryVisible !== 'undefined') return isMoneySummaryVisible;
+    return true;
+  }
+  
+  function forceUpdateIcon(){
+    const topBtn = document.getElementById('top-toggle-btn');
+    if(!topBtn) return;
+    
+    const isOn = getFinanceOn();
+    console.log('V343: forceUpdateIcon - 가계부', isOn ? 'ON' : 'OFF', '현재탭:', typeof currentMainTab !== 'undefined' ? currentMainTab : 'unknown');
+    
+    if(!isOn){
+      // OFF면 무조건 다이어리 아이콘, 가계부 진입 불가
+      topBtn.innerHTML = '📔';
+      topBtn.title = '다이어리 (가계부 OFF - 설정에서 켜기)';
+      topBtn.style.opacity = '0.7';
+      topBtn.style.pointerEvents = 'none'; // 클릭 자체를 막음 - 완전히 진입 불가처럼 보이게? 아니면 클릭시 토스트
+      // pointerEvents none이면 토스트 안 되므로, 대신 opacity만
+      topBtn.style.pointerEvents = 'auto';
+      
+      // 가계부 탭이면 강제로 다이어리로
+      if(typeof currentMainTab !== 'undefined' && currentMainTab === 'money'){
+        console.log('V343: 가계부 OFF인데 money 탭 - diary로 강제 이동');
+        if(typeof switchMainTabOriginal !== 'undefined'){
+          switchMainTabOriginal('diary');
+        } else if(typeof window.switchMainTab === 'function'){
+          // 무한루프 방지용 플래그
+          window._v343_switching = true;
+          const orig = window._v343_originalSwitch || window.switchMainTab;
+          // 직접 패널 전환
+          const diaryPanel = document.getElementById('diary-panel');
+          const moneyPanel = document.getElementById('money-panel');
+          if(diaryPanel) diaryPanel.classList.add('active');
+          if(moneyPanel) moneyPanel.classList.remove('active');
+          if(typeof currentMainTab !== 'undefined') currentMainTab = 'diary';
+          localStorage.setItem('smartDiaryMainTab', 'diary');
+          window._v343_switching = false;
+        }
+      }
+    } else {
+      // ON이면 원래 로직
+      topBtn.style.opacity = '1';
+      topBtn.style.pointerEvents = 'auto';
+      const currentTab = typeof currentMainTab !== 'undefined' ? currentMainTab : 'diary';
+      if(currentTab === 'diary'){
+        topBtn.innerHTML = '💰';
+        topBtn.title = '가계부로 이동';
+      } else {
+        topBtn.innerHTML = '📔';
+        topBtn.title = '다이어리로 이동';
+      }
+    }
+  }
+  
+  // 원본 함수들 백업
+  if(!window._v343_originalSwitch && window.switchMainTab){
+    window._v343_originalSwitch = window.switchMainTab;
+  }
+  if(!window._v343_originalToggle && window.toggleMainTab){
+    window._v343_originalToggle = window.toggleMainTab;
+  }
+  const switchMainTabOriginal = window._v343_originalSwitch;
+  
+  // switchMainTab 완전 재정의 - 가계부 OFF면 money 진입 절대 불가
+  window.switchMainTab = function(tabName){
+    if(window._v343_switching) {
+      // 내부 강제 전환시 재귀 방지
+      if(switchMainTabOriginal) return switchMainTabOriginal.apply(this, arguments);
+      return;
+    }
+    
+    const isOn = getFinanceOn();
+    
+    if(tabName === 'money' && !isOn){
+      console.log('V343: 가계부 OFF - money 진입 차단!');
+      // diary로 강제
+      const diaryPanel = document.getElementById('diary-panel');
+      const moneyPanel = document.getElementById('money-panel');
+      if(diaryPanel) diaryPanel.classList.add('active');
+      if(moneyPanel) moneyPanel.classList.remove('active');
+      if(typeof currentMainTab !== 'undefined') window.currentMainTab = 'diary';
+      localStorage.setItem('smartDiaryMainTab', 'diary');
+      forceUpdateIcon();
+      return;
+    }
+    
+    // 정상 전환
+    let result;
+    if(switchMainTabOriginal){
+      result = switchMainTabOriginal.apply(this, arguments);
+    } else {
+      // 원본이 없으면 직접 구현
+      const panels = {
+        diary: document.getElementById('diary-panel'),
+        money: document.getElementById('money-panel')
+      };
+      Object.keys(panels).forEach(key => {
+        if(panels[key]) panels[key].classList.toggle('active', key === tabName);
+      });
+      if(typeof currentMainTab !== 'undefined') window.currentMainTab = tabName;
+      localStorage.setItem('smartDiaryMainTab', tabName);
+    }
+    
+    setTimeout(forceUpdateIcon, 10);
+    setTimeout(forceUpdateIcon, 100);
+    setTimeout(forceUpdateIcon, 300);
+    return result;
+  };
+  
+  // toggleMainTab 재정의
+  window.toggleMainTab = function(){
+    const isOn = getFinanceOn();
+    if(!isOn){
+      console.log('V343: 가계부 OFF - toggle 차단, 다이어리 유지');
+      forceUpdateIcon();
+      // 가계부 OFF 알림 (조용히)
+      const topBtn = document.getElementById('top-toggle-btn');
+      if(topBtn){
+        topBtn.style.transform = 'scale(0.9)';
+        setTimeout(()=>{ topBtn.style.transform = 'scale(1)'; }, 150);
+      }
+      return;
+    }
+    
+    // ON이면 원래대로
+    const currentTab = typeof currentMainTab !== 'undefined' ? currentMainTab : 'diary';
+    const nextTab = currentTab === 'diary' ? 'money' : 'diary';
+    window.switchMainTab(nextTab);
+  };
+  
+  // setMoneySummaryVisibility 재정의 - localStorage가 진실
+  const origSetMoney = window.setMoneySummaryVisibility;
+  window.setMoneySummaryVisibility = function(isVisible){
+    console.log('V343: setMoneySummaryVisibility', isVisible);
+    localStorage.setItem('smartDiaryMoneySummaryVisible', isVisible);
+    if(typeof isMoneySummaryVisible !== 'undefined') window.isMoneySummaryVisible = isVisible;
+    
+    // 체크박스 동기화
+    const chk = document.getElementById('toggle-money-summary');
+    if(chk) chk.checked = isVisible;
+    
+    // 기존 로직
+    if(origSetMoney && origSetMoney !== window.setMoneySummaryVisibility){
+      // 무한루프 방지 - 원본이 V342 래퍼일 수 있으므로 직접 로직 실행
+      if(!isVisible){
+        if(typeof setCategoryStatsVisibility === 'function') setCategoryStatsVisibility(false);
+        if(typeof currentStatsType !== 'undefined') window.currentStatsType = 'memo';
+      } else {
+        if(typeof currentStatsType !== 'undefined') window.currentStatsType = 'expense';
+      }
+      if(typeof updateMoneySummary === 'function') updateMoneySummary();
+      if(typeof updateToggleButtons === 'function'){
+        updateToggleButtons('money-summary', isVisible);
+        if(typeof isCategoryStatsVisible !== 'undefined') updateToggleButtons('category-stats', window.isCategoryStatsVisible);
+      }
+    } else {
+      if(!isVisible){
+        if(typeof setCategoryStatsVisibility === 'function') setCategoryStatsVisibility(false);
+        if(typeof currentStatsType !== 'undefined') window.currentStatsType = 'memo';
+      } else {
+        if(typeof currentStatsType !== 'undefined') window.currentStatsType = 'expense';
+      }
+      if(typeof updateMoneySummary === 'function') updateMoneySummary();
+    }
+    
+    setTimeout(forceUpdateIcon, 10);
+    setTimeout(forceUpdateIcon, 100);
+    setTimeout(forceUpdateIcon, 500);
+  };
+  
+  // 다이어리 폼 열릴 때도 체크 - 이게 문제의 핵심!
+  // openDiaryForm, closeDiaryForm 등에서 아이콘 리셋되는 것을 방지
+  const checkFunctions = ['openDiaryForm', 'closeDiaryForm', 'renderCalendar', 'selectDiaryDate', 'openSettingsModal', 'closeSettingsModal'];
+  checkFunctions.forEach(funcName => {
+    const origFunc = window[funcName];
+    if(origFunc && !origFunc._v343_wrapped){
+      window[funcName] = function(){
+        const result = origFunc.apply(this, arguments);
+        setTimeout(forceUpdateIcon, 50);
+        setTimeout(forceUpdateIcon, 300);
+        return result;
+      };
+      window[funcName]._v343_wrapped = true;
+    }
+  });
+  
+  // 주기적 감시 - 설정 OFF인데 아이콘이 💰로 바뀌면 즉시 📔로 되돌림
+  setInterval(function(){
+    const isOn = getFinanceOn();
+    const topBtn = document.getElementById('top-toggle-btn');
+    if(!topBtn) return;
+    
+    if(!isOn && topBtn.innerHTML.includes('💰')){
+      console.log('V343 감시: OFF인데 💰 아이콘 발견 - 📔로 강제 변경');
+      forceUpdateIcon();
+    }
+    
+    // 가계부 OFF인데 money 패널이 active면 diary로
+    if(!isOn){
+      const moneyPanel = document.getElementById('money-panel');
+      if(moneyPanel && moneyPanel.classList.contains('active')){
+        console.log('V343 감시: OFF인데 money 패널 active - diary로 강제');
+        const diaryPanel = document.getElementById('diary-panel');
+        if(diaryPanel) diaryPanel.classList.add('active');
+        moneyPanel.classList.remove('active');
+        if(typeof currentMainTab !== 'undefined') window.currentMainTab = 'diary';
+        forceUpdateIcon();
+      }
+    }
+  }, 500);
+  
+  // 초기 실행
+  window.addEventListener('load', function(){
+    setTimeout(forceUpdateIcon, 200);
+    setTimeout(forceUpdateIcon, 800);
+    setTimeout(forceUpdateIcon, 1500);
+  });
+  
+  setTimeout(forceUpdateIcon, 100);
+  setTimeout(forceUpdateIcon, 500);
+  setTimeout(forceUpdateIcon, 1000);
+  
+  window._v343_forceUpdateIcon = forceUpdateIcon;
+  window._v343_getFinanceOn = getFinanceOn;
+  
+  console.log('V343: 지속성 버그 수정 완료 - 설정 OFF면 항상 📔, 다이어리 폼 열어도 유지');
+})();
+</script>
+
 </body>
 </html>
