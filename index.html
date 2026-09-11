@@ -13951,5 +13951,216 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 })();
 </script>
 
+
+<style id="v333-fullscreen-fix">
+/* V333: 위 간격 제거 + 메인화면 흐리게 보이는 것 차단 + 종료버튼 화면 맨 밑 독자적 고정 */
+
+/* 오버레이 - 전체 화면 꽉 채우기, 메인화면 안 보이게 진한 배경 */
+#fortune-popup-overlay,
+#saju-detail-modal-overlay {
+  background: rgba(0,0,0,0.85) !important; /* 더 진하게 - 뒤 메인화면 안 보이게 */
+  padding: 0 !important;
+  align-items: center !important; /* flex-end -> center로 변경 - 위 간격 없애고 가운데 정렬 */
+  justify-content: center !important;
+  backdrop-filter: blur(8px) !important; /* 뒤 배경 흐리게 가리기 */
+}
+
+/* 카드 - 가운데 정렬, 위 간격 없이, 외곽 검은색 안 보이게 */
+.fortune-popup-card,
+.saju-detail-card {
+  width: 92% !important;
+  max-width: 420px !important;
+  max-height: calc(100vh - 100px) !important; /* 종료버튼 80px 공간 확보 */
+  min-height: auto !important;
+  margin: 0 auto !important;
+  border-radius: 20px !important; /* 전체 라운드 - 위 간격 없이 중앙 */
+  padding: 0 !important;
+  background: #ffffff !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5) !important;
+  position: relative !important;
+  /* 중앙 정렬 */
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+}
+
+/* 바디 - 스크롤 */
+#fortune-popup-body {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 20px 20px 20px 20px !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+.saju-detail-card > div:not(.sd-exit-sticky):not(.saju-detail-close):not(.fortune-popup-close) {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  padding: 20px !important;
+}
+
+/* 종료 버튼 - 화면 맨 밑에 독자적으로 고정 (폼과 분리) */
+.fp-exit-sticky,
+.sd-exit-sticky {
+  position: fixed !important; /* sticky -> fixed로 변경 - 화면 맨 밑 독자적 고정 */
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  max-width: 420px !important;
+  margin: 0 auto !important; /* 가운데 정렬 */
+  padding: 12px 20px max(20px, env(safe-area-inset-bottom)) 20px !important;
+  background: #ffffff !important;
+  border-top: 1px solid #e0e0e0 !important;
+  border-radius: 0 !important;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.15) !important;
+  z-index: 1200 !important; /* 오버레이보다 높게 - 독자적 고정 */
+  display: block !important;
+}
+
+/* 종료 버튼 자체 */
+.fp-exit-sticky button,
+.sd-exit-sticky button {
+  width: 100% !important;
+  height: 52px !important;
+  background: #1a1a1a !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 14px !important;
+  font-weight: 800 !important;
+  font-size: 16px !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+}
+
+/* 카드가 fixed 종료버튼에 가려지지 않게 하단 여백 */
+.fortune-popup-card {
+  margin-bottom: 80px !important;
+}
+
+/* 닫기 X 버튼 */
+.fortune-popup-close,
+.saju-detail-close {
+  position: absolute !important;
+  top: 14px !important;
+  right: 14px !important;
+  z-index: 1300 !important;
+  background: #f5f5f5 !important;
+  color: #666 !important;
+  border: 1px solid #e0e0e0 !important;
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50% !important;
+}
+
+/* 모바일 대응 - 화면 작을 때 */
+@media (max-width: 480px) {
+  .fortune-popup-card,
+  .saju-detail-card {
+    width: 94% !important;
+    max-height: calc(100vh - 90px) !important;
+  }
+  .fp-exit-sticky,
+  .sd-exit-sticky {
+    max-width: 100% !important;
+    border-radius: 0 !important;
+  }
+}
+</style>
+<script id="v333-js">
+(function(){
+  function fixV333(){
+    const overlay = document.getElementById('fortune-popup-overlay');
+    const card = document.querySelector('.fortune-popup-card');
+    const body = document.getElementById('fortune-popup-body');
+    const exit = document.querySelector('.fp-exit-sticky');
+    
+    if(overlay){
+      overlay.style.background = 'rgba(0,0,0,0.85)';
+      overlay.style.backdropFilter = 'blur(8px)';
+      overlay.style.alignItems = 'center';
+      overlay.style.justifyContent = 'center';
+      overlay.style.padding = '0';
+    }
+    if(card){
+      card.style.position = 'absolute';
+      card.style.top = '50%';
+      card.style.left = '50%';
+      card.style.transform = 'translate(-50%, -50%)';
+      card.style.width = '92%';
+      card.style.maxWidth = '420px';
+      card.style.maxHeight = 'calc(100vh - 100px)';
+      card.style.borderRadius = '20px';
+      card.style.marginBottom = '80px';
+    }
+    if(exit){
+      exit.style.position = 'fixed';
+      exit.style.bottom = '0';
+      exit.style.left = '0';
+      exit.style.right = '0';
+      exit.style.width = '100%';
+      exit.style.maxWidth = '420px';
+      exit.style.margin = '0 auto';
+      exit.style.zIndex = '1200';
+    }
+    
+    const sajuOverlay = document.getElementById('saju-detail-modal-overlay');
+    const sajuCard = document.querySelector('.saju-detail-card');
+    const sajuExit = document.querySelector('.sd-exit-sticky');
+    if(sajuOverlay){
+      sajuOverlay.style.background = 'rgba(0,0,0,0.85)';
+      sajuOverlay.style.backdropFilter = 'blur(8px)';
+      sajuOverlay.style.alignItems = 'center';
+    }
+    if(sajuCard){
+      sajuCard.style.position = 'absolute';
+      sajuCard.style.top = '50%';
+      sajuCard.style.left = '50%';
+      sajuCard.style.transform = 'translate(-50%, -50%)';
+      sajuCard.style.width = '92%';
+      sajuCard.style.maxWidth = '420px';
+      sajuCard.style.borderRadius = '20px';
+    }
+    if(sajuExit){
+      sajuExit.style.position = 'fixed';
+      sajuExit.style.bottom = '0';
+      sajuExit.style.left = '0';
+      sajuExit.style.right = '0';
+      sajuExit.style.maxWidth = '420px';
+      sajuExit.style.margin = '0 auto';
+      sajuExit.style.zIndex = '1200';
+    }
+  }
+  
+  const origOpen = window.openFortunePopup;
+  if(origOpen && !origOpen._v333){
+    window.openFortunePopup = function(){
+      const r = origOpen.apply(this, arguments);
+      setTimeout(fixV333, 30);
+      setTimeout(fixV333, 200);
+      setTimeout(fixV333, 600);
+      return r;
+    };
+    window.openFortunePopup._v333 = true;
+  }
+  
+  const origSaju = window.openSajuDetailModal;
+  if(origSaju && !origSaju._v333){
+    window.openSajuDetailModal = function(){
+      const r = origSaju.apply(this, arguments);
+      setTimeout(fixV333, 30);
+      setTimeout(fixV333, 200);
+      return r;
+    };
+    window.openSajuDetailModal._v333 = true;
+  }
+  
+  setInterval(fixV333, 1500);
+})();
+</script>
+
 </body>
 </html>
