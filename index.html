@@ -14303,5 +14303,275 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 })();
 </script>
 
+
+<style id="v341-ultimate-fix">
+/* V341: 최종 - 다른 폼(운세)과 동일한 구조로 재구성 */
+
+/* 오버레이 흰색 */
+#saju-detail-modal-overlay {
+  background: #ffffff !important;
+  padding: 0 !important;
+}
+#saju-detail-modal-overlay.active {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+}
+
+/* 카드 - 전체 화면 */
+.saju-detail-card {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  background: #ffffff !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  position: relative !important;
+}
+
+/* 스크롤 래퍼 - 다른 폼과 동일하게 전체 스크롤 */
+.saju-detail-card .sd-main-scroll {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  background: #ffffff !important;
+  padding: 0 0 100px 0 !important;
+  display: block !important;
+}
+
+/* 1) 타이틀 - 왼쪽 정렬, 맨 위 */
+.saju-detail-card .sd-title-row {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: flex-start !important; /* 왼쪽 정렬 */
+  align-items: center !important;
+  text-align: left !important;
+  padding: 20px 20px 16px 20px !important; /* 2) 위아래 간격 늘림 */
+  margin: 0 !important;
+  background: #ffffff !important;
+  width: 100% !important;
+}
+.saju-detail-card .sd-title {
+  font-size: 20px !important;
+  font-weight: 900 !important;
+  color: #111111 !important;
+  text-align: left !important;
+  margin: 0 !important;
+  display: block !important;
+}
+.saju-detail-card #sd-zodiac-badge {
+  margin-left: 8px !important;
+}
+
+/* 사주 4주 - 간격 */
+.saju-detail-card .sd-pillars {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 8px !important;
+  padding: 8px 20px 20px 20px !important; /* 위 8px, 아래 20px로 간격 확보 */
+  margin: 0 !important;
+  background: #ffffff !important;
+}
+.saju-detail-card .sd-pillar {
+  background: #fafafa !important;
+  border: 1px solid #eee !important;
+  border-radius: 12px !important;
+  padding: 10px 4px !important;
+}
+
+/* 전체 운 설명 */
+.saju-detail-card .sd-dm-box {
+  display: flex !important;
+  gap: 12px !important;
+  background: #fff8f0 !important;
+  border: 1px solid #ffe0c0 !important;
+  border-radius: 14px !important;
+  padding: 16px !important;
+  margin: 0 20px 20px 20px !important;
+}
+.saju-detail-card .sd-dm-char {
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px !important;
+  border-radius: 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 22px !important;
+  font-weight: 900 !important;
+}
+.saju-detail-card .sd-dm-desc {
+  font-size: 14px !important;
+  line-height: 1.7 !important;
+  color: #333 !important;
+}
+
+/* 초년/중년/말년 */
+.saju-detail-card #sd-life-stages {
+  display: block !important;
+  overflow: visible !important; /* 부모가 스크롤 */
+  padding: 0 20px 20px 20px !important;
+  height: auto !important;
+  max-height: none !important;
+}
+.saju-detail-card .sd-life-card {
+  background: #fafafa !important;
+  border: 1px solid #eee !important;
+  border-radius: 14px !important;
+  padding: 14px !important;
+  margin-bottom: 12px !important;
+}
+
+/* 4) 종료버튼 - 로즈 컬러로 전체 분위기 맞춤 */
+.saju-detail-card .sd-exit-sticky {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  padding: 12px 20px max(16px, env(safe-area-inset-bottom)) 20px !important;
+  background: #ffffff !important;
+  border-top: 1px solid #f0e0e0 !important;
+  z-index: 999 !important;
+  display: block !important;
+}
+.saju-detail-card .sd-exit-sticky button {
+  width: 100% !important;
+  height: 52px !important;
+  background: linear-gradient(135deg, #8b0000 0%, #c0392b 100%) !important; /* 로즈 와인 - 검은색 아님! */
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 14px !important;
+  font-weight: 800 !important;
+  font-size: 16px !important;
+  box-shadow: 0 4px 15px rgba(139,0,0,0.3) !important;
+}
+
+/* 운세 팝업 종료버튼도 동일하게 로즈로 */
+#fortune-popup-overlay .fp-exit-sticky button {
+  background: linear-gradient(135deg, #8b0000 0%, #c0392b 100%) !important;
+  color: #fff !important;
+}
+
+/* X 버튼 */
+.saju-detail-card .close-form-btn {
+  position: absolute !important;
+  top: 12px !important;
+  right: 12px !important;
+  width: 32px !important;
+  height: 32px !important;
+  background: #f5f5f5 !important;
+  border: 1px solid #e0e0e0 !important;
+  border-radius: 50% !important;
+  z-index: 1000 !important;
+}
+</style>
+<script id="v341-js">
+(function(){
+  function buildSajuScroll(){
+    const overlay = document.getElementById('saju-detail-modal-overlay');
+    if(!overlay || !overlay.classList.contains('active')) return;
+    
+    const card = overlay.querySelector('.saju-detail-card');
+    if(!card) return;
+    
+    // 이미 래퍼가 있으면 스킵
+    if(card.querySelector('.sd-main-scroll')) {
+      // 스타일만 재적용
+      const wrapper = card.querySelector('.sd-main-scroll');
+      wrapper.style.cssText = 'flex:1 !important; overflow-y:auto !important; background:#fff !important; padding:0 0 100px 0 !important;';
+      return;
+    }
+    
+    const titleRow = card.querySelector('.sd-title-row');
+    const pillars = card.querySelector('#sd-pillars');
+    const dmBox = card.querySelector('.sd-dm-box');
+    const lifeStages = card.querySelector('#sd-life-stages');
+    const exit = card.querySelector('.sd-exit-sticky');
+    const closeBtn = card.querySelector('.close-form-btn');
+    
+    if(!titleRow || !pillars || !dmBox || !lifeStages || !exit) {
+      console.log('V341: 요소 없음', {titleRow: !!titleRow, pillars: !!pillars, dmBox: !!dmBox, lifeStages: !!lifeStages, exit: !!exit});
+      return;
+    }
+    
+    console.log('V341: 스크롤 구조 재구성 시작 - 전체 폼 스크롤');
+    
+    // 래퍼 생성
+    const wrapper = document.createElement('div');
+    wrapper.className = 'sd-main-scroll';
+    wrapper.style.cssText = 'flex:1; overflow-y:auto; overflow-x:hidden; background:#ffffff; padding:0 0 100px 0; display:block;';
+    
+    // 기존 요소들을 래퍼로 이동
+    wrapper.appendChild(titleRow);
+    wrapper.appendChild(pillars);
+    wrapper.appendChild(dmBox);
+    wrapper.appendChild(lifeStages);
+    
+    // 카드 비우고 재구성
+    card.innerHTML = '';
+    if(closeBtn) card.appendChild(closeBtn);
+    card.appendChild(wrapper);
+    card.appendChild(exit);
+    
+    // 스타일 적용
+    titleRow.style.cssText = 'display:flex !important; justify-content:flex-start !important; align-items:center !important; text-align:left !important; padding:20px 20px 16px 20px !important; margin:0 !important; background:#fff !important;';
+    pillars.style.cssText = 'display:grid !important; grid-template-columns:repeat(4,1fr) !important; gap:8px !important; padding:8px 20px 20px 20px !important; margin:0 !important; background:#fff !important;';
+    dmBox.style.cssText = 'display:flex !important; gap:12px !important; background:#fff8f0 !important; border:1px solid #ffe0c0 !important; border-radius:14px !important; padding:16px !important; margin:0 20px 20px 20px !important;';
+    lifeStages.style.cssText = 'display:block !important; overflow:visible !important; padding:0 20px 20px 20px !important; height:auto !important; max-height:none !important;';
+    
+    exit.style.cssText = 'position:fixed !important; bottom:0 !important; left:0 !important; right:0 !important; width:100% !important; padding:12px 20px 16px 20px !important; background:#fff !important; border-top:1px solid #f0e0e0 !important; z-index:999 !important; display:block !important;';
+    const btn = exit.querySelector('button');
+    if(btn){
+      btn.style.cssText = 'width:100% !important; height:52px !important; background:linear-gradient(135deg, #8b0000 0%, #c0392b 100%) !important; color:#fff !important; border:none !important; border-radius:14px !important; font-weight:800 !important; font-size:16px !important; box-shadow:0 4px 15px rgba(139,0,0,0.3) !important;';
+    }
+    
+    console.log('V341: 재구성 완료 - 전체 스크롤, 타이틀 왼쪽, 로즈 종료버튼');
+  }
+  
+  const orig = window.openSajuDetailModal;
+  if(orig){
+    window.openSajuDetailModal = function(){
+      const result = orig.apply(this, arguments);
+      setTimeout(buildSajuScroll, 80);
+      setTimeout(buildSajuScroll, 300);
+      setTimeout(buildSajuScroll, 800);
+      setTimeout(buildSajuScroll, 1500);
+      return result;
+    };
+  }
+  
+  // 운세도 종료버튼 로즈로
+  const origFortune = window.openFortunePopup;
+  if(origFortune){
+    const origFortuneWrap = function(){
+      const result = origFortune.apply(this, arguments);
+      setTimeout(function(){
+        const fExit = document.querySelector('#fortune-popup-overlay .fp-exit-sticky button');
+        if(fExit){
+          fExit.style.background = 'linear-gradient(135deg, #8b0000 0%, #c0392b 100%)';
+          fExit.style.color = '#fff';
+        }
+      }, 100);
+      return result;
+    };
+    window.openFortunePopup = origFortuneWrap;
+  }
+  
+  setInterval(function(){
+    const overlay = document.getElementById('saju-detail-modal-overlay');
+    if(overlay && overlay.classList.contains('active')){
+      buildSajuScroll();
+    }
+  }, 1000);
+})();
+</script>
+
 </body>
 </html>
