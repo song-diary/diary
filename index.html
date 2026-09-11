@@ -14573,5 +14573,159 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 })();
 </script>
 
+
+<script id="v342-finance-toggle-icon">
+// V342: 가계부 현황 OFF면 메인 아이콘이 다이어리로 바뀌고 가계부 진입 불가, ON이면 가계부 아이콘으로 바뀌고 입장 가능
+
+(function(){
+  function updateMainFinanceIcon(){
+    const topBtn = document.getElementById('top-toggle-btn');
+    if(!topBtn) return;
+    
+    // isMoneySummaryVisible 전역 변수 사용
+    const isFinanceOn = typeof isMoneySummaryVisible !== 'undefined' ? isMoneySummaryVisible : true;
+    const isMoneySummaryChecked = document.getElementById('toggle-money-summary');
+    const actualOn = isMoneySummaryChecked ? isMoneySummaryChecked.checked : isFinanceOn;
+    
+    console.log('V342: 가계부 현황', actualOn ? 'ON' : 'OFF');
+    
+    if(!actualOn){
+      // 가계부 OFF: 아이콘을 다이어리(📔)로, 가계부 진입 불가
+      topBtn.innerHTML = '📔';
+      topBtn.title = '다이어리 모드 (가계부 OFF)';
+      topBtn.style.opacity = '0.6';
+      // 현재 가계부 탭이면 다이어리로 강제 이동
+      if(typeof currentMainTab !== 'undefined' && currentMainTab === 'money'){
+        console.log('V342: 가계부 OFF이므로 다이어리로 이동');
+        if(typeof switchMainTab === 'function'){
+          switchMainTab('diary');
+        }
+      }
+    } else {
+      // 가계부 ON: 원래 로직 - 다이어리면 💰, 가계부면 📔
+      topBtn.style.opacity = '1';
+      const currentTab = typeof currentMainTab !== 'undefined' ? currentMainTab : 'diary';
+      if(currentTab === 'diary'){
+        topBtn.innerHTML = '💰';
+        topBtn.title = '가계부로 이동';
+      } else {
+        topBtn.innerHTML = '📔';
+        topBtn.title = '다이어리로 이동';
+      }
+    }
+  }
+  
+  // 기존 setMoneySummaryVisibility 래핑
+  const origSetMoneySummaryVisibility = window.setMoneySummaryVisibility;
+  if(origSetMoneySummaryVisibility){
+    window.setMoneySummaryVisibility = function(isVisible){
+      const result = origSetMoneySummaryVisibility.apply(this, arguments);
+      setTimeout(updateMainFinanceIcon, 50);
+      setTimeout(updateMainFinanceIcon, 300);
+      return result;
+    };
+  } else {
+    // 함수가 아직 정의 안 됐으면 전역으로 정의
+    window.setMoneySummaryVisibility = function(isVisible){
+      if(typeof isMoneySummaryVisible !== 'undefined'){
+        isMoneySummaryVisible = isVisible;
+      }
+      localStorage.setItem('smartDiaryMoneySummaryVisible', isVisible);
+      if(!isVisible){
+        if(typeof setCategoryStatsVisibility === 'function') setCategoryStatsVisibility(false);
+        if(typeof currentStatsType !== 'undefined') currentStatsType = 'memo';
+      } else {
+        if(typeof currentStatsType !== 'undefined') currentStatsType = 'expense';
+      }
+      if(typeof updateMoneySummary === 'function') updateMoneySummary();
+      if(typeof updateToggleButtons === 'function'){
+        updateToggleButtons('money-summary', isVisible);
+        if(typeof isCategoryStatsVisible !== 'undefined') updateToggleButtons('category-stats', isCategoryStatsVisible);
+      }
+      setTimeout(updateMainFinanceIcon, 50);
+    };
+  }
+  
+  // toggleMainTab 래핑 - 가계부 OFF면 진입 차단
+  const origToggleMainTab = window.toggleMainTab;
+  if(origToggleMainTab){
+    window.toggleMainTab = function(){
+      const isFinanceOn = typeof isMoneySummaryVisible !== 'undefined' ? isMoneySummaryVisible : true;
+      const chk = document.getElementById('toggle-money-summary');
+      const actualOn = chk ? chk.checked : isFinanceOn;
+      
+      if(!actualOn){
+        // 가계부 OFF면 가계부로 이동 불가
+        console.log('V342: 가계부 OFF - 진입 차단, 다이어리 아이콘 유지');
+        if(typeof currentMainTab !== 'undefined' && currentMainTab === 'money'){
+          if(typeof switchMainTab === 'function') switchMainTab('diary');
+        }
+        updateMainFinanceIcon();
+        // 토스트 메시지
+        if(typeof alert !== 'undefined'){
+          // alert 대신 부드럽게 - 이미 다이어리 모드임을 알림
+          const topBtn = document.getElementById('top-toggle-btn');
+          if(topBtn){
+            const originalTitle = topBtn.title;
+            topBtn.title = '가계부 OFF - 설정에서 켜기';
+            setTimeout(()=>{ topBtn.title = originalTitle; updateMainFinanceIcon(); }, 2000);
+          }
+        }
+        return;
+      }
+      // ON이면 원래대로
+      return origToggleMainTab.apply(this, arguments);
+    };
+  }
+  
+  // switchMainTab도 래핑 - 가계부 OFF면 money로 전환 차단
+  const origSwitchMainTab = window.switchMainTab;
+  if(origSwitchMainTab){
+    window.switchMainTab = function(tabName){
+      const isFinanceOn = typeof isMoneySummaryVisible !== 'undefined' ? isMoneySummaryVisible : true;
+      const chk = document.getElementById('toggle-money-summary');
+      const actualOn = chk ? chk.checked : isFinanceOn;
+      
+      if(tabName === 'money' && !actualOn){
+        console.log('V342: 가계부 OFF - money 탭 진입 차단');
+        // 다이어리로 유지
+        const result = origSwitchMainTab.call(this, 'diary');
+        setTimeout(updateMainFinanceIcon, 50);
+        return result;
+      }
+      
+      const result = origSwitchMainTab.apply(this, arguments);
+      setTimeout(updateMainFinanceIcon, 50);
+      return result;
+    };
+  }
+  
+  // 페이지 로드시 아이콘 동기화
+  window.addEventListener('load', function(){
+    setTimeout(updateMainFinanceIcon, 300);
+    setTimeout(updateMainFinanceIcon, 1000);
+    setTimeout(updateMainFinanceIcon, 2000);
+  });
+  
+  // 설정 변경 감지
+  const observer = new MutationObserver(function(){
+    updateMainFinanceIcon();
+  });
+  
+  setTimeout(function(){
+    const toggleEl = document.getElementById('toggle-money-summary');
+    if(toggleEl){
+      toggleEl.addEventListener('change', function(){
+        setTimeout(updateMainFinanceIcon, 50);
+      });
+    }
+    updateMainFinanceIcon();
+  }, 500);
+  
+  window._v342_updateMainFinanceIcon = updateMainFinanceIcon;
+  console.log('V342: 가계부 현황 토글 - 아이콘 전환 로직 설치 완료');
+})();
+</script>
+
 </body>
 </html>
