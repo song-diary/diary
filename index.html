@@ -13571,5 +13571,385 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 })();
 </script>
 
+
+<style id="v331-outer-fix">
+/* V331: 오늘의 사주폼 외곽 검은색 보이는 문제 + 종료버튼 맨 아래 위치 */
+
+/* 오버레이 - 검은 배경이 외곽으로 비치는 문제 해결 */
+#fortune-popup-overlay {
+  background: rgba(0,0,0,0.6) !important; /* 0.85 -> 0.6으로 연하게 */
+  padding: 0 !important; /* 15px 패딩 제거 -> 외곽 검은색 안 보이게 꽉 채우기 */
+  align-items: flex-end !important; /* 아래에서 올라오는 시트 형태 */
+  justify-content: center !important;
+}
+
+/* 팝업 카드 - 바닥까지 꽉 채우고, 외곽 검은색 안 보이게 */
+.fortune-popup-card {
+  width: 100% !important;
+  max-width: 100% !important; /* 420px 제한 제거 -> 화면 꽉 채우기 */
+  max-height: 92vh !important;
+  min-height: 70vh !important;
+  margin: 0 !important;
+  border-radius: 24px 24px 0 0 !important; /* 위만 라운드, 아래는 바닥에 붙어서 검은색 안 보임 */
+  padding: 20px 20px 0 20px !important; /* 하단 패딩 0 -> 종료버튼이 맨 아래 붙게 */
+  background: #ffffff !important;
+  box-shadow: 0 -10px 40px rgba(0,0,0,0.2) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+/* 바디 - 스크롤 영역 */
+#fortune-popup-body {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding-bottom: 20px !important;
+  padding-right: 2px !important;
+}
+
+/* 종료 버튼 - 맨 아래 바닥에 붙이기 */
+.fp-exit-sticky {
+  position: sticky !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: calc(100% + 40px) !important; /* 카드 패딩까지 꽉 채우기 */
+  margin: 0 -20px 0 -20px !important;
+  padding: 16px 20px 24px 20px !important; /* 아래 24px -> 맨 아래 위치 */
+  background: #ffffff !important;
+  border-top: 1px solid #f0e0e0 !important;
+  border-radius: 0 !important; /* 아래 라운드 제거 -> 바닥에 붙어서 검은색 안 보임 */
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.08) !important;
+  z-index: 20 !important;
+}
+
+.fp-exit-sticky button {
+  background: #8b0000 !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 12px !important;
+  padding: 16px !important;
+  font-weight: 800 !important;
+  font-size: 15px !important;
+  width: 100% !important;
+  box-shadow: 0 4px 12px rgba(139,0,0,0.3) !important;
+}
+
+/* 사주 상세도 동일하게 */
+#saju-detail-modal-overlay {
+  background: rgba(0,0,0,0.6) !important;
+  padding: 0 !important;
+  align-items: flex-end !important;
+}
+
+.saju-detail-card {
+  width: 100% !important;
+  max-width: 100% !important;
+  max-height: 92vh !important;
+  min-height: 70vh !important;
+  margin: 0 !important;
+  border-radius: 24px 24px 0 0 !important;
+  padding: 20px 20px 0 20px !important;
+  background: #ffffff !important;
+  box-shadow: 0 -10px 40px rgba(0,0,0,0.2) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+.saju-detail-card > div:first-child {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  padding-bottom: 20px !important;
+}
+
+.sd-exit-sticky {
+  position: sticky !important;
+  bottom: 0 !important;
+  width: calc(100% + 40px) !important;
+  margin: 0 -20px 0 -20px !important;
+  padding: 16px 20px 24px 20px !important;
+  background: #ffffff !important;
+  border-top: 1px solid #f0e0e0 !important;
+  border-radius: 0 !important;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.08) !important;
+  z-index: 20 !important;
+}
+
+.sd-exit-sticky button {
+  background: #8b0000 !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 12px !important;
+  padding: 16px !important;
+  font-weight: 800 !important;
+  font-size: 15px !important;
+  width: 100% !important;
+}
+
+/* 닫기 X 버튼도 로즈로 */
+.fortune-popup-close,
+.saju-detail-close {
+  background: #fff0f0 !important;
+  color: #8b0000 !important;
+  border: 1px solid #f0c0c0 !important;
+}
+</style>
+<script id="v331-js">
+(function(){
+  function fixV331(){
+    const overlay = document.getElementById('fortune-popup-overlay');
+    const card = document.querySelector('.fortune-popup-card');
+    const body = document.getElementById('fortune-popup-body');
+    const exit = document.querySelector('.fp-exit-sticky');
+    
+    if(overlay){
+      overlay.style.background = 'rgba(0,0,0,0.6)';
+      overlay.style.padding = '0';
+      overlay.style.alignItems = 'flex-end';
+    }
+    if(card){
+      card.style.width = '100%';
+      card.style.maxWidth = '100%';
+      card.style.borderRadius = '24px 24px 0 0';
+      card.style.margin = '0';
+      card.style.paddingBottom = '0';
+    }
+    if(exit){
+      exit.style.position = 'sticky';
+      exit.style.bottom = '0';
+      exit.style.width = 'calc(100% + 40px)';
+      exit.style.margin = '0 -20px 0 -20px';
+      exit.style.padding = '16px 20px 24px 20px';
+      exit.style.borderRadius = '0';
+    }
+    
+    // 사주 상세도
+    const sajuOverlay = document.getElementById('saju-detail-modal-overlay');
+    const sajuCard = document.querySelector('.saju-detail-card');
+    const sajuExit = document.querySelector('.sd-exit-sticky');
+    if(sajuOverlay){
+      sajuOverlay.style.background = 'rgba(0,0,0,0.6)';
+      sajuOverlay.style.padding = '0';
+      sajuOverlay.style.alignItems = 'flex-end';
+    }
+    if(sajuCard){
+      sajuCard.style.width = '100%';
+      sajuCard.style.maxWidth = '100%';
+      sajuCard.style.borderRadius = '24px 24px 0 0';
+      sajuCard.style.margin = '0';
+      sajuCard.style.paddingBottom = '0';
+    }
+    if(sajuExit){
+      sajuExit.style.width = 'calc(100% + 40px)';
+      sajuExit.style.margin = '0 -20px 0 -20px';
+      sajuExit.style.padding = '16px 20px 24px 20px';
+      sajuExit.style.borderRadius = '0';
+    }
+  }
+  
+  const origOpen = window.openFortunePopup;
+  if(origOpen && !origOpen._v331){
+    window.openFortunePopup = function(){
+      const r = origOpen.apply(this, arguments);
+      setTimeout(fixV331, 50);
+      setTimeout(fixV331, 300);
+      return r;
+    };
+    window.openFortunePopup._v331 = true;
+  }
+  
+  const origSaju = window.openSajuDetailModal;
+  if(origSaju && !origSaju._v331){
+    window.openSajuDetailModal = function(){
+      const r = origSaju.apply(this, arguments);
+      setTimeout(fixV331, 50);
+      setTimeout(fixV331, 300);
+      return r;
+    };
+    window.openSajuDetailModal._v331 = true;
+  }
+  
+  setInterval(fixV331, 2000);
+})();
+</script>
+
+
+<style id="v332-exit-fix">
+/* V332: 종료 버튼 위치 애매함 해결 - 완전 바닥 고정 + 명확하게 */
+
+/* 오버레이 - 바텀시트 */
+#fortune-popup-overlay,
+#saju-detail-modal-overlay {
+  background: rgba(0,0,0,0.5) !important;
+  padding: 0 !important;
+  align-items: flex-end !important;
+  justify-content: center !important;
+}
+
+/* 카드 - 화면 하단에 딱 붙게, 검은색 외곽 안 보이게 */
+.fortune-popup-card,
+.saju-detail-card {
+  width: 100% !important;
+  max-width: 480px !important;
+  max-height: 88vh !important;
+  min-height: 60vh !important;
+  margin: 0 auto !important;
+  border-radius: 20px 20px 0 0 !important;
+  padding: 0 !important; /* 패딩 제거 - 내부에서 관리 */
+  background: #ffffff !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  box-shadow: 0 -8px 30px rgba(0,0,0,0.2) !important;
+}
+
+/* 바디 - 스크롤, 종료버튼 공간 확보 */
+#fortune-popup-body {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 20px 20px 16px 20px !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* 사주 상세 내부 스크롤 영역 */
+.saju-detail-card > div:not(.sd-exit-sticky):not(.saju-detail-close) {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  padding: 20px 20px 16px 20px !important;
+}
+
+/* 종료 버튼 컨테이너 - 완전 바닥 고정, 명확한 구분 */
+.fp-exit-sticky,
+.sd-exit-sticky {
+  position: relative !important; /* sticky 대신 relative로 바닥에 고정된 느낌 */
+  flex-shrink: 0 !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 12px 20px max(20px, env(safe-area-inset-bottom)) 20px !important;
+  background: #ffffff !important;
+  border-top: 1px solid #f0e0e0 !important;
+  border-radius: 0 !important;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.06) !important;
+  z-index: 30 !important;
+}
+
+/* 종료 버튼 - 크고 명확하게, 맨 아래 위치 */
+.fp-exit-sticky button,
+.sd-exit-sticky button {
+  width: 100% !important;
+  height: 54px !important;
+  background: #1a1a1a !important; /* 검은색으로 명확하게 */
+  color: white !important;
+  border: none !important;
+  border-radius: 14px !important;
+  font-weight: 800 !important;
+  font-size: 16px !important;
+  letter-spacing: 0.02em !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+}
+
+.fp-exit-sticky button:active,
+.sd-exit-sticky button:active {
+  transform: scale(0.98) !important;
+  background: #000 !important;
+}
+
+/* 로즈 테마로 원하면 아래 주석 해제 - 지금은 검은색이 더 명확해서 검은색으로 */
+/*
+.fp-exit-sticky button,
+.sd-exit-sticky button {
+  background: linear-gradient(135deg, #8b0000, #6a0000) !important;
+}
+*/
+
+/* 닫기 X 버튼 */
+.fortune-popup-close {
+  top: 16px !important;
+  right: 16px !important;
+  width: 32px !important;
+  height: 32px !important;
+  background: #f5f5f5 !important;
+  color: #666 !important;
+  border: 1px solid #e0e0e0 !important;
+  border-radius: 50% !important;
+  font-size: 16px !important;
+  z-index: 40 !important;
+}
+</style>
+<script id="v332-js">
+(function(){
+  function fixV332(){
+    const card = document.querySelector('.fortune-popup-card');
+    const body = document.getElementById('fortune-popup-body');
+    const exit = document.querySelector('.fp-exit-sticky');
+    
+    if(card){
+      card.style.display = 'flex';
+      card.style.flexDirection = 'column';
+      card.style.padding = '0';
+      card.style.overflow = 'hidden';
+    }
+    if(body){
+      body.style.flex = '1';
+      body.style.overflowY = 'auto';
+    }
+    if(exit){
+      exit.style.flexShrink = '0';
+      exit.style.position = 'relative';
+      const btn = exit.querySelector('button');
+      if(btn){
+        btn.style.height = '54px';
+        btn.style.background = '#1a1a1a';
+        btn.style.color = 'white';
+      }
+    }
+    
+    const sajuCard = document.querySelector('.saju-detail-card');
+    const sajuExit = document.querySelector('.sd-exit-sticky');
+    if(sajuCard){
+      sajuCard.style.display = 'flex';
+      sajuCard.style.flexDirection = 'column';
+      sajuCard.style.padding = '0';
+      sajuCard.style.overflow = 'hidden';
+    }
+    if(sajuExit){
+      sajuExit.style.flexShrink = '0';
+      sajuExit.style.position = 'relative';
+    }
+  }
+  
+  const origOpen = window.openFortunePopup;
+  if(origOpen && !origOpen._v332){
+    window.openFortunePopup = function(){
+      const r = origOpen.apply(this, arguments);
+      setTimeout(fixV332, 30);
+      setTimeout(fixV332, 300);
+      return r;
+    };
+    window.openFortunePopup._v332 = true;
+  }
+  
+  const origSaju = window.openSajuDetailModal;
+  if(origSaju && !origSaju._v332){
+    window.openSajuDetailModal = function(){
+      const r = origSaju.apply(this, arguments);
+      setTimeout(fixV332, 30);
+      setTimeout(fixV332, 300);
+      return r;
+    };
+    window.openSajuDetailModal._v332 = true;
+  }
+  
+  setInterval(fixV332, 1500);
+})();
+</script>
+
 </body>
 </html>
