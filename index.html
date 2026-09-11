@@ -14162,5 +14162,187 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 })();
 </script>
 
+
+<style id="v334-saju-top-fix">
+/* V334: 사주풀이도 위에 떠있는 문제 수정 - 운세와 동일하게 중앙 고정 */
+
+/* 사주 상세 오버레이 - 전체 화면, 뒤 배경 완전 차단 */
+#saju-detail-modal-overlay {
+  background: rgba(0,0,0,0.85) !important;
+  backdrop-filter: blur(8px) !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* 사주 상세 카드 - 중앙 고정, 위 간격 없음 */
+#saju-detail-modal-overlay .saju-detail-card,
+.saju-detail-card {
+  width: 92% !important;
+  max-width: 420px !important;
+  max-height: calc(100vh - 100px) !important;
+  min-height: auto !important;
+  margin: 0 !important;
+  border-radius: 20px !important;
+  padding: 0 !important;
+  background: #ffffff !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5) !important;
+  /* 중앙 고정 - 가장 중요 */
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+}
+
+/* 사주 상세 내부 스크롤 영역 */
+#saju-detail-modal-overlay .saju-detail-card > div:nth-child(1),
+#saju-detail-modal-overlay .saju-detail-card > div:nth-child(2),
+.saju-detail-card .sd-content,
+.saju-detail-card #sd-pillars,
+.saju-detail-card #sd-life-stages {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 20px !important;
+  max-height: none !important;
+}
+
+/* 사주 상세 종료 버튼 - 화면 맨 밑 독자적 고정 */
+#saju-detail-modal-overlay .sd-exit-sticky,
+.sd-exit-sticky {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 50% !important;
+  right: auto !important;
+  transform: translateX(-50%) !important;
+  width: 92% !important;
+  max-width: 420px !important;
+  margin: 0 !important;
+  padding: 12px 20px max(20px, env(safe-area-inset-bottom)) 20px !important;
+  background: #ffffff !important;
+  border-top: 1px solid #e0e0e0 !important;
+  border-radius: 0 0 20px 20px !important;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.15) !important;
+  z-index: 1200 !important;
+}
+
+/* 운세도 동일하게 다시 한번 확실히 */
+#fortune-popup-overlay .fortune-popup-card {
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+}
+
+#fortune-popup-overlay .fp-exit-sticky {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 50% !important;
+  right: auto !important;
+  transform: translateX(-50%) !important;
+  width: 92% !important;
+  max-width: 420px !important;
+  margin: 0 !important;
+  z-index: 1200 !important;
+}
+</style>
+<script id="v334-js">
+(function(){
+  function fixV334(){
+    // 사주 상세
+    const sajuOverlay = document.getElementById('saju-detail-modal-overlay');
+    const sajuCard = document.querySelector('.saju-detail-card');
+    const sajuExit = document.querySelector('.sd-exit-sticky');
+    
+    if(sajuOverlay){
+      sajuOverlay.style.background = 'rgba(0,0,0,0.85)';
+      sajuOverlay.style.backdropFilter = 'blur(8px)';
+      sajuOverlay.style.display = 'flex';
+      sajuOverlay.style.alignItems = 'center';
+      sajuOverlay.style.justifyContent = 'center';
+      sajuOverlay.style.padding = '0';
+    }
+    if(sajuCard){
+      sajuCard.style.position = 'absolute';
+      sajuCard.style.top = '50%';
+      sajuCard.style.left = '50%';
+      sajuCard.style.transform = 'translate(-50%, -50%)';
+      sajuCard.style.width = '92%';
+      sajuCard.style.maxWidth = '420px';
+      sajuCard.style.maxHeight = 'calc(100vh - 100px)';
+      sajuCard.style.borderRadius = '20px';
+      sajuCard.style.margin = '0';
+      sajuCard.style.padding = '0';
+      sajuCard.style.display = 'flex';
+      sajuCard.style.flexDirection = 'column';
+      sajuCard.style.overflow = 'hidden';
+    }
+    if(sajuExit){
+      sajuExit.style.position = 'fixed';
+      sajuExit.style.bottom = '0';
+      sajuExit.style.left = '50%';
+      sajuExit.style.right = 'auto';
+      sajuExit.style.transform = 'translateX(-50%)';
+      sajuExit.style.width = '92%';
+      sajuExit.style.maxWidth = '420px';
+      sajuExit.style.margin = '0';
+      sajuExit.style.zIndex = '1200';
+    }
+    
+    // 운세도
+    const fortuneOverlay = document.getElementById('fortune-popup-overlay');
+    const fortuneCard = document.querySelector('.fortune-popup-card');
+    const fortuneExit = document.querySelector('.fp-exit-sticky');
+    if(fortuneOverlay){
+      fortuneOverlay.style.background = 'rgba(0,0,0,0.85)';
+      fortuneOverlay.style.backdropFilter = 'blur(8px)';
+    }
+    if(fortuneCard){
+      fortuneCard.style.position = 'absolute';
+      fortuneCard.style.top = '50%';
+      fortuneCard.style.left = '50%';
+      fortuneCard.style.transform = 'translate(-50%, -50%)';
+    }
+    if(fortuneExit){
+      fortuneExit.style.position = 'fixed';
+      fortuneExit.style.bottom = '0';
+      fortuneExit.style.left = '50%';
+      fortuneExit.style.transform = 'translateX(-50%)';
+      fortuneExit.style.width = '92%';
+      fortuneExit.style.maxWidth = '420px';
+    }
+  }
+  
+  const origSaju = window.openSajuDetailModal;
+  if(origSaju && !origSaju._v334){
+    window.openSajuDetailModal = function(){
+      const r = origSaju.apply(this, arguments);
+      setTimeout(fixV334, 30);
+      setTimeout(fixV334, 200);
+      setTimeout(fixV334, 600);
+      return r;
+    };
+    window.openSajuDetailModal._v334 = true;
+  }
+  
+  const origFortune = window.openFortunePopup;
+  if(origFortune && !origFortune._v334){
+    window.openFortunePopup = function(){
+      const r = origFortune.apply(this, arguments);
+      setTimeout(fixV334, 30);
+      setTimeout(fixV334, 200);
+      return r;
+    };
+    window.openFortunePopup._v334 = true;
+  }
+  
+  setInterval(fixV334, 1500);
+})();
+</script>
+
 </body>
 </html>
