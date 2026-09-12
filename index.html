@@ -16408,5 +16408,165 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 })();
 </script>
 
+
+<style id="v359-bottom-visible">
+/* V359: 맨밑 줄 + 일자까지 다 보이게 - 하단 여백 확보 */
+
+/* 메모 - 하단 패딩 추가 + 스크롤 패딩 */
+#photo-lightbox-memo {
+  background: #FFF9E6 !important;
+  border: 1px solid #E8DCC0 !important;
+  color: #3D2F1F !important;
+  line-height: 1.45 !important;
+  font-size: 15px !important;
+  padding: 16px 18px 24px 18px !important; /* 하단 패딩 24px로 더 크게 */
+  max-height: 38vh !important; /* 35vh -> 38vh로 살짝 크게 */
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  margin-top: 12px !important;
+  width: 100% !important;
+  max-width: 520px !important;
+  box-sizing: border-box !important;
+  
+  /* 스크롤 끝 여백 */
+  scroll-padding-bottom: 20px !important;
+  /* 마지막 줄이 잘리지 않게 */
+  padding-bottom: 28px !important;
+}
+
+#photo-lightbox-memo.no-photo-mode {
+  background: #FFF9E6 !important;
+  border: 1px solid #E8DCC0 !important;
+  max-height: 70vh !important;
+  padding-bottom: 28px !important;
+}
+
+/* 날짜 - 메모 아래에 항상 보이게, 종료 버튼 위 공간 확보 */
+#photo-lightbox-date {
+  margin-top: 8px !important;
+  margin-bottom: 80px !important; /* 종료 버튼 60px + 여백 20px */
+  padding: 6px 0 !important;
+  color: rgba(255,255,255,0.65) !important;
+  font-size: 11px !important;
+  text-align: center !important;
+  width: 100% !important;
+  max-width: 520px !important;
+  box-sizing: border-box !important;
+  flex-shrink: 0 !important;
+}
+
+/* 콘텐츠 - 하단 여백으로 종료 버튼 공간 확보 */
+#photo-lightbox-content {
+  padding-bottom: 90px !important;
+  box-sizing: border-box !important;
+}
+
+/* 종료 버튼 - 더 작고 투명하게 */
+#photo-lightbox-fixed-close {
+  background: rgba(255,249,230,0.92) !important;
+  border-top: 1px solid #E8DCC0 !important;
+  padding: 8px 16px calc(8px + env(safe-area-inset-bottom)) !important;
+  height: auto !important;
+  min-height: 60px !important;
+}
+
+#photo-lightbox-fixed-close button {
+  background: #3D2F1F !important;
+  color: #FFF9E6 !important;
+  padding: 11px !important;
+  font-size: 13px !important;
+  border-radius: 10px !important;
+}
+
+/* 고정핀 유지 */
+.cal-cell.has-photo .cal-photo-corner {
+  top: 4px !important;
+  left: 3px !important;
+  background: transparent !important;
+  clip-path: none !important;
+  border: none !important;
+}
+.cal-cell.has-photo .cal-photo-corner::after {
+  content: '📌' !important;
+  font-size: 11px !important;
+}
+</style>
+<script id="v359-js">
+(function(){
+  console.log('V359: 맨밑 줄 + 일자 보이게');
+  
+  function fixBottomVisible(){
+    const memo = document.getElementById('photo-lightbox-memo');
+    const dateEl = document.getElementById('photo-lightbox-date');
+    const content = document.getElementById('photo-lightbox-content');
+    
+    if(memo){
+      memo.style.lineHeight = '1.45';
+      memo.style.paddingBottom = '28px';
+      memo.style.scrollPaddingBottom = '20px';
+      
+      if(memo.classList.contains('no-photo-mode')){
+        memo.style.maxHeight = '70vh';
+      } else {
+        memo.style.maxHeight = '38vh';
+      }
+      
+      // 맨밑까지 스크롤 가능하도록 강제
+      memo.style.overflowY = 'auto';
+      
+      // 스크롤이 끝에 도달했는지 체크 - 마지막 줄 보이게
+      setTimeout(() => {
+        if(memo.scrollHeight > memo.clientHeight){
+          // 스크롤 가능한 경우, 하단에 빈 공간이 있는지 확인
+          const lastLineVisible = memo.scrollHeight - memo.scrollTop - memo.clientHeight;
+          console.log('V359: 메모 스크롤 필요, scrollHeight:', memo.scrollHeight, 'clientHeight:', memo.clientHeight, '남은:', lastLineVisible);
+        }
+      }, 100);
+    }
+    
+    if(dateEl){
+      dateEl.style.marginBottom = '80px';
+      dateEl.style.display = 'block';
+      dateEl.style.visibility = 'visible';
+    }
+    
+    if(content){
+      content.style.paddingBottom = '90px';
+    }
+  }
+  
+  fixBottomVisible();
+  
+  const orig = window.openPhotoLightbox;
+  if(orig && !orig._v359){
+    window.openPhotoLightbox = function(){
+      const r = orig.apply(this, arguments);
+      setTimeout(fixBottomVisible, 30);
+      setTimeout(fixBottomVisible, 200);
+      setTimeout(fixBottomVisible, 500);
+      setTimeout(fixBottomVisible, 1000);
+      return r;
+    };
+    window.openPhotoLightbox._v359 = true;
+  }
+  
+  // 메모 스크롤시 일자도 보이게
+  const memo = document.getElementById('photo-lightbox-memo');
+  if(memo && !memo._v359_scroll){
+    memo._v359_scroll = true;
+    memo.addEventListener('scroll', function(){
+      const dateEl = document.getElementById('photo-lightbox-date');
+      if(dateEl){
+        // 스크롤 끝에 도달하면 일자 강조
+        const atBottom = this.scrollHeight - this.scrollTop - this.clientHeight < 5;
+        if(atBottom){
+          dateEl.style.opacity = '1';
+        }
+      }
+    });
+  }
+})();
+</script>
+
 </body>
 </html>
