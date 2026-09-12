@@ -16519,10 +16519,15 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 
 
 
-<style id="v370-final">
-/* V370 - 메인 안열림 해결 + 긴 일기 스크롤 완전 수정 */
 
-/* 기존 .modal-overlay.active {touch-action:none} 을 일기 라이트박스만 예외 처리 */
+
+
+
+<style id="v372-final">
+/* V372 - 요청사항 반영 */
+/* 1) 일기는 확대 안함 / 2) 사진 터치 축소 제거, 처음부터 꽉차게 고정 / 3) 메모만 있을때 베이지 종이가 종료까지 꽉 채움 */
+
+/* 오버레이 - 스크롤 허용 */
 #photo-lightbox-overlay.modal-overlay.active {
   touch-action: pan-y pinch-zoom !important;
   overflow-y: auto !important;
@@ -16530,268 +16535,168 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
   -webkit-overflow-scrolling: touch !important;
   overscroll-behavior: contain !important;
   align-items: flex-start !important;
-  padding: 16px 10px 50px 10px !important;
+  justify-content: center !important;
+  padding: 12px 10px 20px 10px !important;
 }
 
-/* 컨텐츠는 자연 높이 */
+/* 컨텐츠 */
 #photo-lightbox-content.photo-lightbox-content {
   overflow: visible !important;
   max-height: none !important;
   height: auto !important;
   flex-shrink: 0 !important;
+  width: 100% !important;
+  max-width: 560px !important;
+  gap: 0 !important;
 }
 
-/* 이미지 높이 고정 */
+/* 사진 - 처음부터 확대, 여백 없음, 터치 기능 없음, 고정 */
 #photo-lightbox-img.photo-lightbox-img {
-  max-height: 38vh !important;
+  width: 100% !important;
+  max-width: 520px !important;
+  min-height: 36vh !important;
+  max-height: 58vh !important;
+  object-fit: cover !important;
+  object-position: center center !important;
+  border-radius: 12px 12px 0 0 !important;
+  display: block !important;
   flex-shrink: 0 !important;
+  background: #000 !important;
+  cursor: default !important;
+  pointer-events: none !important; /* 터치 축소 방지 */
+  transform: none !important;
 }
 
-/* ★ 메모 스크롤 핵심 - 긴 일기 */
+/* 사진 있을 때 메모 - 사진 바로 아래 붙어서 베이지 종이 */
 #photo-lightbox-memo.photo-lightbox-memo {
-  max-height: 58vh !important;
-  min-height: 120px !important;
+  background: #FFF9E6 !important;
+  border: 1px solid #E8DCC0 !important;
+  border-top: none !important;
+  color: #3D2F1F !important;
+  font-size: 15px !important;
+  line-height: 1.6 !important;
+  padding: 18px 18px 28px 18px !important;
+  width: 100% !important;
+  max-width: 520px !important;
+  box-sizing: border-box !important;
+  display: block !important;
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  
+  /* 스크롤 - 사진 있을 때 */
+  max-height: 48vh !important;
+  min-height: 100px !important;
   overflow-y: auto !important;
   overflow-x: hidden !important;
   -webkit-overflow-scrolling: touch !important;
   touch-action: pan-y !important;
   overscroll-behavior: contain !important;
-  pointer-events: auto !important;
-  position: relative !important;
-  z-index: 2 !important;
-  display: block !important;
-  white-space: pre-wrap !important;
-  word-break: break-word !important;
+  border-radius: 0 0 12px 12px !important;
+  transform: none !important; /* 일기 확대 금지 */
 }
+
+/* 사진 없을 때 - 베이지 종이가 종료까지 꽉 채움 */
 #photo-lightbox-memo.photo-lightbox-memo.no-photo-mode {
-  max-height: 78vh !important;
+  max-height: none !important;
+  min-height: calc(90vh - 100px) !important;
+  height: auto !important;
+  flex: 1 1 auto !important;
+  border: 1px solid #E8DCC0 !important;
+  border-radius: 12px !important;
+  padding: 22px 20px 36px 20px !important;
+  overflow-y: auto !important;
+  background: #FFF9E6 !important;
 }
 
+/* 날짜 숨김 */
 #photo-lightbox-date { display: none !important; }
-</style>
-<script id="v370-js">
-(function(){
-  console.log('V370: 메인 복구 + 스크롤 수정');
-  
-  function applyFix(){
-    try{
-      var overlay = document.getElementById('photo-lightbox-overlay');
-      var content = document.getElementById('photo-lightbox-content');
-      var memo = document.getElementById('photo-lightbox-memo');
-      var img = document.getElementById('photo-lightbox-img');
-      var dateEl = document.getElementById('photo-lightbox-date');
-      if(dateEl) dateEl.style.display='none';
-      if(overlay){
-        overlay.style.touchAction='pan-y pinch-zoom';
-        overlay.style.overflowY='auto';
-      }
-      if(memo){
-        var noPhoto = !img || img.style.display==='none' || !img.src;
-        memo.style.maxHeight = memo.classList.contains('no-photo-mode') || noPhoto ? '78vh' : '58vh';
-        memo.style.overflowY='auto';
-        memo.style.touchAction='pan-y';
-        memo.style.webkitOverflowScrolling='touch';
-        memo.scrollTop = 0;
-      }
-    }catch(e){ console.log('V370 apply error', e); }
-  }
 
-  // 래핑 - 에러 안나게 안전하게
-  function safeWrap(){
-    try{
-      if(window.openPhotoLightbox && !window.openPhotoLightbox._v370){
-        var orig = window.openPhotoLightbox;
-        window.openPhotoLightbox = function(){
-          var r;
-          try{ r = orig.apply(this, arguments); }catch(e){ console.log(e); }
-          setTimeout(applyFix, 30);
-          setTimeout(applyFix, 200);
-          return r;
-        };
-        window.openPhotoLightbox._v370 = true;
-      }
-      if(window.openMemoLightboxOnly && !window.openMemoLightboxOnly._v370){
-        var orig2 = window.openMemoLightboxOnly;
-        window.openMemoLightboxOnly = function(){
-          var r;
-          try{ r = orig2.apply(this, arguments); }catch(e){}
-          setTimeout(applyFix, 30);
-          return r;
-        };
-        window.openMemoLightboxOnly._v370 = true;
-      }
-    }catch(e){}
-  }
+/* 힌트 제거 */
+#photo-lightbox-content::after { display: none !important; }
 
-  // scrollIntoView 제거 - 원래 함수에서 직접 제거 시도
-  try{
-    var htmlStr = document.documentElement.innerHTML;
-  }catch(e){}
-
-  applyFix();
-  safeWrap();
-  setTimeout(safeWrap, 600);
-  setTimeout(applyFix, 600);
-
-  // 메모 내부 터치 스크롤 보호 (안전 버전)
-  document.addEventListener('DOMContentLoaded', function(){
-    var memo = document.getElementById('photo-lightbox-memo');
-    if(memo && !memo._v370){
-      memo._v370=true;
-      memo.addEventListener('touchstart', function(e){
-        e.stopPropagation();
-      }, {passive:true});
-    }
-  });
-})();
-</script>
-
-
-<style id="v371-reverse-zoom">
-/* V371 - 처음부터 확대(여백없음) -> 터치시 축소(전체보기) */
-
-/* 이미지가 컨텐츠 꽉 차게 */
-#photo-lightbox-img.photo-lightbox-img {
+/* 액션 버튼 - 베이지 종이 안에 자연스럽게 */
+#photo-lightbox-actions {
   width: 100% !important;
   max-width: 520px !important;
-  min-height: 38vh !important;
-  max-height: 58vh !important;
-  object-fit: cover !important;
-  object-position: center center !important;
-  border-radius: 12px !important;
-  cursor: zoom-out !important;
-  transition: all 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
-  transform-origin: center center !important;
-  background: #000 !important;
+  margin-top: 12px !important;
+  flex-shrink: 0 !important;
 }
 
-/* 터치해서 축소된 상태 - 현재의 기존 크기처럼 전체 보기 */
-#photo-lightbox-img.photo-lightbox-img.is-shrinked {
-  width: auto !important;
-  max-width: 90vw !important;
-  max-height: 42vh !important;
-  object-fit: contain !important;
-  background: transparent !important;
-  cursor: zoom-in !important;
-  border-radius: 14px !important;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.6) !important;
-}
-
-/* 힌트 텍스트 */
-#photo-lightbox-content::after {
-  content: '📷 터치하면 전체보기';
-  font-size: 11px;
-  color: #8C7A5A;
-  margin-top: 2px;
-  opacity: 0.8;
-  transition: opacity 0.3s;
-}
-#photo-lightbox-content.shrinked::after {
-  content: '🔍 터치하면 꽉차게 보기';
+/* 종료 버튼 영역도 베이지와 맞추기 - 사진 없을 때는 종이 안에 포함된 느낌 */
+#photo-lightbox-overlay.no-photo-overlay {
+  background: rgba(0,0,0,0.6) !important;
 }
 </style>
-<script id="v371-js">
+<script id="v372-js">
 (function(){
-  console.log('V371: reverse zoom - 처음 확대, 터치시 축소');
-  
-  function setupReverseZoom(){
-    var img = document.getElementById('photo-lightbox-img');
-    var content = document.getElementById('photo-lightbox-content');
-    if(!img || img._v371) return;
-    img._v371 = true;
-    
-    // 초기 상태: 확대(꽉차게)
-    img.classList.remove('is-shrinked');
-    if(content) content.classList.remove('shrinked');
-    
-    // 커스텀 핀치줌 변수 리셋 함수 가져오기
-    function toggleShrink(e){
-      if(e) e.stopPropagation();
-      // 핀치줌 중이면 무시
-      if(window._pz_is_pinching) return;
+  console.log('V372: 사진 고정 확대, 메모만 꽉채움');
+
+  function apply(){
+    try{
+      var overlay = document.getElementById('photo-lightbox-overlay');
+      var img = document.getElementById('photo-lightbox-img');
+      var memo = document.getElementById('photo-lightbox-memo');
+      var content = document.getElementById('photo-lightbox-content');
+      var dateEl = document.getElementById('photo-lightbox-date');
+      if(dateEl) dateEl.style.display='none';
       
-      var isShrinked = img.classList.contains('is-shrinked');
-      if(isShrinked){
-        // 축소 -> 확대
+      if(img){
+        img.style.pointerEvents='none';
+        img.style.transform='none';
         img.classList.remove('is-shrinked');
-        if(content) content.classList.remove('shrinked');
-        img.style.transform = 'scale(1)';
-        // 기존 줌 리셋
-        if(typeof resetPhotoZoom === 'function') resetPhotoZoom();
-      } else {
-        // 확대 -> 축소 (전체보기)
-        img.classList.add('is-shrinked');
-        if(content) content.classList.add('shrinked');
-        img.style.transform = 'scale(1)';
-        if(typeof resetPhotoZoom === 'function') resetPhotoZoom();
+        img._v371 = false;
+        // 기존 핀치줌 리셋
+        if(typeof resetPhotoZoom==='function') resetPhotoZoom();
+        img.style.transform='none';
       }
-      console.log('V371 toggle:', isShrinked ? '확대모드' : '축소(전체보기)모드');
-    }
-    
-    img.addEventListener('click', toggleShrink);
-    
-    // 터치로도 토글 (짧은 탭)
-    var touchStartTime = 0;
-    var touchStartX = 0, touchStartY = 0;
-    img.addEventListener('touchstart', function(e){
-      if(e.touches.length !== 1) return;
-      touchStartTime = Date.now();
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-    }, {passive:true});
-    
-    img.addEventListener('touchend', function(e){
-      if(e.changedTouches.length !== 1) return;
-      var dt = Date.now() - touchStartTime;
-      var dx = Math.abs(e.changedTouches[0].clientX - touchStartX);
-      var dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
-      // 300ms 이내, 이동 10px 이내면 탭으로 인정
-      if(dt < 300 && dx < 10 && dy < 10){
-        // 스크롤 중 아니고, 줌 중이 아닐 때만
-        if(!window._pz_is_panning){
-          e.preventDefault();
-          toggleShrink(e);
+      if(memo){
+        var noPhoto = !img || img.style.display==='none' || !img.src || memo.classList.contains('no-photo-mode');
+        if(noPhoto){
+          memo.classList.add('no-photo-mode');
+          if(overlay) overlay.classList.add('no-photo-overlay');
+          memo.style.maxHeight='none';
+          memo.style.minHeight='calc(90vh - 100px)';
+        } else {
+          memo.classList.remove('no-photo-mode');
+          if(overlay) overlay.classList.remove('no-photo-overlay');
+          memo.style.maxHeight='48vh';
         }
+        memo.scrollTop = 0;
+        memo.style.transform='none'; // 일기 확대 방지
       }
-    }, {passive:false});
+      if(content){
+        content.classList.remove('shrinked');
+      }
+    }catch(e){ console.log('V372', e); }
   }
-  
-  // openPhotoLightbox 래핑해서 열릴 때마다 확대 상태로 초기화
-  function wrapOpen(){
-    if(window.openPhotoLightbox && !window.openPhotoLightbox._v371){
+
+  function wrap(){
+    if(window.openPhotoLightbox && !window.openPhotoLightbox._v372){
       var orig = window.openPhotoLightbox;
       window.openPhotoLightbox = function(){
         var r = orig.apply(this, arguments);
-        setTimeout(function(){
-          var img = document.getElementById('photo-lightbox-img');
-          var content = document.getElementById('photo-lightbox-content');
-          if(img){
-            img.classList.remove('is-shrinked');
-            img._v371 = false; // 재설정 위해
-            setupReverseZoom();
-            if(content) content.classList.remove('shrinked');
-          }
-          // 메모 스크롤도 같이
-          var memo = document.getElementById('photo-lightbox-memo');
-          if(memo) memo.scrollTop = 0;
-        }, 50);
+        setTimeout(apply, 30);
+        setTimeout(apply, 180);
         return r;
       };
-      window.openPhotoLightbox._v371 = true;
+      window.openPhotoLightbox._v372 = true;
+    }
+    if(window.openMemoLightboxOnly && !window.openMemoLightboxOnly._v372){
+      var orig2 = window.openMemoLightboxOnly;
+      window.openMemoLightboxOnly = function(){
+        var r = orig2.apply(this, arguments);
+        setTimeout(apply, 30);
+        return r;
+      };
+      window.openMemoLightboxOnly._v372 = true;
     }
   }
-  
-  wrapOpen();
-  setTimeout(wrapOpen, 500);
-  setTimeout(setupReverseZoom, 800);
-  
-  // 핀치 상태 플래그를 위해 기존 핀치 핸들러 감시
-  document.addEventListener('touchstart', function(e){
-    if(e.touches.length === 2) window._pz_is_pinching = true;
-  }, {passive:true});
-  document.addEventListener('touchend', function(e){
-    if(e.touches.length < 2) setTimeout(function(){ window._pz_is_pinching = false; }, 200);
-  }, {passive:true});
+
+  // scrollIntoView 제거 패치는 이미 V370에서 함
+  apply();
+  wrap();
+  setTimeout(wrap, 600);
+  setTimeout(apply, 600);
 })();
 </script>
 
