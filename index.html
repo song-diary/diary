@@ -4775,6 +4775,9 @@ body { touch-action:pan-x pan-y; -webkit-text-size-adjust:100%; padding-bottom:v
     let diaryKeywordFilter = '';
 
     let isMoneySummaryVisible = localStorage.getItem('smartDiaryMoneySummaryVisible') !== 'false';
+    // V344: 외부에서 closure 변수 제어 가능하도록 노출
+    window._v344_setFinanceVar = function(v){ isMoneySummaryVisible = v; console.log('V344: isMoneySummaryVisible closure var set to', v); };
+    window._v344_getFinanceVar = function(){ return isMoneySummaryVisible; };
     let isCategoryStatsVisible = localStorage.getItem('smartDiaryCategoryStatsVisible') !== 'false';
     let isSearchFilterVisible = localStorage.getItem('smartDiarySearchFilterVisible') !== 'false';
     let isCalendarPhotoVisible = false;
@@ -14968,6 +14971,241 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
   window._v343_getFinanceOn = getFinanceOn;
   
   console.log('V343: 지속성 버그 수정 완료 - 설정 OFF면 항상 📔, 다이어리 폼 열어도 유지');
+})();
+</script>
+
+
+<script id="v344-real-fix">
+(function(){
+  console.log('V344: 가계부 ON/OFF 진짜 수정 - localStorage와 closure 변수 동기화');
+  
+  function getRealFinanceOn(){
+    // localStorage가 최종 진실, 없으면 true
+    const stored = localStorage.getItem('smartDiaryMoneySummaryVisible');
+    return stored !== 'false';
+  }
+  
+  function syncAllFinanceState(isOn){
+    console.log('V344: syncAllFinanceState', isOn ? 'ON' : 'OFF');
+    localStorage.setItem('smartDiaryMoneySummaryVisible', isOn);
+    
+    // 1. closure 변수 업데이트 (핵심!)
+    if(window._v344_setFinanceVar){
+      window._v344_setFinanceVar(isOn);
+    }
+    // 2. 전역 변수도 업데이트 (혹시 있을 경우)
+    if(typeof window.isMoneySummaryVisible !== 'undefined'){
+      window.isMoneySummaryVisible = isOn;
+    }
+    
+    // 3. 체크박스 업데이트
+    const chk = document.getElementById('toggle-money-summary');
+    if(chk) chk.checked = isOn;
+    
+    // 4. 카테고리 통계도 동기화
+    if(!isOn){
+      if(typeof setCategoryStatsVisibility === 'function'){
+        setCategoryStatsVisibility(false);
+      }
+      if(typeof currentStatsType !== 'undefined'){
+        window.currentStatsType = 'memo';
+      }
+      localStorage.setItem('smartDiaryCategoryStatsVisible', 'false');
+      const catChk = document.getElementById('toggle-category-stats');
+      if(catChk) catChk.checked = false;
+    } else {
+      if(typeof currentStatsType !== 'undefined'){
+        window.currentStatsType = 'expense';
+      }
+    }
+    
+    // 5. 가계부 요약 업데이트
+    if(typeof updateMoneySummary === 'function'){
+      try{ updateMoneySummary(); }catch(e){ console.log('updateMoneySummary error', e); }
+    }
+    
+    // 6. 아이콘 업데이트
+    setTimeout(updateFinanceIcon, 10);
+    setTimeout(updateFinanceIcon, 100);
+    setTimeout(updateFinanceIcon, 300);
+  }
+  
+  function updateFinanceIcon(){
+    const topBtn = document.getElementById('top-toggle-btn');
+    if(!topBtn) return;
+    
+    const isOn = getRealFinanceOn();
+    // console.log('V344 icon update', isOn);
+    
+    if(!isOn){
+      topBtn.innerHTML = '📔';
+      topBtn.title = '다이어리 (가계부 OFF)';
+      topBtn.style.opacity = '0.6';
+      
+      // 가계부 패널이 열려있으면 다이어리로 강제
+      const moneyPanel = document.getElementById('money-panel');
+      const diaryPanel = document.getElementById('diary-panel');
+      if(moneyPanel && moneyPanel.classList.contains('active')){
+        if(diaryPanel) diaryPanel.classList.add('active');
+        moneyPanel.classList.remove('active');
+        if(typeof currentMainTab !== 'undefined') window.currentMainTab = 'diary';
+        localStorage.setItem('smartDiaryMainTab', 'diary');
+      }
+    } else {
+      topBtn.style.opacity = '1';
+      const currentTab = typeof currentMainTab !== 'undefined' ? currentMainTab : 'diary';
+      if(currentTab === 'diary'){
+        topBtn.innerHTML = '💰';
+        topBtn.title = '가계부로 이동';
+      } else {
+        topBtn.innerHTML = '📔';
+        topBtn.title = '다이어리로 이동';
+      }
+    }
+  }
+  
+  // setMoneySummaryVisibility 완전 재정의 - 가장 중요!
+  window.setMoneySummaryVisibility = function(isVisible){
+    console.log('V344: setMoneySummaryVisibility 호출', isVisible);
+    syncAllFinanceState(isVisible);
+    
+    // 토글 버튼 UI 업데이트
+    if(typeof updateToggleButtons === 'function'){
+      updateToggleButtons('money-summary', isVisible);
+      const catVisible = isVisible ? (localStorage.getItem('smartDiaryCategoryStatsVisible') !== 'false') : false;
+      updateToggleButtons('category-stats', catVisible);
+    }
+  };
+  
+  // switchMainTab 재정의 - OFF면 money 진입 차단
+  const origSwitch = window._v343_originalSwitch || window.switchMainTab;
+  window._v344_origSwitch = origSwitch;
+  
+  window.switchMainTab = function(tabName){
+    const isOn = getRealFinanceOn();
+    if(tabName === 'money' && !isOn){
+      console.log('V344: 가계부 OFF - money 진입 차단');
+      // 다이어리로 강제
+      const diaryPanel = document.getElementById('diary-panel');
+      const moneyPanel = document.getElementById('money-panel');
+      if(diaryPanel) diaryPanel.classList.add('active');
+      if(moneyPanel) moneyPanel.classList.remove('active');
+      if(typeof currentMainTab !== 'undefined') window.currentMainTab = 'diary';
+      localStorage.setItem('smartDiaryMainTab', 'diary');
+      updateFinanceIcon();
+      return;
+    }
+    
+    // 정상 진입
+    if(origSwitch){
+      const result = origSwitch.apply(this, arguments);
+      setTimeout(updateFinanceIcon, 10);
+      setTimeout(updateFinanceIcon, 100);
+      return result;
+    }
+  };
+  
+  window.toggleMainTab = function(){
+    const isOn = getRealFinanceOn();
+    if(!isOn){
+      console.log('V344: 가계부 OFF - toggle 차단');
+      updateFinanceIcon();
+      return;
+    }
+    const currentTab = typeof currentMainTab !== 'undefined' ? currentMainTab : 'diary';
+    const nextTab = currentTab === 'diary' ? 'money' : 'diary';
+    window.switchMainTab(nextTab);
+  };
+  
+  // openSettingsModal 재정의 - 체크박스를 localStorage 기준으로 표시 (버그 1 해결)
+  const origOpenSettings = window.openSettingsModal;
+  window.openSettingsModal = function(){
+    let result;
+    if(origOpenSettings){
+      result = origOpenSettings.apply(this, arguments);
+    }
+    
+    // 설정 모달 열린 후 체크박스를 localStorage 기준으로 강제 동기화
+    setTimeout(function(){
+      const isOn = getRealFinanceOn();
+      console.log('V344: openSettingsModal - 설정 체크박스 동기화', isOn);
+      
+      const moneyChk = document.getElementById('toggle-money-summary');
+      if(moneyChk){
+        moneyChk.checked = isOn;
+        console.log('V344: toggle-money-summary 체크박스', isOn ? 'ON' : 'OFF', '로 설정');
+      }
+      
+      // closure 변수도 동기화
+      if(window._v344_setFinanceVar){
+        window._v344_setFinanceVar(isOn);
+      }
+      
+      // 카테고리 통계 체크박스도
+      const catChk = document.getElementById('toggle-category-stats');
+      const catOn = localStorage.getItem('smartDiaryCategoryStatsVisible') !== 'false' && isOn;
+      if(catChk) catChk.checked = catOn;
+      
+    }, 100);
+    
+    return result;
+  };
+  
+  // 체크박스 change 이벤트 직접 감지
+  setTimeout(function(){
+    const chk = document.getElementById('toggle-money-summary');
+    if(chk){
+      chk.addEventListener('change', function(){
+        console.log('V344: 체크박스 change', this.checked);
+        syncAllFinanceState(this.checked);
+      });
+    }
+  }, 500);
+  
+  // 주기적 감시
+  setInterval(function(){
+    const topBtn = document.getElementById('top-toggle-btn');
+    if(!topBtn) return;
+    
+    const isOn = getRealFinanceOn();
+    const moneyPanel = document.getElementById('money-panel');
+    
+    // 아이콘 감시
+    if(!isOn && topBtn.innerHTML.includes('💰')){
+      console.log('V344 감시: OFF인데 💰 발견 - 📔로 수정');
+      updateFinanceIcon();
+    }
+    
+    // 패널 감시
+    if(!isOn && moneyPanel && moneyPanel.classList.contains('active')){
+      console.log('V344 감시: OFF인데 money 패널 active - diary로');
+      const diaryPanel = document.getElementById('diary-panel');
+      if(diaryPanel) diaryPanel.classList.add('active');
+      moneyPanel.classList.remove('active');
+      if(typeof currentMainTab !== 'undefined') window.currentMainTab = 'diary';
+      updateFinanceIcon();
+    }
+  }, 800);
+  
+  // 초기 실행
+  window.addEventListener('load', function(){
+    setTimeout(function(){
+      const isOn = getRealFinanceOn();
+      console.log('V344 load: 현재 가계부', isOn ? 'ON' : 'OFF');
+      syncAllFinanceState(isOn);
+    }, 300);
+  });
+  
+  setTimeout(function(){
+    const isOn = getRealFinanceOn();
+    syncAllFinanceState(isOn);
+  }, 200);
+  
+  window._v344_syncAll = syncAllFinanceState;
+  window._v344_updateIcon = updateFinanceIcon;
+  window._v344_getRealOn = getRealFinanceOn;
+  
+  console.log('V344: 설치 완료 - localStorage와 closure 변수 완전 동기화');
 })();
 </script>
 
