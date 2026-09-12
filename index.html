@@ -15884,5 +15884,105 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 })();
 </script>
 
+
+<style id="v349-pin-icon">
+/* V349: 달력 사진 아이콘 장미🌹 -> 고정핀📌으로 변경, 장미 크기에 맞게 */
+
+/* 기존 장미 아이콘 덮어쓰기 */
+.cal-cell.has-photo .cal-photo-corner::after,
+.cal-photo-corner::after {
+  content: '📌' !important;
+  font-size: 11px !important; /* 장미 크기 12px에서 고정핀은 조금 작게 해야 깔끔 */
+  top: 1px !important;
+  left: 1px !important;
+  line-height: 1 !important;
+  filter: none !important;
+  transform: rotate(0deg) !important;
+}
+
+/* 고정핀 배경은 제목이랑 통일 - 살짝 분홍빛 */
+.cal-cell.has-photo .cal-photo-corner {
+  background: #FFE8F0 !important; /* 고정핀에 어울리는 연분홍 */
+  border-radius: 3px !important;
+  width: 16px !important;
+  height: 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* 다이어리 리스트의 사진 아이콘도 고정핀으로 통일 */
+.sub-memo-item .photo-title-area::before,
+.diary-photo-wrap::after {
+  content: '' !important;
+}
+
+/* V308 제목 고정핀도 크기 조정 - 달력 고정핀이랑 통일감 */
+.getDiaryIcon, [class*="diary-icon"] {
+  font-size: 12px !important;
+}
+</style>
+<script id="v349-pin-js">
+(function(){
+  console.log('V349: 달력 사진 아이콘 장미 -> 고정핀 변경');
+  
+  // 기존 V312 스타일 덮어쓰기
+  function applyPinIcon(){
+    const style = document.createElement('style');
+    style.id = 'v349-pin-override';
+    style.textContent = `
+      .cal-cell.has-photo .cal-photo-corner::after,
+      .cal-photo-corner::after {
+        content: '📌' !important;
+        font-size: 11px !important;
+        top: 1px !important;
+        left: 1px !important;
+      }
+      .cal-cell.has-photo .cal-photo-corner {
+        background: #FFE8F0 !important;
+        width: 16px !important;
+        height: 16px !important;
+      }
+    `;
+    
+    // 기존 장미 스타일 제거 또는 덮어쓰기
+    const oldStyles = document.querySelectorAll('style[id*="v312"], style[id*="red-rose"]');
+    oldStyles.forEach(s => {
+      if(s.id !== 'v349-pin-override'){
+        s.textContent = s.textContent.replace(/🌹/g, '📌');
+      }
+    });
+    
+    // 이미 있는 override 제거 후 다시 추가
+    const existing = document.getElementById('v349-pin-override');
+    if(existing) existing.remove();
+    document.head.appendChild(style);
+  }
+  
+  applyPinIcon();
+  
+  // getDiaryIcon도 고정핀으로 통일 (이미 V308에서 통일됐지만 재확인)
+  window.getDiaryIcon = function(item){
+    return '📌';
+  };
+  
+  // 달력 렌더 후 아이콘 재적용
+  const origRender = window.renderCalendar;
+  if(origRender && !origRender._v349_wrapped){
+    window.renderCalendar = function(){
+      const result = origRender.apply(this, arguments);
+      setTimeout(applyPinIcon, 50);
+      setTimeout(applyPinIcon, 200);
+      return result;
+    };
+    window.renderCalendar._v349_wrapped = true;
+  }
+  
+  setInterval(applyPinIcon, 1000);
+  
+  console.log('V349: 고정핀 아이콘 적용 완료 - 제목📌 + 달력📌 통일');
+})();
+</script>
+
 </body>
 </html>
