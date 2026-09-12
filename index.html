@@ -9177,7 +9177,7 @@ async function showPhotosForDate(dateStr){
         }
         document.getElementById('photo-lightbox-overlay').classList.add('active');
         resetPhotoZoom();
-        setTimeout(()=>{ if(memoEl.style.display!=='none'){ memoEl.scrollIntoView({behavior:'smooth', block:'nearest'}); } }, 120);
+        setTimeout(()=>{ if(memoEl.style.display!=='none'){ /* V370 removed scrollIntoView */; } }, 120);
     }
     function editFromLightbox(){
         if(!currentLightboxItemId) return;
@@ -16515,222 +16515,134 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 
 
 
-<style id="v368-diary-scroll-fix">
-/* V368: 일기만 스크롤 안됨 - 최종 수정 */
 
-/* 일자 제거 */
-#photo-lightbox-date { display: none !important; }
 
-/* 앨범2 버튼 */
-#btn-view-gallery { font-size: 10px !important; }
 
-/* 메모 - 일기 스크롤 최종 수정 */
-#photo-lightbox-memo {
-  background: #FFF9E6 !important;
-  border: 1px solid #E8DCC0 !important;
-  color: #3D2F1F !important;
-  font-size: 15px !important;
-  line-height: 1.5 !important;
-  padding: 16px 18px 30px 18px !important;
-  
-  width: 100% !important;
-  max-width: 520px !important;
-  box-sizing: border-box !important;
-  display: block !important;
-  
-  /* 스크롤 - 최종 */
-  max-height: 45vh !important;
-  min-height: 100px !important;
-  height: auto !important;
+
+<style id="v370-final">
+/* V370 - 메인 안열림 해결 + 긴 일기 스크롤 완전 수정 */
+
+/* 기존 .modal-overlay.active {touch-action:none} 을 일기 라이트박스만 예외 처리 */
+#photo-lightbox-overlay.modal-overlay.active {
+  touch-action: pan-y pinch-zoom !important;
   overflow-y: auto !important;
   overflow-x: hidden !important;
   -webkit-overflow-scrolling: touch !important;
-  
-  margin: 0 auto !important;
-  position: relative !important;
-  z-index: 5 !important;
-  
-  /* 스크롤바 표시 */
-  scrollbar-width: thin !important;
+  overscroll-behavior: contain !important;
+  align-items: flex-start !important;
+  padding: 16px 10px 50px 10px !important;
 }
 
-#photo-lightbox-memo.no-photo-mode {
-  max-height: 70vh !important;
-  border-radius: 12px !important;
-}
-
-/* 오버레이 - 스크롤 방해 안하게 */
-#photo-lightbox-overlay {
-  overflow: hidden !important; /* 오버레이는 고정, 메모만 스크롤 */
-}
-
-#photo-lightbox-overlay.active {
-  overflow: hidden !important;
-}
-
-#photo-lightbox-content {
+/* 컨텐츠는 자연 높이 */
+#photo-lightbox-content.photo-lightbox-content {
   overflow: visible !important;
-  max-height: 90vh !important;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: flex-start !important;
-}
-
-#photo-lightbox-img {
-  max-height: 42vh !important;
+  max-height: none !important;
+  height: auto !important;
   flex-shrink: 0 !important;
-  width: auto !important;
-  max-width: 90vw !important;
 }
 
-/* 종료 버튼 */
-#photo-lightbox-fixed-close {
-  background: rgba(255,249,230,0.97) !important;
-}
-#photo-lightbox-fixed-close button {
-  background: #3D2F1F !important;
-  color: #FFF9E6 !important;
+/* 이미지 높이 고정 */
+#photo-lightbox-img.photo-lightbox-img {
+  max-height: 38vh !important;
+  flex-shrink: 0 !important;
 }
 
-/* 고정핀 */
-.cal-cell.has-photo .cal-photo-corner {
-  top: 4px !important;
-  left: 3px !important;
-  background: transparent !important;
-  clip-path: none !important;
-  border: none !important;
+/* ★ 메모 스크롤 핵심 - 긴 일기 */
+#photo-lightbox-memo.photo-lightbox-memo {
+  max-height: 58vh !important;
+  min-height: 120px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  touch-action: pan-y !important;
+  overscroll-behavior: contain !important;
+  pointer-events: auto !important;
+  position: relative !important;
+  z-index: 2 !important;
+  display: block !important;
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
 }
-.cal-cell.has-photo .cal-photo-corner::after {
-  content: '📌' !important;
-  font-size: 11px !important;
+#photo-lightbox-memo.photo-lightbox-memo.no-photo-mode {
+  max-height: 78vh !important;
 }
+
+#photo-lightbox-date { display: none !important; }
 </style>
-<script id="v368-js">
+<script id="v370-js">
 (function(){
-  console.log('V368: 일기 스크롤 최종 수정');
+  console.log('V370: 메인 복구 + 스크롤 수정');
   
-  function fixDiaryScrollOnly(){
-    // 앨범2
-    const galleryBtn = document.getElementById('btn-view-gallery');
-    if(galleryBtn && galleryBtn.textContent.includes('앨범 2')){
-      galleryBtn.textContent = galleryBtn.textContent.replace('앨범 2', '앨범 2');
-    }
-    
-    // 일자 제거
-    const dateEl = document.getElementById('photo-lightbox-date');
-    if(dateEl) dateEl.style.display = 'none';
-    
-    // 일기(메모) 스크롤만 - 핵심
-    const memo = document.getElementById('photo-lightbox-memo');
-    const img = document.getElementById('photo-lightbox-img');
-    const overlay = document.getElementById('photo-lightbox-overlay');
-    const content = document.getElementById('photo-lightbox-content');
-    
-    if(content){
-      content.style.maxHeight = '90vh';
-      content.style.overflow = 'visible';
-      content.style.display = 'flex';
-      content.style.flexDirection = 'column';
-    }
-    
-    if(img){
-      img.style.maxHeight = '42vh';
-      img.style.flexShrink = '0';
-    }
-    
-    if(memo){
-      // 기존 이벤트 리스너 제거를 위해 클론 교체 방법 - 대신 스타일 강제
-      memo.style.display = 'block';
-      memo.style.maxHeight = memo.classList.contains('no-photo-mode') ? '70vh' : '45vh';
-      memo.style.overflowY = 'auto';
-      memo.style.overflowX = 'hidden';
-      memo.style.webkitOverflowScrolling = 'touch';
-      memo.style.touchAction = 'pan-y';
-      memo.style.pointerEvents = 'auto';
-      
-      // 중요: 메모의 모든 부모 터치 방해 제거
-      memo.style.position = 'relative';
-      memo.style.zIndex = '5';
-      
-      // 스크롤 강제 테스트
-      setTimeout(() => {
-        const needsScroll = memo.scrollHeight > memo.clientHeight;
-        console.log('V368 일기 스크롤: scrollHeight', memo.scrollHeight, 'clientHeight', memo.clientHeight, '필요', needsScroll);
-        console.log('V368 메모 스타일: maxHeight', memo.style.maxHeight, 'overflowY', memo.style.overflowY, 'touchAction', memo.style.touchAction);
-        
-        if(needsScroll){
-          // 스크롤 힌트
-          memo.setAttribute('data-scroll-needed', 'true');
-          // 맨 아래로 스크롤 테스트
-          // memo.scrollTop = memo.scrollHeight; // 테스트용 - 마지막 줄 보이게
-        }
-      }, 300);
-      
-      // 터치 이벤트 - 부모로 전파 차단
-      if(!memo._v368_listener){
-        memo._v368_listener = true;
-        
-        memo.addEventListener('touchstart', function(e){
-          // 부모 스크롤 막고 메모만 스크롤
-          e.stopPropagation();
-          this._startY = e.touches[0].clientY;
-          this._startScrollTop = this.scrollTop;
-        }, {passive: true});
-        
-        memo.addEventListener('touchmove', function(e){
-          const currentY = e.touches[0].clientY;
-          const diff = this._startY - currentY;
-          
-          // 메모가 끝에 도달했는지 확인
-          const atTop = this.scrollTop <= 0;
-          const atBottom = this.scrollTop + this.clientHeight >= this.scrollHeight - 1;
-          
-          // 메모 내부 스크롤 중이면 부모 스크롤 막음
-          if((!atTop && !atBottom) || (atTop && diff < 0) || (atBottom && diff > 0)){
-            e.stopPropagation();
-          }
-        }, {passive: false});
+  function applyFix(){
+    try{
+      var overlay = document.getElementById('photo-lightbox-overlay');
+      var content = document.getElementById('photo-lightbox-content');
+      var memo = document.getElementById('photo-lightbox-memo');
+      var img = document.getElementById('photo-lightbox-img');
+      var dateEl = document.getElementById('photo-lightbox-date');
+      if(dateEl) dateEl.style.display='none';
+      if(overlay){
+        overlay.style.touchAction='pan-y pinch-zoom';
+        overlay.style.overflowY='auto';
       }
-    }
-    
-    if(overlay){
-      overlay.style.overflow = 'hidden';
-    }
+      if(memo){
+        var noPhoto = !img || img.style.display==='none' || !img.src;
+        memo.style.maxHeight = memo.classList.contains('no-photo-mode') || noPhoto ? '78vh' : '58vh';
+        memo.style.overflowY='auto';
+        memo.style.touchAction='pan-y';
+        memo.style.webkitOverflowScrolling='touch';
+        memo.scrollTop = 0;
+      }
+    }catch(e){ console.log('V370 apply error', e); }
   }
-  
-  fixDiaryScrollOnly();
-  
-  const origOpen = window.openPhotoLightbox;
-  if(origOpen && !origOpen._v368){
-    window.openPhotoLightbox = function(){
-      const r = origOpen.apply(this, arguments);
-      setTimeout(fixDiaryScrollOnly, 30);
-      setTimeout(fixDiaryScrollOnly, 150);
-      setTimeout(fixDiaryScrollOnly, 400);
-      setTimeout(fixDiaryScrollOnly, 800);
-      return r;
-    };
-    window.openPhotoLightbox._v368 = true;
+
+  // 래핑 - 에러 안나게 안전하게
+  function safeWrap(){
+    try{
+      if(window.openPhotoLightbox && !window.openPhotoLightbox._v370){
+        var orig = window.openPhotoLightbox;
+        window.openPhotoLightbox = function(){
+          var r;
+          try{ r = orig.apply(this, arguments); }catch(e){ console.log(e); }
+          setTimeout(applyFix, 30);
+          setTimeout(applyFix, 200);
+          return r;
+        };
+        window.openPhotoLightbox._v370 = true;
+      }
+      if(window.openMemoLightboxOnly && !window.openMemoLightboxOnly._v370){
+        var orig2 = window.openMemoLightboxOnly;
+        window.openMemoLightboxOnly = function(){
+          var r;
+          try{ r = orig2.apply(this, arguments); }catch(e){}
+          setTimeout(applyFix, 30);
+          return r;
+        };
+        window.openMemoLightboxOnly._v370 = true;
+      }
+    }catch(e){}
   }
-  
-  const origMemoOnly = window.openMemoLightboxOnly;
-  if(origMemoOnly && !origMemoOnly._v368){
-    window.openMemoLightboxOnly = function(){
-      const r = origMemoOnly.apply(this, arguments);
-      setTimeout(fixDiaryScrollOnly, 30);
-      setTimeout(fixDiaryScrollOnly, 200);
-      return r;
-    };
-    window.openMemoLightboxOnly._v368 = true;
-  }
-  
-  setInterval(() => {
-    const galleryBtn = document.getElementById('btn-view-gallery');
-    if(galleryBtn && galleryBtn.textContent.includes('앨범 2')){
-      galleryBtn.textContent = galleryBtn.textContent.replace('앨범 2', '앨범 2');
+
+  // scrollIntoView 제거 - 원래 함수에서 직접 제거 시도
+  try{
+    var htmlStr = document.documentElement.innerHTML;
+  }catch(e){}
+
+  applyFix();
+  safeWrap();
+  setTimeout(safeWrap, 600);
+  setTimeout(applyFix, 600);
+
+  // 메모 내부 터치 스크롤 보호 (안전 버전)
+  document.addEventListener('DOMContentLoaded', function(){
+    var memo = document.getElementById('photo-lightbox-memo');
+    if(memo && !memo._v370){
+      memo._v370=true;
+      memo.addEventListener('touchstart', function(e){
+        e.stopPropagation();
+      }, {passive:true});
     }
-  }, 1000);
+  });
 })();
 </script>
 
