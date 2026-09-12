@@ -16523,10 +16523,15 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 
 
 
-<style id="v374-final">
-/* V374 - 사진 있는 건 보이게, 없는 건 빈공간 없이 */
 
-/* 오버레이 */
+
+
+
+<style id="v375-final">
+/* V375 - 사진 확대시 안나오는 문제 해결 */
+/* 사진: 처음부터 꽉차게(cover), 핀치줌 가능, 터치 축소 토글 없음 */
+/* 일기: 확대 금지, 스크롤만 */
+
 #photo-lightbox-overlay.modal-overlay.active {
   touch-action: pan-y pinch-zoom !important;
   overflow-y: auto !important;
@@ -16535,7 +16540,7 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
   overscroll-behavior: contain !important;
   align-items: flex-start !important;
   justify-content: center !important;
-  padding: 12px 10px 20px 10px !important;
+  padding: 10px 10px 20px 10px !important;
 }
 
 #photo-lightbox-content.photo-lightbox-content {
@@ -16545,27 +16550,34 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
   width: 100% !important;
   max-width: 560px !important;
   gap: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
 }
 
-/* 사진 있을 때 - 꽉차게, 터치 불가 */
+/* 사진 - 핵심: cover로 꽉차게, 핀치줌을 위해 transform 허용, pointer-events 허용 */
 #photo-lightbox-img.photo-lightbox-img {
   width: 100% !important;
   max-width: 520px !important;
   height: auto !important;
-  min-height: 36vh !important;
+  min-height: 38vh !important;
   max-height: 58vh !important;
   object-fit: cover !important;
   object-position: center center !important;
   border-radius: 12px 12px 0 0 !important;
-  background: #000 !important;
+  background: #111 !important;
   flex-shrink: 0 !important;
-  cursor: default !important;
-  pointer-events: none !important;
-  transform: none !important;
   display: block !important;
+  /* 확대 위해 */
+  pointer-events: auto !important;
+  touch-action: pinch-zoom pan-y !important;
+  transform-origin: center center !important;
+  will-change: transform !important;
+  /* 트랜지션은 줌 중에는 방해되므로 기본은 none, JS에서 토글 */
+  transition: transform 0.05s linear !important;
 }
 
-/* 사진 없을 때만 숨김 - no-photo-mode 일 때만 적용 */
+/* 사진 없을 때만 완전 숨김 */
 #photo-lightbox-content:has(#photo-lightbox-memo.no-photo-mode) #photo-lightbox-img,
 #photo-lightbox-img.no-photo-hidden {
   display: none !important;
@@ -16574,10 +16586,9 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
   height: 0 !important;
   margin: 0 !important;
   padding: 0 !important;
-  border: 0 !important;
 }
 
-/* 메모 - 사진 있을 때 */
+/* 메모 - 확대 금지 */
 #photo-lightbox-memo.photo-lightbox-memo {
   background: #FFF9E6 !important;
   border: 1px solid #E8DCC0 !important;
@@ -16604,23 +16615,20 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
   margin-top: 0 !important;
 }
 
-/* 메모만 있을 때 - 위부터 꽉 채움 */
 #photo-lightbox-memo.photo-lightbox-memo.no-photo-mode {
   max-height: none !important;
   min-height: calc(90vh - 90px) !important;
   border: 1px solid #E8DCC0 !important;
   border-radius: 12px !important;
   padding: 22px 20px 36px 20px !important;
-  margin-top: 0 !important;
 }
 
 #photo-lightbox-date { display: none !important; }
-#photo-lightbox-content::after { display: none !important; }
 #photo-lightbox-actions { margin-top: 12px !important; width: 100% !important; max-width: 520px !important; }
 </style>
-<script id="v374-js">
+<script id="v375-js">
 (function(){
-  console.log('V374: 사진 보임 + 빈공간 제거');
+  console.log('V375: 사진 핀치줌 복구 + 꽉찬 커버');
 
   function apply(){
     try{
@@ -16630,69 +16638,86 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
       if(dateEl) dateEl.style.display='none';
       if(!img || !memo) return;
 
-      var hasSrc = img.src && img.src !== '' && img.src !== window.location.href && !img.src.includes('about:blank');
-      var memoIsNoPhoto = memo.classList.contains('no-photo-mode');
-      var imgDisplayNone = img.style.display === 'none' || window.getComputedStyle(img).display === 'none';
+      var hasSrc = img.src && img.src !== '' && img.src !== window.location.href && img.src.indexOf('about:blank') === -1;
+      var isNoPhotoMode = memo.classList.contains('no-photo-mode');
 
-      // 원본 로직: src 있으면 사진 있음
-      if(memoIsNoPhoto || !hasSrc){
-        // 사진 없음
+      if(isNoPhotoMode || !hasSrc){
         img.classList.add('no-photo-hidden');
         memo.classList.add('no-photo-mode');
-        memo.style.marginTop = '0';
       } else {
-        // 사진 있음 - 확실히 보이게
         img.classList.remove('no-photo-hidden');
         memo.classList.remove('no-photo-mode');
+        // 사진 있을 때 스타일 - 핀치줌 가능하도록 transform 제거하지 않음
         img.style.display = 'block';
-        img.style.minHeight = '36vh';
-        img.style.maxHeight = '58vh';
-        img.style.height = 'auto';
         img.style.width = '100%';
+        img.style.maxWidth = '520px';
+        img.style.minHeight = '38vh';
+        img.style.maxHeight = '58vh';
         img.style.objectFit = 'cover';
-        img.style.pointerEvents = 'none';
-        img.style.transform = 'none';
+        img.style.objectPosition = 'center center';
+        img.style.pointerEvents = 'auto';
+        img.style.touchAction = 'pinch-zoom pan-y';
+        // transform은 resetPhotoZoom이 관리하도록 둠
       }
       memo.style.transform = 'none';
+      // 메모 스크롤 초기화
       memo.scrollTop = 0;
-      if(typeof resetPhotoZoom === 'function'){
-        try{ resetPhotoZoom(); }catch(e){}
-        if(img) img.style.transform='none';
-      }
-    }catch(e){ console.log('V374 error', e); }
+    }catch(e){ console.log('V375 apply error', e); }
   }
 
+  // open 래핑
   function wrap(){
-    if(window.openPhotoLightbox && !window.openPhotoLightbox._v374){
+    if(window.openPhotoLightbox && !window.openPhotoLightbox._v375){
       var orig = window.openPhotoLightbox;
-      window.openPhotoLightbox = function(photoKeyOrData, diaryItemOrText){
+      window.openPhotoLightbox = function(){
         var r;
-        try{ r = orig.apply(this, arguments); }catch(e){ console.log(e); }
-        // 원본이 display 설정 후 우리가 보정
-        setTimeout(apply, 25);
-        setTimeout(apply, 180);
-        setTimeout(apply, 500);
+        try{ r = orig.apply(this, arguments); }catch(e){}
+        setTimeout(function(){
+          // 핀치줌 리셋 후 우리 스타일 다시 적용 (리셋이 cover를 contain으로 바꾸는 것 방지)
+          if(typeof resetPhotoZoom === 'function'){
+            try{ resetPhotoZoom(); }catch(e){}
+          }
+          setTimeout(apply, 30);
+          setTimeout(apply, 200);
+        }, 20);
         return r;
       };
-      window.openPhotoLightbox._v374 = true;
+      window.openPhotoLightbox._v375 = true;
     }
-    if(window.openMemoLightboxOnly && !window.openMemoLightboxOnly._v374){
+    if(window.openMemoLightboxOnly && !window.openMemoLightboxOnly._v375){
       var orig2 = window.openMemoLightboxOnly;
       window.openMemoLightboxOnly = function(){
         var r;
         try{ r = orig2.apply(this, arguments); }catch(e){}
-        setTimeout(apply, 25);
-        setTimeout(apply, 200);
+        setTimeout(apply, 30);
         return r;
       };
-      window.openMemoLightboxOnly._v374 = true;
+      window.openMemoLightboxOnly._v375 = true;
     }
+  }
+
+  // resetPhotoZoom이 object-fit을 contain으로 바꾸는 문제 방지 - 우리가 cover 유지
+  // 원본 reset은 transform만 리셋해야 하는데 혹시 스타일을 덮어쓸 수 있어 감시
+  var origReset = window.resetPhotoZoom;
+  if(origReset && !origReset._v375){
+    window.resetPhotoZoom = function(){
+      try{ origReset.apply(this, arguments); }catch(e){}
+      var img = document.getElementById('photo-lightbox-img');
+      var memo = document.getElementById('photo-lightbox-memo');
+      if(img && memo && !memo.classList.contains('no-photo-mode')){
+        img.style.objectFit = 'cover';
+        img.style.objectPosition = 'center center';
+        img.style.width = '100%';
+        img.style.maxWidth = '520px';
+      }
+    };
+    window.resetPhotoZoom._v375 = true;
   }
 
   apply();
   wrap();
   setTimeout(wrap, 500);
-  setTimeout(apply, 500);
+  setTimeout(apply, 600);
 })();
 </script>
 
