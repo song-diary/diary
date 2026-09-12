@@ -16533,9 +16533,9 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
   padding: 16px 18px 30px 18px !important;
   
   /* 스크롤 핵심 - 강제 */
-  max-height: 45vh !important;
+  max-height: none !important; /* 전체 스크롤 */
   height: auto !important;
-  overflow-y: scroll !important; /* auto -> scroll로 강제 */
+  overflow-y: visible !important; /* auto -> scroll로 강제 */
   overflow-x: hidden !important;
   -webkit-overflow-scrolling: touch !important;
   overscroll-behavior-y: contain !important;
@@ -16686,6 +16686,106 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
   // DOM 로드 후에도 앨범 변경
   document.addEventListener('DOMContentLoaded', fixAlbumAndScroll);
   window.addEventListener('load', fixAlbumAndScroll);
+})();
+</script>
+
+
+<style id="v367-overall-scroll">
+/* V367: 전체 스크롤 옵션 - 사진+메모 같이 위로 올라가게 */
+
+/* 오버레이 - 전체 스크롤 */
+#photo-lightbox-overlay {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  padding: 0 0 100px 0 !important;
+}
+
+#photo-lightbox-overlay.active {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+}
+
+#photo-lightbox-content {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow: visible !important;
+  max-height: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+#photo-lightbox-img {
+  max-height: none !important; /* 높이 제한 해제 - 원본 크기대로 */
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  flex-shrink: 0 !important;
+}
+
+/* 메모 - 전체 스크롤 모드에서는 내부 스크롤 해제, 전체가 같이 스크롤 */
+#photo-lightbox-memo {
+  max-height: none !important; /* 내부 스크롤 해제 */
+  overflow-y: visible !important;
+  min-height: auto !important;
+  background: #FFF9E6 !important;
+  border: none !important;
+  border-radius: 16px 16px 0 0 !important;
+  margin-top: -12px !important;
+  padding: 20px 20px 40px 20px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+#photo-lightbox-memo.no-photo-mode {
+  max-height: none !important;
+  overflow-y: visible !important;
+  margin-top: 0 !important;
+  border-radius: 0 !important;
+  min-height: 50vh !important;
+}
+
+#photo-lightbox-date { display: none !important; }
+</style>
+<script id="v367-js">
+(function(){
+  console.log('V367: 전체 스크롤 모드 - 사진+메모 같이 스크롤');
+  
+  function enableOverallScroll(){
+    const memo = document.getElementById('photo-lightbox-memo');
+    const img = document.getElementById('photo-lightbox-img');
+    const overlay = document.getElementById('photo-lightbox-overlay');
+    
+    if(memo){
+      memo.style.maxHeight = 'none';
+      memo.style.overflowY = 'visible';
+      console.log('V367: 메모 내부 스크롤 해제, 전체 스크롤로 변경 - 사진+메모 같이 위로 올라감');
+    }
+    
+    if(img){
+      img.style.maxHeight = 'none';
+    }
+    
+    if(overlay){
+      overlay.style.overflowY = 'auto';
+    }
+  }
+  
+  // 현재는 V366 내부 스크롤 유지, V367은 전체 스크롤 옵션으로 제공
+  // 사용자가 원하면 전체 스크롤로 전환 가능
+  
+  const origOpen = window.openPhotoLightbox;
+  if(origOpen && !origOpen._v367){
+    window.openPhotoLightbox = function(){
+      const r = origOpen.apply(this, arguments);
+      // V367 전체 스크롤 원하면 아래 주석 해제
+      // setTimeout(enableOverallScroll, 100);
+      return r;
+    };
+    window.openPhotoLightbox._v367 = true;
+  }
 })();
 </script>
 
