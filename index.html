@@ -15984,5 +15984,106 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 })();
 </script>
 
+
+<style id="v350-pin-fix">
+/* V350: 핀이 삼각형에 가려지는 문제 수정 - 삼각형 제거하고 작은 네모 배지로 */
+
+.cal-cell.has-photo .cal-photo-corner,
+.cal-photo-corner {
+  clip-path: none !important; /* 삼각형 제거! */
+  background: #ffffff !important;
+  border: 1px solid #ffd6e8 !important;
+  border-radius: 6px !important;
+  width: 18px !important;
+  height: 18px !important;
+  top: 3px !important;
+  left: 3px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12) !important;
+  z-index: 5 !important;
+}
+
+.cal-cell.has-photo .cal-photo-corner::after,
+.cal-photo-corner::after {
+  content: '📌' !important;
+  font-size: 11px !important;
+  position: static !important; /* absolute에서 static으로 - 중앙 정렬 */
+  top: auto !important;
+  left: auto !important;
+  line-height: 1 !important;
+  display: block !important;
+  transform: none !important;
+}
+
+/* 일요일, 토요일 등 색상별 배경도 통일 */
+.cal-cell.has-photo.sunday .cal-photo-corner,
+.cal-cell.has-photo.saturday .cal-photo-corner,
+.cal-cell.has-photo.today-date .cal-photo-corner {
+  background: #ffffff !important;
+  border-color: #ffd6e8 !important;
+}
+
+/* 호버시 살짝 커짐 */
+.cal-cell.has-photo .cal-photo-corner:hover {
+  transform: scale(1.1) !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
+}
+</style>
+<script id="v350-js">
+(function(){
+  console.log('V350: 고정핀 삼각형 가림 수정 - 네모 배지로');
+  
+  function fixPin(){
+    const style = document.createElement('style');
+    style.id = 'v350-fix-override';
+    style.textContent = `
+      .cal-cell.has-photo .cal-photo-corner,
+      .cal-photo-corner {
+        clip-path: none !important;
+        background: #ffffff !important;
+        border: 1px solid #ffd6e8 !important;
+        border-radius: 6px !important;
+        width: 18px !important;
+        height: 18px !important;
+        top: 3px !important;
+        left: 3px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.12) !important;
+      }
+      .cal-cell.has-photo .cal-photo-corner::after,
+      .cal-photo-corner::after {
+        content: '📌' !important;
+        font-size: 11px !important;
+        position: static !important;
+        top: auto !important;
+        left: auto !important;
+      }
+    `;
+    const old = document.getElementById('v350-fix-override');
+    if(old) old.remove();
+    document.head.appendChild(style);
+  }
+  
+  fixPin();
+  
+  const origRender = window.renderCalendar;
+  if(origRender && !origRender._v350_wrapped){
+    window.renderCalendar = function(){
+      const result = origRender.apply(this, arguments);
+      setTimeout(fixPin, 30);
+      setTimeout(fixPin, 200);
+      return result;
+    };
+    window.renderCalendar._v350_wrapped = true;
+  }
+  
+  setInterval(fixPin, 1000);
+})();
+</script>
+
 </body>
 </html>
