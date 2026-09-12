@@ -15350,5 +15350,208 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 })();
 </script>
 
+
+<script id="v346-icon-always">
+(function(){
+  console.log('V346: 가계부에서 다이어리 아이콘 안 뜨는 버그 최종 수정');
+  
+  function getFinanceOn(){
+    return localStorage.getItem('smartDiaryMoneySummaryVisible') !== 'false';
+  }
+  
+  function getCurrentTabFromDOM(){
+    const moneyPanel = document.getElementById('money-panel');
+    const diaryPanel = document.getElementById('diary-panel');
+    if(moneyPanel && moneyPanel.classList.contains('active')) return 'money';
+    if(diaryPanel && diaryPanel.classList.contains('active')) return 'diary';
+    // fallback to variable
+    if(typeof currentMainTab !== 'undefined') return currentMainTab;
+    if(window.currentMainTab) return window.currentMainTab;
+    return 'diary';
+  }
+  
+  function forceIconUpdate(){
+    const topBtn = document.getElementById('top-toggle-btn');
+    if(!topBtn) {
+      console.log('V346: top-toggle-btn 없음');
+      return;
+    }
+    
+    const isOn = getFinanceOn();
+    const currentTab = getCurrentTabFromDOM();
+    
+    console.log('V346: 아이콘 업데이트 - 탭:', currentTab, '가계부:', isOn ? 'ON' : 'OFF', '현재아이콘:', topBtn.innerHTML);
+    
+    if(!isOn){
+      // OFF면 항상 다이어리
+      topBtn.innerHTML = '📔';
+      topBtn.title = '다이어리 (가계부 OFF)';
+      topBtn.style.opacity = '0.6';
+      topBtn.style.display = 'flex';
+    } else {
+      // ON일 때
+      topBtn.style.opacity = '1';
+      topBtn.style.display = 'flex';
+      if(currentTab === 'money'){
+        // 가계부에 있으면 다이어리로 가는 아이콘 📔
+        topBtn.innerHTML = '📔';
+        topBtn.title = '다이어리로 이동';
+        console.log('V346: 가계부 패널 - 다이어리 아이콘 📔 표시');
+      } else {
+        // 다이어리에 있으면 가계부로 가는 아이콘 💰
+        topBtn.innerHTML = '💰';
+        topBtn.title = '가계부로 이동';
+        console.log('V346: 다이어리 패널 - 가계부 아이콘 💰 표시');
+      }
+    }
+  }
+  
+  // 원본 switch 찾기
+  let trueOriginalSwitch = window._v345_realOriginalSwitch || window._v344_origSwitch || window._v343_originalSwitch;
+  if(!trueOriginalSwitch){
+    // 직접 구현 - 가장 확실한 원본
+    trueOriginalSwitch = function(tabName){
+      console.log('V346: trueOriginalSwitch 직접 구현', tabName);
+      const diaryPanel = document.getElementById('diary-panel');
+      const moneyPanel = document.getElementById('money-panel');
+      
+      if(tabName === 'diary'){
+        if(diaryPanel) diaryPanel.classList.add('active');
+        if(moneyPanel) moneyPanel.classList.remove('active');
+      } else {
+        if(moneyPanel) moneyPanel.classList.add('active');
+        if(diaryPanel) diaryPanel.classList.remove('active');
+      }
+      
+      // closure 변수 업데이트 시도
+      if(window._v344_setFinanceVar){
+        // currentMainTab은 다른 변수이므로 직접 접근 불가 - window에 저장
+        window.currentMainTab = tabName;
+      }
+      try{
+        if(typeof currentMainTab !== 'undefined'){
+          // eval로 closure 변수 업데이트 시도
+          eval('currentMainTab = "' + tabName + '"');
+        }
+      }catch(e){}
+      
+      localStorage.setItem('smartDiaryMainTab', tabName);
+      
+      if(tabName === 'money'){
+        if(typeof updateMoneySummary === 'function') try{ updateMoneySummary(); }catch(e){}
+        if(typeof renderMoneyAroundToday === 'function') try{ renderMoneyAroundToday(); }catch(e){}
+      } else {
+        if(typeof renderDiaryAroundToday === 'function') try{ renderDiaryAroundToday(); }catch(e){}
+      }
+    };
+  }
+  
+  window._v346_trueOriginal = trueOriginalSwitch;
+  
+  // switchMainTab 완전 재정의 - DOM 기준으로 확실하게
+  window.switchMainTab = function(tabName){
+    const isOn = getFinanceOn();
+    console.log('V346: switchMainTab 호출', tabName, '가계부', isOn ? 'ON' : 'OFF');
+    
+    if(tabName === 'money' && !isOn){
+      console.log('V346: 가계부 OFF - money 차단, diary로');
+      trueOriginalSwitch.call(this, 'diary');
+      setTimeout(forceIconUpdate, 10);
+      setTimeout(forceIconUpdate, 100);
+      setTimeout(forceIconUpdate, 300);
+      return;
+    }
+    
+    // 정상 전환
+    trueOriginalSwitch.call(this, tabName);
+    
+    // 아이콘 강제 업데이트 - 여러 번
+    setTimeout(forceIconUpdate, 10);
+    setTimeout(forceIconUpdate, 50);
+    setTimeout(forceIconUpdate, 100);
+    setTimeout(forceIconUpdate, 300);
+    setTimeout(forceIconUpdate, 600);
+  };
+  
+  window.toggleMainTab = function(){
+    const currentTab = getCurrentTabFromDOM();
+    const isOn = getFinanceOn();
+    
+    console.log('V346: toggleMainTab 현재', currentTab, '가계부', isOn ? 'ON' : 'OFF');
+    
+    if(currentTab === 'money'){
+      // 가계부 -> 다이어리: 항상 허용
+      console.log('V346: money -> diary');
+      window.switchMainTab('diary');
+    } else {
+      // 다이어리 -> 가계부: ON일 때만
+      if(!isOn){
+        console.log('V346: diary -> money 차단 (OFF)');
+        forceIconUpdate();
+        return;
+      }
+      console.log('V346: diary -> money');
+      window.switchMainTab('money');
+    }
+  };
+  
+  // 주기적 감시 - 아이콘이 사라지거나 잘못 표시되면 즉시 수정
+  setInterval(function(){
+    const topBtn = document.getElementById('top-toggle-btn');
+    if(!topBtn) return;
+    
+    const currentTab = getCurrentTabFromDOM();
+    const isOn = getFinanceOn();
+    
+    // 가계부 패널인데 아이콘이 💰이면 잘못된 것 - 📔여야 함
+    if(currentTab === 'money' && isOn && topBtn.innerHTML.includes('💰')){
+      console.log('V346 감시: money 패널인데 💰 아이콘 - 📔로 수정');
+      forceIconUpdate();
+    }
+    
+    // 다이어리 패널인데 OFF인데도 💰이면 잘못된 것
+    if(!isOn && topBtn.innerHTML.includes('💰')){
+      console.log('V346 감시: OFF인데 💰 아이콘 - 📔로 수정');
+      forceIconUpdate();
+    }
+    
+    // 아이콘이 비어있으면 강제
+    if(!topBtn.innerHTML || topBtn.innerHTML.trim() === ''){
+      console.log('V346 감시: 아이콘 비어있음 - 강제 업데이트');
+      forceIconUpdate();
+    }
+    
+    // money 패널인데 diary가 active가 아니면 (둘 다 꺼진 경우)
+    const moneyPanel = document.getElementById('money-panel');
+    const diaryPanel = document.getElementById('diary-panel');
+    if(isOn && moneyPanel && diaryPanel){
+      const moneyActive = moneyPanel.classList.contains('active');
+      const diaryActive = diaryPanel.classList.contains('active');
+      if(!moneyActive && !diaryActive){
+        console.log('V346 감시: 둘 다 비활성 - diary로 복구');
+        diaryPanel.classList.add('active');
+        forceIconUpdate();
+      }
+    }
+  }, 300);
+  
+  // 초기 실행
+  setTimeout(forceIconUpdate, 100);
+  setTimeout(forceIconUpdate, 500);
+  setTimeout(forceIconUpdate, 1000);
+  setTimeout(forceIconUpdate, 2000);
+  
+  window.addEventListener('load', function(){
+    setTimeout(forceIconUpdate, 200);
+    setTimeout(forceIconUpdate, 800);
+  });
+  
+  window._v346_forceIcon = forceIconUpdate;
+  window._v346_getTab = getCurrentTabFromDOM;
+  
+  console.log('V346: 설치 완료 - 가계부에서 다이어리 아이콘 항상 표시');
+})();
+</script>
+
 </body>
 </html>
