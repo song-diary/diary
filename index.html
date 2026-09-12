@@ -15553,5 +15553,336 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 })();
 </script>
 
+
+<style id="v347-default-off">
+/* V347: 기본값 6개 모두 OFF - 처음 열면 다이어리만 */
+</style>
+<script id="v347-default-off-js">
+(function(){
+  console.log('V347: 6개 기능 기본값 OFF로 변경 - 처음엔 다이어리만');
+  
+  // localStorage에 값이 없을 때 기본 OFF로 처리
+  // 1. 가계부 현황
+  if(localStorage.getItem('smartDiaryMoneySummaryVisible') === null){
+    localStorage.setItem('smartDiaryMoneySummaryVisible', 'false');
+    console.log('V347: 가계부 현황 기본 OFF 설정');
+  }
+  // 2. 카테고리 통계
+  if(localStorage.getItem('smartDiaryCategoryStatsVisible') === null){
+    localStorage.setItem('smartDiaryCategoryStatsVisible', 'false');
+    console.log('V347: 카테고리 통계 기본 OFF');
+  }
+  // 3. 검색/기간필터
+  if(localStorage.getItem('smartDiarySearchFilterVisible') === null){
+    localStorage.setItem('smartDiarySearchFilterVisible', 'false');
+    console.log('V347: 검색/기간필터 기본 OFF');
+  }
+  // 4. 오늘의 운세
+  if(localStorage.getItem('smartDiaryShowFortune') === null){
+    localStorage.setItem('smartDiaryShowFortune', 'false');
+    console.log('V347: 오늘의 운세 기본 OFF');
+  }
+  // 5. 운세 자동팝업
+  if(localStorage.getItem('smartDiaryFortuneAuto') === null){
+    localStorage.setItem('smartDiaryFortuneAuto', '0');
+    console.log('V347: 운세 자동팝업 기본 OFF');
+  }
+  // 6. 로또 생성기
+  if(localStorage.getItem('smartDiaryShowLotto') === null){
+    localStorage.setItem('smartDiaryShowLotto', 'false');
+    console.log('V347: 로또 생성기 기본 OFF');
+  }
+  
+  // 기본값을 OFF로 하는 새로운 함수들 - 기존 함수 덮어쓰기
+  window.getShowFortune = function(){
+    const v = localStorage.getItem('smartDiaryShowFortune');
+    // null이면 OFF (false)
+    if(v === null) return false;
+    return v !== 'false';
+  };
+  
+  window.getFortuneAutoEnabled = function(){
+    const v = localStorage.getItem('smartDiaryFortuneAuto');
+    // null이면 OFF
+    if(v === null) return false;
+    return v === '1';
+  };
+  
+  window.getShowLotto = function(){
+    const v = localStorage.getItem('smartDiaryShowLotto');
+    // null이면 OFF
+    if(v === null) return false;
+    return v === 'true';
+  };
+  
+  // closure 변수들도 OFF로 강제
+  setTimeout(function(){
+    if(window._v344_setFinanceVar){
+      const isOn = localStorage.getItem('smartDiaryMoneySummaryVisible') === 'true';
+      window._v344_setFinanceVar(isOn);
+      console.log('V347: closure 변수 동기화', isOn ? 'ON' : 'OFF');
+    }
+    
+    // 체크박스 UI도 OFF로
+    const ids = [
+      'toggle-money-summary',
+      'toggle-category-stats',
+      'toggle-search-filter',
+      'settings-show-fortune',
+      'settings-fortune-auto',
+      'settings-show-lotto'
+    ];
+    
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if(el){
+        const keyMap = {
+          'toggle-money-summary': 'smartDiaryMoneySummaryVisible',
+          'toggle-category-stats': 'smartDiaryCategoryStatsVisible',
+          'toggle-search-filter': 'smartDiarySearchFilterVisible',
+          'settings-show-fortune': 'smartDiaryShowFortune',
+          'settings-fortune-auto': 'smartDiaryFortuneAuto',
+          'settings-show-lotto': 'smartDiaryShowLotto'
+        };
+        const key = keyMap[id];
+        const val = localStorage.getItem(key);
+        let checked = false;
+        if(key === 'smartDiaryFortuneAuto'){
+          checked = val === '1';
+        } else {
+          checked = val === 'true';
+        }
+        el.checked = checked;
+        console.log('V347: 체크박스', id, checked ? 'ON' : 'OFF');
+      }
+    });
+    
+    // 가계부 요약 숨김 등 업데이트
+    if(typeof updateMoneySummary === 'function'){
+      try{ updateMoneySummary(); }catch(e){}
+    }
+    if(typeof updateFortuneTeaser === 'function'){
+      try{ updateFortuneTeaser(); }catch(e){}
+    }
+    
+    // 메인 아이콘 업데이트 (가계부 OFF이므로 📔)
+    if(window._v346_forceIcon) window._v346_forceIcon();
+    if(window._v345_updateIcon) window._v345_updateIcon();
+    if(window._v344_updateIcon) window._v344_updateIcon();
+    
+  }, 300);
+  
+  // openSettingsModal에서 체크박스 다시 동기화 (기존 V344 로직 확장)
+  const origOpenSettings = window.openSettingsModal;
+  // 이미 V344에서 래핑됐을 수 있으므로, 가장 최근 것을 다시 래핑
+  setTimeout(function(){
+    const currentOpen = window.openSettingsModal;
+    if(currentOpen && !currentOpen._v347_wrapped){
+      window.openSettingsModal = function(){
+        let result;
+        if(currentOpen){
+          result = currentOpen.apply(this, arguments);
+        }
+        
+        setTimeout(function(){
+          // 6개 모두 localStorage 기준으로 동기화
+          const map = [
+            {id: 'toggle-money-summary', key: 'smartDiaryMoneySummaryVisible', isAuto: false},
+            {id: 'toggle-category-stats', key: 'smartDiaryCategoryStatsVisible', isAuto: false},
+            {id: 'toggle-search-filter', key: 'smartDiarySearchFilterVisible', isAuto: false},
+            {id: 'settings-show-fortune', key: 'smartDiaryShowFortune', isAuto: false},
+            {id: 'settings-fortune-auto', key: 'smartDiaryFortuneAuto', isAuto: true},
+            {id: 'settings-show-lotto', key: 'smartDiaryShowLotto', isAuto: false}
+          ];
+          
+          map.forEach(item => {
+            const el = document.getElementById(item.id);
+            if(el){
+              const val = localStorage.getItem(item.key);
+              let checked = false;
+              if(item.isAuto){
+                checked = val === '1';
+              } else {
+                checked = val === 'true';
+              }
+              // null이면 OFF
+              if(val === null) checked = false;
+              el.checked = checked;
+            }
+          });
+          
+          // 운세 관련 토글 상태
+          if(typeof syncFortuneToggles === 'function'){
+            try{ syncFortuneToggles(); }catch(e){}
+          }
+          if(typeof syncLottoToggle === 'function'){
+            try{ syncLottoToggle(); }catch(e){}
+          }
+          
+        }, 150);
+        
+        return result;
+      };
+      window.openSettingsModal._v347_wrapped = true;
+    }
+  }, 600);
+  
+  console.log('V347: 6개 기능 기본 OFF 설치 완료 - 처음엔 다이어리만 표시');
+})();
+</script>
+
+
+<script id="v348-category-sync">
+(function(){
+  console.log('V348: 가계부 ON/OFF시 카테고리 통계 같이 ON/OFF');
+  
+  // syncAllFinanceState 확장
+  const origSync = window._v344_syncAll || window._v344_syncAllFinanceState;
+  
+  function syncCategoryWithFinance(isFinanceOn){
+    console.log('V348: 카테고리 통계', isFinanceOn ? 'ON' : 'OFF', '(가계부와 동기화)');
+    
+    localStorage.setItem('smartDiaryCategoryStatsVisible', isFinanceOn ? 'true' : 'false');
+    
+    // closure 변수 업데이트 시도
+    try{
+      if(typeof isCategoryStatsVisible !== 'undefined'){
+        eval('isCategoryStatsVisible = ' + (isFinanceOn ? 'true' : 'false'));
+      }
+    }catch(e){
+      console.log('V348: closure 변수 업데이트 실패, window로 대체');
+      window.isCategoryStatsVisible = isFinanceOn;
+    }
+    
+    // 체크박스 업데이트
+    const catChk = document.getElementById('toggle-category-stats');
+    if(catChk) catChk.checked = isFinanceOn;
+    
+    // UI 업데이트
+    if(typeof setCategoryStatsVisibility === 'function'){
+      try{
+        // 직접 호출하지 않고 상태만 업데이트 (무한루프 방지)
+        const card = document.getElementById('category-stats-card') || document.querySelector('#category-stats-body')?.parentElement;
+        if(card){
+          // 가계부가 OFF면 숨김, ON이면 표시 (단, currentStatsType이 memo가 아닐 때)
+          if(!isFinanceOn){
+            card.style.display = 'none';
+          } else {
+            // 가계부가 ON이면 카테고리 통계 표시 (memo가 아닐 때)
+            if(typeof currentStatsType !== 'undefined' && currentStatsType !== 'memo'){
+              card.style.display = 'block';
+            }
+          }
+        }
+      }catch(e){ console.log('V348 setCategoryStatsVisibility error', e); }
+    }
+    
+    if(typeof updateToggleButtons === 'function'){
+      try{ updateToggleButtons('category-stats', isFinanceOn); }catch(e){}
+    }
+  }
+  
+  // setMoneySummaryVisibility 재정의 - 카테고리 통계 같이 처리
+  const currentSetMoney = window.setMoneySummaryVisibility;
+  
+  window.setMoneySummaryVisibility = function(isVisible){
+    console.log('V348: 가계부', isVisible ? 'ON' : 'OFF', '-> 카테고리 통계도 같이', isVisible ? 'ON' : 'OFF');
+    
+    // 1. localStorage
+    localStorage.setItem('smartDiaryMoneySummaryVisible', isVisible ? 'true' : 'false');
+    
+    // 2. closure 변수 (가계부)
+    if(window._v344_setFinanceVar){
+      window._v344_setFinanceVar(isVisible);
+    }
+    try{
+      if(typeof isMoneySummaryVisible !== 'undefined'){
+        eval('isMoneySummaryVisible = ' + (isVisible ? 'true' : 'false'));
+      }
+    }catch(e){}
+    
+    // 3. 카테고리 통계도 같이 ON/OFF
+    syncCategoryWithFinance(isVisible);
+    
+    // 4. currentStatsType
+    if(typeof currentStatsType !== 'undefined'){
+      if(!isVisible){
+        window.currentStatsType = 'memo';
+        try{ eval('currentStatsType = "memo"'); }catch(e){}
+      } else {
+        window.currentStatsType = 'expense';
+        try{ eval('currentStatsType = "expense"'); }catch(e){}
+      }
+    }
+    
+    // 5. 체크박스
+    const moneyChk = document.getElementById('toggle-money-summary');
+    if(moneyChk) moneyChk.checked = isVisible;
+    
+    // 6. 가계부 요약 업데이트
+    if(typeof updateMoneySummary === 'function'){
+      try{ updateMoneySummary(); }catch(e){ console.log('V348 updateMoneySummary error', e); }
+    }
+    
+    // 7. 토글 버튼 UI
+    if(typeof updateToggleButtons === 'function'){
+      try{
+        updateToggleButtons('money-summary', isVisible);
+        updateToggleButtons('category-stats', isVisible);
+      }catch(e){}
+    }
+    
+    // 8. 아이콘 업데이트
+    setTimeout(function(){
+      if(window._v346_forceIcon) window._v346_forceIcon();
+      if(window._v345_updateIcon) window._v345_updateIcon();
+      if(window._v344_updateIcon) window._v344_updateIcon();
+    }, 50);
+  };
+  
+  // 체크박스 직접 change 이벤트도 처리
+  setTimeout(function(){
+    const moneyChk = document.getElementById('toggle-money-summary');
+    if(moneyChk && !moneyChk._v348_wrapped){
+      moneyChk.addEventListener('change', function(){
+        console.log('V348: 가계부 체크박스 직접 변경', this.checked);
+        window.setMoneySummaryVisibility(this.checked);
+      });
+      moneyChk._v348_wrapped = true;
+    }
+    
+    // 카테고리 통계 체크박스를 직접 건드렸을 때도 가계부와 동기화할지? 
+    // 요청은 가계부 ON/OFF하면 카테고리도 같이 ON/OFF이므로, 카테고리 단독 변경은 허용하되
+    // 가계부 OFF일 때는 카테고리 ON 불가
+    const catChk = document.getElementById('toggle-category-stats');
+    if(catChk && !catChk._v348_wrapped){
+      catChk.addEventListener('change', function(){
+        const financeOn = localStorage.getItem('smartDiaryMoneySummaryVisible') === 'true';
+        if(!financeOn && this.checked){
+          console.log('V348: 가계부 OFF인데 카테고리 ON 시도 - 차단');
+          this.checked = false;
+          alert('가계부가 OFF일 때는 카테고리 통계를 켤 수 없어요.\n가계부를 먼저 켜주세요.');
+          return;
+        }
+        // 가계부 ON일 때는 카테고리 단독 ON/OFF 허용
+        console.log('V348: 카테고리 통계 단독 변경', this.checked);
+        localStorage.setItem('smartDiaryCategoryStatsVisible', this.checked ? 'true' : 'false');
+        try{
+          if(typeof isCategoryStatsVisible !== 'undefined'){
+            eval('isCategoryStatsVisible = ' + (this.checked ? 'true' : 'false'));
+          }
+        }catch(e){}
+        if(typeof updateToggleButtons === 'function'){
+          try{ updateToggleButtons('category-stats', this.checked); }catch(e){}
+        }
+      });
+      catChk._v348_wrapped = true;
+    }
+  }, 800);
+  
+  console.log('V348: 가계부-카테고리 통계 동기화 설치 완료');
+})();
+</script>
+
 </body>
 </html>
