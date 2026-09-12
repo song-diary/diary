@@ -15209,5 +15209,146 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 })();
 </script>
 
+
+<script id="v345-diary-return-fix">
+// V345: 가계부에서 다이어리로 가는 아이콘 안 되는 버그 수정
+
+(function(){
+  console.log('V345: 가계부 -> 다이어리 복귀 버그 수정');
+  
+  // 가장 원본 switchMainTab 찾기 - 여러 번 래핑된 것 중 최초 원본
+  let realOriginalSwitch = null;
+  // V341, V342, V343, V344에서 백업해둔 원본들 중 가장 최초
+  if(window._v344_origSwitch && window._v344_origSwitch._v343_originalSwitch){
+    realOriginalSwitch = window._v344_origSwitch._v343_originalSwitch;
+  }
+  if(!realOriginalSwitch && window._v343_originalSwitch){
+    realOriginalSwitch = window._v343_originalSwitch;
+  }
+  // 그래도 없으면 현재 switchMainTab이 이미 래핑된 것이므로, 직접 구현
+  if(!realOriginalSwitch){
+    realOriginalSwitch = function(tabName){
+      const panels = {
+        diary: document.getElementById('diary-panel'),
+        money: document.getElementById('money-panel')
+      };
+      Object.keys(panels).forEach(key => {
+        if(panels[key]) panels[key].classList.toggle('active', key === tabName);
+      });
+      if(typeof currentMainTab !== 'undefined') window.currentMainTab = tabName;
+      localStorage.setItem('smartDiaryMainTab', tabName);
+      
+      const topBtn = document.getElementById('top-toggle-btn');
+      if(topBtn){
+        if(tabName === 'diary'){
+          const isFinanceOn = localStorage.getItem('smartDiaryMoneySummaryVisible') !== 'false';
+          if(isFinanceOn){
+            topBtn.innerHTML = '💰';
+            topBtn.title = '가계부로 이동';
+          } else {
+            topBtn.innerHTML = '📔';
+            topBtn.title = '다이어리 (가계부 OFF)';
+          }
+        } else {
+          topBtn.innerHTML = '📔';
+          topBtn.title = '다이어리로 이동';
+        }
+      }
+      
+      if(tabName === 'money'){
+        if(typeof updateMoneySummary === 'function') updateMoneySummary();
+        if(typeof renderMoneyAroundToday === 'function') renderMoneyAroundToday();
+      }
+      if(tabName === 'diary'){
+        if(typeof renderDiaryAroundToday === 'function') renderDiaryAroundToday();
+      }
+    };
+  }
+  
+  window._v345_realOriginalSwitch = realOriginalSwitch;
+  
+  function getFinanceOn(){
+    return localStorage.getItem('smartDiaryMoneySummaryVisible') !== 'false';
+  }
+  
+  function updateIcon(){
+    const topBtn = document.getElementById('top-toggle-btn');
+    if(!topBtn) return;
+    const isOn = getFinanceOn();
+    const currentTab = typeof currentMainTab !== 'undefined' ? currentMainTab : 'diary';
+    
+    if(!isOn){
+      topBtn.innerHTML = '📔';
+      topBtn.title = '다이어리 (가계부 OFF)';
+      topBtn.style.opacity = '0.6';
+    } else {
+      topBtn.style.opacity = '1';
+      if(currentTab === 'diary'){
+        topBtn.innerHTML = '💰';
+        topBtn.title = '가계부로 이동';
+      } else {
+        topBtn.innerHTML = '📔';
+        topBtn.title = '다이어리로 이동';
+      }
+    }
+  }
+  
+  // switchMainTab 완전 재정의 - 다이어리는 항상 허용, 가계부는 ON일 때만
+  window.switchMainTab = function(tabName){
+    const isOn = getFinanceOn();
+    
+    console.log('V345: switchMainTab', tabName, '가계부', isOn ? 'ON' : 'OFF');
+    
+    if(tabName === 'money' && !isOn){
+      console.log('V345: 가계부 OFF - money 진입 차단, diary 유지');
+      // 다이어리로 강제
+      realOriginalSwitch.call(this, 'diary');
+      setTimeout(updateIcon, 10);
+      return;
+    }
+    
+    // 다이어리는 항상 허용, 가계부는 ON일 때만 허용
+    realOriginalSwitch.call(this, tabName);
+    setTimeout(updateIcon, 10);
+    setTimeout(updateIcon, 100);
+  };
+  
+  // toggleMainTab 재정의 - 가계부 ON/OFF 관계없이 다이어리로는 항상 갈 수 있게
+  window.toggleMainTab = function(){
+    const currentTab = typeof currentMainTab !== 'undefined' ? currentMainTab : 'diary';
+    const isOn = getFinanceOn();
+    
+    console.log('V345: toggleMainTab 현재', currentTab, '가계부', isOn ? 'ON' : 'OFF');
+    
+    if(currentTab === 'money'){
+      // 가계부에서 다이어리로 - 항상 허용 (가계부 OFF든 ON이든)
+      console.log('V345: money -> diary (항상 허용)');
+      window.switchMainTab('diary');
+    } else {
+      // 다이어리에서 가계부로 - ON일 때만 허용
+      if(!isOn){
+        console.log('V345: diary -> money 차단 (가계부 OFF)');
+        updateIcon();
+        return;
+      }
+      console.log('V345: diary -> money (허용)');
+      window.switchMainTab('money');
+    }
+  };
+  
+  // 초기 아이콘 설정
+  setTimeout(updateIcon, 200);
+  setTimeout(updateIcon, 800);
+  
+  window.addEventListener('load', function(){
+    setTimeout(updateIcon, 300);
+  });
+  
+  window._v345_updateIcon = updateIcon;
+  
+  console.log('V345: 가계부->다이어리 복귀 버그 수정 완료');
+})();
+</script>
+
 </body>
 </html>
