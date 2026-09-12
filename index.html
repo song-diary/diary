@@ -16523,12 +16523,8 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 
 
 
-
-
-
-
-<style id="v373-final">
-/* V373 - 사진 없는 메모 빈공간 제거 */
+<style id="v374-final">
+/* V374 - 사진 있는 건 보이게, 없는 건 빈공간 없이 */
 
 /* 오버레이 */
 #photo-lightbox-overlay.modal-overlay.active {
@@ -16546,42 +16542,42 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
   overflow: visible !important;
   max-height: none !important;
   height: auto !important;
-  flex-shrink: 0 !important;
   width: 100% !important;
   max-width: 560px !important;
   gap: 0 !important;
 }
 
-/* 사진 있을 때 - 꽉차게 고정, 터치 불가 */
+/* 사진 있을 때 - 꽉차게, 터치 불가 */
 #photo-lightbox-img.photo-lightbox-img {
   width: 100% !important;
   max-width: 520px !important;
+  height: auto !important;
   min-height: 36vh !important;
   max-height: 58vh !important;
   object-fit: cover !important;
   object-position: center center !important;
   border-radius: 12px 12px 0 0 !important;
-  display: block !important;
-  flex-shrink: 0 !important;
   background: #000 !important;
+  flex-shrink: 0 !important;
   cursor: default !important;
   pointer-events: none !important;
   transform: none !important;
+  display: block !important;
 }
 
-/* 사진 없을 때 이미지 완전 숨김 - 빈공간 제거 핵심 */
-#photo-lightbox-img.photo-lightbox-img[style*="display: none"],
-#photo-lightbox-img.photo-lightbox-img.no-photo-hidden {
+/* 사진 없을 때만 숨김 - no-photo-mode 일 때만 적용 */
+#photo-lightbox-content:has(#photo-lightbox-memo.no-photo-mode) #photo-lightbox-img,
+#photo-lightbox-img.no-photo-hidden {
   display: none !important;
   min-height: 0 !important;
   max-height: 0 !important;
   height: 0 !important;
   margin: 0 !important;
   padding: 0 !important;
-  border: none !important;
+  border: 0 !important;
 }
 
-/* 사진 있을 때 메모 */
+/* 메모 - 사진 있을 때 */
 #photo-lightbox-memo.photo-lightbox-memo {
   background: #FFF9E6 !important;
   border: 1px solid #E8DCC0 !important;
@@ -16605,113 +16601,98 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
   overscroll-behavior: contain !important;
   border-radius: 0 0 12px 12px !important;
   transform: none !important;
+  margin-top: 0 !important;
 }
 
-/* 사진 없을 때 - 베이지 종이가 위부터 종료까지 꽉 채움 */
+/* 메모만 있을 때 - 위부터 꽉 채움 */
 #photo-lightbox-memo.photo-lightbox-memo.no-photo-mode {
   max-height: none !important;
-  min-height: calc(90vh - 80px) !important;
-  height: auto !important;
-  flex: 1 1 auto !important;
+  min-height: calc(90vh - 90px) !important;
   border: 1px solid #E8DCC0 !important;
   border-radius: 12px !important;
   padding: 22px 20px 36px 20px !important;
-  overflow-y: auto !important;
-  background: #FFF9E6 !important;
   margin-top: 0 !important;
 }
 
 #photo-lightbox-date { display: none !important; }
 #photo-lightbox-content::after { display: none !important; }
-#photo-lightbox-actions {
-  width: 100% !important;
-  max-width: 520px !important;
-  margin-top: 12px !important;
-  flex-shrink: 0 !important;
-}
+#photo-lightbox-actions { margin-top: 12px !important; width: 100% !important; max-width: 520px !important; }
 </style>
-<script id="v373-js">
+<script id="v374-js">
 (function(){
-  console.log('V373: 사진없는 메모 빈공간 제거');
+  console.log('V374: 사진 보임 + 빈공간 제거');
 
   function apply(){
     try{
-      var overlay = document.getElementById('photo-lightbox-overlay');
       var img = document.getElementById('photo-lightbox-img');
       var memo = document.getElementById('photo-lightbox-memo');
       var dateEl = document.getElementById('photo-lightbox-date');
       if(dateEl) dateEl.style.display='none';
-      
-      if(img && memo){
-        var isNoPhoto = memo.classList.contains('no-photo-mode') || img.style.display==='none' || !img.src || img.src==='' || img.getAttribute('src')==='';
-        // getComputedStyle로도 확인
-        var computedDisplay = window.getComputedStyle(img).display;
-        
-        if(isNoPhoto || computedDisplay==='none' || memo.classList.contains('no-photo-mode')){
-          // 사진 없음 - 이미지 완전 제거
-          img.classList.add('no-photo-hidden');
-          img.style.setProperty('display','none','important');
-          img.style.setProperty('min-height','0','important');
-          img.style.setProperty('max-height','0','important');
-          img.style.setProperty('height','0','important');
-          memo.classList.add('no-photo-mode');
-          if(overlay) overlay.classList.add('no-photo-overlay');
-          memo.style.setProperty('max-height','none','important');
-          memo.style.setProperty('min-height','calc(90vh - 80px)','important');
-          memo.style.marginTop='0';
-        } else {
-          // 사진 있음
-          img.classList.remove('no-photo-hidden');
-          img.style.removeProperty('min-height');
-          img.style.removeProperty('max-height');
-          img.style.removeProperty('height');
-          // 다시 cover 스타일 적용
-          img.style.setProperty('display','block','important');
-          img.style.setProperty('width','100%','important');
-          img.style.setProperty('object-fit','cover','important');
-          img.style.pointerEvents='none';
-          img.style.transform='none';
-          memo.classList.remove('no-photo-mode');
-          if(overlay) overlay.classList.remove('no-photo-overlay');
-        }
-        memo.style.transform='none';
-        memo.scrollTop = 0;
-        if(typeof resetPhotoZoom==='function') resetPhotoZoom();
+      if(!img || !memo) return;
+
+      var hasSrc = img.src && img.src !== '' && img.src !== window.location.href && !img.src.includes('about:blank');
+      var memoIsNoPhoto = memo.classList.contains('no-photo-mode');
+      var imgDisplayNone = img.style.display === 'none' || window.getComputedStyle(img).display === 'none';
+
+      // 원본 로직: src 있으면 사진 있음
+      if(memoIsNoPhoto || !hasSrc){
+        // 사진 없음
+        img.classList.add('no-photo-hidden');
+        memo.classList.add('no-photo-mode');
+        memo.style.marginTop = '0';
+      } else {
+        // 사진 있음 - 확실히 보이게
+        img.classList.remove('no-photo-hidden');
+        memo.classList.remove('no-photo-mode');
+        img.style.display = 'block';
+        img.style.minHeight = '36vh';
+        img.style.maxHeight = '58vh';
+        img.style.height = 'auto';
+        img.style.width = '100%';
+        img.style.objectFit = 'cover';
+        img.style.pointerEvents = 'none';
+        img.style.transform = 'none';
+      }
+      memo.style.transform = 'none';
+      memo.scrollTop = 0;
+      if(typeof resetPhotoZoom === 'function'){
+        try{ resetPhotoZoom(); }catch(e){}
         if(img) img.style.transform='none';
       }
-    }catch(e){ console.log('V373 error', e); }
+    }catch(e){ console.log('V374 error', e); }
   }
 
   function wrap(){
-    if(window.openPhotoLightbox && !window.openPhotoLightbox._v373){
+    if(window.openPhotoLightbox && !window.openPhotoLightbox._v374){
       var orig = window.openPhotoLightbox;
-      window.openPhotoLightbox = function(){
+      window.openPhotoLightbox = function(photoKeyOrData, diaryItemOrText){
         var r;
-        try{ r = orig.apply(this, arguments); }catch(e){}
-        setTimeout(apply, 20);
-        setTimeout(apply, 150);
-        setTimeout(apply, 400);
+        try{ r = orig.apply(this, arguments); }catch(e){ console.log(e); }
+        // 원본이 display 설정 후 우리가 보정
+        setTimeout(apply, 25);
+        setTimeout(apply, 180);
+        setTimeout(apply, 500);
         return r;
       };
-      window.openPhotoLightbox._v373 = true;
+      window.openPhotoLightbox._v374 = true;
     }
-    if(window.openMemoLightboxOnly && !window.openMemoLightboxOnly._v373){
+    if(window.openMemoLightboxOnly && !window.openMemoLightboxOnly._v374){
       var orig2 = window.openMemoLightboxOnly;
       window.openMemoLightboxOnly = function(){
         var r;
         try{ r = orig2.apply(this, arguments); }catch(e){}
-        setTimeout(apply, 20);
+        setTimeout(apply, 25);
         setTimeout(apply, 200);
         return r;
       };
-      window.openMemoLightboxOnly._v373 = true;
+      window.openMemoLightboxOnly._v374 = true;
     }
   }
 
   apply();
   wrap();
-  setTimeout(wrap, 600);
-  setTimeout(apply, 600);
+  setTimeout(wrap, 500);
+  setTimeout(apply, 500);
 })();
 </script>
 
