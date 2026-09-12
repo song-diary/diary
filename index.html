@@ -16180,5 +16180,148 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 })();
 </script>
 
+
+<style id="v352-final">
+/* V352: 고정핀 위치 내리기 + 크림 종이 */
+
+/* 1. 고정핀 위치 내리기 */
+.cal-cell.has-photo .cal-photo-corner,
+.cal-photo-corner {
+  clip-path: none !important;
+  background: transparent !important;
+  border: none !important;
+  width: auto !important;
+  height: auto !important;
+  top: 4px !important; /* 1px -> 4px */
+  left: 3px !important; /* 2px -> 3px */
+  box-shadow: none !important;
+  display: block !important;
+  padding: 0 !important;
+  z-index: 5 !important;
+}
+.cal-cell.has-photo .cal-photo-corner::after,
+.cal-photo-corner::after {
+  content: '📌' !important;
+  font-size: 11px !important;
+  position: static !important;
+  background: transparent !important;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.15)) !important;
+}
+
+/* 2. 확대 사진 밑 메모 - 크림 종이 */
+#photo-lightbox-memo,
+.photo-lightbox-memo {
+  background: #FFF9E6 !important; /* 크림 종이 */
+  background-image: 
+    radial-gradient(circle at 20% 30%, rgba(255,220,150,0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(255,210,130,0.12) 0%, transparent 40%) !important;
+  border: 1px solid #E8DCC0 !important;
+  border-radius: 12px !important;
+  color: #3D2F1F !important; /* 따뜻한 갈색 글씨 */
+  font-family: 'Nanum Pen Script', 'Noto Serif KR', serif !important;
+  line-height: 1.7 !important;
+  box-shadow: 
+    0 2px 8px rgba(0,0,0,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.8) !important;
+  position: relative !important;
+}
+
+#photo-lightbox-memo::before,
+.photo-lightbox-memo::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E") !important;
+  pointer-events: none !important;
+  border-radius: 12px !important;
+  z-index: 0 !important;
+}
+
+#photo-lightbox-memo.no-photo-mode,
+.photo-lightbox-memo.no-photo-mode {
+  background: #FFF9E6 !important;
+  background-image: 
+    radial-gradient(circle at 20% 30%, rgba(255,220,150,0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(255,210,130,0.12) 0%, transparent 40%) !important;
+  border: 1px solid #E8DCC0 !important;
+  color: #3D2F1F !important;
+}
+
+/* 날짜 표시도 크림 종이에 맞게 */
+#photo-lightbox-date,
+.photo-lightbox-date {
+  background: #FFF9E6 !important;
+  color: rgba(61,47,31,0.5) !important;
+  padding: 8px 16px !important;
+  border-radius: 0 0 12px 12px !important;
+  margin-top: -1px !important;
+  border: 1px solid #E8DCC0 !important;
+  border-top: none !important;
+}
+
+/* 전체 라이트박스 콘텐츠도 크림 종이 느낌 */
+#photo-lightbox-content,
+.photo-lightbox-content {
+  background: transparent !important;
+}
+</style>
+<script id="v352-final-js">
+(function(){
+  console.log('V352: 고정핀 위치 내림 + 크림 종이 적용');
+  
+  function applyAll(){
+    // 고정핀
+    let s1 = document.getElementById('v352-pin-fix');
+    if(!s1){
+      s1 = document.createElement('style');
+      s1.id = 'v352-pin-fix';
+      document.head.appendChild(s1);
+    }
+    s1.textContent = `
+      .cal-cell.has-photo .cal-photo-corner,
+      .cal-photo-corner {
+        clip-path: none !important;
+        background: transparent !important;
+        border: none !important;
+        top: 4px !important;
+        left: 3px !important;
+        width: auto !important;
+        height: auto !important;
+      }
+      .cal-cell.has-photo .cal-photo-corner::after,
+      .cal-photo-corner::after {
+        content: '📌' !important;
+        font-size: 11px !important;
+        position: static !important;
+      }
+      #photo-lightbox-memo,
+      .photo-lightbox-memo {
+        background: #FFF9E6 !important;
+        border: 1px solid #E8DCC0 !important;
+        color: #3D2F1F !important;
+      }
+    `;
+  }
+  
+  applyAll();
+  
+  const origRender = window.renderCalendar;
+  if(origRender && !origRender._v352_final){
+    window.renderCalendar = function(){
+      const r = origRender.apply(this, arguments);
+      setTimeout(applyAll, 30);
+      setTimeout(applyAll, 200);
+      return r;
+    };
+    window.renderCalendar._v352_final = true;
+  }
+  
+  setInterval(applyAll, 2000);
+})();
+</script>
+
 </body>
 </html>
