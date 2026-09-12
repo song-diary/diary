@@ -16323,5 +16323,203 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 })();
 </script>
 
+
+<style id="v353-memo-fix">
+/* V353: 메모 3줄 잘림 수정 + 줄간격 좁히기 + 종료버튼 크림매칭 */
+
+/* 1. 메모 잘림 수정 - max-height 제거하고 전체 스크롤 */
+#photo-lightbox-overlay {
+  overflow-y: auto !important;
+  align-items: flex-start !important;
+  padding: 20px 15px 100px 15px !important; /* 하단 종료버튼 공간 */
+}
+
+#photo-lightbox-content,
+.photo-lightbox-content {
+  max-height: none !important;
+  overflow: visible !important;
+  width: 100% !important;
+  max-width: 520px !important;
+  margin: 0 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  background: transparent !important;
+}
+
+#photo-lightbox-img {
+  max-height: 60vh !important;
+  width: 100% !important;
+  object-fit: contain !important;
+  flex-shrink: 0 !important;
+}
+
+/* 메모 - 크림 종이 + 줄간격 좁히기 + 전체 보이게 */
+#photo-lightbox-memo,
+.photo-lightbox-memo {
+  background: #FFF9E6 !important;
+  background-image: 
+    radial-gradient(circle at 20% 30%, rgba(255,220,150,0.12) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(255,210,130,0.10) 0%, transparent 40%) !important;
+  border: 1px solid #E8DCC0 !important;
+  border-radius: 12px !important;
+  color: #3D2F1F !important;
+  font-size: 15px !important;
+  line-height: 1.45 !important; /* 1.7 -> 1.45로 좁히기 */
+  padding: 16px 18px !important;
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  max-height: none !important; /* 잘림 방지 - 무제한 */
+  overflow: visible !important; /* 스크롤 없음, 전체 표시 */
+  flex-shrink: 0 !important;
+  box-shadow: 
+    0 2px 8px rgba(0,0,0,0.06),
+    inset 0 1px 0 rgba(255,255,255,0.8) !important;
+}
+
+#photo-lightbox-memo.no-photo-mode,
+.photo-lightbox-memo.no-photo-mode {
+  background: #FFF9E6 !important;
+  border: 1px solid #E8DCC0 !important;
+  color: #3D2F1F !important;
+  line-height: 1.5 !important;
+  font-size: 16px !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+#photo-lightbox-date,
+.photo-lightbox-date {
+  background: #FFF9E6 !important;
+  color: rgba(61,47,31,0.45) !important;
+  padding: 8px 18px 12px !important;
+  border-radius: 0 0 12px 12px !important;
+  margin-top: -13px !important;
+  border: 1px solid #E8DCC0 !important;
+  border-top: none !important;
+  font-size: 11px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* 2. 종료 버튼 - 크림 종이 매칭 웜 브라운 */
+#photo-lightbox-fixed-close {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  max-width: 520px !important;
+  margin: 0 auto !important;
+  background: rgba(255,249,230,0.95) !important; /* 크림 반투명 */
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border-top: 1px solid #E8DCC0 !important;
+  padding: 12px 16px !important;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom)) !important;
+  z-index: 9999 !important;
+  display: block !important;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.06) !important;
+}
+
+#photo-lightbox-fixed-close button {
+  width: 100% !important;
+  padding: 14px !important;
+  border-radius: 12px !important;
+  border: none !important;
+  background: #3D2F1F !important; /* 웜 브라운 - 크림 종이 글씨색과 통일 */
+  color: #FFF9E6 !important; /* 크림 글씨 */
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  letter-spacing: 0.3px !important;
+  cursor: pointer !important;
+  box-shadow: 0 2px 8px rgba(61,47,31,0.25) !important;
+  transition: all 0.2s ease !important;
+}
+
+#photo-lightbox-fixed-close button:hover {
+  background: #2F2418 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(61,47,31,0.3) !important;
+}
+
+#photo-lightbox-fixed-close button:active {
+  transform: translateY(0) !important;
+}
+
+/* 기존 닫기 버튼도 숨김 - 고정 버튼만 사용 */
+.photo-lightbox-close {
+  display: none !important;
+}
+
+/* 고정핀 위치는 유지 */
+.cal-cell.has-photo .cal-photo-corner,
+.cal-photo-corner {
+  top: 4px !important;
+  left: 3px !important;
+  background: transparent !important;
+  border: none !important;
+  clip-path: none !important;
+}
+.cal-cell.has-photo .cal-photo-corner::after,
+.cal-photo-corner::after {
+  content: '📌' !important;
+  font-size: 11px !important;
+}
+</style>
+<script id="v353-js">
+(function(){
+  console.log('V353: 메모 잘림 수정 + 줄간격 + 종료버튼 크림매칭');
+  
+  function applyFix(){
+    // 메모 max-height 제거
+    const memo = document.getElementById('photo-lightbox-memo');
+    if(memo){
+      memo.style.maxHeight = 'none';
+      memo.style.overflow = 'visible';
+      memo.style.lineHeight = '1.45';
+    }
+    
+    // 오버레이 스크롤 가능하게
+    const overlay = document.getElementById('photo-lightbox-overlay');
+    if(overlay){
+      overlay.style.overflowY = 'auto';
+      overlay.style.alignItems = 'flex-start';
+    }
+  }
+  
+  applyFix();
+  
+  // 라이트박스 열릴 때마다 적용
+  const origOpen = window.openPhotoLightbox;
+  if(origOpen && !origOpen._v353){
+    window.openPhotoLightbox = function(){
+      const r = origOpen.apply(this, arguments);
+      setTimeout(applyFix, 50);
+      setTimeout(applyFix, 200);
+      setTimeout(applyFix, 500);
+      return r;
+    };
+    window.openPhotoLightbox._v353 = true;
+  }
+  
+  const origMemoOnly = window.openMemoLightboxOnly;
+  if(origMemoOnly && !origMemoOnly._v353){
+    window.openMemoLightboxOnly = function(){
+      const r = origMemoOnly.apply(this, arguments);
+      setTimeout(applyFix, 50);
+      setTimeout(applyFix, 200);
+      return r;
+    };
+    window.openMemoLightboxOnly._v353 = true;
+  }
+  
+  setInterval(applyFix, 2000);
+})();
+</script>
+
 </body>
 </html>
