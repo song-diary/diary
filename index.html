@@ -16646,5 +16646,154 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 })();
 </script>
 
+
+<style id="v371-reverse-zoom">
+/* V371 - 처음부터 확대(여백없음) -> 터치시 축소(전체보기) */
+
+/* 이미지가 컨텐츠 꽉 차게 */
+#photo-lightbox-img.photo-lightbox-img {
+  width: 100% !important;
+  max-width: 520px !important;
+  min-height: 38vh !important;
+  max-height: 58vh !important;
+  object-fit: cover !important;
+  object-position: center center !important;
+  border-radius: 12px !important;
+  cursor: zoom-out !important;
+  transition: all 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+  transform-origin: center center !important;
+  background: #000 !important;
+}
+
+/* 터치해서 축소된 상태 - 현재의 기존 크기처럼 전체 보기 */
+#photo-lightbox-img.photo-lightbox-img.is-shrinked {
+  width: auto !important;
+  max-width: 90vw !important;
+  max-height: 42vh !important;
+  object-fit: contain !important;
+  background: transparent !important;
+  cursor: zoom-in !important;
+  border-radius: 14px !important;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.6) !important;
+}
+
+/* 힌트 텍스트 */
+#photo-lightbox-content::after {
+  content: '📷 터치하면 전체보기';
+  font-size: 11px;
+  color: #8C7A5A;
+  margin-top: 2px;
+  opacity: 0.8;
+  transition: opacity 0.3s;
+}
+#photo-lightbox-content.shrinked::after {
+  content: '🔍 터치하면 꽉차게 보기';
+}
+</style>
+<script id="v371-js">
+(function(){
+  console.log('V371: reverse zoom - 처음 확대, 터치시 축소');
+  
+  function setupReverseZoom(){
+    var img = document.getElementById('photo-lightbox-img');
+    var content = document.getElementById('photo-lightbox-content');
+    if(!img || img._v371) return;
+    img._v371 = true;
+    
+    // 초기 상태: 확대(꽉차게)
+    img.classList.remove('is-shrinked');
+    if(content) content.classList.remove('shrinked');
+    
+    // 커스텀 핀치줌 변수 리셋 함수 가져오기
+    function toggleShrink(e){
+      if(e) e.stopPropagation();
+      // 핀치줌 중이면 무시
+      if(window._pz_is_pinching) return;
+      
+      var isShrinked = img.classList.contains('is-shrinked');
+      if(isShrinked){
+        // 축소 -> 확대
+        img.classList.remove('is-shrinked');
+        if(content) content.classList.remove('shrinked');
+        img.style.transform = 'scale(1)';
+        // 기존 줌 리셋
+        if(typeof resetPhotoZoom === 'function') resetPhotoZoom();
+      } else {
+        // 확대 -> 축소 (전체보기)
+        img.classList.add('is-shrinked');
+        if(content) content.classList.add('shrinked');
+        img.style.transform = 'scale(1)';
+        if(typeof resetPhotoZoom === 'function') resetPhotoZoom();
+      }
+      console.log('V371 toggle:', isShrinked ? '확대모드' : '축소(전체보기)모드');
+    }
+    
+    img.addEventListener('click', toggleShrink);
+    
+    // 터치로도 토글 (짧은 탭)
+    var touchStartTime = 0;
+    var touchStartX = 0, touchStartY = 0;
+    img.addEventListener('touchstart', function(e){
+      if(e.touches.length !== 1) return;
+      touchStartTime = Date.now();
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }, {passive:true});
+    
+    img.addEventListener('touchend', function(e){
+      if(e.changedTouches.length !== 1) return;
+      var dt = Date.now() - touchStartTime;
+      var dx = Math.abs(e.changedTouches[0].clientX - touchStartX);
+      var dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
+      // 300ms 이내, 이동 10px 이내면 탭으로 인정
+      if(dt < 300 && dx < 10 && dy < 10){
+        // 스크롤 중 아니고, 줌 중이 아닐 때만
+        if(!window._pz_is_panning){
+          e.preventDefault();
+          toggleShrink(e);
+        }
+      }
+    }, {passive:false});
+  }
+  
+  // openPhotoLightbox 래핑해서 열릴 때마다 확대 상태로 초기화
+  function wrapOpen(){
+    if(window.openPhotoLightbox && !window.openPhotoLightbox._v371){
+      var orig = window.openPhotoLightbox;
+      window.openPhotoLightbox = function(){
+        var r = orig.apply(this, arguments);
+        setTimeout(function(){
+          var img = document.getElementById('photo-lightbox-img');
+          var content = document.getElementById('photo-lightbox-content');
+          if(img){
+            img.classList.remove('is-shrinked');
+            img._v371 = false; // 재설정 위해
+            setupReverseZoom();
+            if(content) content.classList.remove('shrinked');
+          }
+          // 메모 스크롤도 같이
+          var memo = document.getElementById('photo-lightbox-memo');
+          if(memo) memo.scrollTop = 0;
+        }, 50);
+        return r;
+      };
+      window.openPhotoLightbox._v371 = true;
+    }
+  }
+  
+  wrapOpen();
+  setTimeout(wrapOpen, 500);
+  setTimeout(setupReverseZoom, 800);
+  
+  // 핀치 상태 플래그를 위해 기존 핀치 핸들러 감시
+  document.addEventListener('touchstart', function(e){
+    if(e.touches.length === 2) window._pz_is_pinching = true;
+  }, {passive:true});
+  document.addEventListener('touchend', function(e){
+    if(e.touches.length < 2) setTimeout(function(){ window._pz_is_pinching = false; }, 200);
+  }, {passive:true});
+})();
+</script>
+
 </body>
 </html>
