@@ -16751,5 +16751,108 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 })();
 </script>
 
+
+<style id="v355-bottom-fix">
+/* V355: 종료 버튼에 가려지는 문제 수정 - 하단 여백 추가 */
+
+/* 콘텐츠에 하단 여백 추가 - 종료 버튼 높이만큼 */
+#photo-lightbox-content,
+.photo-lightbox-content {
+  padding-bottom: 90px !important; /* 종료 버튼 60px + 여백 30px */
+  box-sizing: border-box !important;
+}
+
+/* 메모에도 하단 여백 */
+#photo-lightbox-memo,
+.photo-lightbox-memo {
+  margin-bottom: 20px !important;
+  /* 스크롤 끝까지 보이게 */
+  scroll-padding-bottom: 90px !important;
+}
+
+/* 오버레이 하단 패딩 더 크게 */
+#photo-lightbox-overlay {
+  padding-bottom: 120px !important;
+}
+
+/* 날짜도 여백 */
+#photo-lightbox-date,
+.photo-lightbox-date {
+  margin-bottom: 20px !important;
+  padding-bottom: 10px !important;
+}
+
+/* 종료 버튼 - 높이 줄이고 투명도 높여서 덜 가리게 */
+#photo-lightbox-fixed-close {
+  height: auto !important;
+  min-height: 70px !important;
+  background: rgba(255,249,230,0.92) !important; /* 더 투명하게 */
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom)) !important;
+}
+
+#photo-lightbox-fixed-close button {
+  padding: 12px !important;
+  font-size: 13px !important;
+}
+</style>
+<script id="v355-js">
+(function(){
+  console.log('V355: 종료버튼 가림 수정 - 하단 여백');
+  
+  function fixBottom(){
+    const content = document.getElementById('photo-lightbox-content');
+    const memo = document.getElementById('photo-lightbox-memo');
+    const overlay = document.getElementById('photo-lightbox-overlay');
+    const dateEl = document.getElementById('photo-lightbox-date');
+    
+    if(content){
+      content.style.paddingBottom = '90px';
+    }
+    
+    if(memo){
+      memo.style.marginBottom = '20px';
+      memo.style.scrollPaddingBottom = '90px';
+      
+      // 메모가 스크롤 끝에 도달했을 때 종료 버튼 위로 올라오도록
+      // 스크롤 이벤트로 체크
+      if(!memo._v355_scroll){
+        memo._v355_scroll = true;
+        memo.addEventListener('scroll', function(){
+          const isAtBottom = this.scrollHeight - this.scrollTop - this.clientHeight < 10;
+          if(isAtBottom){
+            this.style.marginBottom = '30px';
+          }
+        });
+      }
+    }
+    
+    if(dateEl){
+      dateEl.style.marginBottom = '20px';
+    }
+    
+    if(overlay){
+      overlay.style.paddingBottom = '120px';
+    }
+  }
+  
+  fixBottom();
+  
+  const origOpen = window.openPhotoLightbox;
+  if(origOpen && !origOpen._v355){
+    window.openPhotoLightbox = function(){
+      const r = origOpen.apply(this, arguments);
+      setTimeout(fixBottom, 30);
+      setTimeout(fixBottom, 200);
+      setTimeout(fixBottom, 500);
+      return r;
+    };
+    window.openPhotoLightbox._v355 = true;
+  }
+  
+  // 메모 스크롤시 하단 여백 확보
+  setInterval(fixBottom, 2000);
+})();
+</script>
+
 </body>
 </html>
