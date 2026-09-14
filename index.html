@@ -16913,99 +16913,59 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 </script>
 
 
-<style id="v362-editdel-under-photo">
-/* V362: 수정/삭제 버튼을 사진 바로 밑으로, 상하폭(높이) 컴팩트하게 제목+사진과 동일 톤으로 */
+
+
+
+
+<style id="v363-remove-editdel">
+/* V363: 사진 확대시 수정/삭제 버튼 완전 제거 - 원래대로 */
 #photo-lightbox-actions {
-  display: flex !important;
-  gap: 8px !important;
-  width: 100% !important;
-  max-width: 100% !important;
+  display: none !important;
+  height: 0 !important;
   margin: 0 !important;
-  padding: 8px 12px !important; /* 상하폭 줄임 - 기존 12px -> 8px */
-  background: #fff !important;
-  box-sizing: border-box !important;
-  order: 2 !important;
-}
-#photo-lightbox-actions button {
-  flex: 1 !important;
-  padding: 8px 0 !important; /* 상하폭 컴팩트 - 12px->8px */
-  font-size: 13px !important;
-  line-height: 1.2 !important;
-  border-radius: 8px !important;
-  height: 34px !important; /* 상하폭 고정으로 제목+사진 영역의 여백과 맞춤 */
-  min-height: 34px !important;
-}
-#photo-lightbox-title {
-  order: 0 !important;
-  padding: 10px 16px 8px !important; /* 상하폭 동일하게 */
-}
-#photo-lightbox-img {
-  order: 1 !important;
-}
-#photo-lightbox-memo {
-  order: 3 !important;
-  margin-top: 0 !important;
-}
-/* flex order 적용을 위해 content를 flex로 */
-#photo-lightbox-content {
-  display: flex !important;
-  flex-direction: column !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  visibility: hidden !important;
 }
 </style>
-<script id="v362-js">
+<script id="v363-js-remove">
 (function(){
-  console.log('[V362] 수정/삭제 사진 바로 밑으로 + 상하폭 조정');
+  console.log('[V363] 확대 화면 수정/삭제 버튼 제거 - 원래대로 복구');
 
-  function moveActions(){
-    var content = document.getElementById('photo-lightbox-content');
-    var img = document.getElementById('photo-lightbox-img');
+  function hideActions(){
     var actions = document.getElementById('photo-lightbox-actions');
-    var memo = document.getElementById('photo-lightbox-memo');
-    if(!content || !img || !actions) return;
-
-    // 사진 바로 밑으로 이동
-    if(img.nextElementSibling !== actions){
-      img.insertAdjacentElement('afterend', actions);
-    }
-
-    // 상하폭 동일하게 - memo 위에 붙도록
-    actions.style.setProperty('display','flex','important');
-    if(memo){
-      // memo가 actions 바로 다음에 오도록
-      if(actions.nextElementSibling !== memo){
-        actions.insertAdjacentElement('afterend', memo);
-      }
-    }
-
-    // 버튼이 있을 때만 보이게, 없으면 숨김
-    var hasId = window.currentLightboxItemId || (content.getAttribute('data-has-id')==='1');
-    if(window.currentLightboxItemId){
-      actions.style.setProperty('display','flex','important');
+    if(actions){
+      actions.style.setProperty('display','none','important');
+      actions.style.setProperty('visibility','hidden','important');
     }
   }
 
-  // open 래핑 - 기존 V361 V2 래핑 위에 다시 래핑
+  // open 래핑 - 버튼 표시 로직 무력화
   function wrap(){
     var orig = window.openPhotoLightbox;
-    if(!orig || orig._v362) return;
+    if(!orig || orig._v363) return;
     window.openPhotoLightbox = function(){
       var r = orig.apply(this, arguments);
-      setTimeout(moveActions, 20);
-      setTimeout(moveActions, 150);
-      setTimeout(moveActions, 400);
+      setTimeout(hideActions, 10);
+      setTimeout(hideActions, 100);
+      setTimeout(hideActions, 300);
       return r;
     };
-    window.openPhotoLightbox._v362 = true;
+    window.openPhotoLightbox._v363 = true;
   }
 
   wrap();
-  document.addEventListener('DOMContentLoaded', function(){ wrap(); moveActions(); });
+  document.addEventListener('DOMContentLoaded', function(){ wrap(); hideActions(); });
 
-  // 1초마다 위치 보정 (다른 스크립트가 덮어쓸 경우)
+  // 기존 V362에서 사진 밑으로 이동시키는 로직이 있으면 다시 원위치 + 숨김
   setInterval(function(){
     var ov = document.getElementById('photo-lightbox-overlay');
-    if(ov && ov.classList.contains('active')) moveActions();
+    if(ov && ov.classList.contains('active')){
+      hideActions();
+    }
   }, 800);
+
+  hideActions();
 })();
 </script>
 
