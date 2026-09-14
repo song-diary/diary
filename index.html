@@ -3613,6 +3613,23 @@ body { touch-action:pan-x pan-y; -webkit-text-size-adjust:100%; padding-bottom:v
 
 
 <script>
+/* V365: 더블탭으로만 확대되게 하는 헬퍼 - 다른 초기화 코드보다 먼저 실행되도록 파일 맨 앞에 위치 */
+window.attachPhotoDoubleTap = function(el, handler){
+  if(!el || el._v363DoubleTap) return;
+  el._v363DoubleTap = true;
+  let lastTap = 0;
+  el.addEventListener('touchend', function(e){
+    e.preventDefault();
+    const now = Date.now();
+    if(now - lastTap < 350){
+      lastTap = 0;
+      handler(e);
+    } else {
+      lastTap = now;
+    }
+  }, {passive:false});
+  el.addEventListener('dblclick', handler);
+};
 /* 📅 solarlunar (MIT License) - 양력/음력 변환 라이브러리, 오프라인 사용을 위해 인라인 포함 */
 (function (global, factory) {
   (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.solarLunar = {}));
@@ -16677,24 +16694,7 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 </style>
 <script id="v363-js">
 (function(){
-  // V363: 앨범1/앨범2 사진 - 한번 터치로 실수로 확대되던 것을, 더블탭(더블클릭)에서만 확대되게 변경
-  window.attachPhotoDoubleTap = function(el, handler){
-    if(!el || el._v363DoubleTap) return;
-    el._v363DoubleTap = true;
-    let lastTap = 0;
-    el.addEventListener('touchend', function(e){
-      e.preventDefault();
-      const now = Date.now();
-      if(now - lastTap < 350){
-        lastTap = 0;
-        handler(e);
-      } else {
-        lastTap = now;
-      }
-    }, {passive:false});
-    // 마우스 환경(PC, Electron)에서는 더블클릭으로 동일하게 동작
-    el.addEventListener('dblclick', handler);
-  };
+  // V365: attachPhotoDoubleTap는 로딩 순서 문제로 파일 맨 앞으로 이동함 (여기서는 재정의 안 함)
   console.log('[V363] 앨범 한번터치 오확대 방지 + 라이트박스 텍스트 확대 방지 적용');
 })();
 </script>
