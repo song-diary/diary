@@ -9836,6 +9836,18 @@ async function showPhotosForDate(dateStr){
                 if(txtEl && !txtEl.dataset.bigviewAttached){
                     txtEl.dataset.bigviewAttached='1';
                     txtEl.style.cursor='zoom-in';
+                    if(typeof attachPhotoDoubleTap === 'function'){
+                        attachPhotoDoubleTap(txtEl, function(e){
+                            const m = itemEl.innerHTML.match(/deleteDiary\('([^']+)'\)/);
+                            let diaryItem = null;
+                            if(m){
+                                const all = (typeof getAllDiaries==='function')?getAllDiaries():[];
+                                diaryItem = all.find(d=>d.id===m[1]);
+                            }
+                            const text = diaryItem ? diaryItem.text : txtEl.textContent;
+                            openMemoLightboxOnly(text, diaryItem || {text: txtEl.textContent, date: new Date().toISOString().slice(0,10)});
+                        });
+                    } else {
                     txtEl.addEventListener('click', function(e){
                         e.preventDefault(); e.stopPropagation();
                         const m = itemEl.innerHTML.match(/deleteDiary\('([^']+)'\)/);
@@ -9847,6 +9859,7 @@ async function showPhotosForDate(dateStr){
                         const text = diaryItem ? diaryItem.text : this.textContent;
                         openMemoLightboxOnly(text, diaryItem || {text: this.textContent, date: new Date().toISOString().slice(0,10)});
                     });
+                    }
                 }
                 // 빈사진 자리 (empty-photo-placeholder, diary-photo-wrap 등)
                 const emptySelectors = ['.empty-photo-placeholder', '.diary-photo-wrap', '.diary-photo', '.photo-title-area'];
@@ -9858,6 +9871,19 @@ async function showPhotosForDate(dateStr){
                         if(hasRealImg) return;
                         emptyEl.dataset.bigviewEmptyAttached='1';
                         emptyEl.style.cursor='zoom-in';
+                        if(typeof attachPhotoDoubleTap === 'function'){
+                            attachPhotoDoubleTap(emptyEl, function(e){
+                                if(e.target && e.target.closest && e.target.closest('.memo-action-btns, .edit-btn-hidden, .delete-btn')) return;
+                                const m = itemEl.innerHTML.match(/deleteDiary\('([^']+)'\)/);
+                                let diaryItem = null;
+                                if(m){
+                                    const all = (typeof getAllDiaries==='function')?getAllDiaries():[];
+                                    diaryItem = all.find(d=>d.id===m[1]);
+                                }
+                                const text = diaryItem ? diaryItem.text : (itemEl.querySelector('.diary-text')?.textContent || '');
+                                if(text) openMemoLightboxOnly(text, diaryItem || {text: text, date: new Date().toISOString().slice(0,10)});
+                            });
+                        } else {
                         emptyEl.addEventListener('click', function(e){
                             // 수정/삭제 버튼은 제외
                             if(e.target.closest('.memo-action-btns, .edit-btn-hidden, .delete-btn')) return;
@@ -9871,6 +9897,7 @@ async function showPhotosForDate(dateStr){
                             const text = diaryItem ? diaryItem.text : (itemEl.querySelector('.diary-text')?.textContent || '');
                             if(text) openMemoLightboxOnly(text, diaryItem || {text: text, date: new Date().toISOString().slice(0,10)});
                         });
+                        }
                     }
                 });
             });
@@ -16587,6 +16614,14 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
     const memo = document.getElementById('photo-lightbox-memo');
     const dateEl = document.getElementById('photo-lightbox-date');
     if(!content) return;
+
+    // V364: CSS touch-action만으로 안 막히는 기기 대응 - 텍스트 터치 시 브라우저 자체 확대(더블탭줌) 강제 차단
+    [memo, dateEl].forEach(el=>{
+      if(el && !el._v364NoZoom){
+        el._v364NoZoom = true;
+        el.addEventListener('touchend', function(e){ e.preventDefault(); }, {passive:false});
+      }
+    });
 
     // 종료 버튼의 실제 렌더링 높이를 직접 측정 (기기마다 다른 safe-area 대응)
     const closeBarHeight = (closeBar && closeBar.offsetHeight > 0) ? closeBar.offsetHeight : 70;
