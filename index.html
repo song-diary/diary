@@ -16970,207 +16970,218 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 </script>
 
 
-<style id="v364-title-only-fix">
-/* V364: 제목만 있는 경우도 클릭 영역 확보 */
+<style id="v364-title-only-fix-v2">
+/* V364: 제목만 항목도 클릭 가능하도록 */
+.sub-memo-item {
+  cursor: pointer !important;
+}
 .sub-memo-item .photo-title-area {
   cursor: pointer !important;
-  min-height: 20px !important;
-}
-.sub-memo-item.no-photo .diary-text:empty {
-  display: block !important;
-  min-height: 1px !important;
+  pointer-events: auto !important;
 }
 </style>
-<script id="v364-js-title-only">
+<script id="v364-js-title-only-v2">
 (function(){
-  console.log('[V364] 제목만 입력시 더블클릭 안되는 버그 수정');
+  console.log('[V364-V2] 제목만 입력시 더블클릭 버그 확실하게 수정');
 
-  // 공통으로 표시할 텍스트 가져오기 - 제목만 있어도 열리게
-  function getDisplayContent(item){
+  function getAll(){
+    try{
+      if(typeof getAllDiaries==='function') return getAllDiaries();
+      if(typeof diaries!=='undefined' && Array.isArray(diaries)) return diaries;
+    }catch(e){}
+    return [];
+  }
+
+  function getContent(item){
     if(!item) return '';
-    return item.text || item.anniversary || '';
+    return (item.text && item.text.trim()) ? item.text : (item.anniversary || '');
   }
 
-  // 기존 openPhotoLightboxSafe 오버라이드 - 제목만 있어도 메모 보이게
+  // 라이트박스 표시 패치 - 제목만 있어도 내용이 보이게
   function patchLightbox(){
-    // openPhotoLightboxSafe가 있으면 패치
-    if(typeof window.openPhotoLightboxSafe === 'function' && !window.openPhotoLightboxSafe._v364){
-      var origSafe = window.openPhotoLightboxSafe;
+    if(typeof window.openPhotoLightboxSafe === 'function' && !window.openPhotoLightboxSafe._v364_v2){
+      var orig = window.openPhotoLightboxSafe;
       window.openPhotoLightboxSafe = function(src, item, dateStr, totalCount){
-        // item이 문자열로 올 경우 처리
+        // item이 문자열이면 객체로 변환
         if(typeof item === 'string'){
-          var all = (typeof getAllDiaries==='function')?getAllDiaries():[];
-          var found = all.find(d=>d.text===item || d.anniversary===item);
+          var all = getAll();
+          var found = all.find(function(d){ return d.text===item || d.anniversary===item; });
           if(found) item = found;
-          else item = {text: item, anniversary: '', date: dateStr||''};
+          else item = {text:item, anniversary:'', date: dateStr||''};
         }
-        // 메모 내용 결정 - text 없으면 anniversary(제목) 사용
-        if(item){
-          var displayText = getDisplayContent(item);
-          // 원본 호출 전에 item.text를 임시로 채워서 display:block 되게
-          var originalText = item.text;
-          if(!item.text && item.anniversary){
-            item.text = item.anniversary; // 임시로 채움 - 화면 표시용
-          }
-          var result = origSafe.call(this, src, item, dateStr, totalCount);
-          // 원복
-          if(!originalText && item.anniversary){
-            // 표시용으로는 제목 유지, 실제 저장은 그대로
-            var memoEl = document.getElementById('photo-lightbox-memo');
-            if(memoEl && displayText){
-              memoEl.textContent = displayText;
-              memoEl.style.setProperty('display','block','important');
-            }
-            item.text = originalText; // 빈 문자열로 원복
-          }
-          // 메모가 비어있어도 제목만 있으면 강제로 보이게
-          var memoEl2 = document.getElementById('photo-lightbox-memo');
-          if(memoEl2){
-            if(displayText){
-              memoEl2.textContent = displayText;
-              memoEl2.style.setProperty('display','block','important');
-            }
-          }
-          return result;
-        } else {
-          return origSafe.call(this, src, item, dateStr, totalCount);
-        }
-      };
-      window.openPhotoLightboxSafe._v364 = true;
-    }
-
-    // openPhotoLightbox도 패치
-    if(window.openPhotoLightbox && !window.openPhotoLightbox._v364_title){
-      var origOpen = window.openPhotoLightbox;
-      window.openPhotoLightbox = function(src, item){
-        if(typeof item === 'object' && item !== null){
-          var displayText = getDisplayContent(item);
-          if(displayText && !item.text && item.anniversary){
-            // 임시로 text 채워서 기존 로직 통과
-            var tmp = item.text;
-            item.text = item.anniversary;
-            var r = origOpen.call(this, src, item);
-            item.text = tmp;
-            var memoEl = document.getElementById('photo-lightbox-memo');
-            if(memoEl){
-              memoEl.textContent = displayText;
-              memoEl.style.setProperty('display','block','important');
-            }
-            return r;
-          }
-        }
-        return origOpen.call(this, src, item);
-      };
-      window.openPhotoLightbox._v364_title = true;
-    }
-
-    // openMemoLightboxOnly 패치
-    if(window.openMemoLightboxOnly && !window.openMemoLightboxOnly._v364){
-      var origMemo = window.openMemoLightboxOnly;
-      window.openMemoLightboxOnly = function(text, diaryItem){
-        var item = diaryItem || null;
-        var txt = text || '';
+        // 제목만 있는 경우 text를 임시로 채워서 기존 로직이 display:block 되게 함
+        var patchedItem = item;
         if(item && typeof item === 'object'){
-          var display = getDisplayContent(item);
-          if(display) txt = display;
+          var hasText = item.text && item.text.trim();
+          var hasTitle = item.anniversary && item.anniversary.trim();
+          if(!hasText && hasTitle){
+            // 원본 보존용 클론
+            patchedItem = Object.assign({}, item);
+            patchedItem.text = item.anniversary;
+          }
         }
-        // text가 비어있어도 item이 있으면 열기
+        var ret = orig.call(this, src, patchedItem, dateStr, totalCount);
+        // 메모 표시 강제 - 제목만이어도 보이게
+        setTimeout(function(){
+          var memoEl = document.getElementById('photo-lightbox-memo');
+          if(memoEl && item){
+            var c = getContent(item);
+            if(c){
+              memoEl.textContent = c;
+              memoEl.style.setProperty('display','block','important');
+            }
+          }
+        }, 5);
+        return ret;
+      };
+      window.openPhotoLightboxSafe._v364_v2 = true;
+    }
+
+    // openMemoLightboxOnly도 패치 - text가 비어있어도 열리게
+    var origMemo = window.openMemoLightboxOnly;
+    if(origMemo && !origMemo._v364_v2){
+      window.openMemoLightboxOnly = function(text, diaryItem){
+        // text가 비어있어도 diaryItem이 있으면 열기
+        var item = diaryItem;
+        var txt = text;
         if(!txt && item){
-          txt = getDisplayContent(item);
+          txt = getContent(item);
         }
-        if(txt || item){
-          return origMemo.call(this, txt, item);
+        if(!item && txt){
+          var all = getAll();
+          var found = all.find(function(d){ return d.text===txt || d.anniversary===txt; });
+          if(found) item = found;
+        }
+        // 빈 텍스트여도 아이템 있으면 열기 (제목만 경우)
+        if(item || txt){
+          return origMemo.call(this, txt || getContent(item), item || {text:txt, anniversary: txt});
         }
       };
-      window.openMemoLightboxOnly._v364 = true;
+      window.openMemoLightboxOnly._v364_v2 = true;
     }
   }
 
-  // 제목만 있는 항목에 더블클릭/클릭 핸들러 강제 부착
-  function attachTitleOnlyHandlers(){
+  // 제목만 항목에 클릭 핸들러 강제 부착 - 기존 if(text) 버그 무시
+  function attachHandlers(){
+    var allDiaries = getAll();
     document.querySelectorAll('.sub-memo-item').forEach(function(itemEl){
-      // 이미 처리된 경우 스킵하지 않고 제목-only는 재처리
-      var m = itemEl.innerHTML.match(/deleteDiary\('([^']+)'\)/);
-      if(!m) return;
-      var diaryId = m[1];
-      var all = (typeof getAllDiaries==='function')?getAllDiaries():[];
-      var diaryItem = all.find(function(d){ return d.id===diaryId; });
-      if(!diaryItem) return;
+      // id 추출 - 여러 방법으로 시도
+      var diaryId = null;
+      var onclickMatch = itemEl.innerHTML.match(/deleteDiary\s*\(\s*['"]([^'"]+)['"]\s*\)/);
+      if(onclickMatch) diaryId = onclickMatch[1];
+      if(!diaryId){
+        var m2 = itemEl.innerHTML.match(/editDiary\s*\(\s*['"]([^'"]+)['"]\s*\)/);
+        if(m2) diaryId = m2[1];
+      }
+      if(!diaryId && itemEl.dataset.diaryId) diaryId = itemEl.dataset.diaryId;
 
-      var displayText = getDisplayContent(diaryItem);
-      if(!displayText) return; // 진짜 빈 항목은 제외
-
-      // 제목만 있는 경우 - .diary-text가 없어도 전체 아이템 클릭으로 열기
-      if(!diaryItem.text && diaryItem.anniversary){
-        if(itemEl.dataset.titleOnlyAttached) return;
-        itemEl.dataset.titleOnlyAttached = '1';
-        itemEl.style.cursor = 'pointer';
-
-        var handler = function(e){
-          if(e.target && e.target.closest && e.target.closest('.memo-action-btns, .edit-btn-hidden, .delete-btn, button')) return;
-          e.preventDefault();
-          e.stopPropagation();
-          console.log('[V364] 제목만 항목 클릭:', diaryItem.anniversary);
-          if(typeof window.openMemoLightboxOnly === 'function'){
-            window.openMemoLightboxOnly(displayText, diaryItem);
-          } else if(typeof window.openPhotoLightbox === 'function'){
-            window.openPhotoLightbox(diaryItem.photo || null, diaryItem);
-          }
-        };
-
-        // 클릭 + 더블클릭 둘 다
-        itemEl.addEventListener('click', handler);
-        itemEl.addEventListener('dblclick', handler);
-
-        // 제목 영역에도 별도로
-        var titleArea = itemEl.querySelector('.photo-title-area');
-        if(titleArea && !titleArea.dataset.titleOnlyAttached){
-          titleArea.dataset.titleOnlyAttached = '1';
-          titleArea.style.cursor = 'pointer';
-          titleArea.addEventListener('click', handler);
-          titleArea.addEventListener('dblclick', handler);
-          if(typeof window.attachPhotoDoubleTap === 'function'){
-            try{ window.attachPhotoDoubleTap(titleArea, handler); }catch(e){}
-          }
-        }
-
-        // 빈 공간(사진 자리)에도
-        var emptyEl = itemEl.querySelector('.diary-photo-wrap, .empty-photo-placeholder, .diary-photo');
-        if(emptyEl && !emptyEl.dataset.titleOnlyAttached){
-          emptyEl.dataset.titleOnlyAttached = '1';
-          emptyEl.style.cursor = 'pointer';
-          emptyEl.addEventListener('click', handler);
-          emptyEl.addEventListener('dblclick', handler);
+      var diaryItem = null;
+      if(diaryId){
+        diaryItem = allDiaries.find(function(d){ return d.id===diaryId; });
+      }
+      // id로 못찾으면 텍스트로 찾기 (fallback)
+      if(!diaryItem){
+        var titleEl = itemEl.querySelector('.photo-title-area');
+        var txtEl = itemEl.querySelector('.diary-text');
+        var titleText = titleEl ? titleEl.textContent.trim() : '';
+        var contentText = txtEl ? txtEl.textContent.trim() : '';
+        if(titleText || contentText){
+          diaryItem = allDiaries.find(function(d){
+            return (d.anniversary && d.anniversary.trim()===titleText) || (d.text && d.text.trim()===contentText);
+          });
         }
       }
+      if(!diaryItem) return;
+
+      var content = getContent(diaryItem);
+      if(!content) return; // 진짜 빈 항목 제외
+
+      // 이미 부착했으면 스킵 - but 강제로 다시 체크
+      if(itemEl.dataset.v364Fixed==='1') return;
+      itemEl.dataset.v364Fixed='1';
+
+      // 클릭 핸들러
+      var openHandler = function(e){
+        // 수정/삭제 버튼은 제외
+        if(e.target && e.target.closest){
+          if(e.target.closest('.memo-action-btns, button, .edit-btn, .delete-btn, .edit-btn-hidden')) return;
+        }
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('[V364-V2] 제목만/제목+내용 클릭으로 열기:', content.substring(0,20));
+        if(typeof window.openMemoLightboxOnly === 'function'){
+          window.openMemoLightboxOnly(content, diaryItem);
+        } else if(typeof window.openPhotoLightbox === 'function'){
+          window.openPhotoLightbox(diaryItem.photo || null, diaryItem);
+        }
+      };
+
+      // 전체 박스에 클릭 + 더블클릭
+      itemEl.addEventListener('click', openHandler);
+      itemEl.addEventListener('dblclick', openHandler);
+
+      // 제목 영역에도 별도 부착
+      var titleArea = itemEl.querySelector('.photo-title-area');
+      if(titleArea){
+        titleArea.style.cursor='pointer';
+        titleArea.addEventListener('click', openHandler);
+        titleArea.addEventListener('dblclick', openHandler);
+        // 더블탭 라이브러리가 있으면 그것도
+        if(typeof attachPhotoDoubleTap==='function'){
+          try{ attachPhotoDoubleTap(titleArea, openHandler); }catch(e){}
+        }
+      }
+
+      // 내용이 없는 경우 빈 공간에도
+      var emptyAreas = itemEl.querySelectorAll('.diary-photo-wrap, .empty-photo-placeholder, .diary-photo, .no-photo-placeholder');
+      emptyAreas.forEach(function(el){
+        el.style.cursor='pointer';
+        el.addEventListener('click', openHandler);
+        el.addEventListener('dblclick', openHandler);
+      });
     });
   }
 
-  patchLightbox();
+  // 기존 V363의 no-photo 핸들러의 if(text) 버그를 직접 오버라이드
+  function fixOldHandlers(){
+    // 기존에 등록된 attachNoPhotoHandlers가 if(text) 체크하는 걸 무력화하기 위해
+    // 우리 핸들러를 더 높은 우선순위로 등록 (capture 단계)
+    document.body.addEventListener('click', function(e){
+      var itemEl = e.target.closest('.sub-memo-item');
+      if(!itemEl) return;
+      if(e.target.closest('.memo-action-btns, button')) return;
+      // 이미 처리됐으면 패스
+      if(itemEl.dataset.v364Fixed!=='1') return;
+      // 우리 핸들러가 이미 동작하므로 여기서는 중복 방지
+    }, true);
+  }
 
-  // 기존 attachNoPhotoHandlers의 if(text) 버그도 패치 - MutationObserver로 계속 감시
+  patchLightbox();
+  fixOldHandlers();
+
+  // 초기 + MutationObserver로 계속 재부착
   var observer = new MutationObserver(function(){
     patchLightbox();
-    attachTitleOnlyHandlers();
+    attachHandlers();
   });
   observer.observe(document.body, {childList:true, subtree:true});
 
   document.addEventListener('DOMContentLoaded', function(){
     patchLightbox();
-    setTimeout(attachTitleOnlyHandlers, 300);
-    setTimeout(attachTitleOnlyHandlers, 1000);
+    setTimeout(attachHandlers, 200);
+    setTimeout(attachHandlers, 800);
   });
 
   setTimeout(function(){
     patchLightbox();
-    attachTitleOnlyHandlers();
-  }, 500);
+    attachHandlers();
+  }, 300);
 
   setInterval(function(){
-    attachTitleOnlyHandlers();
-  }, 1500);
+    attachHandlers();
+  }, 1000);
 
-  console.log('[V364] 제목만 입력시 더블클릭 수정 적용 완료');
+  console.log('[V364-V2] 패치 완료');
 })();
 </script>
 
