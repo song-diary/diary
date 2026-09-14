@@ -16632,11 +16632,18 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
     const dateEl = document.getElementById('photo-lightbox-date');
     if(!content) return;
 
-    // V364: CSS touch-action만으로 안 막히는 기기 대응 - 텍스트 터치 시 브라우저 자체 확대(더블탭줌) 강제 차단
+    // V366: V364가 모든 touchend를 막아서 스크롤까지 끊기던 버그 수정 - 더블탭(빠른 연속 터치)일 때만 확대 차단
     [memo, dateEl].forEach(el=>{
       if(el && !el._v364NoZoom){
         el._v364NoZoom = true;
-        el.addEventListener('touchend', function(e){ e.preventDefault(); }, {passive:false});
+        let lastTouchEnd = 0;
+        el.addEventListener('touchend', function(e){
+          const now = Date.now();
+          if(now - lastTouchEnd < 350){
+            e.preventDefault(); // 더블탭으로 확대되려는 순간만 막음
+          }
+          lastTouchEnd = now;
+        }, {passive:false});
       }
     });
 
