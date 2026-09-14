@@ -16706,5 +16706,176 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 })();
 </script>
 
+
+<style id="v361-single-scroll-fix">
+/* V361: 3중 스크롤 -> 싱글 스크롤로 통합 + 일자 박스 삭제 */
+#photo-lightbox-overlay {
+  display: none !important;
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(0,0,0,0.88) !important;
+  z-index: 99999 !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior: contain !important;
+}
+#photo-lightbox-overlay.active {
+  display: block !important;
+}
+#photo-lightbox-content {
+  display: block !important;
+  width: 100% !important;
+  max-width: 520px !important;
+  margin: 0 auto !important;
+  padding: 0 0 120px 0 !important; /* JS가 동적으로 다시 계산 */
+  max-height: none !important;
+  overflow: visible !important;
+  background: transparent !important;
+  gap: 0 !important;
+}
+#photo-lightbox-content.no-photo {
+  background: #fff !important;
+}
+#photo-lightbox-img {
+  width: 100% !important;
+  max-width: 100% !important;
+  max-height: none !important;
+  height: auto !important;
+  display: block !important;
+  border-radius: 0 !important;
+  object-fit: contain !important;
+}
+#photo-lightbox-img[src=""], #photo-lightbox-img:not([src]) {
+  display: none !important;
+}
+
+/* 핵심: 메모 내부 스크롤 제거 */
+#photo-lightbox-memo {
+  max-height: none !important;
+  height: auto !important;
+  overflow: visible !important;
+  overflow-y: visible !important;
+  -webkit-overflow-scrolling: auto !important;
+  overscroll-behavior: auto !important;
+  touch-action: pan-y !important;
+  padding-bottom: 24px !important;
+  margin-bottom: 0 !important;
+}
+#photo-lightbox-memo.no-photo-mode {
+  max-height: none !important;
+}
+
+/* 일자 박스 완전 삭제 - 요청사항 */
+#photo-lightbox-date {
+  display: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  visibility: hidden !important;
+}
+
+/* 종료 버튼 - safe-area 대응 */
+#photo-lightbox-fixed-close {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  max-width: 520px !important;
+  margin: 0 auto !important;
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom)) !important;
+  background: rgba(255,249,230,0.96) !important;
+  border-top: 1px solid #E8DCC0 !important;
+  backdrop-filter: blur(8px) !important;
+  z-index: 100000 !important;
+  box-sizing: border-box !important;
+}
+</style>
+<script id="v361-js">
+(function(){
+  console.log('[V361] 싱글스크롤 + 일자삭제 적용');
+
+  function fixV361(){
+    var overlay = document.getElementById('photo-lightbox-overlay');
+    var content = document.getElementById('photo-lightbox-content');
+    var memo = document.getElementById('photo-lightbox-memo');
+    var dateEl = document.getElementById('photo-lightbox-date');
+    var closeBar = document.getElementById('photo-lightbox-fixed-close');
+    if(!overlay || !content) return;
+
+    // 일자 박스 완전 숨김
+    if(dateEl){
+      dateEl.style.setProperty('display','none','important');
+      dateEl.textContent = '';
+    }
+
+    // 종료바 높이만큼 content 하단 여백 확보
+    var closeH = closeBar ? closeBar.offsetHeight : 68;
+    if(closeH < 10) closeH = 68;
+    content.style.setProperty('padding-bottom', (closeH + 28) + 'px', 'important');
+
+    // 메모는 내부 스크롤 금지
+    if(memo){
+      memo.style.setProperty('max-height','none','important');
+      memo.style.setProperty('overflow','visible','important');
+      memo.style.setProperty('height','auto','important');
+    }
+
+    // overlay가 active일때는 body 스크롤 잠금
+    if(overlay.classList.contains('active')){
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  // 기존 openPhotoLightbox 래핑
+  function wrapOpen(){
+    var orig = window.openPhotoLightbox;
+    if(!orig || orig._v361) return;
+    window.openPhotoLightbox = function(){
+      var r = orig.apply(this, arguments);
+      setTimeout(fixV361, 30);
+      setTimeout(fixV361, 150);
+      setTimeout(fixV361, 400);
+      return r;
+    };
+    window.openPhotoLightbox._v361 = true;
+  }
+
+  wrapOpen();
+  // DOM 로드 후 재시도
+  document.addEventListener('DOMContentLoaded', function(){
+    wrapOpen();
+    fixV361();
+  });
+
+  window.addEventListener('resize', fixV361);
+  window.addEventListener('orientationchange', function(){ setTimeout(fixV361, 250); });
+
+  // close시 body overflow 복구
+  var origClose = window.closePhotoLightbox;
+  if(origClose && !origClose._v361){
+    window.closePhotoLightbox = function(){
+      var r = origClose.apply(this, arguments);
+      document.body.style.overflow = '';
+      var dateEl = document.getElementById('photo-lightbox-date');
+      if(dateEl) dateEl.style.setProperty('display','none','important');
+      return r;
+    };
+    window.closePhotoLightbox._v361 = true;
+  }
+
+  // 주기적 체크 (다른 버전 스크립트가 덮어쓸 경우 대비)
+  setInterval(function(){
+    var overlay = document.getElementById('photo-lightbox-overlay');
+    if(overlay && overlay.classList.contains('active')){
+      fixV361();
+    }
+  }, 1000);
+
+  fixV361();
+})();
+</script>
+
 </body>
 </html>
