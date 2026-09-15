@@ -17198,11 +17198,21 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
           window.openMemoLightboxOnly(text, diaryItem || {text: text, date: new Date().toISOString().slice(0,10)});
         }
       };
-      if(typeof window.attachPhotoDoubleTap === 'function'){
-        window.attachPhotoDoubleTap(itemEl, handler);
-      } else {
-        itemEl.addEventListener('dblclick', handler);
-      }
+      // V360_3: 버튼(수정/삭제) 위 터치는 아예 건드리지 않도록 직접 구현 - 공용 attachPhotoDoubleTap은
+      // 모든 touchend에 preventDefault를 걸어서 버튼 클릭까지 막아버리는 문제가 있었음
+      var lastTap = 0;
+      itemEl.addEventListener('touchend', function(e){
+        if(e.target && e.target.closest && e.target.closest('.memo-action-btns, .edit-btn-hidden, .delete-btn, button, .diary-text')) return;
+        e.preventDefault();
+        var now = Date.now();
+        if(now - lastTap < 350){
+          lastTap = 0;
+          handler(e);
+        } else {
+          lastTap = now;
+        }
+      }, {passive:false});
+      itemEl.addEventListener('dblclick', handler);
     });
   }
   attachWholeBoxOpen();
