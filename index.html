@@ -3037,54 +3037,6 @@ body { touch-action:pan-x pan-y; -webkit-text-size-adjust:100%; padding-bottom:v
 .card { will-change:transform; }
 #back-toast { position:fixed; bottom:calc(30px + var(--safe-bottom)); left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.85); color:#fff; padding:12px 20px; border-radius:24px; z-index:999999; font-size:13px; display:none; }
 </style>
-
-<style id="v5-1-patch">
-/* V5-1: 확대 화면 밑으로 연장되어 열리는 증상 수정 - 제목은 건드리지 않음 */
-#photo-lightbox-overlay {
-  display: none !important;
-  position: fixed !important;
-  inset: 0 !important;
-  background: rgba(0,0,0,0.88) !important;
-  z-index: 99999 !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  -webkit-overflow-scrolling: touch !important;
-  align-items: flex-start !important;
-  justify-content: center !important;
-  padding: 0 !important;
-}
-#photo-lightbox-overlay.active {
-  display: flex !important;
-  align-items: flex-start !important;
-  justify-content: center !important;
-}
-#photo-lightbox-content {
-  width: 100% !important;
-  max-width: 520px !important;
-  margin: 0 auto !important;
-  padding: 0 0 20px 0 !important;
-  max-height: none !important;
-  overflow: visible !important;
-  background: transparent !important;
-  gap: 0 !important;
-  flex-shrink: 0 !important;
-}
-#photo-lightbox-img {
-  width: 100% !important;
-  max-width: 100% !important;
-  height: auto !important;
-  max-height: 65vh !important;
-  object-fit: contain !important;
-  display: block !important;
-  flex-shrink: 0 !important;
-}
-/* 애니메이션으로 인한 연장 방지 */
-#photo-lightbox-content {
-  animation: none !important;
-  transform: none !important;
-}
-</style>
-
 </head>
 <body>
 
@@ -9246,8 +9198,7 @@ async function showPhotosForDate(dateStr){
         }
         document.getElementById('photo-lightbox-overlay').classList.add('active');
         resetPhotoZoom();
-        // V5-1 Fix: 밑으로 연장되어 열리는 증상 제거 - scrollIntoView 제거
-        // memo 자동 스크롤 제거
+        setTimeout(()=>{ if(memoEl.style.display!=='none'){ memoEl.scrollIntoView({behavior:'smooth', block:'nearest'}); } }, 120);
     }
     function editFromLightbox(){
         if(!currentLightboxItemId) return;
@@ -12000,7 +11951,7 @@ async function showPhotosForDate(dateStr){
   padding-bottom: 0 !important;
 }
 #lotto-generator-card .lotto-section {
-  padding-bottom: 20px !important; /* 종료버튼 높이만큼 여유 */
+  padding-bottom: 90px !important; /* 종료버튼 높이만큼 여유 */
   overflow: visible !important;
 }
 #ldt-manual-results2 {
@@ -12153,7 +12104,7 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 }
 #photo-lightbox-overlay.active #photo-lightbox-fixed-close { display: block !important; }
 #photo-lightbox-fixed-close button { width: 100% !important; padding: 15px !important; border-radius: 14px !important; border: none !important; background: #111 !important; color: #fff !important; font-weight: 800 !important; font-size: 15px !important; pointer-events: auto !important; }
-#photo-lightbox-content { padding-bottom: 20px !important; }
+#photo-lightbox-content { padding-bottom: 80px !important; }
 #photo-lightbox-memo { cursor: pointer !important; }
 #photo-lightbox-memo.memo-zoomed { font-size: 20px !important; line-height: 1.7 !important; }
 #photo-lightbox-img { cursor: zoom-in !important; }
@@ -13068,7 +13019,7 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
   flex: 1 !important;
   overflow-y: auto !important;
   overflow-x: hidden !important;
-  padding-bottom: 20px !important; /* 종료 버튼에 가려지지 않게 80px 확보 */
+  padding-bottom: 80px !important; /* 종료 버튼에 가려지지 않게 80px 확보 */
   -webkit-overflow-scrolling: touch !important;
 }
 
@@ -14115,7 +14066,7 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 
 /* 카드가 종료버튼에 가려지지 않게 하단 패딩 */
 #fortune-popup-body {
-  padding-bottom: 20px !important;
+  padding-bottom: 80px !important;
 }
 </style>
 <script id="v338-js">
@@ -16555,7 +16506,7 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 
 /* 콘텐츠 - 하단 여백으로 종료 버튼 공간 확보 */
 #photo-lightbox-content {
-  padding-bottom: 20px !important;
+  padding-bottom: 90px !important;
   box-sizing: border-box !important;
 }
 
@@ -16790,7 +16741,7 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
   width: 100% !important;
   max-width: 520px !important;
   margin: 0 auto !important;
-  padding: 0 0 20px 0 !important;
+  padding: 0 0 140px 0 !important;
   max-height: none !important;
   overflow: visible !important;
   background: transparent !important;
@@ -17269,6 +17220,123 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
   setTimeout(attachWholeBoxOpen, 500);
   setTimeout(attachWholeBoxOpen, 1500);
   console.log('[V360_1] 사진없는 항목 박스 전체 더블탭으로 열리게 통합');
+})();
+</script>
+
+
+<style id="v5-2-final-fix">
+/* V5-2: 확대 화면이 열리고 나서 밑으로 늘어나는 증상 최종 수정 - 제목 건드리지 않음 */
+#photo-lightbox-overlay {
+  display: none !important;
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  height: 100dvh !important;
+  background: rgba(0,0,0,0.9) !important;
+  z-index: 99999 !important;
+  overflow: hidden !important;
+  padding: 12px !important;
+  box-sizing: border-box !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+#photo-lightbox-overlay.active {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+}
+#photo-lightbox-content.photo-lightbox-content {
+  width: 92vw !important;
+  max-width: 520px !important;
+  max-height: 88vh !important;
+  max-height: 88dvh !important;
+  height: auto !important;
+  margin: 0 auto !important;
+  padding: 0 0 16px 0 !important;
+  gap: 0 !important;
+  background: #fff !important;
+  border-radius: 16px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior: contain !important;
+  animation: none !important;
+  transform: none !important;
+  transition: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex-shrink: 0 !important;
+  box-sizing: border-box !important;
+}
+#photo-lightbox-img.photo-lightbox-img {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  max-height: 55vh !important;
+  object-fit: contain !important;
+  display: block !important;
+  flex-shrink: 0 !important;
+  border-radius: 16px 16px 0 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: #111 !important;
+  animation: none !important;
+  transform: none !important;
+}
+#photo-lightbox-memo.photo-lightbox-memo,
+#photo-lightbox-memo {
+  flex-shrink: 0 !important;
+  animation: none !important;
+  transform: none !important;
+}
+#photo-lightbox-date,
+#photo-lightbox-actions {
+  flex-shrink: 0 !important;
+  animation: none !important;
+}
+</style>
+<script id="v5-2-js-fix">
+(function(){
+  console.log('[V5-2] 연장 증상 수정 - scrollIntoView 완전 제거');
+  // 기존 open 함수 덮어쓰기 - scrollIntoView 제거, 안정화
+  const origOpen = window.openPhotoLightbox;
+  window.openPhotoLightbox = function(photoKeyOrData, diaryItemOrText){
+    const imgEl = document.getElementById('photo-lightbox-img');
+    const memoEl = document.getElementById('photo-lightbox-memo');
+    const dateEl = document.getElementById('photo-lightbox-date');
+    const actionEl = document.getElementById('photo-lightbox-actions');
+    let src = null;
+    let memoText = '';
+    let dateText = '';
+    window.currentLightboxItemId = null;
+    try { src = getPhotoSrc(photoKeyOrData); } catch(e){ src = null; }
+    if (!src && typeof photoKeyOrData === 'string' && photoKeyOrData.indexOf('data:image')===0) src = photoKeyOrData;
+    if (!src && typeof photoKeyOrData === 'string' && photoKeyOrData.indexOf('blob:')===0) src = photoKeyOrData;
+    if (diaryItemOrText) {
+        if (typeof diaryItemOrText === 'string') memoText = sanitizeDiaryTextForDisplay(diaryItemOrText);
+        else if (typeof diaryItemOrText === 'object') {
+            memoText = sanitizeDiaryTextForDisplay(diaryItemOrText.text || '');
+            if(diaryItemOrText.id) window.currentLightboxItemId = diaryItemOrText.id;
+            if (diaryItemOrText.date) {
+                try { const d = parseDateObj(diaryItemOrText.date); dateText = d.getFullYear()+'년 '+(d.getMonth()+1)+'월 '+d.getDate()+'일 ('+getDayOfWeekStr(diaryItemOrText.date)+')' + (diaryItemOrText.time ? ' '+diaryItemOrText.time : ''); } catch(e){ dateText = diaryItemOrText.date; }
+            }
+        }
+    }
+    if (src) { imgEl.src = src; imgEl.style.display='block'; } else { imgEl.style.display='none'; imgEl.src=''; }
+    if (memoText) {
+        memoEl.textContent = memoText;
+        memoEl.style.display='block';
+        if(src){ memoEl.classList.remove('no-photo-mode'); } else { memoEl.classList.add('no-photo-mode'); }
+    } else { memoEl.style.display='none'; memoEl.classList.remove('no-photo-mode'); }
+    dateEl.textContent = dateText;
+    if(actionEl){
+        if(window.currentLightboxItemId){ actionEl.style.display='flex'; } else { actionEl.style.display='none'; }
+    }
+    document.getElementById('photo-lightbox-overlay').classList.add('active');
+    if(typeof resetPhotoZoom==='function') resetPhotoZoom();
+    // V5-2: scrollIntoView 제거 - 연장 증상 원인이었음
+  };
 })();
 </script>
 
