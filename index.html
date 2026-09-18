@@ -3037,6 +3037,54 @@ body { touch-action:pan-x pan-y; -webkit-text-size-adjust:100%; padding-bottom:v
 .card { will-change:transform; }
 #back-toast { position:fixed; bottom:calc(30px + var(--safe-bottom)); left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.85); color:#fff; padding:12px 20px; border-radius:24px; z-index:999999; font-size:13px; display:none; }
 </style>
+
+<style id="v5-1-patch">
+/* V5-1: 확대 화면 밑으로 연장되어 열리는 증상 수정 - 제목은 건드리지 않음 */
+#photo-lightbox-overlay {
+  display: none !important;
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(0,0,0,0.88) !important;
+  z-index: 99999 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  padding: 0 !important;
+}
+#photo-lightbox-overlay.active {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+}
+#photo-lightbox-content {
+  width: 100% !important;
+  max-width: 520px !important;
+  margin: 0 auto !important;
+  padding: 0 0 20px 0 !important;
+  max-height: none !important;
+  overflow: visible !important;
+  background: transparent !important;
+  gap: 0 !important;
+  flex-shrink: 0 !important;
+}
+#photo-lightbox-img {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  max-height: 65vh !important;
+  object-fit: contain !important;
+  display: block !important;
+  flex-shrink: 0 !important;
+}
+/* 애니메이션으로 인한 연장 방지 */
+#photo-lightbox-content {
+  animation: none !important;
+  transform: none !important;
+}
+</style>
+
 </head>
 <body>
 
@@ -9198,7 +9246,8 @@ async function showPhotosForDate(dateStr){
         }
         document.getElementById('photo-lightbox-overlay').classList.add('active');
         resetPhotoZoom();
-        setTimeout(()=>{ if(memoEl.style.display!=='none'){ memoEl.scrollIntoView({behavior:'smooth', block:'nearest'}); } }, 120);
+        // V5-1 Fix: 밑으로 연장되어 열리는 증상 제거 - scrollIntoView 제거
+        // memo 자동 스크롤 제거
     }
     function editFromLightbox(){
         if(!currentLightboxItemId) return;
@@ -11951,7 +12000,7 @@ async function showPhotosForDate(dateStr){
   padding-bottom: 0 !important;
 }
 #lotto-generator-card .lotto-section {
-  padding-bottom: 90px !important; /* 종료버튼 높이만큼 여유 */
+  padding-bottom: 20px !important; /* 종료버튼 높이만큼 여유 */
   overflow: visible !important;
 }
 #ldt-manual-results2 {
@@ -12104,7 +12153,7 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 }
 #photo-lightbox-overlay.active #photo-lightbox-fixed-close { display: block !important; }
 #photo-lightbox-fixed-close button { width: 100% !important; padding: 15px !important; border-radius: 14px !important; border: none !important; background: #111 !important; color: #fff !important; font-weight: 800 !important; font-size: 15px !important; pointer-events: auto !important; }
-#photo-lightbox-content { padding-bottom: 80px !important; }
+#photo-lightbox-content { padding-bottom: 20px !important; }
 #photo-lightbox-memo { cursor: pointer !important; }
 #photo-lightbox-memo.memo-zoomed { font-size: 20px !important; line-height: 1.7 !important; }
 #photo-lightbox-img { cursor: zoom-in !important; }
@@ -13019,7 +13068,7 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
   flex: 1 !important;
   overflow-y: auto !important;
   overflow-x: hidden !important;
-  padding-bottom: 80px !important; /* 종료 버튼에 가려지지 않게 80px 확보 */
+  padding-bottom: 20px !important; /* 종료 버튼에 가려지지 않게 80px 확보 */
   -webkit-overflow-scrolling: touch !important;
 }
 
@@ -14066,7 +14115,7 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 
 /* 카드가 종료버튼에 가려지지 않게 하단 패딩 */
 #fortune-popup-body {
-  padding-bottom: 80px !important;
+  padding-bottom: 20px !important;
 }
 </style>
 <script id="v338-js">
@@ -16506,7 +16555,7 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 
 /* 콘텐츠 - 하단 여백으로 종료 버튼 공간 확보 */
 #photo-lightbox-content {
-  padding-bottom: 90px !important;
+  padding-bottom: 20px !important;
   box-sizing: border-box !important;
 }
 
@@ -16741,7 +16790,7 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
   width: 100% !important;
   max-width: 520px !important;
   margin: 0 auto !important;
-  padding: 0 0 140px 0 !important;
+  padding: 0 0 20px 0 !important;
   max-height: none !important;
   overflow: visible !important;
   background: transparent !important;
