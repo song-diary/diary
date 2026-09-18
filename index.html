@@ -17224,95 +17224,69 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 </script>
 
 
-<style id="v365-v16-css">
-/* 사진 있는 칸도 고정핀 제목란 강제 표시 */
-.sub-memo-item.has-photo .photo-title-area,
-.sub-memo-item.no-photo .photo-title-area,
-.sub-memo-item .photo-title-area {
-  display:flex !important;
-  visibility:visible !important;
-  opacity:1 !important;
-  align-items:center !important;
-  gap:6px !important;
-  min-height:26px !important;
-  height:auto !important;
-  padding:5px 10px !important;
-  margin-bottom:6px !important;
-  border-radius:6px !important;
-  background:#FFF0F0 !important;
-  border:1px solid #FFCDCD !important;
-  color:#5D4E6D !important;
-  font-size:12px !important;
-  font-weight:800 !important;
-  width:100% !important;
-  box-sizing:border-box !important;
-  order:1 !important;
-}
-.sub-memo-item .photo-title-area .title-icon { color:#E74C3C !important; font-size:14px !important; display:inline-block !important; }
-.sub-memo-item .photo-title-area .title-text { flex:1 !important; overflow:hidden !important; white-space:nowrap !important; text-overflow:ellipsis !important; }
-.sub-memo-item .diary-photo-wrap { order:2 !important; }
-.sub-memo-item .item-top-row { order:3 !important; }
-.sub-memo-item .diary-text { order:4 !important; }
-
-/* 버튼 */
-#diary-around-today-list:not(.gallery-mode) .memo-action-btns { gap:6px !important; }
-#diary-around-today-list:not(.gallery-mode) .memo-action-btns .rep-btn { font-size:11px !important; padding:2px 6px !important; min-width:26px !important; border:1px solid #ddd !important; background:#fff !important; }
-#diary-around-today-list.gallery-mode .memo-action-btns .rep-btn, #diary-around-today-list.gallery-mode .memo-action-btns .edit-btn-hidden, #diary-around-today-list.gallery-mode .memo-action-btns .delete-btn { font-size:9px !important; padding:2px 4px !important; min-width:20px !important; }
+<style id="v365-v12-css">
+#diary-around-today-list:not(.gallery-mode) .sub-memo-item .memo-action-btns { display:flex !important; gap:8px !important; width:auto !important; justify-content:flex-end !important; }
+#diary-around-today-list:not(.gallery-mode) .memo-action-btns .rep-btn, #diary-around-today-list:not(.gallery-mode) .memo-action-btns .edit-btn-hidden, #diary-around-today-list:not(.gallery-mode) .memo-action-btns .delete-btn { font-size:11px !important; padding:3px 7px !important; min-width:28px !important; }
+#diary-around-today-list.gallery-mode .memo-action-btns { gap:2px !important; width:100% !important; justify-content:space-between !important; }
+#diary-around-today-list.gallery-mode .memo-action-btns .rep-btn, #diary-around-today-list.gallery-mode .memo-action-btns .edit-btn-hidden, #diary-around-today-list.gallery-mode .memo-action-btns .delete-btn { font-size:9px !important; padding:2px 4px !important; min-width:20px !important; flex:1 1 0 !important; }
+.rep-btn { border:1px solid #ddd !important; background:#fff !important; cursor:pointer !important; }
 .rep-btn.is-rep { background:#fff8e1 !important; border-color:#ffb300 !important; color:#ffb300 !important; font-weight:bold !important; }
-.cal-rep-title { margin-top:1px !important; font-size:10px !important; font-weight:700 !important; color:#34495e !important; text-align:center !important; }
+.cal-rep-title { margin-top:1px !important; font-size:10px !important; font-weight:700 !important; color:#34495e !important; text-align:center !important; max-height:28px !important; overflow:hidden !important; }
+.memo-action-btns { position:relative !important; z-index:10 !important; }
 #photo-lightbox-memo { scroll-behavior:auto !important; overflow-anchor:none !important; }
 </style>
 
 
-<script id="v365-v16-js">
+<script id="v365-v12-js">
 (function(){
-  console.log('[V365-V16] 사진 있는 칸도 고정핀 제목란 보이게');
+  console.log('[V365-V12] 더블클릭 연쇄 확대 버그 수정');
 
   function getAllDiariesSafe(){ try { return (typeof getAllDiaries==='function') ? getAllDiaries() : []; } catch(e){ return []; } }
 
-  function ensurePinTitleForAll(){
+  document.addEventListener('click', function(e){ if(e.target.closest('.rep-btn')) e.stopPropagation(); }, true);
+  document.addEventListener('dblclick', function(e){ if(e.target.closest('.rep-btn')) { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); } }, true);
+
+  const origOpenPhotoLightbox = window.openPhotoLightbox;
+  window.openPhotoLightbox = function(photoKeyOrData, diaryItemOrText){
     try{
-      const all = getAllDiariesSafe();
-      const listEl = document.getElementById('diary-around-today-list');
-      if(!listEl) return;
-      listEl.querySelectorAll('.sub-memo-item').forEach(function(itemBox){
-        let titleArea = itemBox.querySelector('.photo-title-area');
-        if(!titleArea){
-          titleArea = document.createElement('div');
-          titleArea.className = 'photo-title-area has-title';
-          const anchor = itemBox.querySelector('.diary-photo-wrap, .empty-photo-placeholder, .item-top-row');
-          if(anchor) itemBox.insertBefore(titleArea, anchor);
-          else itemBox.prepend(titleArea);
-        }
-        // diaryItem 찾기
-        let diaryItem = null;
-        const m = itemBox.innerHTML.match(/deleteDiary\('([^']+)'\)/);
-        if(m){ diaryItem = all.find(d=> d.id===m[1]) || null; }
-        // V308 함수로 핀 + 제목 채우기
-        if(typeof window.getDiaryTitleDisplay_V308==='function'){
-          try{
-            const display = diaryItem ? window.getDiaryTitleDisplay_V308(diaryItem) : {isEmpty:true, html:'<span class="title-icon">📌</span><span class="title-text empty">&nbsp;</span>'};
-            titleArea.className = 'photo-title-area' + (display.isEmpty ? ' no-title' : ' has-title');
-            titleArea.innerHTML = display.html;
-          }catch(e){
-            if(!titleArea.innerHTML.includes('📌')){
-              titleArea.innerHTML = '<span class="title-icon">📌</span><span class="title-text empty">&nbsp;</span>';
-            }
-          }
-        } else {
-          if(!titleArea.innerHTML.includes('📌')){
-            const hasTitle = diaryItem && diaryItem.anniversary && diaryItem.anniversary.trim();
-            const txt = hasTitle ? diaryItem.anniversary : '&nbsp;';
-            titleArea.innerHTML = '<span class="title-icon">📌</span><span class="title-text'+(hasTitle?'':' empty')+'">'+txt+'</span>';
-            titleArea.className = 'photo-title-area' + (hasTitle ? ' has-title' : ' no-title');
+      const imgEl = document.getElementById('photo-lightbox-img');
+      const memoEl = document.getElementById('photo-lightbox-memo');
+      const dateEl = document.getElementById('photo-lightbox-date');
+      const actionEl = document.getElementById('photo-lightbox-actions');
+      let src = null;
+      let memoText = '';
+      let dateText = '';
+      window.currentLightboxItemId = null;
+      try { src = (typeof getPhotoSrc==='function') ? getPhotoSrc(photoKeyOrData) : null; } catch(e){ src=null; }
+      if (!src && typeof photoKeyOrData === 'string' && photoKeyOrData.indexOf('data:image')===0) src = photoKeyOrData;
+      if (!src && typeof photoKeyOrData === 'string' && photoKeyOrData.indexOf('blob:')===0) src = photoKeyOrData;
+      if (diaryItemOrText) {
+        if (typeof diaryItemOrText === 'string') memoText = (typeof sanitizeDiaryTextForDisplay==='function') ? sanitizeDiaryTextForDisplay(diaryItemOrText) : diaryItemOrText;
+        else if (typeof diaryItemOrText === 'object') {
+          memoText = (typeof sanitizeDiaryTextForDisplay==='function') ? sanitizeDiaryTextForDisplay(diaryItemOrText.text || '') : (diaryItemOrText.text||'');
+          if(diaryItemOrText.id) window.currentLightboxItemId = diaryItemOrText.id;
+          if (diaryItemOrText.date) {
+            try { const d = parseDateObj(diaryItemOrText.date); dateText = d.getFullYear()+'년 '+(d.getMonth()+1)+'월 '+d.getDate()+'일 ('+getDayOfWeekStr(diaryItemOrText.date)+')' + (diaryItemOrText.time ? ' '+diaryItemOrText.time : ''); } catch(e){ dateText = diaryItemOrText.date; }
           }
         }
-        titleArea.style.display='flex';
-        titleArea.style.visibility='visible';
-        titleArea.style.opacity='1';
-      });
-    }catch(e){ console.error('ensurePinTitleForAll', e); }
-  }
+      }
+      if (src) { imgEl.src = src; imgEl.style.display='block'; } else { imgEl.style.display='none'; imgEl.src=''; }
+      if (memoText) {
+        memoEl.textContent = memoText;
+        memoEl.style.display='block';
+        if(src){ memoEl.classList.remove('no-photo-mode'); } else { memoEl.classList.add('no-photo-mode'); }
+      } else { memoEl.style.display='none'; memoEl.classList.remove('no-photo-mode'); }
+      dateEl.textContent = dateText;
+      if(actionEl){ actionEl.style.display = window.currentLightboxItemId ? 'flex' : 'none'; }
+      document.getElementById('photo-lightbox-overlay').classList.add('active');
+      if(typeof resetPhotoZoom==='function') try{ resetPhotoZoom(); }catch(e){}
+      try{ if(memoEl) memoEl.scrollTop = 0; }catch(e){}
+      console.log('[V365-V12] 라이트박스 열림 - scrollIntoView 제거');
+    }catch(e){
+      console.error('openPhotoLightbox V12 error', e);
+      if(origOpenPhotoLightbox) return origOpenPhotoLightbox.apply(this, arguments);
+    }
+  };
 
   window.getContentEmoji = function(item){
     try{
@@ -17364,39 +17338,10 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
         const placeholder = itemBox.querySelector('.empty-photo-placeholder');
         if(!placeholder) return;
         const ce = window.getContentEmoji(diaryItem);
-        if(placeholder.textContent !== ce.emoji) placeholder.textContent = ce.emoji;
+        if(placeholder.textContent === ce.emoji) return;
+        placeholder.textContent = ce.emoji;
       });
     }catch(e){}
-  };
-
-  const _origOpen = window.openPhotoLightbox;
-  window.openPhotoLightbox = function(photoKeyOrData, diaryItemOrText){
-    try{
-      const imgEl = document.getElementById('photo-lightbox-img');
-      const memoEl = document.getElementById('photo-lightbox-memo');
-      const dateEl = document.getElementById('photo-lightbox-date');
-      const actionEl = document.getElementById('photo-lightbox-actions');
-      let src = null; let memoText=''; let dateText=''; let titleHeader=''; window.currentLightboxItemId=null;
-      try { src = (typeof getPhotoSrc==='function') ? getPhotoSrc(photoKeyOrData) : null; } catch(e){ src=null; }
-      if (!src && typeof photoKeyOrData === 'string' && photoKeyOrData.indexOf('data:image')===0) src = photoKeyOrData;
-      if (diaryItemOrText) {
-        if (typeof diaryItemOrText === 'string'){ memoText = diaryItemOrText; titleHeader='📌  '; }
-        else if (typeof diaryItemOrText === 'object'){
-          memoText = diaryItemOrText.text || '';
-          if(diaryItemOrText.id) window.currentLightboxItemId = diaryItemOrText.id;
-          if(diaryItemOrText.anniversary) titleHeader = '📌 ' + diaryItemOrText.anniversary; else titleHeader='📌  ';
-          if (diaryItemOrText.date) { try { const d = parseDateObj(diaryItemOrText.date); dateText = d.getFullYear()+'년 '+(d.getMonth()+1)+'월 '+d.getDate()+'일'; } catch(e){ dateText = diaryItemOrText.date; } }
-        }
-      }
-      let finalDisplay = titleHeader; if(memoText) finalDisplay += '\n\n' + memoText;
-      if (src) { imgEl.src = src; imgEl.style.display='block'; } else { imgEl.style.display='none'; imgEl.src=''; }
-      if (finalDisplay) { memoEl.textContent = finalDisplay; memoEl.style.display='block'; if(src) memoEl.classList.remove('no-photo-mode'); else memoEl.classList.add('no-photo-mode'); } else { memoEl.style.display='none'; }
-      dateEl.textContent = dateText;
-      if(actionEl){ actionEl.style.display = window.currentLightboxItemId ? 'flex' : 'none'; }
-      document.getElementById('photo-lightbox-overlay').classList.add('active');
-      if(typeof resetPhotoZoom==='function') try{ resetPhotoZoom(); }catch(e){}
-      try{ if(memoEl) memoEl.scrollTop = 0; }catch(e){}
-    }catch(e){ if(_origOpen) _origOpen.apply(this, arguments); }
   };
 
   window.getRepresentativeForDate = function(dateStr){
@@ -17410,67 +17355,86 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
     const dateStr = normalizeDateStr(target.date);
     all.forEach(d=>{ try{ if(normalizeDateStr(d.date)===dateStr) d.isRepresentative = (d.id===id); }catch(e){} });
     localStorage.setItem('smartDiaryList', JSON.stringify(all));
-    setTimeout(function(){ if(typeof renderCalendar==='function') try{ renderCalendar(); }catch(e){} if(typeof renderDiaryAroundToday==='function') try{ renderDiaryAroundToday(); }catch(e){} }, 80);
+    setTimeout(function(){
+      if(typeof renderCalendar==='function') try{ renderCalendar(); }catch(e){}
+      if(typeof renderDiaryAroundToday==='function') try{ renderDiaryAroundToday(); }catch(e){}
+    }, 60);
   };
 
-  function patchRender(){
-    if(typeof renderDiaryAroundToday!=='function' || renderDiaryAroundToday._v16) return;
-    const orig = renderDiaryAroundToday;
-    renderDiaryAroundToday = function(){
-      const r = orig.apply(this, arguments);
-      setTimeout(function(){
-        ensurePinTitleForAll();
-        window.applyContentEmojis();
-        const listEl = document.getElementById('diary-around-today-list');
-        if(!listEl) return;
-        const all = getAllDiariesSafe();
-        listEl.querySelectorAll('.sub-memo-item').forEach(function(itemBox){
-          if(itemBox.querySelector('.rep-btn')) return;
-          const m = itemBox.innerHTML.match(/deleteDiary\('([^']+)'\)/);
-          if(!m) return;
-          const btns = itemBox.querySelector('.memo-action-btns');
-          if(!btns) return;
-          const diaryItem = all.find(d=> d.id===m[1]);
-          const isRep = diaryItem ? !!diaryItem.isRepresentative : false;
-          const b = document.createElement('button');
-          b.className = isRep ? 'rep-btn is-rep' : 'rep-btn';
-          b.textContent = isRep ? '★' : '☆';
-          b.onclick = function(e){ e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); setTimeout(function(){ window.setAsRepresentative(m[1]); }, 10); };
-          btns.insertBefore(b, btns.firstChild);
-          if(isRep) itemBox.classList.add('is-representative');
-        });
-      }, 300);
-      return r;
-    };
-    renderDiaryAroundToday._v16=true;
+  function patchAll(){
+    if(typeof renderDiaryAroundToday==='function' && !renderDiaryAroundToday._v365_v12){
+      const orig = renderDiaryAroundToday;
+      renderDiaryAroundToday = function(){
+        const r = orig.apply(this, arguments);
+        setTimeout(function(){
+          window.applyContentEmojis();
+          const listEl = document.getElementById('diary-around-today-list');
+          if(!listEl) return;
+          const all = getAllDiariesSafe();
+          listEl.querySelectorAll('.sub-memo-item').forEach(function(itemBox){
+            if(itemBox.querySelector('.rep-btn')) return;
+            const m = itemBox.innerHTML.match(/deleteDiary\('([^']+)'\)/);
+            if(!m) return;
+            const diaryItem = all.find(d=> d.id===m[1]);
+            if(!diaryItem) return;
+            const btns = itemBox.querySelector('.memo-action-btns');
+            if(!btns) return;
+            const isRep = !!diaryItem.isRepresentative;
+            const b = document.createElement('button');
+            b.className = isRep ? 'rep-btn is-rep' : 'rep-btn';
+            b.textContent = isRep ? '★' : '☆';
+            b.addEventListener('click', function(e){
+              e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+              const id = m[1];
+              setTimeout(function(){ window.setAsRepresentative(id); }, 10);
+            });
+            btns.insertBefore(b, btns.firstChild);
+            if(isRep) itemBox.classList.add('is-representative');
+          });
+        }, 150);
+        return r;
+      };
+      renderDiaryAroundToday._v365_v12=true;
+    }
+    if(typeof renderCalendar==='function' && !renderCalendar._v365_v12){
+      const origCal = renderCalendar;
+      renderCalendar = function(){
+        const r = origCal.apply(this, arguments);
+        try{
+          const grid = document.getElementById('cal-days-grid');
+          if(!grid) return r;
+          const cy = typeof calYear!=='undefined'? calYear : new Date().getFullYear();
+          const cm = typeof calMonth!=='undefined'? calMonth : new Date().getMonth();
+          grid.querySelectorAll('.cal-cell:not(.adjacent-month)').forEach(cell=>{
+            let dayNum=null;
+            const span = cell.querySelector('.cal-cell-inner span');
+            if(span){ const mm=span.textContent.match(/\d+/); if(mm) dayNum=parseInt(mm[0],10); }
+            if(!dayNum) return;
+            const dateStr = `${cy}-${String(cm+1).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
+            const rep = window.getRepresentativeForDate(dateStr);
+            cell.querySelectorAll('.cal-rep-title').forEach(el=>el.remove());
+            if(rep){
+              cell.querySelectorAll('.cal-anniv-label, .cal-special-label').forEach(el=>el.remove());
+              let title = (rep.anniversary||'').trim();
+              if(!title) return;
+              const inner = cell.querySelector('.cal-cell-inner');
+              if(inner){
+                const div = document.createElement('div');
+                div.className='cal-rep-title';
+                div.textContent = title;
+                inner.appendChild(div);
+              }
+            }
+          });
+        }catch(e){}
+        return r;
+      };
+      renderCalendar._v365_v12=true;
+      try{ renderCalendar(); }catch(e){}
+    }
   }
-
-  function patchCalendar(){
-    if(typeof renderCalendar!=='function' || renderCalendar._v16) return;
-    const origCal = renderCalendar;
-    renderCalendar = function(){
-      const r = origCal.apply(this, arguments);
-      try{
-        const grid = document.getElementById('cal-days-grid');
-        if(!grid) return r;
-        const cy = typeof calYear!=='undefined'? calYear : new Date().getFullYear();
-        const cm = typeof calMonth!=='undefined'? calMonth : new Date().getMonth();
-        grid.querySelectorAll('.cal-cell:not(.adjacent-month)').forEach(cell=>{
-          let dayNum=null; const span = cell.querySelector('.cal-cell-inner span'); if(span){ const mm=span.textContent.match(/\d+/); if(mm) dayNum=parseInt(mm[0],10); } if(!dayNum) return;
-          const dateStr = `${cy}-${String(cm+1).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
-          const rep = window.getRepresentativeForDate(dateStr);
-          cell.querySelectorAll('.cal-rep-title').forEach(el=>el.remove());
-          if(rep){ cell.querySelectorAll('.cal-anniv-label, .cal-special-label').forEach(el=>el.remove()); let title = (rep.anniversary||'').trim(); if(!title) return; const inner = cell.querySelector('.cal-cell-inner'); if(inner){ const div = document.createElement('div'); div.className='cal-rep-title'; div.textContent = title; inner.appendChild(div); } }
-        });
-      }catch(e){}
-      return r;
-    };
-    renderCalendar._v16=true;
-  }
-
-  setTimeout(function(){ patchRender(); patchCalendar(); try{ renderCalendar(); }catch(e){} }, 300);
-  setTimeout(function(){ try{ renderDiaryAroundToday(); }catch(e){} ensurePinTitleForAll(); }, 1000);
-  console.log('[V365-V16] 사진 있는 칸도 고정핀 보이게 완료');
+  setTimeout(patchAll, 200);
+  setTimeout(function(){ patchAll(); try{ renderDiaryAroundToday(); }catch(e){} window.applyContentEmojis(); }, 900);
 })();
 </script>
 
