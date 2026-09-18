@@ -17224,197 +17224,222 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 </script>
 
 
-<style id="v365-v7-css">
-.rep-btn { border:1px solid #ddd !important; background:#fff !important; border-radius:4px !important; padding:3px 7px !important; font-size:13px !important; cursor:pointer; min-width:28px; }
-.rep-btn.is-rep { background:#fff8e1 !important; border-color:#ffb300 !important; color:#ffb300 !important; font-weight:bold; }
-.sub-memo-item.is-representative { border:1.5px solid #ffb300 !important; }
-.cal-rep-title { margin-top:1px !important; font-size:10px !important; font-weight:700 !important; line-height:1.15 !important; color:#34495e !important; background:transparent !important; border:none !important; padding:0 1px !important; white-space:normal !important; word-break:break-all !important; overflow-wrap:anywhere !important; max-height:28px !important; overflow:hidden !important; text-align:center !important; max-width:100% !important; }
-.empty-photo-placeholder { font-size:28px !important; display:flex !important; align-items:center !important; justify-content:center !important; min-height:100px !important; border-radius:10px !important; }
+<style id="v26-css">
+/* 메인 리스트 제목란 강제 표시 - 원래 스타일 유지 */
+.sub-memo-item .photo-title-area {
+  display:flex !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  min-height:26px !important;
+  height:auto !important;
+  overflow:visible !important;
+  white-space:nowrap !important;
+  align-items:center !important;
+  gap:6px !important;
+  padding:5px 10px !important;
+  margin-bottom:6px !important;
+  background:#FFF0F0 !important;
+  border:1px solid #FFCDCD !important;
+  border-radius:6px !important;
+  font-size:12px !important;
+  font-weight:800 !important;
+  width:100% !important;
+  box-sizing:border-box !important;
+}
+.sub-memo-item.has-photo .photo-title-area { order:1 !important; }
+.sub-memo-item.has-photo .diary-photo-wrap { order:2 !important; }
+.sub-memo-item.has-photo .item-top-row { order:3 !important; }
+.sub-memo-item.has-photo .diary-text { order:4 !important; }
+.memo-action-btns .rep-btn { border:1px solid #ddd !important; background:#fff !important; font-size:11px !important; }
+.rep-btn.is-rep { background:#fff8e1 !important; border-color:#ffb300 !important; color:#ffb300 !important; }
 </style>
 
 
-<script id="v365-v8-fix">
+<script id="v26-js">
 (function(){
-  console.log('[V365-V8] 생일→일 버그 수정 - 긴 키워드 우선');
+  console.log('[V26] 1) 사진+제목 → 고정핀+제목 / 2) 제목없음 → 고정핀+빈칸');
 
-  function getAllDiariesSafe(){
-    try { return (typeof getAllDiaries==='function') ? getAllDiaries() : []; } catch(e){ return []; }
+  function getAllDiariesSafe(){ try { return (typeof getAllDiaries==='function') ? getAllDiaries() : []; } catch(e){ return []; } }
+
+  // 제목 표시 헬퍼 - 합의한 규칙
+  function getPinTitleDisplay(item){
+    const hasTitle = !!(item && item.anniversary && item.anniversary.trim());
+    const titleText = hasTitle ? item.anniversary.trim() : '';
+    // 합의: 제목 없으면 고정핀 + 빈칸
+    if(hasTitle){
+      return { isEmpty:false, text:titleText, html:'<span class="title-icon">📌</span><span class="title-text">'+escapeHtmlForDiary(titleText)+'</span>' };
+    } else {
+      return { isEmpty:true, text:'', html:'<span class="title-icon">📌</span><span class="title-text empty">&nbsp;</span>' };
+    }
+  }
+  window.getPinTitleDisplay = getPinTitleDisplay;
+
+  // 메인 리스트 패치 - 사진+제목 유무 관계없이 고정핀+제목/빈칸
+  function patchRender(){
+    if(typeof renderDiaryAroundToday!=='function' || renderDiaryAroundToday._v26) return;
+    const orig = renderDiaryAroundToday;
+    renderDiaryAroundToday = function(){
+      const r = orig.apply(this, arguments);
+      setTimeout(function(){
+        try{
+          const all = getAllDiariesSafe();
+          const listEl = document.getElementById('diary-around-today-list');
+          if(!listEl) return;
+          listEl.querySelectorAll('.sub-memo-item').forEach(function(box){
+            let titleArea = box.querySelector('.photo-title-area');
+            const m = box.innerHTML.match(/deleteDiary\('([^']+)'\)/);
+            let item = null;
+            if(m) item = all.find(d=> d.id===m[1]);
+
+            if(!titleArea){
+              titleArea = document.createElement('div');
+              titleArea.className = 'photo-title-area';
+              if(box.firstChild) box.insertBefore(titleArea, box.firstChild);
+              else box.appendChild(titleArea);
+            }
+
+            // 합의한 규칙으로 다시 채우기
+            const disp = getPinTitleDisplay(item);
+            titleArea.className = 'photo-title-area ' + (disp.isEmpty ? 'no-title' : 'has-title');
+            titleArea.innerHTML = disp.html;
+            titleArea.style.display='flex';
+            titleArea.style.visibility='visible';
+            titleArea.style.opacity='1';
+          });
+
+          // 이모지
+          listEl.querySelectorAll('.sub-memo-item.no-photo .empty-photo-placeholder').forEach(function(ph){
+            const box = ph.closest('.sub-memo-item');
+            if(!box) return;
+            const m = box.innerHTML.match(/deleteDiary\('([^']+)'\)/);
+            if(!m) return;
+            const diaryItem = all.find(d=> d.id===m[1]);
+            if(!diaryItem) return;
+            const raw = (diaryItem.text||'') + ' ' + (diaryItem.anniversary||'');
+            const low = raw.toLowerCase();
+            let emoji='📝';
+            if(low.includes('생일')||low.includes('축하')) emoji='🎂';
+            else if(low.includes('밥')||low.includes('음식')) emoji='🍚';
+            ph.textContent = emoji;
+          });
+
+          // 대표 버튼
+          listEl.querySelectorAll('.sub-memo-item').forEach(function(box){
+            if(box.querySelector('.rep-btn')) return;
+            const m = box.innerHTML.match(/deleteDiary\('([^']+)'\)/);
+            if(!m) return;
+            const btns = box.querySelector('.memo-action-btns');
+            if(!btns) return;
+            const diaryItem = all.find(d=> d.id===m[1]);
+            const isRep = diaryItem ? !!diaryItem.isRepresentative : false;
+            const b = document.createElement('button');
+            b.className = isRep ? 'rep-btn is-rep' : 'rep-btn';
+            b.textContent = isRep ? '★' : '☆';
+            b.onclick = function(e){ e.preventDefault(); e.stopPropagation(); setTimeout(function(){ window.setAsRepresentative(m[1]); }, 10); };
+            btns.insertBefore(b, btns.firstChild);
+          });
+
+        }catch(e){ console.error('V26 list patch', e); }
+      }, 250);
+      return r;
+    };
+    renderDiaryAroundToday._v26=true;
   }
 
-  // 수정된 매핑: 긴 키워드, 구체적인 키워드를 앞으로, 한 글자 '일' 같은 건 맨 뒤로
-  window.getContentEmoji = function(item){
+  // 라이트박스 - 합의한 규칙: 사진+제목 → 고정핀+제목, 제목없음 → 고정핀+빈칸
+  window.openPhotoLightbox = function(photoKeyOrData, diaryItemOrText){
     try{
-      const rawText = (item.text||'') + ' ' + (item.anniversary||'');
-      const text = rawText.toLowerCase();
-      
-      const mapping = [
-        { keywords: ['생일','축하','기념일','선물'], emoji: '🎂', label: '기념일' }, // 생일을 가장 앞으로!
-        { keywords: ['밥','음식','맛있','식사','점심','저녁','아침','라면','치킨','커피','카페','먹'], emoji: '🍚', label: '맛있는 하루' },
-        { keywords: ['여행','휴가','비행','바다','산','캠핑','호텔','관광'], emoji: '✈️', label: '여행' },
-        { keywords: ['사랑','연애','데이트','그리워','보고싶'], emoji: '💕', label: '사랑' },
-        { keywords: ['가족','엄마','아빠','부모','아이','아들','딸'], emoji: '👨‍👩‍👧', label: '가족' },
-        { keywords: ['친구','만남','모임','파티'], emoji: '🎉', label: '친구' },
-        { keywords: ['운동','헬스','걷기','러닝','요가','건강','병원','아프'], emoji: '💪', label: '건강' },
-        { keywords: ['공부','책','독서','시험','학교','수업'], emoji: '📚', label: '공부' },
-        { keywords: ['가계부','지출','수입','쇼핑','구매','월급','돈'], emoji: '💰', label: '가계부' },
-        { keywords: ['우울','슬프','눈물','힘들','외로','짜증'], emoji: '🌧️', label: '감성' },
-        { keywords: ['행복','기쁘','즐거','신나','웃','꿀잠'], emoji: '😊', label: '행복' },
-        { keywords: ['잠','꿈','피곤','졸려','새벽'], emoji: '🌙', label: '휴식' },
-        { keywords: ['날씨','맑','흐리','추워','더워','봄','여름','가을','겨울','눈','꽃','비'], emoji: '🌤️', label: '날씨' },
-        { keywords: ['음악','노래','콘서트','영화','드라마','공연'], emoji: '🎵', label: '문화' },
-        { keywords: ['강아지','고양이','반려','펫','동물'], emoji: '🐾', label: '반려' },
-        { keywords: ['회사','업무','회의','야근','출근','술','맥주'], emoji: '💼', label: '일' }, // '일' 같은 한 글자는 맨 뒤로 이동, 그리고 '좋아'도 너무 포괄적이라 제거
-      ];
+      const imgEl = document.getElementById('photo-lightbox-img');
+      const memoEl = document.getElementById('photo-lightbox-memo');
+      const dateEl = document.getElementById('photo-lightbox-date');
+      const actionEl = document.getElementById('photo-lightbox-actions');
+      let src=null;
+      window.currentLightboxItemId=null;
 
-      // 긴 키워드부터 체크하도록 정렬된 매핑 사용
-      for(let map of mapping){
-        // 각 맵 안에서도 긴 키워드부터
-        const sortedKws = [...map.keywords].sort((a,b)=> b.length - a.length);
-        for(let kw of sortedKws){
-          if(text.includes(kw.toLowerCase())){
-            return { emoji: map.emoji, label: map.label, keyword: kw };
-          }
+      try { src = (typeof getPhotoSrc==='function') ? getPhotoSrc(photoKeyOrData) : null; } catch(e){ src=null; }
+      if(!src && typeof photoKeyOrData==='string' && (photoKeyOrData.startsWith('data:image') || photoKeyOrData.startsWith('blob:'))) src=photoKeyOrData;
+
+      let finalText = '';
+      let dateText = '';
+
+      if(diaryItemOrText && typeof diaryItemOrText==='object'){
+        const hasTitle = !!(diaryItemOrText.anniversary && diaryItemOrText.anniversary.trim());
+        const title = hasTitle ? diaryItemOrText.anniversary.trim() : '';
+        const content = (diaryItemOrText.text || '').trim();
+
+        if(diaryItemOrText.id) window.currentLightboxItemId = diaryItemOrText.id;
+
+        // 합의한 규칙으로 라이트박스 텍스트 구성
+        if(hasTitle){
+          // 1) 사진+제목 → 고정핀+제목
+          finalText = '📌 ' + title;
+          if(content) finalText += '\n\n' + content;
+        } else {
+          // 2) 제목없음 → 고정핀+빈칸 (사진이건 내용만 있건)
+          finalText = '📌';
+          if(content) finalText += '\n\n' + content;
+          else finalText += '\n\n(내용 없음)';
         }
+
+        if(diaryItemOrText.date && typeof parseDateObj==='function'){
+          try{
+            const d = parseDateObj(diaryItemOrText.date);
+            const dayName = typeof getDayOfWeekStr==='function' ? getDayOfWeekStr(diaryItemOrText.date) : '';
+            dateText = d.getFullYear()+'년 '+(d.getMonth()+1)+'월 '+d.getDate()+'일' + (dayName?' ('+dayName+')':'') + (diaryItemOrText.time?' '+diaryItemOrText.time:'');
+          }catch(e){ dateText = diaryItemOrText.date; }
+        }
+      } else if(typeof diaryItemOrText==='string'){
+        finalText = '📌\n\n' + diaryItemOrText;
       }
-      
-      const date = item.date || '';
-      const month = parseInt((date.split('-')[1]||'0'), 10);
-      if(month>=3 && month<=5) return { emoji: '🌸', label: '봄', keyword: '봄' };
-      if(month>=6 && month<=8) return { emoji: '🌊', label: '여름', keyword: '여름' };
-      if(month>=9 && month<=11) return { emoji: '🍂', label: '가을', keyword: '가을' };
-      if(month===12 || month===1 || month===2) return { emoji: '❄️', label: '겨울', keyword: '겨울' };
-      
-      return { emoji: '📝', label: '일기', keyword: '일기' };
-    }catch(e){
-      return { emoji: '📝', label: '일기', keyword: '일기' };
-    }
+
+      if(src){ imgEl.src=src; imgEl.style.display='block'; } else { imgEl.style.display='none'; imgEl.src=''; }
+
+      if(finalText){
+        memoEl.textContent = finalText;
+        memoEl.style.display='block';
+        memoEl.style.whiteSpace='pre-wrap';
+        if(src) memoEl.classList.remove('no-photo-mode'); else memoEl.classList.add('no-photo-mode');
+      } else { memoEl.style.display='none'; }
+
+      dateEl.textContent = dateText;
+      if(actionEl) actionEl.style.display = window.currentLightboxItemId ? 'flex' : 'none';
+
+      document.getElementById('photo-lightbox-overlay').classList.add('active');
+      if(typeof resetPhotoZoom==='function') try{ resetPhotoZoom(); }catch(e){}
+      try{ memoEl.scrollTop=0; }catch(e){}
+
+    }catch(e){ console.error('V26 lightbox error', e); }
   };
 
-  window.applyContentEmojis = function(){
-    try{
-      const listEl = document.getElementById('diary-around-today-list');
-      if(!listEl) return;
-      const all = getAllDiariesSafe();
-      listEl.querySelectorAll('.sub-memo-item').forEach(function(itemBox){
-        if(itemBox.classList.contains('has-photo')) return;
-        const m = itemBox.innerHTML.match(/deleteDiary\('([^']+)'\)/);
-        if(!m) return;
-        const diaryItem = all.find(d=> d.id===m[1]);
-        if(!diaryItem) return;
-        const placeholder = itemBox.querySelector('.empty-photo-placeholder');
-        if(!placeholder) return;
-        const ce = window.getContentEmoji(diaryItem);
-        placeholder.textContent = ce.emoji;
-        placeholder.setAttribute('data-keyword', ce.label);
-        placeholder.title = ce.keyword + ' - ' + ce.label;
-        const bgMap = {
-          '🍚': 'linear-gradient(135deg, #FFF8E0 0%, #FFE8CC 100%)',
-          '✈️': 'linear-gradient(135deg, #E0F2FF 0%, #C2E8FF 100%)',
-          '💕': 'linear-gradient(135deg, #FFE0EC 0%, #FFC2D1 100%)',
-          '🎉': 'linear-gradient(135deg, #FFF0FF 0%, #E8D0FF 100%)',
-          '💪': 'linear-gradient(135deg, #E0FFE0 0%, #C2FFC2 100%)',
-          '🎂': 'linear-gradient(135deg, #FFF0F8 0%, #FFD0E8 100%)',
-          '😊': 'linear-gradient(135deg, #FFF8E0 0%, #FFF0CC 100%)',
-          '🌸': 'linear-gradient(135deg, #FFE0F0 0%, #FFC2E0 100%)',
-          '🌊': 'linear-gradient(135deg, #E0F8FF 0%, #C2E8FF 100%)',
-          '🍂': 'linear-gradient(135deg, #FFF0E0 0%, #FFD8B0 100%)',
-          '❄️': 'linear-gradient(135deg, #E8F0FF 0%, #D0E8FF 100%)',
-        };
-        if(bgMap[ce.emoji]) placeholder.style.background = bgMap[ce.emoji];
-      });
-    }catch(e){ console.error(e); }
+  window.closePhotoLightbox = function(event){
+    if(event) event.stopPropagation();
+    const overlay = document.getElementById('photo-lightbox-overlay');
+    if(overlay) overlay.classList.remove('active');
+    const imgEl = document.getElementById('photo-lightbox-img');
+    const memoEl = document.getElementById('photo-lightbox-memo');
+    if(imgEl){ imgEl.src=''; imgEl.style.display='none'; }
+    if(memoEl){ memoEl.style.display='none'; }
+    if(typeof resetPhotoZoom==='function') try{ resetPhotoZoom(); }catch(e){}
   };
 
-  // 기존 패치 유지 (대표 기능)
-  window.getRepresentativeForDate = window.getRepresentativeForDate || function(dateStr){
+  window.getRepresentativeForDate = function(dateStr){
     const all = getAllDiariesSafe();
-    return all.find(d=>{
-      try { return normalizeDateStr(d.date)===dateStr && d.isRepresentative; } catch(e){ return false; }
-    }) || null;
+    return all.find(d=>{ try { return normalizeDateStr(d.date)===dateStr && d.isRepresentative; } catch(e){ return false; } }) || null;
   };
-  window.setAsRepresentative = window.setAsRepresentative || function(id){
+  window.setAsRepresentative = function(id){
     const all = getAllDiariesSafe();
     const target = all.find(d=> d.id===id);
     if(!target || target.isRepresentative) return;
     const dateStr = normalizeDateStr(target.date);
     all.forEach(d=>{ try{ if(normalizeDateStr(d.date)===dateStr) d.isRepresentative = (d.id===id); }catch(e){} });
     localStorage.setItem('smartDiaryList', JSON.stringify(all));
-    if(typeof renderCalendar==='function') try{ renderCalendar(); }catch(e){}
-    if(typeof renderDiaryAroundToday==='function') try{ renderDiaryAroundToday(); }catch(e){}
+    setTimeout(function(){ if(typeof renderCalendar==='function') try{ renderCalendar(); }catch(e){} if(typeof renderDiaryAroundToday==='function') try{ renderDiaryAroundToday(); }catch(e){} }, 60);
   };
 
-  function patchAll(){
-    if(typeof renderDiaryAroundToday==='function' && !renderDiaryAroundToday._v365_v8){
-      const orig = renderDiaryAroundToday;
-      renderDiaryAroundToday = function(){
-        const r = orig.apply(this, arguments);
-        setTimeout(function(){
-          window.applyContentEmojis();
-          const listEl = document.getElementById('diary-around-today-list');
-          if(!listEl) return;
-          const all = getAllDiariesSafe();
-          listEl.querySelectorAll('.sub-memo-item').forEach(function(itemBox){
-            if(itemBox.querySelector('.rep-btn')) return;
-            const m = itemBox.innerHTML.match(/deleteDiary\('([^']+)'\)/);
-            if(!m) return;
-            const diaryItem = all.find(d=> d.id===m[1]);
-            if(!diaryItem) return;
-            const btns = itemBox.querySelector('.memo-action-btns');
-            if(!btns) return;
-            const isRep = !!diaryItem.isRepresentative;
-            const b = document.createElement('button');
-            b.className = isRep ? 'rep-btn is-rep' : 'rep-btn';
-            b.textContent = isRep ? '★' : '☆';
-            b.onclick = function(e){ e.stopPropagation(); window.setAsRepresentative(m[1]); };
-            btns.insertBefore(b, btns.firstChild);
-            if(isRep) itemBox.classList.add('is-representative');
-          });
-        }, 120);
-        return r;
-      };
-      renderDiaryAroundToday._v365_v8=true;
-    }
-    if(typeof renderCalendar==='function' && !renderCalendar._v365_v8){
-      const origCal = renderCalendar;
-      renderCalendar = function(){
-        const r = origCal.apply(this, arguments);
-        try{
-          const grid = document.getElementById('cal-days-grid');
-          if(!grid) return r;
-          const cy = typeof calYear!=='undefined'? calYear : new Date().getFullYear();
-          const cm = typeof calMonth!=='undefined'? calMonth : new Date().getMonth();
-          grid.querySelectorAll('.cal-cell:not(.adjacent-month)').forEach(cell=>{
-            let dayNum=null;
-            const span = cell.querySelector('.cal-cell-inner span');
-            if(span){ const mm=span.textContent.match(/\d+/); if(mm) dayNum=parseInt(mm[0],10); }
-            if(!dayNum) return;
-            const dateStr = `${cy}-${String(cm+1).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
-            const rep = window.getRepresentativeForDate(dateStr);
-            cell.querySelectorAll('.cal-rep-title').forEach(el=>el.remove());
-            if(rep){
-              cell.querySelectorAll('.cal-anniv-label, .cal-special-label').forEach(el=>el.remove());
-              let title = (rep.anniversary||'').trim();
-              if(!title) return;
-              const inner = cell.querySelector('.cal-cell-inner');
-              if(inner){
-                const div = document.createElement('div');
-                div.className='cal-rep-title';
-                div.textContent = title;
-                inner.appendChild(div);
-              }
-            }
-          });
-        }catch(e){}
-        return r;
-      };
-      renderCalendar._v365_v8=true;
-      try{ renderCalendar(); }catch(e){}
-    }
-  }
+  setTimeout(function(){ patchRender(); }, 200);
+  setTimeout(function(){ try{ renderDiaryAroundToday(); }catch(e){} }, 600);
 
-  setTimeout(patchAll, 200);
-  setTimeout(function(){ patchAll(); try{ renderDiaryAroundToday(); }catch(e){} window.applyContentEmojis(); }, 800);
-  console.log('[V365-V8] 생일 버그 수정 완료 - 생일 먼저 체크');
+  console.log('[V26] 합의한 규칙 적용 완료');
 })();
 </script>
 
