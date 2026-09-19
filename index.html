@@ -17224,18 +17224,29 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 </script>
 
 
+
 <script id="v3_1-ultimate-no-grow">
 (function(){
-  console.log('[V3_1 ULTIMATE] 시간차 늘어남 근본 제거');
+  console.log('[V3_1 ULTIMATE FIXED] 늘어남 제거 + 제목/종료버튼 복구');
 
-  // 1. 구형 라이트박스 완전 제거
   window.openLightbox = function(){ return; };
   function killOld(){ document.querySelectorAll('#photo-lightbox, #lightbox-img').forEach(function(el){ el.remove(); }); }
   killOld();
   new MutationObserver(killOld).observe(document.body, {childList:true, subtree:true});
 
-  // 2. 모든 비동기 src 재설정 차단 - 이게 시간차 늘어남의 핵심 원인
-  // openPhotoLightboxSafe가 빈 src로 먼저 열고 나중에 src를 넣어서 커지는 현상
+  // 원본 V308의 제목/아이콘 생성 로직을 그대로 가져옴
+  function ensureTitleEl(){
+    var content = document.getElementById('photo-lightbox-content');
+    var titleEl = document.getElementById('photo-lightbox-title');
+    if(!titleEl && content){
+      titleEl = document.createElement('div');
+      titleEl.id='photo-lightbox-title';
+      titleEl.style.cssText='color:#fff;font-size:13px;font-weight:800;text-align:center;margin-bottom:8px;';
+      content.prepend(titleEl);
+    }
+    return titleEl;
+  }
+
   window.openPhotoLightboxSafe = function(src, item, dateStr, totalCount){
     var overlay = document.getElementById('photo-lightbox-overlay');
     var imgEl = document.getElementById('photo-lightbox-img');
@@ -17243,89 +17254,124 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
     var dateEl = document.getElementById('photo-lightbox-date');
     if(!overlay || !imgEl) return;
 
-    // 이미 열려있으면 무시 - 늘어남 방지
     if(overlay.classList.contains('active') && overlay._isOpen){
-      console.log('[ULTIMATE] 이미 열려있음 - 무시');
+      console.log('[FIXED] 중복 무시');
       return;
     }
 
-    // src 확정 (동기적으로만)
     var finalSrc = src || '';
     if(!finalSrc && item && item.photo){
       try{ finalSrc = (typeof getPhotoSrc==='function') ? getPhotoSrc(item.photo) : ''; }catch(e){}
     }
 
-    // 이미지 먼저 세팅
     if(finalSrc && (finalSrc.startsWith('data:') || finalSrc.startsWith('blob:') || finalSrc.startsWith('http') || finalSrc.length>100)){
       imgEl.src = finalSrc;
       imgEl.style.display='block';
+      imgEl.style.transform='none';
     }else{
       imgEl.style.display='none';
       imgEl.src='';
     }
 
-    // 메모/제목 - 원본의 제목+아이콘 로직 유지 (📌 포함)
+    // 제목 + 메모 (아이콘 포함) - 원본 V308/V364 로직 복구
+    var titleEl = ensureTitleEl();
     var memoText = '';
+    var displayTitle = '';
+
     if(item){
-      if(item.text) memoText = item.text;
-      else if(item.anniversary) memoText = '📌 ' + item.anniversary;
+      if(item.anniversary && item.anniversary.trim()){
+        displayTitle = item.anniversary.trim();
+        memoText = item.text ? item.text : '';
+        // 제목만 있는 경우 메모에 핀+제목 표시 (원본처럼)
+        if(!memoText){
+          memoText = '📌 ' + displayTitle;
+        }
+      }else if(item.text){
+        memoText = item.text;
+        displayTitle = '';
+      }
     }
+
+    // titleEl에는 제목 표시
+    if(titleEl){
+      if(displayTitle){
+        titleEl.textContent = '📌 ' + displayTitle;
+        titleEl.style.display='block';
+      }else{
+        titleEl.textContent = finalSrc ? '사진 확대보기' : '내용 확대보기';
+        titleEl.style.display='block';
+      }
+    }
+
     if(memoEl){
       if(memoText){
         memoEl.textContent = memoText;
         memoEl.style.display='block';
+        // 크림 종이 유지
+        memoEl.classList.remove('no-photo-mode');
+        if(!finalSrc) memoEl.classList.add('no-photo-mode');
       }else{
         memoEl.style.display='none';
       }
     }
 
-    if(dateEl && item && item.date){
-      dateEl.textContent = item.date;
-      dateEl.style.display='block';
+    if(dateEl){
+      if(item && item.date){
+        dateEl.textContent = item.date;
+        dateEl.style.display='block';
+      }else{
+        dateEl.textContent='';
+        dateEl.style.display='none';
+      }
     }
 
-    // 한번에 열기 - 이후에 크기 변경 없음
+    // 종료 버튼 복구 - 원본 CSS가 active일 때 block으로 보이게 함
+    var fixedBtn = document.getElementById('photo-lightbox-fixed-close');
+    if(fixedBtn){
+      fixedBtn.style.display='block';
+      fixedBtn.style.pointerEvents='auto';
+      // overlay 안으로 이동 (원본 동작)
+      if(fixedBtn.parentElement !== overlay){
+        overlay.appendChild(fixedBtn);
+      }
+    }
+
     overlay.classList.add('active');
     overlay.style.display='flex';
     overlay._isOpen = true;
     document.body.classList.add('modal-open');
     document.body.style.overflow='hidden';
 
-    console.log('[ULTIMATE] 단일 오픈 완료 - 늘어남 없음');
+    // 스크롤/리사이즈 유발하는 추가 setTimeout 제거 - 늘어남 원천 차단
   };
 
-  // 3. openPhotoLightbox를 위 Safe 버전만 호출하게 - 비동기 재호출 제거
   window.openPhotoLightbox = function(photoKeyOrData, diaryItemOrText){
     var overlay = document.getElementById('photo-lightbox-overlay');
     if(overlay && overlay.classList.contains('active') && overlay._isOpen){
-      console.log('[ULTIMATE] openPhotoLightbox 중복 차단');
       return;
     }
-
     var item = null;
     var src = photoKeyOrData;
-
     if(diaryItemOrText && typeof diaryItemOrText==='object'){
       item = diaryItemOrText;
       if(!src && item.photo){
         try{ src = (typeof getPhotoSrc==='function') ? getPhotoSrc(item.photo) : ''; }catch(e){}
       }
     }else if(typeof diaryItemOrText==='string'){
-      // 텍스트만 있는 경우
       item = {text: diaryItemOrText, anniversary: diaryItemOrText};
     }
-
-    // item이 src를 포함하는 경우
     if(!item && src && typeof src==='object'){
       item = src;
       src = item.photo || '';
     }
-
     return window.openPhotoLightboxSafe(src, item);
   };
 
   window.openMemoLightboxOnly = function(text, diaryItem){
-    return window.openPhotoLightbox(null, diaryItem || {text: text, anniversary: text});
+    var dItem = diaryItem || {};
+    if(!dItem.anniversary && text) dItem.anniversary = text;
+    if(!dItem.text && text) dItem.text = text;
+    return window.openPhotoLightbox(null, dItem);
   };
 
   window.closePhotoLightbox = function(e){
@@ -17337,12 +17383,16 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
       overlay._isOpen = false;
     }
     var imgEl = document.getElementById('photo-lightbox-img');
-    if(imgEl){ imgEl.src=''; imgEl.style.display='none'; }
+    if(imgEl){ imgEl.src=''; imgEl.style.display='none'; imgEl.style.transform='none'; }
+    var memoEl = document.getElementById('photo-lightbox-memo');
+    if(memoEl) memoEl.style.display='none';
+    var titleEl = document.getElementById('photo-lightbox-title');
+    if(titleEl) titleEl.style.display='none';
     document.body.classList.remove('modal-open');
     document.body.style.overflow='';
   };
 
-  // 4. 크기 변경하는 interval/setTimeout 모두 무력화
+  // 크기 변경 interval 차단
   var origSetInterval = window.setInterval;
   window.setInterval = function(fn, delay){
     var s = fn.toString();
@@ -17352,7 +17402,6 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
     return origSetInterval.apply(this, arguments);
   };
 
-  // CSS로 늘어나는 애니메이션 차단
   var css = document.createElement('style');
   css.textContent = `
     #photo-lightbox-overlay, #photo-lightbox-content, #photo-lightbox-img, #photo-lightbox-memo {
@@ -17365,16 +17414,28 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
       justify-content: center !important;
       overflow-y: auto !important;
     }
-    #photo-lightbox-content {
-      flex-shrink: 0 !important;
-      transform: none !important;
+    #photo-lightbox-overlay.active #photo-lightbox-fixed-close {
+      display: block !important;
+      pointer-events: auto !important;
+    }
+    #photo-lightbox-title {
+      display: block !important;
+      color: #fff !important;
+      font-size: 13px !important;
+      font-weight: 800 !important;
+      text-align: center !important;
+      margin-bottom: 8px !important;
+    }
+    #photo-lightbox-fixed-close {
+      display: none;
     }
   `;
   document.head.appendChild(css);
 
-  console.log('[V3_1 ULTIMATE] 패치 완료 - 시간차 늘어남 제거, 제목+아이콘 유지');
+  console.log('[V3_1 FIXED] 제목+종료버튼 복구, 늘어남 제거 완료');
 })();
 </script>
+
 
 </body>
 </html>
