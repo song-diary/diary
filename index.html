@@ -2241,7 +2241,25 @@ body { touch-action: pan-x pan-y pinch-zoom !important; }
             cursor: zoom-in !important;
             touch-action: pan-x pan-y pinch-zoom !important;
         }
-        /* old #photo-lightbox CSS removed */
+        #photo-lightbox {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 99999;
+            align-items: center;
+            justify-content: center;
+            touch-action: pan-x pan-y pinch-zoom !important;
+        }
+        #photo-lightbox.show {
+            display: flex !important;
+        }
+        #photo-lightbox img {
+            max-width: 100vw !important;
+            max-height: 100vh !important;
+            object-fit: contain !important;
+            touch-action: pan-x pan-y pinch-zoom !important;
+        }
 
 
 /* ===== V149 SINGLE - 절기/기념일 좌측정렬 고정 ===== */
@@ -10130,7 +10148,41 @@ async function showPhotosForDate(dateStr){
     window.addEventListener('load', autoResizeCalendar);
 })();
 </script>
-<!-- V195 old lightbox removed to fix double open -->
+<script>
+
+        /* V195 개선: 사진 클릭 확대 - 이벤트 위임으로 최적화, MutationObserver 제거 */
+        (function(){
+            function openLightbox(src){
+                const lb = document.getElementById('photo-lightbox');
+                const lbImg = document.getElementById('lightbox-img');
+                if (lb && lbImg) {
+                    lbImg.src = src;
+                    lb.classList.add('show');
+                    lb.style.display = 'flex';
+                    document.body.style.overflow = 'hidden';
+                }
+            }
+            // 이벤트 위임: diary 패널에서만 감지
+            document.addEventListener('click', function(e){
+                const target = e.target;
+                // 사진 클릭
+                if(target.matches && target.matches('.diary-photo-wrap img')){
+                    e.stopPropagation();
+                    openLightbox(target.src);
+                    return;
+                }
+                // 라이트박스 닫기
+                const lb = document.getElementById('photo-lightbox');
+                if (!lb) return;
+                if (e.target.id === 'photo-lightbox' || e.target.id === 'lightbox-img') {
+                    lb.classList.remove('show');
+                    lb.style.display = 'none';
+                    document.body.style.overflow = '';
+                }
+            });
+        })();
+
+</script>
 <script>
 
                 (function(){
@@ -17168,172 +17220,6 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
   setTimeout(attachWholeBoxOpen, 500);
   setTimeout(attachWholeBoxOpen, 1500);
   console.log('[V360_1] 사진없는 항목 박스 전체 더블탭으로 열리게 통합');
-})();
-</script>
-
-
-<script id="v365-fix-double-lightbox">
-// V365 FIX: 이중으로 열리는 라이트박스 근본 수정 - 사용자 요청
-(function(){
-  console.log('[V365] 이중 라이트박스 수정 시작');
-
-  // 1. 구형 라이트박스 완전 무력화
-  window.openLightbox = function(){ console.log('[V365] old openLightbox blocked'); return; };
-
-  // 기존 #photo-lightbox 요소가 있으면 제거 (나중에 뜨는 큰 화면)
-  var oldLb = document.getElementById('photo-lightbox');
-  if(oldLb){ oldLb.remove(); console.log('[V365] old #photo-lightbox removed'); }
-  var oldLbImg = document.getElementById('lightbox-img');
-  if(oldLbImg && oldLbImg.closest('#photo-lightbox')){ /* already removed */ }
-  // 혹시 남아있는 오래된 요소 제거
-  document.querySelectorAll('#photo-lightbox, #lightbox-img').forEach(function(el){ el.remove(); });
-
-  // 2. 중복 open 방지 플래그
-  var isOpening = false;
-  var lastOpenTime = 0;
-
-  // 원본 open 함수들을 하나로 통합 - 가장 안정적인 Safe 버전만 사용
-  var originalSafe = window.openPhotoLightboxSafe;
-  
-  // 기존에 겹겹이 래핑된 openPhotoLightbox를 완전히 새로 정의
-  window.openPhotoLightbox = function(photoKeyOrData, diaryItemOrText){
-    var now = Date.now();
-    if(isOpening && (now - lastOpenTime) < 600){
-      console.log('[V365] 중복 열기 차단');
-      return;
-    }
-    isOpening = true;
-    lastOpenTime = now;
-
-    try{
-      var imgEl = document.getElementById('photo-lightbox-img');
-      var memoEl = document.getElementById('photo-lightbox-memo');
-      var dateEl = document.getElementById('photo-lightbox-date');
-      var overlay = document.getElementById('photo-lightbox-overlay');
-      var content = document.getElementById('photo-lightbox-content');
-      var titleEl = document.getElementById('photo-lightbox-title');
-
-      if(!overlay || !imgEl){
-        console.log('[V365] overlay/img 없음');
-        isOpening = false;
-        return;
-      }
-
-      // 기존 내용 초기화 (이중 잔상 제거)
-      if(imgEl){ imgEl.src=''; imgEl.style.display='none'; imgEl.style.transform='none'; }
-      
-      var src = null;
-      var memoText = '';
-      var dateText = '';
-      var diaryItem = null;
-
-      if(typeof diaryItemOrText === 'object' && diaryItemOrText !== null){
-        diaryItem = diaryItemOrText;
-        // diaryItem에서 텍스트 추출
-        if(diaryItem.text) memoText = diaryItem.text;
-        else if(diaryItem.anniversary) memoText = diaryItem.anniversary;
-        if(diaryItem.date) dateText = diaryItem.date;
-        if(diaryItem.photo){
-          try{ if(typeof getPhotoSrc === 'function') src = getPhotoSrc(diaryItem.photo); }catch(e){}
-          if(!src) src = photoKeyOrData;
-        } else {
-          src = photoKeyOrData;
-        }
-      } else if(typeof diaryItemOrText === 'string'){
-        memoText = diaryItemOrText;
-        src = photoKeyOrData;
-      } else {
-        src = photoKeyOrData;
-      }
-
-      // src가 photoKey일 경우 실제 src로 변환
-      if(src && typeof src === 'string' && src.length < 200 && !src.startsWith('data:') && !src.startsWith('http') && !src.startsWith('blob:')){
-        try{
-          if(typeof getPhotoSrc === 'function'){
-            var realSrc = getPhotoSrc(src);
-            if(realSrc) src = realSrc;
-          }
-        }catch(e){}
-      }
-
-      // 이미지 표시
-      if(src && typeof src === 'string' && (src.startsWith('data:') || src.startsWith('http') || src.startsWith('blob:') || src.length > 100)){
-        imgEl.src = src;
-        imgEl.style.display = 'block';
-        overlay.classList.remove('no-photo');
-        if(content) content.classList.remove('no-photo');
-      } else {
-        imgEl.style.display='none';
-        imgEl.src='';
-        overlay.classList.add('no-photo');
-        if(content) content.classList.add('no-photo');
-      }
-
-      // 메모 표시
-      if(memoEl){
-        if(memoText){
-          memoEl.textContent = memoText;
-          memoEl.style.display='block';
-        } else {
-          // 텍스트 없으면 숨김 (제목만 있는 경우는 diaryItem.anniversary로 이미 처리됨)
-          memoEl.style.display = memoText ? 'block' : 'none';
-          if(!memoText && diaryItem && diaryItem.anniversary){
-            memoEl.textContent = '📌 ' + diaryItem.anniversary;
-            memoEl.style.display='block';
-          }
-        }
-      }
-
-      if(dateEl){
-        dateEl.textContent = dateText || '';
-        dateEl.style.display = dateText ? 'block' : 'none';
-      }
-
-      if(titleEl){
-        titleEl.textContent = diaryItem && diaryItem.anniversary ? diaryItem.anniversary : '';
-      }
-
-      overlay.classList.add('active');
-      overlay.style.display='flex';
-      document.body.classList.add('modal-open');
-      document.body.style.overflow='hidden';
-
-      // 고정 종료 버튼이 overlay 안으로
-      setTimeout(function(){
-        var fixedBtn = document.getElementById('photo-lightbox-fixed-close');
-        if(fixedBtn && overlay && fixedBtn.parentElement !== overlay){
-          overlay.appendChild(fixedBtn);
-        }
-      }, 10);
-
-    }catch(err){
-      console.error('[V365] open error', err);
-    }finally{
-      setTimeout(function(){ isOpening = false; }, 700);
-    }
-  };
-
-  window.openMemoLightboxOnly = function(text, diaryItem){
-    return window.openPhotoLightbox(null, diaryItem || text);
-  };
-
-  window.closePhotoLightbox = function(e){
-    if(e) e.stopPropagation();
-    var overlay = document.getElementById('photo-lightbox-overlay');
-    if(overlay){
-      overlay.classList.remove('active');
-      overlay.style.display='none';
-    }
-    var imgEl = document.getElementById('photo-lightbox-img');
-    if(imgEl){ imgEl.src=''; imgEl.style.display='none'; imgEl.style.transform='none'; }
-    document.body.classList.remove('modal-open');
-    document.body.style.overflow='';
-    isOpening = false;
-  };
-
-  // 기존에 document에 걸린 중복 click 리스너들이 또 열지 못하도록 캡처 단계에서 차단
-  // (우리가 만든 overlay 외에는 새로 열지 않음)
-  console.log('[V365] 이중 라이트박스 수정 완료 - 단일 overlay만 사용');
 })();
 </script>
 
