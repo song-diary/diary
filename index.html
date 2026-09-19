@@ -17224,123 +17224,155 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 </script>
 
 
-
-<script id="v3_1-final-no-grow">
+<script id="v3_1-ultimate-no-grow">
 (function(){
-  console.log('[V3_1 no-grow] 늘어남 완전 차단');
+  console.log('[V3_1 ULTIMATE] 시간차 늘어남 근본 제거');
 
-  // 구형 큰 화면 제거
+  // 1. 구형 라이트박스 완전 제거
   window.openLightbox = function(){ return; };
   function killOld(){ document.querySelectorAll('#photo-lightbox, #lightbox-img').forEach(function(el){ el.remove(); }); }
   killOld();
   new MutationObserver(killOld).observe(document.body, {childList:true, subtree:true});
 
-  // CSS로 transition/animation 제거 - 늘어나는 애니메이션 자체를 막음
-  var style = document.createElement('style');
-  style.id='v3_1-no-grow-css';
-  style.textContent = `
-    #photo-lightbox-overlay, #photo-lightbox-overlay.active,
-    #photo-lightbox-content, #photo-lightbox-img, #photo-lightbox-memo {
+  // 2. 모든 비동기 src 재설정 차단 - 이게 시간차 늘어남의 핵심 원인
+  // openPhotoLightboxSafe가 빈 src로 먼저 열고 나중에 src를 넣어서 커지는 현상
+  window.openPhotoLightboxSafe = function(src, item, dateStr, totalCount){
+    var overlay = document.getElementById('photo-lightbox-overlay');
+    var imgEl = document.getElementById('photo-lightbox-img');
+    var memoEl = document.getElementById('photo-lightbox-memo');
+    var dateEl = document.getElementById('photo-lightbox-date');
+    if(!overlay || !imgEl) return;
+
+    // 이미 열려있으면 무시 - 늘어남 방지
+    if(overlay.classList.contains('active') && overlay._isOpen){
+      console.log('[ULTIMATE] 이미 열려있음 - 무시');
+      return;
+    }
+
+    // src 확정 (동기적으로만)
+    var finalSrc = src || '';
+    if(!finalSrc && item && item.photo){
+      try{ finalSrc = (typeof getPhotoSrc==='function') ? getPhotoSrc(item.photo) : ''; }catch(e){}
+    }
+
+    // 이미지 먼저 세팅
+    if(finalSrc && (finalSrc.startsWith('data:') || finalSrc.startsWith('blob:') || finalSrc.startsWith('http') || finalSrc.length>100)){
+      imgEl.src = finalSrc;
+      imgEl.style.display='block';
+    }else{
+      imgEl.style.display='none';
+      imgEl.src='';
+    }
+
+    // 메모/제목 - 원본의 제목+아이콘 로직 유지 (📌 포함)
+    var memoText = '';
+    if(item){
+      if(item.text) memoText = item.text;
+      else if(item.anniversary) memoText = '📌 ' + item.anniversary;
+    }
+    if(memoEl){
+      if(memoText){
+        memoEl.textContent = memoText;
+        memoEl.style.display='block';
+      }else{
+        memoEl.style.display='none';
+      }
+    }
+
+    if(dateEl && item && item.date){
+      dateEl.textContent = item.date;
+      dateEl.style.display='block';
+    }
+
+    // 한번에 열기 - 이후에 크기 변경 없음
+    overlay.classList.add('active');
+    overlay.style.display='flex';
+    overlay._isOpen = true;
+    document.body.classList.add('modal-open');
+    document.body.style.overflow='hidden';
+
+    console.log('[ULTIMATE] 단일 오픈 완료 - 늘어남 없음');
+  };
+
+  // 3. openPhotoLightbox를 위 Safe 버전만 호출하게 - 비동기 재호출 제거
+  window.openPhotoLightbox = function(photoKeyOrData, diaryItemOrText){
+    var overlay = document.getElementById('photo-lightbox-overlay');
+    if(overlay && overlay.classList.contains('active') && overlay._isOpen){
+      console.log('[ULTIMATE] openPhotoLightbox 중복 차단');
+      return;
+    }
+
+    var item = null;
+    var src = photoKeyOrData;
+
+    if(diaryItemOrText && typeof diaryItemOrText==='object'){
+      item = diaryItemOrText;
+      if(!src && item.photo){
+        try{ src = (typeof getPhotoSrc==='function') ? getPhotoSrc(item.photo) : ''; }catch(e){}
+      }
+    }else if(typeof diaryItemOrText==='string'){
+      // 텍스트만 있는 경우
+      item = {text: diaryItemOrText, anniversary: diaryItemOrText};
+    }
+
+    // item이 src를 포함하는 경우
+    if(!item && src && typeof src==='object'){
+      item = src;
+      src = item.photo || '';
+    }
+
+    return window.openPhotoLightboxSafe(src, item);
+  };
+
+  window.openMemoLightboxOnly = function(text, diaryItem){
+    return window.openPhotoLightbox(null, diaryItem || {text: text, anniversary: text});
+  };
+
+  window.closePhotoLightbox = function(e){
+    if(e) e.stopPropagation();
+    var overlay = document.getElementById('photo-lightbox-overlay');
+    if(overlay){
+      overlay.classList.remove('active');
+      overlay.style.display='none';
+      overlay._isOpen = false;
+    }
+    var imgEl = document.getElementById('photo-lightbox-img');
+    if(imgEl){ imgEl.src=''; imgEl.style.display='none'; }
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow='';
+  };
+
+  // 4. 크기 변경하는 interval/setTimeout 모두 무력화
+  var origSetInterval = window.setInterval;
+  window.setInterval = function(fn, delay){
+    var s = fn.toString();
+    if(s.includes('fixLightbox') || s.includes('fixV361') || s.includes('fixBottom') || s.includes('checkNoPhoto') || s.includes('syncDuplicate')){
+      return 0;
+    }
+    return origSetInterval.apply(this, arguments);
+  };
+
+  // CSS로 늘어나는 애니메이션 차단
+  var css = document.createElement('style');
+  css.textContent = `
+    #photo-lightbox-overlay, #photo-lightbox-content, #photo-lightbox-img, #photo-lightbox-memo {
       transition: none !important;
       animation: none !important;
     }
     #photo-lightbox-overlay.active {
       display: flex !important;
-      align-items: center !important;
+      align-items: flex-start !important;
       justify-content: center !important;
+      overflow-y: auto !important;
     }
     #photo-lightbox-content {
-      max-height: 90vh !important;
-      overflow-y: auto !important;
+      flex-shrink: 0 !important;
       transform: none !important;
     }
-    #photo-lightbox-fixed-close {
-      position: fixed !important;
-      bottom: 0 !important;
-      height: 60px !important;
-    }
   `;
-  document.head.appendChild(style);
+  document.head.appendChild(css);
 
-  // 원본 open을 래핑하되, 두번째 호출시 크기 변경 없이 내용만 유지
-  var origOpen = window.openPhotoLightbox;
-  var isOpen = false;
-  var openTimer = null;
-
-  if(origOpen && !origOpen._noGrow){
-    window.openPhotoLightbox = function(a,b){
-      var overlay = document.getElementById('photo-lightbox-overlay');
-      var nowActive = overlay && overlay.classList.contains('active');
-
-      // 이미 열려있으면 두번째 호출은 완전 무시 (늘어남 원인 차단)
-      if(nowActive && isOpen){
-        console.log('[V3_1] 이미 열림 - 두번째 호출 무시로 늘어남 방지');
-        return;
-      }
-
-      isOpen = true;
-      // 원본 호출
-      var result = origOpen.apply(this, arguments);
-
-      // 열린 직후 스크롤/리사이즈 유발하는 setTimeout들을 무력화
-      // - memo scrollIntoView 제거
-      // - fixed 버튼 append로 인한 리플로우 방지: 이미 overlay 안에 있으면 재append 안함
-      setTimeout(function(){
-        var fixedBtn = document.getElementById('photo-lightbox-fixed-close');
-        var ov = document.getElementById('photo-lightbox-overlay');
-        if(fixedBtn && ov && fixedBtn.parentElement !== ov){
-          // 고정 버튼을 overlay에 넣되, content 크기에는 영향 없게
-          ov.appendChild(fixedBtn);
-        }
-      }, 50);
-
-      // 1초 후 플래그 해제 (닫을 때까지는 차단 유지)
-      clearTimeout(openTimer);
-      // isOpen은 close때까지 유지
-
-      return result;
-    };
-    window.openPhotoLightbox._noGrow = true;
-  }
-
-  var origMemo = window.openMemoLightboxOnly;
-  if(origMemo && !origMemo._noGrow){
-    window.openMemoLightboxOnly = function(a,b){
-      var overlay = document.getElementById('photo-lightbox-overlay');
-      var nowActive = overlay && overlay.classList.contains('active');
-      if(nowActive && isOpen){
-        console.log('[V3_1] memo 중복 무시');
-        return;
-      }
-      isOpen = true;
-      return origMemo.apply(this, arguments);
-    };
-    window.openMemoLightboxOnly._noGrow = true;
-  }
-
-  var origClose = window.closePhotoLightbox;
-  if(origClose && !origClose._noGrow){
-    window.closePhotoLightbox = function(e){
-      isOpen = false;
-      if(e) e.stopPropagation();
-      return origClose.apply(this, arguments);
-    };
-    window.closePhotoLightbox._noGrow = true;
-  }
-
-  // 기존에 setInterval로 계속 크기를 바꾸는 코드들 무력화
-  // V361, V360 등에서 주기적으로 fixLightboxLayout 호출하는 것 차단
-  var originalSetInterval = window.setInterval;
-  window.setInterval = function(fn, delay){
-    var fnStr = fn.toString();
-    if(fnStr.includes('fixLightbox') || fnStr.includes('fixV361') || fnStr.includes('fixBottomVisible') || fnStr.includes('hideActions')){
-      console.log('[V3_1] 크기 변경 interval 차단');
-      return 0;
-    }
-    return originalSetInterval.apply(this, arguments);
-  };
-
-  console.log('[V3_1 no-grow] 적용 완료');
+  console.log('[V3_1 ULTIMATE] 패치 완료 - 시간차 늘어남 제거, 제목+아이콘 유지');
 })();
 </script>
 
