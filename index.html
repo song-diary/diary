@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>Smart Diary V3_4 - 제목만 분리</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>Smart Diary V3_4 - 제목만 분리 최종</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -17224,203 +17224,112 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 </script>
 
 
-
-
-
-<script id="v3_4-title-only-fix">
+<script id="v3_4-final">
 (function(){
-  console.log('[V3_4] 제목만 있을 때 내용 복사 방지');
-
-  // 기존 CSS 유지, 필요하면 재주입
+  console.log('[V3_4] 최종 표준: 왼쪽 정렬, 크림 배경, 제목만일 때 내용 복사 금지');
+  window.openLightbox = function(){ return; };
+  document.querySelectorAll('#photo-lightbox, #lightbox-img').forEach(function(el){ el.remove(); });
   var css = document.createElement('style');
   css.id='v3_4-css';
   css.textContent = `
-    #photo-lightbox-title {
-      display: flex !important;
-      justify-content: flex-start !important;
-      text-align: left !important;
-      background: #FFF9E6 !important;
-      background-color: #FFF9E6 !important;
-      color: #3D2F1F !important;
-      border-left: 1px solid #E8DCC0 !important;
-      border-right: 1px solid #E8DCC0 !important;
-      border-top: none !important;
-      border-bottom: none !important;
-      padding: 12px 16px !important;
-      font-size: 15px !important;
-      font-weight: 800 !important;
-      margin: 0 !important;
-      width: 100% !important;
-      box-sizing: border-box !important;
+    #photo-lightbox-overlay.active #photo-lightbox-content #photo-lightbox-title {
+      display:flex !important; justify-content:flex-start !important; text-align:left !important;
+      background:#FFF9E6 !important; background-color:#FFF9E6 !important; color:#3D2F1F !important;
+      border-left:1px solid #E8DCC0 !important; border-right:1px solid #E8DCC0 !important; border-top:none !important; border-bottom:none !important;
+      padding:12px 16px !important; margin:0 !important; width:100% !important; box-sizing:border-box !important;
+      font-size:15px !important; font-weight:800 !important; line-height:1.4 !important;
     }
-    #photo-lightbox-title.no-photo {
-      border-top: 1px solid #E8DCC0 !important;
-      border-radius: 12px 12px 0 0 !important;
-    }
-    #photo-lightbox-memo {
-      background: #FFF9E6 !important;
-      background-color: #FFF9E6 !important;
-      border: 1px solid #E8DCC0 !important;
-      border-top: none !important;
-      border-radius: 0 0 12px 12px !important;
-      text-align: left !important;
-      margin: 0 !important;
-      width: 100% !important;
-    }
-    #photo-lightbox-memo.no-photo-mode {
-      border-top: 1px solid #E8DCC0 !important;
-      border-radius: 12px !important;
-    }
-    #photo-lightbox-img {
-      border: 1px solid #E8DCC0 !important;
-      border-bottom: none !important;
-      border-radius: 12px 12px 0 0 !important;
-      margin: 0 !important;
-      width: 100% !important;
-    }
-    #photo-lightbox-content {
-      gap: 0 !important;
-      background: transparent !important;
-    }
+    #photo-lightbox-title.no-photo { border-top:1px solid #E8DCC0 !important; border-radius:12px 12px 0 0 !important; }
+    #photo-lightbox-img { border:1px solid #E8DCC0 !important; border-bottom:none !important; border-radius:12px 12px 0 0 !important; margin:0 !important; width:100% !important; }
+    #photo-lightbox-memo { background:#FFF9E6 !important; background-color:#FFF9E6 !important; color:#3D2F1F !important; border:1px solid #E8DCC0 !important; border-top:none !important; border-radius:0 0 12px 12px !important; text-align:left !important; margin:0 !important; width:100% !important; padding:16px !important; box-sizing:border-box !important; }
+    #photo-lightbox-memo.no-photo-mode { border-top:1px solid #E8DCC0 !important; border-radius:12px !important; }
+    #photo-lightbox-content { gap:0 !important; background:transparent !important; display:flex !important; flex-direction:column !important; width:100% !important; max-width:520px !important; margin:0 auto !important; }
+    #photo-lightbox-overlay, #photo-lightbox-content, #photo-lightbox-img, #photo-lightbox-memo, #photo-lightbox-title { transition:none !important; animation:none !important; }
+    #photo-lightbox-overlay.active { display:flex !important; align-items:flex-start !important; justify-content:center !important; overflow-y:auto !important; padding:10px 10px 100px 10px !important; }
+    #photo-lightbox-overlay.active #photo-lightbox-fixed-close { display:block !important; pointer-events:auto !important; }
   `;
   document.head.appendChild(css);
 
   function ensureTitleEl(){
-    var content = document.getElementById('photo-lightbox-content');
-    var imgEl = document.getElementById('photo-lightbox-img');
-    var memoEl = document.getElementById('photo-lightbox-memo');
-    var titleEl = document.getElementById('photo-lightbox-title');
-    if(!titleEl){
-      titleEl = document.createElement('div');
-      titleEl.id='photo-lightbox-title';
+    var c=document.getElementById('photo-lightbox-content');
+    var img=document.getElementById('photo-lightbox-img');
+    var memo=document.getElementById('photo-lightbox-memo');
+    var t=document.getElementById('photo-lightbox-title');
+    if(!t){ t=document.createElement('div'); t.id='photo-lightbox-title'; }
+    if(c && img && memo){
+      if(!c.contains(img)) c.prepend(img);
+      if(!c.contains(t)) c.insertBefore(t, memo);
+      c.insertBefore(img, t);
+      c.insertBefore(t, memo);
     }
-    if(content && imgEl && memoEl){
-      // 순서: img -> title -> memo
-      if(imgEl.parentElement===content) content.insertBefore(titleEl, memoEl);
-      else {
-        content.prepend(imgEl);
-        content.insertBefore(titleEl, memoEl);
-      }
-    }
-    return titleEl;
+    return t;
   }
 
-  // 핵심 수정: 제목만 있을 때 내용란에 제목 복사 안함
-  window.openPhotoLightboxSafe = function(src, item){
-    var overlay = document.getElementById('photo-lightbox-overlay');
-    var imgEl = document.getElementById('photo-lightbox-img');
-    var memoEl = document.getElementById('photo-lightbox-memo');
-    var dateEl = document.getElementById('photo-lightbox-date');
-    if(!overlay || !imgEl) return;
-    if(overlay.classList.contains('active') && overlay._isOpen) return;
-
-    var finalSrc = src || '';
-    if(!finalSrc && item && item.photo){
-      try{ finalSrc = (typeof getPhotoSrc==='function') ? getPhotoSrc(item.photo) : ''; }catch(e){}
-    }
-
-    if(finalSrc && finalSrc.length>20){
-      imgEl.src = finalSrc;
-      imgEl.style.display='block';
-    }else{
-      imgEl.style.display='none';
-      imgEl.src='';
-    }
-
-    var titleEl = ensureTitleEl();
-    var hasTitle = !!(item && item.anniversary && item.anniversary.trim());
-    var titleText = hasTitle ? item.anniversary.trim() : '';
-    // 내용란에는 item.text만 사용, 제목은 절대 복사 안함
-    var contentText = (item && item.text) ? item.text.trim() : '';
-
+  window.openPhotoLightboxSafe = function(src,item){
+    var overlay=document.getElementById('photo-lightbox-overlay');
+    var img=document.getElementById('photo-lightbox-img');
+    var memo=document.getElementById('photo-lightbox-memo');
+    var dateEl=document.getElementById('photo-lightbox-date');
+    if(!overlay||!img) return;
+    if(overlay.classList.contains('active')&&overlay._isOpen) return;
+    var finalSrc=src||'';
+    if(!finalSrc&&item&&item.photo){ try{ finalSrc=(typeof getPhotoSrc==='function')?getPhotoSrc(item.photo):''; }catch(e){} }
+    if(finalSrc&&finalSrc.length>20){ img.src=finalSrc; img.style.display='block'; }else{ img.style.display='none'; img.src=''; }
+    var titleEl=ensureTitleEl();
+    var hasTitle=!!(item&&item.anniversary&&item.anniversary.trim());
+    var titleText=hasTitle?item.anniversary.trim():'';
+    var contentText=(item&&item.text)?item.text.trim():'';
     if(titleEl){
-      titleEl.classList.toggle('no-photo', !finalSrc || imgEl.style.display==='none');
-      if(hasTitle){
-        titleEl.innerHTML = '<span class="pin">📌</span><span class="title-text">' + titleText.replace(/</g,'&lt;') + '</span>';
-      }else{
-        titleEl.innerHTML = '<span class="pin">📌</span><span class="title-text">&nbsp;</span>';
-      }
+      titleEl.classList.toggle('no-photo', !finalSrc || img.style.display==='none');
+      titleEl.innerHTML=hasTitle?'<span class="pin">📌</span><span class="title-text">'+titleText.replace(/</g,'&lt;')+'</span>':'<span class="pin">📌</span><span class="title-text">&nbsp;</span>';
       titleEl.style.display='flex';
+      titleEl.style.setProperty('background','#FFF9E6','important');
+      titleEl.style.setProperty('justify-content','flex-start','important');
     }
-
-    if(memoEl){
+    if(memo){
       if(contentText){
-        memoEl.textContent = contentText;
-        memoEl.style.display='block';
-        memoEl.classList.remove('no-photo-mode');
-        if(!finalSrc || imgEl.style.display==='none') memoEl.classList.add('no-photo-mode');
+        memo.textContent=contentText;
+        memo.style.display='block';
+        memo.classList.remove('no-photo-mode');
+        if(!finalSrc || img.style.display==='none') memo.classList.add('no-photo-mode');
       }else{
-        // 내용 없으면 내용란 숨김 - 제목만 표시 (제목이 내용란에 복사되는 문제 해결)
-        memoEl.style.display='none';
-        memoEl.textContent='';
+        memo.style.display='none';
+        memo.textContent='';
       }
     }
-
     if(dateEl) dateEl.style.display='none';
-
-    var fixedBtn = document.getElementById('photo-lightbox-fixed-close');
-    if(fixedBtn){
-      fixedBtn.style.display='block';
-      if(fixedBtn.parentElement !== overlay) overlay.appendChild(fixedBtn);
-    }
-
-    overlay.classList.add('active');
-    overlay.style.display='flex';
-    overlay._isOpen = true;
-    document.body.classList.add('modal-open');
-    document.body.style.overflow='hidden';
+    var fixedBtn=document.getElementById('photo-lightbox-fixed-close');
+    if(fixedBtn){ fixedBtn.style.display='block'; if(fixedBtn.parentElement!==overlay) overlay.appendChild(fixedBtn); }
+    overlay.classList.add('active'); overlay.style.display='flex'; overlay._isOpen=true;
+    document.body.classList.add('modal-open'); document.body.style.overflow='hidden';
   };
 
-  // openMemoLightboxOnly도 동일하게 - 제목을 내용으로 복사하지 않음
-  window.openMemoLightboxOnly = function(text, diaryItem){
-    var dItem = diaryItem || {};
-    // text가 실제 내용인지 제목인지 구분: diaryItem.text가 있으면 그걸 내용으로, 없으면 text를 내용으로 하되 제목 복사 금지
-    // 만약 diaryItem에 anniversary만 있고 text가 없으면, 내용 없이 제목만
+  window.openPhotoLightbox=function(photoKeyOrData,diaryItemOrText){
+    var overlay=document.getElementById('photo-lightbox-overlay');
+    if(overlay&&overlay.classList.contains('active')&&overlay._isOpen) return;
+    var item=null,src=photoKeyOrData;
+    if(diaryItemOrText&&typeof diaryItemOrText==='object'){ item=diaryItemOrText; if(!src&&item.photo){ try{ src=getPhotoSrc(item.photo)||''; }catch(e){} } }
+    else if(typeof diaryItemOrText==='string'){ item={text:diaryItemOrText, anniversary:''}; }
+    if(!item&&src&&typeof src==='object'){ item=src; src=item.photo||''; }
+    return window.openPhotoLightboxSafe(src,item);
+  };
+
+  window.openMemoLightboxOnly=function(text,diaryItem){
+    var dItem=diaryItem||{};
     if(!dItem.text && text){
-      // text가 제목과 같으면 내용으로 취급하지 않음
-      if(dItem.anniversary && text.trim() === dItem.anniversary.trim()){
-        // 제목만인 경우 - 내용 없음
+      if(dItem.anniversary && text.trim()===dItem.anniversary.trim()){
+        // 제목만 - 내용 없음
       }else{
-        dItem.text = text;
+        dItem.text=text;
       }
     }
-    return window.openPhotoLightboxSafe(null, dItem);
+    return window.openPhotoLightboxSafe(null,dItem);
   };
 
-  window.openPhotoLightbox = function(photoKeyOrData, diaryItemOrText){
-    var overlay = document.getElementById('photo-lightbox-overlay');
-    if(overlay && overlay.classList.contains('active') && overlay._isOpen) return;
-    var item = null;
-    var src = photoKeyOrData;
-    if(diaryItemOrText && typeof diaryItemOrText==='object'){
-      item = diaryItemOrText;
-      if(!src && item.photo){
-        try{ src = (typeof getPhotoSrc==='function') ? getPhotoSrc(item.photo) : ''; }catch(e){}
-      }
-    }else if(typeof diaryItemOrText==='string'){
-      // 문자열만 넘어온 경우 내용으로 취급, 제목 없음
-      item = {text: diaryItemOrText, anniversary: ''};
-    }
-    if(!item && src && typeof src==='object'){
-      item = src;
-      src = item.photo || '';
-    }
-    return window.openPhotoLightboxSafe(src, item);
-  };
-
-  window.closePhotoLightbox = function(e){
-    if(e) e.stopPropagation();
-    var overlay = document.getElementById('photo-lightbox-overlay');
-    if(overlay){
-      overlay.classList.remove('active');
-      overlay.style.display='none';
-      overlay._isOpen = false;
-    }
-    document.body.classList.remove('modal-open');
-    document.body.style.overflow='';
-  };
-
-  console.log('[V3_4] 수정 완료: 제목만 있을 때 내용란 복사 안함');
+  window.closePhotoLightbox=function(e){ if(e) e.stopPropagation(); var o=document.getElementById('photo-lightbox-overlay'); if(o){ o.classList.remove('active'); o.style.display='none'; o._isOpen=false; } document.body.classList.remove('modal-open'); document.body.style.overflow=''; };
+  var origSetInterval=window.setInterval;
+  window.setInterval=function(fn,delay){ var s=fn.toString(); if(s.includes('fixLightbox')||s.includes('fixV361')||s.includes('fixBottom')||s.includes('checkNoPhoto')) return 0; return origSetInterval.apply(this,arguments); };
+  console.log('[V3_4] 최종 적용 완료');
 })();
 </script>
 
