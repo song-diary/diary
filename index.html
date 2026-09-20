@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>Smart Diary V3_15 - 처음부터 다시</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 다이어리&가계부 V301-AK 오늘운세자동+맨밑고정종료 - Swing2App+NodeAPK 통합 최종</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -17171,194 +17171,55 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 </script>
 
 <script id="v360_1-whole-box-open">
-</script>
-
-
-<script id="v3_15-from-scratch">
+/* V360_1: 사진 없는 항목(제목만/메모만) - 박스 전체 어디를 눌러도 더블탭으로 열리게 통합 */
 (function(){
-  console.log('[V3_15] 처음부터 다시 - 제목 카피 방지 + 확대 버튼 + 폰 싱글/더블탭');
-
-  // 1. 구형 라이트박스 제거
-  window.openLightbox = function(){ return; };
-  document.querySelectorAll('#photo-lightbox, #lightbox-img').forEach(function(el){ el.remove(); });
-
-  // 2. CSS - 왼쪽 정렬, 크림
-  var css=document.createElement('style');
-  css.id='v3_15-css';
-  css.textContent=`
-    #photo-lightbox-overlay.active{display:flex !important;align-items:flex-start !important;justify-content:center !important;overflow-y:auto !important;padding:10px 10px 100px 10px !important;}
-    #photo-lightbox-content{display:flex !important;flex-direction:column !important;gap:0 !important;width:100% !important;max-width:520px !important;margin:0 auto !important;background:transparent !important;}
-    #photo-lightbox-img{width:100% !important;max-height:70vh !important;object-fit:contain !important;border:1px solid #E8DCC0 !important;border-bottom:none !important;border-radius:12px 12px 0 0 !important;margin:0 !important;background:#000 !important;}
-    #photo-lightbox-content #photo-lightbox-title{display:flex !important;justify-content:flex-start !important;align-items:center !important;gap:6px !important;width:100% !important;margin:0 !important;padding:12px 16px !important;background:#FFF9E6 !important;color:#3D2F1F !important;border:1px solid #E8DCC0 !important;border-radius:12px 12px 0 0 !important;font-size:15px !important;font-weight:800 !important;text-align:left !important;box-sizing:border-box !important;}
-    #photo-lightbox-title.no-photo{border-radius:12px !important;}
-    #photo-lightbox-memo{background:#FFF9E6 !important;color:#3D2F1F !important;border:1px solid #E8DCC0 !important;border-top:none !important;border-radius:0 0 12px 12px !important;text-align:left !important;margin:0 !important;width:100% !important;padding:16px !important;box-sizing:border-box !important;}
-    #photo-lightbox-overlay.active #photo-lightbox-fixed-close{display:block !important;}
-    .sub-memo-item{position:relative !important; cursor:pointer !important;}
-    .v15-zoom-btn{position:absolute !important; top:4px !important; right:4px !important; z-index:99 !important; background:#FFF9E6 !important; border:1px solid #E8DCC0 !important; border-radius:6px !important; padding:3px 8px !important; font-size:11px !important; font-weight:bold !important; color:#3D2F1F !important;}
-  `;
-  document.head.appendChild(css);
-
-  function ensureTitle(){
-    var c=document.getElementById('photo-lightbox-content');
-    var img=document.getElementById('photo-lightbox-img');
-    var memo=document.getElementById('photo-lightbox-memo');
-    var t=document.getElementById('photo-lightbox-title');
-    if(!t){ t=document.createElement('div'); t.id='photo-lightbox-title'; }
-    if(c&&img&&memo){ c.insertBefore(img,t); c.insertBefore(t,memo); }
-    return t;
+  function getItemDisplayText(diaryItem){
+    if(!diaryItem) return '';
+    return diaryItem.text || diaryItem.anniversary || '';
   }
-  function norm(s){ return String(s||'').replace(/📌/g,'').replace(/\s+/g,'').trim(); }
-
-  // 핵심: 제목 카피 절대 안함 - 내용 없을 때 크림박스 자체를 안 만듦
-  window.openPhotoLightboxSafe=function(src,item){
-    var overlay=document.getElementById('photo-lightbox-overlay');
-    var img=document.getElementById('photo-lightbox-img');
-    var memo=document.getElementById('photo-lightbox-memo');
-    if(!overlay||!img) return;
-    if(overlay.classList.contains('active')&&overlay._isOpen) return;
-    var finalSrc=src||'';
-    if(!finalSrc&&item&&item.photo){ try{ finalSrc=getPhotoSrc(item.photo)||''; }catch(e){} }
-    if(finalSrc&&finalSrc.length>20){ img.src=finalSrc; img.style.display='block'; } else { img.style.display='none'; img.src=''; }
-
-    var titleEl=ensureTitle();
-    var hasTitle=!!(item&&item.anniversary&&String(item.anniversary).trim());
-    var titleText=hasTitle?String(item.anniversary).trim():'';
-    var rawContent=(item&&typeof item.text==='string')?item.text:'';
-    var contentText=rawContent.trim();
-
-    if(titleEl){
-      titleEl.classList.toggle('no-photo', !finalSrc||img.style.display==='none');
-      if(hasTitle){
-        titleEl.innerHTML='<span class="pin">📌</span><span class="title-text">'+titleText.replace(/</g,'&lt;')+'</span>';
-      }else{
-        titleEl.innerHTML='<span class="pin">📌</span><span class="title-text">&nbsp;</span>';
-      }
-      titleEl.style.display='flex';
-      // 제목만이면 전체 라운드
-      if(!contentText || norm(contentText)===norm(titleText)){
-        if(!finalSrc){ titleEl.style.borderRadius='12px'; titleEl.style.borderBottom='1px solid #E8DCC0'; }
-        else { titleEl.style.borderRadius='0 0 12px 12px'; }
-      }else{
-        titleEl.style.borderRadius='12px 12px 0 0'; titleEl.style.borderBottom='none';
-      }
-    }
-
-    if(memo){
-      var hide=!contentText || (hasTitle && norm(contentText)===norm(titleText));
-      if(hide){
-        memo.style.display='none'; memo.textContent='';
-      }else{
-        memo.textContent=contentText; memo.style.display='block';
-      }
-    }
-    var dateEl=document.getElementById('photo-lightbox-date'); if(dateEl) dateEl.style.display='none';
-    var fixedBtn=document.getElementById('photo-lightbox-fixed-close'); if(fixedBtn){ fixedBtn.style.display='block'; if(fixedBtn.parentElement!==overlay) overlay.appendChild(fixedBtn); }
-    overlay.classList.add('active'); overlay.style.display='flex'; overlay._isOpen=true;
-    document.body.classList.add('modal-open'); document.body.style.overflow='hidden';
-  };
-
-  window.openPhotoLightbox=function(a,b){
-    var overlay=document.getElementById('photo-lightbox-overlay');
-    if(overlay&&overlay.classList.contains('active')&&overlay._isOpen) return;
-    var item=null, src=a;
-    if(b&&typeof b==='object'){ item=b; if(!src&&item.photo){ try{ src=getPhotoSrc(item.photo)||''; }catch(e){} } }
-    else if(typeof b==='string'){ item={text:b, anniversary:''}; }
-    if(!item&&src&&typeof src==='object'){ item=src; src=item.photo||''; }
-    return window.openPhotoLightboxSafe(src,item);
-  };
-  window.openMemoLightboxOnly=function(text, diaryItem){
-    var dItem=diaryItem||{};
-    var ann=String(dItem.anniversary||'').trim();
-    var txt=String(text||'').trim();
-    if(ann&&txt&&norm(txt)===norm(ann)) dItem.text='';
-    else if(text&&typeof dItem.text!=='string'){ if(!ann||norm(txt)!==norm(ann)) dItem.text=text; else dItem.text=''; }
-    if(dItem.text&&ann&&norm(String(dItem.text))===norm(ann)) dItem.text='';
-    return window.openPhotoLightboxSafe(null,dItem);
-  };
-  window.closePhotoLightbox=function(e){ if(e) e.stopPropagation(); var o=document.getElementById('photo-lightbox-overlay'); if(o){ o.classList.remove('active'); o.style.display='none'; o._isOpen=false; } var img=document.getElementById('photo-lightbox-img'); if(img){ img.src=''; img.style.display='none'; } document.body.classList.remove('modal-open'); document.body.style.overflow=''; };
-
-  function getItem(el){
-    try{
-      var html=el.innerHTML;
-      var m=html.match(/deleteDiary\('([^']+)'\)/)||html.match(/deleteDiary\("([^"]+)"\)/);
-      if(m){
-        var id=m[1];
-        var all=(typeof getAllDiaries==='function')?getAllDiaries():[];
-        var f=all.find(function(d){return d.id===id;});
-        if(f) return f;
-      }
-    }catch(e){}
-    return null;
+  function findDiaryItemFromEl(itemEl){
+    var m = itemEl.innerHTML.match(/deleteDiary\('([^']+)'\)/);
+    if(!m) return null;
+    var all = (typeof getAllDiaries === 'function') ? getAllDiaries() : [];
+    return all.find(function(d){ return d.id === m[1]; }) || null;
   }
-  function openEl(el){
-    var item=getItem(el);
-    var img=el.querySelector('.diary-photo, img'); var src=img&&img.src?img.src:'';
-    if(item){
-      if(item.photo||src){ var s=item.photo?getPhotoSrc(item.photo):src; window.openPhotoLightboxSafe(s,item); }
-      else{ window.openMemoLightboxOnly(item.text||item.anniversary||'', item); }
-      return;
-    }
-    var pre=el.getAttribute('data-text-preview')||'';
-    var tA=el.querySelector('.photo-title-area'); var tT=tA?tA.textContent.replace(/📌/g,'').trim():''; 
-    var txA=el.querySelector('.diary-text'); var txC=txA?txA.textContent.trim():pre;
-    if(src){ window.openPhotoLightboxSafe(src,{text:txC,anniversary:tT,photo:src}); }
-    else{ window.openMemoLightboxOnly(txC||tT,{text:txC,anniversary:tT}); }
-  }
-
-  function addZoomButtons(){
-    document.querySelectorAll('.sub-memo-item').forEach(function(el){
-      if(el.querySelector('.v15-zoom-btn')) return;
-      var btn=document.createElement('button');
-      btn.className='v15-zoom-btn';
-      btn.textContent='🔍 확대';
-      btn.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); openEl(el); });
-      btn.addEventListener('touchend', function(e){ e.preventDefault(); e.stopPropagation(); openEl(el); }, {passive:false});
-      el.appendChild(btn);
+  function attachWholeBoxOpen(){
+    document.querySelectorAll('.sub-memo-item.no-photo').forEach(function(itemEl){
+      if(itemEl._v360_1WholeBox) return;
+      itemEl._v360_1WholeBox = true;
+      itemEl.style.cursor = 'pointer';
+      var handler = function(e){
+        // 수정/삭제 버튼, 그리고 기존 "클릭하면 수정폼 열림" 기능이 있는 .diary-text는 제외
+        if(e.target && e.target.closest && e.target.closest('.memo-action-btns, .edit-btn-hidden, .delete-btn, button, .diary-text')) return;
+        var diaryItem = findDiaryItemFromEl(itemEl);
+        var text = getItemDisplayText(diaryItem) || itemEl.getAttribute('data-text-preview') || '';
+        if(!text && !diaryItem) return;
+        if(typeof window.openMemoLightboxOnly === 'function'){
+          window.openMemoLightboxOnly(text, diaryItem || {text: text, date: new Date().toISOString().slice(0,10)});
+        }
+      };
+      // V360_3: 버튼(수정/삭제) 위 터치는 아예 건드리지 않도록 직접 구현 - 공용 attachPhotoDoubleTap은
+      // 모든 touchend에 preventDefault를 걸어서 버튼 클릭까지 막아버리는 문제가 있었음
+      var lastTap = 0;
+      itemEl.addEventListener('touchend', function(e){
+        if(e.target && e.target.closest && e.target.closest('.memo-action-btns, .edit-btn-hidden, .delete-btn, button, .diary-text')) return;
+        e.preventDefault();
+        var now = Date.now();
+        if(now - lastTap < 350){
+          lastTap = 0;
+          handler(e);
+        } else {
+          lastTap = now;
+        }
+      }, {passive:false});
+      itemEl.addEventListener('dblclick', handler);
     });
   }
-
-  // PC 더블클릭
-  document.addEventListener('dblclick', function(e){
-    if(e.target.closest&&e.target.closest('button, .v15-zoom-btn, .memo-action-btns')) return;
-    var box=e.target.closest&&e.target.closest('.sub-memo-item');
-    if(box){ e.preventDefault(); e.stopPropagation(); openEl(box); }
-  }, true);
-
-  // 폰: 사진 싱글탭 확대
-  document.addEventListener('click', function(e){
-    if(e.target.closest&&e.target.closest('button, .v15-zoom-btn, .memo-action-btns')) return;
-    var photo=e.target.closest&&e.target.closest('.diary-photo, .diary-photo-wrap, .diary-photo-wrap img');
-    if(photo){
-      var box=photo.closest('.sub-memo-item');
-      if(box){ e.preventDefault(); e.stopPropagation(); openEl(box); }
-    }
-  }, true);
-
-  // 폰 더블탭
-  var last={t:0,el:null};
-  document.addEventListener('touchend', function(e){
-    if(e.target.closest&&e.target.closest('button, .v15-zoom-btn, .memo-action-btns')) return;
-    var box=e.target.closest&&e.target.closest('.sub-memo-item');
-    if(!box) return;
-    var now=Date.now();
-    if(last.el===box && (now-last.t)<400){
-      last.t=0; last.el=null;
-      e.preventDefault(); e.stopPropagation();
-      openEl(box);
-      return;
-    }
-    last.t=now; last.el=box;
-  }, {passive:false, capture:true});
-
-  addZoomButtons();
-  setTimeout(addZoomButtons, 600);
-  setTimeout(addZoomButtons, 1500);
-  new MutationObserver(addZoomButtons).observe(document.body, {childList:true, subtree:true});
-
-  var origSetInterval=window.setInterval;
-  window.setInterval=function(fn,delay){var s=String(fn); if(s.includes('fixLightbox')||s.includes('fixV361')) return 0; return origSetInterval.apply(this,arguments);};
-
-  console.log('[V3_15] 처음부터 다시 적용 완료 - 확대버튼 + 폰 싱글/더블탭 + 제목 카피 방지');
+  attachWholeBoxOpen();
+  new MutationObserver(attachWholeBoxOpen).observe(document.body, {childList:true, subtree:true});
+  setTimeout(attachWholeBoxOpen, 500);
+  setTimeout(attachWholeBoxOpen, 1500);
+  console.log('[V360_1] 사진없는 항목 박스 전체 더블탭으로 열리게 통합');
 })();
 </script>
 
