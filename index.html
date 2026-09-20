@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>Smart Diary V3_10 - 더블클릭 수정 최종</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>Smart Diary V3_11</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -17223,284 +17223,42 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 })();
 </script>
 
-<script id="v3_10-doubleclick-fixed">
+
+<script id="v3_11-doc-dblclick">
 (function(){
-  console.log('[V3_10] 더블클릭 수정 + 크림박스 카피 방지 - 내용 없을 때 크림박스 자체 제거');
-
-  window.openLightbox = function(){ return; };
-  document.querySelectorAll('#photo-lightbox, #lightbox-img').forEach(function(el){ el.remove(); });
-
-  var css = document.createElement('style');
-  css.id='v3_10-css';
-  css.textContent = `
-    #photo-lightbox-overlay, #photo-lightbox-content, #photo-lightbox-img, #photo-lightbox-memo, #photo-lightbox-title { transition:none !important; animation:none !important; }
-    #photo-lightbox-overlay.active { display:flex !important; align-items:flex-start !important; justify-content:center !important; overflow-y:auto !important; padding:10px 10px 100px 10px !important; }
-    #photo-lightbox-content { display:flex !important; flex-direction:column !important; gap:0 !important; width:100% !important; max-width:520px !important; margin:0 auto !important; background:transparent !important; }
-    #photo-lightbox-img { width:100% !important; max-height:70vh !important; object-fit:contain !important; border:1px solid #E8DCC0 !important; border-bottom:none !important; border-radius:12px 12px 0 0 !important; margin:0 !important; background:#000 !important; }
-    #photo-lightbox-content #photo-lightbox-title {
-      display:flex !important; justify-content:flex-start !important; align-items:center !important; gap:6px !important;
-      width:100% !important; margin:0 !important; padding:12px 16px !important;
-      background:#FFF9E6 !important; background-color:#FFF9E6 !important; color:#3D2F1F !important;
-      border:1px solid #E8DCC0 !important; border-bottom:none !important;
-      border-radius:12px 12px 0 0 !important;
-      font-size:15px !important; font-weight:800 !important; text-align:left !important; line-height:1.4 !important; box-sizing:border-box !important;
-    }
-    #photo-lightbox-title.no-photo { border-radius:12px !important; border-bottom:1px solid #E8DCC0 !important; }
-    #photo-lightbox-memo {
-      background:#FFF9E6 !important; background-color:#FFF9E6 !important; color:#3D2F1F !important;
-      border:1px solid #E8DCC0 !important; border-top:none !important; border-radius:0 0 12px 12px !important;
-      text-align:left !important; margin:0 !important; width:100% !important; padding:16px !important; box-sizing:border-box !important;
-      max-height:none !important; overflow:visible !important;
-    }
-    #photo-lightbox-memo.no-photo-mode { border-top:1px solid #E8DCC0 !important; border-radius:12px !important; }
-    #photo-lightbox-overlay.active #photo-lightbox-fixed-close { display:block !important; }
-  `;
+  console.log('[V3_11] 문서 전체 더블클릭');
+  window.openLightbox=function(){return;};
+  document.querySelectorAll('#photo-lightbox, #lightbox-img').forEach(function(el){el.remove();});
+  var css=document.createElement('style');
+  css.textContent="#photo-lightbox-overlay.active{display:flex !important;align-items:flex-start !important;justify-content:center !important;padding:10px 10px 100px 10px !important;} #photo-lightbox-content{display:flex !important;flex-direction:column !important;gap:0 !important;width:100% !important;max-width:520px !important;margin:0 auto !important;background:transparent !important;} #photo-lightbox-img{width:100% !important;max-height:70vh !important;object-fit:contain !important;border:1px solid #E8DCC0 !important;border-bottom:none !important;border-radius:12px 12px 0 0 !important;margin:0 !important;background:#000 !important;} #photo-lightbox-content #photo-lightbox-title{display:flex !important;justify-content:flex-start !important;align-items:center !important;gap:6px !important;width:100% !important;margin:0 !important;padding:12px 16px !important;background:#FFF9E6 !important;color:#3D2F1F !important;border:1px solid #E8DCC0 !important;border-bottom:none !important;border-radius:12px 12px 0 0 !important;font-size:15px !important;font-weight:800 !important;text-align:left !important;} #photo-lightbox-title.no-photo{border-radius:12px !important;border-bottom:1px solid #E8DCC0 !important;} #photo-lightbox-memo{background:#FFF9E6 !important;color:#3D2F1F !important;border:1px solid #E8DCC0 !important;border-top:none !important;border-radius:0 0 12px 12px !important;text-align:left !important;margin:0 !important;width:100% !important;padding:16px !important;} .sub-memo-item{cursor:pointer !important;}";
   document.head.appendChild(css);
-
-  function ensureTitle(){
-    var c=document.getElementById('photo-lightbox-content');
-    var img=document.getElementById('photo-lightbox-img');
-    var memo=document.getElementById('photo-lightbox-memo');
-    var t=document.getElementById('photo-lightbox-title');
-    if(!t){ t=document.createElement('div'); t.id='photo-lightbox-title'; }
-    if(c && img && memo){
-      c.insertBefore(img, t);
-      c.insertBefore(t, memo);
-    }
-    return t;
-  }
-
-  function normalize(s){
-    return String(s||'').replace(/📌/g,'').replace(/\s+/g,'').trim();
-  }
-
-  window.openPhotoLightboxSafe = function(src, item){
-    var overlay=document.getElementById('photo-lightbox-overlay');
-    var img=document.getElementById('photo-lightbox-img');
-    var memo=document.getElementById('photo-lightbox-memo');
-    if(!overlay||!img) return;
-    if(overlay.classList.contains('active')&&overlay._isOpen) return;
-
-    var finalSrc=src||'';
-    if(!finalSrc && item && item.photo){ try{ finalSrc=getPhotoSrc(item.photo)||''; }catch(e){} }
-
-    if(finalSrc && finalSrc.length>20){ img.src=finalSrc; img.style.display='block'; }
-    else { img.style.display='none'; img.src=''; }
-
-    var titleEl=ensureTitle();
-    var hasTitle=!!(item && item.anniversary && String(item.anniversary).trim());
-    var titleText=hasTitle?String(item.anniversary).trim():'';
-    var titleNorm=normalize(titleText);
-    var rawContent=(item && typeof item.text==='string')?item.text:'';
-    var contentText=rawContent.trim();
-    var contentNorm=normalize(contentText);
-
-    if(titleEl){
-      titleEl.classList.toggle('no-photo', !finalSrc || img.style.display==='none');
-      if(hasTitle){
-        titleEl.innerHTML='<span class="pin">📌</span><span class="title-text">'+titleText.replace(/</g,'&lt;')+'</span>';
-      }else{
-        titleEl.innerHTML='<span class="pin">📌</span><span class="title-text">&nbsp;</span>';
-      }
-      titleEl.style.display='flex';
-      // 제목만 있을 때 제목 라운드 전체
-      if(!contentText || contentNorm===titleNorm || !finalSrc){
-        if(!finalSrc && !contentText){
-          titleEl.style.borderRadius='12px';
-          titleEl.style.borderBottom='1px solid #E8DCC0';
-        }else if(finalSrc && !contentText){
-          titleEl.style.borderRadius='0 0 12px 12px';
-          titleEl.style.borderTop='none';
-          titleEl.style.borderBottom='1px solid #E8DCC0';
-        }
-      }else{
-        titleEl.style.borderRadius='0';
-        titleEl.style.borderBottom='none';
-      }
-    }
-
-    if(memo){
-      // 핵심: 내용 없을 때는 크림박스 자체를 만들지 않음 - display:none
-      var shouldHide = false;
-      if(!contentText) shouldHide=true;
-      else if(hasTitle && contentNorm===titleNorm) shouldHide=true;
-      else if(hasTitle && contentNorm.includes(titleNorm) && contentNorm.length<=titleNorm.length+5) shouldHide=true;
-      else if(contentText.startsWith('📌') && normalize(contentText.replace('📌',''))===titleNorm) shouldHide=true;
-
-      if(shouldHide){
-        console.log('[V3_10] 내용 없음 또는 제목과 동일 - 크림박스 숨김, 카피 방지');
-        memo.style.display='none';
-        memo.textContent='';
-        memo.classList.remove('no-photo-mode');
-      }else{
-        memo.textContent=contentText;
-        memo.style.display='block';
-        memo.classList.remove('no-photo-mode');
-        if(!finalSrc || img.style.display==='none') memo.classList.add('no-photo-mode');
-      }
-    }
-
-    var dateEl=document.getElementById('photo-lightbox-date');
-    if(dateEl) dateEl.style.display='none';
-
-    var fixedBtn=document.getElementById('photo-lightbox-fixed-close');
-    if(fixedBtn){ fixedBtn.style.display='block'; if(fixedBtn.parentElement!==overlay) overlay.appendChild(fixedBtn); }
-
-    overlay.classList.add('active'); overlay.style.display='flex'; overlay._isOpen=true;
-    document.body.classList.add('modal-open'); document.body.style.overflow='hidden';
-
-    // 추가 방어: 열리고 난 후 10ms, 100ms 후에 다시 검사해서 카피된 크림박스가 있으면 강제 숨김
-    setTimeout(function(){
-      var m=document.getElementById('photo-lightbox-memo');
-      var t=document.getElementById('photo-lightbox-title');
-      if(!m||!t) return;
-      var mText=String(m.textContent||'').trim();
-      var tTextEl=t.querySelector('.title-text');
-      var tText=tTextEl?String(tTextEl.textContent||'').trim():'';
-      if(m.style.display!=='none' && ( !mText || normalize(mText)===normalize(tText) || mText.startsWith('📌') && normalize(mText.replace('📌',''))===normalize(tText) )){
-        console.log('[V3_10] 후속 검사 - 크림박스 카피 발견, 강제 숨김');
-        m.style.display='none';
-        m.textContent='';
-        // 제목만이면 제목 라운드 전체로 변경
-        if(t){
-          var imgEl=document.getElementById('photo-lightbox-img');
-          var hasPhoto=imgEl && imgEl.style.display!=='none';
-          if(!hasPhoto){
-            t.style.borderRadius='12px';
-            t.style.borderBottom='1px solid #E8DCC0';
-          }else{
-            t.style.borderRadius='0 0 12px 12px';
-          }
-        }
-      }
-    }, 20);
+  function ensureTitle(){var c=document.getElementById('photo-lightbox-content');var img=document.getElementById('photo-lightbox-img');var memo=document.getElementById('photo-lightbox-memo');var t=document.getElementById('photo-lightbox-title');if(!t){t=document.createElement('div');t.id='photo-lightbox-title';}if(c&&img&&memo){c.insertBefore(img,t);c.insertBefore(t,memo);}return t;}
+  function norm(s){return String(s||'').replace(/📌/g,'').replace(/\s+/g,'').trim();}
+  window.openPhotoLightboxSafe=function(src,item){
+    var overlay=document.getElementById('photo-lightbox-overlay');var img=document.getElementById('photo-lightbox-img');var memo=document.getElementById('photo-lightbox-memo');
+    if(!overlay||!img) return; if(overlay.classList.contains('active')&&overlay._isOpen) return;
+    var finalSrc=src||''; if(!finalSrc&&item&&item.photo){try{finalSrc=getPhotoSrc(item.photo)||'';}catch(e){}}
+    if(finalSrc&&finalSrc.length>20){img.src=finalSrc;img.style.display='block';}else{img.style.display='none';img.src='';}
+    var titleEl=ensureTitle(); var hasTitle=!!(item&&item.anniversary&&String(item.anniversary).trim()); var titleText=hasTitle?String(item.anniversary).trim():'';
+    var rawContent=(item&&typeof item.text==='string')?item.text:''; var contentText=rawContent.trim();
+    if(titleEl){titleEl.classList.toggle('no-photo',!finalSrc||img.style.display==='none'); titleEl.innerHTML=hasTitle?'<span class="pin">📌</span><span class="title-text">'+titleText.replace(/</g,'&lt;')+'</span>':'<span class="pin">📌</span><span class="title-text">&nbsp;</span>'; titleEl.style.display='flex';}
+    if(memo){var hide=!contentText||(hasTitle&&norm(contentText)===norm(titleText)); if(hide){memo.style.display='none';memo.textContent='';}else{memo.textContent=contentText;memo.style.display='block';}}
+    var dateEl=document.getElementById('photo-lightbox-date'); if(dateEl) dateEl.style.display='none';
+    var fixedBtn=document.getElementById('photo-lightbox-fixed-close'); if(fixedBtn){fixedBtn.style.display='block'; if(fixedBtn.parentElement!==overlay) overlay.appendChild(fixedBtn);}
+    overlay.classList.add('active'); overlay.style.display='flex'; overlay._isOpen=true; document.body.classList.add('modal-open'); document.body.style.overflow='hidden';
   };
-
-  window.openPhotoLightbox=function(a,b){
-    var overlay=document.getElementById('photo-lightbox-overlay');
-    if(overlay&&overlay.classList.contains('active')&&overlay._isOpen) return;
-    var item=null, src=a;
-    if(b&&typeof b==='object'){ item=b; if(!src&&item.photo){ try{ src=getPhotoSrc(item.photo)||''; }catch(e){} } }
-    else if(typeof b==='string'){ item={text:b, anniversary:''}; }
-    if(!item&&src&&typeof src==='object'){ item=src; src=item.photo||''; }
-    return window.openPhotoLightboxSafe(src,item);
-  };
-
-  window.openMemoLightboxOnly=function(text, diaryItem){
-    var dItem=diaryItem||{};
-    var ann=String(dItem.anniversary||'').trim();
-    var txt=String(text||'').trim();
-    // 텍스트가 제목과 동일하면 내용으로 절대 복사하지 않음
-    if(ann && txt && normalize(txt)===normalize(ann)){
-      dItem.text='';
-    }else if(text && typeof dItem.text!=='string'){
-      if(!ann || normalize(txt)!==normalize(ann)){
-        dItem.text=text;
-      }else{
-        dItem.text='';
-      }
-    }
-    if(dItem.text && ann && normalize(String(dItem.text))===normalize(ann)){
-      dItem.text='';
-    }
-    return window.openPhotoLightboxSafe(null,dItem);
-  };
-
-  window.closePhotoLightbox=function(e){ if(e) e.stopPropagation(); var o=document.getElementById('photo-lightbox-overlay'); if(o){ o.classList.remove('active'); o.style.display='none'; o._isOpen=false; } var img=document.getElementById('photo-lightbox-img'); if(img){ img.src=''; img.style.display='none'; } document.body.classList.remove('modal-open'); document.body.style.overflow=''; };
-
-  function getDiaryItemFromEl(el){
-    try{
-      var html=el.innerHTML;
-      var m=html.match(/deleteDiary\('([^']+)'\)/)||html.match(/deleteDiary\("([^"]+)"\)/);
-      if(!m) return null;
-      var id=m[1];
-      var all=(typeof getAllDiaries==='function')?getAllDiaries():[];
-      return all.find(function(d){ return d.id===id; })||null;
-    }catch(e){ return null; }
-  }
-
-  function openFromEl(el){
-    var item=getDiaryItemFromEl(el);
-    if(!item){
-      var txt=el.getAttribute('data-text-preview')||'';
-      if(!txt) return;
-      window.openMemoLightboxOnly(txt, {text:txt, anniversary:'', date:new Date().toISOString().slice(0,10)});
-      return;
-    }
-    if(item.photo) window.openPhotoLightbox(item.photo, item);
-    else{
-      var txt2=item.text||item.anniversary||'';
-      window.openMemoLightboxOnly(txt2, item);
-    }
-  }
-
-  function attachDoubleClickV10(){
-    document.querySelectorAll('.sub-memo-item, .diary-item, .photo-item').forEach(function(el){
-      if(el._v310Double) return;
-      el._v310Double=true;
-      el.style.cursor='pointer';
-      el.addEventListener('dblclick', function(e){
-        if(e.target.closest && e.target.closest('button, .memo-action-btns, .edit-btn-hidden, .delete-btn, .edit-btn, .delete-btn-hidden')) return;
-        // .diary-text는 더블클릭에서는 허용 (싱글클릭은 수정폼, 더블클릭은 라이트박스)
-        e.preventDefault(); e.stopPropagation();
-        openFromEl(el);
-      });
-      var lastTap=0;
-      el.addEventListener('touchend', function(e){
-        if(e.target.closest && e.target.closest('button, .memo-action-btns, .edit-btn-hidden, .delete-btn, .edit-btn, .delete-btn-hidden')) return;
-        // .diary-text는 더블클릭에서는 허용 (싱글클릭은 수정폼, 더블클릭은 라이트박스)
-        var now=Date.now();
-        if(now-lastTap<350){ lastTap=0; e.preventDefault(); openFromEl(el); }
-        else { lastTap=now; }
-      }, {passive:false});
-    });
-  }
-
-  attachAll();
-  setTimeout(attachAll, 600);
-  setTimeout(attachDoubleClickV10, 1500);
-  function attachAll(){ attachDoubleClickV10(); 
-  // 추가: .diary-text 자체에도 더블클릭 리스너 직접 연결 (기존 싱글클릭 수정폼과 충돌 방지)
-  document.querySelectorAll('.diary-text').forEach(function(txtEl){
-    if(txtEl._v310TextDouble) return;
-    txtEl._v310TextDouble=true;
-    txtEl.addEventListener('dblclick', function(e){
-      e.preventDefault(); e.stopPropagation();
-      var parent = txtEl.closest('.sub-memo-item, .diary-item');
-      if(parent){
-        var evt = new Event('dblclick', {bubbles:true});
-        parent.dispatchEvent(evt);
-        // 직접 열기
-        if(typeof getDiaryItemFromEl==='function'){
-          // use same logic as parent
-          var html=parent.innerHTML;
-          var mm=html.match(/deleteDiary\('([^']+)'\)/)||html.match(/deleteDiary\("([^"]+)"\)/);
-          if(mm){
-            var id=mm[1];
-            var all=(typeof getAllDiaries==='function')?getAllDiaries():[];
-            var item=all.find(function(d){ return d.id===id; });
-            if(item){
-              if(item.photo) window.openPhotoLightbox(item.photo, item);
-              else window.openMemoLightboxOnly(item.text||item.anniversary||'', item);
-            }
-          }
-        }
-      }
-    });
-  });
- }
-  attachAll();
-  new MutationObserver(attachAll).observe(document.body, {childList:true, subtree:true});
-
-  var origSetInterval=window.setInterval;
-  window.setInterval=function(fn,delay){
-    var s=String(fn);
-    if(s.includes('fixLightbox')||s.includes('fixV361')||s.includes('fixBottom')||s.includes('checkNoPhoto')||s.includes('syncDuplicate')) return 0;
-    return origSetInterval.apply(this,arguments);
-  };
-
-  console.log('[V3_10] 최종 적용 완료 - 더블클릭 수정 + 크림박스 카피 방지');
+  window.openPhotoLightbox=function(a,b){var overlay=document.getElementById('photo-lightbox-overlay'); if(overlay&&overlay.classList.contains('active')&&overlay._isOpen) return; var item=null,src=a; if(b&&typeof b==='object'){item=b; if(!src&&item.photo){try{src=getPhotoSrc(item.photo)||'';}catch(e){}}} else if(typeof b==='string'){item={text:b,anniversary:''};} if(!item&&src&&typeof src==='object'){item=src;src=item.photo||'';} return window.openPhotoLightboxSafe(src,item);};
+  window.openMemoLightboxOnly=function(text,diaryItem){var dItem=diaryItem||{};var ann=String(dItem.anniversary||'').trim();var txt=String(text||'').trim(); if(ann&&txt&&norm(txt)===norm(ann)) dItem.text=''; else if(text&&typeof dItem.text!=='string'){if(!ann||norm(txt)!==norm(ann)) dItem.text=text; else dItem.text='';} if(dItem.text&&ann&&norm(String(dItem.text))===norm(ann)) dItem.text=''; return window.openPhotoLightboxSafe(null,dItem);};
+  window.closePhotoLightbox=function(e){if(e) e.stopPropagation();var o=document.getElementById('photo-lightbox-overlay'); if(o){o.classList.remove('active');o.style.display='none';o._isOpen=false;} var img=document.getElementById('photo-lightbox-img'); if(img){img.src='';img.style.display='none';} document.body.classList.remove('modal-open'); document.body.style.overflow='';};
+  function getDiaryItemFromEl(el){try{var html=el.innerHTML;var m=html.match(/deleteDiary\('([^']+)'\)/)||html.match(/deleteDiary\("([^"]+)"\)/); if(!m) return null;var id=m[1];var all=(typeof getAllDiaries==='function')?getAllDiaries():[]; return all.find(function(d){return d.id===id;})||null;}catch(e){return null;}}
+  function openFromEl(el){var item=getDiaryItemFromEl(el); if(!item){var txt=el.getAttribute('data-text-preview')||''; if(!txt) return; window.openMemoLightboxOnly(txt,{text:txt,anniversary:'',date:new Date().toISOString().slice(0,10)}); return;} if(item.photo) window.openPhotoLightbox(item.photo,item); else{var txt2=item.text||item.anniversary||''; window.openMemoLightboxOnly(txt2,item);}}
+  document.addEventListener('dblclick',function(e){if(e.target.closest&&e.target.closest('button, .memo-action-btns')) return;var box=e.target.closest&&e.target.closest('.sub-memo-item, .diary-item, .photo-item'); if(box){e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); openFromEl(box);}},true);
+  var lastTapTime=0,lastTapTarget=null;
+  document.addEventListener('touchend',function(e){if(e.target.closest&&e.target.closest('button, .memo-action-btns')) return;var box=e.target.closest&&e.target.closest('.sub-memo-item, .diary-item, .photo-item'); if(!box) return;var now=Date.now(); if(lastTapTarget===box&&(now-lastTapTime)<400){lastTapTime=0;lastTapTarget=null;e.preventDefault();openFromEl(box);}else{lastTapTime=now;lastTapTarget=box;}}, {passive:false,capture:true});
+  var origSetInterval=window.setInterval; window.setInterval=function(fn,delay){var s=String(fn); if(s.includes('fixLightbox')||s.includes('fixV361')||s.includes('fixBottom')||s.includes('checkNoPhoto')) return 0; return origSetInterval.apply(this,arguments);};
+  console.log('[V3_11] 최종');
 })();
 </script>
+
 </body>
 </html>
