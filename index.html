@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>Smart Diary V3_2 - 제목 표준화</title><title style='display:none'>다이어리&가계부 다이어리&가계부 V301-AK 오늘운세자동+맨밑고정종료 - Swing2App+NodeAPK 통합 최종</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>Smart Diary V3_3 - 제목 왼쪽 크림 고정</title><title style='display:none'>다이어리&가계부 다이어리&가계부 V301-AK 오늘운세자동+맨밑고정종료 - Swing2App+NodeAPK 통합 최종</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -17474,6 +17474,97 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
   };
 
   console.log('[V3_2] 표준 적용 완료');
+})();
+</script>
+
+
+<script id="v3_3-strong-fix">
+(function(){
+  console.log('[V3_3] 강제 표준 적용 - 캐시 문제 대비');
+
+  // 모든 이전 v3_2 패치 제거 후 재적용
+  var oldCss = document.getElementById('v3_2-standard-css');
+  if(oldCss) oldCss.remove();
+
+  var css = document.createElement('style');
+  css.id='v3_3-standard-css';
+  css.textContent = `
+    #photo-lightbox-overlay.active #photo-lightbox-content #photo-lightbox-title {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: flex-start !important;
+      gap: 6px !important;
+      width: 100% !important;
+      background: #FFF9E6 !important;
+      background-color: #FFF9E6 !important;
+      color: #3D2F1F !important;
+      border-left: 1px solid #E8DCC0 !important;
+      border-right: 1px solid #E8DCC0 !important;
+      border-top: none !important;
+      border-bottom: none !important;
+      padding: 12px 16px !important;
+      font-size: 15px !important;
+      font-weight: 800 !important;
+      text-align: left !important;
+      line-height: 1.4 !important;
+      margin: 0 !important;
+      border-radius: 0 !important;
+    }
+    #photo-lightbox-overlay.active #photo-lightbox-content #photo-lightbox-title.no-photo {
+      border-top: 1px solid #E8DCC0 !important;
+      border-radius: 12px 12px 0 0 !important;
+    }
+    #photo-lightbox-overlay.active #photo-lightbox-content #photo-lightbox-img {
+      border-radius: 12px 12px 0 0 !important;
+      border: 1px solid #E8DCC0 !important;
+      border-bottom: none !important;
+      margin: 0 !important;
+    }
+    #photo-lightbox-overlay.active #photo-lightbox-content #photo-lightbox-memo {
+      background: #FFF9E6 !important;
+      background-color: #FFF9E6 !important;
+      color: #3D2F1F !important;
+      border: 1px solid #E8DCC0 !important;
+      border-top: none !important;
+      border-radius: 0 0 12px 12px !important;
+      text-align: left !important;
+      padding: 16px !important;
+      margin: 0 !important;
+    }
+    #photo-lightbox-title .pin { font-size: 14px !important; }
+    #photo-lightbox-title .title-text { flex: 1 !important; text-align: left !important; }
+  `;
+  document.head.appendChild(css);
+
+  // JS에서 인라인 스타일로 강제 (CSS보다 우선)
+  var origSafe = window.openPhotoLightboxSafe;
+  window.openPhotoLightboxSafe = function(src, item){
+    if(origSafe){
+      var result = origSafe.apply(this, arguments);
+      // 강제 스타일 적용
+      setTimeout(function(){
+        var titleEl = document.getElementById('photo-lightbox-title');
+        if(titleEl){
+          titleEl.style.setProperty('background', '#FFF9E6', 'important');
+          titleEl.style.setProperty('background-color', '#FFF9E6', 'important');
+          titleEl.style.setProperty('color', '#3D2F1F', 'important');
+          titleEl.style.setProperty('display', 'flex', 'important');
+          titleEl.style.setProperty('justify-content', 'flex-start', 'important');
+          titleEl.style.setProperty('text-align', 'left', 'important');
+          titleEl.style.setProperty('border-left', '1px solid #E8DCC0', 'important');
+          titleEl.style.setProperty('border-right', '1px solid #E8DCC0', 'important');
+        }
+        var memoEl = document.getElementById('photo-lightbox-memo');
+        if(memoEl){
+          memoEl.style.setProperty('background', '#FFF9E6', 'important');
+          memoEl.style.setProperty('background-color', '#FFF9E6', 'important');
+        }
+      }, 10);
+      return result;
+    }
+  };
+
+  console.log('[V3_3] 강제 적용 완료');
 })();
 </script>
 
