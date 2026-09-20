@@ -17357,5 +17357,16 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 })();
 </script>
 
+
+<script id="v3_13-phone-fix">
+(function(){
+  function getItem(el){try{var h=el.innerHTML;var m=h.match(/deleteDiary\('([^']+)'\)/); if(m){var id=m[1];var all=getAllDiaries();var f=all.find(function(d){return d.id===id;}); if(f) return f;}}catch(e){}return null;}
+  function openEl(el){var item=getItem(el);var img=el.querySelector('.diary-photo, img');var src=img&&img.src?img.src:''; if(item){if(item.photo||src){var s=item.photo?getPhotoSrc(item.photo):src; window.openPhotoLightboxSafe(s,item);}else{window.openMemoLightboxOnly(item.text||item.anniversary||'',item);}return;} var pre=el.getAttribute('data-text-preview')||''; var tA=el.querySelector('.photo-title-area'); var tT=tA?tA.textContent.replace(/📌/g,'').trim():''; var txA=el.querySelector('.diary-text'); var txC=txA?txA.textContent.trim():pre; if(src){window.openPhotoLightboxSafe(src,{text:txC,anniversary:tT,photo:src});}else{window.openMemoLightboxOnly(txC||tT,{text:txC,anniversary:tT});}}
+  document.addEventListener('click',function(e){if(e.target.closest&&e.target.closest('button')) return; var p=e.target.closest&&e.target.closest('.diary-photo, .diary-photo-wrap img'); if(p){var b=p.closest('.sub-memo-item'); if(b){e.preventDefault(); e.stopPropagation(); openEl(b);}}},true);
+  var last={t:0,el:null}; document.addEventListener('touchend',function(e){if(e.target.closest&&e.target.closest('button')) return; var b=e.target.closest&&e.target.closest('.sub-memo-item, .diary-item'); if(!b) return; var now=Date.now(); if(last.el===b&&(now-last.t)<400){last.t=0; last.el=null; e.preventDefault(); e.stopPropagation(); openEl(b); return;} last.t=now; last.el=b;}, {passive:false,capture:true});
+  console.log('[V3_13] phone fix applied');
+})();
+</script>
+
 </body>
 </html>
