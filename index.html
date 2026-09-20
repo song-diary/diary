@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>Smart Diary V3_11</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>Smart Diary V3_12 - 더블클릭 최종 수정</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -17224,13 +17224,13 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 </script>
 
 
-<script id="v3_11-doc-dblclick">
+<script id="v3_12-final">
 (function(){
-  console.log('[V3_11] 문서 전체 더블클릭');
+  console.log('[V3_12] 더블클릭 최종 - 문서 전체 + robust open');
   window.openLightbox=function(){return;};
   document.querySelectorAll('#photo-lightbox, #lightbox-img').forEach(function(el){el.remove();});
   var css=document.createElement('style');
-  css.textContent="#photo-lightbox-overlay.active{display:flex !important;align-items:flex-start !important;justify-content:center !important;padding:10px 10px 100px 10px !important;} #photo-lightbox-content{display:flex !important;flex-direction:column !important;gap:0 !important;width:100% !important;max-width:520px !important;margin:0 auto !important;background:transparent !important;} #photo-lightbox-img{width:100% !important;max-height:70vh !important;object-fit:contain !important;border:1px solid #E8DCC0 !important;border-bottom:none !important;border-radius:12px 12px 0 0 !important;margin:0 !important;background:#000 !important;} #photo-lightbox-content #photo-lightbox-title{display:flex !important;justify-content:flex-start !important;align-items:center !important;gap:6px !important;width:100% !important;margin:0 !important;padding:12px 16px !important;background:#FFF9E6 !important;color:#3D2F1F !important;border:1px solid #E8DCC0 !important;border-bottom:none !important;border-radius:12px 12px 0 0 !important;font-size:15px !important;font-weight:800 !important;text-align:left !important;} #photo-lightbox-title.no-photo{border-radius:12px !important;border-bottom:1px solid #E8DCC0 !important;} #photo-lightbox-memo{background:#FFF9E6 !important;color:#3D2F1F !important;border:1px solid #E8DCC0 !important;border-top:none !important;border-radius:0 0 12px 12px !important;text-align:left !important;margin:0 !important;width:100% !important;padding:16px !important;} .sub-memo-item{cursor:pointer !important;}";
+  css.textContent="#photo-lightbox-overlay.active{display:flex !important;align-items:flex-start !important;justify-content:center !important;padding:10px 10px 100px 10px !important;} #photo-lightbox-content{display:flex !important;flex-direction:column !important;gap:0 !important;width:100% !important;max-width:520px !important;margin:0 auto !important;background:transparent !important;} #photo-lightbox-img{width:100% !important;max-height:70vh !important;object-fit:contain !important;border:1px solid #E8DCC0 !important;border-bottom:none !important;border-radius:12px 12px 0 0 !important;margin:0 !important;background:#000 !important;} #photo-lightbox-content #photo-lightbox-title{display:flex !important;justify-content:flex-start !important;align-items:center !important;gap:6px !important;width:100% !important;margin:0 !important;padding:12px 16px !important;background:#FFF9E6 !important;color:#3D2F1F !important;border:1px solid #E8DCC0 !important;border-bottom:none !important;border-radius:12px 12px 0 0 !important;font-size:15px !important;font-weight:800 !important;text-align:left !important;} #photo-lightbox-title.no-photo{border-radius:12px !important;border-bottom:1px solid #E8DCC0 !important;} #photo-lightbox-memo{background:#FFF9E6 !important;color:#3D2F1F !important;border:1px solid #E8DCC0 !important;border-top:none !important;border-radius:0 0 12px 12px !important;text-align:left !important;margin:0 !important;width:100% !important;padding:16px !important;} .sub-memo-item{cursor:pointer !important; user-select:none !important;}";
   document.head.appendChild(css);
   function ensureTitle(){var c=document.getElementById('photo-lightbox-content');var img=document.getElementById('photo-lightbox-img');var memo=document.getElementById('photo-lightbox-memo');var t=document.getElementById('photo-lightbox-title');if(!t){t=document.createElement('div');t.id='photo-lightbox-title';}if(c&&img&&memo){c.insertBefore(img,t);c.insertBefore(t,memo);}return t;}
   function norm(s){return String(s||'').replace(/📌/g,'').replace(/\s+/g,'').trim();}
@@ -17250,13 +17250,110 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
   window.openPhotoLightbox=function(a,b){var overlay=document.getElementById('photo-lightbox-overlay'); if(overlay&&overlay.classList.contains('active')&&overlay._isOpen) return; var item=null,src=a; if(b&&typeof b==='object'){item=b; if(!src&&item.photo){try{src=getPhotoSrc(item.photo)||'';}catch(e){}}} else if(typeof b==='string'){item={text:b,anniversary:''};} if(!item&&src&&typeof src==='object'){item=src;src=item.photo||'';} return window.openPhotoLightboxSafe(src,item);};
   window.openMemoLightboxOnly=function(text,diaryItem){var dItem=diaryItem||{};var ann=String(dItem.anniversary||'').trim();var txt=String(text||'').trim(); if(ann&&txt&&norm(txt)===norm(ann)) dItem.text=''; else if(text&&typeof dItem.text!=='string'){if(!ann||norm(txt)!==norm(ann)) dItem.text=text; else dItem.text='';} if(dItem.text&&ann&&norm(String(dItem.text))===norm(ann)) dItem.text=''; return window.openPhotoLightboxSafe(null,dItem);};
   window.closePhotoLightbox=function(e){if(e) e.stopPropagation();var o=document.getElementById('photo-lightbox-overlay'); if(o){o.classList.remove('active');o.style.display='none';o._isOpen=false;} var img=document.getElementById('photo-lightbox-img'); if(img){img.src='';img.style.display='none';} document.body.classList.remove('modal-open'); document.body.style.overflow='';};
-  function getDiaryItemFromEl(el){try{var html=el.innerHTML;var m=html.match(/deleteDiary\('([^']+)'\)/)||html.match(/deleteDiary\("([^"]+)"\)/); if(!m) return null;var id=m[1];var all=(typeof getAllDiaries==='function')?getAllDiaries():[]; return all.find(function(d){return d.id===id;})||null;}catch(e){return null;}}
-  function openFromEl(el){var item=getDiaryItemFromEl(el); if(!item){var txt=el.getAttribute('data-text-preview')||''; if(!txt) return; window.openMemoLightboxOnly(txt,{text:txt,anniversary:'',date:new Date().toISOString().slice(0,10)}); return;} if(item.photo) window.openPhotoLightbox(item.photo,item); else{var txt2=item.text||item.anniversary||''; window.openMemoLightboxOnly(txt2,item);}}
-  document.addEventListener('dblclick',function(e){if(e.target.closest&&e.target.closest('button, .memo-action-btns')) return;var box=e.target.closest&&e.target.closest('.sub-memo-item, .diary-item, .photo-item'); if(box){e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); openFromEl(box);}},true);
-  var lastTapTime=0,lastTapTarget=null;
-  document.addEventListener('touchend',function(e){if(e.target.closest&&e.target.closest('button, .memo-action-btns')) return;var box=e.target.closest&&e.target.closest('.sub-memo-item, .diary-item, .photo-item'); if(!box) return;var now=Date.now(); if(lastTapTarget===box&&(now-lastTapTime)<400){lastTapTime=0;lastTapTarget=null;e.preventDefault();openFromEl(box);}else{lastTapTime=now;lastTapTarget=box;}}, {passive:false,capture:true});
-  var origSetInterval=window.setInterval; window.setInterval=function(fn,delay){var s=String(fn); if(s.includes('fixLightbox')||s.includes('fixV361')||s.includes('fixBottom')||s.includes('checkNoPhoto')) return 0; return origSetInterval.apply(this,arguments);};
-  console.log('[V3_11] 최종');
+
+  // Robust open: try multiple ways
+  function getDiaryItemFromEl(el){
+    try{
+      // 1. deleteDiary id
+      var html=el.innerHTML;
+      var m=html.match(/deleteDiary\('([^']+)'\)/)||html.match(/deleteDiary\("([^"]+)"\)/);
+      if(m){
+        var id=m[1];
+        var all=(typeof getAllDiaries==='function')?getAllDiaries():[];
+        var found=all.find(function(d){return d.id===id;});
+        if(found) return found;
+      }
+      // 2. data-id
+      var did=el.getAttribute('data-id')||el.getAttribute('data-diary-id');
+      if(did){
+        var all2=(typeof getAllDiaries==='function')?getAllDiaries():[];
+        var found2=all2.find(function(d){return d.id===did;});
+        if(found2) return found2;
+      }
+    }catch(e){}
+    return null;
+  }
+
+  function openFromEl(el){
+    console.log('[V3_12] openFromEl', el.className);
+    var item=getDiaryItemFromEl(el);
+    var photoSrc='';
+    // try to get photo src directly from DOM if item has photo
+    var imgDom=el.querySelector('.diary-photo, img');
+    if(imgDom && imgDom.src) photoSrc=imgDom.src;
+
+    if(item){
+      if(item.photo || photoSrc){
+        var src=item.photo? (typeof getPhotoSrc==='function'? getPhotoSrc(item.photo) : photoSrc) : photoSrc;
+        window.openPhotoLightboxSafe(src, item);
+      }else{
+        var txt2=item.text||item.anniversary||'';
+        window.openMemoLightboxOnly(txt2, item);
+      }
+      return;
+    }
+    // fallback: use data-text-preview
+    var preview=el.getAttribute('data-text-preview')||'';
+    var titleArea=el.querySelector('.photo-title-area');
+    var titleText=titleArea?titleArea.textContent.replace(/📌/g,'').trim():'';
+    var textArea=el.querySelector('.diary-text');
+    var textContent=textArea?textArea.textContent.trim():preview;
+
+    if(photoSrc){
+      // photo only fallback
+      window.openPhotoLightboxSafe(photoSrc, {text:textContent, anniversary:titleText, photo:photoSrc});
+    }else{
+      window.openMemoLightboxOnly(textContent||titleText, {text:textContent, anniversary:titleText, date:new Date().toISOString().slice(0,10)});
+    }
+  }
+
+  // 문서 전체 더블클릭 - 캡처
+  document.addEventListener('dblclick', function(e){
+    if(e.target.closest && e.target.closest('button, .memo-action-btns, .edit-btn-hidden, .delete-btn, .delete-btn-hidden, .edit-btn')) return;
+    var box=e.target.closest && e.target.closest('.sub-memo-item, .diary-item, .photo-item, .photo-box-item');
+    if(box){
+      console.log('[V3_12] dblclick', box);
+      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+      openFromEl(box);
+    }
+  }, true);
+
+  // 모바일 더블탭 - 더 robust
+  var lastTap={time:0, target:null};
+  document.addEventListener('touchend', function(e){
+    if(e.target.closest && e.target.closest('button, .memo-action-btns')) return;
+    var box=e.target.closest && e.target.closest('.sub-memo-item, .diary-item, .photo-item');
+    if(!box) return;
+    var now=Date.now();
+    if(lastTap.target===box && (now-lastTap.time)<400){
+      console.log('[V3_12] double tap');
+      lastTap.time=0; lastTap.target=null;
+      e.preventDefault();
+      openFromEl(box);
+      // prevent single-click edit from firing
+      e.stopPropagation();
+    }else{
+      lastTap.time=now;
+      lastTap.target=box;
+    }
+  }, {passive:false, capture:true});
+
+  // 추가: 더블클릭 시 싱글클릭 수정폼 열리는 것 방지 - click 이벤트에서 더블클릭 직후면 차단
+  var lastDoubleClick=0;
+  document.addEventListener('dblclick', function(){ lastDoubleClick=Date.now(); }, true);
+  document.addEventListener('click', function(e){
+    if(Date.now()-lastDoubleClick<600){
+      var box=e.target.closest && e.target.closest('.sub-memo-item, .diary-item');
+      if(box && e.target.closest && e.target.closest('.diary-text')){
+        console.log('[V3_12] click 차단 - 더블클릭 직후');
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+      }
+    }
+  }, true);
+
+  var origSetInterval=window.setInterval;
+  window.setInterval=function(fn,delay){var s=String(fn); if(s.includes('fixLightbox')||s.includes('fixV361')||s.includes('fixBottom')||s.includes('checkNoPhoto')) return 0; return origSetInterval.apply(this,arguments);};
+  console.log('[V3_12] 적용 완료');
 })();
 </script>
 
