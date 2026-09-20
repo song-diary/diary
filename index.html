@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>Smart Diary V3_3 - 제목 왼쪽 크림 고정</title><title style='display:none'>다이어리&가계부 다이어리&가계부 V301-AK 오늘운세자동+맨밑고정종료 - Swing2App+NodeAPK 통합 최종</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>Smart Diary V3_4 - 제목만 분리</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -17224,66 +17224,23 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 </script>
 
 
-<script id="v3_2-standard-title-fixed">
+
+
+
+<script id="v3_4-title-only-fix">
 (function(){
-  console.log('[V3_2] 표준화: 제목 왼쪽+크림바탕, 늘어남 제거');
+  console.log('[V3_4] 제목만 있을 때 내용 복사 방지');
 
-  // 구형 큰 화면 제거
-  window.openLightbox = function(){ return; };
-  document.querySelectorAll('#photo-lightbox, #lightbox-img').forEach(function(el){ el.remove(); });
-  new MutationObserver(function(){
-    document.querySelectorAll('#photo-lightbox, #lightbox-img').forEach(function(el){ el.remove(); });
-  }).observe(document.body, {childList:true, subtree:true});
-
-  // ===== 표준 CSS - V3_2 기준 =====
+  // 기존 CSS 유지, 필요하면 재주입
   var css = document.createElement('style');
-  css.id='v3_2-standard-css';
+  css.id='v3_4-css';
   css.textContent = `
-    /* 공통: 전환 제거 - 늘어남 방지 */
-    #photo-lightbox-overlay, #photo-lightbox-content, #photo-lightbox-img, #photo-lightbox-memo, #photo-lightbox-title {
-      transition: none !important;
-      animation: none !important;
-    }
-    #photo-lightbox-overlay.active {
-      display: flex !important;
-      align-items: flex-start !important;
-      justify-content: center !important;
-      overflow-y: auto !important;
-      padding: 10px 10px 100px 10px !important;
-    }
-    #photo-lightbox-overlay.active #photo-lightbox-fixed-close {
-      display: block !important;
-      pointer-events: auto !important;
-    }
-    #photo-lightbox-content {
-      display: flex !important;
-      flex-direction: column !important;
-      gap: 0 !important;
-      width: 100% !important;
-      max-width: 520px !important;
-      margin: 0 auto !important;
-      background: transparent !important;
-      padding-bottom: 0 !important;
-    }
-    /* 사진 */
-    #photo-lightbox-img {
-      width: 100% !important;
-      max-height: 70vh !important;
-      object-fit: contain !important;
-      border-radius: 12px 12px 0 0 !important;
-      border: 1px solid #E8DCC0 !important;
-      border-bottom: none !important;
-      background: #000 !important;
-      margin: 0 !important;
-    }
-    /* 표준 제목: 사진 바로 밑, 왼쪽 정렬, 크림 바탕 (내용과 동일) */
     #photo-lightbox-title {
       display: flex !important;
-      align-items: center !important;
       justify-content: flex-start !important;
-      gap: 6px !important;
-      width: 100% !important;
+      text-align: left !important;
       background: #FFF9E6 !important;
+      background-color: #FFF9E6 !important;
       color: #3D2F1F !important;
       border-left: 1px solid #E8DCC0 !important;
       border-right: 1px solid #E8DCC0 !important;
@@ -17292,45 +17249,38 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
       padding: 12px 16px !important;
       font-size: 15px !important;
       font-weight: 800 !important;
-      text-align: left !important;
-      line-height: 1.4 !important;
-      box-sizing: border-box !important;
       margin: 0 !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
     }
     #photo-lightbox-title.no-photo {
       border-top: 1px solid #E8DCC0 !important;
       border-radius: 12px 12px 0 0 !important;
     }
-    #photo-lightbox-title .pin { font-size: 14px !important; flex-shrink: 0 !important; }
-    #photo-lightbox-title .title-text { flex: 1 !important; text-align: left !important; }
-
-    /* 메모/내용 - 크림 바탕 통일 */
     #photo-lightbox-memo {
       background: #FFF9E6 !important;
-      color: #3D2F1F !important;
+      background-color: #FFF9E6 !important;
       border: 1px solid #E8DCC0 !important;
       border-top: none !important;
       border-radius: 0 0 12px 12px !important;
-      padding: 16px !important;
       text-align: left !important;
-      width: 100% !important;
-      box-sizing: border-box !important;
       margin: 0 !important;
-      max-height: none !important;
-      overflow: visible !important;
+      width: 100% !important;
     }
     #photo-lightbox-memo.no-photo-mode {
       border-top: 1px solid #E8DCC0 !important;
       border-radius: 12px !important;
     }
-    /* 메모만 있을 때 제목+메모 연결 */
-    #photo-lightbox-title + #photo-lightbox-memo {
-      border-top: none !important;
+    #photo-lightbox-img {
+      border: 1px solid #E8DCC0 !important;
+      border-bottom: none !important;
+      border-radius: 12px 12px 0 0 !important;
+      margin: 0 !important;
+      width: 100% !important;
     }
-    /* 종료 버튼 크림 매칭 */
-    #photo-lightbox-fixed-close {
-      background: rgba(255,249,230,0.96) !important;
-      border-top: 1px solid #E8DCC0 !important;
+    #photo-lightbox-content {
+      gap: 0 !important;
+      background: transparent !important;
     }
   `;
   document.head.appendChild(css);
@@ -17343,26 +17293,19 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
     if(!titleEl){
       titleEl = document.createElement('div');
       titleEl.id='photo-lightbox-title';
-      if(content){
-        if(imgEl && imgEl.parentElement===content){
-          content.insertBefore(titleEl, memoEl || null);
-          // img 바로 뒤로 이동
-          if(titleEl.previousElementSibling !== imgEl && imgEl.nextSibling !== titleEl){
-            content.insertBefore(titleEl, memoEl || null);
-          }
-        }else{
-          content.prepend(titleEl);
-        }
-      }
     }
-    // 항상 img 바로 뒤, memo 바로 앞으로
-    if(content && imgEl && memoEl && titleEl){
-      content.insertBefore(imgEl, titleEl);
-      content.insertBefore(titleEl, memoEl);
+    if(content && imgEl && memoEl){
+      // 순서: img -> title -> memo
+      if(imgEl.parentElement===content) content.insertBefore(titleEl, memoEl);
+      else {
+        content.prepend(imgEl);
+        content.insertBefore(titleEl, memoEl);
+      }
     }
     return titleEl;
   }
 
+  // 핵심 수정: 제목만 있을 때 내용란에 제목 복사 안함
   window.openPhotoLightboxSafe = function(src, item){
     var overlay = document.getElementById('photo-lightbox-overlay');
     var imgEl = document.getElementById('photo-lightbox-img');
@@ -17376,7 +17319,7 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
       try{ finalSrc = (typeof getPhotoSrc==='function') ? getPhotoSrc(item.photo) : ''; }catch(e){}
     }
 
-    if(finalSrc && (finalSrc.startsWith('data:') || finalSrc.startsWith('blob:') || finalSrc.startsWith('http') || finalSrc.length>100)){
+    if(finalSrc && finalSrc.length>20){
       imgEl.src = finalSrc;
       imgEl.style.display='block';
     }else{
@@ -17385,15 +17328,15 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
     }
 
     var titleEl = ensureTitleEl();
-    var memoText = (item && item.text) ? item.text : '';
     var hasTitle = !!(item && item.anniversary && item.anniversary.trim());
     var titleText = hasTitle ? item.anniversary.trim() : '';
+    // 내용란에는 item.text만 사용, 제목은 절대 복사 안함
+    var contentText = (item && item.text) ? item.text.trim() : '';
 
-    // 표준: 왼쪽 정렬, 핀 고정, 바탕 크림
     if(titleEl){
       titleEl.classList.toggle('no-photo', !finalSrc || imgEl.style.display==='none');
       if(hasTitle){
-        titleEl.innerHTML = '<span class="pin">📌</span><span class="title-text">' + titleText.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</span>';
+        titleEl.innerHTML = '<span class="pin">📌</span><span class="title-text">' + titleText.replace(/</g,'&lt;') + '</span>';
       }else{
         titleEl.innerHTML = '<span class="pin">📌</span><span class="title-text">&nbsp;</span>';
       }
@@ -17401,15 +17344,18 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
     }
 
     if(memoEl){
-      if(memoText){
-        memoEl.textContent = memoText;
+      if(contentText){
+        memoEl.textContent = contentText;
         memoEl.style.display='block';
         memoEl.classList.remove('no-photo-mode');
         if(!finalSrc || imgEl.style.display==='none') memoEl.classList.add('no-photo-mode');
       }else{
+        // 내용 없으면 내용란 숨김 - 제목만 표시 (제목이 내용란에 복사되는 문제 해결)
         memoEl.style.display='none';
+        memoEl.textContent='';
       }
     }
+
     if(dateEl) dateEl.style.display='none';
 
     var fixedBtn = document.getElementById('photo-lightbox-fixed-close');
@@ -17425,6 +17371,22 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
     document.body.style.overflow='hidden';
   };
 
+  // openMemoLightboxOnly도 동일하게 - 제목을 내용으로 복사하지 않음
+  window.openMemoLightboxOnly = function(text, diaryItem){
+    var dItem = diaryItem || {};
+    // text가 실제 내용인지 제목인지 구분: diaryItem.text가 있으면 그걸 내용으로, 없으면 text를 내용으로 하되 제목 복사 금지
+    // 만약 diaryItem에 anniversary만 있고 text가 없으면, 내용 없이 제목만
+    if(!dItem.text && text){
+      // text가 제목과 같으면 내용으로 취급하지 않음
+      if(dItem.anniversary && text.trim() === dItem.anniversary.trim()){
+        // 제목만인 경우 - 내용 없음
+      }else{
+        dItem.text = text;
+      }
+    }
+    return window.openPhotoLightboxSafe(null, dItem);
+  };
+
   window.openPhotoLightbox = function(photoKeyOrData, diaryItemOrText){
     var overlay = document.getElementById('photo-lightbox-overlay');
     if(overlay && overlay.classList.contains('active') && overlay._isOpen) return;
@@ -17436,6 +17398,7 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
         try{ src = (typeof getPhotoSrc==='function') ? getPhotoSrc(item.photo) : ''; }catch(e){}
       }
     }else if(typeof diaryItemOrText==='string'){
+      // 문자열만 넘어온 경우 내용으로 취급, 제목 없음
       item = {text: diaryItemOrText, anniversary: ''};
     }
     if(!item && src && typeof src==='object'){
@@ -17443,12 +17406,6 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
       src = item.photo || '';
     }
     return window.openPhotoLightboxSafe(src, item);
-  };
-
-  window.openMemoLightboxOnly = function(text, diaryItem){
-    var dItem = diaryItem || {};
-    if(!dItem.text && text) dItem.text = text;
-    return window.openPhotoLightbox(null, dItem);
   };
 
   window.closePhotoLightbox = function(e){
@@ -17463,108 +17420,7 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
     document.body.style.overflow='';
   };
 
-  // 늘어남 유발 interval 차단
-  var origSetInterval = window.setInterval;
-  window.setInterval = function(fn, delay){
-    var s = fn.toString();
-    if(s.includes('fixLightbox') || s.includes('fixV361') || s.includes('fixBottom') || s.includes('checkNoPhoto') || s.includes('syncDuplicate')){
-      return 0;
-    }
-    return origSetInterval.apply(this, arguments);
-  };
-
-  console.log('[V3_2] 표준 적용 완료');
-})();
-</script>
-
-
-<script id="v3_3-strong-fix">
-(function(){
-  console.log('[V3_3] 강제 표준 적용 - 캐시 문제 대비');
-
-  // 모든 이전 v3_2 패치 제거 후 재적용
-  var oldCss = document.getElementById('v3_2-standard-css');
-  if(oldCss) oldCss.remove();
-
-  var css = document.createElement('style');
-  css.id='v3_3-standard-css';
-  css.textContent = `
-    #photo-lightbox-overlay.active #photo-lightbox-content #photo-lightbox-title {
-      display: flex !important;
-      align-items: center !important;
-      justify-content: flex-start !important;
-      gap: 6px !important;
-      width: 100% !important;
-      background: #FFF9E6 !important;
-      background-color: #FFF9E6 !important;
-      color: #3D2F1F !important;
-      border-left: 1px solid #E8DCC0 !important;
-      border-right: 1px solid #E8DCC0 !important;
-      border-top: none !important;
-      border-bottom: none !important;
-      padding: 12px 16px !important;
-      font-size: 15px !important;
-      font-weight: 800 !important;
-      text-align: left !important;
-      line-height: 1.4 !important;
-      margin: 0 !important;
-      border-radius: 0 !important;
-    }
-    #photo-lightbox-overlay.active #photo-lightbox-content #photo-lightbox-title.no-photo {
-      border-top: 1px solid #E8DCC0 !important;
-      border-radius: 12px 12px 0 0 !important;
-    }
-    #photo-lightbox-overlay.active #photo-lightbox-content #photo-lightbox-img {
-      border-radius: 12px 12px 0 0 !important;
-      border: 1px solid #E8DCC0 !important;
-      border-bottom: none !important;
-      margin: 0 !important;
-    }
-    #photo-lightbox-overlay.active #photo-lightbox-content #photo-lightbox-memo {
-      background: #FFF9E6 !important;
-      background-color: #FFF9E6 !important;
-      color: #3D2F1F !important;
-      border: 1px solid #E8DCC0 !important;
-      border-top: none !important;
-      border-radius: 0 0 12px 12px !important;
-      text-align: left !important;
-      padding: 16px !important;
-      margin: 0 !important;
-    }
-    #photo-lightbox-title .pin { font-size: 14px !important; }
-    #photo-lightbox-title .title-text { flex: 1 !important; text-align: left !important; }
-  `;
-  document.head.appendChild(css);
-
-  // JS에서 인라인 스타일로 강제 (CSS보다 우선)
-  var origSafe = window.openPhotoLightboxSafe;
-  window.openPhotoLightboxSafe = function(src, item){
-    if(origSafe){
-      var result = origSafe.apply(this, arguments);
-      // 강제 스타일 적용
-      setTimeout(function(){
-        var titleEl = document.getElementById('photo-lightbox-title');
-        if(titleEl){
-          titleEl.style.setProperty('background', '#FFF9E6', 'important');
-          titleEl.style.setProperty('background-color', '#FFF9E6', 'important');
-          titleEl.style.setProperty('color', '#3D2F1F', 'important');
-          titleEl.style.setProperty('display', 'flex', 'important');
-          titleEl.style.setProperty('justify-content', 'flex-start', 'important');
-          titleEl.style.setProperty('text-align', 'left', 'important');
-          titleEl.style.setProperty('border-left', '1px solid #E8DCC0', 'important');
-          titleEl.style.setProperty('border-right', '1px solid #E8DCC0', 'important');
-        }
-        var memoEl = document.getElementById('photo-lightbox-memo');
-        if(memoEl){
-          memoEl.style.setProperty('background', '#FFF9E6', 'important');
-          memoEl.style.setProperty('background-color', '#FFF9E6', 'important');
-        }
-      }, 10);
-      return result;
-    }
-  };
-
-  console.log('[V3_3] 강제 적용 완료');
+  console.log('[V3_4] 수정 완료: 제목만 있을 때 내용란 복사 안함');
 })();
 </script>
 
