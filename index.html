@@ -9195,7 +9195,8 @@ async function showPhotosForDate(dateStr){
         if (diaryItemOrText) {
             if (typeof diaryItemOrText === 'string') memoText = sanitizeDiaryTextForDisplay(diaryItemOrText);
             else if (typeof diaryItemOrText === 'object') {
-                memoText = sanitizeDiaryTextForDisplay(diaryItemOrText.text || ''); // 제목에 따라 그림 표현 삭제 - text만, anniversary 절대 카피 안함
+                // FIX: 제목만 있는 경우도 사진과 동일하게 처리 - text 없으면 anniversary 표시
+                memoText = sanitizeDiaryTextForDisplay(diaryItemOrText.text || diaryItemOrText.anniversary || '');
                 if(diaryItemOrText.id) currentLightboxItemId = diaryItemOrText.id;
                 if (diaryItemOrText.date) {
                     try { const d = parseDateObj(diaryItemOrText.date); dateText = d.getFullYear()+'년 '+(d.getMonth()+1)+'월 '+d.getDate()+'일 ('+getDayOfWeekStr(diaryItemOrText.date)+')' + (diaryItemOrText.time ? ' '+diaryItemOrText.time : ''); } catch(e){ dateText = diaryItemOrText.date; }
