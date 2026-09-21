@@ -8727,7 +8727,7 @@ window.attachPhotoDoubleTap = function(el, handler){
             const titleText = item.anniversary || '';
             const titleHTML = `<div class="photo-title-area" style="height:20px; font-size:12px; font-weight:bold; color:#9C6ADE; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; margin-bottom:4px; padding-left:6px;">${titleText ? titleText : '&nbsp;'}</div>`;
             // 내용에 사진 임의로 하나 만들어 넣으면 동일하게 표현 - 사진처럼 처리
-            const emptyPhotoHTML = !item.photo ? `<div class="diary-photo-wrap"><div class="diary-photo" style="width:100%;aspect-ratio:1/1;background:#f5f0f0;border-radius:10px;min-height:100px;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:28px;">📷</div></div>` : '';
+            const emptyPhotoHTML = !item.photo ? `<div class="diary-photo-wrap empty-photo-wrap" data-empty="true"><div class="diary-photo empty-photo-icon" style="width:100%;aspect-ratio:1/1;background:#f5f0f0;border-radius:10px;min-height:100px;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:28px;">📷</div></div>` : '';
             itemBox.innerHTML = `
                 ${titleHTML}
                 ${photoHTML}${emptyPhotoHTML}
@@ -8765,13 +8765,23 @@ window.attachPhotoDoubleTap = function(el, handler){
                         }catch(e){ console.log('IDB direct fail', e); }
                     }
                     if(src){ openPhotoLightbox(src, item); }
-                    else { alert('사진 데이터를 찾을 수 없습니다.\n키: '+item.photo); }
+                    else { // 사진 없음 - 사진아이콘 더블클릭시 메모만 하이라이트 (사진 데이터 없음 알림 제거)
+                        if(typeof window.openMemoLightboxOnly === 'function'){
+                            window.openMemoLightboxOnly(item.text || item.anniversary || '', item);
+                        } else if(typeof window.openPhotoLightbox === 'function'){
+                            window.openPhotoLightbox(null, item);
+                        }
+                    }
                 };
-                // V363: 실수로 한번 터치에 확대되는 것 방지 - 더블탭/더블클릭에서만 확대
-                if(typeof attachPhotoDoubleTap === 'function'){
-                    attachPhotoDoubleTap(_photoArea, handlePhotoClick);
+                // V363: 사진아이콘(빈사진)은 사진 핸들러 제외 - 메모 하이라이트만 (사진 데이터 없음 알림 방지)
+                if(_photoArea && _photoArea.dataset && _photoArea.dataset.empty === 'true'){
+                    // 빈 사진 아이콘 - 사진 확대 핸들러 건너뜀, 전체박스 더블클릭 핸들러로 메모만 열림
                 } else {
-                    _photoArea.addEventListener('dblclick', handlePhotoClick);
+                    if(typeof attachPhotoDoubleTap === 'function'){
+                        attachPhotoDoubleTap(_photoArea, handlePhotoClick);
+                    } else {
+                        _photoArea.addEventListener('dblclick', handlePhotoClick);
+                    }
                 }
             }
             // 텍스트 클릭시 수정, 사진 클릭시 확대 (V262)
@@ -8940,13 +8950,23 @@ window.attachPhotoDoubleTap = function(el, handler){
                         }catch(e){ console.log('IDB direct fail', e); }
                     }
                     if(src){ openPhotoLightbox(src, item); }
-                    else { alert('사진 데이터를 찾을 수 없습니다.\n키: '+item.photo); }
+                    else { // 사진 없음 - 사진아이콘 더블클릭시 메모만 하이라이트 (사진 데이터 없음 알림 제거)
+                        if(typeof window.openMemoLightboxOnly === 'function'){
+                            window.openMemoLightboxOnly(item.text || item.anniversary || '', item);
+                        } else if(typeof window.openPhotoLightbox === 'function'){
+                            window.openPhotoLightbox(null, item);
+                        }
+                    }
                 };
-                // V363: 실수로 한번 터치에 확대되는 것 방지 - 더블탭/더블클릭에서만 확대
-                if(typeof attachPhotoDoubleTap === 'function'){
-                    attachPhotoDoubleTap(_photoArea, handlePhotoClick);
+                // V363: 사진아이콘(빈사진)은 사진 핸들러 제외 - 메모 하이라이트만 (사진 데이터 없음 알림 방지)
+                if(_photoArea && _photoArea.dataset && _photoArea.dataset.empty === 'true'){
+                    // 빈 사진 아이콘 - 사진 확대 핸들러 건너뜀, 전체박스 더블클릭 핸들러로 메모만 열림
                 } else {
-                    _photoArea.addEventListener('dblclick', handlePhotoClick);
+                    if(typeof attachPhotoDoubleTap === 'function'){
+                        attachPhotoDoubleTap(_photoArea, handlePhotoClick);
+                    } else {
+                        _photoArea.addEventListener('dblclick', handlePhotoClick);
+                    }
                 }
             }
             // 텍스트 클릭시 수정, 사진 클릭시 확대 (V262)
@@ -17203,7 +17223,12 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
         window._lightboxOpening = true;
         setTimeout(function(){ window._lightboxOpening = false; }, 800);
         if(diaryItem){
-          window.openPhotoLightbox(diaryItem.photo || null, diaryItem);
+          if(diaryItem.photo){
+            window.openPhotoLightbox(diaryItem.photo, diaryItem);
+          } else {
+            // 사진아이콘 - 사진 없음, 메모만 하이라이트
+            window.openMemoLightboxOnly(diaryItem.text || diaryItem.anniversary || text, diaryItem);
+          }
         } else {
           window.openMemoLightboxOnly(text, null);
         }
