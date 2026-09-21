@@ -3038,16 +3038,19 @@ body { touch-action:pan-x pan-y; -webkit-text-size-adjust:100%; padding-bottom:v
 #back-toast { position:fixed; bottom:calc(30px + var(--safe-bottom)); left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.85); color:#fff; padding:12px 20px; border-radius:24px; z-index:999999; font-size:13px; display:none; }
 </style>
 
-<style id="fix-album2-horizontal-align">
-/* FIX 2) 화면 늘어나는거 방지 - no-photo가 1/-1로 전체 차지하면서 늘어나는거 방지, has-photo와 동일하게 */
-#diary-around-today-list .sub-memo-item.no-photo,
-#money-around-today-list .sub-memo-item.no-photo,
-#search-result-list .sub-memo-item.no-photo,
-#diary-search-result-list .sub-memo-item.no-photo {
-    grid-column: span 1 !important;
+<style id="v18-final-fix">
+/* 2) 화면 늘어나는거 방지 - 기존 v359 90px, v361 등 제거하고 여백 정상화 */
+#diary-around-today-list, #money-around-today-list {
+    padding-bottom: 20px !important;
+    margin-bottom: 0 !important;
+}
+#diary-around-today-list .sub-memo-item, #money-around-today-list .sub-memo-item {
+    margin-bottom: 8px !important;
+    padding-bottom: 10px !important;
 }
 
-/* FIX 3) 앨범2에서 [사진][내용][내용] 3가지 다른 사항이 나타나도 가로로 동일하게 정렬 */
+/* 3) 앨범2 [사진][내용][내용] 3가지 다른 사항이 나타나도 가로로 동일하게 */
+/* 기본 리스트를 2열 그리드로 - 사진/내용 모두 동일 span 1 */
 #diary-around-today-list,
 #money-around-today-list,
 #search-result-list,
@@ -3056,62 +3059,50 @@ body { touch-action:pan-x pan-y; -webkit-text-size-adjust:100%; padding-bottom:v
     grid-template-columns: 1fr 1fr !important;
     gap: 8px !important;
     align-items: stretch !important;
+    align-content: start !important;
 }
-
-/* 일반 모드에서도 has-photo, no-photo 동일 크기 */
 #diary-around-today-list .sub-memo-item.has-photo,
 #diary-around-today-list .sub-memo-item.no-photo,
 #money-around-today-list .sub-memo-item.has-photo,
-#money-around-today-list .sub-memo-item.no-photo {
+#money-around-today-list .sub-memo-item.no-photo,
+#search-result-list .sub-memo-item.has-photo,
+#search-result-list .sub-memo-item.no-photo {
     grid-column: span 1 !important;
     display: flex !important;
     flex-direction: column !important;
     min-height: 180px !important;
+    height: auto !important;
 }
 
-/* 사진 없는 경우 강제 사진 박스도 사진과 동일 1:1 비율 */
+/* 사진 없는 경우 강제 사진 박스도 사진과 동일한 1:1 비율로 - 가로 정렬 일정 */
 #diary-around-today-list .sub-memo-item.no-photo .diary-photo-wrap,
 #diary-around-today-list .sub-memo-item.no-photo .empty-photo-wrap,
-#diary-around-today-list .sub-memo-item.no-photo .empty-photo-placeholder,
-#diary-around-today-list .sub-memo-item.no-photo .diary-photo {
+#money-around-today-list .sub-memo-item.no-photo .diary-photo-wrap {
     width: 100% !important;
     aspect-ratio: 1/1 !important;
     min-height: 100px !important;
     border-radius: 10px !important;
-    overflow: hidden !important;
 }
 
-/* 갤러리 모드(앨범2) - 3열에서 모두 동일 */
+/* 제목 영역 고정 높이 */
+#diary-around-today-list .sub-memo-item .photo-title-area {
+    height: 20px !important;
+    min-height: 20px !important;
+    flex-shrink: 0 !important;
+}
+#diary-around-today-list .sub-memo-item .diary-photo-wrap { flex-shrink: 0 !important; }
+#diary-around-today-list .sub-memo-item .diary-text { flex: 1 !important; }
+
+/* 갤러리 모드(앨범2) - 3열에서 [사진][내용][내용] 모두 동일 */
 #diary-around-today-list.gallery-mode {
     grid-template-columns: repeat(3, 1fr) !important;
 }
 #diary-around-today-list.gallery-mode .sub-memo-item.has-photo,
 #diary-around-today-list.gallery-mode .sub-memo-item.no-photo {
     grid-column: auto !important;
-    display: flex !important;
-    flex-direction: column !important;
     min-height: 140px !important;
     background: #fff !important;
     border: 1px solid #eee !important;
-}
-#diary-around-today-list.gallery-mode .sub-memo-item.no-photo .diary-photo-wrap,
-#diary-around-today-list.gallery-mode .sub-memo-item.no-photo .empty-photo-wrap {
-    aspect-ratio: 1/1 !important;
-    width: 100% !important;
-}
-
-/* 제목 영역 고정 높이로 가로 정렬 일정 */
-#diary-around-today-list .sub-memo-item .photo-title-area {
-    height: 20px !important;
-    min-height: 20px !important;
-    order: 1 !important;
-}
-#diary-around-today-list .sub-memo-item .diary-photo-wrap {
-    order: 2 !important;
-}
-#diary-around-today-list .sub-memo-item .diary-text {
-    order: 3 !important;
-    flex: 1 !important;
 }
 </style>
 
@@ -17055,74 +17046,49 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 </script>
 
 
-<script id="content-dblclick-highlight">
+<script id="v18-content-dblclick">
 (function(){
-  function getDiaryItem(el){
-    var m=el.innerHTML.match(/deleteDiary\('([^']+)'\)/);
+  function getItem(box){
+    var m=box.innerHTML.match(/deleteDiary\('([^']+)'\)/);
     if(!m) return null;
     var all=(typeof getAllDiaries==='function')?getAllDiaries():[];
     return all.find(function(d){ return d.id===m[1]; })||null;
   }
   function attach(){
     document.querySelectorAll('.sub-memo-item').forEach(function(box){
-      if(box._contentDbl) return;
-      box._contentDbl=true;
-      var item=getDiaryItem(box);
-      if(!item) return;
-      
-      var openHighlight=function(e){
+      if(box._v18fixed) return;
+      box._v18fixed=true;
+      var openHL=function(e){
         if(e && e.target && e.target.closest && e.target.closest('.memo-action-btns, .edit-btn-hidden, .delete-btn, button')) return;
-        if(e) { e.preventDefault(); e.stopPropagation(); }
-        if(window._hlOpening) return;
-        window._hlOpening=true;
-        setTimeout(function(){ window._hlOpening=false; }, 800);
-        window.openPhotoLightbox(item.photo||null, item);
+        if(e){ e.preventDefault(); e.stopPropagation(); }
+        if(window._v18opening) return;
+        window._v18opening=true;
+        setTimeout(function(){ window._v18opening=false; }, 800);
+        var it=getItem(box);
+        if(!it) return;
+        window.openPhotoLightbox(it.photo||null, it);
       };
-      
-      // 내용란 (.diary-text) 더블클릭 -> 하이라이트 (다른거와 동일)
-      var textEl=box.querySelector('.diary-text');
-      if(textEl){
-        textEl.style.cursor='pointer';
+      // 내용란 더블클릭 -> 하이라이트
+      var txt=box.querySelector('.diary-text');
+      if(txt){
+        txt.style.cursor='pointer';
         var lt=0;
-        textEl.addEventListener('touchend', function(e){
-          if(e.target.closest && e.target.closest('button')) return;
-          var now=Date.now();
-          if(now-lt<350){ lt=0; openHighlight(e); } else { lt=now; }
-        }, {passive:false});
-        textEl.addEventListener('dblclick', openHighlight);
+        txt.addEventListener('touchend', function(e){ var n=Date.now(); if(n-lt<350){ lt=0; openHL(e); } else lt=n; }, {passive:false});
+        txt.addEventListener('dblclick', openHL);
       }
-      
-      // 빈공란 (사진아이콘) 더블클릭 -> 하이라이트
-      var emptyEl=box.querySelector('.empty-photo-wrap, .empty-photo-placeholder, .diary-photo-wrap[data-empty]');
-      if(emptyEl){
-        emptyEl.style.cursor='zoom-in';
+      var emp=box.querySelector('.empty-photo-wrap, .diary-photo-wrap');
+      if(emp){
+        emp.style.cursor='zoom-in';
         var le=0;
-        emptyEl.addEventListener('touchend', function(e){
-          var now=Date.now();
-          if(now-le<350){ le=0; openHighlight(e); } else { le=now; }
-        }, {passive:false});
-        emptyEl.addEventListener('dblclick', openHighlight);
-      }
-      
-      // 사진 있는 경우 - 사진 더블클릭도 동일하게 (기존 핸들러 유지)
-      var photoEl=box.querySelector('.diary-photo-wrap:not([data-empty])');
-      if(photoEl && !photoEl._hasDbl){
-        photoEl._hasDbl=true;
-        // 기존 핸들러가 이미 있지만 중복 방지 위해 한번 더 보장
-        var lp=0;
-        photoEl.addEventListener('touchend', function(e){
-          var now=Date.now();
-          if(now-lp<350){ lp=0; openHighlight(e); } else { lp=now; }
-        }, {passive:false});
-        photoEl.addEventListener('dblclick', openHighlight);
+        emp.addEventListener('touchend', function(e){ var n=Date.now(); if(n-le<350){ le=0; openHL(e); } else le=n; }, {passive:false});
+        emp.addEventListener('dblclick', openHL);
       }
     });
   }
   attach();
-  setTimeout(attach, 600);
-  setTimeout(attach, 1500);
+  setTimeout(attach, 800);
+  setTimeout(attach, 2000);
   try{ new MutationObserver(attach).observe(document.body, {childList:true, subtree:true}); }catch(e){}
-  console.log('[FIX] 내용란 더블클릭=하이라이트, 제목만/내용만 동일 처리');
 })();
 </script>
 
