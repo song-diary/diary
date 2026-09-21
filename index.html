@@ -3037,6 +3037,84 @@ body { touch-action:pan-x pan-y; -webkit-text-size-adjust:100%; padding-bottom:v
 .card { will-change:transform; }
 #back-toast { position:fixed; bottom:calc(30px + var(--safe-bottom)); left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.85); color:#fff; padding:12px 20px; border-radius:24px; z-index:999999; font-size:13px; display:none; }
 </style>
+
+<style id="fix-album2-horizontal-align">
+/* FIX 2) 화면 늘어나는거 방지 - no-photo가 1/-1로 전체 차지하면서 늘어나는거 방지, has-photo와 동일하게 */
+#diary-around-today-list .sub-memo-item.no-photo,
+#money-around-today-list .sub-memo-item.no-photo,
+#search-result-list .sub-memo-item.no-photo,
+#diary-search-result-list .sub-memo-item.no-photo {
+    grid-column: span 1 !important;
+}
+
+/* FIX 3) 앨범2에서 [사진][내용][내용] 3가지 다른 사항이 나타나도 가로로 동일하게 정렬 */
+#diary-around-today-list,
+#money-around-today-list,
+#search-result-list,
+#diary-search-result-list {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    align-items: stretch !important;
+}
+
+/* 일반 모드에서도 has-photo, no-photo 동일 크기 */
+#diary-around-today-list .sub-memo-item.has-photo,
+#diary-around-today-list .sub-memo-item.no-photo,
+#money-around-today-list .sub-memo-item.has-photo,
+#money-around-today-list .sub-memo-item.no-photo {
+    grid-column: span 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 180px !important;
+}
+
+/* 사진 없는 경우 강제 사진 박스도 사진과 동일 1:1 비율 */
+#diary-around-today-list .sub-memo-item.no-photo .diary-photo-wrap,
+#diary-around-today-list .sub-memo-item.no-photo .empty-photo-wrap,
+#diary-around-today-list .sub-memo-item.no-photo .empty-photo-placeholder,
+#diary-around-today-list .sub-memo-item.no-photo .diary-photo {
+    width: 100% !important;
+    aspect-ratio: 1/1 !important;
+    min-height: 100px !important;
+    border-radius: 10px !important;
+    overflow: hidden !important;
+}
+
+/* 갤러리 모드(앨범2) - 3열에서 모두 동일 */
+#diary-around-today-list.gallery-mode {
+    grid-template-columns: repeat(3, 1fr) !important;
+}
+#diary-around-today-list.gallery-mode .sub-memo-item.has-photo,
+#diary-around-today-list.gallery-mode .sub-memo-item.no-photo {
+    grid-column: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 140px !important;
+    background: #fff !important;
+    border: 1px solid #eee !important;
+}
+#diary-around-today-list.gallery-mode .sub-memo-item.no-photo .diary-photo-wrap,
+#diary-around-today-list.gallery-mode .sub-memo-item.no-photo .empty-photo-wrap {
+    aspect-ratio: 1/1 !important;
+    width: 100% !important;
+}
+
+/* 제목 영역 고정 높이로 가로 정렬 일정 */
+#diary-around-today-list .sub-memo-item .photo-title-area {
+    height: 20px !important;
+    min-height: 20px !important;
+    order: 1 !important;
+}
+#diary-around-today-list .sub-memo-item .diary-photo-wrap {
+    order: 2 !important;
+}
+#diary-around-today-list .sub-memo-item .diary-text {
+    order: 3 !important;
+    flex: 1 !important;
+}
+</style>
+
 </head>
 <body>
 
