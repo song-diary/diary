@@ -8727,7 +8727,7 @@ window.attachPhotoDoubleTap = function(el, handler){
             const titleText = item.anniversary || '';
             const titleHTML = `<div class="photo-title-area" style="height:20px; font-size:12px; font-weight:bold; color:#9C6ADE; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; margin-bottom:4px; padding-left:6px;">${titleText ? titleText : '&nbsp;'}</div>`;
             // 내용에 사진 임의로 하나 만들어 넣으면 동일하게 표현 - 사진처럼 처리
-            const emptyPhotoHTML = !item.photo ? `<div class="diary-photo-wrap empty-photo-wrap" data-empty="true"><div class="diary-photo empty-photo-icon" style="width:100%;aspect-ratio:1/1;background:#f5f0f0;border-radius:10px;min-height:100px;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:28px;">📷</div></div>` : '';
+                        const emptyPhotoHTML = !item.photo ? `<div class="diary-photo-wrap empty-photo-wrap" data-empty="true"><div class="diary-photo" style="width:100%;aspect-ratio:1/1;background:#f5f0f0;border-radius:10px;min-height:100px;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:28px;">📷</div></div>` : ''; // 내용에 사진 임의로 하나 넣어 동일 표현
             itemBox.innerHTML = `
                 ${titleHTML}
                 ${photoHTML}${emptyPhotoHTML}
@@ -17193,19 +17193,8 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 </script>
 
 <script id="v360_1-whole-box-open">
-/* V360_1: 사진 없는 항목(제목만/메모만) - 박스 전체 어디를 눌러도 더블탭으로 열리게 통합 */
+/* FIXED: 제목만/내용만 = 사진과 동일하게 처리, 더블클릭/더블탭만, 밑으로 늘어나는거 방지 */
 (function(){
-  function getItemDisplayText(diaryItem){
-    if(!diaryItem) return '';
-    return diaryItem.text || diaryItem.anniversary || '';
-  }
-  function findDiaryItemFromEl(itemEl){
-    var m = itemEl.innerHTML.match(/deleteDiary\('([^']+)'\)/);
-    if(!m) return null;
-    var all = (typeof getAllDiaries === 'function') ? getAllDiaries() : [];
-    return all.find(function(d){ return d.id === m[1]; }) || null;
-  }
-  
   function attachWholeBoxOpen(){
     document.querySelectorAll('.sub-memo-item.no-photo').forEach(function(itemEl){
       if(itemEl._v360_1WholeBox) return;
@@ -17214,27 +17203,21 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
       var handler = function(e){
         if(e.target && e.target.closest && e.target.closest('.memo-action-btns, .edit-btn-hidden, .delete-btn, button, .diary-text')) return;
         e.preventDefault(); e.stopPropagation();
+        if(window._lightboxOpening) return;
+        window._lightboxOpening = true;
+        setTimeout(function(){ window._lightboxOpening = false; }, 800);
         var m = itemEl.innerHTML.match(/deleteDiary\('([^']+)'\)/);
         if(!m) return;
         var all = (typeof getAllDiaries === 'function') ? getAllDiaries() : [];
         var diaryItem = all.find(function(d){ return d.id === m[1]; }) || null;
-        var text = itemEl.getAttribute('data-text-preview') || '';
-        // 2중 열기 방지
-        if(window._lightboxOpening) return;
-        window._lightboxOpening = true;
-        setTimeout(function(){ window._lightboxOpening = false; }, 800);
-        if(diaryItem){
-          if(diaryItem.photo){
-            window.openPhotoLightbox(diaryItem.photo, diaryItem);
-          } else {
-            // 사진아이콘 - 사진 없음, 메모만 하이라이트
-            window.openMemoLightboxOnly(diaryItem.text || diaryItem.anniversary || text, diaryItem);
-          }
+        if(!diaryItem) return;
+        // 제목만/내용만 = 사진과 동일하게 처리
+        if(diaryItem.photo){
+          window.openPhotoLightbox(diaryItem.photo, diaryItem);
         } else {
-          window.openMemoLightboxOnly(text, null);
+          window.openPhotoLightbox(null, diaryItem); // 내부에서 text||anniversary 처리
         }
       };
-      // 클릭 제거 - 더블클릭/더블탭만 (2중 처리로 밑으로 늘어나는 원인 제거)
       var lastTap = 0;
       itemEl.addEventListener('touchend', function(e){
         if(e.target && e.target.closest && e.target.closest('.memo-action-btns, .edit-btn-hidden, .delete-btn, button, .diary-text')) return;
@@ -17250,12 +17233,9 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
     });
   }
   attachWholeBoxOpen();
-  // MutationObserver 제거 - 2중 등록으로 늘어나는 원인
   setTimeout(attachWholeBoxOpen, 800);
-  console.log('[V360_1-FIXED] 더블클릭 2중 처리 제거 - 더블탭/더블클릭만, 클릭 제거');
+  console.log('[FIXED] 제목만/내용만 사진과 동일, 더블클릭만');
 })();
-
 </script>
-
 </body>
 </html>
