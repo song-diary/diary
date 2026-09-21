@@ -1781,7 +1781,7 @@ body { touch-action: pan-x pan-y pinch-zoom !important; }
 .cal-special-label, .cal-anniv-label { font-size:7px !important; line-height:1 !important; }
 
 /* 리스트 - 사진, 시간(수정삭제), 내용 순 */
-#diary-around-today-list { display:flex !important; flex-direction:column !important; gap:10px !important; }
+
 #diary-around-today-list .sub-memo-item { display:flex !important; flex-direction:column !important; background:#fff !important; border-radius:14px !important; overflow:hidden !important; border:1px solid #eee !important; padding:0 !important; }
 #diary-around-today-list .sub-memo-item .diary-photo-wrap { order:1; width:100% !important; margin:0 !important; }
 #diary-around-today-list .sub-memo-item .diary-photo-wrap .diary-photo { width:100% !important; aspect-ratio:auto !important; object-fit:contain !important; max-height:320px; background:#f8f5f0; }
@@ -1870,7 +1870,7 @@ body { touch-action: pan-x pan-y pinch-zoom !important; }
 .cal-special-label, .cal-anniv-label { font-size:7px !important; line-height:1 !important; }
 
 /* 리스트 - 사진, 시간, 내용 */
-#diary-around-today-list { display:flex !important; flex-direction:column !important; gap:10px !important; }
+
 #diary-around-today-list .sub-memo-item { display:flex !important; flex-direction:column !important; background:#fff !important; border-radius:14px !important; overflow:hidden !important; border:1px solid #eee !important; padding:0 !important; }
 #diary-around-today-list .sub-memo-item .diary-photo-wrap { order:1; width:100% !important; margin:0 !important; }
 #diary-around-today-list .sub-memo-item .diary-photo-wrap .diary-photo { width:100% !important; aspect-ratio:auto !important; object-fit:contain !important; max-height:320px; background:#f8f5f0; }
@@ -14210,6 +14210,38 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
   console.log('[V18 FINAL] 내용란 더블클릭=하이라이트, 가로동일정렬, 늘어남 방지');
 })();
 </script>
+
+
+<style id="v18-final-override2">
+/* 1) 하이라이트 후 밑에 날짜/시간 안나오게 */
+#photo-lightbox-date { display: none !important; }
+#photo-lightbox-actions { display: none !important; }
+
+/* 2) 좌우 정렬 - flex 강제 해제하고 grid 강제 */
+#diary-around-today-list,
+#money-around-today-list {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    align-items: stretch !important;
+}
+#diary-around-today-list .sub-memo-item,
+#money-around-today-list .sub-memo-item {
+    grid-column: span 1 !important;
+    width: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+#diary-around-today-list.gallery-mode {
+    grid-template-columns: repeat(3, 1fr) !important;
+}
+</style>
+
+
+<style id="hide-date-only">
+#photo-lightbox-date { display: none !important; visibility: hidden !important; height: 0 !important; margin: 0 !important; padding: 0 !important; }
+#photo-lightbox-memo.no-photo-mode { background: transparent !important; color: #000 !important; }
+</style>
 
 </body>
 </html>
