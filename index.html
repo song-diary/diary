@@ -8726,8 +8726,7 @@ window.attachPhotoDoubleTap = function(el, handler){
 
             const titleText = item.anniversary || '';
             const titleHTML = `<div class="photo-title-area" style="height:20px; font-size:12px; font-weight:bold; color:#9C6ADE; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; margin-bottom:4px; padding-left:6px;">${titleText ? titleText : '&nbsp;'}</div>`;
-            // 내용에 사진 임의로 하나 만들어 넣으면 동일하게 표현 - 사진처럼 처리
-                        const emptyPhotoHTML = !item.photo ? `<div class="diary-photo-wrap empty-photo-wrap" data-empty="true"><div class="diary-photo" style="width:100%;aspect-ratio:1/1;background:#f5f0f0;border-radius:10px;min-height:100px;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:28px;">📷</div></div>` : ''; // 내용에 사진 임의로 하나 넣어 동일 표현
+            const emptyPhotoHTML = !item.photo ? `<div class="diary-photo-wrap empty-photo-wrap" data-empty="true" style="cursor:zoom-in;"><div class="diary-photo" style="width:100%;aspect-ratio:1/1;background:#f5f0f0;border-radius:10px;min-height:100px;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:28px;">📷</div></div>` : '';
             itemBox.innerHTML = `
                 ${titleHTML}
                 ${photoHTML}${emptyPhotoHTML}
@@ -8765,23 +8764,13 @@ window.attachPhotoDoubleTap = function(el, handler){
                         }catch(e){ console.log('IDB direct fail', e); }
                     }
                     if(src){ openPhotoLightbox(src, item); }
-                    else { // 사진 없음 - 사진아이콘 더블클릭시 메모만 하이라이트 (사진 데이터 없음 알림 제거)
-                        if(typeof window.openMemoLightboxOnly === 'function'){
-                            window.openMemoLightboxOnly(item.text || item.anniversary || '', item);
-                        } else if(typeof window.openPhotoLightbox === 'function'){
-                            window.openPhotoLightbox(null, item);
-                        }
-                    }
+                    else { if(typeof window.openMemoLightboxOnly==='function'){ window.openMemoLightboxOnly(item.text||item.anniversary||'', item); } else { window.openPhotoLightbox(null, item); } }
                 };
-                // V363: 사진아이콘(빈사진)은 사진 핸들러 제외 - 메모 하이라이트만 (사진 데이터 없음 알림 방지)
-                if(_photoArea && _photoArea.dataset && _photoArea.dataset.empty === 'true'){
-                    // 빈 사진 아이콘 - 사진 확대 핸들러 건너뜀, 전체박스 더블클릭 핸들러로 메모만 열림
+                // V363: 실수로 한번 터치에 확대되는 것 방지 - 더블탭/더블클릭에서만 확대
+                if(typeof attachPhotoDoubleTap === 'function'){
+                    attachPhotoDoubleTap(_photoArea, handlePhotoClick);
                 } else {
-                    if(typeof attachPhotoDoubleTap === 'function'){
-                        attachPhotoDoubleTap(_photoArea, handlePhotoClick);
-                    } else {
-                        _photoArea.addEventListener('dblclick', handlePhotoClick);
-                    }
+                    _photoArea.addEventListener('dblclick', handlePhotoClick);
                 }
             }
             // 텍스트 클릭시 수정, 사진 클릭시 확대 (V262)
@@ -8950,23 +8939,13 @@ window.attachPhotoDoubleTap = function(el, handler){
                         }catch(e){ console.log('IDB direct fail', e); }
                     }
                     if(src){ openPhotoLightbox(src, item); }
-                    else { // 사진 없음 - 사진아이콘 더블클릭시 메모만 하이라이트 (사진 데이터 없음 알림 제거)
-                        if(typeof window.openMemoLightboxOnly === 'function'){
-                            window.openMemoLightboxOnly(item.text || item.anniversary || '', item);
-                        } else if(typeof window.openPhotoLightbox === 'function'){
-                            window.openPhotoLightbox(null, item);
-                        }
-                    }
+                    else { if(typeof window.openMemoLightboxOnly==='function'){ window.openMemoLightboxOnly(item.text||item.anniversary||'', item); } else { window.openPhotoLightbox(null, item); } }
                 };
-                // V363: 사진아이콘(빈사진)은 사진 핸들러 제외 - 메모 하이라이트만 (사진 데이터 없음 알림 방지)
-                if(_photoArea && _photoArea.dataset && _photoArea.dataset.empty === 'true'){
-                    // 빈 사진 아이콘 - 사진 확대 핸들러 건너뜀, 전체박스 더블클릭 핸들러로 메모만 열림
+                // V363: 실수로 한번 터치에 확대되는 것 방지 - 더블탭/더블클릭에서만 확대
+                if(typeof attachPhotoDoubleTap === 'function'){
+                    attachPhotoDoubleTap(_photoArea, handlePhotoClick);
                 } else {
-                    if(typeof attachPhotoDoubleTap === 'function'){
-                        attachPhotoDoubleTap(_photoArea, handlePhotoClick);
-                    } else {
-                        _photoArea.addEventListener('dblclick', handlePhotoClick);
-                    }
+                    _photoArea.addEventListener('dblclick', handlePhotoClick);
                 }
             }
             // 텍스트 클릭시 수정, 사진 클릭시 확대 (V262)
@@ -9195,7 +9174,6 @@ async function showPhotosForDate(dateStr){
         if (diaryItemOrText) {
             if (typeof diaryItemOrText === 'string') memoText = sanitizeDiaryTextForDisplay(diaryItemOrText);
             else if (typeof diaryItemOrText === 'object') {
-                // FIX: 제목만 있는 경우도 사진과 동일하게 처리 - text 없으면 anniversary 표시
                 memoText = sanitizeDiaryTextForDisplay(diaryItemOrText.text || diaryItemOrText.anniversary || '');
                 if(diaryItemOrText.id) currentLightboxItemId = diaryItemOrText.id;
                 if (diaryItemOrText.date) {
@@ -11973,7 +11951,7 @@ async function showPhotosForDate(dateStr){
   padding-bottom: 0 !important;
 }
 #lotto-generator-card .lotto-section {
-  padding-bottom: 20px !important; // 2중 늘어남 방지 - 90px->20px /* 종료버튼 높이만큼 여유 */
+  padding-bottom: 90px !important; /* 종료버튼 높이만큼 여유 */
   overflow: visible !important;
 }
 #ldt-manual-results2 {
@@ -12276,7 +12254,7 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
         if(memoText) finalDisplay += '\n\n' + memoText;
         // V360_3: 제목/내용 없이 사진만 있을 때 붙던 안내문구 제거 - 핀 아이콘만 표시
       } else {
-        finalDisplay = memoText || '' // 제목 따라 그림 표현 삭제;
+        finalDisplay = memoText || '📌  \n(내용 없음)';
       }
 
       if (src) { imgEl.src = src; imgEl.style.display='block'; } else { imgEl.style.display='none'; imgEl.src=''; }
@@ -16999,82 +16977,74 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 </script>
 
 
-<script id="v360_fixed_content_dblclick">
-/* FIXED: 제목만 있는 경우 - 제목 더블클릭 X, 내용란(빈공란/사진아이콘) 더블클릭 O */
+<script id="content-dblclick-highlight">
 (function(){
+  function getDiaryItem(el){
+    var m=el.innerHTML.match(/deleteDiary\('([^']+)'\)/);
+    if(!m) return null;
+    var all=(typeof getAllDiaries==='function')?getAllDiaries():[];
+    return all.find(function(d){ return d.id===m[1]; })||null;
+  }
   function attach(){
-    document.querySelectorAll('.sub-memo-item.no-photo').forEach(function(el){
-      if(el._contentFixed) return;
-      el._contentFixed = true;
+    document.querySelectorAll('.sub-memo-item').forEach(function(box){
+      if(box._contentDbl) return;
+      box._contentDbl=true;
+      var item=getDiaryItem(box);
+      if(!item) return;
       
-      var handler = function(e){
-        if(e.target && e.target.closest && e.target.closest('.memo-action-btns, .edit-btn-hidden, .delete-btn, button')) return;
-        // 제목 영역 클릭은 제외 - 내용란만
-        if(e.target && e.target.closest && e.target.closest('.photo-title-area')){
-          return; // 제목 더블클릭 안됨
-        }
-        // diary-text가 있는 경우(내용 있음) - 내용 더블클릭은 하이라이트, 싱글클릭은 수정
-        if(e.target && e.target.closest && e.target.closest('.diary-text')){
-          if(e.type === 'click') return; // 싱글클릭은 수정폼으로
-        }
-        e.preventDefault(); e.stopPropagation();
-        if(window._opening) return;
-        window._opening = true;
-        setTimeout(function(){ window._opening = false; }, 800);
-        var m = el.innerHTML.match(/deleteDiary\('([^']+)'\)/);
-        if(!m) return;
-        var all = (typeof getAllDiaries === 'function') ? getAllDiaries() : [];
-        var item = all.find(function(d){ return d.id === m[1]; }) || null;
-        if(!item) return;
-        window.openPhotoLightbox(item.photo || null, item);
+      var openHighlight=function(e){
+        if(e && e.target && e.target.closest && e.target.closest('.memo-action-btns, .edit-btn-hidden, .delete-btn, button')) return;
+        if(e) { e.preventDefault(); e.stopPropagation(); }
+        if(window._hlOpening) return;
+        window._hlOpening=true;
+        setTimeout(function(){ window._hlOpening=false; }, 800);
+        window.openPhotoLightbox(item.photo||null, item);
       };
       
-      // 1. 빈공란(사진아이콘) 영역 - 내용란 더블클릭
-      var emptyEl = el.querySelector('.diary-photo-wrap, .empty-photo-placeholder, .diary-photo, .empty-photo-wrap');
-      if(emptyEl){
-        emptyEl.style.cursor = 'zoom-in';
-        var last1=0;
-        emptyEl.addEventListener('touchend', function(e){
-          if(e.target && e.target.closest && e.target.closest('.memo-action-btns, .edit-btn-hidden, .delete-btn, button')) return;
+      // 내용란 (.diary-text) 더블클릭 -> 하이라이트 (다른거와 동일)
+      var textEl=box.querySelector('.diary-text');
+      if(textEl){
+        textEl.style.cursor='pointer';
+        var lt=0;
+        textEl.addEventListener('touchend', function(e){
+          if(e.target.closest && e.target.closest('button')) return;
           var now=Date.now();
-          if(now-last1<350){ last1=0; handler(e); } else { last1=now; }
+          if(now-lt<350){ lt=0; openHighlight(e); } else { lt=now; }
         }, {passive:false});
-        emptyEl.addEventListener('dblclick', handler);
+        textEl.addEventListener('dblclick', openHighlight);
       }
       
-      // 2. 전체 박스 배경 더블클릭 (내용란 빈공간) - 제목 제외
-      var last2=0;
-      el.addEventListener('touchend', function(e){
-        if(e.target && e.target.closest && e.target.closest('.memo-action-btns, .edit-btn-hidden, .delete-btn, button, .photo-title-area, .diary-text')) return;
-        var now=Date.now();
-        if(now-last2<350){ last2=0; handler(e); } else { last2=now; }
-      }, {passive:false});
-      el.addEventListener('dblclick', function(e){
-        if(e.target && e.target.closest && e.target.closest('.photo-title-area, .diary-text')) return;
-        handler(e);
-      });
-      
-      // 3. 내용 텍스트 더블클릭 (내용 있는 경우)
-      var textEl = el.querySelector('.diary-text');
-      if(textEl){
-        textEl.style.cursor = 'pointer';
-        var last3=0;
-        textEl.addEventListener('touchend', function(e){
+      // 빈공란 (사진아이콘) 더블클릭 -> 하이라이트
+      var emptyEl=box.querySelector('.empty-photo-wrap, .empty-photo-placeholder, .diary-photo-wrap[data-empty]');
+      if(emptyEl){
+        emptyEl.style.cursor='zoom-in';
+        var le=0;
+        emptyEl.addEventListener('touchend', function(e){
           var now=Date.now();
-          if(now-last3<350){ last3=0; handler(e); } else { last3=now; }
+          if(now-le<350){ le=0; openHighlight(e); } else { le=now; }
         }, {passive:false});
-        textEl.addEventListener('dblclick', handler);
+        emptyEl.addEventListener('dblclick', openHighlight);
+      }
+      
+      // 사진 있는 경우 - 사진 더블클릭도 동일하게 (기존 핸들러 유지)
+      var photoEl=box.querySelector('.diary-photo-wrap:not([data-empty])');
+      if(photoEl && !photoEl._hasDbl){
+        photoEl._hasDbl=true;
+        // 기존 핸들러가 이미 있지만 중복 방지 위해 한번 더 보장
+        var lp=0;
+        photoEl.addEventListener('touchend', function(e){
+          var now=Date.now();
+          if(now-lp<350){ lp=0; openHighlight(e); } else { lp=now; }
+        }, {passive:false});
+        photoEl.addEventListener('dblclick', openHighlight);
       }
     });
   }
   attach();
-  setTimeout(attach, 800);
-  setTimeout(attach, 2000);
-  // MutationObserver로 새로 생기는 항목도 처리 (가볍게)
-  try {
-    new MutationObserver(attach).observe(document.body, {childList:true, subtree:true});
-  } catch(e){}
-  console.log('[FIXED] 제목더블클릭X, 내용란(빈공란) 더블클릭O');
+  setTimeout(attach, 600);
+  setTimeout(attach, 1500);
+  try{ new MutationObserver(attach).observe(document.body, {childList:true, subtree:true}); }catch(e){}
+  console.log('[FIX] 내용란 더블클릭=하이라이트, 제목만/내용만 동일 처리');
 })();
 </script>
 
