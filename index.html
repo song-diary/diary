@@ -16998,60 +16998,85 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 })();
 </script>
 
-<script id="v360_1-whole-box-open">
-/* FIXED 3가지 모두: 1)밑으로 늘어남 제거 2)제목만 더블클릭 안됨 해결 3)제목아이콘+제목+빈공란 처리 */
+
+<script id="v360_fixed_content_dblclick">
+/* FIXED: 제목만 있는 경우 - 제목 더블클릭 X, 내용란(빈공란/사진아이콘) 더블클릭 O */
 (function(){
   function attach(){
     document.querySelectorAll('.sub-memo-item.no-photo').forEach(function(el){
-      if(el._fixed) return;
-      el._fixed = true;
-      el.style.cursor='pointer';
-      var handler=function(e){
+      if(el._contentFixed) return;
+      el._contentFixed = true;
+      
+      var handler = function(e){
         if(e.target && e.target.closest && e.target.closest('.memo-action-btns, .edit-btn-hidden, .delete-btn, button')) return;
-        // diary-text 클릭은 수정폼 열림, 그 외는 하이라이트
+        // 제목 영역 클릭은 제외 - 내용란만
+        if(e.target && e.target.closest && e.target.closest('.photo-title-area')){
+          return; // 제목 더블클릭 안됨
+        }
+        // diary-text가 있는 경우(내용 있음) - 내용 더블클릭은 하이라이트, 싱글클릭은 수정
         if(e.target && e.target.closest && e.target.closest('.diary-text')){
-          // 텍스트 자체 클릭시 기존 수정 동작 유지하려면 return, 하지만 제목만은 diary-text가 없으므로 하이라이트 열림
-          if(el.classList.contains('has-photo') || el.querySelector('.diary-text')) {
-            // 내용 있는 경우 텍스트 클릭은 수정으로 가므로 여기서는 제외 - 하지만 더블클릭은 하이라이트로 가야함
-            if(e.type==='click') return;
-          }
+          if(e.type === 'click') return; // 싱글클릭은 수정폼으로
         }
         e.preventDefault(); e.stopPropagation();
         if(window._opening) return;
-        window._opening=true;
-        setTimeout(function(){ window._opening=false; }, 800);
-        var m=el.innerHTML.match(/deleteDiary\('([^']+)'\)/);
+        window._opening = true;
+        setTimeout(function(){ window._opening = false; }, 800);
+        var m = el.innerHTML.match(/deleteDiary\('([^']+)'\)/);
         if(!m) return;
-        var all=(typeof getAllDiaries==='function')?getAllDiaries():[];
-        var item=all.find(function(d){ return d.id===m[1]; })||null;
+        var all = (typeof getAllDiaries === 'function') ? getAllDiaries() : [];
+        var item = all.find(function(d){ return d.id === m[1]; }) || null;
         if(!item) return;
-        // 사진과 동일하게 처리 - 사진 있으면 사진 하이라이트, 없으면 메모 하이라이트 (제목만/내용만 모두)
-        window.openPhotoLightbox(item.photo||null, item);
+        window.openPhotoLightbox(item.photo || null, item);
       };
-      var last=0;
-      el.addEventListener('touchend', function(e){
-        if(e.target && e.target.closest && e.target.closest('.memo-action-btns, .edit-btn-hidden, .delete-btn, button')) return;
-        var now=Date.now();
-        if(now-last<350){ last=0; handler(e); } else { last=now; }
-      }, {passive:false});
-      el.addEventListener('dblclick', handler);
-      // 제목 영역도 동일하게 - 제목만 있으면 제목아이콘+제목+빈공란 구조이므로 전체 박스처럼 동작
-      var titleArea=el.querySelector('.photo-title-area');
-      if(titleArea){
-        titleArea.style.cursor='pointer';
-        titleArea.addEventListener('touchend', function(e){
+      
+      // 1. 빈공란(사진아이콘) 영역 - 내용란 더블클릭
+      var emptyEl = el.querySelector('.diary-photo-wrap, .empty-photo-placeholder, .diary-photo, .empty-photo-wrap');
+      if(emptyEl){
+        emptyEl.style.cursor = 'zoom-in';
+        var last1=0;
+        emptyEl.addEventListener('touchend', function(e){
+          if(e.target && e.target.closest && e.target.closest('.memo-action-btns, .edit-btn-hidden, .delete-btn, button')) return;
           var now=Date.now();
-          if(now-last<350){ last=0; handler(e); } else { last=now; }
+          if(now-last1<350){ last1=0; handler(e); } else { last1=now; }
         }, {passive:false});
-        titleArea.addEventListener('dblclick', handler);
+        emptyEl.addEventListener('dblclick', handler);
+      }
+      
+      // 2. 전체 박스 배경 더블클릭 (내용란 빈공간) - 제목 제외
+      var last2=0;
+      el.addEventListener('touchend', function(e){
+        if(e.target && e.target.closest && e.target.closest('.memo-action-btns, .edit-btn-hidden, .delete-btn, button, .photo-title-area, .diary-text')) return;
+        var now=Date.now();
+        if(now-last2<350){ last2=0; handler(e); } else { last2=now; }
+      }, {passive:false});
+      el.addEventListener('dblclick', function(e){
+        if(e.target && e.target.closest && e.target.closest('.photo-title-area, .diary-text')) return;
+        handler(e);
+      });
+      
+      // 3. 내용 텍스트 더블클릭 (내용 있는 경우)
+      var textEl = el.querySelector('.diary-text');
+      if(textEl){
+        textEl.style.cursor = 'pointer';
+        var last3=0;
+        textEl.addEventListener('touchend', function(e){
+          var now=Date.now();
+          if(now-last3<350){ last3=0; handler(e); } else { last3=now; }
+        }, {passive:false});
+        textEl.addEventListener('dblclick', handler);
       }
     });
   }
   attach();
   setTimeout(attach, 800);
   setTimeout(attach, 2000);
-  console.log('[FIXED] 밑늘어남 제거, 제목만 더블클릭 OK, 제목아이콘+제목+빈공란 처리');
+  // MutationObserver로 새로 생기는 항목도 처리 (가볍게)
+  try {
+    new MutationObserver(attach).observe(document.body, {childList:true, subtree:true});
+  } catch(e){}
+  console.log('[FIXED] 제목더블클릭X, 내용란(빈공란) 더블클릭O');
 })();
 </script>
+
 </body>
 </html>
