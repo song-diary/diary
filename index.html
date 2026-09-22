@@ -2685,12 +2685,6 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
             #settings-card { max-width:100% !important; width:100% !important; height:100vh !important; max-height:100vh !important; border-radius:0 !important; border:none !important; }
         }
 
-#diary-around-today-list.gallery-mode .sub-memo-item .item-top-row{flex:0 0 auto !important;margin-top:4px !important;margin-bottom:2px !important;order:2 !important;}
-#diary-around-today-list.gallery-mode .sub-memo-item .diary-text{flex:0 0 auto !important;min-height:18px !important;order:3 !important;margin-top:2px !important;}
-#diary-around-today-list.gallery-mode .sub-memo-item .diary-photo-wrap{order:1 !important;}
-#diary-around-today-list.gallery-mode .sub-memo-item{justify-content:flex-start !important;align-items:stretch !important;height:auto !important;min-height:210px !important;}
-#diary-around-today-list.gallery-mode .sub-memo-item.no-photo .diary-text{order:3 !important;}
-
 </style>
 
 
@@ -3043,25 +3037,78 @@ body { touch-action:pan-x pan-y; -webkit-text-size-adjust:100%; padding-bottom:v
 .card { will-change:transform; }
 #back-toast { position:fixed; bottom:calc(30px + var(--safe-bottom)); left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.85); color:#fff; padding:12px 20px; border-radius:24px; z-index:999999; font-size:13px; display:none; }
 </style>
-<style id="v18-clean-final">
+<style id="v18-final-3fix">
 #photo-lightbox-date{display:none !important;}
 #photo-lightbox-actions{display:none !important;}
-/* 앨범1 세로 1개씩, 사진 크게, 글씨는 수정/삭제 밑에 */
 #diary-around-today-list:not(.gallery-mode){display:flex !important;flex-direction:column !important;gap:10px !important;}
 #diary-around-today-list:not(.gallery-mode) .sub-memo-item .diary-text{font-size:11px !important;color:#666 !important;line-height:1.4 !important;}
-/* 앨범2 3열 - 사진과 내용란 높이 동일 */
+/* 앨범2 - 높이 동일, 버튼 바로 밑 */
 #diary-around-today-list.gallery-mode{display:grid !important;grid-template-columns:repeat(3,1fr) !important;gap:8px !important;align-items:stretch !important;}
-#diary-around-today-list.gallery-mode .sub-memo-item{display:flex !important;flex-direction:column !important;min-height:210px !important;height:210px !important;background:#fff !important;border:1px solid #eee !important;border-radius:14px !important;overflow:hidden !important;}
-#diary-around-today-list.gallery-mode .sub-memo-item .photo-title-area{height:20px !important;flex:0 0 20px !important;}
-#diary-around-today-list.gallery-mode .sub-memo-item .diary-photo-wrap{flex:0 0 110px !important;height:110px !important;min-height:110px !important;width:100% !important;aspect-ratio:1/1 !important;overflow:hidden !important;border-radius:10px !important;margin:0 !important;}
+#diary-around-today-list.gallery-mode .sub-memo-item{display:flex !important;flex-direction:column !important;min-height:210px !important;background:#fff !important;border:1px solid #eee !important;border-radius:14px !important;overflow:hidden !important;justify-content:flex-start !important;}
+#diary-around-today-list.gallery-mode .sub-memo-item .photo-title-area{height:20px !important;flex:0 0 20px !important;border-radius:14px 14px 0 0 !important;display:flex !important;align-items:center !important;justify-content:flex-start !important;padding-left:8px !important;}
+#diary-around-today-list.gallery-mode .sub-memo-item .diary-photo-wrap{flex:0 0 110px !important;height:110px !important;min-height:110px !important;width:100% !important;aspect-ratio:1/1 !important;overflow:hidden !important;border-radius:10px !important;margin:0 !important;order:1 !important;}
 #diary-around-today-list.gallery-mode .sub-memo-item .diary-photo{width:100% !important;height:100% !important;aspect-ratio:1/1 !important;object-fit:cover !important;border-radius:10px !important;min-height:110px !important;}
 #diary-around-today-list.gallery-mode .sub-memo-item .diary-photo-wrap.empty-photo-wrap{flex:0 0 110px !important;height:110px !important;background:#f8f5f0 !important;display:flex !important;align-items:center !important;justify-content:center !important;}
 #diary-around-today-list.gallery-mode .sub-memo-item .item-top-row{flex:0 0 auto !important;margin-top:4px !important;margin-bottom:2px !important;order:2 !important;}
 #diary-around-today-list.gallery-mode .sub-memo-item .diary-text{flex:0 0 auto !important;min-height:18px !important;order:3 !important;margin-top:2px !important;}
-#diary-around-today-list.gallery-mode .sub-memo-item .diary-photo-wrap{order:1 !important;}
-#diary-around-today-list.gallery-mode .sub-memo-item{justify-content:flex-start !important;align-items:stretch !important;height:auto !important;min-height:210px !important;}
-#diary-around-today-list.gallery-mode .sub-memo-item.no-photo .diary-text{order:3 !important;}
 
+/* 1) 제목란 고정핀 크기 반으로, 왼쪽으로 */
+#diary-around-today-list.gallery-mode .photo-title-area .pin-icon,
+.photo-title-area .pin-icon,
+.sub-memo-item .photo-title-area span:first-child,
+.photo-title-area{
+  font-size:11px !important;
+}
+#diary-around-today-list .photo-title-area{
+  text-align:left !important;
+  justify-content:flex-start !important;
+}
+#diary-around-today-list .photo-title-area img,
+#diary-around-today-list .photo-title-area .pin,
+.sub-memo-item .photo-title-area{
+  font-size:12px !important;
+}
+/* 고정핀 이모지 크기 축소 */
+.sub-memo-item .photo-title-area{
+  font-size:12px !important;
+}
+.sub-memo-item .photo-title-area::first-letter{
+  font-size:10px !important;
+}
+.photo-title-area{
+  padding-left:6px !important;
+}
+/* 2) 제목란 바탕 라운딩 대칭 고정 */
+#diary-around-today-list .sub-memo-item .photo-title-area{
+  border-radius:12px 12px 0 0 !important;
+  margin:0 !important;
+  width:100% !important;
+  box-sizing:border-box !important;
+  background:#fff0f0 !important;
+  border:1px solid #f3d5d5 !important;
+  border-bottom:1px dashed #e9caca !important;
+  line-height:20px !important;
+  height:22px !important;
+  min-height:22px !important;
+  overflow:hidden !important;
+}
+#diary-around-today-list.gallery-mode .sub-memo-item .photo-title-area{
+  border-radius:10px 10px 0 0 !important;
+  background:#fff0f0 !important;
+}
+/* 3) 사진 아이콘 크기 축소 */
+.empty-photo-wrap .diary-photo{
+  font-size:18px !important;
+}
+.diary-photo-wrap.empty-photo-wrap div{
+  font-size:20px !important;
+}
+#diary-around-today-list .empty-photo-wrap{
+  font-size:18px !important;
+}
+#diary-around-today-list.gallery-mode .empty-photo-wrap div{
+  font-size:22px !important;
+}
 </style>
 
 </head>
@@ -17248,6 +17295,30 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 })();
 </script>
 
-<script id="v18-js">(function(){function g(b){var m=b.innerHTML.match(/deleteDiary\('([^']+)'\)/);if(!m)return null;var a=(typeof getAllDiaries==='function')?getAllDiaries():[];return a.find(function(d){return d.id===m[1];})||null;}function at(){document.querySelectorAll('.sub-memo-item').forEach(function(b){if(b._v18)return;b._v18=true;var o=function(e){if(e&&e.target&&e.target.closest&&e.target.closest('.memo-action-btns,.edit-btn-hidden,.delete-btn,button'))return;if(e){e.preventDefault();e.stopPropagation();}if(window._o)return;window._o=true;setTimeout(function(){window._o=false;},800);var it=g(b);if(!it)return;window.openPhotoLightbox(it.photo||null,it);};var t=b.querySelector('.diary-text');if(t){t.style.cursor='pointer';var lt=0;t.addEventListener('touchend',function(e){var n=Date.now();if(n-lt<350){lt=0;o(e);}else lt=n;},{passive:false});t.addEventListener('dblclick',o);}var p=b.querySelector('.diary-photo-wrap');if(p){p.style.cursor='zoom-in';var lp=0;p.addEventListener('touchend',function(e){var n=Date.now();if(n-lp<350){lp=0;o(e);}else lp=n;},{passive:false});p.addEventListener('dblclick',o);}});}at();setTimeout(at,800);setTimeout(at,2000);try{new MutationObserver(at).observe(document.body,{childList:true,subtree:true});}catch(e){}})();</script>
+<script id="v18-js">(function(){
+function fixPinAndIcon(){
+  document.querySelectorAll('.sub-memo-item .photo-title-area').forEach(function(el){
+    // 고정핀 이모지 크기 반으로
+    el.style.fontSize='11px';
+    el.style.textAlign='left';
+    el.style.justifyContent='flex-start';
+    // 핀 이모지 텍스트 노드 찾기
+    var html = el.innerHTML;
+    // 📌 이모지 크기 줄이기 - span으로 감싸기
+    if(html.indexOf('📌')!==-1 || html.indexOf('📍')!==-1 || html.includes('pushpin')){
+      el.innerHTML = html.replace(/📌/g,'<span style="font-size:10px !important;display:inline-block;transform:scale(0.6);transform-origin:left center;margin-right:2px;">📌</span>');
+    }
+  });
+  document.querySelectorAll('.diary-photo-wrap.empty-photo-wrap div').forEach(function(el){
+    el.style.fontSize='22px';
+  });
+}
+setTimeout(fixPinAndIcon,300);
+setTimeout(fixPinAndIcon,1000);
+new MutationObserver(fixPinAndIcon).observe(document.body,{childList:true,subtree:true});
+
+function g(b){var m=b.innerHTML.match(/deleteDiary\('([^']+)'\)/);if(!m)return null;var a=(typeof getAllDiaries==='function')?getAllDiaries():[];return a.find(function(d){return d.id===m[1];})||null;}
+function at(){document.querySelectorAll('.sub-memo-item').forEach(function(b){if(b._v18)return;b._v18=true;var o=function(e){if(e&&e.target&&e.target.closest&&e.target.closest('.memo-action-btns,.edit-btn-hidden,.delete-btn,button'))return;if(e){e.preventDefault();e.stopPropagation();}if(window._o)return;window._o=true;setTimeout(function(){window._o=false;},800);var it=g(b);if(!it)return;window.openPhotoLightbox(it.photo||null,it);};var t=b.querySelector('.diary-text');if(t){t.style.cursor='pointer';var lt=0;t.addEventListener('touchend',function(e){var n=Date.now();if(n-lt<350){lt=0;o(e);}else lt=n;},{passive:false});t.addEventListener('dblclick',o);}var p=b.querySelector('.diary-photo-wrap');if(p){p.style.cursor='zoom-in';var lp=0;p.addEventListener('touchend',function(e){var n=Date.now();if(n-lp<350){lp=0;o(e);}else lp=n;},{passive:false});p.addEventListener('dblclick',o);}});}at();setTimeout(at,800);setTimeout(at,2000);try{new MutationObserver(at).observe(document.body,{childList:true,subtree:true});}catch(e){}
+})();</script>
 </body>
 </html>
