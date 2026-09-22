@@ -1781,7 +1781,7 @@ body { touch-action: pan-x pan-y pinch-zoom !important; }
 .cal-special-label, .cal-anniv-label { font-size:7px !important; line-height:1 !important; }
 
 /* 리스트 - 사진, 시간(수정삭제), 내용 순 */
-
+#diary-around-today-list { display:flex !important; flex-direction:column !important; gap:10px !important; }
 #diary-around-today-list .sub-memo-item { display:flex !important; flex-direction:column !important; background:#fff !important; border-radius:14px !important; overflow:hidden !important; border:1px solid #eee !important; padding:0 !important; }
 #diary-around-today-list .sub-memo-item .diary-photo-wrap { order:1; width:100% !important; margin:0 !important; }
 #diary-around-today-list .sub-memo-item .diary-photo-wrap .diary-photo { width:100% !important; aspect-ratio:auto !important; object-fit:contain !important; max-height:320px; background:#f8f5f0; }
@@ -1870,7 +1870,7 @@ body { touch-action: pan-x pan-y pinch-zoom !important; }
 .cal-special-label, .cal-anniv-label { font-size:7px !important; line-height:1 !important; }
 
 /* 리스트 - 사진, 시간, 내용 */
-
+#diary-around-today-list { display:flex !important; flex-direction:column !important; gap:10px !important; }
 #diary-around-today-list .sub-memo-item { display:flex !important; flex-direction:column !important; background:#fff !important; border-radius:14px !important; overflow:hidden !important; border:1px solid #eee !important; padding:0 !important; }
 #diary-around-today-list .sub-memo-item .diary-photo-wrap { order:1; width:100% !important; margin:0 !important; }
 #diary-around-today-list .sub-memo-item .diary-photo-wrap .diary-photo { width:100% !important; aspect-ratio:auto !important; object-fit:contain !important; max-height:320px; background:#f8f5f0; }
@@ -3037,221 +3037,21 @@ body { touch-action:pan-x pan-y; -webkit-text-size-adjust:100%; padding-bottom:v
 .card { will-change:transform; }
 #back-toast { position:fixed; bottom:calc(30px + var(--safe-bottom)); left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.85); color:#fff; padding:12px 20px; border-radius:24px; z-index:999999; font-size:13px; display:none; }
 </style>
-
-
-
-<style id="v18-final-align">
-/* 1) 하이라이트 날짜/시간 숨김 */
-#photo-lightbox-date { display: none !important; visibility: hidden !important; height: 0 !important; }
-#photo-lightbox-actions { display: none !important; }
-
-/* 2) 리스트 전체 2열 유지 */
-#diary-around-today-list,
-#money-around-today-list {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    gap: 8px !important;
-    align-items: stretch !important;
-}
-
-/* 3) 좌우 정렬 - 사진을 기준으로: 제목과 수정삭제는 좌우 정렬(기존), 사진과 내용란을 좌우로 */
-#diary-around-today-list .sub-memo-item.has-photo {
-    display: grid !important;
-    grid-template-columns: 110px 1fr !important;
-    grid-template-areas:
-        "title title"
-        "photo text"
-        "top top" !important;
-    gap: 0 !important;
-    min-height: 140px !important;
-    padding: 0 !important;
-    overflow: hidden !important;
-    background: #fff !important;
-    border: 1px solid #eee !important;
-    border-radius: 14px !important;
-}
-
-#diary-around-today-list .sub-memo-item.has-photo .photo-title-area {
-    grid-area: title !important;
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    height: 24px !important;
-    padding: 4px 10px !important;
-    order: unset !important;
-}
-
-#diary-around-today-list .sub-memo-item.has-photo .diary-photo-wrap {
-    grid-area: photo !important;
-    width: 100% !important;
-    aspect-ratio: 1/1 !important;
-    margin: 0 !important;
-    padding: 6px !important;
-    order: unset !important;
-}
-
-#diary-around-today-list .sub-memo-item.has-photo .diary-photo-wrap .diary-photo {
-    width: 100% !important;
-    height: 100% !important;
-    aspect-ratio: 1/1 !important;
-    object-fit: cover !important;
-    border-radius: 10px !important;
-}
-
-#diary-around-today-list .sub-memo-item.has-photo .diary-text {
-    grid-area: text !important;
-    padding: 8px 10px !important;
-    display: flex !important;
-    align-items: flex-start !important;
-    justify-content: flex-start !important;
-    order: unset !important;
-    min-height: 90px !important;
-}
-
-#diary-around-today-list .sub-memo-item.has-photo .item-top-row {
-    grid-area: top !important;
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    padding: 4px 10px !important;
-    border-top: 1px solid #f5f0f0 !important;
-    background: #fcfcfc !important;
-    order: unset !important;
-}
-
-/* 제목만/내용만 - 사진 없을 때도 동일 높이, 빈공간은 사진처럼 1:1 */
-#diary-around-today-list .sub-memo-item.no-photo {
-    display: grid !important;
-    grid-template-columns: 110px 1fr !important;
-    grid-template-areas:
-        "title title"
-        "photo text"
-        "top top" !important;
-    min-height: 140px !important;
-    padding: 0 !important;
-    background: #fff !important;
-    border: 1px solid #eee !important;
-    border-radius: 14px !important;
-}
-
-#diary-around-today-list .sub-memo-item.no-photo .photo-title-area {
-    grid-area: title !important;
-    height: 24px !important;
-    padding: 4px 10px !important;
-}
-
-#diary-around-today-list .sub-memo-item.no-photo .diary-photo-wrap,
-#diary-around-today-list .sub-memo-item.no-photo .empty-photo-wrap {
-    grid-area: photo !important;
-    width: 100% !important;
-    aspect-ratio: 1/1 !important;
-    padding: 6px !important;
-}
-
-#diary-around-today-list .sub-memo-item.no-photo .diary-text {
-    grid-area: text !important;
-    padding: 8px 10px !important;
-    min-height: 90px !important;
-}
-
-#diary-around-today-list .sub-memo-item.no-photo .item-top-row {
-    grid-area: top !important;
-    padding: 4px 10px !important;
-    border-top: 1px solid #f5f0f0 !important;
-    background: #fcfcfc !important;
-}
-
-/* 갤러리 모드에서는 기존 세로 유지 */
-#diary-around-today-list.gallery-mode .sub-memo-item.has-photo,
-#diary-around-today-list.gallery-mode .sub-memo-item.no-photo {
-    display: flex !important;
-    flex-direction: column !important;
-    grid-template-columns: unset !important;
-}
-#diary-around-today-list.gallery-mode .sub-memo-item.has-photo .diary-photo-wrap,
-#diary-around-today-list.gallery-mode .sub-memo-item.no-photo .diary-photo-wrap {
-    grid-area: unset !important;
-}
-</style>
-
-
-<style id="v18-final-align-v2">
-/* 날짜/시간 숨김 */
-#photo-lightbox-date { display: none !important; }
-#photo-lightbox-actions { display: none !important; }
-
-/* 리스트 2열 */
-#diary-around-today-list,
-#money-around-today-list {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    gap: 8px !important;
-    align-items: stretch !important;
-}
-
-/* [사진][내용] 상하정렬 -> 좌우 정렬, 사진 기준 */
-#diary-around-today-list .sub-memo-item {
-    display: grid !important;
-    grid-template-columns: 110px 1fr !important;
-    grid-template-areas:
-        "title title"
-        "photo text"
-        "top top" !important;
-    min-height: 140px !important;
-    padding: 0 !important;
-    overflow: hidden !important;
-    background: #fff !important;
-    border: 1px solid #eee !important;
-    border-radius: 14px !important;
-}
-#diary-around-today-list .sub-memo-item .photo-title-area { grid-area: title !important; height: 22px !important; padding: 3px 10px !important; }
-#diary-around-today-list .sub-memo-item .diary-photo-wrap,
-#diary-around-today-list .sub-memo-item .empty-photo-wrap {
-    grid-area: photo !important;
-    width: 100% !important;
-    aspect-ratio: 1/1 !important;
-    padding: 6px !important;
-    margin: 0 !important;
-}
-#diary-around-today-list .sub-memo-item .diary-photo-wrap .diary-photo {
-    width: 100% !important;
-    height: 100% !important;
-    aspect-ratio: 1/1 !important;
-    object-fit: cover !important;
-    border-radius: 10px !important;
-}
-#diary-around-today-list .sub-memo-item .diary-text {
-    grid-area: text !important;
-    padding: 8px 10px !important;
-    min-height: 90px !important;
-    display: flex !important;
-    align-items: center !important;
-}
-#diary-around-today-list .sub-memo-item .item-top-row {
-    grid-area: top !important;
-    display: flex !important;
-    justify-content: space-between !important;
-    padding: 4px 10px !important;
-    border-top: 1px solid #f5f0f0 !important;
-    background: #fcfcfc !important;
-}
-
-/* 앨범2 갤러리 모드 3열 */
-#diary-around-today-list.gallery-mode { grid-template-columns: repeat(3, 1fr) !important; }
-#diary-around-today-list.gallery-mode .sub-memo-item { min-height: 140px !important; }
-</style>
-
-<style id="v18-final-v3">
+<style id="v18-final">
 #photo-lightbox-date{display:none !important;}
-#diary-around-today-list{display:grid !important;grid-template-columns:1fr 1fr !important;gap:8px !important;align-items:stretch !important;}
-#diary-around-today-list .sub-memo-item{grid-column:span 1 !important;display:grid !important;grid-template-columns:90px 1fr !important;grid-template-areas:"title title" "photo text" "top top" !important;min-height:130px !important;padding:0 !important;background:#fff !important;border:1px solid #eee !important;border-radius:14px !important;overflow:hidden !important;align-items:center !important;}
-#diary-around-today-list .sub-memo-item .photo-title-area{grid-area:title !important;height:20px !important;padding:2px 8px !important;border-bottom:1px solid #f5f0f0 !important;}
-#diary-around-today-list .sub-memo-item .diary-photo-wrap{grid-area:photo !important;width:100% !important;padding:6px !important;margin:0 !important;display:flex !important;align-items:center !important;justify-content:center !important;}
-#diary-around-today-list .sub-memo-item .diary-photo{width:100% !important;aspect-ratio:1/1 !important;object-fit:cover !important;border-radius:8px !important;}
-#diary-around-today-list .sub-memo-item .diary-text{grid-area:text !important;padding:6px 8px !important;display:flex !important;align-items:center !important;min-height:80px !important;}
-#diary-around-today-list .sub-memo-item .item-top-row{grid-area:top !important;padding:4px 8px !important;display:flex !important;justify-content:space-between !important;border-top:1px solid #f5f0f0 !important;background:#fcfcfc !important;}
-#diary-around-today-list.gallery-mode{grid-template-columns:repeat(3,1fr) !important;}
+#photo-lightbox-actions{display:none !important;}
+/* 앨범1 세로 1개씩 */
+#diary-around-today-list:not(.gallery-mode){display:flex !important;flex-direction:column !important;gap:10px !important;}
+#diary-around-today-list:not(.gallery-mode) .sub-memo-item{display:grid !important;grid-template-columns:90px 1fr !important;grid-template-areas:"title title" "photo text" "top top" !important;min-height:130px !important;padding:0 !important;background:#fff !important;border:1px solid #eee !important;border-radius:14px !important;overflow:hidden !important;align-items:center !important;}
+#diary-around-today-list:not(.gallery-mode) .sub-memo-item .photo-title-area{grid-area:title !important;height:20px !important;padding:2px 8px !important;border-bottom:1px solid #f5f0f0 !important;}
+#diary-around-today-list:not(.gallery-mode) .sub-memo-item .diary-photo-wrap{grid-area:photo !important;padding:6px !important;margin:0 !important;display:flex !important;align-items:center !important;justify-content:center !important;}
+#diary-around-today-list:not(.gallery-mode) .sub-memo-item .diary-photo{width:100% !important;aspect-ratio:1/1 !important;object-fit:cover !important;border-radius:8px !important;}
+#diary-around-today-list:not(.gallery-mode) .sub-memo-item .diary-text{grid-area:text !important;padding:6px 8px !important;display:flex !important;align-items:center !important;min-height:80px !important;}
+#diary-around-today-list:not(.gallery-mode) .sub-memo-item .item-top-row{grid-area:top !important;padding:4px 8px !important;display:flex !important;justify-content:space-between !important;border-top:1px solid #f5f0f0 !important;background:#fcfcfc !important;}
+/* 앨범2 3열 */
+#diary-around-today-list.gallery-mode{display:grid !important;grid-template-columns:repeat(3,1fr) !important;gap:8px !important;}
 </style>
+
 </head>
 <body>
 
@@ -8941,7 +8741,7 @@ window.attachPhotoDoubleTap = function(el, handler){
 
             const titleText = item.anniversary || '';
             const titleHTML = `<div class="photo-title-area" style="height:20px; font-size:12px; font-weight:bold; color:#9C6ADE; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; margin-bottom:4px; padding-left:6px;">${titleText ? titleText : '&nbsp;'}</div>`;
-            const emptyPhotoHTML = !item.photo ? `<div class="diary-photo-wrap empty-photo-wrap" data-empty="true" style="cursor:zoom-in;"><div class="diary-photo" style="width:100%;aspect-ratio:1/1;background:#f5f0f0;border-radius:10px;min-height:100px;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:28px;">📷</div></div>` : '';
+            const emptyPhotoHTML = !item.photo ? `<div class="diary-photo-wrap empty-photo-wrap" data-empty="true"><div class="diary-photo" style="width:100%;aspect-ratio:1/1;background:#f5f0f0;border-radius:10px;min-height:100px;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:28px;">📷</div></div>` : '';
             itemBox.innerHTML = `
                 ${titleHTML}
                 ${photoHTML}${emptyPhotoHTML}
@@ -8979,7 +8779,7 @@ window.attachPhotoDoubleTap = function(el, handler){
                         }catch(e){ console.log('IDB direct fail', e); }
                     }
                     if(src){ openPhotoLightbox(src, item); }
-                    else { if(typeof window.openMemoLightboxOnly==='function'){ window.openMemoLightboxOnly(item.text||item.anniversary||'', item); } else { window.openPhotoLightbox(null, item); } }
+                    else { alert('사진 데이터를 찾을 수 없습니다.\n키: '+item.photo); }
                 };
                 // V363: 실수로 한번 터치에 확대되는 것 방지 - 더블탭/더블클릭에서만 확대
                 if(typeof attachPhotoDoubleTap === 'function'){
@@ -9154,7 +8954,7 @@ window.attachPhotoDoubleTap = function(el, handler){
                         }catch(e){ console.log('IDB direct fail', e); }
                     }
                     if(src){ openPhotoLightbox(src, item); }
-                    else { if(typeof window.openMemoLightboxOnly==='function'){ window.openMemoLightboxOnly(item.text||item.anniversary||'', item); } else { window.openPhotoLightbox(null, item); } }
+                    else { alert('사진 데이터를 찾을 수 없습니다.\n키: '+item.photo); }
                 };
                 // V363: 실수로 한번 터치에 확대되는 것 방지 - 더블탭/더블클릭에서만 확대
                 if(typeof attachPhotoDoubleTap === 'function'){
@@ -14320,53 +14120,3124 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 </script>
 
 
+<style id="v340-full-reset">
+/* V340: 코드 안 변한 것처럼 보인 문제 해결 - 전체 초기화 후 재구성 */
 
-<script id="v18-final-js">
+/* 모든 이전 V336-V339 오버라이드 무력화하고 새로 시작 */
+#saju-detail-modal-overlay {
+  background: #ffffff !important;
+  padding: 0 !important;
+}
+#saju-detail-modal-overlay.active {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  align-items: stretch !important;
+}
+
+.saju-detail-card {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  background: #ffffff !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+/* 1. 타이틀 영역 - 맨 위 고정 */
+.saju-detail-card .sd-title-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 16px 20px 12px 20px !important;
+  margin: 0 !important;
+  background: #ffffff !important;
+  flex: 0 0 auto !important;
+  order: 1 !important;
+}
+.saju-detail-card .sd-title {
+  font-size: 19px !important;
+  font-weight: 900 !important;
+  color: #111 !important;
+  display: block !important;
+}
+.saju-detail-card #sd-zodiac-badge {
+  display: inline-block !important;
+}
+
+/* 2. 사주 4주 - 두 번째 */
+.saju-detail-card .sd-pillars {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 8px !important;
+  padding: 0 20px 14px 20px !important;
+  margin: 0 !important;
+  background: #ffffff !important;
+  flex: 0 0 auto !important;
+  order: 2 !important;
+}
+.saju-detail-card .sd-pillar {
+  background: #fafafa !important;
+  border: 1px solid #eee !important;
+  border-radius: 10px !important;
+  padding: 8px 4px !important;
+  display: block !important;
+}
+.saju-detail-card .sdp-label {
+  display: block !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: #666 !important;
+  text-align: center !important;
+}
+.saju-detail-card .sdp-char {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  margin: 4px auto !important;
+  border-radius: 8px !important;
+  font-weight: 800 !important;
+  font-size: 16px !important;
+}
+
+/* 3. 전체 운 설명 - 세 번째, 이게 핵심! 초년운 전 */
+.saju-detail-card .sd-dm-box {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 12px !important;
+  align-items: flex-start !important;
+  background: #f9f9f9 !important;
+  border: 1px solid #e8e8e8 !important;
+  border-radius: 12px !important;
+  padding: 14px !important;
+  margin: 0 20px 14px 20px !important;
+  flex: 0 0 auto !important;
+  order: 3 !important;
+  min-height: 80px !important;
+}
+.saju-detail-card .sd-dm-char {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 44px !important;
+  border-radius: 10px !important;
+  font-size: 20px !important;
+  font-weight: 900 !important;
+  flex-shrink: 0 !important;
+}
+.saju-detail-card .sd-dm-desc {
+  display: block !important;
+  flex: 1 !important;
+  font-size: 13.5px !important;
+  line-height: 1.65 !important;
+  color: #222 !important;
+  white-space: pre-wrap !important;
+  word-break: keep-all !important;
+}
+
+/* 4. 초년/중년/말년 - 네 번째, 스크롤 */
+.saju-detail-card #sd-life-stages {
+  display: block !important;
+  flex: 1 1 auto !important;
+  overflow-y: auto !important;
+  padding: 0 20px 90px 20px !important;
+  margin: 0 !important;
+  background: #ffffff !important;
+  order: 4 !important;
+}
+.saju-detail-card .sd-life-card {
+  display: block !important;
+  background: #fafafa !important;
+  border: 1px solid #eee !important;
+  border-radius: 12px !important;
+  padding: 12px 14px !important;
+  margin-bottom: 10px !important;
+}
+.saju-detail-card .sd-life-head { display: flex !important; gap: 8px !important; margin-bottom: 6px !important; }
+.saju-detail-card .sd-life-badge { display: inline-block !important; font-size: 12px !important; font-weight: 800 !important; padding: 3px 8px !important; border-radius: 20px !important; }
+.saju-detail-card .sd-life-age { display: inline-block !important; font-size: 11px !important; color: #888 !important; }
+.saju-detail-card .sd-life-keyword { display: block !important; font-size: 13px !important; font-weight: 800 !important; margin: 4px 0 !important; color: #111 !important; }
+.saju-detail-card .sd-life-text { display: block !important; font-size: 13px !important; line-height: 1.6 !important; color: #333 !important; }
+
+/* 5. 종료 - 맨 밑 고정 */
+.saju-detail-card .sd-exit-sticky {
+  display: block !important;
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  padding: 10px 20px max(12px, env(safe-area-inset-bottom)) 20px !important;
+  background: #ffffff !important;
+  border-top: 1px solid #eee !important;
+  z-index: 999 !important;
+  order: 5 !important;
+}
+.saju-detail-card .sd-exit-sticky button {
+  width: 100% !important;
+  height: 48px !important;
+  background: #111 !important;
+  color: #fff !important;
+  border-radius: 10px !important;
+  font-weight: 800 !important;
+  font-size: 15px !important;
+  border: none !important;
+}
+
+/* X 버튼 */
+.saju-detail-card .close-form-btn {
+  position: fixed !important;
+  top: 10px !important;
+  right: 10px !important;
+  z-index: 1000 !important;
+  background: #f0f0f0 !important;
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50% !important;
+  border: 1px solid #ddd !important;
+}
+</style>
+<script id="v340-js">
 (function(){
-  function getItem(box){
-    var m=box.innerHTML.match(/deleteDiary\('([^']+)'\)/);
-    if(!m) return null;
-    var all=(typeof getAllDiaries==='function')?getAllDiaries():[];
-    return all.find(function(d){ return d.id===m[1]; })||null;
+  console.log('V340: 사주풀이 전체 복구 - 전체 운 설명 복구');
+  
+  function restoreSaju(){
+    const overlay = document.getElementById('saju-detail-modal-overlay');
+    if(!overlay || !overlay.classList.contains('active')) return;
+    
+    const card = overlay.querySelector('.saju-detail-card');
+    const titleRow = overlay.querySelector('.sd-title-row');
+    const pillars = overlay.querySelector('#sd-pillars');
+    const dmBox = overlay.querySelector('.sd-dm-box');
+    const dmChar = overlay.querySelector('#sd-dm-char');
+    const dmDesc = overlay.querySelector('#sd-dm-desc');
+    const lifeStages = overlay.querySelector('#sd-life-stages');
+    const exit = overlay.querySelector('.sd-exit-sticky');
+    
+    // 강제 표시
+    if(titleRow) {
+      titleRow.style.cssText = 'display:flex !important; padding:16px 20px 12px 20px !important; order:1 !important;';
+      console.log('titleRow 복구');
+    }
+    if(pillars) {
+      pillars.style.cssText = 'display:grid !important; grid-template-columns:repeat(4,1fr) !important; gap:8px !important; padding:0 20px 14px 20px !important; order:2 !important;';
+    }
+    if(dmBox) {
+      dmBox.style.cssText = 'display:flex !important; flex-direction:row !important; gap:12px !important; background:#f9f9f9 !important; border:1px solid #e8e8e8 !important; border-radius:12px !important; padding:14px !important; margin:0 20px 14px 20px !important; order:3 !important; min-height:80px !important;';
+      console.log('dmBox 복구 - 전체 운 설명:', dmBox.innerHTML.substring(0,100));
+    }
+    if(dmChar) {
+      dmChar.style.cssText = 'display:flex !important; width:44px !important; height:44px !important; min-width:44px !important; border-radius:10px !important; align-items:center !important; justify-content:center !important; font-size:20px !important; font-weight:900 !important;';
+    }
+    if(dmDesc) {
+      dmDesc.style.cssText = 'display:block !important; flex:1 !important; font-size:13.5px !important; line-height:1.65 !important; color:#222 !important; white-space:pre-wrap !important;';
+      console.log('dmDesc 내용:', dmDesc.textContent.substring(0,150));
+    }
+    if(lifeStages) {
+      lifeStages.style.cssText = 'display:block !important; flex:1 1 auto !important; overflow-y:auto !important; padding:0 20px 90px 20px !important; order:4 !important;';
+    }
+    if(exit) {
+      exit.style.cssText = 'display:block !important; position:fixed !important; bottom:0 !important; left:0 !important; right:0 !important; width:100% !important; padding:10px 20px 12px 20px !important; background:#fff !important; border-top:1px solid #eee !important; z-index:999 !important;';
+    }
   }
-  function attach(){
-    document.querySelectorAll('.sub-memo-item').forEach(function(box){
-      if(box._v18final) return;
-      box._v18final=true;
-      var openHL=function(e){
-        if(e && e.target && e.target.closest && e.target.closest('.memo-action-btns, .edit-btn-hidden, .delete-btn, button')) return;
-        if(e){ e.preventDefault(); e.stopPropagation(); }
-        if(window._v18open) return;
-        window._v18open=true;
-        setTimeout(function(){ window._v18open=false; }, 800);
-        var it=getItem(box);
-        if(!it) return;
-        window.openPhotoLightbox(it.photo||null, it);
-      };
-      var txt=box.querySelector('.diary-text');
-      if(txt){
-        txt.style.cursor='pointer';
-        var lt=0;
-        txt.addEventListener('touchend', function(e){ var n=Date.now(); if(n-lt<350){ lt=0; openHL(e); } else lt=n; }, {passive:false});
-        txt.addEventListener('dblclick', openHL);
-      }
-      var emp=box.querySelector('.diary-photo-wrap');
-      if(emp){
-        emp.style.cursor='zoom-in';
-        var le=0;
-        emp.addEventListener('touchend', function(e){ var n=Date.now(); if(n-le<350){ le=0; openHL(e); } else le=n; }, {passive:false});
-        emp.addEventListener('dblclick', openHL);
-      }
-    });
+  
+  // 기존 openSajuDetailModal을 래핑해서 복구 로직 추가
+  const orig = window.openSajuDetailModal;
+  if(orig){
+    window.openSajuDetailModal = function(){
+      const result = orig.apply(this, arguments);
+      // 데이터 로드 후 복구
+      setTimeout(restoreSaju, 100);
+      setTimeout(restoreSaju, 500);
+      setTimeout(restoreSaju, 1000);
+      setTimeout(restoreSaju, 2000);
+      return result;
+    };
   }
-  attach();
-  setTimeout(attach, 800);
-  setTimeout(attach, 2000);
-  try{ new MutationObserver(attach).observe(document.body, {childList:true, subtree:true}); }catch(e){}
-  console.log('[V18 FINAL] 내용란 더블클릭=하이라이트, 가로동일정렬, 늘어남 방지');
+  
+  // 주기적 체크
+  setInterval(restoreSaju, 1000);
+  
+  window._v340_restoreSaju = restoreSaju;
 })();
 </script>
 
 
+<style id="v341-ultimate-fix">
+/* V341: 최종 - 다른 폼(운세)과 동일한 구조로 재구성 */
+
+/* 오버레이 흰색 */
+#saju-detail-modal-overlay {
+  background: #ffffff !important;
+  padding: 0 !important;
+}
+#saju-detail-modal-overlay.active {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+}
+
+/* 카드 - 전체 화면 */
+.saju-detail-card {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  background: #ffffff !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  position: relative !important;
+}
+
+/* 스크롤 래퍼 - 다른 폼과 동일하게 전체 스크롤 */
+.saju-detail-card .sd-main-scroll {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  background: #ffffff !important;
+  padding: 0 0 100px 0 !important;
+  display: block !important;
+}
+
+/* 1) 타이틀 - 왼쪽 정렬, 맨 위 */
+.saju-detail-card .sd-title-row {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: flex-start !important; /* 왼쪽 정렬 */
+  align-items: center !important;
+  text-align: left !important;
+  padding: 20px 20px 16px 20px !important; /* 2) 위아래 간격 늘림 */
+  margin: 0 !important;
+  background: #ffffff !important;
+  width: 100% !important;
+}
+.saju-detail-card .sd-title {
+  font-size: 20px !important;
+  font-weight: 900 !important;
+  color: #111111 !important;
+  text-align: left !important;
+  margin: 0 !important;
+  display: block !important;
+}
+.saju-detail-card #sd-zodiac-badge {
+  margin-left: 8px !important;
+}
+
+/* 사주 4주 - 간격 */
+.saju-detail-card .sd-pillars {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 8px !important;
+  padding: 8px 20px 20px 20px !important; /* 위 8px, 아래 20px로 간격 확보 */
+  margin: 0 !important;
+  background: #ffffff !important;
+}
+.saju-detail-card .sd-pillar {
+  background: #fafafa !important;
+  border: 1px solid #eee !important;
+  border-radius: 12px !important;
+  padding: 10px 4px !important;
+}
+
+/* 전체 운 설명 */
+.saju-detail-card .sd-dm-box {
+  display: flex !important;
+  gap: 12px !important;
+  background: #fff8f0 !important;
+  border: 1px solid #ffe0c0 !important;
+  border-radius: 14px !important;
+  padding: 16px !important;
+  margin: 0 20px 20px 20px !important;
+}
+.saju-detail-card .sd-dm-char {
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px !important;
+  border-radius: 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 22px !important;
+  font-weight: 900 !important;
+}
+.saju-detail-card .sd-dm-desc {
+  font-size: 14px !important;
+  line-height: 1.7 !important;
+  color: #333 !important;
+}
+
+/* 초년/중년/말년 */
+.saju-detail-card #sd-life-stages {
+  display: block !important;
+  overflow: visible !important; /* 부모가 스크롤 */
+  padding: 0 20px 20px 20px !important;
+  height: auto !important;
+  max-height: none !important;
+}
+.saju-detail-card .sd-life-card {
+  background: #fafafa !important;
+  border: 1px solid #eee !important;
+  border-radius: 14px !important;
+  padding: 14px !important;
+  margin-bottom: 12px !important;
+}
+
+/* 4) 종료버튼 - 로즈 컬러로 전체 분위기 맞춤 */
+.saju-detail-card .sd-exit-sticky {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  padding: 12px 20px max(16px, env(safe-area-inset-bottom)) 20px !important;
+  background: #ffffff !important;
+  border-top: 1px solid #f0e0e0 !important;
+  z-index: 999 !important;
+  display: block !important;
+}
+.saju-detail-card .sd-exit-sticky button {
+  width: 100% !important;
+  height: 52px !important;
+  background: linear-gradient(135deg, #8b0000 0%, #c0392b 100%) !important; /* 로즈 와인 - 검은색 아님! */
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 14px !important;
+  font-weight: 800 !important;
+  font-size: 16px !important;
+  box-shadow: 0 4px 15px rgba(139,0,0,0.3) !important;
+}
+
+/* 운세 팝업 종료버튼도 동일하게 로즈로 */
+#fortune-popup-overlay .fp-exit-sticky button {
+  background: linear-gradient(135deg, #8b0000 0%, #c0392b 100%) !important;
+  color: #fff !important;
+}
+
+/* X 버튼 */
+.saju-detail-card .close-form-btn {
+  position: absolute !important;
+  top: 12px !important;
+  right: 12px !important;
+  width: 32px !important;
+  height: 32px !important;
+  background: #f5f5f5 !important;
+  border: 1px solid #e0e0e0 !important;
+  border-radius: 50% !important;
+  z-index: 1000 !important;
+}
+</style>
+<script id="v341-js">
+(function(){
+  function buildSajuScroll(){
+    const overlay = document.getElementById('saju-detail-modal-overlay');
+    if(!overlay || !overlay.classList.contains('active')) return;
+    
+    const card = overlay.querySelector('.saju-detail-card');
+    if(!card) return;
+    
+    // 이미 래퍼가 있으면 스킵
+    if(card.querySelector('.sd-main-scroll')) {
+      // 스타일만 재적용
+      const wrapper = card.querySelector('.sd-main-scroll');
+      wrapper.style.cssText = 'flex:1 !important; overflow-y:auto !important; background:#fff !important; padding:0 0 100px 0 !important;';
+      return;
+    }
+    
+    const titleRow = card.querySelector('.sd-title-row');
+    const pillars = card.querySelector('#sd-pillars');
+    const dmBox = card.querySelector('.sd-dm-box');
+    const lifeStages = card.querySelector('#sd-life-stages');
+    const exit = card.querySelector('.sd-exit-sticky');
+    const closeBtn = card.querySelector('.close-form-btn');
+    
+    if(!titleRow || !pillars || !dmBox || !lifeStages || !exit) {
+      console.log('V341: 요소 없음', {titleRow: !!titleRow, pillars: !!pillars, dmBox: !!dmBox, lifeStages: !!lifeStages, exit: !!exit});
+      return;
+    }
+    
+    console.log('V341: 스크롤 구조 재구성 시작 - 전체 폼 스크롤');
+    
+    // 래퍼 생성
+    const wrapper = document.createElement('div');
+    wrapper.className = 'sd-main-scroll';
+    wrapper.style.cssText = 'flex:1; overflow-y:auto; overflow-x:hidden; background:#ffffff; padding:0 0 100px 0; display:block;';
+    
+    // 기존 요소들을 래퍼로 이동
+    wrapper.appendChild(titleRow);
+    wrapper.appendChild(pillars);
+    wrapper.appendChild(dmBox);
+    wrapper.appendChild(lifeStages);
+    
+    // 카드 비우고 재구성
+    card.innerHTML = '';
+    if(closeBtn) card.appendChild(closeBtn);
+    card.appendChild(wrapper);
+    card.appendChild(exit);
+    
+    // 스타일 적용
+    titleRow.style.cssText = 'display:flex !important; justify-content:flex-start !important; align-items:center !important; text-align:left !important; padding:20px 20px 16px 20px !important; margin:0 !important; background:#fff !important;';
+    pillars.style.cssText = 'display:grid !important; grid-template-columns:repeat(4,1fr) !important; gap:8px !important; padding:8px 20px 20px 20px !important; margin:0 !important; background:#fff !important;';
+    dmBox.style.cssText = 'display:flex !important; gap:12px !important; background:#fff8f0 !important; border:1px solid #ffe0c0 !important; border-radius:14px !important; padding:16px !important; margin:0 20px 20px 20px !important;';
+    lifeStages.style.cssText = 'display:block !important; overflow:visible !important; padding:0 20px 20px 20px !important; height:auto !important; max-height:none !important;';
+    
+    exit.style.cssText = 'position:fixed !important; bottom:0 !important; left:0 !important; right:0 !important; width:100% !important; padding:12px 20px 16px 20px !important; background:#fff !important; border-top:1px solid #f0e0e0 !important; z-index:999 !important; display:block !important;';
+    const btn = exit.querySelector('button');
+    if(btn){
+      btn.style.cssText = 'width:100% !important; height:52px !important; background:linear-gradient(135deg, #8b0000 0%, #c0392b 100%) !important; color:#fff !important; border:none !important; border-radius:14px !important; font-weight:800 !important; font-size:16px !important; box-shadow:0 4px 15px rgba(139,0,0,0.3) !important;';
+    }
+    
+    console.log('V341: 재구성 완료 - 전체 스크롤, 타이틀 왼쪽, 로즈 종료버튼');
+  }
+  
+  const orig = window.openSajuDetailModal;
+  if(orig){
+    window.openSajuDetailModal = function(){
+      const result = orig.apply(this, arguments);
+      setTimeout(buildSajuScroll, 80);
+      setTimeout(buildSajuScroll, 300);
+      setTimeout(buildSajuScroll, 800);
+      setTimeout(buildSajuScroll, 1500);
+      return result;
+    };
+  }
+  
+  // 운세도 종료버튼 로즈로
+  const origFortune = window.openFortunePopup;
+  if(origFortune){
+    const origFortuneWrap = function(){
+      const result = origFortune.apply(this, arguments);
+      setTimeout(function(){
+        const fExit = document.querySelector('#fortune-popup-overlay .fp-exit-sticky button');
+        if(fExit){
+          fExit.style.background = 'linear-gradient(135deg, #8b0000 0%, #c0392b 100%)';
+          fExit.style.color = '#fff';
+        }
+      }, 100);
+      return result;
+    };
+    window.openFortunePopup = origFortuneWrap;
+  }
+  
+  setInterval(function(){
+    const overlay = document.getElementById('saju-detail-modal-overlay');
+    if(overlay && overlay.classList.contains('active')){
+      buildSajuScroll();
+    }
+  }, 1000);
+})();
+</script>
+
+
+<script id="v342-finance-toggle-icon">
+// V342: 가계부 현황 OFF면 메인 아이콘이 다이어리로 바뀌고 가계부 진입 불가, ON이면 가계부 아이콘으로 바뀌고 입장 가능
+
+(function(){
+  function updateMainFinanceIcon(){
+    const topBtn = document.getElementById('top-toggle-btn');
+    if(!topBtn) return;
+    
+    // isMoneySummaryVisible 전역 변수 사용
+    const isFinanceOn = typeof isMoneySummaryVisible !== 'undefined' ? isMoneySummaryVisible : true;
+    const isMoneySummaryChecked = document.getElementById('toggle-money-summary');
+    const actualOn = isMoneySummaryChecked ? isMoneySummaryChecked.checked : isFinanceOn;
+    
+    console.log('V342: 가계부 현황', actualOn ? 'ON' : 'OFF');
+    
+    if(!actualOn){
+      // 가계부 OFF: 아이콘을 다이어리(📔)로, 가계부 진입 불가
+      topBtn.innerHTML = '📔';
+      topBtn.title = '다이어리 모드 (가계부 OFF)';
+      topBtn.style.opacity = '0.6';
+      // 현재 가계부 탭이면 다이어리로 강제 이동
+      if(typeof currentMainTab !== 'undefined' && currentMainTab === 'money'){
+        console.log('V342: 가계부 OFF이므로 다이어리로 이동');
+        if(typeof switchMainTab === 'function'){
+          switchMainTab('diary');
+        }
+      }
+    } else {
+      // 가계부 ON: 원래 로직 - 다이어리면 💰, 가계부면 📔
+      topBtn.style.opacity = '1';
+      const currentTab = typeof currentMainTab !== 'undefined' ? currentMainTab : 'diary';
+      if(currentTab === 'diary'){
+        topBtn.innerHTML = '💰';
+        topBtn.title = '가계부로 이동';
+      } else {
+        topBtn.innerHTML = '📔';
+        topBtn.title = '다이어리로 이동';
+      }
+    }
+  }
+  
+  // 기존 setMoneySummaryVisibility 래핑
+  const origSetMoneySummaryVisibility = window.setMoneySummaryVisibility;
+  if(origSetMoneySummaryVisibility){
+    window.setMoneySummaryVisibility = function(isVisible){
+      const result = origSetMoneySummaryVisibility.apply(this, arguments);
+      setTimeout(updateMainFinanceIcon, 50);
+      setTimeout(updateMainFinanceIcon, 300);
+      return result;
+    };
+  } else {
+    // 함수가 아직 정의 안 됐으면 전역으로 정의
+    window.setMoneySummaryVisibility = function(isVisible){
+      if(typeof isMoneySummaryVisible !== 'undefined'){
+        isMoneySummaryVisible = isVisible;
+      }
+      localStorage.setItem('smartDiaryMoneySummaryVisible', isVisible);
+      if(!isVisible){
+        if(typeof setCategoryStatsVisibility === 'function') setCategoryStatsVisibility(false);
+        if(typeof currentStatsType !== 'undefined') currentStatsType = 'memo';
+      } else {
+        if(typeof currentStatsType !== 'undefined') currentStatsType = 'expense';
+      }
+      if(typeof updateMoneySummary === 'function') updateMoneySummary();
+      if(typeof updateToggleButtons === 'function'){
+        updateToggleButtons('money-summary', isVisible);
+        if(typeof isCategoryStatsVisible !== 'undefined') updateToggleButtons('category-stats', isCategoryStatsVisible);
+      }
+      setTimeout(updateMainFinanceIcon, 50);
+    };
+  }
+  
+  // toggleMainTab 래핑 - 가계부 OFF면 진입 차단
+  const origToggleMainTab = window.toggleMainTab;
+  if(origToggleMainTab){
+    window.toggleMainTab = function(){
+      const isFinanceOn = typeof isMoneySummaryVisible !== 'undefined' ? isMoneySummaryVisible : true;
+      const chk = document.getElementById('toggle-money-summary');
+      const actualOn = chk ? chk.checked : isFinanceOn;
+      
+      if(!actualOn){
+        // 가계부 OFF면 가계부로 이동 불가
+        console.log('V342: 가계부 OFF - 진입 차단, 다이어리 아이콘 유지');
+        if(typeof currentMainTab !== 'undefined' && currentMainTab === 'money'){
+          if(typeof switchMainTab === 'function') switchMainTab('diary');
+        }
+        updateMainFinanceIcon();
+        // 토스트 메시지
+        if(typeof alert !== 'undefined'){
+          // alert 대신 부드럽게 - 이미 다이어리 모드임을 알림
+          const topBtn = document.getElementById('top-toggle-btn');
+          if(topBtn){
+            const originalTitle = topBtn.title;
+            topBtn.title = '가계부 OFF - 설정에서 켜기';
+            setTimeout(()=>{ topBtn.title = originalTitle; updateMainFinanceIcon(); }, 2000);
+          }
+        }
+        return;
+      }
+      // ON이면 원래대로
+      return origToggleMainTab.apply(this, arguments);
+    };
+  }
+  
+  // switchMainTab도 래핑 - 가계부 OFF면 money로 전환 차단
+  const origSwitchMainTab = window.switchMainTab;
+  if(origSwitchMainTab){
+    window.switchMainTab = function(tabName){
+      const isFinanceOn = typeof isMoneySummaryVisible !== 'undefined' ? isMoneySummaryVisible : true;
+      const chk = document.getElementById('toggle-money-summary');
+      const actualOn = chk ? chk.checked : isFinanceOn;
+      
+      if(tabName === 'money' && !actualOn){
+        console.log('V342: 가계부 OFF - money 탭 진입 차단');
+        // 다이어리로 유지
+        const result = origSwitchMainTab.call(this, 'diary');
+        setTimeout(updateMainFinanceIcon, 50);
+        return result;
+      }
+      
+      const result = origSwitchMainTab.apply(this, arguments);
+      setTimeout(updateMainFinanceIcon, 50);
+      return result;
+    };
+  }
+  
+  // 페이지 로드시 아이콘 동기화
+  window.addEventListener('load', function(){
+    setTimeout(updateMainFinanceIcon, 300);
+    setTimeout(updateMainFinanceIcon, 1000);
+    setTimeout(updateMainFinanceIcon, 2000);
+  });
+  
+  // 설정 변경 감지
+  const observer = new MutationObserver(function(){
+    updateMainFinanceIcon();
+  });
+  
+  setTimeout(function(){
+    const toggleEl = document.getElementById('toggle-money-summary');
+    if(toggleEl){
+      toggleEl.addEventListener('change', function(){
+        setTimeout(updateMainFinanceIcon, 50);
+      });
+    }
+    updateMainFinanceIcon();
+  }, 500);
+  
+  window._v342_updateMainFinanceIcon = updateMainFinanceIcon;
+  console.log('V342: 가계부 현황 토글 - 아이콘 전환 로직 설치 완료');
+})();
+</script>
+
+
+<script id="v343-fix-persist">
+// V343: 설정 OFF인데 메인 가계부 아이콘이 다시 나타나는 버그 수정
+
+(function(){
+  console.log('V343: 가계부 OFF 지속성 버그 수정');
+  
+  function getFinanceOn(){
+    // localStorage가 최종 진실
+    const stored = localStorage.getItem('smartDiaryMoneySummaryVisible');
+    if(stored === 'false') return false;
+    if(stored === 'true') return true;
+    // 체크박스도 확인
+    const chk = document.getElementById('toggle-money-summary');
+    if(chk) return chk.checked;
+    if(typeof isMoneySummaryVisible !== 'undefined') return isMoneySummaryVisible;
+    return true;
+  }
+  
+  function forceUpdateIcon(){
+    const topBtn = document.getElementById('top-toggle-btn');
+    if(!topBtn) return;
+    
+    const isOn = getFinanceOn();
+    console.log('V343: forceUpdateIcon - 가계부', isOn ? 'ON' : 'OFF', '현재탭:', typeof currentMainTab !== 'undefined' ? currentMainTab : 'unknown');
+    
+    if(!isOn){
+      // OFF면 무조건 다이어리 아이콘, 가계부 진입 불가
+      topBtn.innerHTML = '📔';
+      topBtn.title = '다이어리 (가계부 OFF - 설정에서 켜기)';
+      topBtn.style.opacity = '0.7';
+      topBtn.style.pointerEvents = 'none'; // 클릭 자체를 막음 - 완전히 진입 불가처럼 보이게? 아니면 클릭시 토스트
+      // pointerEvents none이면 토스트 안 되므로, 대신 opacity만
+      topBtn.style.pointerEvents = 'auto';
+      
+      // 가계부 탭이면 강제로 다이어리로
+      if(typeof currentMainTab !== 'undefined' && currentMainTab === 'money'){
+        console.log('V343: 가계부 OFF인데 money 탭 - diary로 강제 이동');
+        if(typeof switchMainTabOriginal !== 'undefined'){
+          switchMainTabOriginal('diary');
+        } else if(typeof window.switchMainTab === 'function'){
+          // 무한루프 방지용 플래그
+          window._v343_switching = true;
+          const orig = window._v343_originalSwitch || window.switchMainTab;
+          // 직접 패널 전환
+          const diaryPanel = document.getElementById('diary-panel');
+          const moneyPanel = document.getElementById('money-panel');
+          if(diaryPanel) diaryPanel.classList.add('active');
+          if(moneyPanel) moneyPanel.classList.remove('active');
+          if(typeof currentMainTab !== 'undefined') currentMainTab = 'diary';
+          localStorage.setItem('smartDiaryMainTab', 'diary');
+          window._v343_switching = false;
+        }
+      }
+    } else {
+      // ON이면 원래 로직
+      topBtn.style.opacity = '1';
+      topBtn.style.pointerEvents = 'auto';
+      const currentTab = typeof currentMainTab !== 'undefined' ? currentMainTab : 'diary';
+      if(currentTab === 'diary'){
+        topBtn.innerHTML = '💰';
+        topBtn.title = '가계부로 이동';
+      } else {
+        topBtn.innerHTML = '📔';
+        topBtn.title = '다이어리로 이동';
+      }
+    }
+  }
+  
+  // 원본 함수들 백업
+  if(!window._v343_originalSwitch && window.switchMainTab){
+    window._v343_originalSwitch = window.switchMainTab;
+  }
+  if(!window._v343_originalToggle && window.toggleMainTab){
+    window._v343_originalToggle = window.toggleMainTab;
+  }
+  const switchMainTabOriginal = window._v343_originalSwitch;
+  
+  // switchMainTab 완전 재정의 - 가계부 OFF면 money 진입 절대 불가
+  window.switchMainTab = function(tabName){
+    if(window._v343_switching) {
+      // 내부 강제 전환시 재귀 방지
+      if(switchMainTabOriginal) return switchMainTabOriginal.apply(this, arguments);
+      return;
+    }
+    
+    const isOn = getFinanceOn();
+    
+    if(tabName === 'money' && !isOn){
+      console.log('V343: 가계부 OFF - money 진입 차단!');
+      // diary로 강제
+      const diaryPanel = document.getElementById('diary-panel');
+      const moneyPanel = document.getElementById('money-panel');
+      if(diaryPanel) diaryPanel.classList.add('active');
+      if(moneyPanel) moneyPanel.classList.remove('active');
+      if(typeof currentMainTab !== 'undefined') window.currentMainTab = 'diary';
+      localStorage.setItem('smartDiaryMainTab', 'diary');
+      forceUpdateIcon();
+      return;
+    }
+    
+    // 정상 전환
+    let result;
+    if(switchMainTabOriginal){
+      result = switchMainTabOriginal.apply(this, arguments);
+    } else {
+      // 원본이 없으면 직접 구현
+      const panels = {
+        diary: document.getElementById('diary-panel'),
+        money: document.getElementById('money-panel')
+      };
+      Object.keys(panels).forEach(key => {
+        if(panels[key]) panels[key].classList.toggle('active', key === tabName);
+      });
+      if(typeof currentMainTab !== 'undefined') window.currentMainTab = tabName;
+      localStorage.setItem('smartDiaryMainTab', tabName);
+    }
+    
+    setTimeout(forceUpdateIcon, 10);
+    setTimeout(forceUpdateIcon, 100);
+    setTimeout(forceUpdateIcon, 300);
+    return result;
+  };
+  
+  // toggleMainTab 재정의
+  window.toggleMainTab = function(){
+    const isOn = getFinanceOn();
+    if(!isOn){
+      console.log('V343: 가계부 OFF - toggle 차단, 다이어리 유지');
+      forceUpdateIcon();
+      // 가계부 OFF 알림 (조용히)
+      const topBtn = document.getElementById('top-toggle-btn');
+      if(topBtn){
+        topBtn.style.transform = 'scale(0.9)';
+        setTimeout(()=>{ topBtn.style.transform = 'scale(1)'; }, 150);
+      }
+      return;
+    }
+    
+    // ON이면 원래대로
+    const currentTab = typeof currentMainTab !== 'undefined' ? currentMainTab : 'diary';
+    const nextTab = currentTab === 'diary' ? 'money' : 'diary';
+    window.switchMainTab(nextTab);
+  };
+  
+  // setMoneySummaryVisibility 재정의 - localStorage가 진실
+  const origSetMoney = window.setMoneySummaryVisibility;
+  window.setMoneySummaryVisibility = function(isVisible){
+    console.log('V343: setMoneySummaryVisibility', isVisible);
+    localStorage.setItem('smartDiaryMoneySummaryVisible', isVisible);
+    if(typeof isMoneySummaryVisible !== 'undefined') window.isMoneySummaryVisible = isVisible;
+    
+    // 체크박스 동기화
+    const chk = document.getElementById('toggle-money-summary');
+    if(chk) chk.checked = isVisible;
+    
+    // 기존 로직
+    if(origSetMoney && origSetMoney !== window.setMoneySummaryVisibility){
+      // 무한루프 방지 - 원본이 V342 래퍼일 수 있으므로 직접 로직 실행
+      if(!isVisible){
+        if(typeof setCategoryStatsVisibility === 'function') setCategoryStatsVisibility(false);
+        if(typeof currentStatsType !== 'undefined') window.currentStatsType = 'memo';
+      } else {
+        if(typeof currentStatsType !== 'undefined') window.currentStatsType = 'expense';
+      }
+      if(typeof updateMoneySummary === 'function') updateMoneySummary();
+      if(typeof updateToggleButtons === 'function'){
+        updateToggleButtons('money-summary', isVisible);
+        if(typeof isCategoryStatsVisible !== 'undefined') updateToggleButtons('category-stats', window.isCategoryStatsVisible);
+      }
+    } else {
+      if(!isVisible){
+        if(typeof setCategoryStatsVisibility === 'function') setCategoryStatsVisibility(false);
+        if(typeof currentStatsType !== 'undefined') window.currentStatsType = 'memo';
+      } else {
+        if(typeof currentStatsType !== 'undefined') window.currentStatsType = 'expense';
+      }
+      if(typeof updateMoneySummary === 'function') updateMoneySummary();
+    }
+    
+    setTimeout(forceUpdateIcon, 10);
+    setTimeout(forceUpdateIcon, 100);
+    setTimeout(forceUpdateIcon, 500);
+  };
+  
+  // 다이어리 폼 열릴 때도 체크 - 이게 문제의 핵심!
+  // openDiaryForm, closeDiaryForm 등에서 아이콘 리셋되는 것을 방지
+  const checkFunctions = ['openDiaryForm', 'closeDiaryForm', 'renderCalendar', 'selectDiaryDate', 'openSettingsModal', 'closeSettingsModal'];
+  checkFunctions.forEach(funcName => {
+    const origFunc = window[funcName];
+    if(origFunc && !origFunc._v343_wrapped){
+      window[funcName] = function(){
+        const result = origFunc.apply(this, arguments);
+        setTimeout(forceUpdateIcon, 50);
+        setTimeout(forceUpdateIcon, 300);
+        return result;
+      };
+      window[funcName]._v343_wrapped = true;
+    }
+  });
+  
+  // 주기적 감시 - 설정 OFF인데 아이콘이 💰로 바뀌면 즉시 📔로 되돌림
+  setInterval(function(){
+    const isOn = getFinanceOn();
+    const topBtn = document.getElementById('top-toggle-btn');
+    if(!topBtn) return;
+    
+    if(!isOn && topBtn.innerHTML.includes('💰')){
+      console.log('V343 감시: OFF인데 💰 아이콘 발견 - 📔로 강제 변경');
+      forceUpdateIcon();
+    }
+    
+    // 가계부 OFF인데 money 패널이 active면 diary로
+    if(!isOn){
+      const moneyPanel = document.getElementById('money-panel');
+      if(moneyPanel && moneyPanel.classList.contains('active')){
+        console.log('V343 감시: OFF인데 money 패널 active - diary로 강제');
+        const diaryPanel = document.getElementById('diary-panel');
+        if(diaryPanel) diaryPanel.classList.add('active');
+        moneyPanel.classList.remove('active');
+        if(typeof currentMainTab !== 'undefined') window.currentMainTab = 'diary';
+        forceUpdateIcon();
+      }
+    }
+  }, 500);
+  
+  // 초기 실행
+  window.addEventListener('load', function(){
+    setTimeout(forceUpdateIcon, 200);
+    setTimeout(forceUpdateIcon, 800);
+    setTimeout(forceUpdateIcon, 1500);
+  });
+  
+  setTimeout(forceUpdateIcon, 100);
+  setTimeout(forceUpdateIcon, 500);
+  setTimeout(forceUpdateIcon, 1000);
+  
+  window._v343_forceUpdateIcon = forceUpdateIcon;
+  window._v343_getFinanceOn = getFinanceOn;
+  
+  console.log('V343: 지속성 버그 수정 완료 - 설정 OFF면 항상 📔, 다이어리 폼 열어도 유지');
+})();
+</script>
+
+
+<script id="v344-real-fix">
+(function(){
+  console.log('V344: 가계부 ON/OFF 진짜 수정 - localStorage와 closure 변수 동기화');
+  
+  function getRealFinanceOn(){
+    // localStorage가 최종 진실, 없으면 true
+    const stored = localStorage.getItem('smartDiaryMoneySummaryVisible');
+    return stored !== 'false';
+  }
+  
+  function syncAllFinanceState(isOn){
+    console.log('V344: syncAllFinanceState', isOn ? 'ON' : 'OFF');
+    localStorage.setItem('smartDiaryMoneySummaryVisible', isOn);
+    
+    // 1. closure 변수 업데이트 (핵심!)
+    if(window._v344_setFinanceVar){
+      window._v344_setFinanceVar(isOn);
+    }
+    // 2. 전역 변수도 업데이트 (혹시 있을 경우)
+    if(typeof window.isMoneySummaryVisible !== 'undefined'){
+      window.isMoneySummaryVisible = isOn;
+    }
+    
+    // 3. 체크박스 업데이트
+    const chk = document.getElementById('toggle-money-summary');
+    if(chk) chk.checked = isOn;
+    
+    // 4. 카테고리 통계도 동기화
+    if(!isOn){
+      if(typeof setCategoryStatsVisibility === 'function'){
+        setCategoryStatsVisibility(false);
+      }
+      if(typeof currentStatsType !== 'undefined'){
+        window.currentStatsType = 'memo';
+      }
+      localStorage.setItem('smartDiaryCategoryStatsVisible', 'false');
+      const catChk = document.getElementById('toggle-category-stats');
+      if(catChk) catChk.checked = false;
+    } else {
+      if(typeof currentStatsType !== 'undefined'){
+        window.currentStatsType = 'expense';
+      }
+    }
+    
+    // 5. 가계부 요약 업데이트
+    if(typeof updateMoneySummary === 'function'){
+      try{ updateMoneySummary(); }catch(e){ console.log('updateMoneySummary error', e); }
+    }
+    
+    // 6. 아이콘 업데이트
+    setTimeout(updateFinanceIcon, 10);
+    setTimeout(updateFinanceIcon, 100);
+    setTimeout(updateFinanceIcon, 300);
+  }
+  
+  function updateFinanceIcon(){
+    const topBtn = document.getElementById('top-toggle-btn');
+    if(!topBtn) return;
+    
+    const isOn = getRealFinanceOn();
+    // console.log('V344 icon update', isOn);
+    
+    if(!isOn){
+      topBtn.innerHTML = '📔';
+      topBtn.title = '다이어리 (가계부 OFF)';
+      topBtn.style.opacity = '0.6';
+      
+      // 가계부 패널이 열려있으면 다이어리로 강제
+      const moneyPanel = document.getElementById('money-panel');
+      const diaryPanel = document.getElementById('diary-panel');
+      if(moneyPanel && moneyPanel.classList.contains('active')){
+        if(diaryPanel) diaryPanel.classList.add('active');
+        moneyPanel.classList.remove('active');
+        if(typeof currentMainTab !== 'undefined') window.currentMainTab = 'diary';
+        localStorage.setItem('smartDiaryMainTab', 'diary');
+      }
+    } else {
+      topBtn.style.opacity = '1';
+      const currentTab = typeof currentMainTab !== 'undefined' ? currentMainTab : 'diary';
+      if(currentTab === 'diary'){
+        topBtn.innerHTML = '💰';
+        topBtn.title = '가계부로 이동';
+      } else {
+        topBtn.innerHTML = '📔';
+        topBtn.title = '다이어리로 이동';
+      }
+    }
+  }
+  
+  // setMoneySummaryVisibility 완전 재정의 - 가장 중요!
+  window.setMoneySummaryVisibility = function(isVisible){
+    console.log('V344: setMoneySummaryVisibility 호출', isVisible);
+    syncAllFinanceState(isVisible);
+    
+    // 토글 버튼 UI 업데이트
+    if(typeof updateToggleButtons === 'function'){
+      updateToggleButtons('money-summary', isVisible);
+      const catVisible = isVisible ? (localStorage.getItem('smartDiaryCategoryStatsVisible') !== 'false') : false;
+      updateToggleButtons('category-stats', catVisible);
+    }
+  };
+  
+  // switchMainTab 재정의 - OFF면 money 진입 차단
+  const origSwitch = window._v343_originalSwitch || window.switchMainTab;
+  window._v344_origSwitch = origSwitch;
+  
+  window.switchMainTab = function(tabName){
+    const isOn = getRealFinanceOn();
+    if(tabName === 'money' && !isOn){
+      console.log('V344: 가계부 OFF - money 진입 차단');
+      // 다이어리로 강제
+      const diaryPanel = document.getElementById('diary-panel');
+      const moneyPanel = document.getElementById('money-panel');
+      if(diaryPanel) diaryPanel.classList.add('active');
+      if(moneyPanel) moneyPanel.classList.remove('active');
+      if(typeof currentMainTab !== 'undefined') window.currentMainTab = 'diary';
+      localStorage.setItem('smartDiaryMainTab', 'diary');
+      updateFinanceIcon();
+      return;
+    }
+    
+    // 정상 진입
+    if(origSwitch){
+      const result = origSwitch.apply(this, arguments);
+      setTimeout(updateFinanceIcon, 10);
+      setTimeout(updateFinanceIcon, 100);
+      return result;
+    }
+  };
+  
+  window.toggleMainTab = function(){
+    const isOn = getRealFinanceOn();
+    if(!isOn){
+      console.log('V344: 가계부 OFF - toggle 차단');
+      updateFinanceIcon();
+      return;
+    }
+    const currentTab = typeof currentMainTab !== 'undefined' ? currentMainTab : 'diary';
+    const nextTab = currentTab === 'diary' ? 'money' : 'diary';
+    window.switchMainTab(nextTab);
+  };
+  
+  // openSettingsModal 재정의 - 체크박스를 localStorage 기준으로 표시 (버그 1 해결)
+  const origOpenSettings = window.openSettingsModal;
+  window.openSettingsModal = function(){
+    let result;
+    if(origOpenSettings){
+      result = origOpenSettings.apply(this, arguments);
+    }
+    
+    // 설정 모달 열린 후 체크박스를 localStorage 기준으로 강제 동기화
+    setTimeout(function(){
+      const isOn = getRealFinanceOn();
+      console.log('V344: openSettingsModal - 설정 체크박스 동기화', isOn);
+      
+      const moneyChk = document.getElementById('toggle-money-summary');
+      if(moneyChk){
+        moneyChk.checked = isOn;
+        console.log('V344: toggle-money-summary 체크박스', isOn ? 'ON' : 'OFF', '로 설정');
+      }
+      
+      // closure 변수도 동기화
+      if(window._v344_setFinanceVar){
+        window._v344_setFinanceVar(isOn);
+      }
+      
+      // 카테고리 통계 체크박스도
+      const catChk = document.getElementById('toggle-category-stats');
+      const catOn = localStorage.getItem('smartDiaryCategoryStatsVisible') !== 'false' && isOn;
+      if(catChk) catChk.checked = catOn;
+      
+    }, 100);
+    
+    return result;
+  };
+  
+  // 체크박스 change 이벤트 직접 감지
+  setTimeout(function(){
+    const chk = document.getElementById('toggle-money-summary');
+    if(chk){
+      chk.addEventListener('change', function(){
+        console.log('V344: 체크박스 change', this.checked);
+        syncAllFinanceState(this.checked);
+      });
+    }
+  }, 500);
+  
+  // 주기적 감시
+  setInterval(function(){
+    const topBtn = document.getElementById('top-toggle-btn');
+    if(!topBtn) return;
+    
+    const isOn = getRealFinanceOn();
+    const moneyPanel = document.getElementById('money-panel');
+    
+    // 아이콘 감시
+    if(!isOn && topBtn.innerHTML.includes('💰')){
+      console.log('V344 감시: OFF인데 💰 발견 - 📔로 수정');
+      updateFinanceIcon();
+    }
+    
+    // 패널 감시
+    if(!isOn && moneyPanel && moneyPanel.classList.contains('active')){
+      console.log('V344 감시: OFF인데 money 패널 active - diary로');
+      const diaryPanel = document.getElementById('diary-panel');
+      if(diaryPanel) diaryPanel.classList.add('active');
+      moneyPanel.classList.remove('active');
+      if(typeof currentMainTab !== 'undefined') window.currentMainTab = 'diary';
+      updateFinanceIcon();
+    }
+  }, 800);
+  
+  // 초기 실행
+  window.addEventListener('load', function(){
+    setTimeout(function(){
+      const isOn = getRealFinanceOn();
+      console.log('V344 load: 현재 가계부', isOn ? 'ON' : 'OFF');
+      syncAllFinanceState(isOn);
+    }, 300);
+  });
+  
+  setTimeout(function(){
+    const isOn = getRealFinanceOn();
+    syncAllFinanceState(isOn);
+  }, 200);
+  
+  window._v344_syncAll = syncAllFinanceState;
+  window._v344_updateIcon = updateFinanceIcon;
+  window._v344_getRealOn = getRealFinanceOn;
+  
+  console.log('V344: 설치 완료 - localStorage와 closure 변수 완전 동기화');
+})();
+</script>
+
+
+<script id="v345-diary-return-fix">
+// V345: 가계부에서 다이어리로 가는 아이콘 안 되는 버그 수정
+
+(function(){
+  console.log('V345: 가계부 -> 다이어리 복귀 버그 수정');
+  
+  // 가장 원본 switchMainTab 찾기 - 여러 번 래핑된 것 중 최초 원본
+  let realOriginalSwitch = null;
+  // V341, V342, V343, V344에서 백업해둔 원본들 중 가장 최초
+  if(window._v344_origSwitch && window._v344_origSwitch._v343_originalSwitch){
+    realOriginalSwitch = window._v344_origSwitch._v343_originalSwitch;
+  }
+  if(!realOriginalSwitch && window._v343_originalSwitch){
+    realOriginalSwitch = window._v343_originalSwitch;
+  }
+  // 그래도 없으면 현재 switchMainTab이 이미 래핑된 것이므로, 직접 구현
+  if(!realOriginalSwitch){
+    realOriginalSwitch = function(tabName){
+      const panels = {
+        diary: document.getElementById('diary-panel'),
+        money: document.getElementById('money-panel')
+      };
+      Object.keys(panels).forEach(key => {
+        if(panels[key]) panels[key].classList.toggle('active', key === tabName);
+      });
+      if(typeof currentMainTab !== 'undefined') window.currentMainTab = tabName;
+      localStorage.setItem('smartDiaryMainTab', tabName);
+      
+      const topBtn = document.getElementById('top-toggle-btn');
+      if(topBtn){
+        if(tabName === 'diary'){
+          const isFinanceOn = localStorage.getItem('smartDiaryMoneySummaryVisible') !== 'false';
+          if(isFinanceOn){
+            topBtn.innerHTML = '💰';
+            topBtn.title = '가계부로 이동';
+          } else {
+            topBtn.innerHTML = '📔';
+            topBtn.title = '다이어리 (가계부 OFF)';
+          }
+        } else {
+          topBtn.innerHTML = '📔';
+          topBtn.title = '다이어리로 이동';
+        }
+      }
+      
+      if(tabName === 'money'){
+        if(typeof updateMoneySummary === 'function') updateMoneySummary();
+        if(typeof renderMoneyAroundToday === 'function') renderMoneyAroundToday();
+      }
+      if(tabName === 'diary'){
+        if(typeof renderDiaryAroundToday === 'function') renderDiaryAroundToday();
+      }
+    };
+  }
+  
+  window._v345_realOriginalSwitch = realOriginalSwitch;
+  
+  function getFinanceOn(){
+    return localStorage.getItem('smartDiaryMoneySummaryVisible') !== 'false';
+  }
+  
+  function updateIcon(){
+    const topBtn = document.getElementById('top-toggle-btn');
+    if(!topBtn) return;
+    const isOn = getFinanceOn();
+    const currentTab = typeof currentMainTab !== 'undefined' ? currentMainTab : 'diary';
+    
+    if(!isOn){
+      topBtn.innerHTML = '📔';
+      topBtn.title = '다이어리 (가계부 OFF)';
+      topBtn.style.opacity = '0.6';
+    } else {
+      topBtn.style.opacity = '1';
+      if(currentTab === 'diary'){
+        topBtn.innerHTML = '💰';
+        topBtn.title = '가계부로 이동';
+      } else {
+        topBtn.innerHTML = '📔';
+        topBtn.title = '다이어리로 이동';
+      }
+    }
+  }
+  
+  // switchMainTab 완전 재정의 - 다이어리는 항상 허용, 가계부는 ON일 때만
+  window.switchMainTab = function(tabName){
+    const isOn = getFinanceOn();
+    
+    console.log('V345: switchMainTab', tabName, '가계부', isOn ? 'ON' : 'OFF');
+    
+    if(tabName === 'money' && !isOn){
+      console.log('V345: 가계부 OFF - money 진입 차단, diary 유지');
+      // 다이어리로 강제
+      realOriginalSwitch.call(this, 'diary');
+      setTimeout(updateIcon, 10);
+      return;
+    }
+    
+    // 다이어리는 항상 허용, 가계부는 ON일 때만 허용
+    realOriginalSwitch.call(this, tabName);
+    setTimeout(updateIcon, 10);
+    setTimeout(updateIcon, 100);
+  };
+  
+  // toggleMainTab 재정의 - 가계부 ON/OFF 관계없이 다이어리로는 항상 갈 수 있게
+  window.toggleMainTab = function(){
+    const currentTab = typeof currentMainTab !== 'undefined' ? currentMainTab : 'diary';
+    const isOn = getFinanceOn();
+    
+    console.log('V345: toggleMainTab 현재', currentTab, '가계부', isOn ? 'ON' : 'OFF');
+    
+    if(currentTab === 'money'){
+      // 가계부에서 다이어리로 - 항상 허용 (가계부 OFF든 ON이든)
+      console.log('V345: money -> diary (항상 허용)');
+      window.switchMainTab('diary');
+    } else {
+      // 다이어리에서 가계부로 - ON일 때만 허용
+      if(!isOn){
+        console.log('V345: diary -> money 차단 (가계부 OFF)');
+        updateIcon();
+        return;
+      }
+      console.log('V345: diary -> money (허용)');
+      window.switchMainTab('money');
+    }
+  };
+  
+  // 초기 아이콘 설정
+  setTimeout(updateIcon, 200);
+  setTimeout(updateIcon, 800);
+  
+  window.addEventListener('load', function(){
+    setTimeout(updateIcon, 300);
+  });
+  
+  window._v345_updateIcon = updateIcon;
+  
+  console.log('V345: 가계부->다이어리 복귀 버그 수정 완료');
+})();
+</script>
+
+
+<script id="v346-icon-always">
+(function(){
+  console.log('V346: 가계부에서 다이어리 아이콘 안 뜨는 버그 최종 수정');
+  
+  function getFinanceOn(){
+    return localStorage.getItem('smartDiaryMoneySummaryVisible') !== 'false';
+  }
+  
+  function getCurrentTabFromDOM(){
+    const moneyPanel = document.getElementById('money-panel');
+    const diaryPanel = document.getElementById('diary-panel');
+    if(moneyPanel && moneyPanel.classList.contains('active')) return 'money';
+    if(diaryPanel && diaryPanel.classList.contains('active')) return 'diary';
+    // fallback to variable
+    if(typeof currentMainTab !== 'undefined') return currentMainTab;
+    if(window.currentMainTab) return window.currentMainTab;
+    return 'diary';
+  }
+  
+  function forceIconUpdate(){
+    const topBtn = document.getElementById('top-toggle-btn');
+    if(!topBtn) {
+      console.log('V346: top-toggle-btn 없음');
+      return;
+    }
+    
+    const isOn = getFinanceOn();
+    const currentTab = getCurrentTabFromDOM();
+    
+    console.log('V346: 아이콘 업데이트 - 탭:', currentTab, '가계부:', isOn ? 'ON' : 'OFF', '현재아이콘:', topBtn.innerHTML);
+    
+    if(!isOn){
+      // OFF면 항상 다이어리
+      topBtn.innerHTML = '📔';
+      topBtn.title = '다이어리 (가계부 OFF)';
+      topBtn.style.opacity = '0.6';
+      topBtn.style.display = 'flex';
+    } else {
+      // ON일 때
+      topBtn.style.opacity = '1';
+      topBtn.style.display = 'flex';
+      if(currentTab === 'money'){
+        // 가계부에 있으면 다이어리로 가는 아이콘 📔
+        topBtn.innerHTML = '📔';
+        topBtn.title = '다이어리로 이동';
+        console.log('V346: 가계부 패널 - 다이어리 아이콘 📔 표시');
+      } else {
+        // 다이어리에 있으면 가계부로 가는 아이콘 💰
+        topBtn.innerHTML = '💰';
+        topBtn.title = '가계부로 이동';
+        console.log('V346: 다이어리 패널 - 가계부 아이콘 💰 표시');
+      }
+    }
+  }
+  
+  // 원본 switch 찾기
+  let trueOriginalSwitch = window._v345_realOriginalSwitch || window._v344_origSwitch || window._v343_originalSwitch;
+  if(!trueOriginalSwitch){
+    // 직접 구현 - 가장 확실한 원본
+    trueOriginalSwitch = function(tabName){
+      console.log('V346: trueOriginalSwitch 직접 구현', tabName);
+      const diaryPanel = document.getElementById('diary-panel');
+      const moneyPanel = document.getElementById('money-panel');
+      
+      if(tabName === 'diary'){
+        if(diaryPanel) diaryPanel.classList.add('active');
+        if(moneyPanel) moneyPanel.classList.remove('active');
+      } else {
+        if(moneyPanel) moneyPanel.classList.add('active');
+        if(diaryPanel) diaryPanel.classList.remove('active');
+      }
+      
+      // closure 변수 업데이트 시도
+      if(window._v344_setFinanceVar){
+        // currentMainTab은 다른 변수이므로 직접 접근 불가 - window에 저장
+        window.currentMainTab = tabName;
+      }
+      try{
+        if(typeof currentMainTab !== 'undefined'){
+          // eval로 closure 변수 업데이트 시도
+          eval('currentMainTab = "' + tabName + '"');
+        }
+      }catch(e){}
+      
+      localStorage.setItem('smartDiaryMainTab', tabName);
+      
+      if(tabName === 'money'){
+        if(typeof updateMoneySummary === 'function') try{ updateMoneySummary(); }catch(e){}
+        if(typeof renderMoneyAroundToday === 'function') try{ renderMoneyAroundToday(); }catch(e){}
+      } else {
+        if(typeof renderDiaryAroundToday === 'function') try{ renderDiaryAroundToday(); }catch(e){}
+      }
+    };
+  }
+  
+  window._v346_trueOriginal = trueOriginalSwitch;
+  
+  // switchMainTab 완전 재정의 - DOM 기준으로 확실하게
+  window.switchMainTab = function(tabName){
+    const isOn = getFinanceOn();
+    console.log('V346: switchMainTab 호출', tabName, '가계부', isOn ? 'ON' : 'OFF');
+    
+    if(tabName === 'money' && !isOn){
+      console.log('V346: 가계부 OFF - money 차단, diary로');
+      trueOriginalSwitch.call(this, 'diary');
+      setTimeout(forceIconUpdate, 10);
+      setTimeout(forceIconUpdate, 100);
+      setTimeout(forceIconUpdate, 300);
+      return;
+    }
+    
+    // 정상 전환
+    trueOriginalSwitch.call(this, tabName);
+    
+    // 아이콘 강제 업데이트 - 여러 번
+    setTimeout(forceIconUpdate, 10);
+    setTimeout(forceIconUpdate, 50);
+    setTimeout(forceIconUpdate, 100);
+    setTimeout(forceIconUpdate, 300);
+    setTimeout(forceIconUpdate, 600);
+  };
+  
+  window.toggleMainTab = function(){
+    const currentTab = getCurrentTabFromDOM();
+    const isOn = getFinanceOn();
+    
+    console.log('V346: toggleMainTab 현재', currentTab, '가계부', isOn ? 'ON' : 'OFF');
+    
+    if(currentTab === 'money'){
+      // 가계부 -> 다이어리: 항상 허용
+      console.log('V346: money -> diary');
+      window.switchMainTab('diary');
+    } else {
+      // 다이어리 -> 가계부: ON일 때만
+      if(!isOn){
+        console.log('V346: diary -> money 차단 (OFF)');
+        forceIconUpdate();
+        return;
+      }
+      console.log('V346: diary -> money');
+      window.switchMainTab('money');
+    }
+  };
+  
+  // 주기적 감시 - 아이콘이 사라지거나 잘못 표시되면 즉시 수정
+  setInterval(function(){
+    const topBtn = document.getElementById('top-toggle-btn');
+    if(!topBtn) return;
+    
+    const currentTab = getCurrentTabFromDOM();
+    const isOn = getFinanceOn();
+    
+    // 가계부 패널인데 아이콘이 💰이면 잘못된 것 - 📔여야 함
+    if(currentTab === 'money' && isOn && topBtn.innerHTML.includes('💰')){
+      console.log('V346 감시: money 패널인데 💰 아이콘 - 📔로 수정');
+      forceIconUpdate();
+    }
+    
+    // 다이어리 패널인데 OFF인데도 💰이면 잘못된 것
+    if(!isOn && topBtn.innerHTML.includes('💰')){
+      console.log('V346 감시: OFF인데 💰 아이콘 - 📔로 수정');
+      forceIconUpdate();
+    }
+    
+    // 아이콘이 비어있으면 강제
+    if(!topBtn.innerHTML || topBtn.innerHTML.trim() === ''){
+      console.log('V346 감시: 아이콘 비어있음 - 강제 업데이트');
+      forceIconUpdate();
+    }
+    
+    // money 패널인데 diary가 active가 아니면 (둘 다 꺼진 경우)
+    const moneyPanel = document.getElementById('money-panel');
+    const diaryPanel = document.getElementById('diary-panel');
+    if(isOn && moneyPanel && diaryPanel){
+      const moneyActive = moneyPanel.classList.contains('active');
+      const diaryActive = diaryPanel.classList.contains('active');
+      if(!moneyActive && !diaryActive){
+        console.log('V346 감시: 둘 다 비활성 - diary로 복구');
+        diaryPanel.classList.add('active');
+        forceIconUpdate();
+      }
+    }
+  }, 300);
+  
+  // 초기 실행
+  setTimeout(forceIconUpdate, 100);
+  setTimeout(forceIconUpdate, 500);
+  setTimeout(forceIconUpdate, 1000);
+  setTimeout(forceIconUpdate, 2000);
+  
+  window.addEventListener('load', function(){
+    setTimeout(forceIconUpdate, 200);
+    setTimeout(forceIconUpdate, 800);
+  });
+  
+  window._v346_forceIcon = forceIconUpdate;
+  window._v346_getTab = getCurrentTabFromDOM;
+  
+  console.log('V346: 설치 완료 - 가계부에서 다이어리 아이콘 항상 표시');
+})();
+</script>
+
+
+<style id="v347-default-off">
+/* V347: 기본값 6개 모두 OFF - 처음 열면 다이어리만 */
+</style>
+<script id="v347-default-off-js">
+(function(){
+  console.log('V347: 6개 기능 기본값 OFF로 변경 - 처음엔 다이어리만');
+  
+  // localStorage에 값이 없을 때 기본 OFF로 처리
+  // 1. 가계부 현황
+  if(localStorage.getItem('smartDiaryMoneySummaryVisible') === null){
+    localStorage.setItem('smartDiaryMoneySummaryVisible', 'false');
+    console.log('V347: 가계부 현황 기본 OFF 설정');
+  }
+  // 2. 카테고리 통계
+  if(localStorage.getItem('smartDiaryCategoryStatsVisible') === null){
+    localStorage.setItem('smartDiaryCategoryStatsVisible', 'false');
+    console.log('V347: 카테고리 통계 기본 OFF');
+  }
+  // 3. 검색/기간필터
+  if(localStorage.getItem('smartDiarySearchFilterVisible') === null){
+    localStorage.setItem('smartDiarySearchFilterVisible', 'false');
+    console.log('V347: 검색/기간필터 기본 OFF');
+  }
+  // 4. 오늘의 운세
+  if(localStorage.getItem('smartDiaryShowFortune') === null){
+    localStorage.setItem('smartDiaryShowFortune', 'false');
+    console.log('V347: 오늘의 운세 기본 OFF');
+  }
+  // 5. 운세 자동팝업
+  if(localStorage.getItem('smartDiaryFortuneAuto') === null){
+    localStorage.setItem('smartDiaryFortuneAuto', '0');
+    console.log('V347: 운세 자동팝업 기본 OFF');
+  }
+  // 6. 로또 생성기
+  if(localStorage.getItem('smartDiaryShowLotto') === null){
+    localStorage.setItem('smartDiaryShowLotto', 'false');
+    console.log('V347: 로또 생성기 기본 OFF');
+  }
+  
+  // 기본값을 OFF로 하는 새로운 함수들 - 기존 함수 덮어쓰기
+  window.getShowFortune = function(){
+    const v = localStorage.getItem('smartDiaryShowFortune');
+    // null이면 OFF (false)
+    if(v === null) return false;
+    return v !== 'false';
+  };
+  
+  window.getFortuneAutoEnabled = function(){
+    const v = localStorage.getItem('smartDiaryFortuneAuto');
+    // null이면 OFF
+    if(v === null) return false;
+    return v === '1';
+  };
+  
+  window.getShowLotto = function(){
+    const v = localStorage.getItem('smartDiaryShowLotto');
+    // null이면 OFF
+    if(v === null) return false;
+    return v === 'true';
+  };
+  
+  // closure 변수들도 OFF로 강제
+  setTimeout(function(){
+    if(window._v344_setFinanceVar){
+      const isOn = localStorage.getItem('smartDiaryMoneySummaryVisible') === 'true';
+      window._v344_setFinanceVar(isOn);
+      console.log('V347: closure 변수 동기화', isOn ? 'ON' : 'OFF');
+    }
+    
+    // 체크박스 UI도 OFF로
+    const ids = [
+      'toggle-money-summary',
+      'toggle-category-stats',
+      'toggle-search-filter',
+      'settings-show-fortune',
+      'settings-fortune-auto',
+      'settings-show-lotto'
+    ];
+    
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if(el){
+        const keyMap = {
+          'toggle-money-summary': 'smartDiaryMoneySummaryVisible',
+          'toggle-category-stats': 'smartDiaryCategoryStatsVisible',
+          'toggle-search-filter': 'smartDiarySearchFilterVisible',
+          'settings-show-fortune': 'smartDiaryShowFortune',
+          'settings-fortune-auto': 'smartDiaryFortuneAuto',
+          'settings-show-lotto': 'smartDiaryShowLotto'
+        };
+        const key = keyMap[id];
+        const val = localStorage.getItem(key);
+        let checked = false;
+        if(key === 'smartDiaryFortuneAuto'){
+          checked = val === '1';
+        } else {
+          checked = val === 'true';
+        }
+        el.checked = checked;
+        console.log('V347: 체크박스', id, checked ? 'ON' : 'OFF');
+      }
+    });
+    
+    // 가계부 요약 숨김 등 업데이트
+    if(typeof updateMoneySummary === 'function'){
+      try{ updateMoneySummary(); }catch(e){}
+    }
+    if(typeof updateFortuneTeaser === 'function'){
+      try{ updateFortuneTeaser(); }catch(e){}
+    }
+    
+    // 메인 아이콘 업데이트 (가계부 OFF이므로 📔)
+    if(window._v346_forceIcon) window._v346_forceIcon();
+    if(window._v345_updateIcon) window._v345_updateIcon();
+    if(window._v344_updateIcon) window._v344_updateIcon();
+    
+  }, 300);
+  
+  // openSettingsModal에서 체크박스 다시 동기화 (기존 V344 로직 확장)
+  const origOpenSettings = window.openSettingsModal;
+  // 이미 V344에서 래핑됐을 수 있으므로, 가장 최근 것을 다시 래핑
+  setTimeout(function(){
+    const currentOpen = window.openSettingsModal;
+    if(currentOpen && !currentOpen._v347_wrapped){
+      window.openSettingsModal = function(){
+        let result;
+        if(currentOpen){
+          result = currentOpen.apply(this, arguments);
+        }
+        
+        setTimeout(function(){
+          // 6개 모두 localStorage 기준으로 동기화
+          const map = [
+            {id: 'toggle-money-summary', key: 'smartDiaryMoneySummaryVisible', isAuto: false},
+            {id: 'toggle-category-stats', key: 'smartDiaryCategoryStatsVisible', isAuto: false},
+            {id: 'toggle-search-filter', key: 'smartDiarySearchFilterVisible', isAuto: false},
+            {id: 'settings-show-fortune', key: 'smartDiaryShowFortune', isAuto: false},
+            {id: 'settings-fortune-auto', key: 'smartDiaryFortuneAuto', isAuto: true},
+            {id: 'settings-show-lotto', key: 'smartDiaryShowLotto', isAuto: false}
+          ];
+          
+          map.forEach(item => {
+            const el = document.getElementById(item.id);
+            if(el){
+              const val = localStorage.getItem(item.key);
+              let checked = false;
+              if(item.isAuto){
+                checked = val === '1';
+              } else {
+                checked = val === 'true';
+              }
+              // null이면 OFF
+              if(val === null) checked = false;
+              el.checked = checked;
+            }
+          });
+          
+          // 운세 관련 토글 상태
+          if(typeof syncFortuneToggles === 'function'){
+            try{ syncFortuneToggles(); }catch(e){}
+          }
+          if(typeof syncLottoToggle === 'function'){
+            try{ syncLottoToggle(); }catch(e){}
+          }
+          
+        }, 150);
+        
+        return result;
+      };
+      window.openSettingsModal._v347_wrapped = true;
+    }
+  }, 600);
+  
+  console.log('V347: 6개 기능 기본 OFF 설치 완료 - 처음엔 다이어리만 표시');
+})();
+</script>
+
+
+<script id="v348-category-sync">
+(function(){
+  console.log('V348: 가계부 ON/OFF시 카테고리 통계 같이 ON/OFF');
+  
+  // syncAllFinanceState 확장
+  const origSync = window._v344_syncAll || window._v344_syncAllFinanceState;
+  
+  function syncCategoryWithFinance(isFinanceOn){
+    console.log('V348: 카테고리 통계', isFinanceOn ? 'ON' : 'OFF', '(가계부와 동기화)');
+    
+    localStorage.setItem('smartDiaryCategoryStatsVisible', isFinanceOn ? 'true' : 'false');
+    
+    // closure 변수 업데이트 시도
+    try{
+      if(typeof isCategoryStatsVisible !== 'undefined'){
+        eval('isCategoryStatsVisible = ' + (isFinanceOn ? 'true' : 'false'));
+      }
+    }catch(e){
+      console.log('V348: closure 변수 업데이트 실패, window로 대체');
+      window.isCategoryStatsVisible = isFinanceOn;
+    }
+    
+    // 체크박스 업데이트
+    const catChk = document.getElementById('toggle-category-stats');
+    if(catChk) catChk.checked = isFinanceOn;
+    
+    // UI 업데이트
+    if(typeof setCategoryStatsVisibility === 'function'){
+      try{
+        // 직접 호출하지 않고 상태만 업데이트 (무한루프 방지)
+        const card = document.getElementById('category-stats-card') || document.querySelector('#category-stats-body')?.parentElement;
+        if(card){
+          // 가계부가 OFF면 숨김, ON이면 표시 (단, currentStatsType이 memo가 아닐 때)
+          if(!isFinanceOn){
+            card.style.display = 'none';
+          } else {
+            // 가계부가 ON이면 카테고리 통계 표시 (memo가 아닐 때)
+            if(typeof currentStatsType !== 'undefined' && currentStatsType !== 'memo'){
+              card.style.display = 'block';
+            }
+          }
+        }
+      }catch(e){ console.log('V348 setCategoryStatsVisibility error', e); }
+    }
+    
+    if(typeof updateToggleButtons === 'function'){
+      try{ updateToggleButtons('category-stats', isFinanceOn); }catch(e){}
+    }
+  }
+  
+  // setMoneySummaryVisibility 재정의 - 카테고리 통계 같이 처리
+  const currentSetMoney = window.setMoneySummaryVisibility;
+  
+  window.setMoneySummaryVisibility = function(isVisible){
+    console.log('V348: 가계부', isVisible ? 'ON' : 'OFF', '-> 카테고리 통계도 같이', isVisible ? 'ON' : 'OFF');
+    
+    // 1. localStorage
+    localStorage.setItem('smartDiaryMoneySummaryVisible', isVisible ? 'true' : 'false');
+    
+    // 2. closure 변수 (가계부)
+    if(window._v344_setFinanceVar){
+      window._v344_setFinanceVar(isVisible);
+    }
+    try{
+      if(typeof isMoneySummaryVisible !== 'undefined'){
+        eval('isMoneySummaryVisible = ' + (isVisible ? 'true' : 'false'));
+      }
+    }catch(e){}
+    
+    // 3. 카테고리 통계도 같이 ON/OFF
+    syncCategoryWithFinance(isVisible);
+    
+    // 4. currentStatsType
+    if(typeof currentStatsType !== 'undefined'){
+      if(!isVisible){
+        window.currentStatsType = 'memo';
+        try{ eval('currentStatsType = "memo"'); }catch(e){}
+      } else {
+        window.currentStatsType = 'expense';
+        try{ eval('currentStatsType = "expense"'); }catch(e){}
+      }
+    }
+    
+    // 5. 체크박스
+    const moneyChk = document.getElementById('toggle-money-summary');
+    if(moneyChk) moneyChk.checked = isVisible;
+    
+    // 6. 가계부 요약 업데이트
+    if(typeof updateMoneySummary === 'function'){
+      try{ updateMoneySummary(); }catch(e){ console.log('V348 updateMoneySummary error', e); }
+    }
+    
+    // 7. 토글 버튼 UI
+    if(typeof updateToggleButtons === 'function'){
+      try{
+        updateToggleButtons('money-summary', isVisible);
+        updateToggleButtons('category-stats', isVisible);
+      }catch(e){}
+    }
+    
+    // 8. 아이콘 업데이트
+    setTimeout(function(){
+      if(window._v346_forceIcon) window._v346_forceIcon();
+      if(window._v345_updateIcon) window._v345_updateIcon();
+      if(window._v344_updateIcon) window._v344_updateIcon();
+    }, 50);
+  };
+  
+  // 체크박스 직접 change 이벤트도 처리
+  setTimeout(function(){
+    const moneyChk = document.getElementById('toggle-money-summary');
+    if(moneyChk && !moneyChk._v348_wrapped){
+      moneyChk.addEventListener('change', function(){
+        console.log('V348: 가계부 체크박스 직접 변경', this.checked);
+        window.setMoneySummaryVisibility(this.checked);
+      });
+      moneyChk._v348_wrapped = true;
+    }
+    
+    // 카테고리 통계 체크박스를 직접 건드렸을 때도 가계부와 동기화할지? 
+    // 요청은 가계부 ON/OFF하면 카테고리도 같이 ON/OFF이므로, 카테고리 단독 변경은 허용하되
+    // 가계부 OFF일 때는 카테고리 ON 불가
+    const catChk = document.getElementById('toggle-category-stats');
+    if(catChk && !catChk._v348_wrapped){
+      catChk.addEventListener('change', function(){
+        const financeOn = localStorage.getItem('smartDiaryMoneySummaryVisible') === 'true';
+        if(!financeOn && this.checked){
+          console.log('V348: 가계부 OFF인데 카테고리 ON 시도 - 차단');
+          this.checked = false;
+          alert('가계부가 OFF일 때는 카테고리 통계를 켤 수 없어요.\n가계부를 먼저 켜주세요.');
+          return;
+        }
+        // 가계부 ON일 때는 카테고리 단독 ON/OFF 허용
+        console.log('V348: 카테고리 통계 단독 변경', this.checked);
+        localStorage.setItem('smartDiaryCategoryStatsVisible', this.checked ? 'true' : 'false');
+        try{
+          if(typeof isCategoryStatsVisible !== 'undefined'){
+            eval('isCategoryStatsVisible = ' + (this.checked ? 'true' : 'false'));
+          }
+        }catch(e){}
+        if(typeof updateToggleButtons === 'function'){
+          try{ updateToggleButtons('category-stats', this.checked); }catch(e){}
+        }
+      });
+      catChk._v348_wrapped = true;
+    }
+  }, 800);
+  
+  console.log('V348: 가계부-카테고리 통계 동기화 설치 완료');
+})();
+</script>
+
+
+<style id="v349-pin-icon">
+/* V349: 달력 사진 아이콘 장미🌹 -> 고정핀📌으로 변경, 장미 크기에 맞게 */
+
+/* 기존 장미 아이콘 덮어쓰기 */
+.cal-cell.has-photo .cal-photo-corner::after,
+.cal-photo-corner::after {
+  content: '📌' !important;
+  font-size: 11px !important; /* 장미 크기 12px에서 고정핀은 조금 작게 해야 깔끔 */
+  top: 1px !important;
+  left: 1px !important;
+  line-height: 1 !important;
+  filter: none !important;
+  transform: rotate(0deg) !important;
+}
+
+/* 고정핀 배경은 제목이랑 통일 - 살짝 분홍빛 */
+.cal-cell.has-photo .cal-photo-corner {
+  background: #FFE8F0 !important; /* 고정핀에 어울리는 연분홍 */
+  border-radius: 3px !important;
+  width: 16px !important;
+  height: 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* 다이어리 리스트의 사진 아이콘도 고정핀으로 통일 */
+.sub-memo-item .photo-title-area::before,
+.diary-photo-wrap::after {
+  content: '' !important;
+}
+
+/* V308 제목 고정핀도 크기 조정 - 달력 고정핀이랑 통일감 */
+.getDiaryIcon, [class*="diary-icon"] {
+  font-size: 12px !important;
+}
+</style>
+<script id="v349-pin-js">
+(function(){
+  console.log('V349: 달력 사진 아이콘 장미 -> 고정핀 변경');
+  
+  // 기존 V312 스타일 덮어쓰기
+  function applyPinIcon(){
+    const style = document.createElement('style');
+    style.id = 'v349-pin-override';
+    style.textContent = `
+      .cal-cell.has-photo .cal-photo-corner::after,
+      .cal-photo-corner::after {
+        content: '📌' !important;
+        font-size: 11px !important;
+        top: 1px !important;
+        left: 1px !important;
+      }
+      .cal-cell.has-photo .cal-photo-corner {
+        background: #FFE8F0 !important;
+        width: 16px !important;
+        height: 16px !important;
+      }
+    `;
+    
+    // 기존 장미 스타일 제거 또는 덮어쓰기
+    const oldStyles = document.querySelectorAll('style[id*="v312"], style[id*="red-rose"]');
+    oldStyles.forEach(s => {
+      if(s.id !== 'v349-pin-override'){
+        s.textContent = s.textContent.replace(/🌹/g, '📌');
+      }
+    });
+    
+    // 이미 있는 override 제거 후 다시 추가
+    const existing = document.getElementById('v349-pin-override');
+    if(existing) existing.remove();
+    document.head.appendChild(style);
+  }
+  
+  applyPinIcon();
+  
+  // getDiaryIcon도 고정핀으로 통일 (이미 V308에서 통일됐지만 재확인)
+  window.getDiaryIcon = function(item){
+    return '📌';
+  };
+  
+  // 달력 렌더 후 아이콘 재적용
+  const origRender = window.renderCalendar;
+  if(origRender && !origRender._v349_wrapped){
+    window.renderCalendar = function(){
+      const result = origRender.apply(this, arguments);
+      setTimeout(applyPinIcon, 50);
+      setTimeout(applyPinIcon, 200);
+      return result;
+    };
+    window.renderCalendar._v349_wrapped = true;
+  }
+  
+  setInterval(applyPinIcon, 1000);
+  
+  console.log('V349: 고정핀 아이콘 적용 완료 - 제목📌 + 달력📌 통일');
+})();
+</script>
+
+
+<style id="v350-pin-fix">
+/* V350: 핀이 삼각형에 가려지는 문제 수정 - 삼각형 제거하고 작은 네모 배지로 */
+
+.cal-cell.has-photo .cal-photo-corner,
+.cal-photo-corner {
+  clip-path: none !important; /* 삼각형 제거! */
+  background: #ffffff !important;
+  border: 1px solid #ffd6e8 !important;
+  border-radius: 6px !important;
+  width: 18px !important;
+  height: 18px !important;
+  top: 3px !important;
+  left: 3px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12) !important;
+  z-index: 5 !important;
+}
+
+.cal-cell.has-photo .cal-photo-corner::after,
+.cal-photo-corner::after {
+  content: '📌' !important;
+  font-size: 11px !important;
+  position: static !important; /* absolute에서 static으로 - 중앙 정렬 */
+  top: auto !important;
+  left: auto !important;
+  line-height: 1 !important;
+  display: block !important;
+  transform: none !important;
+}
+
+/* 일요일, 토요일 등 색상별 배경도 통일 */
+.cal-cell.has-photo.sunday .cal-photo-corner,
+.cal-cell.has-photo.saturday .cal-photo-corner,
+.cal-cell.has-photo.today-date .cal-photo-corner {
+  background: #ffffff !important;
+  border-color: #ffd6e8 !important;
+}
+
+/* 호버시 살짝 커짐 */
+.cal-cell.has-photo .cal-photo-corner:hover {
+  transform: scale(1.1) !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
+}
+</style>
+<script id="v350-js">
+(function(){
+  console.log('V350: 고정핀 삼각형 가림 수정 - 네모 배지로');
+  
+  function fixPin(){
+    const style = document.createElement('style');
+    style.id = 'v350-fix-override';
+    style.textContent = `
+      .cal-cell.has-photo .cal-photo-corner,
+      .cal-photo-corner {
+        clip-path: none !important;
+        background: #ffffff !important;
+        border: 1px solid #ffd6e8 !important;
+        border-radius: 6px !important;
+        width: 18px !important;
+        height: 18px !important;
+        top: 3px !important;
+        left: 3px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.12) !important;
+      }
+      .cal-cell.has-photo .cal-photo-corner::after,
+      .cal-photo-corner::after {
+        content: '📌' !important;
+        font-size: 11px !important;
+        position: static !important;
+        top: auto !important;
+        left: auto !important;
+      }
+    `;
+    const old = document.getElementById('v350-fix-override');
+    if(old) old.remove();
+    document.head.appendChild(style);
+  }
+  
+  fixPin();
+  
+  const origRender = window.renderCalendar;
+  if(origRender && !origRender._v350_wrapped){
+    window.renderCalendar = function(){
+      const result = origRender.apply(this, arguments);
+      setTimeout(fixPin, 30);
+      setTimeout(fixPin, 200);
+      return result;
+    };
+    window.renderCalendar._v350_wrapped = true;
+  }
+  
+  setInterval(fixPin, 1000);
+})();
+</script>
+
+
+<style id="v351-pin-only">
+/* V351: 흰색 배지 없이 고정핀만 단독 표시 - 깔끔하게 */
+
+.cal-cell.has-photo .cal-photo-corner,
+.cal-photo-corner {
+  clip-path: none !important;
+  background: transparent !important; /* 배경 투명 */
+  border: none !important; /* 테두리 없음 */
+  border-radius: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  top: 1px !important;
+  left: 2px !important;
+  display: block !important;
+  box-shadow: none !important;
+  z-index: 5 !important;
+  padding: 0 !important;
+}
+
+.cal-cell.has-photo .cal-photo-corner::after,
+.cal-photo-corner::after {
+  content: '📌' !important;
+  font-size: 12px !important; /* 단독이라 살짝 크게 */
+  position: static !important;
+  top: auto !important;
+  left: auto !important;
+  line-height: 1 !important;
+  display: block !important;
+  background: transparent !important;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2)) !important; /* 살짝 그림자로 가독성 */
+}
+
+/* 일요일, 토요일 등 색상도 투명으로 통일 */
+.cal-cell.has-photo.sunday .cal-photo-corner,
+.cal-cell.has-photo.saturday .cal-photo-corner,
+.cal-cell.has-photo.today-date .cal-photo-corner {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* 호버시 살짝 커짐 */
+.cal-cell.has-photo .cal-photo-corner:hover::after {
+  transform: scale(1.2) !important;
+}
+</style>
+<script id="v351-js">
+(function(){
+  console.log('V351: 흰색 배지 제거, 고정핀만 단독 표시');
+  
+  function fixPinOnly(){
+    const style = document.createElement('style');
+    style.id = 'v351-only-override';
+    style.textContent = `
+      .cal-cell.has-photo .cal-photo-corner,
+      .cal-photo-corner {
+        clip-path: none !important;
+        background: transparent !important;
+        border: none !important;
+        width: auto !important;
+        height: auto !important;
+        top: 1px !important;
+        left: 2px !important;
+        box-shadow: none !important;
+      }
+      .cal-cell.has-photo .cal-photo-corner::after,
+      .cal-photo-corner::after {
+        content: '📌' !important;
+        font-size: 12px !important;
+        position: static !important;
+        background: transparent !important;
+      }
+    `;
+    const old = document.getElementById('v351-only-override');
+    if(old) old.remove();
+    document.head.appendChild(style);
+  }
+  
+  fixPinOnly();
+  
+  const origRender = window.renderCalendar;
+  if(origRender && !origRender._v351_wrapped){
+    window.renderCalendar = function(){
+      const result = origRender.apply(this, arguments);
+      setTimeout(fixPinOnly, 30);
+      setTimeout(fixPinOnly, 200);
+      return result;
+    };
+    window.renderCalendar._v351_wrapped = true;
+  }
+  
+  setInterval(fixPinOnly, 1500);
+})();
+</script>
+
+
+<style id="v352-final">
+/* V352: 고정핀 위치 내리기 + 크림 종이 */
+
+/* 1. 고정핀 위치 내리기 */
+.cal-cell.has-photo .cal-photo-corner,
+.cal-photo-corner {
+  clip-path: none !important;
+  background: transparent !important;
+  border: none !important;
+  width: auto !important;
+  height: auto !important;
+  top: 4px !important; /* 1px -> 4px */
+  left: 3px !important; /* 2px -> 3px */
+  box-shadow: none !important;
+  display: block !important;
+  padding: 0 !important;
+  z-index: 5 !important;
+}
+.cal-cell.has-photo .cal-photo-corner::after,
+.cal-photo-corner::after {
+  content: '📌' !important;
+  font-size: 11px !important;
+  position: static !important;
+  background: transparent !important;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.15)) !important;
+}
+
+/* 2. 확대 사진 밑 메모 - 크림 종이 */
+#photo-lightbox-memo,
+.photo-lightbox-memo {
+  background: #FFF9E6 !important; /* 크림 종이 */
+  background-image: 
+    radial-gradient(circle at 20% 30%, rgba(255,220,150,0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(255,210,130,0.12) 0%, transparent 40%) !important;
+  border: 1px solid #E8DCC0 !important;
+  border-radius: 12px !important;
+  color: #3D2F1F !important; /* 따뜻한 갈색 글씨 */
+  font-family: 'Nanum Pen Script', 'Noto Serif KR', serif !important;
+  line-height: 1.7 !important;
+  box-shadow: 
+    0 2px 8px rgba(0,0,0,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.8) !important;
+  position: relative !important;
+}
+
+#photo-lightbox-memo::before,
+.photo-lightbox-memo::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E") !important;
+  pointer-events: none !important;
+  border-radius: 12px !important;
+  z-index: 0 !important;
+}
+
+#photo-lightbox-memo.no-photo-mode,
+.photo-lightbox-memo.no-photo-mode {
+  background: #FFF9E6 !important;
+  background-image: 
+    radial-gradient(circle at 20% 30%, rgba(255,220,150,0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(255,210,130,0.12) 0%, transparent 40%) !important;
+  border: 1px solid #E8DCC0 !important;
+  color: #3D2F1F !important;
+}
+
+/* 날짜 표시도 크림 종이에 맞게 */
+#photo-lightbox-date,
+.photo-lightbox-date {
+  background: #FFF9E6 !important;
+  color: rgba(61,47,31,0.5) !important;
+  padding: 8px 16px !important;
+  border-radius: 0 0 12px 12px !important;
+  margin-top: -1px !important;
+  border: 1px solid #E8DCC0 !important;
+  border-top: none !important;
+}
+
+/* 전체 라이트박스 콘텐츠도 크림 종이 느낌 */
+#photo-lightbox-content,
+.photo-lightbox-content {
+  background: transparent !important;
+}
+</style>
+<script id="v352-final-js">
+(function(){
+  console.log('V352: 고정핀 위치 내림 + 크림 종이 적용');
+  
+  function applyAll(){
+    // 고정핀
+    let s1 = document.getElementById('v352-pin-fix');
+    if(!s1){
+      s1 = document.createElement('style');
+      s1.id = 'v352-pin-fix';
+      document.head.appendChild(s1);
+    }
+    s1.textContent = `
+      .cal-cell.has-photo .cal-photo-corner,
+      .cal-photo-corner {
+        clip-path: none !important;
+        background: transparent !important;
+        border: none !important;
+        top: 4px !important;
+        left: 3px !important;
+        width: auto !important;
+        height: auto !important;
+      }
+      .cal-cell.has-photo .cal-photo-corner::after,
+      .cal-photo-corner::after {
+        content: '📌' !important;
+        font-size: 11px !important;
+        position: static !important;
+      }
+      #photo-lightbox-memo,
+      .photo-lightbox-memo {
+        background: #FFF9E6 !important;
+        border: 1px solid #E8DCC0 !important;
+        color: #3D2F1F !important;
+      }
+    `;
+  }
+  
+  applyAll();
+  
+  const origRender = window.renderCalendar;
+  if(origRender && !origRender._v352_final){
+    window.renderCalendar = function(){
+      const r = origRender.apply(this, arguments);
+      setTimeout(applyAll, 30);
+      setTimeout(applyAll, 200);
+      return r;
+    };
+    window.renderCalendar._v352_final = true;
+  }
+  
+  setInterval(applyAll, 2000);
+})();
+</script>
+
+
+<style id="v358-minimal-fix">
+/* V358: 메인화면 건드리지 않고 메모 스크롤 + 종료버튼 가림만 최소 수정 */
+
+/* 메모만 수정 - 크림 종이 + 줄간격 + 스크롤 */
+#photo-lightbox-memo {
+  background: #FFF9E6 !important;
+  border: 1px solid #E8DCC0 !important;
+  color: #3D2F1F !important;
+  line-height: 1.45 !important; /* 1.7 -> 1.45 */
+  font-size: 15px !important;
+  padding: 16px 18px !important;
+  max-height: 35vh !important; /* 45vh -> 35vh로 줄여서 종료버튼 공간 확보 */
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  margin-top: 12px !important;
+  width: 100% !important;
+  max-width: 520px !important;
+  box-sizing: border-box !important;
+}
+
+#photo-lightbox-memo.no-photo-mode {
+  background: #FFF9E6 !important;
+  border: 1px solid #E8DCC0 !important;
+  color: #3D2F1F !important;
+  max-height: 70vh !important;
+}
+
+/* 종료 버튼만 - 크림 매칭 */
+#photo-lightbox-fixed-close {
+  background: rgba(255,249,230,0.96) !important;
+  border-top: 1px solid #E8DCC0 !important;
+}
+
+#photo-lightbox-fixed-close button {
+  background: #3D2F1F !important;
+  color: #FFF9E6 !important;
+}
+
+/* 고정핀 위치 유지 */
+.cal-cell.has-photo .cal-photo-corner {
+  top: 4px !important;
+  left: 3px !important;
+  background: transparent !important;
+  clip-path: none !important;
+  border: none !important;
+}
+.cal-cell.has-photo .cal-photo-corner::after {
+  content: '📌' !important;
+  font-size: 11px !important;
+  position: static !important;
+}
+</style>
+<script id="v358-js">
+(function(){
+  console.log('V358: 최소 수정 - 메모 스크롤만');
+  
+  function minimalFix(){
+    const memo = document.getElementById('photo-lightbox-memo');
+    if(memo){
+      memo.style.lineHeight = '1.45';
+      if(memo.classList.contains('no-photo-mode')){
+        memo.style.maxHeight = '70vh';
+      } else {
+        memo.style.maxHeight = '35vh';
+      }
+      memo.style.overflowY = 'auto';
+    }
+  }
+  
+  minimalFix();
+  
+  const orig = window.openPhotoLightbox;
+  if(orig && !orig._v358){
+    window.openPhotoLightbox = function(){
+      const r = orig.apply(this, arguments);
+      setTimeout(minimalFix, 50);
+      setTimeout(minimalFix, 300);
+      return r;
+    };
+    window.openPhotoLightbox._v358 = true;
+  }
+})();
+</script>
+
+
+<style id="v359-bottom-visible">
+/* V359: 맨밑 줄 + 일자까지 다 보이게 - 하단 여백 확보 */
+
+/* 메모 - 하단 패딩 추가 + 스크롤 패딩 */
+#photo-lightbox-memo {
+  background: #FFF9E6 !important;
+  border: 1px solid #E8DCC0 !important;
+  color: #3D2F1F !important;
+  line-height: 1.45 !important;
+  font-size: 15px !important;
+  padding: 16px 18px 24px 18px !important; /* 하단 패딩 24px로 더 크게 */
+  max-height: 38vh !important; /* 35vh -> 38vh로 살짝 크게 */
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  margin-top: 12px !important;
+  width: 100% !important;
+  max-width: 520px !important;
+  box-sizing: border-box !important;
+  
+  /* 스크롤 끝 여백 */
+  scroll-padding-bottom: 20px !important;
+  /* 마지막 줄이 잘리지 않게 */
+  padding-bottom: 28px !important;
+}
+
+#photo-lightbox-memo.no-photo-mode {
+  background: #FFF9E6 !important;
+  border: 1px solid #E8DCC0 !important;
+  max-height: 70vh !important;
+  padding-bottom: 28px !important;
+}
+
+/* 날짜 - 메모 아래에 항상 보이게, 종료 버튼 위 공간 확보 */
+#photo-lightbox-date {
+  margin-top: 8px !important;
+  margin-bottom: 80px !important; /* 종료 버튼 60px + 여백 20px */
+  padding: 6px 0 !important;
+  color: rgba(255,255,255,0.65) !important;
+  font-size: 11px !important;
+  text-align: center !important;
+  width: 100% !important;
+  max-width: 520px !important;
+  box-sizing: border-box !important;
+  flex-shrink: 0 !important;
+}
+
+/* 콘텐츠 - 하단 여백으로 종료 버튼 공간 확보 */
+#photo-lightbox-content {
+  padding-bottom: 90px !important;
+  box-sizing: border-box !important;
+}
+
+/* 종료 버튼 - 더 작고 투명하게 */
+#photo-lightbox-fixed-close {
+  background: rgba(255,249,230,0.92) !important;
+  border-top: 1px solid #E8DCC0 !important;
+  padding: 8px 16px calc(8px + env(safe-area-inset-bottom)) !important;
+  height: auto !important;
+  min-height: 60px !important;
+}
+
+#photo-lightbox-fixed-close button {
+  background: #3D2F1F !important;
+  color: #FFF9E6 !important;
+  padding: 11px !important;
+  font-size: 13px !important;
+  border-radius: 10px !important;
+}
+
+/* 고정핀 유지 */
+.cal-cell.has-photo .cal-photo-corner {
+  top: 4px !important;
+  left: 3px !important;
+  background: transparent !important;
+  clip-path: none !important;
+  border: none !important;
+}
+/* V360_2: 폴더폰 등에서 이모지 핀(📌)이 기기별로 크게 렌더링되는 문제 - 고정 크기 SVG 핀으로 교체 */
+.cal-cell.has-photo .cal-photo-corner::after {
+  content: '' !important;
+  display: block !important;
+  width: 8px !important;
+  height: 10px !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='7' cy='6' r='4.2' fill='%23E63946'/%3E%3Crect x='6.3' y='9' width='1.4' height='5.5' rx='0.7' fill='%238B4513' transform='rotate(15 7 9)'/%3E%3C/svg%3E") !important;
+  background-size: contain !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+}
+</style>
+<script id="v359-js">
+(function(){
+  console.log('V359: 맨밑 줄 + 일자 보이게');
+  
+  function fixBottomVisible(){
+    const memo = document.getElementById('photo-lightbox-memo');
+    const dateEl = document.getElementById('photo-lightbox-date');
+    const content = document.getElementById('photo-lightbox-content');
+    
+    if(memo){
+      memo.style.lineHeight = '1.45';
+      memo.style.paddingBottom = '28px';
+      memo.style.scrollPaddingBottom = '20px';
+      
+      if(memo.classList.contains('no-photo-mode')){
+        memo.style.maxHeight = '70vh';
+      } else {
+        memo.style.maxHeight = '38vh';
+      }
+      
+      // 맨밑까지 스크롤 가능하도록 강제
+      memo.style.overflowY = 'auto';
+      
+      // 스크롤이 끝에 도달했는지 체크 - 마지막 줄 보이게
+      setTimeout(() => {
+        if(memo.scrollHeight > memo.clientHeight){
+          // 스크롤 가능한 경우, 하단에 빈 공간이 있는지 확인
+          const lastLineVisible = memo.scrollHeight - memo.scrollTop - memo.clientHeight;
+          console.log('V359: 메모 스크롤 필요, scrollHeight:', memo.scrollHeight, 'clientHeight:', memo.clientHeight, '남은:', lastLineVisible);
+        }
+      }, 100);
+    }
+    
+    if(dateEl){
+      dateEl.style.marginBottom = '80px';
+      dateEl.style.display = 'block';
+      dateEl.style.visibility = 'visible';
+    }
+    
+    if(content){
+      content.style.paddingBottom = '90px';
+    }
+  }
+  
+  fixBottomVisible();
+  
+  const orig = window.openPhotoLightbox;
+  if(orig && !orig._v359){
+    window.openPhotoLightbox = function(){
+      const r = orig.apply(this, arguments);
+      setTimeout(fixBottomVisible, 30);
+      setTimeout(fixBottomVisible, 200);
+      setTimeout(fixBottomVisible, 500);
+      setTimeout(fixBottomVisible, 1000);
+      return r;
+    };
+    window.openPhotoLightbox._v359 = true;
+  }
+  
+  // 메모 스크롤시 일자도 보이게
+  const memo = document.getElementById('photo-lightbox-memo');
+  if(memo && !memo._v359_scroll){
+    memo._v359_scroll = true;
+    memo.addEventListener('scroll', function(){
+      const dateEl = document.getElementById('photo-lightbox-date');
+      if(dateEl){
+        // 스크롤 끝에 도달하면 일자 강조
+        const atBottom = this.scrollHeight - this.scrollTop - this.clientHeight < 5;
+        if(atBottom){
+          dateEl.style.opacity = '1';
+        }
+      }
+    });
+  }
+})();
+</script>
+
+<style id="v360-lightbox-fix">
+/* V360: 종료버튼에 내용 가려지는 문제 + 날짜 빈칸 문제 근본 수정 */
+#photo-lightbox-date:empty { display: none !important; margin: 0 !important; padding: 0 !important; }
+</style>
+<script id="v360-js">
+(function(){
+  console.log('[V360] 라이트박스 하단 여백/날짜 표시 정리');
+
+  function fixLightboxLayout(){
+    const closeBar = document.getElementById('photo-lightbox-fixed-close');
+    const content = document.getElementById('photo-lightbox-content');
+    const memo = document.getElementById('photo-lightbox-memo');
+    const dateEl = document.getElementById('photo-lightbox-date');
+    if(!content) return;
+
+    // V366: V364가 모든 touchend를 막아서 스크롤까지 끊기던 버그 수정 - 더블탭(빠른 연속 터치)일 때만 확대 차단
+    [memo, dateEl].forEach(el=>{
+      if(el && !el._v364NoZoom){
+        el._v364NoZoom = true;
+        let lastTouchEnd = 0;
+        el.addEventListener('touchend', function(e){
+          const now = Date.now();
+          if(now - lastTouchEnd < 350){
+            e.preventDefault(); // 더블탭으로 확대되려는 순간만 막음
+          }
+          lastTouchEnd = now;
+        }, {passive:false});
+      }
+    });
+
+    // 종료 버튼의 실제 렌더링 높이를 직접 측정 (기기마다 다른 safe-area 대응)
+    const closeBarHeight = (closeBar && closeBar.offsetHeight > 0) ? closeBar.offsetHeight : 70;
+    const safePadding = closeBarHeight + 16; // 여유 16px만 추가
+
+    content.style.setProperty('padding-bottom', safePadding + 'px', 'important');
+
+    if(memo){
+      memo.style.setProperty('padding-bottom', '16px', 'important');
+      memo.style.setProperty('min-height', 'auto', 'important');
+    }
+
+    if(dateEl){
+      const hasText = dateEl.textContent && dateEl.textContent.trim().length > 0;
+      if(hasText){
+        dateEl.style.setProperty('display', 'block', 'important');
+        dateEl.style.setProperty('margin-top', '8px', 'important');
+        dateEl.style.setProperty('margin-bottom', '4px', 'important');
+      } else {
+        // 날짜가 없으면 자리 자체를 없앰 (요청하신 부분)
+        dateEl.style.setProperty('display', 'none', 'important');
+        dateEl.style.setProperty('margin', '0', 'important');
+        dateEl.style.setProperty('padding', '0', 'important');
+      }
+    }
+  }
+
+  fixLightboxLayout();
+  window.addEventListener('resize', fixLightboxLayout);
+  window.addEventListener('orientationchange', function(){ setTimeout(fixLightboxLayout, 200); });
+
+  const orig = window.openPhotoLightbox;
+  if(orig && !orig._v360){
+    window.openPhotoLightbox = function(){
+      const r = orig.apply(this, arguments);
+      setTimeout(fixLightboxLayout, 30);
+      setTimeout(fixLightboxLayout, 200);
+      setTimeout(fixLightboxLayout, 500);
+      return r;
+    };
+    window.openPhotoLightbox._v360 = true;
+  }
+})();
+</script>
+
+<style id="v363-text-no-zoom">
+/* V363: 라이트박스 안 메모/날짜 텍스트는 확대(핀치/더블탭) 안 되게, 세로 스크롤만 허용 */
+#photo-lightbox-memo, .photo-lightbox-memo,
+#photo-lightbox-memo *, .photo-lightbox-memo *,
+#photo-lightbox-date, .photo-lightbox-date {
+  touch-action: pan-y !important;
+}
+</style>
+<script id="v363-js">
+(function(){
+  // V365: attachPhotoDoubleTap는 로딩 순서 문제로 파일 맨 앞으로 이동함 (여기서는 재정의 안 함)
+  console.log('[V363] 앨범 한번터치 오확대 방지 + 라이트박스 텍스트 확대 방지 적용');
+})();
+</script>
+
+
+
+
+
+
+<style id="v361-single-scroll-fix-V2">
+/* V361-V2: 폰 스크롤 안되는 문제 근본 수정 */
+#photo-lightbox-overlay {
+  display: none !important;
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(0,0,0,0.88) !important;
+  z-index: 99999 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior-y: contain !important;
+  touch-action: pan-y !important; /* 기존 touch-action:none 덮어쓰기 */
+}
+#photo-lightbox-overlay.active {
+  display: block !important;
+  touch-action: pan-y !important;
+}
+#photo-lightbox-content {
+  display: block !important;
+  width: 100% !important;
+  max-width: 520px !important;
+  margin: 0 auto !important;
+  padding: 0 0 140px 0 !important;
+  max-height: none !important;
+  overflow: visible !important;
+  background: transparent !important;
+  gap: 0 !important;
+  touch-action: pan-y !important;
+}
+#photo-lightbox-content.no-photo {
+  background: #fff !important;
+}
+#photo-lightbox-img {
+  width: 100% !important;
+  max-width: 100% !important;
+  max-height: none !important;
+  height: auto !important;
+  display: block !important;
+  border-radius: 0 !important;
+  object-fit: contain !important;
+  touch-action: pan-y pinch-zoom !important;
+  pointer-events: auto !important;
+}
+#photo-lightbox-img[src=""], #photo-lightbox-img:not([src]) {
+  display: none !important;
+}
+
+/* 핵심: 메모 내부 스크롤 제거 + 터치 스크롤 허용 */
+#photo-lightbox-memo {
+  max-height: none !important;
+  height: auto !important;
+  overflow: visible !important;
+  overflow-y: visible !important;
+  -webkit-overflow-scrolling: auto !important;
+  overscroll-behavior: auto !important;
+  touch-action: pan-y !important;
+  padding: 16px 18px 24px 18px !important;
+  margin-bottom: 0 !important;
+  pointer-events: auto !important;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+#photo-lightbox-memo.no-photo-mode {
+  max-height: none !important;
+}
+
+/* 일자 박스 완전 삭제 */
+#photo-lightbox-date {
+  display: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  visibility: hidden !important;
+}
+
+/* 종료 버튼 */
+#photo-lightbox-fixed-close {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  max-width: 520px !important;
+  margin: 0 auto !important;
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom)) !important;
+  background: rgba(255,249,230,0.96) !important;
+  border-top: 1px solid #E8DCC0 !important;
+  backdrop-filter: blur(8px) !important;
+  z-index: 100000 !important;
+  box-sizing: border-box !important;
+  touch-action: manipulation !important;
+}
+
+/* V363에서 memo에 pan-y만 강제했던거 해제 - overlay 스크롤을 위해 */
+#photo-lightbox-memo *, .photo-lightbox-memo * {
+  touch-action: pan-y !important;
+}
+
+/* 기존에 overlay에 touch-action:none 걸었던 코드 무력화 */
+#photo-lightbox-overlay[style] {
+  touch-action: pan-y !important;
+}
+</style>
+<script id="v361-js-V2">
+(function(){
+  console.log('[V361-V2] 폰 스크롤 블로킹 해제');
+
+  function fixV361(){
+    var overlay = document.getElementById('photo-lightbox-overlay');
+    var content = document.getElementById('photo-lightbox-content');
+    var memo = document.getElementById('photo-lightbox-memo');
+    var dateEl = document.getElementById('photo-lightbox-date');
+    var closeBar = document.getElementById('photo-lightbox-fixed-close');
+    if(!overlay || !content) return;
+
+    if(dateEl){
+      dateEl.style.setProperty('display','none','important');
+      dateEl.textContent = '';
+    }
+
+    var closeH = closeBar ? closeBar.offsetHeight : 68;
+    if(closeH < 10) closeH = 68;
+    content.style.setProperty('padding-bottom', (closeH + 40) + 'px', 'important');
+
+    if(memo){
+      memo.style.setProperty('max-height','none','important');
+      memo.style.setProperty('overflow','visible','important');
+      memo.style.setProperty('height','auto','important');
+      memo.style.setProperty('touch-action','pan-y','important');
+    }
+    if(overlay){
+      overlay.style.setProperty('touch-action','pan-y','important');
+      overlay.style.setProperty('overflow-y','auto','important');
+    }
+  }
+
+  // 기존 핀치줌/스크롤 가로채는 이벤트 리스너들 무력화 - 캡처 단계에서 pan-y 허용
+  function killScrollBlockers(){
+    var overlay = document.getElementById('photo-lightbox-overlay');
+    if(!overlay) return;
+    
+    // overlay 자체의 터치 이벤트에서 preventDefault 하는 로직이 있으면 막음
+    overlay.addEventListener('touchmove', function(e){
+      // 한 손가락 스크롤은 허용 (두 손가락은 핀치줌)
+      if(e.touches.length === 1){
+        e.stopPropagation();
+        // preventDefault 하지 않음 -> 스크롤 허용
+      }
+    }, {passive:true, capture:true});
+  }
+
+  function wrapOpen(){
+    var orig = window.openPhotoLightbox;
+    if(!orig || orig._v361v2) return;
+    window.openPhotoLightbox = function(){
+      var r = orig.apply(this, arguments);
+      setTimeout(fixV361, 30);
+      setTimeout(fixV361, 150);
+      setTimeout(fixV361, 400);
+      setTimeout(killScrollBlockers, 50);
+      // 바디 스크롤 잠금 하지 않음 - 폰에서 overlay 스크롤이 body 잠금 때문에 멈추는 경우 있음
+      document.body.style.overflow = '';
+      return r;
+    };
+    window.openPhotoLightbox._v361v2 = true;
+  }
+
+  wrapOpen();
+  document.addEventListener('DOMContentLoaded', function(){
+    wrapOpen();
+    fixV361();
+    killScrollBlockers();
+  });
+
+  window.addEventListener('resize', fixV361);
+  window.addEventListener('orientationchange', function(){ setTimeout(fixV361, 250); });
+
+  var origClose = window.closePhotoLightbox;
+  if(origClose && !origClose._v361v2){
+    window.closePhotoLightbox = function(){
+      var r = origClose.apply(this, arguments);
+      document.body.style.overflow = '';
+      return r;
+    };
+    window.closePhotoLightbox._v361v2 = true;
+  }
+
+  setInterval(function(){
+    var overlay = document.getElementById('photo-lightbox-overlay');
+    if(overlay && overlay.classList.contains('active')){
+      fixV361();
+    }
+  }, 1000);
+
+  fixV361();
+  killScrollBlockers();
+})();
+</script>
+
+
+
+
+
+
+<style id="v363-remove-editdel">
+/* V363: 사진 확대시 수정/삭제 버튼 완전 제거 - 원래대로 */
+#photo-lightbox-actions {
+  display: none !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  visibility: hidden !important;
+}
+</style>
+<script id="v363-js-remove">
+(function(){
+  console.log('[V363] 확대 화면 수정/삭제 버튼 제거 - 원래대로 복구');
+
+  function hideActions(){
+    var actions = document.getElementById('photo-lightbox-actions');
+    if(actions){
+      actions.style.setProperty('display','none','important');
+      actions.style.setProperty('visibility','hidden','important');
+    }
+  }
+
+  // open 래핑 - 버튼 표시 로직 무력화
+  function wrap(){
+    var orig = window.openPhotoLightbox;
+    if(!orig || orig._v363) return;
+    window.openPhotoLightbox = function(){
+      var r = orig.apply(this, arguments);
+      setTimeout(hideActions, 10);
+      setTimeout(hideActions, 100);
+      setTimeout(hideActions, 300);
+      return r;
+    };
+    window.openPhotoLightbox._v363 = true;
+  }
+
+  wrap();
+  document.addEventListener('DOMContentLoaded', function(){ wrap(); hideActions(); });
+
+  // 기존 V362에서 사진 밑으로 이동시키는 로직이 있으면 다시 원위치 + 숨김
+  setInterval(function(){
+    var ov = document.getElementById('photo-lightbox-overlay');
+    if(ov && ov.classList.contains('active')){
+      hideActions();
+    }
+  }, 800);
+
+  hideActions();
+})();
+</script>
+
+
+<style id="v364-title-only-fix">
+/* V364: 제목만 있는 경우도 클릭 영역 확보 */
+.sub-memo-item .photo-title-area {
+  cursor: pointer !important;
+  min-height: 20px !important;
+}
+.sub-memo-item.no-photo .diary-text:empty {
+  display: block !important;
+  min-height: 1px !important;
+}
+</style>
+<script id="v364-js-title-only">
+(function(){
+  console.log('[V364] 제목만 입력시 더블클릭 안되는 버그 수정');
+
+  // 공통으로 표시할 텍스트 가져오기 - 제목만 있어도 열리게
+  function getDisplayContent(item){
+    if(!item) return '';
+    return item.text || item.anniversary || '';
+  }
+
+  // 기존 openPhotoLightboxSafe 오버라이드 - 제목만 있어도 메모 보이게
+  function patchLightbox(){
+    // openPhotoLightboxSafe가 있으면 패치
+    if(typeof window.openPhotoLightboxSafe === 'function' && !window.openPhotoLightboxSafe._v364){
+      var origSafe = window.openPhotoLightboxSafe;
+      window.openPhotoLightboxSafe = function(src, item, dateStr, totalCount){
+        // item이 문자열로 올 경우 처리
+        if(typeof item === 'string'){
+          var all = (typeof getAllDiaries==='function')?getAllDiaries():[];
+          var found = all.find(d=>d.text===item || d.anniversary===item);
+          if(found) item = found;
+          else item = {text: item, anniversary: '', date: dateStr||''};
+        }
+        // 메모 내용 결정 - text 없으면 anniversary(제목) 사용
+        if(item){
+          var displayText = getDisplayContent(item);
+          // 원본 호출 전에 item.text를 임시로 채워서 display:block 되게
+          var originalText = item.text;
+          if(!item.text && item.anniversary){
+            item.text = item.anniversary; // 임시로 채움 - 화면 표시용
+          }
+          var result = origSafe.call(this, src, item, dateStr, totalCount);
+          // 원복
+          if(!originalText && item.anniversary){
+            // 표시용으로는 제목 유지, 실제 저장은 그대로
+            var memoEl = document.getElementById('photo-lightbox-memo');
+            if(memoEl && displayText){
+              memoEl.textContent = '📌 ' + displayText; // V360_1: 핀 아이콘 유지
+              memoEl.style.setProperty('display','block','important');
+            }
+            item.text = originalText; // 빈 문자열로 원복
+          }
+          // 메모가 비어있어도 제목만 있으면 강제로 보이게
+          var memoEl2 = document.getElementById('photo-lightbox-memo');
+          if(memoEl2){
+            if(displayText && !item.text && item.anniversary){
+              memoEl2.textContent = '📌 ' + displayText; // V360_1: 핀 아이콘 유지 (제목만 있는 경우)
+              memoEl2.style.setProperty('display','block','important');
+            } else if(displayText){
+              memoEl2.textContent = displayText;
+              memoEl2.style.setProperty('display','block','important');
+            }
+          }
+          return result;
+        } else {
+          return origSafe.call(this, src, item, dateStr, totalCount);
+        }
+      };
+      window.openPhotoLightboxSafe._v364 = true;
+    }
+
+    // openPhotoLightbox도 패치
+    if(window.openPhotoLightbox && !window.openPhotoLightbox._v364_title){
+      var origOpen = window.openPhotoLightbox;
+      window.openPhotoLightbox = function(src, item){
+        // V360_1: 원본 openPhotoLightbox가 이미 제목만 있는 경우도 📌 핀 아이콘까지 정확히 처리하므로
+        // 여기서 memoEl.textContent를 다시 덮어쓰던 코드(핀 아이콘이 사라지는 원인)를 제거함
+        return origOpen.call(this, src, item);
+      };
+      window.openPhotoLightbox._v364_title = true;
+    }
+
+    // openMemoLightboxOnly 패치
+    if(window.openMemoLightboxOnly && !window.openMemoLightboxOnly._v364){
+      var origMemo = window.openMemoLightboxOnly;
+      window.openMemoLightboxOnly = function(text, diaryItem){
+        var item = diaryItem || null;
+        var txt = text || '';
+        if(item && typeof item === 'object'){
+          var display = getDisplayContent(item);
+          if(display) txt = display;
+        }
+        // text가 비어있어도 item이 있으면 열기
+        if(!txt && item){
+          txt = getDisplayContent(item);
+        }
+        if(txt || item){
+          return origMemo.call(this, txt, item);
+        }
+      };
+      window.openMemoLightboxOnly._v364 = true;
+    }
+  }
+
+  // 제목만 있는 항목에 더블클릭/클릭 핸들러 강제 부착
+  function attachTitleOnlyHandlers(){
+    document.querySelectorAll('.sub-memo-item').forEach(function(itemEl){
+      // 이미 처리된 경우 스킵하지 않고 제목-only는 재처리
+      var m = itemEl.innerHTML.match(/deleteDiary\('([^']+)'\)/);
+      if(!m) return;
+      var diaryId = m[1];
+      var all = (typeof getAllDiaries==='function')?getAllDiaries():[];
+      var diaryItem = all.find(function(d){ return d.id===diaryId; });
+      if(!diaryItem) return;
+
+      var displayText = getDisplayContent(diaryItem);
+      if(!displayText) return; // 진짜 빈 항목은 제외
+
+      // 제목만 있는 경우 - .diary-text가 없어도 전체 아이템 클릭으로 열기
+      if(!diaryItem.text && diaryItem.anniversary){
+        if(itemEl.dataset.titleOnlyAttached) return;
+        itemEl.dataset.titleOnlyAttached = '1';
+        itemEl.style.cursor = 'pointer';
+
+        var handler = function(e){
+          if(e.target && e.target.closest && e.target.closest('.memo-action-btns, .edit-btn-hidden, .delete-btn, button')) return;
+          e.preventDefault();
+          e.stopPropagation();
+          console.log('[V364] 제목만 항목 클릭:', diaryItem.anniversary);
+          if(typeof window.openMemoLightboxOnly === 'function'){
+            window.openMemoLightboxOnly(displayText, diaryItem);
+          } else if(typeof window.openPhotoLightbox === 'function'){
+            window.openPhotoLightbox(diaryItem.photo || null, diaryItem);
+          }
+        };
+
+        // 클릭 + 더블클릭 둘 다
+        itemEl.addEventListener('click', handler);
+        itemEl.addEventListener('dblclick', handler);
+
+        // 제목 영역에도 별도로
+        var titleArea = itemEl.querySelector('.photo-title-area');
+        if(titleArea && !titleArea.dataset.titleOnlyAttached){
+          titleArea.dataset.titleOnlyAttached = '1';
+          titleArea.style.cursor = 'pointer';
+          titleArea.addEventListener('click', handler);
+          titleArea.addEventListener('dblclick', handler);
+          if(typeof window.attachPhotoDoubleTap === 'function'){
+            try{ window.attachPhotoDoubleTap(titleArea, handler); }catch(e){}
+          }
+        }
+
+        // 빈 공간(사진 자리)에도
+        var emptyEl = itemEl.querySelector('.diary-photo-wrap, .empty-photo-placeholder, .diary-photo');
+        if(emptyEl && !emptyEl.dataset.titleOnlyAttached){
+          emptyEl.dataset.titleOnlyAttached = '1';
+          emptyEl.style.cursor = 'pointer';
+          emptyEl.addEventListener('click', handler);
+          emptyEl.addEventListener('dblclick', handler);
+        }
+      }
+    });
+  }
+
+  patchLightbox();
+
+  // 기존 attachNoPhotoHandlers의 if(text) 버그도 패치 - MutationObserver로 계속 감시
+  var observer = new MutationObserver(function(){
+    patchLightbox();
+    attachTitleOnlyHandlers();
+  });
+  observer.observe(document.body, {childList:true, subtree:true});
+
+  document.addEventListener('DOMContentLoaded', function(){
+    patchLightbox();
+    setTimeout(attachTitleOnlyHandlers, 300);
+    setTimeout(attachTitleOnlyHandlers, 1000);
+  });
+
+  setTimeout(function(){
+    patchLightbox();
+    attachTitleOnlyHandlers();
+  }, 500);
+
+  setInterval(function(){
+    attachTitleOnlyHandlers();
+  }, 1500);
+
+  console.log('[V364] 제목만 입력시 더블클릭 수정 적용 완료');
+})();
+</script>
+
+<script id="v360_1-whole-box-open">
+/* V360_1: 사진 없는 항목(제목만/메모만) - 박스 전체 어디를 눌러도 더블탭으로 열리게 통합 */
+(function(){
+  function getItemDisplayText(diaryItem){
+    if(!diaryItem) return '';
+    return diaryItem.text || diaryItem.anniversary || '';
+  }
+  function findDiaryItemFromEl(itemEl){
+    var m = itemEl.innerHTML.match(/deleteDiary\('([^']+)'\)/);
+    if(!m) return null;
+    var all = (typeof getAllDiaries === 'function') ? getAllDiaries() : [];
+    return all.find(function(d){ return d.id === m[1]; }) || null;
+  }
+  function attachWholeBoxOpen(){
+    document.querySelectorAll('.sub-memo-item.no-photo').forEach(function(itemEl){
+      if(itemEl._v360_1WholeBox) return;
+      itemEl._v360_1WholeBox = true;
+      itemEl.style.cursor = 'pointer';
+      var handler = function(e){
+        // 수정/삭제 버튼, 그리고 기존 "클릭하면 수정폼 열림" 기능이 있는 .diary-text는 제외
+        if(e.target && e.target.closest && e.target.closest('.memo-action-btns, .edit-btn-hidden, .delete-btn, button, .diary-text')) return;
+        var diaryItem = findDiaryItemFromEl(itemEl);
+        var text = getItemDisplayText(diaryItem) || itemEl.getAttribute('data-text-preview') || '';
+        if(!text && !diaryItem) return;
+        if(typeof window.openMemoLightboxOnly === 'function'){
+          window.openMemoLightboxOnly(text, diaryItem || {text: text, date: new Date().toISOString().slice(0,10)});
+        }
+      };
+      // V360_3: 버튼(수정/삭제) 위 터치는 아예 건드리지 않도록 직접 구현 - 공용 attachPhotoDoubleTap은
+      // 모든 touchend에 preventDefault를 걸어서 버튼 클릭까지 막아버리는 문제가 있었음
+      var lastTap = 0;
+      itemEl.addEventListener('touchend', function(e){
+        if(e.target && e.target.closest && e.target.closest('.memo-action-btns, .edit-btn-hidden, .delete-btn, button, .diary-text')) return;
+        e.preventDefault();
+        var now = Date.now();
+        if(now - lastTap < 350){
+          lastTap = 0;
+          handler(e);
+        } else {
+          lastTap = now;
+        }
+      }, {passive:false});
+      itemEl.addEventListener('dblclick', handler);
+    });
+  }
+  attachWholeBoxOpen();
+  new MutationObserver(attachWholeBoxOpen).observe(document.body, {childList:true, subtree:true});
+  setTimeout(attachWholeBoxOpen, 500);
+  setTimeout(attachWholeBoxOpen, 1500);
+  console.log('[V360_1] 사진없는 항목 박스 전체 더블탭으로 열리게 통합');
+})();
+</script>
+
+<script id="v18-js">(function(){function g(b){var m=b.innerHTML.match(/deleteDiary\('([^']+)'\)/);if(!m)return null;var a=(typeof getAllDiaries==='function')?getAllDiaries():[];return a.find(function(d){return d.id===m[1];})||null;}function at(){document.querySelectorAll('.sub-memo-item').forEach(function(b){if(b._v18)return;b._v18=true;var o=function(e){if(e&&e.target&&e.target.closest&&e.target.closest('.memo-action-btns,.edit-btn-hidden,.delete-btn,button'))return;if(e){e.preventDefault();e.stopPropagation();}if(window._o)return;window._o=true;setTimeout(function(){window._o=false;},800);var it=g(b);if(!it)return;window.openPhotoLightbox(it.photo||null,it);};var t=b.querySelector('.diary-text');if(t){t.style.cursor='pointer';var lt=0;t.addEventListener('touchend',function(e){var n=Date.now();if(n-lt<350){lt=0;o(e);}else lt=n;},{passive:false});t.addEventListener('dblclick',o);}var p=b.querySelector('.diary-photo-wrap');if(p){p.style.cursor='zoom-in';var lp=0;p.addEventListener('touchend',function(e){var n=Date.now();if(n-lp<350){lp=0;o(e);}else lp=n;},{passive:false});p.addEventListener('dblclick',o);}});}at();setTimeout(at,800);setTimeout(at,2000);try{new MutationObserver(at).observe(document.body,{childList:true,subtree:true});}catch(e){}})();</script>
 </body>
 </html>
