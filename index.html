@@ -3038,16 +3038,14 @@ body { touch-action:pan-x pan-y; -webkit-text-size-adjust:100%; padding-bottom:v
 #back-toast { position:fixed; bottom:calc(30px + var(--safe-bottom)); left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.85); color:#fff; padding:12px 20px; border-radius:24px; z-index:999999; font-size:13px; display:none; }
 </style>
 
-
-
-
-<style id="v18-main-fix">
+<style id="V3_19_FINAL">
+/* 기본 */
 #photo-lightbox-date{display:none !important;}
 #photo-lightbox-actions{display:none !important;}
 #diary-around-today-list:not(.gallery-mode){display:flex !important;flex-direction:column !important;gap:10px !important;}
 #diary-around-today-list:not(.gallery-mode) .sub-memo-item .diary-text{font-size:11px !important;color:#666 !important;line-height:1.4 !important;}
 #diary-around-today-list.gallery-mode{display:grid !important;grid-template-columns:repeat(3,1fr) !important;gap:8px !important;align-items:stretch !important;}
-#diary-around-today-list.gallery-mode .sub-memo-item{display:flex !important;flex-direction:column !important;min-height:210px !important;background:#fff !important;border:1px solid #eee !important;border-radius:14px !important;overflow:hidden !important;justify-content:flex-start !important;}
+#diary-around-today-list.gallery-mode .sub-memo-item{display:flex !important;flex-direction:column !important;min-height:210px !important;background:#fff !important;border:1px solid #eee !important;border-radius:14px !important;overflow:hidden !important;}
 #diary-around-today-list.gallery-mode .sub-memo-item .diary-photo-wrap{flex:0 0 110px !important;height:110px !important;min-height:110px !important;width:100% !important;aspect-ratio:1/1 !important;overflow:hidden !important;border-radius:10px !important;margin:2px 0 0 0 !important;order:1 !important;}
 #diary-around-today-list.gallery-mode .sub-memo-item .diary-photo{width:100% !important;height:100% !important;aspect-ratio:1/1 !important;object-fit:cover !important;border-radius:10px !important;min-height:110px !important;}
 #diary-around-today-list.gallery-mode .sub-memo-item .diary-photo-wrap.empty-photo-wrap{flex:0 0 110px !important;height:110px !important;background:#f8f5f0 !important;display:flex !important;align-items:center !important;justify-content:center !important;}
@@ -3059,33 +3057,33 @@ body { touch-action:pan-x pan-y; -webkit-text-size-adjust:100%; padding-bottom:v
 #diary-around-today-list.gallery-mode .sub-memo-item .photo-title-area{border-radius:10px 10px 0 0 !important;margin:0 0 6px 0 !important;}
 .empty-photo-wrap .diary-photo.empty-icon{font-size:22px !important;}
 
-/* 달력 폰트 13px 통일 + 그리드 정상화 */
+/* 달력 그리드 정상화 */
 #cal-days-grid{position:relative !important;}
 .cal-cell{position:absolute !important;}
-.cal-cell, .calendar-cell, .calendar-day, .cal-day, .cal-cell-inner, .cal-day-number, .calendar-day-number{
-  font-family:'Malgun Gothic', sans-serif !important;
-  font-weight:400 !important;
-  font-size:13px !important;
-}
-.cal-special-label, .cal-anniv-label, .calendar-memo, .cal-memo, .cal-label{font-family:'Malgun Gothic', sans-serif !important;font-size:9px !important;font-weight:400 !important;}
-.cal-weekday{font-family:'Malgun Gothic', sans-serif !important;font-size:10px !important;}
+/* 달력 일자 13px */
+.cal-cell, .cal-cell-inner span{font-family:'Malgun Gothic', sans-serif !important;font-weight:400 !important;font-size:13px !important;}
+.cal-special-label, .cal-anniv-label{font-family:'Malgun Gothic', sans-serif !important;font-size:9px !important;font-weight:400 !important;}
 
-/* 달력 고정핀 - 아래 제목란과 같은 크기 */
-.cal-photo-corner.has-pin-icon{
-  position:absolute !important;
+/* 달력 고정핀 - 보라 세모 제거하고 아래 고정핀과 같은 크기 */
+.cal-cell.has-photo .cal-photo-corner,
+.cal-photo-corner{
+  left:auto !important;
   top:2px !important;
   right:3px !important;
   width:auto !important;
   height:auto !important;
   background:transparent !important;
+  background-color:transparent !important;
+  clip-path:none !important;
   border:none !important;
+  border-radius:0 !important;
   display:flex !important;
   align-items:center !important;
   gap:1px !important;
-  z-index:2 !important;
+  z-index:5 !important;
 }
 .cal-photo-corner.has-pin-icon .pin-emoji{font-size:9px !important;transform:scale(0.7) !important;display:inline-block !important;line-height:1 !important;}
-.cal-photo-corner.has-pin-icon .corner-count{font-size:8px !important;color:#e06d6d !important;font-weight:bold !important;}
+.cal-photo-corner .corner-count{font-size:8px !important;color:#e06d6d !important;font-weight:bold !important;}
 </style>
 
 </head>
@@ -17273,7 +17271,7 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 </script>
 
 
-<script id="v18-final-js">
+<script id="V3_19_JS">
 (function(){
   function styleTitles(){
     document.querySelectorAll('.sub-memo-item .photo-title-area').forEach(function(el){
@@ -17286,11 +17284,30 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
       }
     });
   }
+  function forcePin(){
+    document.querySelectorAll('.cal-cell.has-photo').forEach(function(cell){
+      var corner = cell.querySelector('.cal-photo-corner');
+      if(!corner) return;
+      if(corner.querySelector('.pin-emoji')) return;
+      var countEl = corner.querySelector('.corner-count');
+      var count = countEl ? countEl.textContent.trim() : '';
+      corner.classList.add('has-pin-icon');
+      corner.innerHTML = '<span class="pin-emoji">📌</span><span class="corner-count">'+count+'</span>';
+    });
+  }
   setTimeout(styleTitles,200);
   setTimeout(styleTitles,800);
-  try{new MutationObserver(styleTitles).observe(document.body,{childList:true,subtree:true});}catch(e){}
+  setTimeout(forcePin,300);
+  setTimeout(forcePin,800);
+  setTimeout(forcePin,1500);
+  try{
+    var obs = new MutationObserver(function(){ styleTitles(); forcePin(); });
+    obs.observe(document.body,{childList:true,subtree:true});
+  }catch(e){}
+  document.addEventListener('DOMContentLoaded', function(){ styleTitles(); forcePin(); });
+  // diary item double tap
   function g(b){var m=b.innerHTML.match(/deleteDiary\('([^']+)'\)/);if(!m)return null;var a=(typeof getAllDiaries==='function')?getAllDiaries():[];return a.find(function(d){return d.id===m[1];})||null;}
-  function at(){document.querySelectorAll('.sub-memo-item').forEach(function(b){if(b._v18)return;b._v18=true;var o=function(e){if(e&&e.target&&e.target.closest&&e.target.closest('.memo-action-btns,.edit-btn-hidden,.delete-btn,button'))return;if(e){e.preventDefault();e.stopPropagation();}if(window._o)return;window._o=true;setTimeout(function(){window._o=false;},800);var it=g(b);if(!it)return;window.openPhotoLightbox(it.photo||null,it);};var tt=b.querySelector('.diary-text');if(tt){tt.style.cursor='pointer';var lt=0;tt.addEventListener('touchend',function(e){var n=Date.now();if(n-lt<350){lt=0;o(e);}else lt=n;},{passive:false});tt.addEventListener('dblclick',o);}var p=b.querySelector('.diary-photo-wrap');if(p){p.style.cursor='zoom-in';var lp=0;p.addEventListener('touchend',function(e){var n=Date.now();if(n-lp<350){lp=0;o(e);}else lp=n;},{passive:false});p.addEventListener('dblclick',o);}});}at();setTimeout(at,800);setTimeout(at,2000);try{new MutationObserver(at).observe(document.body,{childList:true,subtree:true});}catch(e){}
+  function at(){document.querySelectorAll('.sub-memo-item').forEach(function(b){if(b._v18)return;b._v18=true;var o=function(e){if(e&&e.target&&e.target.closest&&e.target.closest('.memo-action-btns,.edit-btn-hidden,.delete-btn,button'))return;if(e){e.preventDefault();e.stopPropagation();}if(window._o)return;window._o=true;setTimeout(function(){window._o=false;},800);var it=g(b);if(!it)return;window.openPhotoLightbox(it.photo||null,it);};var tt=b.querySelector('.diary-text');if(tt){tt.style.cursor='pointer';var lt=0;tt.addEventListener('touchend',function(e){var n=Date.now();if(n-lt<350){lt=0;o(e);}else lt=n;},{passive:false});tt.addEventListener('dblclick',o);}var p=b.querySelector('.diary-photo-wrap');if(p){p.style.cursor='zoom-in';var lp=0;p.addEventListener('touchend',function(e){var n=Date.now();if(n-lp<350){lp=0;o(e);}else lp=n;},{passive:false});p.addEventListener('dblclick',o);}});}at();setTimeout(at,800);setTimeout(at,2000);
 })();
 </script>
 
