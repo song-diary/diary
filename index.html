@@ -17163,13 +17163,26 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 </script>
 
 
-<style id="V3_28_STYLE">
-.photo-title-area .pin-emoji{font-size:9px !important;}
-.photo-title-area .star-emoji{font-size:8px !important;}
-.photo-title-area .title-text{font-size:12px !important; font-weight:800 !important;}
-.photo-title-area{cursor:pointer !important; user-select:none !important; position:relative; z-index:2;}
+<style id="V3_29_STYLE">
+.photo-title-area{
+  display:flex !important;
+  align-items:center !important;
+  gap:4px !important;
+  cursor:pointer !important;
+  user-select:none !important;
+  position:relative; z-index:5;
+  height:24px !important;
+  min-height:24px !important;
+  background:#fff0f0 !important;
+  border:1px solid #f3d5d5 !important;
+  border-radius:12px 12px 0 0 !important;
+  padding-left:8px !important;
+}
+.photo-title-area .pin-emoji{font-size:9px !important; line-height:1 !important; display:inline-block !important;}
+.photo-title-area .star-emoji{font-size:8px !important; line-height:1 !important; display:inline-block !important;}
+.photo-title-area .title-text{font-size:12px !important; font-weight:800 !important; color:#5D4E6D !important; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;}
 </style>
-<script id="V3_28_SELECT">
+<script id="V3_29_SELECT">
 (function(){
   const PIN='📌';
   const STAR='⭐';
@@ -17182,12 +17195,13 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
     if(!el) return null;
     var h=el.innerHTML||'';
     var m=h.match(/deleteDiary\(\s*['"]([^'"]+)['"]\s*\)/);
-    return m?m[1]:null;
+    if(m) return m[1];
+    var m2=h.match(/'([a-z0-9\-]{10,})'\s*\)\s*\">수정/);
+    return m2?m2[1]:null;
   }
 
-  // 원본 함수 백업 후 패치
   function patchAnniv(){
-    if(window._v28Patched) return;
+    if(window._v29Patched) return;
     if(typeof window.getAnniversaryForDate!=='function') return;
     var orig=window.getAnniversaryForDate;
     window.getAnniversaryForDate=function(dateStr){
@@ -17196,34 +17210,63 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
       if(selId){
         var all=getAll();
         var d=all.find(function(x){return x.id===selId;});
-        if(d){
-          // 선택된 항목이 빈 제목이면 빈문자열 반환 -> 달력에서 기념일 제거
-          return d.anniversary||'';
-        }
+        if(d) return d.anniversary||'';
       }
-      // 선택 없으면 원래대로 첫번째 기념일
       return orig.call(this,dateStr);
     };
-    window._v28Patched=true;
+    window._v29Patched=true;
   }
 
-  function applySelection(dateStr, diaryId){
+  function ensureTitleStructure(){
+    document.querySelectorAll('.sub-memo-item').forEach(function(itemEl){
+      var titleArea=itemEl.querySelector('.photo-title-area');
+      if(!titleArea) return;
+      if(titleArea.dataset.v29Done) return;
+      // 기존 텍스트 추출
+      var rawText = titleArea.textContent.trim();
+      if(rawText==='\xa0' || rawText==='') rawText='';
+      // 이미 pin/star 있는지 확인
+      var hasIcon = titleArea.querySelector('.pin-emoji, .star-emoji');
+      if(hasIcon) { titleArea.dataset.v29Done='1'; return; }
+      // 재구성
+      titleArea.innerHTML='<span class="pin-emoji">'+PIN+'</span><span class="title-text">'+(rawText||'&nbsp;')+'</span>';
+      titleArea.dataset.v29Done='1';
+    });
+  }
+
+  function refreshIcons(){
+    ensureTitleStructure();
     var map=getMap();
-    map[dateStr]=diaryId;
-    setMap(map);
-    // 아이콘 갱신
     var all=getAll();
     document.querySelectorAll('.sub-memo-item').forEach(function(itemEl){
       var did=findId(itemEl);
       if(!did) return;
       var dd=all.find(function(x){return x.id===did;});
-      if(!dd || dd.date!==dateStr) return;
-      var icon=itemEl.querySelector('.photo-title-area .pin-emoji, .photo-title-area .star-emoji');
+      if(!dd) return;
+      var titleArea=itemEl.querySelector('.photo-title-area');
+      if(!titleArea) return;
+      var icon=titleArea.querySelector('.pin-emoji, .star-emoji');
       if(!icon) return;
-      if(did===diaryId){ icon.textContent=STAR; icon.className='pin-emoji star-emoji'; }
-      else { icon.textContent=PIN; icon.className='pin-emoji'; }
+      var titleTextSpan=titleArea.querySelector('.title-text');
+      if(titleTextSpan){
+        titleTextSpan.textContent=dd.anniversary||'';
+        if(!dd.anniversary) titleTextSpan.innerHTML='&nbsp;';
+      }
+      if(map[dd.date]===did){
+        icon.textContent=STAR;
+        icon.className='pin-emoji star-emoji';
+      }else{
+        icon.textContent=PIN;
+        icon.className='pin-emoji';
+      }
     });
-    // 달력 재렌더 - 기념일 변경
+  }
+
+  function selectDiary(dateStr, diaryId){
+    var map=getMap();
+    map[dateStr]=diaryId;
+    setMap(map);
+    refreshIcons();
     try{ if(typeof renderCalendar==='function') renderCalendar(); }catch(e){}
   }
 
@@ -17234,16 +17277,14 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
     if(!itemEl) return;
     var did=findId(itemEl);
     if(!did) return;
-    // 다른 핸들러 차단
     e.preventDefault();
     e.stopPropagation();
     if(e.stopImmediatePropagation) e.stopImmediatePropagation();
-
     var all=getAll();
     var diary=all.find(function(x){return x.id===did;});
     if(!diary) return;
-    applySelection(diary.date, did);
-    console.log('[V3_28] 제목 클릭 -> 달력 기념일 변경', diary.date, diary.anniversary||'(빈공간)');
+    selectDiary(diary.date, did);
+    console.log('[V3_29] 클릭 선택 -> 달력 변경', diary.date, diary.anniversary||'(빈공간)');
   }
 
   document.addEventListener('click', onTitleClick, true);
@@ -17252,50 +17293,33 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
     patchAnniv();
     var map=getMap();
     var all=getAll();
-    // 자동 선택: 날짜별 첫번째 항목
-    var changed=false;
     var byDate={};
-    all.forEach(function(d){ if(!byDate[d.date]) byDate[d.date]=[]; byDate[d.date].push(d); });
+    all.forEach(function(d){ if(!d.date) return; if(!byDate[d.date]) byDate[d.date]=[]; byDate[d.date].push(d); });
+    var changed=false;
     Object.keys(byDate).forEach(function(ds){
       if(!map[ds]){ map[ds]=byDate[ds][0].id; changed=true; }
     });
     if(changed) setMap(map);
-    // 아이콘 초기 표시
-    document.querySelectorAll('.sub-memo-item').forEach(function(itemEl){
-      var did=findId(itemEl);
-      if(!did) return;
-      var dd=all.find(function(x){return x.id===did;});
-      if(!dd) return;
-      var icon=itemEl.querySelector('.photo-title-area .pin-emoji, .photo-title-area .star-emoji');
-      if(!icon) return;
-      if(map[dd.date]===did){ icon.textContent=STAR; icon.className='pin-emoji star-emoji'; }
-      else { icon.textContent=PIN; icon.className='pin-emoji'; }
-    });
+    ensureTitleStructure();
+    refreshIcons();
     try{ if(typeof renderCalendar==='function') renderCalendar(); }catch(e){}
   }
 
-  setTimeout(init, 600);
-  setTimeout(init, 1600);
+  setTimeout(init, 500);
+  setTimeout(init, 1500);
+  setTimeout(init, 2500);
 
-  // 리스트 갱신시만 아이콘 갱신 (전체 body 관찰 안함 -> 메인화면 클릭 정상)
   var listEl=document.getElementById('diary-around-today-list');
   if(listEl){
     try{
-      var obs=new MutationObserver(function(){ setTimeout(function(){ 
-        var map=getMap(); var all=getAll();
-        document.querySelectorAll('.sub-memo-item').forEach(function(itemEl){
-          var did=findId(itemEl); if(!did) return;
-          var dd=all.find(function(x){return x.id===did;}); if(!dd) return;
-          var icon=itemEl.querySelector('.photo-title-area .pin-emoji, .photo-title-area .star-emoji'); if(!icon) return;
-          if(map[dd.date]===did){ icon.textContent=STAR; icon.className='pin-emoji star-emoji'; }
-          else { icon.textContent=PIN; icon.className='pin-emoji'; }
-        });
-      },150); });
-      obs.observe(listEl, {childList:true});
+      var obs=new MutationObserver(function(){
+        setTimeout(function(){ ensureTitleStructure(); refreshIcons(); }, 150);
+      });
+      obs.observe(listEl, {childList:true, subtree:true});
     }catch(e){}
   }
 
-  console.log('[V3_28] 적용 - 제목 클릭 = 달력 기념일 변경, 하이라이트 없음, 별표 8px');
+  console.log('[V3_29] 적용 - 1개면 별표만, 2개면 1별+1핀, 클릭시 별 이동+달력 변경');
 })();
 </script>
 
