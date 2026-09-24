@@ -12253,103 +12253,48 @@ async function showPhotosForDate(dateStr){
 
 
 <style id="V3_FINAL_STYLE">
-/* === 기준 스타일 - 6개 이슈 통합 === */
-/* 1) 달력 고정핀 - 위치만 위로 1px, 투명 배경 유지 */
+/* 기준 - 폰트 + 핀 + 제목 */
 .cal-cell .cal-photo-corner{
-  top:1px !important;
-  left:2px !important;
-  background:transparent !important;
-  border:none !important;
-  box-shadow:none !important;
-  clip-path:none !important;
-  display:block !important;
-  visibility:visible !important;
-  opacity:1 !important;
+  top:1px !important; left:2px !important;
+  background:transparent !important; border:none !important; box-shadow:none !important; clip-path:none !important;
+  display:block !important; visibility:visible !important; opacity:1 !important; z-index:10 !important;
 }
-.cal-cell .cal-photo-corner .pin-emoji{font-size:10px !important; line-height:1 !important;}
+.cal-cell .cal-photo-corner .pin-emoji{font-size:10px !important; line-height:1 !important; display:inline-block !important;}
+.cal-cell.has-photo .cal-photo-corner{display:block !important; visibility:visible !important; opacity:1 !important;}
 
-/* 기본 달력 폰트/크기 정상화 - 누적된 큰 폰트들 덮어쓰기 */
-.cal-cell, .cal-cell.has-photo, .cal-cell.adjacent-month, .cal-cell.today-date, .cal-cell.sunday, .cal-cell.saturday{
-  font-size:13px !important;
-  min-height:62px !important;
-  font-weight:400 !important;
+.cal-cell, .cal-cell.has-photo, .cal-cell.adjacent-month, .cal-cell.today-date{
+  font-size:13px !important; min-height:62px !important; font-weight:400 !important;
 }
-.cal-cell .cal-cell-inner span, .cal-cell-inner span{
-  font-size:13px !important;
-  font-weight:400 !important;
-  line-height:1.2 !important;
-}
-.cal-cell .cal-anniv-label, .cal-cell-inner .cal-anniv-label{
-  font-size:9px !important;
-  font-weight:600 !important;
-}
+.cal-cell .cal-cell-inner span, .cal-cell-inner span{font-size:13px !important; font-weight:400 !important; line-height:1.2 !important;}
+.cal-cell .cal-anniv-label{font-size:9px !important; font-weight:600 !important;}
 
-/* 3) 사진과 일기 상하 정렬 */
 .sub-memo-item .diary-photo-wrap{margin-bottom:2px !important;}
-.sub-memo-item .diary-text{margin-top:2px !important; padding-top:0 !important;}
-.sub-memo-item.no-photo .diary-text{margin-top:4px !important;}
+.sub-memo-item .diary-text{margin-top:2px !important;}
 
-/* 5) 제목 네모박스 정리 + 6) 실선/점선 통일 */
 .photo-title-area{
-  display:flex !important;
-  align-items:center !important;
-  gap:5px !important;
-  height:26px !important;
-  min-height:26px !important;
-  background:#fff0f0 !important;
-  border:1px solid #f3d5d5 !important;
-  border-style:solid !important;
-  border-radius:12px 12px 0 0 !important;
-  padding-left:8px !important;
-  box-sizing:border-box !important;
-  cursor:pointer !important;
-  user-select:none !important;
-  z-index:20 !important;
+  display:flex !important; align-items:center !important; gap:5px !important;
+  height:26px !important; min-height:26px !important;
+  background:#fff0f0 !important; border:1px solid #f3d5d5 !important; border-style:solid !important;
+  border-radius:12px 12px 0 0 !important; padding-left:8px !important;
+  cursor:pointer !important; user-select:none !important; z-index:20 !important;
 }
 .photo-title-area .pin-emoji{font-size:10px !important;}
 .photo-title-area .star-emoji{font-size:11px !important; color:#1e90ff !important;}
-.photo-title-area .title-text{
-  font-size:12px !important;
-  font-weight:800 !important;
-  color:#5D4E6D !important;
-  flex:1; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;
-  pointer-events:none !important;
-}
+.photo-title-area .title-text{font-size:12px !important; font-weight:800 !important; color:#5D4E6D !important; flex:1; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; pointer-events:none !important;}
 </style>
 <script id="V3_FINAL_SCRIPT">
-/*
-  V3_FINAL - 기준 코드 (누적 없음)
-  1) 달력 고정핀 사라짐 - 원본 로직 유지 + 가벼운 보강만
-  2) 사진/내용 이동 버그 - 인덱스 기반 확실한 선택
-  3) 정렬 - CSS로 처리
-  4) 제목 변경 시 깜빡임 - renderCalendar 전체 호출 안함
-  5) 제목 네모박스 - 구조 정리
-  6) 실선/점선 - solid 통일
-  수정 요청 들어오면 이 파일 1개만 수정, 누적 금지
-*/
 (function(){
-  const PIN='📌';
-  const STAR='⭐';
-  const MAP_KEY='v3_date_title_selected_map';
-
+  const PIN='📌'; const STAR='⭐'; const MAP_KEY='v3_date_title_selected_map';
   function getAll(){ try{ return typeof getAllDiaries==='function'?getAllDiaries():JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); }catch(e){return [];} }
   function getMap(){ try{ return JSON.parse(localStorage.getItem(MAP_KEY)||'{}'); }catch(e){return {};} }
   function setMap(m){ try{ localStorage.setItem(MAP_KEY, JSON.stringify(m)); }catch(e){} }
   function normDate(d){ try{ return typeof normalizeDateStr==='function'?normalizeDateStr(d):d; }catch(e){return d;} }
-
   function getFiltered(dateStr){
-    var all=getAll();
-    var n=normDate(dateStr);
-    var f=all.filter(function(it){
-      if(it.money && it.money.amount) return false;
-      if(!it.text && !it.photo && !it.health && !it.anniversary) return false;
-      return normDate(it.date)===n;
-    });
+    var all=getAll(); var n=normDate(dateStr);
+    var f=all.filter(function(it){ if(it.money && it.money.amount) return false; if(!it.text && !it.photo && !it.health && !it.anniversary) return false; return normDate(it.date)===n; });
     f.sort(function(a,b){ return (a.time||'').localeCompare(b.time||''); });
     return f;
   }
-
-  // 1) 달력 기념일 패치 - 선택된 제목의 기념일로 달력 표시
   function patchAnniv(){
     if(window._vFinalAnniv) return;
     if(typeof window.getAnniversaryForDate!=='function') return;
@@ -12357,23 +12302,19 @@ async function showPhotosForDate(dateStr){
     window.getAnniversaryForDate=function(dateStr){
       var map=getMap();
       var selId=map[normDate(dateStr)] || map[dateStr];
-      if(selId){
-        var all=getAll();
-        var d=all.find(function(x){return x.id===selId;});
-        if(d) return d.anniversary||'';
-      }
+      if(selId){ var all=getAll(); var d=all.find(function(x){return x.id===selId;}); if(d) return d.anniversary||''; }
       return orig.call(this,dateStr);
     };
     window._vFinalAnniv=true;
   }
-
-  // 1) 고정핀 보강 - 그리드 절대 안 건드림, corner만 추가
+  // 고정핀 - 원본 has-photo 유지 + 사진 있는 날짜는 무조건 핀 보강
   function forcePin(){
     try{
       var all=getAll();
       var photoDates=new Set(all.filter(function(d){return !!d.photo;}).map(function(d){ return normDate(d.date); }));
       document.querySelectorAll('.cal-cell').forEach(function(cell){
         if(cell.classList.contains('adjacent-month')) return;
+        var isHasPhoto=cell.classList.contains('has-photo');
         var dayEl=cell.querySelector('.cal-cell-inner span');
         if(!dayEl) return;
         var day=parseInt(dayEl.textContent.trim());
@@ -12381,7 +12322,9 @@ async function showPhotosForDate(dateStr){
         var y=typeof calYear!=='undefined'?calYear:new Date().getFullYear();
         var m=typeof calMonth!=='undefined'?calMonth:new Date().getMonth();
         var ds=y+'-'+String(m+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
-        if(!photoDates.has(normDate(ds))) return;
+        var nd=normDate(ds);
+        // 원본이 has-photo 붙였거나, 우리 데이터에 사진 있는 날이면 핀 표시
+        if(!isHasPhoto && !photoDates.has(nd)) return;
         cell.classList.add('has-photo');
         var corner=cell.querySelector('.cal-photo-corner');
         if(!corner){
@@ -12392,12 +12335,13 @@ async function showPhotosForDate(dateStr){
           cell.appendChild(corner);
         }
         corner.style.display='block';
+        corner.style.visibility='visible';
+        corner.style.opacity='1';
         corner.style.top='1px'; corner.style.left='2px';
+        if(!corner.innerHTML.includes('pin-emoji')) corner.innerHTML='<span class="pin-emoji">📌</span>';
       });
-    }catch(e){}
+    }catch(e){ console.error('[V3_FINAL] forcePin', e); }
   }
-
-  // 4) 깜빡임 방지 - 달력 전체 다시 그리지 않고 해당 셀 라벨만 교체
   function updateCalendarLabel(dateStr, anniv){
     var n=normDate(dateStr);
     document.querySelectorAll('.cal-cell').forEach(function(cell){
@@ -12427,13 +12371,20 @@ async function showPhotosForDate(dateStr){
       }else{ if(exist) exist.remove(); }
     });
   }
-
-  // 2)5)6) 제목 구조 정리 + 아이콘 갱신
   function refreshIcons(){
     var map=getMap();
     var dateStr=typeof selectedViewDate!=='undefined' && selectedViewDate ? selectedViewDate : (typeof getTodayStr==='function'?getTodayStr():'');
     var n=normDate(dateStr);
     var filtered=getFiltered(dateStr);
+    if(filtered.length===0) return;
+    // 맵에 없으면 첫 번째를 기본 선택으로 자동 저장 - 처음에 별 안 보이는 문제 해결
+    if(!map[n] && !map[dateStr]){
+      map[n]=filtered[0].id;
+      map[dateStr]=filtered[0].id;
+      map[filtered[0].date]=filtered[0].id;
+      setMap(map);
+      console.log('[V3_FINAL] 첫 항목 자동 선택', filtered[0].date, filtered[0].anniversary);
+    }
     document.querySelectorAll('.sub-memo-item').forEach(function(el, idx){
       var dd=filtered[idx];
       if(!dd) return;
@@ -12451,13 +12402,11 @@ async function showPhotosForDate(dateStr){
       var txt=ta.querySelector('.title-text');
       if(txt){ txt.textContent=dd.anniversary||''; if(!dd.anniversary) txt.innerHTML='&nbsp;'; }
       if(!icon) return;
-      var selId=map[n] || map[dateStr] || map[dd.date];
+      var selId=map[n] || map[dateStr] || map[dd.date] || map[normDate(dd.date)];
       if(selId===dd.id){ icon.textContent=STAR; icon.className='pin-emoji star-emoji'; }
       else { icon.textContent=PIN; icon.className='pin-emoji'; }
     });
   }
-
-  // 2) 내용만 선택 안됨 - 문서 레벨 캡처로 확실하게 처리 (다른 핸들러보다 먼저)
   function onTitleClick(e){
     var ta=e.target.closest ? e.target.closest('.photo-title-area') : null;
     if(!ta) return;
@@ -12477,11 +12426,10 @@ async function showPhotosForDate(dateStr){
     e.preventDefault(); e.stopPropagation(); if(e.stopImmediatePropagation) e.stopImmediatePropagation();
     var map=getMap();
     var nn=normDate(target.date);
-    map[nn]=target.id; map[target.date]=target.id;
+    map[nn]=target.id; map[target.date]=target.id; map[dateStr]=target.id;
     setMap(map);
     refreshIcons();
     updateCalendarLabel(target.date, target.anniversary||'');
-    console.log('[V3_FINAL] 선택', target.date, target.anniversary||'(빈)', target.photo?'사진':'내용');
     return false;
   }
   document.addEventListener('click', onTitleClick, true);
@@ -12490,13 +12438,14 @@ async function showPhotosForDate(dateStr){
     if(ta){ e.preventDefault(); e.stopPropagation(); if(e.stopImmediatePropagation) e.stopImmediatePropagation(); return false; }
   }, true);
 
-  // 래핑 - 달력은 핀 보강만, 리스트는 아이콘 갱신만
   var origCal=window.renderCalendar;
   if(origCal && !origCal._vFinal){
     window.renderCalendar=function(){
       var r=origCal.apply(this, arguments);
-      setTimeout(forcePin, 50);
-      setTimeout(refreshIcons, 80);
+      setTimeout(forcePin, 30);
+      setTimeout(forcePin, 200);
+      setTimeout(refreshIcons, 100);
+      setTimeout(refreshIcons, 400);
       return r;
     };
     window.renderCalendar._vFinal=true;
@@ -12505,7 +12454,9 @@ async function showPhotosForDate(dateStr){
   if(origList && !origList._vFinal){
     window.renderDiaryAroundToday=function(){
       var r=origList.apply(this, arguments);
-      setTimeout(refreshIcons, 60);
+      setTimeout(refreshIcons, 30);
+      setTimeout(refreshIcons, 200);
+      setTimeout(forcePin, 100);
       return r;
     };
     window.renderDiaryAroundToday._vFinal=true;
@@ -12520,11 +12471,22 @@ async function showPhotosForDate(dateStr){
     var changed=false;
     Object.keys(byDate).forEach(function(ds){ if(!map[ds] && byDate[ds].length>0){ map[ds]=byDate[ds][0].id; changed=true; } });
     if(changed) setMap(map);
-    setTimeout(function(){ forcePin(); refreshIcons(); }, 400);
-    setTimeout(function(){ forcePin(); refreshIcons(); }, 1200);
+    // 초기 로드시 여러 번 시도 - 리스트 렌더 전이면 안 보이므로
+    setTimeout(function(){ forcePin(); refreshIcons(); }, 300);
+    setTimeout(function(){ forcePin(); refreshIcons(); }, 800);
+    setTimeout(function(){ forcePin(); refreshIcons(); }, 1500);
+    setTimeout(function(){ forcePin(); refreshIcons(); }, 2500);
+    // 리스트 변화 감지해서 별 자동 표시
+    var listEl=document.getElementById('diary-around-today-list');
+    if(listEl){
+      try{
+        var obs=new MutationObserver(function(){ setTimeout(refreshIcons, 50); setTimeout(forcePin, 100); });
+        obs.observe(listEl, {childList:true, subtree:false});
+      }catch(e){}
+    }
   }
-  setTimeout(init, 300);
-  console.log('[V3_FINAL] 기준 코드 - 누적 없음, 6개 이슈 통합');
+  setTimeout(init, 200);
+  console.log('[V3_FINAL] 기준 - 핀+별 초기 표시 수정');
 })();
 </script>
 
