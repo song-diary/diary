@@ -16855,43 +16855,34 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
 
 
 
-<style id="V3_34_STYLE">
+<style id="V3_35_STYLE">
+/* 제목칸 - 실선 통일 + 기준 스타일 */
 .photo-title-area{
   display:flex !important; align-items:center !important; gap:5px !important;
-  cursor:pointer !important; user-select:none !important; position:relative; z-index:10;
+  cursor:pointer !important; user-select:none !important; z-index:10 !important;
   height:26px !important; min-height:26px !important;
   background:#fff0f0 !important; 
   border:1px solid #f3d5d5 !important; 
-  border-style:solid !important; /* 6) 점선/실선 통일 - 실선 고정 */
+  border-style:solid !important;
   border-radius:12px 12px 0 0 !important; 
   padding-left:8px !important;
 }
+.photo-title-area[style]{border-style:solid !important;}
 .photo-title-area .pin-emoji{font-size:10px !important;}
-.photo-title-area .star-emoji{font-size:11px !important; color:#1e90ff !important; filter:drop-shadow(0 0 2px rgba(30,144,255,0.5)) !important;}
+.photo-title-area .star-emoji{font-size:11px !important; color:#1e90ff !important;}
 .photo-title-area .title-text{font-size:12px !important; font-weight:800 !important; color:#5D4E6D !important; flex:1; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;}
 
-/* 1) 달력 고정핀 위치 아래로 - 기준 유지 */
-.cal-photo-corner{top:3px !important; left:1px !important;}
-.cal-photo-corner .pin-emoji{font-size:9px !important; left:0 !important; top:0 !important;}
+/* 1) 달력 고정핀 위치 - 원본 유지하되 아래로 3px */
+.cal-cell .cal-photo-corner{top:3px !important; left:1px !important;}
 
-/* 3) 사진과 일기 상하정렬 */
-.sub-memo-item{display:flex !important; flex-direction:column !important; gap:0 !important;}
-.sub-memo-item .diary-photo-wrap{margin-bottom:4px !important;}
-.sub-memo-item .diary-photo-wrap img{vertical-align:top !important; display:block !important;}
-.sub-memo-item .diary-text{
-  margin-top:-2px !important; 
-  padding-top:4px !important; 
-  line-height:1.4 !important;
-  min-height:auto !important;
-}
+/* 3) 사진/일기 정렬 - 간격 조정 */
+.sub-memo-item{gap:0 !important;}
+.sub-memo-item .diary-photo-wrap{margin-bottom:2px !important;}
+.sub-memo-item .diary-photo-wrap img{display:block !important;}
+.sub-memo-item .diary-text{margin-top:0 !important; padding-top:4px !important;}
 .sub-memo-item.no-photo .diary-text{margin-top:4px !important;}
-.sub-memo-item.has-photo .diary-text{margin-top:0 !important;}
-.sub-memo-item .item-top-row{margin-top:3px !important; margin-bottom:2px !important;}
-
-/* adjacent-month는 핀 숨김 */
-.cal-cell.adjacent-month .cal-photo-corner{display:none !important;}
 </style>
-<script id="V3_34_FIX">
+<script id="V3_35_FIX">
 (function(){
   const PIN='📌';
   const STAR='⭐';
@@ -16904,63 +16895,46 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
   function findId(itemEl){
     if(!itemEl) return null;
     if(itemEl.dataset && itemEl.dataset.diaryId) return itemEl.dataset.diaryId;
+    var ta=itemEl.querySelector('.photo-title-area');
+    if(ta && ta.dataset && ta.dataset.diaryId) return ta.dataset.diaryId;
     var html=itemEl.innerHTML||'';
     var m=html.match(/deleteDiary\(\s*['"]([^'"]+)['"]\s*\)/);
     if(m) return m[1];
-    var m2=html.match(/d\.id===['"]([^'"]+)['"]/);
-    if(m2) return m2[1];
     return null;
   }
 
-  // 2) 사진/내용 모두 ID 주입 - render 패치 강화
   function patchRender(){
-    if(window._v34RenderPatched) return;
+    if(window._v35RenderPatched) return;
     if(typeof window.renderDiaryAroundToday!=='function') return;
     var orig=window.renderDiaryAroundToday;
     window.renderDiaryAroundToday=function(){
-      var res=orig.apply(this, arguments);
+      var ret=orig.apply(this, arguments);
       try{
+        var dateStr=(typeof selectedViewDate!=='undefined'?selectedViewDate:'');
+        if(!dateStr) dateStr=typeof getTodayStr==='function'?getTodayStr():'';
         var all=getAll();
-        var items=document.querySelectorAll('.sub-memo-item');
-        items.forEach(function(itemEl, idx){
-          // all filtered 순서와 동일 - dateStr 기준
-          // 가장 확실한 방법: itemEl의 텍스트/시간으로 all에서 찾기
-          var timeBadge=itemEl.querySelector('.time-badge-inline');
-          var timeText=timeBadge?timeBadge.textContent.trim():'';
-          var textEl=itemEl.querySelector('.diary-text');
-          var diaryText=textEl?textEl.textContent.trim().slice(0,40):'';
-          var titleEl=itemEl.querySelector('.photo-title-area .title-text');
-          var ann=titleEl?titleEl.textContent.trim():'';
-          var dateStr=(typeof selectedViewDate!=='undefined'?selectedViewDate:'');
-          // 매칭
-          var found=null;
-          for(var i=0;i<all.length;i++){
-            var d=all[i];
-            if(d.date!==dateStr) continue;
-            if(ann && d.anniversary===ann){ found=d; break; }
-            if(diaryText && d.text && d.text.indexOf(diaryText.slice(0,10))!==-1){ found=d; }
-            if(timeText && d.time && timeText.indexOf(d.time)!==-1){ found=d; break; }
-          }
-          // 그래도 없으면 filtered 순서대로
-          if(!found){
-            var filtered=all.filter(function(x){return x.date===dateStr;});
-            if(filtered[idx]) found=filtered[idx];
-          }
-          if(found){
-            itemEl.dataset.diaryId=found.id;
-            // 제목 영역에도 직접 ID 저장
-            var ta=itemEl.querySelector('.photo-title-area');
-            if(ta) ta.dataset.diaryId=found.id;
+        var filtered=all.filter(function(item){
+          if(item.money && item.money.amount) return false;
+          if(!item.text && !item.photo && !item.health && !item.anniversary) return false;
+          return item.date===dateStr;
+        });
+        filtered.sort(function(a,b){ return (a.time||'').localeCompare(b.time||''); });
+        var domItems=document.querySelectorAll('.sub-memo-item');
+        domItems.forEach(function(el, i){
+          if(filtered[i]){
+            el.dataset.diaryId=filtered[i].id;
+            var ta=el.querySelector('.photo-title-area');
+            if(ta) ta.dataset.diaryId=filtered[i].id;
           }
         });
-      }catch(e){ console.error('[V3_34] patchRender 오류', e); }
-      return res;
+      }catch(e){ console.error('[V3_35] render patch err', e); }
+      return ret;
     };
-    window._v34RenderPatched=true;
+    window._v35RenderPatched=true;
   }
 
   function patchAnniv(){
-    if(window._v34Patched) return;
+    if(window._v35Patched) return;
     if(typeof window.getAnniversaryForDate!=='function') return;
     var orig=window.getAnniversaryForDate;
     window.getAnniversaryForDate=function(dateStr){
@@ -16973,33 +16947,31 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
       }
       return orig.call(this,dateStr);
     };
-    window._v34Patched=true;
+    window._v35Patched=true;
   }
 
   function patchAlert(){
-    if(window._v34AlertPatched) return;
-    var origAlert=window.alert;
+    if(window._v35AlertPatched) return;
+    var orig=window.alert;
     window.alert=function(msg){
-      if(typeof msg==='string' && msg.indexOf('키: null')!==-1){ return; }
-      return origAlert.apply(this, arguments);
+      if(typeof msg==='string' && msg.indexOf('키: null')!==-1) return;
+      return orig.apply(this, arguments);
     };
-    window._v34AlertPatched=true;
+    window._v35AlertPatched=true;
   }
 
   function ensureTitleStructure(){
     document.querySelectorAll('.sub-memo-item').forEach(function(itemEl){
-      var titleArea=itemEl.querySelector('.photo-title-area');
-      if(!titleArea) return;
-      // 기존 아이콘 없으면 생성, 있으면 유지
-      if(!titleArea.querySelector('.pin-emoji, .star-emoji')){
-        var raw=titleArea.textContent.trim();
-        if(raw==='\xa0') raw='';
-        titleArea.innerHTML='<span class="pin-emoji">'+PIN+'</span><span class="title-text">'+(raw||'&nbsp;')+'</span>';
-      }
-      // border-style 강제 실선
-      titleArea.style.borderStyle='solid';
-      titleArea.style.borderWidth='1px';
-      titleArea.style.borderColor='#f3d5d5';
+      var ta=itemEl.querySelector('.photo-title-area');
+      if(!ta) return;
+      // border 실선 강제
+      ta.style.borderStyle='solid';
+      ta.style.borderColor='#f3d5d5';
+      ta.style.borderWidth='1px';
+      if(ta.querySelector('.pin-emoji, .star-emoji')) return;
+      var raw=ta.textContent.trim();
+      if(raw==='\xa0') raw='';
+      ta.innerHTML='<span class="pin-emoji">'+PIN+'</span><span class="title-text">'+(raw||'&nbsp;')+'</span>';
     });
   }
 
@@ -17012,10 +16984,10 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
       if(!did) return;
       var dd=all.find(function(x){return x.id===did;});
       if(!dd) return;
-      var titleArea=itemEl.querySelector('.photo-title-area');
-      if(!titleArea) return;
-      var icon=titleArea.querySelector('.pin-emoji, .star-emoji');
-      var txt=titleArea.querySelector('.title-text');
+      var ta=itemEl.querySelector('.photo-title-area');
+      if(!ta) return;
+      var icon=ta.querySelector('.pin-emoji, .star-emoji');
+      var txt=ta.querySelector('.title-text');
       if(txt){ txt.textContent=dd.anniversary||''; if(!dd.anniversary) txt.innerHTML='&nbsp;'; }
       if(!icon) return;
       if(map[dd.date]===did){ icon.textContent=STAR; icon.className='pin-emoji star-emoji'; }
@@ -17023,84 +16995,27 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
     });
   }
 
-  function forceCalendarPin(){
-    // 5) 9월30일 이후 10월 1,2,3일에 고정핀 나타남 수정 - adjacent-month 제외 + 현재 달만
-    var all=getAll();
-    var datesWithPhoto=new Set(all.filter(function(d){return !!d.photo;}).map(function(d){return d.date;}));
-    document.querySelectorAll('.cal-cell').forEach(function(cell){
-      if(cell.classList.contains('adjacent-month')){ 
-        var c=cell.querySelector('.cal-photo-corner'); if(c) c.style.display='none'; cell.classList.remove('has-photo'); return; 
-      }
-      var daySpan=cell.querySelector('.cal-cell-inner span');
-      if(!daySpan) return;
-      var day=parseInt(daySpan.textContent.trim());
-      if(isNaN(day)) return;
-      try{
-        var mStr=String((typeof calMonth!=='undefined'?calMonth:0)+1).padStart(2,'0');
-        var dStr=String(day).padStart(2,'0');
-        var y=(typeof calYear!=='undefined'?calYear:2026);
-        var dateStr=y+'-'+mStr+'-'+dStr;
-        var hasPhoto = datesWithPhoto.has(dateStr);
-        var corner=cell.querySelector('.cal-photo-corner');
-        if(hasPhoto){
-          if(!corner){
-            corner=document.createElement('div');
-            corner.className='cal-photo-corner has-pin-icon';
-            corner.style.top='3px'; corner.style.left='1px';
-            corner.innerHTML='<span class="pin-emoji">'+PIN+'</span>';
-            cell.appendChild(corner);
-          }
-          cell.classList.add('has-photo');
-          corner.style.display='flex'; corner.style.visibility='visible'; corner.style.opacity='1';
-          corner.style.top='3px'; corner.style.left='1px';
-        }else{
-          cell.classList.remove('has-photo');
-          if(corner) corner.style.display='none';
-        }
-      }catch(e){}
-    });
-  }
-
-  // 4) 깜빡임 방지 - renderCalendar 후 한번만, MutationObserver 제거로 깜빡임 방지
   function selectDiary(dateStr, diaryId){
     var map=getMap();
     map[dateStr]=diaryId;
     setMap(map);
     refreshIcons();
-    // 달력 재렌더는 깜빡임 방지를 위해 requestAnimationFrame으로 1회만
-    try{
-      if(typeof renderCalendar==='function'){
-        renderCalendar();
-        // renderCalendar가 비동기로 corner 재생성하므로 150ms 후 한번만
-        setTimeout(forceCalendarPin, 150);
-      }
-    }catch(e){}
+    try{ if(typeof renderCalendar==='function') renderCalendar(); }catch(e){}
   }
 
   function onTitleClick(e){
-    var titleArea=e.target.closest ? e.target.closest('.photo-title-area') : null;
-    if(!titleArea) return;
-    var itemEl=titleArea.closest('.sub-memo-item');
+    var ta=e.target.closest ? e.target.closest('.photo-title-area') : null;
+    if(!ta) return;
+    var itemEl=ta.closest('.sub-memo-item');
     if(!itemEl) return;
-    var did=findId(itemEl) || titleArea.dataset.diaryId || itemEl.dataset.diaryId;
-    if(!did){
-      // 최후 매칭
-      var all=getAll();
-      var dateStr=(typeof selectedViewDate!=='undefined'?selectedViewDate:'');
-      var txtEl=titleArea.querySelector('.title-text');
-      var ann=txtEl?txtEl.textContent.trim():'';
-      var cand=all.filter(function(d){return d.date===dateStr;});
-      // anniversary 매칭 우선
-      for(var i=0;i<cand.length;i++){ if((cand[i].anniversary||'')===ann){ did=cand[i].id; break; } }
-      if(!did && cand.length>0) did=cand[0].id;
-    }
-    if(!did){ console.warn('[V3_34] ID 못찾음'); return; }
+    var did=findId(itemEl) || ta.dataset.diaryId;
+    if(!did) return;
     e.preventDefault(); e.stopPropagation(); if(e.stopImmediatePropagation) e.stopImmediatePropagation();
     var all=getAll();
-    var diary=all.find(function(x){return x.id===did;});
-    if(!diary) return;
-    selectDiary(diary.date, did);
-    console.log('[V3_34] 선택', diary.date, diary.anniversary||'(빈)', diary.photo?'사진':'내용');
+    var d=all.find(function(x){return x.id===did;});
+    if(!d) return;
+    selectDiary(d.date, d.id);
+    console.log('[V3_35] 선택', d.date, d.anniversary||'(빈)', d.photo?'사진':'내용');
   }
   function onTitleDblClick(e){
     var ta=e.target.closest ? e.target.closest('.photo-title-area') : null;
@@ -17123,23 +17038,21 @@ button, .sub-memo-item, .diary-photo-wrap{will-change:auto !important;}
       if(!map[ds] && byDate[ds].length>0){ map[ds]=byDate[ds][0].id; changed=true; }
     });
     if(changed) setMap(map);
-    try{ if(typeof renderCalendar==='function'){ renderCalendar(); setTimeout(forceCalendarPin, 300); } }catch(e){}
-    setTimeout(function(){ ensureTitleStructure(); refreshIcons(); forceCalendarPin(); }, 400);
+    setTimeout(function(){ ensureTitleStructure(); refreshIcons(); }, 500);
   }
 
   setTimeout(init, 300);
-  setTimeout(init, 1300);
+  setTimeout(init, 1000);
 
   var listEl=document.getElementById('diary-around-today-list');
   if(listEl){
     try{
-      var obs=new MutationObserver(function(){ setTimeout(function(){ ensureTitleStructure(); refreshIcons(); }, 150); });
+      var obs=new MutationObserver(function(){ setTimeout(function(){ ensureTitleStructure(); refreshIcons(); }, 100); });
       obs.observe(listEl, {childList:true});
     }catch(e){}
   }
-  // 달력 그리드 관찰 제거 - 깜빡임 원인 제거 (4번 수정)
 
-  console.log('[V3_34] 6가지 수정 완료');
+  console.log('[V3_35] 달력핀 원본유지 + 내용 선택 수정 + 정렬 + 실선 통일');
 })();
 </script>
 
