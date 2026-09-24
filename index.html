@@ -12255,9 +12255,12 @@ async function showPhotosForDate(dateStr){
 <style id="V3_FINAL_STYLE">
 /* 기준 - 폰트 + 핀 + 제목 */
 .cal-cell .cal-photo-corner{
-  top:1px !important; left:2px !important;
+  position:absolute !important;
+  top:1px !important; left:2px !important; right:auto !important; bottom:auto !important;
+  width:auto !important; height:auto !important;
   background:transparent !important; border:none !important; box-shadow:none !important; clip-path:none !important;
   display:block !important; visibility:visible !important; opacity:1 !important; z-index:10 !important;
+  margin:0 !important; padding:0 !important;
 }
 .cal-cell .cal-photo-corner .pin-emoji{font-size:10px !important; line-height:1 !important; display:inline-block !important;}
 .cal-cell.has-photo .cal-photo-corner{display:block !important; visibility:visible !important; opacity:1 !important;}
@@ -12334,10 +12337,10 @@ async function showPhotosForDate(dateStr){
           corner.innerHTML='<span class="pin-emoji">📌</span>';
           cell.appendChild(corner);
         }
-        corner.style.display='block';
+        corner.style.position='absolute'; corner.style.display='block';
         corner.style.visibility='visible';
         corner.style.opacity='1';
-        corner.style.top='1px'; corner.style.left='2px';
+        corner.style.position='absolute'; corner.style.top='1px'; corner.style.left='2px'; corner.style.right='auto'; corner.style.bottom='auto';
         if(!corner.innerHTML.includes('pin-emoji')) corner.innerHTML='<span class="pin-emoji">📌</span>';
       });
     }catch(e){ console.error('[V3_FINAL] forcePin', e); }
