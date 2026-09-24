@@ -12252,39 +12252,75 @@ async function showPhotosForDate(dateStr){
 
 
 
+
 <style id="V3_FINAL_STYLE">
-/* 기준 - 폰트 + 핀 + 제목 */
-.cal-cell .cal-photo-corner{
+/* === V3 기준 - 누적 금지, 이 파일 1개만 수정 === */
+/* 1) 고정핀 - 모든 요일 투명, 왼쪽상단 1px */
+.cal-cell .cal-photo-corner,
+.cal-cell.has-photo .cal-photo-corner,
+.cal-cell.saturday .cal-photo-corner,
+.cal-cell.sunday .cal-photo-corner,
+.cal-cell.saturday.has-photo .cal-photo-corner,
+.cal-cell.sunday.has-photo .cal-photo-corner,
+.cal-cell .cal-photo-corner.has-pin-icon {
   position:absolute !important;
   top:1px !important; left:2px !important; right:auto !important; bottom:auto !important;
-  width:auto !important; height:auto !important;
-  background:transparent !important; border:none !important; box-shadow:none !important; clip-path:none !important;
+  width:auto !important; height:auto !important; min-width:0 !important; min-height:0 !important;
+  background:transparent !important; background-color:transparent !important; background-image:none !important;
+  border:none !important; border-width:0 !important; box-shadow:none !important; clip-path:none !important;
   display:block !important; visibility:visible !important; opacity:1 !important; z-index:10 !important;
-  margin:0 !important; padding:0 !important;
+  margin:0 !important; padding:0 !important; border-radius:0 !important;
 }
-.cal-cell .cal-photo-corner .pin-emoji{font-size:10px !important; line-height:1 !important; display:inline-block !important;}
-.cal-cell.has-photo .cal-photo-corner{display:block !important; visibility:visible !important; opacity:1 !important;}
+.cal-cell .cal-photo-corner::before,
+.cal-cell .cal-photo-corner::after,
+.cal-cell.has-photo .cal-photo-corner::before,
+.cal-cell.has-photo .cal-photo-corner::after,
+.cal-cell.saturday .cal-photo-corner::before,
+.cal-cell.sunday .cal-photo-corner::before {
+  display:none !important; content:none !important; width:0 !important; height:0 !important;
+  background:transparent !important; border:none !important;
+}
+.cal-cell .cal-photo-corner .pin-emoji {
+  background:transparent !important; border:none !important; box-shadow:none !important;
+  font-size:10px !important; line-height:1 !important; display:inline-block !important;
+  padding:0 !important; margin:0 !important;
+}
 
-.cal-cell, .cal-cell.has-photo, .cal-cell.adjacent-month, .cal-cell.today-date{
+/* 달력 폰트/크기 정상화 */
+.cal-cell, .cal-cell.has-photo, .cal-cell.adjacent-month, .cal-cell.today-date {
   font-size:13px !important; min-height:62px !important; font-weight:400 !important;
 }
-.cal-cell .cal-cell-inner span, .cal-cell-inner span{font-size:13px !important; font-weight:400 !important; line-height:1.2 !important;}
-.cal-cell .cal-anniv-label{font-size:9px !important; font-weight:600 !important;}
+.cal-cell .cal-cell-inner span, .cal-cell-inner span {
+  font-size:13px !important; font-weight:400 !important; line-height:1.2 !important;
+}
+.cal-cell .cal-anniv-label { font-size:9px !important; font-weight:600 !important; }
 
-.sub-memo-item .diary-photo-wrap{margin-bottom:2px !important;}
-.sub-memo-item .diary-text{margin-top:2px !important;}
-
-.photo-title-area{
+/* 제목 영역 */
+.sub-memo-item .diary-photo-wrap { margin-bottom:2px !important; }
+.sub-memo-item .diary-text { margin-top:2px !important; }
+.photo-title-area {
   display:flex !important; align-items:center !important; gap:5px !important;
   height:26px !important; min-height:26px !important;
   background:#fff0f0 !important; border:1px solid #f3d5d5 !important; border-style:solid !important;
   border-radius:12px 12px 0 0 !important; padding-left:8px !important;
   cursor:pointer !important; user-select:none !important; z-index:20 !important;
 }
-.photo-title-area .pin-emoji{font-size:10px !important;}
-.photo-title-area .star-emoji{font-size:11px !important; color:#1e90ff !important;}
-.photo-title-area .title-text{font-size:12px !important; font-weight:800 !important; color:#5D4E6D !important; flex:1; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; pointer-events:none !important;}
+.photo-title-area .pin-emoji { font-size:10px !important; }
+.photo-title-area .star-emoji { font-size:11px !important; color:#1e90ff !important; }
+.photo-title-area .title-text {
+  font-size:12px !important; font-weight:800 !important; color:#5D4E6D !important;
+  flex:1; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; pointer-events:none !important;
+}
+
+/* 종료 버튼 - 원래대로 중앙 고정, 작아지지 않게 */
+#exit-btn, .exit-btn, button[onclick*="exit"], button[onclick*="close"] {
+  position:fixed !important; bottom:10px !important; left:50% !important;
+  transform:translateX(-50%) !important;
+  width:calc(100% - 30px) !important; max-width:570px !important;
+  display:block !important; z-index:100 !important;
+}
 </style>
+
 <script id="V3_FINAL_SCRIPT">
 (function(){
   const PIN='📌'; const STAR='⭐'; const MAP_KEY='v3_date_title_selected_map';
@@ -12337,7 +12373,7 @@ async function showPhotosForDate(dateStr){
           corner.innerHTML='<span class="pin-emoji">📌</span>';
           cell.appendChild(corner);
         }
-        corner.style.position='absolute'; corner.style.display='block';
+        corner.style.position='absolute'; corner.style.position='absolute'; corner.style.background='transparent'; corner.style.backgroundColor='transparent'; corner.style.border='none'; corner.style.boxShadow='none'; corner.style.display='block';
         corner.style.visibility='visible';
         corner.style.opacity='1';
         corner.style.position='absolute'; corner.style.top='1px'; corner.style.left='2px'; corner.style.right='auto'; corner.style.bottom='auto';
