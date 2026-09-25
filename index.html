@@ -11774,10 +11774,11 @@ async function showPhotosForDate(dateStr){
   window.getDiaryTitleDisplay_V308 = function(item){
     const hasTitle = !!(item.anniversary && item.anniversary.trim());
     const icon = '📌';
+    // V3_67 fix: pin-emoji로 통일 - title-icon 중복 방지
     if(hasTitle){
-      return { icon: icon, text: item.anniversary, isEmpty: false, html: '<span class="title-icon">📌</span><span class="title-text">'+escapeHtmlForDiary(item.anniversary)+'</span>' };
+      return { icon: icon, text: item.anniversary, isEmpty: false, html: '<span class="pin-emoji">📌</span><span class="title-text">'+escapeHtmlForDiary(item.anniversary)+'</span>' };
     } else {
-      return { icon: icon, text: '', isEmpty: true, html: '<span class="title-icon">📌</span><span class="title-text empty">&nbsp;</span>' };
+      return { icon: icon, text: '', isEmpty: true, html: '<span class="pin-emoji">📌</span><span class="title-text empty">&nbsp;</span>' };
     }
   };
 
@@ -12427,14 +12428,13 @@ async function showPhotosForDate(dateStr){
       }else{ if(exist) exist.remove(); }
     });
   }
-  function refreshIcons(){
+    function refreshIcons(){
     try{
       var map=getMap();
       var dateStr=typeof selectedViewDate!=='undefined' && selectedViewDate ? selectedViewDate : (typeof getTodayStr==='function'?getTodayStr():'');
       var n=normDate(dateStr);
       var filtered=getFiltered(dateStr);
       var all=getAll();
-      // V3_65: PC/폰 모두 - filtered 비어있어도 바인딩은 해야 함, 첫 항목 자동 선택은 filtered 있을 때만
       if(filtered.length>0 && !map[n] && !map[dateStr] && !map[normDate(dateStr)]){
         map[n]=filtered[0].id;
         map[dateStr]=filtered[0].id;
@@ -12442,60 +12442,39 @@ async function showPhotosForDate(dateStr){
         map[filtered[0].date]=filtered[0].id;
         map[normDate(filtered[0].date)]=filtered[0].id;
         setMap(map);
-        console.log('[V3_FINAL] 첫 항목 자동 선택', filtered[0].date, filtered[0].anniversary);
       }
-      // 모든 메모 아이템 순회 - filtered 순서 의존 없이 diaryId로 찾기
       document.querySelectorAll('.sub-memo-item').forEach(function(el, idx){
         var ta=el.querySelector('.photo-title-area');
         if(!ta) return;
-        // diaryId가 이미 있으면 그걸 사용, 없으면 filtered[idx]나 all에서 찾기
         var dd=null;
         var did=el.dataset.diaryId || ta.dataset.diaryId;
-        if(did){
-          dd=all.find(function(x){return String(x.id)===String(did);});
-        }
-        if(!dd && filtered[idx]){
-          dd=filtered[idx];
-        }
-        if(!dd){
-          // DOM에서 data-date 등으로 찾기 시도
-          return;
-        }
+        if(did){ dd=all.find(function(x){return String(x.id)===String(did);}); }
+        if(!dd && filtered[idx]){ dd=filtered[idx]; }
+        if(!dd) return;
         el.dataset.diaryId=dd.id;
         ta.dataset.diaryId=dd.id;
-        // V3_65: 직접 바인딩 - PC 클릭 + 폰 터치 모두, 중복 방지
-        if(!ta._v65Bound){
+        if(!ta._v67Bound){
           var handler=function(e){ return onTitleClick(e, ta); };
           ta.addEventListener('click', handler, false);
           ta.addEventListener('touchend', handler, {passive:false});
-          // PC에서 버튼처럼 보이게 - 키보드 접근성도
-          ta.setAttribute('role','button');
-          ta.setAttribute('tabindex','0');
+          ta.setAttribute('role','button'); ta.setAttribute('tabindex','0');
           ta.addEventListener('keydown', function(e){ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); return onTitleClick(e, ta); } }, false);
-          ta._v65Bound=true;
+          ta._v67Bound=true; ta._v65Bound=true;
         }
-        if(!ta.querySelector('.pin-emoji, .star-emoji')){
-          var raw=ta.textContent.trim();
-          if(raw==='\xa0') raw='';
-          // 기존 텍스트 보존
-          var annivText = dd.anniversary || raw || '';
-          ta.innerHTML='<span class="pin-emoji">'+PIN+'</span><span class="title-text">'+(annivText||'&nbsp;')+'</span>';
-        }
-        ta.style.borderStyle='solid';
-        ta.style.touchAction='manipulation';
+        // V3_67: 고정핀 2개 방지 - 완전히 재생성
+        var existingTextEl = ta.querySelector('.title-text');
+        var annivText = dd.anniversary || (existingTextEl ? existingTextEl.textContent.trim() : '') || ta.textContent.replace(/📌|⭐/g,'').trim() || '';
+        ta.innerHTML='';
+        var pinSpan=document.createElement('span'); pinSpan.className='pin-emoji'; pinSpan.textContent=PIN;
+        var textSpan=document.createElement('span'); textSpan.className='title-text'; textSpan.textContent=annivText||''; if(!annivText) textSpan.innerHTML='&nbsp;';
+        ta.appendChild(pinSpan); ta.appendChild(textSpan);
+        ta.style.borderStyle='solid'; ta.style.touchAction='manipulation';
         var icon=ta.querySelector('.pin-emoji, .star-emoji');
-        var txt=ta.querySelector('.title-text');
-        if(txt){ 
-          var showText = dd.anniversary || txt.textContent.trim() || '';
-          if(showText) txt.textContent=showText; 
-          else txt.innerHTML='&nbsp;'; 
-        }
-        if(!icon) return;
         var selId=map[n] || map[dateStr] || map[normDate(dateStr)] || map[dd.date] || map[normDate(dd.date)];
         if(selId && String(selId)===String(dd.id)){ icon.textContent=STAR; icon.className='pin-emoji star-emoji'; }
         else { icon.textContent=PIN; icon.className='pin-emoji'; }
       });
-    }catch(e){ console.error('[V3_65] refreshIcons error', e); }
+    }catch(e){ console.error('[V3_67] refreshIcons error', e); }
   }
   function onTitleClick(e, forcedTa){
     var ta=forcedTa || (e.target.closest ? e.target.closest('.photo-title-area') : null);
