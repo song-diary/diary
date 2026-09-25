@@ -8735,20 +8735,51 @@ window.attachPhotoDoubleTap = function(el, handler){
             }
             // 전체 박스 클릭으로는 수정폼 안 열림 - 수정 버튼으로만
 
-            // V3_68: 사진 없는 빈 박스는 확대 커서 제거, 클릭시 수정폼 열기
+            // V3_74 fix: 제목만 있고 사진/내용 없을 때 더블클릭 시 하이라이트 열리도록
             const _emptyArea = itemBox.querySelector('.empty-photo-wrap, .empty-icon');
             if(_emptyArea){
                 _emptyArea.style.cursor='pointer';
                 _emptyArea.style.pointerEvents='auto';
                 _emptyArea.addEventListener('click', (e)=>{
                     e.preventDefault(); e.stopPropagation();
+                    try{ if(navigator.vibrate) navigator.vibrate(30); }catch(err){}
                     openDiaryForm(item.date, item);
                 });
                 _emptyArea.addEventListener('dblclick', (e)=>{
                     e.preventDefault(); e.stopPropagation();
-                    // 더블클릭시에도 수정폼 (키:NULL 방지)
-                    openDiaryForm(item.date, item);
+                    try{ if(navigator.vibrate) navigator.vibrate(80); }catch(err){}
+                    // V3_74: 제목/내용 있으면 하이라이트 열기, 없으면 수정폼
+                    const hasTitle = !!(item.anniversary && String(item.anniversary).trim());
+                    const hasText = !!(item.text && String(item.text).trim());
+                    if(hasTitle || hasText){
+                        // 하이라이트 (핀 + 제목 + 내용)
+                        if(typeof openPhotoLightbox==='function'){
+                            openPhotoLightbox(null, item);
+                        } else if(typeof openMemoLightboxOnly==='function'){
+                            openMemoLightboxOnly(item.text || item.anniversary, item);
+                        }
+                    } else {
+                        // 제목도 내용도 없으면 수정폼
+                        openDiaryForm(item.date, item);
+                    }
                 });
+                // V3_74: 더블탭(모바일)으로도 하이라이트 열기
+                let _lastTap = 0;
+                _emptyArea.addEventListener('touchend', (e)=>{
+                    const now = Date.now();
+                    if(now - _lastTap < 350){
+                        e.preventDefault();
+                        try{ if(navigator.vibrate) navigator.vibrate(80); }catch(err){}
+                        const hasTitle = !!(item.anniversary && String(item.anniversary).trim());
+                        const hasText = !!(item.text && String(item.text).trim());
+                        if(hasTitle || hasText){
+                            if(typeof openPhotoLightbox==='function'){
+                                openPhotoLightbox(null, item);
+                            }
+                        }
+                    }
+                    _lastTap = now;
+                }, {passive:false});
             }
 
             listEl.appendChild(itemBox);
@@ -8928,20 +8959,51 @@ window.attachPhotoDoubleTap = function(el, handler){
             }
             // 전체 박스 클릭으로는 수정폼 안 열림 - 수정 버튼으로만
 
-            // V3_68: 사진 없는 빈 박스는 확대 커서 제거, 클릭시 수정폼 열기
+            // V3_74 fix: 제목만 있고 사진/내용 없을 때 더블클릭 시 하이라이트 열리도록
             const _emptyArea = itemBox.querySelector('.empty-photo-wrap, .empty-icon');
             if(_emptyArea){
                 _emptyArea.style.cursor='pointer';
                 _emptyArea.style.pointerEvents='auto';
                 _emptyArea.addEventListener('click', (e)=>{
                     e.preventDefault(); e.stopPropagation();
+                    try{ if(navigator.vibrate) navigator.vibrate(30); }catch(err){}
                     openDiaryForm(item.date, item);
                 });
                 _emptyArea.addEventListener('dblclick', (e)=>{
                     e.preventDefault(); e.stopPropagation();
-                    // 더블클릭시에도 수정폼 (키:NULL 방지)
-                    openDiaryForm(item.date, item);
+                    try{ if(navigator.vibrate) navigator.vibrate(80); }catch(err){}
+                    // V3_74: 제목/내용 있으면 하이라이트 열기, 없으면 수정폼
+                    const hasTitle = !!(item.anniversary && String(item.anniversary).trim());
+                    const hasText = !!(item.text && String(item.text).trim());
+                    if(hasTitle || hasText){
+                        // 하이라이트 (핀 + 제목 + 내용)
+                        if(typeof openPhotoLightbox==='function'){
+                            openPhotoLightbox(null, item);
+                        } else if(typeof openMemoLightboxOnly==='function'){
+                            openMemoLightboxOnly(item.text || item.anniversary, item);
+                        }
+                    } else {
+                        // 제목도 내용도 없으면 수정폼
+                        openDiaryForm(item.date, item);
+                    }
                 });
+                // V3_74: 더블탭(모바일)으로도 하이라이트 열기
+                let _lastTap = 0;
+                _emptyArea.addEventListener('touchend', (e)=>{
+                    const now = Date.now();
+                    if(now - _lastTap < 350){
+                        e.preventDefault();
+                        try{ if(navigator.vibrate) navigator.vibrate(80); }catch(err){}
+                        const hasTitle = !!(item.anniversary && String(item.anniversary).trim());
+                        const hasText = !!(item.text && String(item.text).trim());
+                        if(hasTitle || hasText){
+                            if(typeof openPhotoLightbox==='function'){
+                                openPhotoLightbox(null, item);
+                            }
+                        }
+                    }
+                    _lastTap = now;
+                }, {passive:false});
             }
 
             listEl.appendChild(itemBox);
@@ -12890,5 +12952,52 @@ document.addEventListener('DOMContentLoaded', function(){
   line-height: 1.2 !important;
 }
 </style>
+
+<script id="V3_74_HIGHLIGHT_FIX">
+// V3_74: 제목만 있고 사진/내용 없을 때 하이라이트 열기 - diary-text 및 카드 전체 더블클릭 대응
+(function(){
+  function openHighlightForItem(item){
+    if(!item) return false;
+    const hasTitle = !!(item.anniversary && String(item.anniversary).trim());
+    const hasText = !!(item.text && String(item.text).trim());
+    if(hasTitle || hasText){
+      if(typeof openPhotoLightbox==='function'){
+        openPhotoLightbox(null, item);
+        return true;
+      }
+    }
+    return false;
+  }
+  document.addEventListener('dblclick', function(e){
+    // 이미 처리된 경우 제외
+    if(e.target.closest('.empty-photo-wrap, .empty-icon')) return;
+    if(e.target.closest('.diary-photo-wrap, .diary-photo')) return;
+    if(e.target.closest('.memo-action-btns, .delete-btn, .edit-btn-hidden')) return;
+    const itemBox = e.target.closest('.sub-memo-item');
+    if(!itemBox) return;
+    // 앨범 모드에서만
+    const diaryId = itemBox.dataset.diaryId;
+    if(!diaryId) return;
+    try{
+      const all = (typeof getAllDiaries==='function')?getAllDiaries():JSON.parse(localStorage.getItem('smartDiaryList')||'[]');
+      const item = all.find(function(x){ return String(x.id)===String(diaryId); });
+      if(!item) return;
+      // 사진 없는 경우만 하이라이트로 (사진 있으면 사진 확대가 우선)
+      const hasPhoto = !!(item.photo && String(item.photo).trim() && String(item.photo).toUpperCase()!=='NULL');
+      if(hasPhoto) return;
+      const hasTitle = !!(item.anniversary && String(item.anniversary).trim());
+      const hasText = !!(item.text && String(item.text).trim());
+      // 제목만 있어도 하이라이트 열기
+      if(hasTitle || hasText){
+        e.preventDefault();
+        e.stopPropagation();
+        try{ if(navigator.vibrate) navigator.vibrate(80); }catch(err){}
+        openHighlightForItem(item);
+      }
+    }catch(err){ console.error('[V3_74] dblclick highlight', err); }
+  }, true);
+})();
+</script>
+
 </body>
 </html>
