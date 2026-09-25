@@ -3412,7 +3412,10 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
             <button onclick="editFromLightbox()" style="flex:1; padding:12px; border-radius:10px; border:none; background:#3498db; color:#fff; font-weight:800; font-size:14px;">✏️ 수정</button>
             <button onclick="deleteFromLightbox()" style="flex:1; padding:12px; border-radius:10px; border:1px solid #e74c3c; background:#fff; color:#e74c3c; font-weight:800; font-size:14px;">🗑️ 삭제</button>
         </div>
-        
+    </div>
+    <!-- V3_70 fix: 하이라이트 적어도 항상 보이는 종료바 - 오른쪽상측 X + 하측중앙 종료 -->
+    <div id="photo-lightbox-fixed-close-bottom" class="photo-lightbox-fixed-close-bottom">
+        <button type="button" onclick="closePhotoLightbox(event)">종료</button>
     </div>
 </div>
 
@@ -12755,6 +12758,64 @@ async function showPhotosForDate(dateStr){
 }
 #diary-around-today-list:not(.gallery-mode) .sub-memo-item .diary-text br { display:none !important; }
 /* 리스트 모드에서도 텍스트가 길면 한줄로 */
+</style>
+<style id="V3_70_FIX">
+/* V3_70 fix: 사진 확대 - 오른쪽상측 X + 하측중앙 종료 버튼 항상 표시 (하이라이트 적어도) */
+.photo-lightbox-overlay {
+  padding-bottom: 80px !important;
+}
+.photo-lightbox-close {
+  position: fixed !important;
+  top: 12px !important;
+  right: 12px !important;
+  width: 36px !important;
+  height: 36px !important;
+  background: rgba(0,0,0,0.6) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,0.3) !important;
+  border-radius: 50% !important;
+  font-size: 18px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 10002 !important;
+  cursor: pointer !important;
+  backdrop-filter: blur(4px) !important;
+}
+.photo-lightbox-fixed-close-bottom {
+  position: fixed !important;
+  bottom: 16px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 10002 !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  pointer-events: auto !important;
+}
+.photo-lightbox-fixed-close-bottom button {
+  background: linear-gradient(135deg, #8e6b6b 0%, #a67c7c 100%) !important;
+  color: #fff !important;
+  border: none !important;
+  padding: 12px 40px !important;
+  border-radius: 24px !important;
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+  cursor: pointer !important;
+  min-width: 120px !important;
+  letter-spacing: 1px !important;
+}
+.photo-lightbox-fixed-close-bottom button:active {
+  transform: scale(0.96) !important;
+}
+.photo-lightbox-overlay.active .photo-lightbox-fixed-close-bottom {
+  display: flex !important;
+}
+/* 하이라이트 적을 때도 종료바 보이게 - 내용이 적어도 고정 */
+#photo-lightbox-content {
+  margin-bottom: 70px !important;
+}
 </style>
 </body>
 </html>
