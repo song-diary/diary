@@ -1521,12 +1521,7 @@
             transform-origin: center center;
             will-change: transform;
         }
-        .photo-lightbox-memo {
-            background: rgba(255,255,255,0.97);
-            color: #2A241C;
-            border-radius: 16px;
-            padding: 20px 22px;
-            font-size: 19px;
+        .photo-lightbox-memo { background: rgba(255,255,255,0.97); color: #2A241C; border-radius: 16px; padding: 20px 22px; font-size: 19px;
             line-height: 1.75;
             white-space: pre-wrap;
             word-break: break-word;
@@ -1538,11 +1533,7 @@
             overflow-y: auto;
             box-sizing: border-box;
         }
-        .photo-lightbox-memo.no-photo-mode {
-            font-size: 24px;
-            line-height: 1.8;
-            padding: 28px 26px;
-            max-height: 70vh;
+        .photo-lightbox-memo.no-photo-mode { font-size: 19px; line-height: 1.75; padding: 20px 22px; max-height: 70vh; // V3_75 fix: 사진 있는 폰트로 통일
             width: min(88vmin, 600px);
             max-width: 92vw;
             background: #fff;
@@ -8742,12 +8733,12 @@ window.attachPhotoDoubleTap = function(el, handler){
                 _emptyArea.style.pointerEvents='auto';
                 _emptyArea.addEventListener('click', (e)=>{
                     e.preventDefault(); e.stopPropagation();
-                    try{ if(navigator.vibrate) navigator.vibrate(30); }catch(err){}
+                    // V3_75: 사진 없는 곳 진동 제거
                     openDiaryForm(item.date, item);
                 });
                 _emptyArea.addEventListener('dblclick', (e)=>{
                     e.preventDefault(); e.stopPropagation();
-                    try{ if(navigator.vibrate) navigator.vibrate(80); }catch(err){}
+                    // V3_75 fix: 사진 없는 곳 더블클릭 진동 제거 (사진 있는 곳은 진동 없음)
                     // V3_74: 제목/내용 있으면 하이라이트 열기, 없으면 수정폼
                     const hasTitle = !!(item.anniversary && String(item.anniversary).trim());
                     const hasText = !!(item.text && String(item.text).trim());
@@ -8769,7 +8760,7 @@ window.attachPhotoDoubleTap = function(el, handler){
                     const now = Date.now();
                     if(now - _lastTap < 350){
                         e.preventDefault();
-                        try{ if(navigator.vibrate) navigator.vibrate(80); }catch(err){}
+                        // V3_75: 진동 제거
                         const hasTitle = !!(item.anniversary && String(item.anniversary).trim());
                         const hasText = !!(item.text && String(item.text).trim());
                         if(hasTitle || hasText){
@@ -8966,12 +8957,12 @@ window.attachPhotoDoubleTap = function(el, handler){
                 _emptyArea.style.pointerEvents='auto';
                 _emptyArea.addEventListener('click', (e)=>{
                     e.preventDefault(); e.stopPropagation();
-                    try{ if(navigator.vibrate) navigator.vibrate(30); }catch(err){}
+                    // V3_75: 사진 없는 곳 진동 제거
                     openDiaryForm(item.date, item);
                 });
                 _emptyArea.addEventListener('dblclick', (e)=>{
                     e.preventDefault(); e.stopPropagation();
-                    try{ if(navigator.vibrate) navigator.vibrate(80); }catch(err){}
+                    // V3_75 fix: 사진 없는 곳 더블클릭 진동 제거 (사진 있는 곳은 진동 없음)
                     // V3_74: 제목/내용 있으면 하이라이트 열기, 없으면 수정폼
                     const hasTitle = !!(item.anniversary && String(item.anniversary).trim());
                     const hasText = !!(item.text && String(item.text).trim());
@@ -8993,7 +8984,7 @@ window.attachPhotoDoubleTap = function(el, handler){
                     const now = Date.now();
                     if(now - _lastTap < 350){
                         e.preventDefault();
-                        try{ if(navigator.vibrate) navigator.vibrate(80); }catch(err){}
+                        // V3_75: 진동 제거
                         const hasTitle = !!(item.anniversary && String(item.anniversary).trim());
                         const hasText = !!(item.text && String(item.text).trim());
                         if(hasTitle || hasText){
@@ -12934,14 +12925,19 @@ document.addEventListener('DOMContentLoaded', function(){
 </script>
 
 <style id="V3_73_FIX">
-/* V3_73 fix: 하이라이트 화면 고정핀과 글씨 간격 좁히기 - 글씨를 위로 올려 핀 바로 아래 시작 */
+/* V3_75 fix: 하이라이트 화면 고정핀과 글씨 간격 + 폰트 통일 - 사진 있는 폰트(19px)로 기준 */
 .photo-lightbox-memo {
   padding-top: 14px !important;
   line-height: 1.5 !important;
+  font-size: 19px !important;
 }
 .photo-lightbox-memo.no-photo-mode {
-  padding-top: 16px !important;
+  padding-top: 14px !important;
   line-height: 1.5 !important;
+  font-size: 19px !important; /* V3_75: 사진 없는 곳도 사진 있는 폰트(19px)로 통일 */
+  font-weight: 400 !important;
+  padding: 20px 22px !important;
+  padding-top: 14px !important;
 }
 #photo-lightbox-memo {
   white-space: pre-wrap !important;
@@ -12991,7 +12987,7 @@ document.addEventListener('DOMContentLoaded', function(){
       if(hasTitle || hasText){
         e.preventDefault();
         e.stopPropagation();
-        try{ if(navigator.vibrate) navigator.vibrate(80); }catch(err){}
+        // V3_75: 사진 없는 곳 진동 제거
         openHighlightForItem(item);
       }
     }catch(err){ console.error('[V3_74] dblclick highlight', err); }
@@ -12999,5 +12995,15 @@ document.addEventListener('DOMContentLoaded', function(){
 })();
 </script>
 
+<style id="V3_75_FIX">
+/* V3_75: 사진 없는 곳과 있는 곳 하이라이트 폰트 동일 - 사진 있는 폰트 기준 (19px, 1.75) */
+.photo-lightbox-memo,
+.photo-lightbox-memo.no-photo-mode {
+  font-size: 19px !important;
+  line-height: 1.75 !important;
+  font-family: 'Malgun Gothic', sans-serif !important;
+  font-weight: 400 !important;
+}
+</style>
 </body>
 </html>
