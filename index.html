@@ -12460,24 +12460,37 @@ async function showPhotosForDate(dateStr){
     if(!ta) return;
     var itemEl=ta.closest('.sub-memo-item');
     if(!itemEl) return;
-    var dateStr=typeof selectedViewDate!=='undefined' && selectedViewDate ? selectedViewDate : (typeof getTodayStr==='function'?getTodayStr():'');
-    var filtered=getFiltered(dateStr);
-    var domItems=Array.from(document.querySelectorAll('.sub-memo-item'));
-    var idx=domItems.indexOf(itemEl);
+    // V3_63 fix: diaryId 기반으로 직접 찾기 - getFiltered 순서 의존 제거
+    var did=ta.dataset.diaryId || (itemEl ? itemEl.dataset.diaryId : null);
     var target=null;
-    if(idx>=0 && filtered[idx]) target=filtered[idx];
-    else {
-      var did=ta.dataset.diaryId || itemEl.dataset.diaryId;
-      if(did){ var all=getAll(); target=all.find(function(x){return x.id===did;}); }
+    if(did){
+      var all=getAll();
+      target=all.find(function(x){return String(x.id)===String(did);});
+    }
+    if(!target){
+      // fallback: DOM 순서로 찾기
+      var dateStr=typeof selectedViewDate!=='undefined' && selectedViewDate ? selectedViewDate : (typeof getTodayStr==='function'?getTodayStr():'');
+      var filtered=getFiltered(dateStr);
+      var domItems=Array.from(document.querySelectorAll('.sub-memo-item'));
+      var idx=domItems.indexOf(itemEl);
+      if(idx>=0 && filtered[idx]) target=filtered[idx];
     }
     if(!target) return;
     e.preventDefault(); e.stopPropagation(); if(e.stopImmediatePropagation) e.stopImmediatePropagation();
-    var map=getMap();
-    var nn=normDate(target.date);
-    map[nn]=target.id; map[target.date]=target.id; map[dateStr]=target.id;
-    setMap(map);
-    refreshIcons();
-    updateCalendarLabel(target.date, target.anniversary||'');
+    try{
+      var map=getMap();
+      var nn=normDate(target.date);
+      var dateStr=typeof selectedViewDate!=='undefined' && selectedViewDate ? selectedViewDate : (typeof getTodayStr==='function'?getTodayStr():'');
+      map[nn]=target.id; map[target.date]=target.id; map[dateStr]=target.id;
+      // 모든 날짜 형식으로 저장해서 달력/리스트 동기화 확실히
+      map[normDate(dateStr)]=target.id;
+      setMap(map);
+      refreshIcons();
+      updateCalendarLabel(target.date, target.anniversary||'');
+      // 깜빡임 대신 피드백 - 진동(모바일)
+      if(navigator.vibrate) navigator.vibrate(30);
+      console.log('[V3_63] 별 이동', target.date, target.anniversary, target.id);
+    }catch(err){ console.error('[V3_63] onTitleClick error', err); }
     return false;
   }
   document.addEventListener('click', onTitleClick, true);
