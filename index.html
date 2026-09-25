@@ -1975,12 +1975,16 @@ body { touch-action: pan-x pan-y pinch-zoom !important; }
 
 
         /* v102: 제목 영역 고정 높이로 사진 정렬 일정하게 */
-        .photo-title-area { height:20px !important; line-height:20px; }
+        .photo-title-area {
+  touch-action: manipulation !important;
+  -webkit-touch-callout:none !important; height:20px !important; line-height:20px; }
         .sub-memo-item.has-photo .diary-photo { margin-top:0 !important; }
         .sub-memo-item { display:flex; flex-direction:column; }
         /* 사진 위 아이콘 제거 - photo-title-area 외에는 사진 위에 아무것도 없도록 */
         .sub-memo-item .health-badge, .sub-memo-item [class*="anniv"] { display:none !important; }
-        .photo-title-area { order:1; }
+        .photo-title-area {
+  touch-action: manipulation !important;
+  -webkit-touch-callout:none !important; order:1; }
         .diary-photo-wrap { order:2; }
         .item-top-row { order:3; }
         .diary-text { order:4; }
@@ -2024,6 +2028,8 @@ body { touch-action: pan-x pan-y pinch-zoom !important; }
             height:100% !important;
         }
         .sub-memo-item .photo-title-area {
+  touch-action: manipulation !important;
+  -webkit-touch-callout:none !important;
             align-self:flex-start !important;
             width:100%;
         }
@@ -12277,6 +12283,8 @@ async function showPhotosForDate(dateStr){
 .sub-memo-item .diary-photo-wrap { margin-bottom:2px !important; }
 .sub-memo-item .diary-text { margin-top:2px !important; }
 .photo-title-area {
+  touch-action: manipulation !important;
+  -webkit-touch-callout:none !important;
   display:flex !important; align-items:center !important; gap:5px !important;
   height:26px !important; min-height:26px !important;
   background:#fff0f0 !important; border:1px solid #f3d5d5 !important; border-style:solid !important;
@@ -12420,47 +12428,92 @@ async function showPhotosForDate(dateStr){
     });
   }
   function refreshIcons(){
-    var map=getMap();
-    var dateStr=typeof selectedViewDate!=='undefined' && selectedViewDate ? selectedViewDate : (typeof getTodayStr==='function'?getTodayStr():'');
-    var n=normDate(dateStr);
-    var filtered=getFiltered(dateStr);
-    if(filtered.length===0) return;
-    // 맵에 없으면 첫 번째를 기본 선택으로 자동 저장 - 처음에 별 안 보이는 문제 해결
-    if(!map[n] && !map[dateStr]){
-      map[n]=filtered[0].id;
-      map[dateStr]=filtered[0].id;
-      map[filtered[0].date]=filtered[0].id;
-      setMap(map);
-      console.log('[V3_FINAL] 첫 항목 자동 선택', filtered[0].date, filtered[0].anniversary);
-    }
-    document.querySelectorAll('.sub-memo-item').forEach(function(el, idx){
-      var dd=filtered[idx];
-      if(!dd) return;
-      el.dataset.diaryId=dd.id;
-      var ta=el.querySelector('.photo-title-area');
-      if(!ta) return;
-      ta.dataset.diaryId=dd.id;
-      if(!ta.querySelector('.pin-emoji, .star-emoji')){
-        var raw=ta.textContent.trim();
-        if(raw==='\xa0') raw='';
-        ta.innerHTML='<span class="pin-emoji">'+PIN+'</span><span class="title-text">'+(raw||'&nbsp;')+'</span>';
+    try{
+      var map=getMap();
+      var dateStr=typeof selectedViewDate!=='undefined' && selectedViewDate ? selectedViewDate : (typeof getTodayStr==='function'?getTodayStr():'');
+      var n=normDate(dateStr);
+      var filtered=getFiltered(dateStr);
+      var all=getAll();
+      // V3_65: PC/폰 모두 - filtered 비어있어도 바인딩은 해야 함, 첫 항목 자동 선택은 filtered 있을 때만
+      if(filtered.length>0 && !map[n] && !map[dateStr] && !map[normDate(dateStr)]){
+        map[n]=filtered[0].id;
+        map[dateStr]=filtered[0].id;
+        map[normDate(dateStr)]=filtered[0].id;
+        map[filtered[0].date]=filtered[0].id;
+        map[normDate(filtered[0].date)]=filtered[0].id;
+        setMap(map);
+        console.log('[V3_FINAL] 첫 항목 자동 선택', filtered[0].date, filtered[0].anniversary);
       }
-      ta.style.borderStyle='solid';
-      var icon=ta.querySelector('.pin-emoji, .star-emoji');
-      var txt=ta.querySelector('.title-text');
-      if(txt){ txt.textContent=dd.anniversary||''; if(!dd.anniversary) txt.innerHTML='&nbsp;'; }
-      if(!icon) return;
-      var selId=map[n] || map[dateStr] || map[dd.date] || map[normDate(dd.date)];
-      if(selId===dd.id){ icon.textContent=STAR; icon.className='pin-emoji star-emoji'; }
-      else { icon.textContent=PIN; icon.className='pin-emoji'; }
-    });
+      // 모든 메모 아이템 순회 - filtered 순서 의존 없이 diaryId로 찾기
+      document.querySelectorAll('.sub-memo-item').forEach(function(el, idx){
+        var ta=el.querySelector('.photo-title-area');
+        if(!ta) return;
+        // diaryId가 이미 있으면 그걸 사용, 없으면 filtered[idx]나 all에서 찾기
+        var dd=null;
+        var did=el.dataset.diaryId || ta.dataset.diaryId;
+        if(did){
+          dd=all.find(function(x){return String(x.id)===String(did);});
+        }
+        if(!dd && filtered[idx]){
+          dd=filtered[idx];
+        }
+        if(!dd){
+          // DOM에서 data-date 등으로 찾기 시도
+          return;
+        }
+        el.dataset.diaryId=dd.id;
+        ta.dataset.diaryId=dd.id;
+        // V3_65: 직접 바인딩 - PC 클릭 + 폰 터치 모두, 중복 방지
+        if(!ta._v65Bound){
+          var handler=function(e){ return onTitleClick(e, ta); };
+          ta.addEventListener('click', handler, false);
+          ta.addEventListener('touchend', handler, {passive:false});
+          // PC에서 버튼처럼 보이게 - 키보드 접근성도
+          ta.setAttribute('role','button');
+          ta.setAttribute('tabindex','0');
+          ta.addEventListener('keydown', function(e){ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); return onTitleClick(e, ta); } }, false);
+          ta._v65Bound=true;
+        }
+        if(!ta.querySelector('.pin-emoji, .star-emoji')){
+          var raw=ta.textContent.trim();
+          if(raw==='\xa0') raw='';
+          // 기존 텍스트 보존
+          var annivText = dd.anniversary || raw || '';
+          ta.innerHTML='<span class="pin-emoji">'+PIN+'</span><span class="title-text">'+(annivText||'&nbsp;')+'</span>';
+        }
+        ta.style.borderStyle='solid';
+        ta.style.touchAction='manipulation';
+        var icon=ta.querySelector('.pin-emoji, .star-emoji');
+        var txt=ta.querySelector('.title-text');
+        if(txt){ 
+          var showText = dd.anniversary || txt.textContent.trim() || '';
+          if(showText) txt.textContent=showText; 
+          else txt.innerHTML='&nbsp;'; 
+        }
+        if(!icon) return;
+        var selId=map[n] || map[dateStr] || map[normDate(dateStr)] || map[dd.date] || map[normDate(dd.date)];
+        if(selId && String(selId)===String(dd.id)){ icon.textContent=STAR; icon.className='pin-emoji star-emoji'; }
+        else { icon.textContent=PIN; icon.className='pin-emoji'; }
+      });
+    }catch(e){ console.error('[V3_65] refreshIcons error', e); }
   }
-  function onTitleClick(e){
-    var ta=e.target.closest ? e.target.closest('.photo-title-area') : null;
+  function onTitleClick(e, forcedTa){
+    var ta=forcedTa || (e.target.closest ? e.target.closest('.photo-title-area') : null);
+    if(!ta){
+      // touch 이벤트 fallback
+      if(e.changedTouches && e.changedTouches[0]){
+        var el=document.elementFromPoint(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+        if(el) ta=el.closest ? el.closest('.photo-title-area') : null;
+      }
+    }
     if(!ta) return;
     var itemEl=ta.closest('.sub-memo-item');
     if(!itemEl) return;
-    // V3_63 fix: diaryId 기반으로 직접 찾기 - getFiltered 순서 의존 제거
+    // V3_64 fix: 터치 길게 눌림 제외 (스크롤이면 무시)
+    if(e.type==='touchend' && ta._touchStartTime){
+      var dur=Date.now()-ta._touchStartTime;
+      if(dur>500) return; // 0.5초 이상 길게 누르면 스크롤로 간주
+    }
     var did=ta.dataset.diaryId || (itemEl ? itemEl.dataset.diaryId : null);
     var target=null;
     if(did){
@@ -12468,7 +12521,6 @@ async function showPhotosForDate(dateStr){
       target=all.find(function(x){return String(x.id)===String(did);});
     }
     if(!target){
-      // fallback: DOM 순서로 찾기
       var dateStr=typeof selectedViewDate!=='undefined' && selectedViewDate ? selectedViewDate : (typeof getTodayStr==='function'?getTodayStr():'');
       var filtered=getFiltered(dateStr);
       var domItems=Array.from(document.querySelectorAll('.sub-memo-item'));
@@ -12480,20 +12532,45 @@ async function showPhotosForDate(dateStr){
     try{
       var map=getMap();
       var nn=normDate(target.date);
-      var dateStr=typeof selectedViewDate!=='undefined' && selectedViewDate ? selectedViewDate : (typeof getTodayStr==='function'?getTodayStr():'');
-      map[nn]=target.id; map[target.date]=target.id; map[dateStr]=target.id;
-      // 모든 날짜 형식으로 저장해서 달력/리스트 동기화 확실히
-      map[normDate(dateStr)]=target.id;
+      var dateStr2=typeof selectedViewDate!=='undefined' && selectedViewDate ? selectedViewDate : (typeof getTodayStr==='function'?getTodayStr():'');
+      map[nn]=target.id; map[target.date]=target.id; map[dateStr2]=target.id;
+      map[normDate(dateStr2)]=target.id;
       setMap(map);
       refreshIcons();
       updateCalendarLabel(target.date, target.anniversary||'');
-      // 깜빡임 대신 피드백 - 진동(모바일)
       if(navigator.vibrate) navigator.vibrate(30);
-      console.log('[V3_63] 별 이동', target.date, target.anniversary, target.id);
-    }catch(err){ console.error('[V3_63] onTitleClick error', err); }
+      console.log('[V3_64] 별 이동', target.date, target.anniversary, target.id, 'via', e.type);
+    }catch(err){ console.error('[V3_64] onTitleClick error', err); }
     return false;
   }
-  document.addEventListener('click', onTitleClick, true);
+  // V3_64 fix: PC(클릭) + 폰(터치) 모두 대응 - 스윙투앱 웹뷰 호환
+  function getTitleAreaFromEvent(e){
+    var target = e.target;
+    // touch 이벤트면 changedTouches에서 타겟 찾기
+    if(e.changedTouches && e.changedTouches[0]){
+      target = document.elementFromPoint(e.changedTouches[0].clientX, e.changedTouches[0].clientY) || e.target;
+    }
+    if(!target) return null;
+    return target.closest ? target.closest('.photo-title-area') : null;
+  }
+  // 통합 핸들러 - 클릭/터치 모두 처리
+  function handleTitleInteraction(e){
+    var ta = getTitleAreaFromEvent(e);
+    if(!ta) return;
+    // 폰에서 더블탭 확대 방지, PC 더블클릭 방지
+    if(e.type==='touchend'){
+      e.preventDefault();
+    }
+    return onTitleClick(e, ta);
+  }
+  document.addEventListener('click', handleTitleInteraction, true);
+  document.addEventListener('touchend', handleTitleInteraction, {passive:false, capture:true});
+  document.addEventListener('touchstart', function(e){
+    var ta=getTitleAreaFromEvent(e);
+    if(ta){
+      ta._touchStartTime = Date.now();
+    }
+  }, {passive:true, capture:true});
   document.addEventListener('dblclick', function(e){
     var ta=e.target.closest ? e.target.closest('.photo-title-area') : null;
     if(ta){ e.preventDefault(); e.stopPropagation(); if(e.stopImmediatePropagation) e.stopImmediatePropagation(); return false; }
