@@ -12623,37 +12623,68 @@ async function showPhotosForDate(dateStr){
     }catch(err){ console.error('[V3_64] onTitleClick error', err); }
     return false;
   }
-  // V3_64 fix: PC(클릭) + 폰(터치) 모두 대응 - 스윙투앱 웹뷰 호환
+  // V3_78 fix: 제목 클릭 → 별 변경 너무 쉬움, 더블클릭으로 변경 (언더스텐)
   function getTitleAreaFromEvent(e){
     var target = e.target;
-    // touch 이벤트면 changedTouches에서 타겟 찾기
     if(e.changedTouches && e.changedTouches[0]){
       target = document.elementFromPoint(e.changedTouches[0].clientX, e.changedTouches[0].clientY) || e.target;
     }
     if(!target) return null;
     return target.closest ? target.closest('.photo-title-area') : null;
   }
-  // 통합 핸들러 - 클릭/터치 모두 처리
-  function handleTitleInteraction(e){
+  // V3_78: 더블클릭 핸들러 - 별로 변경 (PC: dblclick, 폰: 더블탭)
+  function handleTitleDoubleClick(e){
     var ta = getTitleAreaFromEvent(e);
     if(!ta) return;
-    // 폰에서 더블탭 확대 방지, PC 더블클릭 방지
-    if(e.type==='touchend'){
-      e.preventDefault();
-    }
+    e.preventDefault(); e.stopPropagation(); if(e.stopImmediatePropagation) e.stopImmediatePropagation();
     return onTitleClick(e, ta);
   }
-  document.addEventListener('click', handleTitleInteraction, true);
-  document.addEventListener('touchend', handleTitleInteraction, {passive:false, capture:true});
+  // V3_78: 싱글클릭은 별 변경 안 함 - 진동도 없음 (더블클릭으로만 변경)
+  function handleTitleSingleClick(e){
+    var ta = getTitleAreaFromEvent(e);
+    if(ta){
+      // 싱글클릭은 별 변경 막기 - 이벤트만 차단
+      // e.preventDefault(); // 필요시 주석 해제
+    }
+  }
+  // PC: 더블클릭으로만 별 변경
+  document.addEventListener('dblclick', function(e){
+    var ta = e.target.closest ? e.target.closest('.photo-title-area') : null;
+    if(ta){
+      return handleTitleDoubleClick(e);
+    }
+  }, true);
+  // 폰: 더블탭으로 별 변경 (350ms 이내 두 번 터치)
+  document.addEventListener('touchend', function(e){
+    var ta=getTitleAreaFromEvent(e);
+    if(!ta) return;
+    var now = Date.now();
+    var lastTap = ta._lastTap || 0;
+    var diff = now - lastTap;
+    if(diff < 350 && diff > 0){
+      // 더블탭 감지
+      e.preventDefault();
+      handleTitleDoubleClick(e);
+      ta._lastTap = 0;
+    } else {
+      // 첫 번째 탭
+      ta._lastTap = now;
+      // 싱글탭은 별 변경 안 함
+    }
+  }, {passive:false, capture:true});
   document.addEventListener('touchstart', function(e){
     var ta=getTitleAreaFromEvent(e);
     if(ta){
       ta._touchStartTime = Date.now();
     }
   }, {passive:true, capture:true});
-  document.addEventListener('dblclick', function(e){
+  // 클릭 이벤트는 별 변경 안 함 (V3_78)
+  document.addEventListener('click', function(e){
     var ta=e.target.closest ? e.target.closest('.photo-title-area') : null;
-    if(ta){ e.preventDefault(); e.stopPropagation(); if(e.stopImmediatePropagation) e.stopImmediatePropagation(); return false; }
+    if(ta){
+      // 싱글클릭으로 별 변경 방지 - 아무 동작 안 함
+      // 필요시 e.preventDefault()로 다른 동작 방지 가능
+    }
   }, true);
 
   var origCal=window.renderCalendar;
