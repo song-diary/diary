@@ -8215,6 +8215,7 @@ window.attachPhotoDoubleTap = function(el, handler){
             if(hasPhotoFlag) cell.classList.add('has-photo');
             cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + (hasPhotoFlag ? `<div class="cal-photo-corner has-pin-icon" data-date="${dateStr}"><span class="pin-emoji">📌</span></div>` : '');
             cell.onclick = async (e) => {
+                try{ if(navigator.vibrate) navigator.vibrate(30); }catch(err){}
                 const target = e.target.closest('.cal-photo-corner');
                 if(target){
                     e.stopPropagation();
@@ -8247,10 +8248,37 @@ window.attachPhotoDoubleTap = function(el, handler){
         const normalized = normalizeDateStr(dateStr);
         calEnlargedDate = null;
         selectedViewDate = normalized;
+        // V3_71 fix: 일자 선택시 제목 터치와 동일한 진동/움직임 적용
+        try{
+          if(navigator.vibrate) navigator.vibrate(30);
+        }catch(e){}
+        // 선택된 셀에 터치 애니메이션 (스윙2앱용)
+        try{
+          const grid = document.getElementById('cal-days-grid');
+          if(grid){
+            const cells = grid.querySelectorAll('.cal-cell');
+            cells.forEach(function(cell){
+              const span = cell.querySelector('.cal-cell-inner span');
+              if(span && cell.textContent.trim().startsWith(String(parseInt(normalized.split('-')[2],10)))){
+                // 해당 날짜 셀에만 애니메이션
+                if(normalized === (cell.getAttribute('data-date') || '') || cell.classList.contains('selected-date') || true){
+                  // 간단한 스케일 애니메이션
+                  cell.style.transition='transform 0.1s ease';
+                  cell.style.transform='scale(0.92)';
+                  setTimeout(function(){ cell.style.transform='scale(1)'; }, 100);
+                }
+              }
+            });
+          }
+        }catch(e){}
         renderCalendar();
         renderDiaryAroundToday();
         renderMoneyAroundToday();
         if (isDiarySearchFilterOpen) filterDiaryCustomList();
+        // 렌더 후 선택된 셀에 진동 피드백 한번 더 (스윙2앱에서 확실히 느끼게)
+        setTimeout(function(){
+          try{ if(navigator.vibrate) navigator.vibrate([20, 30, 20]); }catch(e){}
+        }, 50);
     }
 
     function changeMonth(delta) {
@@ -11167,6 +11195,7 @@ async function showPhotosForDate(dateStr){
           if(hasPhotoFlag) cell.classList.add('has-photo');
           cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + (hasPhotoFlag ? `<div class="cal-photo-corner has-pin-icon" data-date="${dateStr}"><span class="pin-emoji">📌</span></div>` : '');
           cell.onclick = async (e) => {
+              try{ if(navigator.vibrate) navigator.vibrate(30); }catch(err){}
               const rect = cell.getBoundingClientRect();
               const x = e.clientX - rect.left;
               const y = e.clientY - rect.top;
@@ -11312,13 +11341,10 @@ async function showPhotosForDate(dateStr){
         if(hasPhotoFlag) cell.classList.add('has-photo');
         cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + (hasPhotoFlag ? `<div class="cal-photo-corner" data-date="${dateStr}"><span class="pin-emoji">📌</span></div>` : '');
         cell.onclick = (e) => {
+            try{ if(navigator.vibrate) navigator.vibrate(30); }catch(err){}
             const rect = cell.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            if(x < 36 && y < 36 && hasPhotoFlag){
-              e.stopPropagation();
-              return false;
-            }
+            const x = e.clientX - rect.left; const y = e.clientY - rect.top;
+            if(x < 36 && y < 36 && hasPhotoFlag){ e.stopPropagation(); return false; }
             if(typeof selectDiaryDate==='function') selectDiaryDate(dateStr);
         };
         grid.appendChild(cell);
@@ -11469,6 +11495,7 @@ async function showPhotosForDate(dateStr){
         if(hasPhotoFlag) cell.classList.add('has-photo');
         cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + (hasPhotoFlag ? `<div class="cal-photo-corner"></div>` : '');
         cell.onclick = (e) => {
+            try{ if(navigator.vibrate) navigator.vibrate(30); }catch(err){}
             const rect = cell.getBoundingClientRect();
             const x = e.clientX - rect.left; const y = e.clientY - rect.top;
             if(x < 36 && y < 36 && hasPhotoFlag){ e.stopPropagation(); return false; }
@@ -11662,6 +11689,7 @@ async function showPhotosForDate(dateStr){
         if(hasPhotoFlag) cell.classList.add('has-photo');
         cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + (hasPhotoFlag ? `<div class="cal-photo-corner"></div>` : '');
         cell.onclick = (e) => {
+            try{ if(navigator.vibrate) navigator.vibrate(30); }catch(err){}
             const rect = cell.getBoundingClientRect();
             const x = e.clientX - rect.left; const y = e.clientY - rect.top;
             if(x < 36 && y < 36 && hasPhotoFlag){ e.stopPropagation(); return false; }
@@ -12815,6 +12843,24 @@ async function showPhotosForDate(dateStr){
 /* 하이라이트 적을 때도 종료바 보이게 - 내용이 적어도 고정 */
 #photo-lightbox-content {
   margin-bottom: 70px !important;
+}
+</style>
+<style id="V3_71_FIX">
+/* V3_71 fix: 일자 선택시 제목 터치와 동일한 진동/움직임 - 터치 애니메이션 */
+.cal-cell {
+  -webkit-tap-highlight-color: transparent !important;
+}
+.cal-cell:active {
+  transform: scale(0.92) !important;
+  transition: transform 0.1s ease !important;
+}
+.cal-cell.selected-date {
+  animation: calSelectPop 0.2s ease !important;
+}
+@keyframes calSelectPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.92); }
+  100% { transform: scale(1); }
 }
 </style>
 </body>
