@@ -11912,10 +11912,8 @@ async function showPhotosForDate(dateStr){
           titleArea.className = 'photo-title-area' + (display.isEmpty ? ' no-title' : ' has-title');
           titleArea.innerHTML = display.html;
           titleArea.style.cursor='pointer';
-          titleArea.addEventListener('click', function(e){
-            e.preventDefault(); e.stopPropagation();
-            window.openPhotoLightbox(diaryItem.photo || null, diaryItem);
-          });
+          // V3_61 fix: 제목 클릭시 별 이동이 먼저, 사진 확대는 사진 클릭시만 - 중복 리스너 제거
+          // 기존 openPhotoLightbox 리스너 제거 (V3_FINAL의 onTitleClick이 별 이동 담당)
         }
 
         const hasPhoto = !!diaryItem.photo;
