@@ -12557,8 +12557,13 @@ async function showPhotosForDate(dateStr){
         if(!ta._v67Bound){
           // V3_79 fix: 터치 한번에 별 바뀌는 문제 - 더블클릭/더블탭으로만 별 변경
           var singleClickHandler=function(e){ 
-            // 싱글클릭은 별 변경 안 함 - 막기
-            e.preventDefault(); e.stopPropagation();
+            // V3_81: 싱글클릭 번쩍임 완전 차단 - 모든 이벤트 차단
+            e.preventDefault(); 
+            e.stopPropagation(); 
+            if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+            // 포커스 제거로 번쩍임 방지
+            if(e.target && e.target.blur) e.target.blur();
+            if(ta && ta.blur) ta.blur();
             return false;
           };
           var doubleClickHandler=function(e){ return onTitleClick(e, ta); };
@@ -12569,12 +12574,19 @@ async function showPhotosForDate(dateStr){
               var diff=now-lastTap;
               if(diff<350 && diff>0){
                 e.preventDefault();
+                if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+                if(e.target && e.target.blur) e.target.blur();
+                if(ta && ta.blur) ta.blur();
                 lastTap=0;
                 return onTitleClick(e, ta);
               }else{
                 lastTap=now;
-                // 첫 탭은 별 변경 안 함
-                e.preventDefault(); e.stopPropagation();
+                // V3_81: 첫 탭은 번쩍임 없이 차단
+                e.preventDefault(); 
+                e.stopPropagation();
+                if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+                if(e.target && e.target.blur) e.target.blur();
+                if(ta && ta.blur) ta.blur();
                 return false;
               }
             };
@@ -13178,6 +13190,65 @@ document.addEventListener('DOMContentLoaded', function(){
 /* 브라우저 기본 active 하이라이트 제거 */
 .photo-title-area::-moz-focus-inner {
   border: 0 !important;
+}
+</style>
+<style id="V3_81_FIX">
+/* V3_81 fix: 제목 한 번 터치 번쩍임 완전 제거 - 강력 버전 */
+* {
+  -webkit-tap-highlight-color: transparent !important;
+}
+html, body, .app-container, #diary-around-today-list, .sub-memo-item {
+  -webkit-tap-highlight-color: transparent !important;
+}
+.photo-title-area,
+.photo-title-area * {
+  -webkit-tap-highlight-color: rgba(0,0,0,0) !important;
+  -webkit-tap-highlight-color: transparent !important;
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  -khtml-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+  outline: none !important;
+  -webkit-focus-ring-color: transparent !important;
+}
+.photo-title-area:active,
+.photo-title-area:focus,
+.photo-title-area:focus-visible,
+.photo-title-area:focus-within,
+.photo-title-area:hover,
+.photo-title-area:visited,
+.photo-title-area:target {
+  background: #fff0f0 !important;
+  background-color: #fff0f0 !important;
+  transform: none !important;
+  -webkit-transform: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  border-bottom: 1px solid #f3d5d5 !important;
+  filter: none !important;
+  opacity: 1 !important;
+  animation: none !important;
+  transition: none !important;
+}
+.sub-memo-item:active,
+.sub-memo-item:focus,
+.sub-memo-item:hover {
+  transform: none !important;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.04) !important;
+}
+/* 제목 영역 클릭 시 브라우저 기본 포커스 링 완전 제거 */
+.photo-title-area::-moz-focus-inner,
+.photo-title-area::-moz-focus-outer {
+  border: 0 !important;
+  outline: none !important;
+}
+/* 터치 시 배경색 변화 완전 차단 */
+@media (hover: none) {
+  .photo-title-area:active {
+    background: #fff0f0 !important;
+  }
 }
 </style>
 </body>
