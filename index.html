@@ -8671,9 +8671,11 @@ window.attachPhotoDoubleTap = function(el, handler){
                 ${textContentHTML}
             `;
             
-            // V204 - 사진 클릭만 확대, 전체 클릭은 수정폼 안 열림
-            const _photoArea = itemBox.querySelector('.diary-photo-wrap, .diary-photo');
-            if(_photoArea){
+                        // V204 - 사진 클릭만 확대, 전체 클릭은 수정폼 안 열림
+            // V3_68 fix: 사진 없는 곳 더블클릭시 키:NULL 버그 수정 - 사진 있을 때만 확대 핸들러 부착
+            const _photoArea = itemBox.querySelector('.diary-photo-wrap:not(.empty-photo-wrap), .diary-photo:not(.empty-icon)');
+            const _hasRealPhoto = !!(item.photo && String(item.photo).trim() && String(item.photo).toUpperCase()!=='NULL');
+            if(_photoArea && _hasRealPhoto){
                 _photoArea.style.cursor='zoom-in';
                 _photoArea.style.pointerEvents='auto';
                 const handlePhotoClick = async (e)=>{
@@ -8720,6 +8722,22 @@ window.attachPhotoDoubleTap = function(el, handler){
                 _textArea.addEventListener('touchend', ()=>{ if(pressTimer) clearTimeout(pressTimer); });
             }
             // 전체 박스 클릭으로는 수정폼 안 열림 - 수정 버튼으로만
+
+            // V3_68: 사진 없는 빈 박스는 확대 커서 제거, 클릭시 수정폼 열기
+            const _emptyArea = itemBox.querySelector('.empty-photo-wrap, .empty-icon');
+            if(_emptyArea){
+                _emptyArea.style.cursor='pointer';
+                _emptyArea.style.pointerEvents='auto';
+                _emptyArea.addEventListener('click', (e)=>{
+                    e.preventDefault(); e.stopPropagation();
+                    openDiaryForm(item.date, item);
+                });
+                _emptyArea.addEventListener('dblclick', (e)=>{
+                    e.preventDefault(); e.stopPropagation();
+                    // 더블클릭시에도 수정폼 (키:NULL 방지)
+                    openDiaryForm(item.date, item);
+                });
+            }
 
             listEl.appendChild(itemBox);
         });
@@ -8846,9 +8864,11 @@ window.attachPhotoDoubleTap = function(el, handler){
                 ${textContentHTML}
             `;
             
-            // V204 - 사진 클릭만 확대, 전체 클릭은 수정폼 안 열림
-            const _photoArea = itemBox.querySelector('.diary-photo-wrap, .diary-photo');
-            if(_photoArea){
+                        // V204 - 사진 클릭만 확대, 전체 클릭은 수정폼 안 열림
+            // V3_68 fix: 사진 없는 곳 더블클릭시 키:NULL 버그 수정 - 사진 있을 때만 확대 핸들러 부착
+            const _photoArea = itemBox.querySelector('.diary-photo-wrap:not(.empty-photo-wrap), .diary-photo:not(.empty-icon)');
+            const _hasRealPhoto = !!(item.photo && String(item.photo).trim() && String(item.photo).toUpperCase()!=='NULL');
+            if(_photoArea && _hasRealPhoto){
                 _photoArea.style.cursor='zoom-in';
                 _photoArea.style.pointerEvents='auto';
                 const handlePhotoClick = async (e)=>{
@@ -8895,6 +8915,22 @@ window.attachPhotoDoubleTap = function(el, handler){
                 _textArea.addEventListener('touchend', ()=>{ if(pressTimer) clearTimeout(pressTimer); });
             }
             // 전체 박스 클릭으로는 수정폼 안 열림 - 수정 버튼으로만
+
+            // V3_68: 사진 없는 빈 박스는 확대 커서 제거, 클릭시 수정폼 열기
+            const _emptyArea = itemBox.querySelector('.empty-photo-wrap, .empty-icon');
+            if(_emptyArea){
+                _emptyArea.style.cursor='pointer';
+                _emptyArea.style.pointerEvents='auto';
+                _emptyArea.addEventListener('click', (e)=>{
+                    e.preventDefault(); e.stopPropagation();
+                    openDiaryForm(item.date, item);
+                });
+                _emptyArea.addEventListener('dblclick', (e)=>{
+                    e.preventDefault(); e.stopPropagation();
+                    // 더블클릭시에도 수정폼 (키:NULL 방지)
+                    openDiaryForm(item.date, item);
+                });
+            }
 
             listEl.appendChild(itemBox);
         });
