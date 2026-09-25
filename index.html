@@ -12555,9 +12555,35 @@ async function showPhotosForDate(dateStr){
         el.dataset.diaryId=dd.id;
         ta.dataset.diaryId=dd.id;
         if(!ta._v67Bound){
-          var handler=function(e){ return onTitleClick(e, ta); };
-          ta.addEventListener('click', handler, false);
-          ta.addEventListener('touchend', handler, {passive:false});
+          // V3_79 fix: 터치 한번에 별 바뀌는 문제 - 더블클릭/더블탭으로만 별 변경
+          var singleClickHandler=function(e){ 
+            // 싱글클릭은 별 변경 안 함 - 막기
+            e.preventDefault(); e.stopPropagation();
+            return false;
+          };
+          var doubleClickHandler=function(e){ return onTitleClick(e, ta); };
+          var doubleTapHandler=(function(){
+            var lastTap=0;
+            return function(e){
+              var now=Date.now();
+              var diff=now-lastTap;
+              if(diff<350 && diff>0){
+                e.preventDefault();
+                lastTap=0;
+                return onTitleClick(e, ta);
+              }else{
+                lastTap=now;
+                // 첫 탭은 별 변경 안 함
+                e.preventDefault(); e.stopPropagation();
+                return false;
+              }
+            };
+          })();
+          // PC: 클릭은 막고 더블클릭으로만 별 변경
+          ta.addEventListener('click', singleClickHandler, false);
+          ta.addEventListener('dblclick', doubleClickHandler, false);
+          // 폰: 싱글탭 막고 더블탭으로만 별 변경
+          ta.addEventListener('touchend', doubleTapHandler, {passive:false});
           ta.setAttribute('role','button'); ta.setAttribute('tabindex','0');
           ta.addEventListener('keydown', function(e){ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); return onTitleClick(e, ta); } }, false);
           ta._v67Bound=true; ta._v65Bound=true;
