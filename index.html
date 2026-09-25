@@ -11756,10 +11756,6 @@ async function showPhotosForDate(dateStr){
 
 
 
-<div id="photo-lightbox-fixed-close" onclick="event.stopPropagation()">
-  <button onclick="closePhotoLightbox(event)">✕ 종료</button>
-</div>
-
 <script>
 // V308 - 제목 아이콘 항상 빨간 핀 하나로 통일
 (function(){
@@ -11871,9 +11867,10 @@ async function showPhotosForDate(dateStr){
       if(typeof resetPhotoZoom==='function'){ try{ resetPhotoZoom(); }catch(e){} }
       
       setTimeout(function(){
-        const fixedBtn = document.getElementById('photo-lightbox-fixed-close');
+        const // fixedBtn removed = document.getElementById('photo-lightbox-fixed-close');
         const overlay = document.getElementById('photo-lightbox-overlay');
-        if(overlay && fixedBtn && fixedBtn.parentElement!==overlay) overlay.appendChild(fixedBtn);
+        // 하단중간 고정 - overlay 안으로 이동 안 함, viewport 고정 유지
+        // if(overlay && // fixedBtn removed && // fixedBtn removed.parentElement!==overlay) overlay.appendChild(// fixedBtn removed);
         const mEl = document.getElementById('photo-lightbox-memo');
         const iEl = document.getElementById('photo-lightbox-img');
         if(mEl && !mEl._v308){
@@ -12318,6 +12315,20 @@ async function showPhotosForDate(dateStr){
   transform:scale(0.98) !important;
   box-shadow:0 2px 6px rgba(142,107,107,0.2) !important;
 }
+
+/* 사진 확대 - 우측상단 X 유지 + 하단중간 고정 종료 추가 */
+.photo-lightbox-close {
+  position:absolute !important;
+  top:18px !important; right:18px !important;
+  background:rgba(255,255,255,0.92) !important;
+  border:none !important; border-radius:50% !important;
+  width:40px !important; height:40px !important;
+  font-size:18px !important; line-height:1 !important;
+  box-shadow:0 2px 8px rgba(0,0,0,0.3) !important;
+  z-index:10 !important;
+  display:flex !important; align-items:center !important; justify-content:center !important;
+}
+
 </style>
 
 
@@ -12528,6 +12539,8 @@ async function showPhotosForDate(dateStr){
   console.log('[V3_FINAL] 기준 - 핀+별 초기 표시 수정');
 })();
 </script>
+
+
 
 </body>
 </html>
