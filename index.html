@@ -3417,9 +3417,15 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
             <button class="close-form-btn" onclick="closeDiaryFormPanel()" title="입력창 닫기">✖</button>
         </div>
 
-        <div class="reservation-box" id="reservation-box" >
+        <div class="reservation-box" id="reservation-box" style="flex-wrap:wrap;">
             <span style="font-size: 12px;">⏰ 알림 받을 시간:</span>
             <input type="time" id="reservation-time-input" style="border:1px solid var(--border-color); border-radius:4px; background:#fff;">
+            <label style="display:flex; align-items:center; gap:4px; font-size:12px; cursor:pointer; margin-left:6px;">
+                <input type="checkbox" id="daily-repeat-checkbox" style="width:14px; height:14px;"> 매일 반복
+            </label>
+            <label style="display:flex; align-items:center; gap:4px; font-size:12px; cursor:pointer; margin-left:6px; color:#27ae60; font-weight:bold;">
+                <input type="checkbox" id="daily-alarm-enabled" checked style="width:14px; height:14px;"> 매일 체크
+            </label>
         </div>
 
         <!-- 💵 가계부 입력 영역: 가계부_입력폼 모드에서만 표시 -->
@@ -13357,6 +13363,353 @@ html, body, .app-container, #diary-around-today-list, .sub-memo-item {
   cursor: pointer !important;
 }
 </style>
+
+
+<!-- 🔔 매일 알림 시스템 -->
+<style id="DAILY_ALARM_CSS">
+#daily-alarm-popup {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-150%);
+  width: min(92vw, 400px);
+  background: #fff;
+  border: 2px solid #e06d6d;
+  border-radius: 16px;
+  padding: 18px 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  z-index: 10000;
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: block;
+}
+#daily-alarm-popup.show {
+  transform: translateX(-50%) translateY(0);
+}
+#daily-alarm-popup .alarm-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: bold;
+  font-size: 16px;
+  color: #e06d6d;
+  margin-bottom: 10px;
+}
+#daily-alarm-popup .alarm-body {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #2c3e50;
+  margin-bottom: 12px;
+  max-height: 120px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+#daily-alarm-popup .alarm-footer {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+#daily-alarm-popup .alarm-btn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  font-weight: bold;
+  font-size: 13px;
+  cursor: pointer;
+}
+#daily-alarm-popup .alarm-btn-confirm {
+  background: #e06d6d;
+  color: #fff;
+}
+#daily-alarm-popup .alarm-btn-snooze {
+  background: #f0f0f0;
+  color: #666;
+}
+@keyframes alarm-shake {
+  0%,100% { transform: translateX(-50%) translateY(0); }
+  10%,30%,50%,70%,90% { transform: translateX(-50%) translateY(0) translateX(-3px); }
+  20%,40%,60%,80% { transform: translateX(-50%) translateY(0) translateX(3px); }
+}
+#daily-alarm-popup.shake {
+  animation: alarm-shake 0.5s ease;
+}
+</style>
+
+<div id="daily-alarm-popup">
+  <div class="alarm-header">🔔 알림 시간입니다!</div>
+  <div class="alarm-body" id="daily-alarm-body">내용</div>
+  <div class="alarm-footer">
+    <button class="alarm-btn alarm-btn-snooze" onclick="snoozeDailyAlarm()">5분 후</button>
+    <button class="alarm-btn alarm-btn-confirm" onclick="closeDailyAlarm()">확인</button>
+  </div>
+</div>
+
+<script id="DAILY_ALARM_JS">
+// ===== 🔔 매일 알림 체크 시스템 =====
+let dailyAlarmInterval = null;
+let snoozedAlarms = [];
+let lastNotifiedKeys = new Set();
+let audioContext = null;
+
+function initDailyAlarmSystem() {
+  console.log('[DailyAlarm] 초기화');
+  // 알림 권한 요청
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission().then(p=>console.log('[DailyAlarm] Notification permission:', p));
+  }
+  // 매일 체크 설정 복원
+  const enabledEl = document.getElementById('daily-alarm-enabled');
+  const savedEnabled = localStorage.getItem('dailyAlarmEnabled');
+  if (enabledEl) {
+    enabledEl.checked = savedEnabled === null ? true : savedEnabled === 'true';
+    enabledEl.addEventListener('change', function(){
+      localStorage.setItem('dailyAlarmEnabled', this.checked);
+      if(this.checked) startDailyAlarmChecker();
+      else stopDailyAlarmChecker();
+    });
+  }
+  startDailyAlarmChecker();
+  // 앱이 백그라운드에서도 체크되도록 visibilitychange 리스너
+  document.addEventListener('visibilitychange', function(){
+    if(!document.hidden) checkDailyAlarms();
+  });
+}
+
+function startDailyAlarmChecker() {
+  stopDailyAlarmChecker();
+  const enabled = localStorage.getItem('dailyAlarmEnabled');
+  if(enabled === 'false') return;
+  checkDailyAlarms(); // 즉시 체크
+  dailyAlarmInterval = setInterval(checkDailyAlarms, 60000); // 1분마다 체크
+  console.log('[DailyAlarm] 체커 시작');
+}
+
+function stopDailyAlarmChecker() {
+  if(dailyAlarmInterval) clearInterval(dailyAlarmInterval);
+  dailyAlarmInterval = null;
+}
+
+function getCurrentTimeStr() {
+  const now = new Date();
+  return String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+}
+
+function getTodayStrLocal() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth()+1).padStart(2,'0');
+  const d = String(now.getDate()).padStart(2,'0');
+  return `${y}-${m}-${d}`;
+}
+
+function playAlarmSound() {
+  try {
+    if(!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    if(audioContext.state === 'suspended') audioContext.resume();
+    // 3번 울리는 알림음
+    const times = [0, 0.4, 0.8];
+    times.forEach((t,i)=>{
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880 + i*100, audioContext.currentTime + t);
+      osc.frequency.exponentialRampToValueAtTime(440, audioContext.currentTime + t + 0.3);
+      gain.gain.setValueAtTime(0.5, audioContext.currentTime + t);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + t + 0.35);
+      osc.connect(gain);
+      gain.connect(audioContext.destination);
+      osc.start(audioContext.currentTime + t);
+      osc.stop(audioContext.currentTime + t + 0.35);
+    });
+    // 진동 (모바일)
+    if(navigator.vibrate) navigator.vibrate([200,100,200,100,400]);
+  } catch(e){ console.log('[DailyAlarm] sound error', e); }
+}
+
+function checkDailyAlarms() {
+  try {
+    const enabledEl = document.getElementById('daily-alarm-enabled');
+    if(enabledEl && !enabledEl.checked) return;
+    if(localStorage.getItem('dailyAlarmEnabled') === 'false') return;
+    
+    const now = new Date();
+    const curTime = getCurrentTimeStr();
+    const todayStr = getTodayStrLocal();
+    const todayKey = todayStr + ' ' + curTime;
+    
+    // 이미 오늘 이 시간에 알림했으면 중복 방지 (같은 분)
+    if(lastNotifiedKeys.has(todayKey)) return;
+    
+    // diaries 배열이 없으면 리턴
+    if(typeof diaries === 'undefined' || !Array.isArray(diaries)) return;
+    
+    let matched = [];
+    diaries.forEach(item=>{
+      if(!item.time) return;
+      const itemTime = (item.time || '').substring(0,5);
+      if(itemTime !== curTime) return;
+      
+      // 조건 1: 오늘 날짜인 경우
+      if(item.date === todayStr) {
+        matched.push(item);
+        return;
+      }
+      // 조건 2: 매일 반복 체크된 항목
+      if(item.dailyRepeat) {
+        matched.push(item);
+        return;
+      }
+      // 조건 3: 기념일 반복이 오늘이 생일/기념일인 경우
+      if(item.anniversary && item.annivRepeat) {
+        try {
+          const itemDate = new Date(item.date);
+          const today = new Date();
+          if(item.annivRepeat === 'yearly' && itemDate.getMonth() === today.getMonth() && itemDate.getDate() === today.getDate()) {
+            matched.push(item);
+          } else if(item.annivRepeat === 'monthly' && itemDate.getDate() === today.getDate()) {
+            matched.push(item);
+          }
+        } catch(e){}
+      }
+    });
+    
+    // 스누즈된 알림도 체크
+    const nowMs = now.getTime();
+    snoozedAlarms = snoozedAlarms.filter(s=>{
+      if(nowMs >= s.wakeTime) {
+        matched.push(s.item);
+        return false;
+      }
+      return true;
+    });
+    
+    if(matched.length > 0) {
+      lastNotifiedKeys.add(todayKey);
+      // 오늘 날짜가 바뀌면 lastNotifiedKeys 초기화 (자정에)
+      setTimeout(()=>{
+        if(getTodayStrLocal() !== todayStr) lastNotifiedKeys.clear();
+      }, 65000);
+      matched.forEach(item=> showDailyAlarmNotification(item, curTime));
+    }
+  } catch(e){ console.error('[DailyAlarm] check error', e); }
+}
+
+function showDailyAlarmNotification(item, timeStr) {
+  playAlarmSound();
+  const popup = document.getElementById('daily-alarm-popup');
+  const body = document.getElementById('daily-alarm-body');
+  if(!popup || !body) return;
+  
+  const title = item.anniversary || item.text || '알림';
+  const titleShort = title.length > 80 ? title.substring(0,80) + '...' : title;
+  const dateStr = item.date || '';
+  
+  body.innerHTML = `<div style="font-weight:bold; color:#e06d6d; margin-bottom:6px;">⏰ ${timeStr} - ${item.anniversary ? '📌 ' + item.anniversary : ''}</div><div>${titleShort}</div><div style="font-size:11px; color:#999; margin-top:6px;">${dateStr} ${item.time || ''}</div>`;
+  popup.classList.add('show');
+  popup.classList.remove('shake');
+  setTimeout(()=> popup.classList.add('shake'), 100);
+  
+  // 브라우저 알림
+  if('Notification' in window && Notification.permission === 'granted') {
+    try {
+      const n = new Notification('🔔 다이어리 알림', {
+        body: titleShort,
+        icon: 'https://cdn-icons-png.flaticon.com/512/3602/3602145.png',
+        requireInteraction: true
+      });
+      n.onclick = function(){ window.focus(); closeDailyAlarm(); };
+      setTimeout(()=> n.close(), 10000);
+    } catch(e){}
+  }
+  
+  // 현재 알림 아이템 저장
+  popup.dataset.currentItemId = item.id;
+}
+
+function closeDailyAlarm() {
+  const popup = document.getElementById('daily-alarm-popup');
+  if(popup) popup.classList.remove('show');
+}
+
+function snoozeDailyAlarm() {
+  const popup = document.getElementById('daily-alarm-popup');
+  if(!popup) return;
+  const itemId = popup.dataset.currentItemId;
+  if(typeof diaries !== 'undefined') {
+    const item = diaries.find(d=> d.id === itemId);
+    if(item) {
+      snoozedAlarms.push({
+        item: item,
+        wakeTime: Date.now() + 5*60*1000
+      });
+    }
+  }
+  closeDailyAlarm();
+}
+
+// 기존 저장 로직에 dailyRepeat 추가
+(function(){
+  const origSave = window.saveDiaryEntry || null;
+  // 저장 함수 후킹을 위해 save 버튼 클릭 시 dailyRepeat 값 추가
+  const originalRender = window.renderDiaryAroundToday;
+  // 오버라이드 필요 없음, saveDiaryEntry 함수 직접 패치
+})();
+
+// saveDiaryEntry 함수 패치 - dailyRepeat 저장
+(function patchSave(){
+  // 원본 함수가 로드될 때까지 대기
+  const interval = setInterval(()=>{
+    if(typeof window.saveDiaryEntry === 'function') {
+      clearInterval(interval);
+      const orig = window.saveDiaryEntry;
+      window.saveDiaryEntry = function(){
+        try {
+          const dailyCb = document.getElementById('daily-repeat-checkbox');
+          window._tempDailyRepeat = dailyCb ? dailyCb.checked : false;
+        } catch(e){}
+        return orig.apply(this, arguments);
+      };
+      console.log('[DailyAlarm] saveDiaryEntry patched');
+    }
+  }, 500);
+})();
+
+// 기존 diaries 저장 시 dailyRepeat 포함하도록 create/update 부분 후킹
+// MutationObserver로 diaries 배열 변경 감지 대신, 저장 직전 데이터에 추가
+const origLocalStorageSetItem = localStorage.setItem;
+localStorage.setItem = function(key, value){
+  try {
+    if(key === 'smartDiaries' || key.includes('diary')) {
+      // diaries에 dailyRepeat 주입
+      if(window._tempDailyRepeat !== undefined) {
+        let arr = JSON.parse(value);
+        if(Array.isArray(arr) && arr.length>0) {
+          // 마지막 아이템 또는 editing 중인 아이템에 dailyRepeat 추가
+          const last = arr[arr.length-1];
+          if(last && !last.dailyRepeat && window._tempDailyRepeat) {
+            last.dailyRepeat = true;
+            value = JSON.stringify(arr);
+          }
+        }
+      }
+    }
+  } catch(e){}
+  return origLocalStorageSetItem.apply(this, arguments);
+};
+
+// 초기화 - 페이지 로드 후
+window.addEventListener('load', function(){
+  setTimeout(initDailyAlarmSystem, 1500);
+});
+
+// 테스트용 함수 (콘솔에서 호출)
+window.testDailyAlarm = function(){
+  const testItem = {id:'test', date:getTodayStrLocal(), time:getCurrentTimeStr(), text:'테스트 알림입니다! 매일 체크 기능이 잘 작동합니다.', anniversary:'테스트'};
+  showDailyAlarmNotification(testItem, getCurrentTimeStr());
+};
+
+console.log('[DailyAlarm] 스크립트 로드 완료 - testDailyAlarm()으로 테스트 가능');
+</script>
 
 </body>
 </html>
