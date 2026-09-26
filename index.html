@@ -11570,57 +11570,6 @@ async function showPhotosForDate(dateStr){
 
 
 <script>
-// V301-U 1) 종료 후 재진입시 운세 자동팝업 금지
-(function(){
-  console.log('[V301-U] 운세 자동팝업 완전 차단');
-
-  // 기존 maybeAutoShowFortunePopup 덮어쓰기 - 절대 자동 안 뜸, 수동 클릭시에만 뜸
-  window.maybeAutoShowFortunePopup = function(){
-    console.log('[V301-U] 자동 운세 팝업 차단됨 - 수동 클릭시에만 열림');
-    return;
-  };
-
-  // 혹시 다른 곳에서 직접 openFortunePopup 호출하는 타이머도 차단
-  const _origOpenFortune = window.openFortunePopup;
-  let _fortuneManuallyAllowed = false;
-
-  // 운세 배너 클릭 시에만 허용 플래그
-  document.addEventListener('click', function(e){
-    if(e.target.closest('#fortune-teaser')){
-      _fortuneManuallyAllowed = true;
-      console.log('[V301-U] 운세 수동 클릭 허용');
-      setTimeout(()=>{ _fortuneManuallyAllowed = false; }, 2000);
-    }
-  }, true);
-
-  // openFortunePopup을 감싸서 자동 호출은 차단하되, 수동은 허용
-  // 단, V301-H 로직이 이미 3초 이내 자동 차단하고 있으므로, 여기서는 maybeAutoShow만 차단하면 충분
-  // 추가 안전장치: DOMContentLoaded에서 자동 호출된 경우 lastShown이 오늘이라도 팝업 안 뜨게
-
-  // localStorage에 오늘 봤다고 미리 기록해서 maybeAutoShow가 뜨더라도 조건에서 걸리게? No, we already disabled.
-
-  // 앱 시작 시 메인 탭을 diary로 강제 + 운세 팝업 닫기
-  window.addEventListener('load', function(){
-    setTimeout(()=>{
-      const fortuneEl = document.getElementById('fortune-popup-overlay');
-      if(fortuneEl && fortuneEl.classList.contains('active')){
-        fortuneEl.classList.remove('active');
-        document.body.classList.remove('modal-open');
-        document.body.style.overflow='';
-        console.log('[V301-U] 시작시 떠있는 운세 팝업 강제 닫기');
-      }
-      if(typeof switchMainTab==='function'){
-        switchMainTab('diary');
-      }
-    }, 500);
-  });
-
-  console.log('[V301-U] 1번 문제 수정 완료');
-})();
-</script>
-
-
-<script>
 // V301-V 달력 네모칸 크기 복구 + 빈공간 없음 유지
 (function(){
   console.log('[V301-V] 달력 크기 복구');
@@ -12058,27 +12007,7 @@ async function showPhotosForDate(dateStr){
     }, 100);
   };
 
-  window.maybeAutoShowFortunePopup = function(){
-    try{
-      const autoV = localStorage.getItem('smartDiaryFortuneAuto');
-      if(autoV==='0') return;
-      if(typeof getShowFortune==='function' && !getShowFortune()) return;
-      let hasBirth=false;
-      try{
-        const bi = (typeof sajuBirthInfo!=='undefined' && sajuBirthInfo && sajuBirthInfo.date) ? sajuBirthInfo : JSON.parse(localStorage.getItem('smartDiarySajuBirth')||'null');
-        hasBirth = !!(bi && bi.date);
-      }catch(e){}
-      if(!hasBirth) return;
-      const today = new Date().toISOString().slice(0,10);
-      const lastShown = localStorage.getItem('smartDiarySajuLastShown');
-      const sess = sessionStorage.getItem('fortuneAutoShownSession');
-      const force = new URLSearchParams(window.location.search).get('autobrief')==='1';
-      if(!force && (lastShown===today || sess===today)) return;
-      if(typeof openFortunePopup==='function'){
-        setTimeout(function(){ openFortunePopup(); try{ sessionStorage.setItem('fortuneAutoShownSession', today); }catch(e){} }, 1000);
-      }
-    }catch(e){}
-  };
+  
 
   document.addEventListener('DOMContentLoaded', function(){
     setTimeout(function(){
@@ -13709,6 +13638,72 @@ window.testDailyAlarm = function(){
 };
 
 console.log('[DailyAlarm] 스크립트 로드 완료 - testDailyAlarm()으로 테스트 가능');
+</script>
+
+
+<script id="V3_93_FORTUNE_ONCE_PER_DAY">
+// V3_93: 오늘의 운세 하루에 한번만 - 종료 후 재진입시 안 나오게
+(function(){
+  console.log('[V3_93] 운세 하루 1번 로직 적용');
+  
+  // 기존 openFortunePopup이 호출될 때 lastShown 저장 (이미 closeFortunePopup에서 저장하지만, open 시에도 저장)
+  const origOpen = window.openFortunePopup;
+  if(origOpen) {
+    window.openFortunePopup = function(){
+      try {
+        const today = (typeof getTodayStr==='function') ? getTodayStr() : new Date().toISOString().slice(0,10);
+        localStorage.setItem('smartDiarySajuLastShown', today);
+        localStorage.setItem('smartDiarySajuLastShownTime', String(Date.now()));
+        console.log('[V3_93] 운세 열림 기록:', today);
+      } catch(e){}
+      return origOpen.apply(this, arguments);
+    };
+  }
+  
+  // 하루 1번 자동 팝업 - 종료 후 재진입시 안 나오게
+  window.maybeAutoShowFortunePopup = function(){
+    try {
+      const autoV = localStorage.getItem('smartDiaryFortuneAuto');
+      if(autoV === '0') {
+        console.log('[V3_93] 자동팝업 꺼짐');
+        return;
+      }
+      if(typeof getShowFortune==='function' && !getShowFortune()) {
+        console.log('[V3_93] 운세 기능 꺼짐');
+        return;
+      }
+      // 생년월일 없으면 안 띄움
+      let hasBirth = false;
+      try {
+        const bi = (typeof sajuBirthInfo!=='undefined' && sajuBirthInfo && sajuBirthInfo.date) ? sajuBirthInfo : JSON.parse(localStorage.getItem('smartDiarySajuBirth')||'null');
+        hasBirth = !!(bi && bi.date);
+      } catch(e){}
+      if(!hasBirth) {
+        console.log('[V3_93] 생년월일 없음');
+        return;
+      }
+      const today = (typeof getTodayStr==='function') ? getTodayStr() : new Date().toISOString().slice(0,10);
+      const lastShown = localStorage.getItem('smartDiarySajuLastShown');
+      
+      // URL에 autobrief=1 있으면 강제 오픈 (테스트용)
+      const urlParams = new URLSearchParams(window.location.search);
+      const forceOpen = urlParams.get('autobrief') === '1';
+      
+      if(!forceOpen && lastShown === today) {
+        console.log('[V3_93] 오늘 이미 운세 봄:', today, '-> 자동팝업 차단');
+        return;
+      }
+      console.log('[V3_93] 오늘 첫 진입, 운세 자동팝업:', today, 'lastShown:', lastShown);
+      if(typeof origOpen==='function') origOpen();
+      else if(typeof window.openFortunePopup==='function') window.openFortunePopup();
+    } catch(e){
+      console.error('[V3_93] error', e);
+    }
+  };
+  
+  // 혹시 기존 타이머로 자동 호출되는 것 방지 - load 이벤트에서 한번만 호출되도록
+  console.log('[V3_93] 적용 완료 - 하루 1번만 자동 표시');
+})();
 </script>
 
 </body>
