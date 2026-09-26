@@ -13256,8 +13256,9 @@ html, body, .app-container, #diary-around-today-list, .sub-memo-item {
 
 
 
-<style id="V3_88_FINAL">
-/* V3_88 FINAL: 종료버튼 하단 가운데 정렬 고정 */
+
+<style id="V3_89_FINAL">
+/* V3_89 FINAL: 제목만 있을 때 박스 가려짐 해결 + 사진 있을 때 내용박스 시작 위치 조정 */
 /* 오버레이 */
 .photo-lightbox-overlay {
   background: rgba(0,0,0,0.88) !important;
@@ -13267,8 +13268,10 @@ html, body, .app-container, #diary-around-today-list, .sub-memo-item {
   background: rgba(0,0,0,0.88) !important;
   padding: 0 !important;
   padding-bottom: 100px !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  overflow-y: auto !important;
 }
-/* 컨텐츠 */
 #photo-lightbox-content,
 .photo-lightbox-content {
   width: 100vw !important;
@@ -13277,51 +13280,82 @@ html, body, .app-container, #diary-around-today-list, .sub-memo-item {
   padding: 0 !important;
   gap: 0 !important;
   background: transparent !important;
+  justify-content: flex-start !important;
+  align-items: stretch !important;
 }
-/* 사진 */
+/* 사진 - 좌우 꽉 채우기 */
 #photo-lightbox-img,
 .photo-lightbox-img {
   width: 100vw !important;
   max-width: 100vw !important;
   min-width: 100vw !important;
+  height: auto !important;
   max-height: 75vh !important;
   object-fit: cover !important;
   object-position: center top !important;
   border-radius: 0 !important;
   margin: 0 !important;
   background: #000 !important;
+  display: block !important;
 }
-/* 메모 - 94vw 중앙, 라운드 20px */
-#photo-lightbox-memo,
-.photo-lightbox-memo {
+/* 2) 사진 있을 때: 내용박스 출발이 사진 끝나는 시점에서 시작 */
+#photo-lightbox-memo:not(.no-photo-mode),
+.photo-lightbox-memo:not(.no-photo-mode) {
   width: 94vw !important;
   max-width: 94vw !important;
   min-width: 94vw !important;
-  margin: -24px auto 0 auto !important;
+  margin: 0 auto 0 auto !important;
+  margin-top: 0 !important;
   background: #FFFBEB !important;
   border-radius: 20px !important;
   padding: 20px 22px !important;
+  position: relative !important;
   z-index: 2 !important;
   box-shadow: 0 4px 20px rgba(0,0,0,0.25) !important;
+  font-size: 18px !important;
+  line-height: 1.6 !important;
+  color: #3E2723 !important;
+  transform: translateY(-20px) !important;
 }
+/* 1) 제목+내용만 있을 때: 너무 위에서 시작해서 가려짐 -> 아래에서 시작 */
+#photo-lightbox-memo.no-photo-mode,
 .photo-lightbox-memo.no-photo-mode {
   width: min(92vw, 600px) !important;
-  margin: 60px auto 0 auto !important;
+  max-width: 92vw !important;
+  min-width: auto !important;
+  margin: 0 auto !important;
+  margin-top: 90px !important;
+  background: #FFFBEB !important;
+  border-radius: 20px !important;
+  padding: 22px 24px !important;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.3) !important;
+  position: relative !important;
+  z-index: 2 !important;
+  transform: none !important;
 }
-/* 종료버튼 영역 - 하단 가운데 정렬 핵심 수정 */
+/* X 닫기 버튼 - 우상단, 제목만 있을 때도 가려지지 않게 */
+.photo-lightbox-close,
+#photo-lightbox-close {
+  background: rgba(0,0,0,0.55) !important;
+  backdrop-filter: blur(8px) !important;
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 50% !important;
+  top: 14px !important;
+  right: 14px !important;
+  z-index: 10 !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
+}
+/* 종료 버튼 - 하단 가운데 */
 #photo-lightbox-fixed-close-bottom,
 .photo-lightbox-fixed-close-bottom {
   position: fixed !important;
   left: 0 !important;
   right: 0 !important;
   bottom: 0 !important;
-  top: auto !important;
   width: 100% !important;
   max-width: 100% !important;
-  min-width: 100% !important;
-  height: auto !important;
   background: #FFFBEB !important;
-  background-color: #FFFBEB !important;
   padding: 12px 16px 16px 16px !important;
   padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
   margin: 0 !important;
@@ -13333,16 +13367,12 @@ html, body, .app-container, #diary-around-today-list, .sub-memo-item {
   justify-content: center !important;
   align-items: center !important;
   box-sizing: border-box !important;
-  transform: none !important;
 }
-/* 종료 버튼 - 가운데 정렬, 꽉 채우지 않고 중앙 90% */
 #photo-lightbox-fixed-close-bottom button,
 .photo-lightbox-fixed-close-bottom button {
   width: 100% !important;
   max-width: 100% !important;
-  min-width: auto !important;
   background: #3E2723 !important;
-  background-color: #3E2723 !important;
   color: #fff !important;
   border: none !important;
   border-radius: 14px !important;
@@ -13350,14 +13380,11 @@ html, body, .app-container, #diary-around-today-list, .sub-memo-item {
   font-size: 17px !important;
   font-weight: bold !important;
   text-align: center !important;
-  line-height: 1 !important;
   display: flex !important;
   justify-content: center !important;
   align-items: center !important;
-  gap: 6px !important;
   margin: 0 auto !important;
   box-sizing: border-box !important;
-  flex: 1 !important;
 }
 </style>
 
