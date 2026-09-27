@@ -10533,8 +10533,20 @@ async function showPhotosForDate(dateStr){
     };
     window._vFinalAnniv=true;
   }
-  // 고정핀 - 원본 has-photo 유지 + 사진 있는 날짜는 무조건 핀 보강
+  // 고정핀 - 설정에 따라 표시/숨김 (V3_97)
   function forcePin(){
+    try{
+      var showPinSetting = true;
+      try {
+        if(typeof getShowPhotoPin==='function') showPinSetting = getShowPhotoPin();
+        else showPinSetting = localStorage.getItem('smartDiaryShowPhotoPin') !== 'false';
+      } catch(e){}
+      if(!showPinSetting) {
+        document.querySelectorAll('.cal-cell .cal-photo-corner').forEach(function(c){ c.style.display='none'; c.remove(); });
+        document.querySelectorAll('.cal-cell.has-photo').forEach(function(c){ c.classList.remove('has-photo'); });
+        return;
+      }
+
     try{
       var all=getAll();
       var photoDates=new Set(all.filter(function(d){return !!d.photo;}).map(function(d){ return normDate(d.date); }));
