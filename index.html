@@ -5437,9 +5437,66 @@ window.attachPhotoDoubleTap = function(el, handler){
 
     function getAnniversaryForDate(dateStr) {
         const diaries = getAllDiaries();
-        const found = diaries.find(item => item.anniversary && sajuAnniversaryMatches(item, dateStr));
+        // [FIXED V3.2] 출력물3장 매일 반복 버그 수정
+        // 1. dailyRepeat로 인한 캘린더 도배 방지: dailyRepeat만 있고 annivRepeat 없는 항목은 캘린더 라벨에서 제외
+        // 2. 같은 날짜에 여러 기념일이 있으면 가장 최근(마지막) 항목 우선
+        const normalized = normalizeDateStr(dateStr);
+        let found = null;
+        for(let i=diaries.length-1; i>=0; i--){
+            const item = diaries[i];
+            if(!item.anniversary) continue;
+            // dailyRepeat만으로 매일 표시되는 항목은 캘린더 라벨에서 제외 (리스트에는 표시됨)
+            if(item.dailyRepeat && !item.annivRepeat) continue;
+            // 텍스트가 '출력' 포함된 임시 메모가 기념일로 잘못 등록된 경우, 원본 날짜가 아니면 제외 (정리 대상)
+            if(item.annivRepeat === 'none' || !item.annivRepeat){
+                if(normalizeDateStr(item.date) !== normalized) continue;
+            }
+            if(sajuAnniversaryMatches(item, normalized)){
+                found = item;
+                break;
+            }
+        }
+        // 추가 방어: 출력물/출력 처럼 업무용 텍스트가 기념일로 등록되어 매일 도배되는 경우 숨김
+        if(found && /출력|물\s*3장|전단지|복사/i.test(found.anniversary)){
+            // 해당 항목이 반복 설정으로 인해 7일 이상 연속으로 나타나면 캘린더에서는 숨김
+            const all = diaries.filter(d=>d.anniversary===found.anniversary);
+            if(all.length>=7){
+                // 원본 날짜에만 표시
+                if(normalizeDateStr(found.date) !== normalized) return null;
+            }
+        }
         return found ? found.anniversary : null;
     }
+    
+    // [NEW] 반복으로 도배된 기념일 정리 함수
+    function cleanupFloodingAnniversaries(){
+        const diaries = getAllDiaries();
+        const before = diaries.length;
+        const floodKeywords = ['출력물3장','출력물','출력','전단지출력','지출력'];
+        let cleaned = diaries.filter(item=>{
+            if(!item.anniversary) return true;
+            const isFlood = floodKeywords.some(k=>item.anniversary.includes(k));
+            if(isFlood && item.dailyRepeat){
+                console.log('[CLEANUP] dailyRepeat 제거:', item.anniversary, item.date);
+                item.dailyRepeat = false;
+                // annivRepeat도 없애서 원본 날짜에만 남김
+                if(item.annivRepeat && item.annivRepeat!=='none'){
+                    item.annivRepeat = 'none';
+                }
+                return true;
+            }
+            return true;
+        });
+        localStorage.setItem('smartDiaryList', JSON.stringify(cleaned));
+        if(typeof localStorage.getItem('smartDiaries')!=='undefined'){
+            try{ localStorage.setItem('smartDiaries', JSON.stringify(cleaned)); }catch(e){}
+        }
+        alert(`정리 완료! ${before}개 -> ${cleaned.length}개\n- '출력물3장' dailyRepeat 해제됨\n이제 캘린더 새로고침 됩니다.`);
+        renderCalendar();
+        renderDiaryAroundToday();
+    }
+    window.cleanupFloodingAnniversaries = cleanupFloodingAnniversaries;
+
 
     function getAllDiaries() {
         let combinedList = [];
@@ -8692,8 +8749,10 @@ window.attachPhotoDoubleTap = function(el, handler){
             itemBox.setAttribute('data-text-preview', previewText);
             if (isReservedDate) itemBox.classList.add('is-reserved');
 
+            const isDailyRepeatItem = !!item.dailyRepeat;
+            const repeatBadge = isDailyRepeatItem ? '<span style="background:#8e44ad; color:#fff; padding:1px 4px; border-radius:3px; font-size:9px; margin-right:3px;">매일</span>' : '';
             const titleText = item.anniversary || '';
-            const titleHTML = `<div class="photo-title-area" style="height:20px; font-size:12px; font-weight:bold; color:#9C6ADE; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; margin-bottom:4px; padding-left:6px;">${titleText ? titleText : '&nbsp;'}</div>`;
+            const titleHTML = `<div class="photo-title-area" style="height:20px; font-size:12px; font-weight:bold; color:#9C6ADE; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; margin-bottom:4px; padding-left:6px;">${repeatBadge}${titleText ? titleText : '&nbsp;'}</div>`;
             const emptyPhotoHTML = !item.photo ? `<div class="diary-photo-wrap empty-photo-wrap" data-empty="true"><div class="diary-photo empty-icon" style="width:100%;aspect-ratio:1/1;background:#f5f0f0;border-radius:10px;min-height:100px;display:flex;align-items:center;justify-content:center;color:#bbb;">📷</div></div>` : '';
             itemBox.innerHTML = `
                 ${titleHTML}
