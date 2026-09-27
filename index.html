@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 다이어리&가계부 V301-AK 오늘운세자동+맨밑고정종료 - Swing2App+NodeAPK 통합 최종</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 V3.1 FIXED - 원본UI 유지 + 보안패치 + 알람안정화</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -13646,7 +13646,13 @@ function showDailyAlarmNotification(item, timeStr) {
   const titleShort = title.length > 80 ? title.substring(0,80) + '...' : title;
   const dateStr = item.date || '';
   
-  body.innerHTML = `<div style="font-weight:bold; color:#e06d6d; margin-bottom:6px;">⏰ ${timeStr} - ${item.anniversary ? '📌 ' + item.anniversary : ''}</div><div>${titleShort}</div><div style="font-size:11px; color:#999; margin-top:6px;">${dateStr} ${item.time || ''}</div>`;
+  // [FIXED] XSS 방지 - textContent 기반 안전한 렌더링
+  const esc = (s)=>{ const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; };
+  const safeTitle = esc(titleShort);
+  const safeAnniv = esc(item.anniversary || '');
+  const safeDate = esc(dateStr + ' ' + (item.time||''));
+  const safeTime = esc(timeStr);
+  body.innerHTML = `<div style="font-weight:bold; color:#e06d6d; margin-bottom:6px;">⏰ ${safeTime} - ${safeAnniv ? '📌 ' + safeAnniv : ''}</div><div>${safeTitle}</div><div style="font-size:11px; color:#999; margin-top:6px;">${safeDate}</div>`;
   popup.classList.add('show');
   popup.classList.remove('shake');
   setTimeout(()=> popup.classList.add('shake'), 100);
@@ -13698,8 +13704,7 @@ function snoozeDailyAlarm() {
 })();
 
 // saveDiaryEntry 함수 패치 - dailyRepeat 저장
-(function patchSave(){
-  // 원본 함수가 로드될 때까지 대기
+(function patchSaveFixed(){
   const interval = setInterval(()=>{
     if(typeof window.saveDiaryEntry === 'function') {
       clearInterval(interval);
@@ -13708,36 +13713,37 @@ function snoozeDailyAlarm() {
         try {
           const dailyCb = document.getElementById('daily-repeat-checkbox');
           window._tempDailyRepeat = dailyCb ? dailyCb.checked : false;
+          // [FIXED] dailyRepeat를 diaries 배열에 안전하게 주입 - localStorage 패치 없이
+          if(typeof diaries !== 'undefined' && Array.isArray(diaries) && diaries.length>0){
+            // 저장 직후 마지막 아이템에 반영은 orig 내부에서 처리되므로 플래그만 전달
+          }
         } catch(e){}
-        return orig.apply(this, arguments);
+        const res = orig.apply(this, arguments);
+        try{
+          // [FIXED] 저장 후 diaries 마지막 항목에 dailyRepeat 플래그 추가
+          if(window._tempDailyRepeat && typeof diaries !== 'undefined' && diaries.length>0){
+            const last = diaries[diaries.length-1];
+            if(last && !last.dailyRepeat){
+              last.dailyRepeat = true;
+              // localStorage에 안전하게 다시 저장 (원본 함수 훼손 없음)
+              try{ localStorage.setItem('smartDiaries', JSON.stringify(diaries)); }catch(e){}
+              try{ localStorage.setItem('smartDiaryList', JSON.stringify(diaries)); }catch(e){}
+            }
+          }
+        }catch(e){}
+        return res;
       };
-      console.log('[DailyAlarm] saveDiaryEntry patched');
+      console.log('[FIXED] saveDiaryEntry patched safely');
     }
   }, 500);
 })();
 
 // 기존 diaries 저장 시 dailyRepeat 포함하도록 create/update 부분 후킹
 // MutationObserver로 diaries 배열 변경 감지 대신, 저장 직전 데이터에 추가
-const origLocalStorageSetItem = localStorage.setItem;
-localStorage.setItem = function(key, value){
-  try {
-    if(key === 'smartDiaries' || key.includes('diary')) {
-      // diaries에 dailyRepeat 주입
-      if(window._tempDailyRepeat !== undefined) {
-        let arr = JSON.parse(value);
-        if(Array.isArray(arr) && arr.length>0) {
-          // 마지막 아이템 또는 editing 중인 아이템에 dailyRepeat 추가
-          const last = arr[arr.length-1];
-          if(last && !last.dailyRepeat && window._tempDailyRepeat) {
-            last.dailyRepeat = true;
-            value = JSON.stringify(arr);
-          }
-        }
-      }
-    }
-  } catch(e){}
-  return origLocalStorageSetItem.apply(this, arguments);
-};
+// [FIXED V3.1] localStorage 원본 훼손 제거 - dailyRepeat는 saveDiaryEntry에서 직접 처리
+// origLocalStorageSetItem monkey patch removed for data safety
+window._tempDailyRepeat = false;
+console.log('[FIXED] localStorage monkey patch removed');
 
 // 초기화 - 페이지 로드 후
 window.addEventListener('load', function(){
