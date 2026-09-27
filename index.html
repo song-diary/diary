@@ -3192,6 +3192,7 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
                 <div class="toggle-card"><span class="toggle-card-label">🔮 오늘의 운세</span><label class="toggle-switch"><input type="checkbox" id="settings-show-fortune" checked onchange="onShowFortuneToggle()"><span class="toggle-slider"></span></label></div>
                 <div class="toggle-card" id="fortune-auto-toggle-card"><span class="toggle-card-label">⏰ 운세 자동팝업</span><label class="toggle-switch"><input type="checkbox" id="settings-fortune-auto" checked onchange="onFortuneAutoToggle()"><span class="toggle-slider"></span></label></div>
                 <div class="toggle-card" id="lotto-toggle-card"><span class="toggle-card-label">🎱 로또 생성기</span><label class="toggle-switch"><input type="checkbox" id="settings-show-lotto" checked onchange="onShowLottoToggle()"><span class="toggle-slider"></span></label></div>
+                <div class="toggle-card" id="photo-pin-toggle-card"><span class="toggle-card-label">📌 사진고정핀 표시</span><label class="toggle-switch"><input type="checkbox" id="settings-show-photo-pin" checked onchange="onShowPhotoPinToggle()"><span class="toggle-slider"></span></label></div>
             </div>
 
             <div class="settings-section">
@@ -6501,6 +6502,7 @@ window.attachPhotoDoubleTap = function(el, handler){
         const fortuneChk = document.getElementById('settings-show-fortune');
         if (fortuneChk) fortuneChk.checked = getShowFortune();
         syncFortuneToggles();
+        try{ syncPhotoPinToggle(); }catch(e){}
         syncLottoToggle();
         const healthChk = document.getElementById('settings-show-health');
         if (healthChk) healthChk.checked = getShowHealth();
@@ -6780,6 +6782,11 @@ window.attachPhotoDoubleTap = function(el, handler){
     function getFortuneAutoEnabled(){ const v = localStorage.getItem('smartDiaryFortuneAuto'); return v===null ? true : v==='1'; }
     function onFortuneAutoToggle(){ const chk = document.getElementById('settings-fortune-auto'); if(!chk) return; localStorage.setItem('smartDiaryFortuneAuto', chk.checked ? '1' : '0'); }
     function syncFortuneToggles(){ const autoChk = document.getElementById('settings-fortune-auto'); if(autoChk) autoChk.checked = getFortuneAutoEnabled(); const showChk = document.getElementById('settings-show-fortune'); const autoCard = document.getElementById('fortune-auto-toggle-card'); if(showChk && autoCard) autoCard.style.opacity = showChk.checked ? '1' : '0.4'; }
+
+    
+    function getShowPhotoPin(){ const v = localStorage.getItem('smartDiaryShowPhotoPin'); return v===null ? true : v==='true'; }
+    function onShowPhotoPinToggle(){ const chk = document.getElementById('settings-show-photo-pin'); if(!chk) return; localStorage.setItem('smartDiaryShowPhotoPin', chk.checked ? 'true' : 'false'); try{ renderCalendar(); }catch(e){} }
+    function syncPhotoPinToggle(){ const chk = document.getElementById('settings-show-photo-pin'); if(chk) chk.checked = getShowPhotoPin(); }
 
     function getShowLotto(){ const v = localStorage.getItem('smartDiaryShowLotto'); return v===null ? true : v==='true'; }
     function onShowLottoToggle(){ const chk = document.getElementById('settings-show-lotto'); if(!chk) return; localStorage.setItem('smartDiaryShowLotto', chk.checked ? 'true' : 'false'); applyLottoVisibility(); }
@@ -8210,8 +8217,10 @@ window.attachPhotoDoubleTap = function(el, handler){
                 photoListCount = allDiaries.filter(d => normalizeDateStr(d.date) === dateStr && d.photo).length;
             } catch(e){}
             const hasPhotoFlag = photoListCount > 0;
-            if(hasPhotoFlag) cell.classList.add('has-photo');
-            cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + (hasPhotoFlag ? `<div class="cal-photo-corner has-pin-icon" data-date="${dateStr}"><span class="pin-emoji">📌</span></div>` : '');
+            const showPhotoPin = (typeof getShowPhotoPin==='function') ? getShowPhotoPin() : (localStorage.getItem('smartDiaryShowPhotoPin') !== 'false');
+            const showPinIcon = hasPhotoFlag && showPhotoPin;
+            if(showPinIcon) cell.classList.add('has-photo');
+            cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + (showPinIcon ? `<div class="cal-photo-corner has-pin-icon" data-date="${dateStr}"><span class="pin-emoji">📌</span></div>` : '');
             cell.onclick = async (e) => {
                 try{       try{ if(navigator.vibrate) window.triggerVibration(80) || navigator.vibrate(80); else if(window.navigator && window.navigator.vibrate) window.triggerVibration(80) || (window.navigator && window.navigator.vibrate && window.window.triggerVibration(80) || navigator.vibrate(80)); }catch(e){} }catch(err){}
                 const target = e.target.closest('.cal-photo-corner');
