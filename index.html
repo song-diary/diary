@@ -8649,7 +8649,13 @@ window.attachPhotoDoubleTap = function(el, handler){
             if (!item.text && !item.photo && !item.health && !item.anniversary) return false;
             var isSameDate = normalizeDateStr(item.date) === dateStr;
             var isDailyRepeat = !!item.dailyRepeat;
-            // 오늘 예약 + 매일반복은 매일 표시 (과거 예약도 오늘에서 확인/취소 가능)
+            var isToday = dateStr === getTodayStr();
+            // 오늘 화면이면 모든 예약(시간 있는 항목) + 매일반복 + 오늘 날짜 항목 모두 표시
+            // 수정/입력에서 확인/취소 가능하도록
+            if(isToday){
+                var hasTime = !!item.time;
+                return isSameDate || isDailyRepeat || hasTime;
+            }
             return isSameDate || isDailyRepeat;
         });
 
@@ -12472,7 +12478,16 @@ async function showPhotosForDate(dateStr){
   function normDate(d){ try{ return typeof normalizeDateStr==='function'?normalizeDateStr(d):d; }catch(e){return d;} }
   function getFiltered(dateStr){
     var all=getAll(); var n=normDate(dateStr);
-    var f=all.filter(function(it){ if(it.money && it.money.amount) return false; if(!it.text && !it.photo && !it.health && !it.anniversary) return false; var isSameDate = normDate(it.date)===n; var isDailyRepeat = !!it.dailyRepeat; return isSameDate || isDailyRepeat; });
+    var isToday = n === (typeof getTodayStr==='function'?getTodayStr():new Date().toISOString().slice(0,10));
+    var f=all.filter(function(it){ 
+      if(it.money && it.money.amount) return false; 
+      if(!it.text && !it.photo && !it.health && !it.anniversary) return false; 
+      var isSameDate = normDate(it.date)===n; 
+      var isDailyRepeat = !!it.dailyRepeat; 
+      var hasTime = !!it.time;
+      if(isToday){ return isSameDate || isDailyRepeat || hasTime; }
+      return isSameDate || isDailyRepeat; 
+    });
     f.sort(function(a,b){ return (a.time||'').localeCompare(b.time||''); });
     return f;
   }
