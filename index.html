@@ -3192,7 +3192,8 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
                 <div class="toggle-card"><span class="toggle-card-label">🔮 오늘의 운세</span><label class="toggle-switch"><input type="checkbox" id="settings-show-fortune" checked onchange="onShowFortuneToggle()"><span class="toggle-slider"></span></label></div>
                 <div class="toggle-card" id="fortune-auto-toggle-card"><span class="toggle-card-label">⏰ 운세 자동팝업</span><label class="toggle-switch"><input type="checkbox" id="settings-fortune-auto" checked onchange="onFortuneAutoToggle()"><span class="toggle-slider"></span></label></div>
                 <div class="toggle-card" id="lotto-toggle-card"><span class="toggle-card-label">🎱 로또 생성기</span><label class="toggle-switch"><input type="checkbox" id="settings-show-lotto" checked onchange="onShowLottoToggle()"><span class="toggle-slider"></span></label></div>
-                <div class="toggle-card" id="photo-pin-toggle-card"><span class="toggle-card-label">📌 사진고정핀 표시</span><label class="toggle-switch"><input type="checkbox" id="settings-show-photo-pin" checked onchange="onShowPhotoPinToggle()"><span class="toggle-slider"></span></label></div>
+                <div class="toggle-card" style="background:#fff3cd; border:1px solid #f0c36d;"><span class="toggle-card-label">🧹 출력물3장 도배 정리</span><button onclick="autoFixFloodingOnLoad(); renderCalendar(); renderDiaryAroundToday(); alert('정리 완료! 캘린더를 확인하세요.');" style="padding:4px 8px; border-radius:6px; background:#e06d6d; color:#fff; border:none;">정리하기</button></div>
+            <div class="toggle-card" id="photo-pin-toggle-card"><span class="toggle-card-label">📌 사진고정핀 표시</span><label class="toggle-switch"><input type="checkbox" id="settings-show-photo-pin" checked onchange="onShowPhotoPinToggle()"><span class="toggle-slider"></span></label></div>
             </div>
 
             <div class="settings-section">
@@ -5437,37 +5438,60 @@ window.attachPhotoDoubleTap = function(el, handler){
 
     function getAnniversaryForDate(dateStr) {
         const diaries = getAllDiaries();
-        // [FIXED V3.2] 출력물3장 매일 반복 버그 수정
-        // 1. dailyRepeat로 인한 캘린더 도배 방지: dailyRepeat만 있고 annivRepeat 없는 항목은 캘린더 라벨에서 제외
-        // 2. 같은 날짜에 여러 기념일이 있으면 가장 최근(마지막) 항목 우선
         const normalized = normalizeDateStr(dateStr);
+        // [FIXED V3.3] 출력물3장 도배 완전 차단 - 업무 키워드는 원본 날짜에만 표시
+        const BLOCK_KEYWORDS = ['출력물3장','출력물','전단지출력','지출력','출력','복사','물3장'];
         let found = null;
         for(let i=diaries.length-1; i>=0; i--){
             const item = diaries[i];
             if(!item.anniversary) continue;
-            // dailyRepeat만으로 매일 표시되는 항목은 캘린더 라벨에서 제외 (리스트에는 표시됨)
-            if(item.dailyRepeat && !item.annivRepeat) continue;
-            // 텍스트가 '출력' 포함된 임시 메모가 기념일로 잘못 등록된 경우, 원본 날짜가 아니면 제외 (정리 대상)
-            if(item.annivRepeat === 'none' || !item.annivRepeat){
+            const ann = String(item.anniversary);
+            const isBlocked = BLOCK_KEYWORDS.some(k=>ann.includes(k));
+            // 차단 키워드는 반복 여부와 관계없이 원본 날짜 정확히 일치할 때만 표시
+            if(isBlocked){
                 if(normalizeDateStr(item.date) !== normalized) continue;
+                // dailyRepeat가 있어도 캘린더 라벨에서는 무조건 원본 날짜만
+                found = item;
+                break;
             }
+            // 일반 기념일은 기존 로직: annivRepeat 매칭
             if(sajuAnniversaryMatches(item, normalized)){
                 found = item;
                 break;
             }
         }
-        // 추가 방어: 출력물/출력 처럼 업무용 텍스트가 기념일로 등록되어 매일 도배되는 경우 숨김
-        if(found && /출력|물\s*3장|전단지|복사/i.test(found.anniversary)){
-            // 해당 항목이 반복 설정으로 인해 7일 이상 연속으로 나타나면 캘린더에서는 숨김
-            const all = diaries.filter(d=>d.anniversary===found.anniversary);
-            if(all.length>=7){
-                // 원본 날짜에만 표시
-                if(normalizeDateStr(found.date) !== normalized) return null;
-            }
-        }
         return found ? found.anniversary : null;
     }
     
+    
+    // [FIXED V3.3] 자동 정리 - 출력물3장 dailyRepeat 도배 발견시 자동 해제 (사용자가 '그대로인데'라고 한 문제 해결)
+    function autoFixFloodingOnLoad(){
+        try{
+            const diaries = getAllDiaries();
+            const floodItems = diaries.filter(d=> d.anniversary && /출력물3장|전단지출력/.test(d.anniversary) && d.dailyRepeat);
+            if(floodItems.length>0){
+                console.log('[AUTO-FIX] 출력물 도배 발견', floodItems.length, '개 자동 정리');
+                diaries.forEach(item=>{
+                    if(item.anniversary && /출력물3장|전단지출력/.test(item.anniversary)){
+                        if(item.dailyRepeat){
+                            item.dailyRepeat = false;
+                        }
+                        // 반복 설정도 원본 날짜만으로 강제
+                        if(item.annivRepeat && item.annivRepeat!=='none'){
+                            item.annivRepeat = 'none';
+                        }
+                    }
+                });
+                localStorage.setItem('smartDiaryList', JSON.stringify(diaries));
+                try{ localStorage.setItem('smartDiaries', JSON.stringify(diaries)); }catch(e){}
+                console.log('[AUTO-FIX] 정리 완료');
+            }
+        }catch(e){ console.error('[AUTO-FIX] 실패', e); }
+    }
+    // 페이지 로드 1초 후 자동 실행
+    setTimeout(autoFixFloodingOnLoad, 1000);
+    window.autoFixFloodingOnLoad = autoFixFloodingOnLoad;
+
     // [NEW] 반복으로 도배된 기념일 정리 함수
     function cleanupFloodingAnniversaries(){
         const diaries = getAllDiaries();
