@@ -4414,6 +4414,7 @@ window.attachPhotoDoubleTap = function(el, handler){
     let editingDiaryId = null;
     let currentFormMode = 'diary'; // '입력' 폼이 다이어리용인지 가계부용인지 구분 ('diary' | 'money')
     let currentPhotoBase64 = null;
+            try { const dc=document.getElementById('daily-repeat-checkbox'); if(dc && !existingItem) dc.checked=false; } catch(e){}
     let currentMediaType = 'image';
 
     // ===================== 🔮 오늘의 운세 (사주팔자 기반) =====================
@@ -8499,7 +8500,14 @@ window.attachPhotoDoubleTap = function(el, handler){
     function openDiaryForm(dateStr, existingItem = null, mode = null) {
         stopVoiceRecording();
         selectedReservationDate = normalizeDateStr(dateStr);
+        
         editingDiaryId = existingItem ? existingItem.id : null;
+        // 매일 반복 체크박스 복원
+        try {
+            const dailyCb = document.getElementById('daily-repeat-checkbox');
+            if(dailyCb) dailyCb.checked = existingItem ? !!existingItem.dailyRepeat : false;
+        } catch(e){}
+
 
         let effectiveMode = mode;
         if (!effectiveMode) {
@@ -8560,6 +8568,7 @@ window.attachPhotoDoubleTap = function(el, handler){
             // ⏰ 예약(미래 날짜)일 때는 '지금 입력하는 시간'이 아니라 기본값 오전 8시로 설정
             reservationTimeInput.value = isFutureDate(selectedReservationDate) ? '08:00' : getCurrentTimeStr();
             currentPhotoBase64 = null;
+            try { const dc=document.getElementById('daily-repeat-checkbox'); if(dc && !existingItem) dc.checked=false; } catch(e){}
             setMoneyType('expense', '');
             moneyAmountInput.value = '';
             if (cardPendingCheckbox) { cardPendingCheckbox.checked = false; onCardPendingToggle(); }
@@ -8587,6 +8596,7 @@ window.attachPhotoDoubleTap = function(el, handler){
         unlockBodyScroll();
         editingDiaryId = null;
         currentPhotoBase64 = null;
+            try { const dc=document.getElementById('daily-repeat-checkbox'); if(dc && !existingItem) dc.checked=false; } catch(e){}
         selectedReservationDate = null;
         renderDiaryAroundToday();
         renderMoneyAroundToday();
@@ -9016,6 +9026,7 @@ window.attachPhotoDoubleTap = function(el, handler){
     function closeDiaryForm() {
         editingDiaryId = null;
         currentPhotoBase64 = null;
+            try { const dc=document.getElementById('daily-repeat-checkbox'); if(dc && !existingItem) dc.checked=false; } catch(e){}
     }
 
     // ===================== 📷 사진 저장소: IndexedDB (localStorage 5MB 한계 회피) =====================
@@ -9436,6 +9447,7 @@ async function showPhotosForDate(dateStr){
             alert('동영상은 저장되지 않습니다. 사진만 선택해주세요! 📷');
             event.target.value = '';
             currentPhotoBase64 = null;
+            try { const dc=document.getElementById('daily-repeat-checkbox'); if(dc && !existingItem) dc.checked=false; } catch(e){}
             const wrap = document.getElementById('photo-preview-wrap');
             if(wrap) wrap.style.display='none';
             return;
@@ -9511,6 +9523,7 @@ async function showPhotosForDate(dateStr){
     function removeImage() {
         if (!confirm('사진을 취소할까요? 삭제한 사진은 복구할 수 없어요.')) return;
         currentPhotoBase64 = null;
+            try { const dc=document.getElementById('daily-repeat-checkbox'); if(dc && !existingItem) dc.checked=false; } catch(e){}
         updatePhotoPreview();
         const fileInput = document.getElementById('diary-photo-input');
         if (fileInput) fileInput.value = '';
@@ -9573,7 +9586,7 @@ async function showPhotosForDate(dateStr){
         if (editingDiaryId) {
             diaries = diaries.map(item => {
                 if (item.id === editingDiaryId) {
-                    return { ...item, date: finalDateStr, text: content, time: timeVal, photo: photoKey, money: moneyObj, health: healthObj, anniversary: annivVal || null, annivRepeat: annivRepeatVal, annivCalType: annivCalTypeVal };
+                    return { ...item, date: finalDateStr, text: content, time: timeVal, photo: photoKey, money: moneyObj, health: healthObj, anniversary: annivVal || null, annivRepeat: annivRepeatVal, annivCalType: annivCalTypeVal, dailyRepeat: (document.getElementById('daily-repeat-checkbox') ? document.getElementById('daily-repeat-checkbox').checked : (item.dailyRepeat || false)) };
                 }
                 return item;
             });
@@ -9588,7 +9601,8 @@ async function showPhotosForDate(dateStr){
                 health: healthObj,
                 anniversary: annivVal || null,
                 annivRepeat: annivRepeatVal,
-                annivCalType: annivCalTypeVal
+                annivCalType: annivCalTypeVal,
+                dailyRepeat: (document.getElementById('daily-repeat-checkbox') ? document.getElementById('daily-repeat-checkbox').checked : false)
             };
             diaries.push(newItem);
         }
@@ -11685,56 +11699,6 @@ function snoozeDailyAlarm() {
   }
   closeDailyAlarm();
 }
-
-// 기존 저장 로직에 dailyRepeat 추가
-(function(){
-  const origSave = window.saveDiaryEntry || null;
-  // 저장 함수 후킹을 위해 save 버튼 클릭 시 dailyRepeat 값 추가
-  const originalRender = window.renderDiaryAroundToday;
-  // 오버라이드 필요 없음, saveDiaryEntry 함수 직접 패치
-})();
-
-// saveDiaryEntry 함수 패치 - dailyRepeat 저장
-(function patchSave(){
-  // 원본 함수가 로드될 때까지 대기
-  const interval = setInterval(()=>{
-    if(typeof window.saveDiaryEntry === 'function') {
-      clearInterval(interval);
-      const orig = window.saveDiaryEntry;
-      window.saveDiaryEntry = function(){
-        try {
-          const dailyCb = document.getElementById('daily-repeat-checkbox');
-          window._tempDailyRepeat = dailyCb ? dailyCb.checked : false;
-        } catch(e){}
-        return orig.apply(this, arguments);
-      };
-      console.log('[DailyAlarm] saveDiaryEntry patched');
-    }
-  }, 500);
-})();
-
-// 기존 diaries 저장 시 dailyRepeat 포함하도록 create/update 부분 후킹
-// MutationObserver로 diaries 배열 변경 감지 대신, 저장 직전 데이터에 추가
-const origLocalStorageSetItem = localStorage.setItem;
-localStorage.setItem = function(key, value){
-  try {
-    if(key === 'smartDiaries' || key.includes('diary')) {
-      // diaries에 dailyRepeat 주입
-      if(window._tempDailyRepeat !== undefined) {
-        let arr = JSON.parse(value);
-        if(Array.isArray(arr) && arr.length>0) {
-          // 마지막 아이템 또는 editing 중인 아이템에 dailyRepeat 추가
-          const last = arr[arr.length-1];
-          if(last && !last.dailyRepeat && window._tempDailyRepeat) {
-            last.dailyRepeat = true;
-            value = JSON.stringify(arr);
-          }
-        }
-      }
-    }
-  } catch(e){}
-  return origLocalStorageSetItem.apply(this, arguments);
-};
 
 // 초기화 - 페이지 로드 후
 window.addEventListener('load', function(){
