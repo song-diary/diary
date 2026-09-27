@@ -8218,7 +8218,7 @@ window.attachPhotoDoubleTap = function(el, handler){
             let photoListCount = 0;
             try {
                 const allDiaries = getAllDiaries();
-                photoListCount = allDiaries.filter(d => normalizeDateStr(d.date) === dateStr && d.photo).length;
+                photoListCount = allDiaries.filter(d => normalizeDateStr(d.date) === dateStr && d.photo && String(d.photo).trim().toUpperCase()!=='NULL').length;
             } catch(e){}
             const hasPhotoFlag = photoListCount > 0;
             const showPhotoPin = (typeof getShowPhotoPin==='function') ? getShowPhotoPin() : (localStorage.getItem('smartDiaryShowPhotoPin') !== 'false');
@@ -8649,14 +8649,19 @@ window.attachPhotoDoubleTap = function(el, handler){
             if (!item.text && !item.photo && !item.health && !item.anniversary) return false;
             var isSameDate = normalizeDateStr(item.date) === dateStr;
             var isDailyRepeat = !!item.dailyRepeat;
-            var isToday = dateStr === getTodayStr();
-            // 오늘 화면이면 모든 예약(시간 있는 항목) + 매일반복 + 오늘 날짜 항목 모두 표시
-            // 수정/입력에서 확인/취소 가능하도록
-            if(isToday){
-                var hasTime = !!item.time;
-                return isSameDate || isDailyRepeat || hasTime;
-            }
-            return isSameDate || isDailyRepeat;
+            // [FIXED V3.1-1] 오늘이라도 해당 날짜와 일치하는 것만 표시 - 예약(미래) 항목이 오늘에 섞이는 버그 수정
+            // 매일반복은 날짜 무관하게 항상 표시
+            // 기념일 반복이 오늘이면 표시 (기존 anniv 로직 유지)
+            var isAnnivMatch = false;
+            try {
+              if(item.anniversary && item.annivRepeat){
+                const d = parseDateObj(item.date);
+                const today = parseDateObj(dateStr);
+                if(item.annivRepeat==='yearly' && d.getMonth()===today.getMonth() && d.getDate()===today.getDate()) isAnnivMatch=true;
+                if(item.annivRepeat==='monthly' && d.getDate()===today.getDate()) isAnnivMatch=true;
+              }
+            } catch(e){}
+            return isSameDate || isDailyRepeat || isAnnivMatch;
         });
 
         // 시간 내림차순 정렬
@@ -9883,7 +9888,13 @@ async function showPhotosForDate(dateStr){
         setCategoryStatsVisibility(isCategoryStatsVisible);
         setSearchFilterVisibility(isSearchFilterVisible);
         
-        selectedViewDate = getTodayStr();
+                selectedViewDate = (typeof getTodayStrLocal==='function'?getTodayStrLocal():getTodayStr());
+        // [FIXED] 달력과 다이어리 리스트 날짜 동기화 강제
+        if(typeof calYear!=='undefined'){
+          const todayObj = parseDateObj(selectedViewDate);
+          calYear = todayObj.getFullYear();
+          calMonth = todayObj.getMonth();
+        }
         renderCalendar();
         applyMemoFontSize();
         initSpeechRecognition();
