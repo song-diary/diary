@@ -3192,6 +3192,7 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
                 <div class="toggle-card"><span class="toggle-card-label">🔮 오늘의 운세</span><label class="toggle-switch"><input type="checkbox" id="settings-show-fortune" checked onchange="onShowFortuneToggle()"><span class="toggle-slider"></span></label></div>
                 <div class="toggle-card" id="fortune-auto-toggle-card"><span class="toggle-card-label">⏰ 운세 자동팝업</span><label class="toggle-switch"><input type="checkbox" id="settings-fortune-auto" checked onchange="onFortuneAutoToggle()"><span class="toggle-slider"></span></label></div>
                 <div class="toggle-card" id="lotto-toggle-card"><span class="toggle-card-label">🎱 로또 생성기</span><label class="toggle-switch"><input type="checkbox" id="settings-show-lotto" checked onchange="onShowLottoToggle()"><span class="toggle-slider"></span></label></div>
+                <div class="toggle-card" id="photo-pin-toggle-card"><span class="toggle-card-label">📌 사진고정핀 표시</span><label class="toggle-switch"><input type="checkbox" id="settings-show-photo-pin" checked onchange="onShowPhotoPinToggle()"><span class="toggle-slider"></span></label></div>
             </div>
 
             <div class="settings-section">
@@ -6500,7 +6501,7 @@ window.attachPhotoDoubleTap = function(el, handler){
         const fortuneChk = document.getElementById('settings-show-fortune');
         if (fortuneChk) fortuneChk.checked = getShowFortune();
         syncFortuneToggles();
-        syncLottoToggle();
+        syncLottoToggle(); try{ if(typeof syncPhotoPinToggle==="function") syncPhotoPinToggle(); }catch(e){}
         const healthChk = document.getElementById('settings-show-health');
         if (healthChk) healthChk.checked = getShowHealth();
         const moneySummaryChk = document.getElementById('toggle-money-summary');
@@ -6789,6 +6790,17 @@ window.attachPhotoDoubleTap = function(el, handler){
         if(lottoCard) lottoCard.style.opacity = '1';
     }
     function syncLottoToggle(){ const chk = document.getElementById('settings-show-lotto'); if(chk) chk.checked = getShowLotto(); }
+    // V99 사진고정핀 표시 ON/OFF - 달력 핀 표시 제어 (제목/별표 안 건드림)
+    function getShowPhotoPin(){ const v = localStorage.getItem('smartDiaryShowPhotoPin'); return v===null ? true : v!=='false'; }
+    function onShowPhotoPinToggle(){
+        const chk = document.getElementById('settings-show-photo-pin');
+        if(!chk) return;
+        localStorage.setItem('smartDiaryShowPhotoPin', chk.checked ? 'true' : 'false');
+        if(typeof renderCalendar==='function') renderCalendar();
+        // forcePin이 있으면 다시 실행해서 핀 제거/생성
+        setTimeout(function(){ if(typeof forcePin==='function') forcePin(); }, 100);
+    }
+    function syncPhotoPinToggle(){ const chk = document.getElementById('settings-show-photo-pin'); if(chk) chk.checked = getShowPhotoPin(); }
 
 
     // 오늘 날짜의 干支(일진) 및 오행을 계산
@@ -8209,8 +8221,10 @@ window.attachPhotoDoubleTap = function(el, handler){
                 photoListCount = allDiaries.filter(d => normalizeDateStr(d.date) === dateStr && d.photo).length;
             } catch(e){}
             const hasPhotoFlag = photoListCount > 0;
-            if(hasPhotoFlag) cell.classList.add('has-photo');
-            cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + (hasPhotoFlag ? `<div class="cal-photo-corner has-pin-icon" data-date="${dateStr}"><span class="pin-emoji">📌</span></div>` : '');
+            const showPhotoPin = (typeof getShowPhotoPin==='function') ? getShowPhotoPin() : (localStorage.getItem('smartDiaryShowPhotoPin') !== 'false');
+            const showPinIcon = hasPhotoFlag && showPhotoPin;
+            if(showPinIcon) cell.classList.add('has-photo');
+            cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + (showPinIcon ? `<div class="cal-photo-corner has-pin-icon" data-date="${dateStr}"><span class="pin-emoji">📌</span></div>` : '');
             cell.onclick = async (e) => {
                 try{       try{ if(navigator.vibrate) window.triggerVibration(80) || navigator.vibrate(80); else if(window.navigator && window.navigator.vibrate) window.triggerVibration(80) || (window.navigator && window.navigator.vibrate && window.window.triggerVibration(80) || navigator.vibrate(80)); }catch(e){} }catch(err){}
                 const target = e.target.closest('.cal-photo-corner');
@@ -12474,6 +12488,16 @@ async function showPhotosForDate(dateStr){
   // 고정핀 - 원본 has-photo 유지 + 사진 있는 날짜는 무조건 핀 보강
   function forcePin(){
     try{
+      var showPinSetting = true;
+      try {
+        if(typeof getShowPhotoPin==='function') showPinSetting = getShowPhotoPin();
+        else showPinSetting = localStorage.getItem('smartDiaryShowPhotoPin') !== 'false';
+      } catch(e){}
+      if(!showPinSetting){
+        document.querySelectorAll('.cal-cell .cal-photo-corner').forEach(function(c){ c.remove(); });
+        document.querySelectorAll('.cal-cell.has-photo').forEach(function(c){ c.classList.remove('has-photo'); });
+        return;
+      }
       var all=getAll();
       var photoDates=new Set(all.filter(function(d){return !!d.photo;}).map(function(d){ return normDate(d.date); }));
       document.querySelectorAll('.cal-cell').forEach(function(cell){
