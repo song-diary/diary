@@ -8647,7 +8647,10 @@ window.attachPhotoDoubleTap = function(el, handler){
         let filtered = diaries.filter(item => {
             if (item.money && item.money.amount) return false;
             if (!item.text && !item.photo && !item.health && !item.anniversary) return false;
-            return normalizeDateStr(item.date) === dateStr;
+            var isSameDate = normalizeDateStr(item.date) === dateStr;
+            var isDailyRepeat = !!item.dailyRepeat;
+            // 오늘 예약 + 매일반복은 매일 표시 (과거 예약도 오늘에서 확인/취소 가능)
+            return isSameDate || isDailyRepeat;
         });
 
         // 시간 내림차순 정렬
