@@ -12469,7 +12469,7 @@ async function showPhotosForDate(dateStr){
   function normDate(d){ try{ return typeof normalizeDateStr==='function'?normalizeDateStr(d):d; }catch(e){return d;} }
   function getFiltered(dateStr){
     var all=getAll(); var n=normDate(dateStr);
-    var f=all.filter(function(it){ if(it.money && it.money.amount) return false; if(!it.text && !it.photo && !it.health && !it.anniversary) return false; return normDate(it.date)===n; });
+    var f=all.filter(function(it){ if(it.money && it.money.amount) return false; if(!it.text && !it.photo && !it.health && !it.anniversary) return false; var isSameDate = normDate(it.date)===n; var isDailyRepeat = !!it.dailyRepeat; return isSameDate || isDailyRepeat; });
     f.sort(function(a,b){ return (a.time||'').localeCompare(b.time||''); });
     return f;
   }
