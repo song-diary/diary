@@ -13885,7 +13885,275 @@ console.log('[DailyAlarm] 스크립트 로드 완료 - testDailyAlarm()으로 �
   console.log('[V4.3] back fix + photo box hide applied');
 })();
 </script>
+
+<script>
+// [V4.4 B안] 매일반복(시간) 제대로 재구현 - 제목과 반복 분리
+// 요구사항: 
+// - 출력물3장 같은 업무 메모는 제목이지 반복 대상 아님
+// - 예: 20:00 제목:약먹기 + 매일반복 체크 => 매일 20:00 알림 + 매일 리스트 표시
+// - 해지: 어느날 리스트에서 수정 들어가서 체크 해제 or 삭제
+// - 폼: 기존 예약일 입력폼(시간+매일반복) 그대로 사용, 로직만 교체
+
+(function(){
+  console.log('[V4.4] B안 로드 - 업무 메모는 반복 제외, 제목+시간 반복은 매일 알림');
+
+  function isWorkMemo(txt){
+    if(!txt) return false;
+    return /출력|전단|복사|물3장|로또|전단지|물\s*3장/i.test(txt);
+  }
+
+  // 기존 요소
+  const timeInput = document.getElementById('reservation-time-input');
+  const dailyCb = document.getElementById('daily-repeat-checkbox');
+  const alarmEnabledCb = document.getElementById('daily-alarm-enabled');
+  const textArea = document.getElementById('memo-textarea') || document.getElementById('diary-textarea') || document.querySelector('.diary-textarea');
+
+  // UI 개선: 매일 반복 라벨에 시간 표시
+  if(timeInput && dailyCb){
+    timeInput.addEventListener('change', ()=>{
+      const label = dailyCb.parentElement;
+      if(label && timeInput.value){
+        label.title = `매일 ${timeInput.value}에 알림`;
+      }
+    });
+    // 업무 메모면 반복 비활성화
+    function updateWorkMemoCheck(){
+      let txt = '';
+      if(textArea) txt = textArea.value || textArea.textContent || '';
+      else {
+        const ta = document.querySelector('#memo-form-card textarea, #memo-form-card [contenteditable]');
+        if(ta) txt = ta.value || ta.textContent || '';
+      }
+      if(isWorkMemo(txt)){
+        if(dailyCb.checked){
+          console.log('[V4.4] 업무 메모는 반복 불가 - 체크 해제');
+          dailyCb.checked = false;
+        }
+        dailyCb.disabled = true;
+        dailyCb.parentElement.style.opacity='0.4';
+        dailyCb.parentElement.style.textDecoration='line-through';
+      } else {
+        dailyCb.disabled = false;
+        dailyCb.parentElement.style.opacity='1';
+        dailyCb.parentElement.style.textDecoration='none';
+      }
+    }
+    if(textArea){
+      textArea.addEventListener('input', updateWorkMemoCheck);
+      textArea.addEventListener('change', updateWorkMemoCheck);
+    }
+    // 폼 열릴 때마다 체크
+    const observer = new MutationObserver(()=>{ setTimeout(updateWorkMemoCheck, 100); });
+    const formCard = document.getElementById('memo-form-card');
+    if(formCard) observer.observe(formCard, {attributes:true, attributeFilter:['style','class']});
+  }
+
+  // 저장 패치 - 기존 saveDiaryEntry가 있으면 dailyRepeat 정상 저장
+  let patched = false;
+  function patchSave(){
+    if(patched) return;
+    if(typeof window.saveDiaryEntry !== 'function' && typeof window.saveMemo !== 'function'){
+      setTimeout(patchSave, 500);
+      return;
+    }
+    // saveDiaryEntry가 실제 저장 함수
+    if(typeof window.saveDiaryEntry === 'function'){
+      const orig = window.saveDiaryEntry;
+      window.saveDiaryEntry = function(){
+        try{
+          const cb = document.getElementById('daily-repeat-checkbox');
+          const tInput = document.getElementById('reservation-time-input');
+          const ta = document.getElementById('memo-textarea') || document.querySelector('.diary-textarea');
+          let txt = ta ? (ta.value||ta.textContent||'') : '';
+          
+          if(cb && cb.checked){
+            if(isWorkMemo(txt)){
+              alert('⚠️ 업무 메모(출력물3장 등)는 매일 반복 대상이 아닙니다.\n제목으로만 저장됩니다.');
+              cb.checked = false;
+              window._tempDailyRepeat = false;
+            } else if(!tInput || !tInput.value){
+              alert('⏰ 매일 반복은 시간을 지정해야 합니다.\n시간을 선택해주세요.');
+              return;
+            } else {
+              window._tempDailyRepeat = true;
+              window._tempDailyRepeatTime = tInput.value;
+            }
+          } else {
+            window._tempDailyRepeat = false;
+          }
+        }catch(e){ console.error('[V4.4] save patch error', e); }
+        return orig.apply(this, arguments);
+      };
+      patched = true;
+      console.log('[V4.4] saveDiaryEntry 패치 완료');
+    }
+  }
+  patchSave();
+
+  // localStorage 저장 시 dailyRepeat 정상 주입 (기존 몽키패칭 대체)
+  const origSetItem = localStorage.setItem.bind(localStorage);
+  localStorage.setItem = function(key, value){
+    try{
+      if((key==='smartDiaryList' || key==='smartDiaries') && window._tempDailyRepeat!==undefined){
+        let arr;
+        try{ arr = JSON.parse(value); }catch(e){ return origSetItem(key, value); }
+        if(!Array.isArray(arr) || arr.length===0) return origSetItem(key, value);
+        
+        let target = null;
+        if(window.editingDiaryId || window.editingMemoId){
+          const editId = window.editingDiaryId || window.editingMemoId;
+          target = arr.find(x=> String(x.id)===String(editId));
+        }
+        if(!target) target = arr[arr.length-1];
+        
+        if(target){
+          if(window._tempDailyRepeat){
+            const txt = target.text||target.anniversary||'';
+            if(isWorkMemo(txt)){
+              target.dailyRepeat = false;
+            } else {
+              target.dailyRepeat = true;
+              if(window._tempDailyRepeatTime) target.time = window._tempDailyRepeatTime;
+              // 매일 반복은 기념일이 아니므로 anniversary에서 제거 (캘린더 도배 방지)
+              if(target.anniversary && isWorkMemo(target.anniversary)){
+                target.text = (target.anniversary + ' ' + (target.text||'')).trim();
+                target.anniversary = '';
+              }
+              target.annivRepeat = 'none';
+            }
+          } else {
+            target.dailyRepeat = false;
+          }
+          value = JSON.stringify(arr);
+        }
+        setTimeout(()=>{ window._tempDailyRepeat=undefined; window._tempDailyRepeatTime=undefined; }, 200);
+      }
+    }catch(e){ console.error('[V4.4] setItem error', e); }
+    return origSetItem(key, value);
+  };
+
+  // 렌더 패치 - 매일 반복 항목은 매일 표시, 해지 가능하도록
+  function patchRender(){
+    if(typeof window.renderDiaryAroundToday !== 'function'){
+      setTimeout(patchRender, 500);
+      return;
+    }
+    const origRender = window.renderDiaryAroundToday;
+    window.renderDiaryAroundToday = function(){
+      const res = origRender.apply(this, arguments);
+      try{
+        const listEl = document.getElementById('diary-around-today-list');
+        const dateStr = window.selectedViewDate || (typeof getTodayStr==='function'?getTodayStr():'');
+        if(!listEl || !dateStr) return res;
+        
+        const diaries = typeof getAllDiaries==='function' ? getAllDiaries() : JSON.parse(localStorage.getItem('smartDiaryList')||'[]');
+        // 매일 반복이지만 오늘 날짜가 아닌 것들 (오늘 날짜인 것은 원본에서 이미 표시됨)
+        const dailyItems = diaries.filter(item=>{
+          if(!item.dailyRepeat) return false;
+          if(item.money && item.money.amount) return false;
+          if(isWorkMemo(item.text||'')) return false;
+          const itemDate = typeof normalizeDateStr==='function' ? normalizeDateStr(item.date) : item.date;
+          if(itemDate === dateStr) return false; // 오늘 항목은 중복 방지
+          return true;
+        });
+        
+        if(dailyItems.length>0){
+          dailyItems.sort((a,b)=> (a.time||'').localeCompare(b.time||''));
+          dailyItems.forEach(item=>{
+            if(listEl.querySelector(`[data-daily-id="${item.id}"]`)) return;
+            const div = document.createElement('div');
+            div.className = 'sub-memo-item daily-repeat-item';
+            div.dataset.dailyId = item.id;
+            div.style.cssText = 'grid-column:1 / -1; border:2px dashed #a5b4fc; background:#f5f7ff; border-radius:10px; padding:10px; display:flex; justify-content:space-between; align-items:center;';
+            const timeBadge = item.time ? `<span style="background:#6366f1;color:#fff;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:bold;margin-right:8px;">🔁 매일 ${item.time}</span>` : '<span style="background:#6366f1;color:#fff;padding:3px 8px;border-radius:12px;font-size:11px;">🔁 매일</span>';
+            const txt = (item.text||'매일 알림').substring(0,80);
+            div.innerHTML = `
+              <div style="flex:1;font-size:13px;">${timeBadge}${txt}</div>
+              <button onclick="editDailyRepeatItem('${item.id}')" style="margin-left:8px;padding:5px 10px;border:1px solid #6366f1;border-radius:6px;background:#fff;color:#6366f1;font-size:11px;cursor:pointer;">수정/해지</button>
+            `;
+            div.addEventListener('click', (e)=>{
+              if(e.target.tagName==='BUTTON') return;
+              if(typeof window.editDiaryEntry==='function') window.editDiaryEntry(item.id);
+            });
+            listEl.appendChild(div);
+          });
+        }
+      }catch(e){ console.error('[V4.4] render patch error', e); }
+      return res;
+    };
+    console.log('[V4.4] renderDiaryAroundToday 패치 - 매일 반복 매일 표시');
+  }
+  patchRender();
+
+  window.editDailyRepeatItem = function(id){
+    if(typeof window.editDiaryEntry==='function'){
+      window.editDiaryEntry(id);
+    } else {
+      const diaries = JSON.parse(localStorage.getItem('smartDiaryList')||'[]');
+      const item = diaries.find(x=> String(x.id)===String(id));
+      if(item && confirm(`매일 반복을 해지할까요?\n\n${item.time||''} ${item.text||''}\n\n해지하면 매일 알림이 중단됩니다.`)){
+        item.dailyRepeat = false;
+        localStorage.setItem('smartDiaryList', JSON.stringify(diaries));
+        if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday();
+        alert('해지되었습니다.');
+      }
+    }
+  };
+
+  // 알림 체크 - 매일 지정 시간에 1번만
+  let lastMinKey = '';
+  function checkAlarms(){
+    try{
+      const now = new Date();
+      const curTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+      const todayStr = typeof getTodayStr==='function' ? getTodayStr() : now.toISOString().slice(0,10);
+      const key = `${todayStr}-${curTime}`;
+      if(lastMinKey===key) return;
+      
+      const diaries = typeof getAllDiaries==='function' ? getAllDiaries() : JSON.parse(localStorage.getItem('smartDiaryList')||'[]');
+      const toAlarm = diaries.filter(it=> it.dailyRepeat && it.time===curTime && !isWorkMemo(it.text||''));
+      if(toAlarm.length>0){
+        lastMinKey = key;
+        toAlarm.forEach(it=> showAlarm(it, curTime));
+      }
+    }catch(e){ console.error(e); }
+  }
+  function showAlarm(item, timeStr){
+    let popup = document.getElementById('daily-alarm-popup');
+    if(!popup){
+      popup = document.createElement('div');
+      popup.id = 'daily-alarm-popup';
+      popup.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#fff;border:2px solid #6366f1;border-radius:14px;padding:16px;box-shadow:0 8px 24px rgba(0,0,0,0.2);z-index:99999;min-width:300px;display:none;';
+      popup.innerHTML = '<div id="daily-alarm-body"></div><div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;"><button onclick="closeDailyAlarmV44()" style="padding:7px 14px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;">닫기</button><button onclick="snoozeDailyAlarmV44()" style="padding:7px 14px;border:none;border-radius:8px;background:#6366f1;color:#fff;cursor:pointer;">5분 후</button><button onclick="editDailyRepeatItem(document.getElementById(\'daily-alarm-popup\').dataset.currentItemId); closeDailyAlarmV44();" style="padding:7px 14px;border:1px solid #6366f1;border-radius:8px;background:#fff;color:#6366f1;cursor:pointer;">해지</button></div>';
+      document.body.appendChild(popup);
+    }
+    const body = document.getElementById('daily-alarm-body');
+    if(body) body.innerHTML = `<div style="font-weight:bold;color:#6366f1;margin-bottom:6px;">🔁 매일 ${timeStr} 알림</div><div style="font-size:14px;line-height:1.4;">${item.text||'알림'}</div><div style="font-size:11px;color:#999;margin-top:6px;">${item.date||''}</div>`;
+    popup.style.display='block';
+    popup.classList.add('show');
+    popup.dataset.currentItemId = item.id;
+    if('Notification' in window && Notification.permission==='granted'){
+      try{ const n=new Notification('🔁 매일 알림', {body:item.text||'알림', requireInteraction:true}); n.onclick=()=>{ window.focus(); closeDailyAlarmV44(); }; setTimeout(()=>n.close(), 10000); }catch(e){}
+    }
+    try{ if(typeof playAlarmSound==='function') playAlarmSound(); }catch(e){}
+  }
+  window.closeDailyAlarmV44 = function(){ const p=document.getElementById('daily-alarm-popup'); if(p){ p.style.display='none'; p.classList.remove('show'); } };
+  window.snoozeDailyAlarmV44 = function(){ const p=document.getElementById('daily-alarm-popup'); if(!p) return; const id=p.dataset.currentItemId; window.closeDailyAlarmV44(); setTimeout(()=>{ const diaries=JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); const it=diaries.find(x=>String(x.id)===String(id)); if(it) showAlarm(it, it.time||''); }, 5*60*1000); };
+  window.closeDailyAlarm = window.closeDailyAlarmV44;
+  window.snoozeDailyAlarm = window.snoozeDailyAlarmV44;
+
+  window.addEventListener('load', ()=>{
+    setTimeout(()=>{
+      checkAlarms();
+      setInterval(checkAlarms, 30*1000);
+      if('Notification' in window && Notification.permission==='default'){ Notification.requestPermission(); }
+      console.log('[V4.4] 매일 반복 B안 완료 - 예: 20:00 약먹기 매일체크 => 매일 20:00 알림 + 매일 리스트에 표시, 수정에서 해지 가능');
+    }, 1200);
+  });
+})();
+</script>
 </body>
+
 
 
 
