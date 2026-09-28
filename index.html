@@ -13791,62 +13791,102 @@ console.log('[DailyAlarm] 스크립트 로드 완료 - testDailyAlarm()으로 �
 })();
 </script>
 
+
+<style>
+/* [V4.3] 28일 오늘날짜 아이콘 배경 네모박스 숨김 - 스크린샷 이슈 */
+.cal-cell .cal-photo-corner,
+.cal-cell.has-photo .cal-photo-corner,
+.cal-cell.today-date .cal-photo-corner,
+.cal-cell.has-photo.today-date .cal-photo-corner,
+.cal-cell.has-photo.sunday .cal-photo-corner,
+.cal-cell.has-photo.saturday .cal-photo-corner {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+/* 핀 이모지만 남기고 배경은 투명 */
+.cal-cell .cal-photo-corner .pin-emoji {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+/* 오늘 날짜(28일) 셀의 사진 배경 오버레이도 투명 */
+.cal-cell.today-date.has-photo::after,
+.cal-cell.has-photo::after {
+  background: transparent !important;
+}
+</style>
 <script>
-// [V4.2] 뒤로가기 여러번 버그 최종 수정 - 메인에서는 1번에 종료
+// [V4.3] 뒤로가기 + 사진박스 최종 수정
+// 1. 스윙2앱: 스윙2앱은 자체적으로 뒤로가기 2번 카운터를 가짐. 코드로 완전 제어 불가.
+//    - 스윙2앱 콘솔 > 앱 설정 > 뒤로가기 버튼 > "바로 종료"로 설정하면 1번에 종료됨
+//    - 또는 JS_NODE APK는 이미 1번에 종료되므로 실제 배포는 JS_NODE APK 사용
+// 2. 그래도 코드에서는 최대한 한 번에 종료되도록 개선
+
 (function(){
   function getOpenModals(){
-    const els = document.querySelectorAll('.modal-overlay.active, #fortune-popup-overlay.active, #daily-alarm-popup.show');
-    return Array.from(els).filter(el=>{
+    return Array.from(document.querySelectorAll('.modal-overlay.active')).filter(el=>{
       const cs = window.getComputedStyle(el);
-      return cs.display!=='none';
-    });
+      return cs.display!=='none' && el.classList.contains('active');
+    }).concat(
+      Array.from(document.querySelectorAll('#fortune-popup-overlay.active, #daily-alarm-popup.show')).filter(el=>{
+        return window.getComputedStyle(el).display!=='none';
+      })
+    );
   }
   function closeAllModals(){
-    let c=0;
-    document.querySelectorAll('.modal-overlay.active').forEach(el=>{ el.classList.remove('active'); el.style.display='none'; c++; });
+    document.querySelectorAll('.modal-overlay.active').forEach(el=>{ el.classList.remove('active'); el.style.display='none'; });
     const f=document.getElementById('fortune-popup-overlay'); if(f){ f.classList.remove('active'); f.style.display='none'; }
     const l=document.getElementById('lotto-generator-modal-overlay'); if(l){ l.classList.remove('active'); l.style.display='none'; }
     const a=document.getElementById('daily-alarm-popup'); if(a){ a.classList.remove('show'); }
     try{ if(typeof modalLockCount!=='undefined') modalLockCount=0; }catch(e){}
-    try{ if(typeof unlockBodyScroll==='function'){ unlockBodyScroll(); } }catch(e){}
+    try{ if(typeof unlockBodyScroll==='function') unlockBodyScroll(); }catch(e){}
     document.documentElement.style.overflow=''; document.body.style.overflow=''; document.body.style.position=''; document.body.style.touchAction='';
-    const funcs=['closeSettingsModal','closeCardStatementModal','closeCardPendingModal','closeBalanceLocationModal','closeFortunePopup','closeDailyAlarm'];
-    funcs.forEach(fn=>{ try{ if(typeof window[fn]==='function') window[fn](); }catch(e){} });
-    return c;
+    ['closeSettingsModal','closeCardStatementModal','closeCardPendingModal','closeBalanceLocationModal','closeFortunePopup','closeDailyAlarm'].forEach(fn=>{ try{ if(typeof window[fn]==='function') window[fn](); }catch(e){} });
   }
   let isExiting=false;
   function doExit(){
     if(isExiting) return; isExiting=true;
     try{
-      if(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App){ window.Capacitor.Plugins.App.exitApp(); }
+      // Swing2App 전용 종료 시도
+      if(window.s2app && window.s2app.exitApp){ window.s2app.exitApp(); }
+      else if(window.S2App && window.S2App.exitApp){ window.S2App.exitApp(); }
+      else if(window.Android && window.Android.exitApp){ window.Android.exitApp(); }
+      // Capacitor / Cordova
+      else if(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App){ window.Capacitor.Plugins.App.exitApp(); }
       else if(navigator.app && navigator.app.exitApp){ navigator.app.exitApp(); }
-      else { try{ history.go(-(history.length-1)); }catch(e){} setTimeout(()=>{ try{ window.close(); }catch(e){} },100); }
-    }catch(e){}
+      else { window.close(); }
+    }catch(e){ console.error(e); }
     setTimeout(()=>{ isExiting=false; },1000);
   }
   function handleBack(e){
     try{
       if(e){ e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); }
       const open=getOpenModals();
+      console.log('[V4.3] back, modals:', open.length);
       if(open.length>0){ closeAllModals(); return false; }
       doExit(); return false;
     }catch(err){ return false; }
   }
+  // Capacitor
   if(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App){
     window.Capacitor.Plugins.App.addListener('backButton', ()=>{ handleBack(); });
   }
+  // Swing2App / Cordova - capture phase로 최우선 처리
   document.addEventListener('backbutton', function(e){ return handleBack(e); }, true);
+  // 브라우저
   window.addEventListener('popstate', function(e){
     const open=getOpenModals();
-    if(open.length>0){ closeAllModals(); try{ history.pushState(null,'',location.href); }catch(e){} }
+    if(open.length>0){ closeAllModals(); try{ history.pushState(null,'',location.href); }catch(err){} }
     else { handleBack(e); }
   }, true);
   try{ history.replaceState(null,'',location.href); }catch(e){}
-  document.addEventListener('keydown', function(e){ if(e.key==='Escape' && getOpenModals().length>0) handleBack(e); }, true);
-  console.log('[V4.2] back fix ready');
+  console.log('[V4.3] back fix + photo box hide applied');
 })();
 </script>
 </body>
+
 
 
 </html>
