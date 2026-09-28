@@ -13741,5 +13741,55 @@ window.testDailyAlarm = function(){
 console.log('[DailyAlarm] 스크립트 로드 완료 - testDailyAlarm()으로 테스트 가능');
 </script>
 
+
+<script>
+// [V4.0.1 근본수정] 출력물3장 데이터 자동 정리 - 달력 도배 원인 데이터 자체를 일반 메모로 이동
+(function autoFixOutputData(){
+  try{
+    const keys = ['smartDiaryList', 'diaryV4', 'smartDiaries'];
+    let totalFixed = 0;
+    keys.forEach(k=>{
+      const raw = localStorage.getItem(k);
+      if(!raw) return;
+      let arr;
+      try{ arr = JSON.parse(raw); }catch(e){ return; }
+      if(!Array.isArray(arr)) return;
+      let changed = false;
+      arr.forEach(item=>{
+        const ann = String(item.anniversary||'');
+        if(/출력|전단|복사|물3장|로또/.test(ann)){
+          // 기념일 -> 일반 메모로 이동
+          const txt = String(item.text||'');
+          if(!txt.includes(ann)){
+            item.text = ann + (txt ? ' ' + txt : '');
+          }
+          item.anniversary = '';
+          item.annivRepeat = 'none';
+          item.dailyRepeat = false;
+          changed = true;
+          totalFixed++;
+        }
+        // dailyRepeat도 함께 제거 (도배 원인)
+        if(item.dailyRepeat){
+          item.dailyRepeat = false;
+          changed = true;
+        }
+      });
+      if(changed){
+        localStorage.setItem(k, JSON.stringify(arr));
+        console.log(`[V4.0.1] ${k}에서 ${totalFixed}개 출력물3장 정리`);
+      }
+    });
+    if(totalFixed>0){
+      setTimeout(()=>{
+        if(typeof renderCalendar==='function') renderCalendar();
+        if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday();
+        console.log(`[V4.0.1] 총 ${totalFixed}개 출력물3장 기념일→일반메모 변환 완료`);
+      }, 800);
+    }
+  }catch(e){ console.error('[V4.0.1] autoFix 실패', e); }
+})();
+</script>
 </body>
+
 </html>
