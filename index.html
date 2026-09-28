@@ -5437,32 +5437,22 @@ window.attachPhotoDoubleTap = function(el, handler){
 
     function getAnniversaryForDate(dateStr) {
         const diaries = getAllDiaries();
-        // [FIXED V3.2] 출력물3장 매일 반복 버그 수정
-        // 1. dailyRepeat로 인한 캘린더 도배 방지: dailyRepeat만 있고 annivRepeat 없는 항목은 캘린더 라벨에서 제외
-        // 2. 같은 날짜에 여러 기념일이 있으면 가장 최근(마지막) 항목 우선
         const normalized = normalizeDateStr(dateStr);
+        // [FIXED V3.7] 출력물3장 달력에서 완전 숨김 - 원인 제거 최종
+        const BLOCK = ['출력물3장','출력물','전단지출력','지출력','출력','물3장','전단지'];
         let found = null;
+        // 뒤에서부터 검색 (최신 우선)
         for(let i=diaries.length-1; i>=0; i--){
             const item = diaries[i];
             if(!item.anniversary) continue;
-            // dailyRepeat만으로 매일 표시되는 항목은 캘린더 라벨에서 제외 (리스트에는 표시됨)
-            if(item.dailyRepeat && !item.annivRepeat) continue;
-            // 텍스트가 '출력' 포함된 임시 메모가 기념일로 잘못 등록된 경우, 원본 날짜가 아니면 제외 (정리 대상)
-            if(item.annivRepeat === 'none' || !item.annivRepeat){
-                if(normalizeDateStr(item.date) !== normalized) continue;
+            const ann = String(item.anniversary);
+            if(BLOCK.some(k=>ann.includes(k))){
+                // 업무 메모는 달력에 절대 표시 안 함
+                continue;
             }
             if(sajuAnniversaryMatches(item, normalized)){
                 found = item;
                 break;
-            }
-        }
-        // 추가 방어: 출력물/출력 처럼 업무용 텍스트가 기념일로 등록되어 매일 도배되는 경우 숨김
-        if(found && /출력|물\s*3장|전단지|복사/i.test(found.anniversary)){
-            // 해당 항목이 반복 설정으로 인해 7일 이상 연속으로 나타나면 캘린더에서는 숨김
-            const all = diaries.filter(d=>d.anniversary===found.anniversary);
-            if(all.length>=7){
-                // 원본 날짜에만 표시
-                if(normalizeDateStr(found.date) !== normalized) return null;
             }
         }
         return found ? found.anniversary : null;
