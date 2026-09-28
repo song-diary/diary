@@ -5439,7 +5439,7 @@ window.attachPhotoDoubleTap = function(el, handler){
         const diaries = getAllDiaries();
         const normalized = normalizeDateStr(dateStr);
         // [FIXED V3.7] 출력물3장 달력에서 완전 숨김 - 원인 제거 최종
-        const BLOCK = ['출력물3장','출력물','전단지출력','지출력','출력','물3장','전단지'];
+        const BLOCK = ['출력물3장','출력물','전단지출력','지출력','출력','물3장','전단지','출력 물'];
         let found = null;
         // 뒤에서부터 검색 (최신 우선)
         for(let i=diaries.length-1; i>=0; i--){
@@ -8195,8 +8195,16 @@ window.attachPhotoDoubleTap = function(el, handler){
             const cell = document.createElement('div');
             cell.className = 'cal-cell adjacent-month';
             placeCell(cell, cellIndex, 1);
+            // [FIXED V3.8] 인접월(회색) 날짜도 오늘/선택 표시 + 출력물3장 숨김
+            const todayStrLocal = getTodayStr();
+            if (dateStr === todayStrLocal) cell.classList.add('today-date');
+            if (selectedViewDate && dateStr === selectedViewDate) cell.classList.add('selected-date');
             const specialInfo = getSpecialDayLabel(dateStr);
-            const annivText = getAnniversaryForDate(dateStr);
+            let annivText = getAnniversaryForDate(dateStr);
+            // 출력물3장 등 업무 메모는 인접월에서도 절대 표시 안 함
+            if(annivText && /출력|전단|복사|물3장/.test(annivText)){
+                annivText = null;
+            }
             let indicatorHTML = '';
             if (specialInfo) {
                 indicatorHTML += `<div class="cal-special-label cal-special-${specialInfo.type}">${formatCalLabel(specialInfo.label)}</div>`;
@@ -8215,7 +8223,7 @@ window.attachPhotoDoubleTap = function(el, handler){
                 renderCalendar();
                 renderDiaryAroundToday();
                 renderMoneyAroundToday();
-                if (isDiarySearchFilterOpen) filterDiaryCustomList();
+                if (typeof filterDiaryCustomList==='function' && isDiarySearchFilterOpen) filterDiaryCustomList();
             };
             grid.appendChild(cell);
         }
@@ -8256,6 +8264,10 @@ window.attachPhotoDoubleTap = function(el, handler){
 
             if (specialInfo) {
                 indicatorHTML += `<div class="cal-special-label cal-special-${specialInfo.type}">${formatCalLabel(specialInfo.label)}</div>`;
+            }
+            // [FIXED V3.8] 출력물3장 달력 라벨 원천 차단
+            if (annivText && /출력|전단|복사|물3장/.test(annivText)) {
+                annivText = null;
             }
             if (annivText) {
                 indicatorHTML += `<div class="cal-anniv-label">${formatCalLabel(annivText)}</div>`;
