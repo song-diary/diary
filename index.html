@@ -13790,6 +13790,119 @@ console.log('[DailyAlarm] 스크립트 로드 완료 - testDailyAlarm()으로 �
   }catch(e){ console.error('[V4.0.1] autoFix 실패', e); }
 })();
 </script>
+
+<script>
+// [V4.1 근본수정] 뒤로가기 여러 번 눌러야 종료되는 버그 수정
+// 원인: V3-99에는 backButton 핸들러가 없어 WebView 히스토리가 쌓임, 모달이 10개 열리면 10번 눌러야 종료됨
+// 수정: 모달이 열려있으면 모달만 닫고, 모두 닫혔을 때 1번 더 누르면 종료 확인
+(function(){
+  let lastBackPress = 0;
+  let exitToast = null;
+
+  function getOpenModals(){
+    const overlays = document.querySelectorAll('.modal-overlay.active, #fortune-popup-overlay.active, #lotto-generator-modal-overlay.active, #daily-alarm-popup.show');
+    return Array.from(overlays);
+  }
+
+  function closeTopModal(){
+    const open = getOpenModals();
+    if(open.length===0) return false;
+    const top = open[open.length-1];
+    // 공통 닫기 시도
+    if(top.id==='fortune-popup-overlay' && typeof closeFortunePopup==='function'){ closeFortunePopup(); return true; }
+    if(top.id==='lotto-generator-modal-overlay'){ top.classList.remove('active'); top.style.display='none'; try{ unlockBodyScroll(); }catch(e){} return true; }
+    if(top.id==='daily-alarm-popup' && typeof closeDailyAlarm==='function'){ closeDailyAlarm(); return true; }
+    // 일반 modal-overlay
+    top.classList.remove('active');
+    try{ if(typeof unlockBodyScroll==='function') unlockBodyScroll(); }catch(e){}
+    // 전용 close 함수들
+    try{
+      if(top.id==='settings-modal-overlay' && typeof closeSettingsModal==='function') closeSettingsModal();
+      if(top.id==='card-statement-modal-overlay' && typeof closeCardStatementModal==='function') closeCardStatementModal();
+      if(top.id==='card-pending-modal-overlay' && typeof closeCardPendingModal==='function') closeCardPendingModal();
+      if(top.id==='balance-location-modal-overlay' && typeof closeBalanceLocationModal==='function') closeBalanceLocationModal();
+    }catch(e){}
+    return true;
+  }
+
+  function showExitToast(){
+    if(exitToast) exitToast.remove();
+    exitToast = document.createElement('div');
+    exitToast.textContent = '뒤로가기를 한 번 더 누르면 종료됩니다';
+    exitToast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;z-index:99999;animation:fadeIn .2s';
+    document.body.appendChild(exitToast);
+    setTimeout(()=>{ if(exitToast){ exitToast.remove(); exitToast=null; } }, 2000);
+  }
+
+  function handleBack(e){
+    try{
+      // 모달이 열려있으면 모달만 닫고 종료 방지
+      if(closeTopModal()){
+        if(e){ e.preventDefault(); e.stopPropagation(); }
+        return;
+      }
+      // 모달이 없으면 2초 이내 두 번 누르면 종료
+      const now = Date.now();
+      if(now - lastBackPress < 2000){
+        // Capacitor / Cordova 환경이면 앱 종료
+        if(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App){
+          window.Capacitor.Plugins.App.exitApp();
+        } else if(window.cordova && navigator.app && navigator.app.exitApp){
+          navigator.app.exitApp();
+        } else {
+          // 웹에서는 히스토리 백 또는 종료 안내
+          if(history.length>1){
+            history.back();
+          } else {
+            // Swing2App 등에서 window.close 시도
+            try{ window.close(); }catch(err){}
+            showExitToast();
+          }
+        }
+      } else {
+        lastBackPress = now;
+        showExitToast();
+        if(e){ e.preventDefault(); e.stopPropagation(); }
+      }
+    }catch(err){ console.error('[V4.1 back] error', err); }
+  }
+
+  // Capacitor backButton 리스너 (APK)
+  if(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App){
+    window.Capacitor.Plugins.App.addListener('backButton', ({canGoBack})=>{
+      handleBack();
+    });
+    console.log('[V4.1] Capacitor backButton 리스너 등록');
+  }
+
+  // Cordova / Swing2App
+  document.addEventListener('backbutton', handleBack, false);
+
+  // 브라우저 뒤로가기 (popstate) - 모달 닫기용
+  window.addEventListener('popstate', function(e){
+    if(getOpenModals().length>0){
+      closeTopModal();
+      // 히스토리 유지
+      history.pushState(null, '', location.href);
+    }
+  });
+
+  // 초기 히스토리 1개 추가 (모달 닫기용 트랩)
+  try{ history.pushState(null, '', location.href); }catch(e){}
+
+  // ESC 키도 뒤로가기로 처리 (PC 테스트용)
+  document.addEventListener('keydown', function(e){
+    if(e.key==='Escape'){
+      if(getOpenModals().length>0){
+        handleBack(e);
+      }
+    }
+  });
+
+  console.log('[V4.1] 뒤로가기 핸들러 등록 완료 - 모달 있으면 모달만 닫고, 없으면 두 번 눌러 종료');
+})();
+</script>
 </body>
+
 
 </html>
