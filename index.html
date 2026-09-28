@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>다이어리&가계부 V3.1 FIXED - 원본UI 유지 + 보안패치 + 알람안정화</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>Smart Diary V4.0 - UI 원본 동일, 로또 비활성화</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -5437,56 +5437,9 @@ window.attachPhotoDoubleTap = function(el, handler){
 
     function getAnniversaryForDate(dateStr) {
         const diaries = getAllDiaries();
-        const normalized = normalizeDateStr(dateStr);
-        // [FIXED V3.7] 출력물3장 달력에서 완전 숨김 - 원인 제거 최종
-        const BLOCK = ['출력물3장','출력물','전단지출력','지출력','출력','물3장','전단지','출력 물'];
-        let found = null;
-        // 뒤에서부터 검색 (최신 우선)
-        for(let i=diaries.length-1; i>=0; i--){
-            const item = diaries[i];
-            if(!item.anniversary) continue;
-            const ann = String(item.anniversary);
-            if(BLOCK.some(k=>ann.includes(k))){
-                // 업무 메모는 달력에 절대 표시 안 함
-                continue;
-            }
-            if(sajuAnniversaryMatches(item, normalized)){
-                found = item;
-                break;
-            }
-        }
+        const found = diaries.find(item => item.anniversary && sajuAnniversaryMatches(item, dateStr));
         return found ? found.anniversary : null;
     }
-    
-    // [NEW] 반복으로 도배된 기념일 정리 함수
-    function cleanupFloodingAnniversaries(){
-        const diaries = getAllDiaries();
-        const before = diaries.length;
-        const floodKeywords = ['출력물3장','출력물','출력','전단지출력','지출력'];
-        let cleaned = diaries.filter(item=>{
-            if(!item.anniversary) return true;
-            const isFlood = floodKeywords.some(k=>item.anniversary.includes(k));
-            if(isFlood && item.dailyRepeat){
-                console.log('[CLEANUP] dailyRepeat 제거:', item.anniversary, item.date);
-                item.dailyRepeat = false;
-                // annivRepeat도 없애서 원본 날짜에만 남김
-                if(item.annivRepeat && item.annivRepeat!=='none'){
-                    item.annivRepeat = 'none';
-                }
-                return true;
-            }
-            return true;
-        });
-        localStorage.setItem('smartDiaryList', JSON.stringify(cleaned));
-        if(typeof localStorage.getItem('smartDiaries')!=='undefined'){
-            try{ localStorage.setItem('smartDiaries', JSON.stringify(cleaned)); }catch(e){}
-        }
-        alert(`정리 완료! ${before}개 -> ${cleaned.length}개\n- '출력물3장' dailyRepeat 해제됨\n이제 캘린더 새로고침 됩니다.`);
-        renderCalendar();
-        renderDiaryAroundToday();
-    }
-    window.cleanupFloodingAnniversaries = cleanupFloodingAnniversaries;
-
 
     function getAllDiaries() {
         let combinedList = [];
@@ -7263,7 +7216,8 @@ window.attachPhotoDoubleTap = function(el, handler){
     }
 
     // V210 로또 방 전용
-    function openLottoGeneratorModal(){
+    function openLottoGeneratorModal(){ console.log('[V4.0] 로또 제거됨'); return; }
+    function openLottoGeneratorModal_DISABLED_ORIG(){
         const overlay = document.getElementById('lotto-generator-modal-overlay');
         if(!overlay) return;
         overlay.classList.add('active');
@@ -8195,16 +8149,13 @@ window.attachPhotoDoubleTap = function(el, handler){
             const cell = document.createElement('div');
             cell.className = 'cal-cell adjacent-month';
             placeCell(cell, cellIndex, 1);
-            // [FIXED V3.8] 인접월(회색) 날짜도 오늘/선택 표시 + 출력물3장 숨김
-            const todayStrLocal = getTodayStr();
-            if (dateStr === todayStrLocal) cell.classList.add('today-date');
-            if (selectedViewDate && dateStr === selectedViewDate) cell.classList.add('selected-date');
+            try{
+                const todayStrAdj = getTodayStr();
+                if (dateStr === todayStrAdj) cell.classList.add('today-date');
+                if (selectedViewDate && dateStr === selectedViewDate) cell.classList.add('selected-date');
+            }catch(e){}
             const specialInfo = getSpecialDayLabel(dateStr);
-            let annivText = getAnniversaryForDate(dateStr);
-            // 출력물3장 등 업무 메모는 인접월에서도 절대 표시 안 함
-            if(annivText && /출력|전단|복사|물3장/.test(annivText)){
-                annivText = null;
-            }
+            const annivText = getAnniversaryForDate(dateStr);
             let indicatorHTML = '';
             if (specialInfo) {
                 indicatorHTML += `<div class="cal-special-label cal-special-${specialInfo.type}">${formatCalLabel(specialInfo.label)}</div>`;
@@ -8223,7 +8174,7 @@ window.attachPhotoDoubleTap = function(el, handler){
                 renderCalendar();
                 renderDiaryAroundToday();
                 renderMoneyAroundToday();
-                if (typeof filterDiaryCustomList==='function' && isDiarySearchFilterOpen) filterDiaryCustomList();
+                if (typeof isDiarySearchFilterOpen !== 'undefined' && isDiarySearchFilterOpen && typeof filterDiaryCustomList==='function') filterDiaryCustomList();
             };
             grid.appendChild(cell);
         }
@@ -8265,10 +8216,6 @@ window.attachPhotoDoubleTap = function(el, handler){
             if (specialInfo) {
                 indicatorHTML += `<div class="cal-special-label cal-special-${specialInfo.type}">${formatCalLabel(specialInfo.label)}</div>`;
             }
-            // [FIXED V3.8] 출력물3장 달력 라벨 원천 차단
-            if (annivText && /출력|전단|복사|물3장/.test(annivText)) {
-                annivText = null;
-            }
             if (annivText) {
                 indicatorHTML += `<div class="cal-anniv-label">${formatCalLabel(annivText)}</div>`;
             }
@@ -8277,7 +8224,7 @@ window.attachPhotoDoubleTap = function(el, handler){
             let photoListCount = 0;
             try {
                 const allDiaries = getAllDiaries();
-                photoListCount = allDiaries.filter(d => normalizeDateStr(d.date) === dateStr && d.photo && String(d.photo).trim().toUpperCase()!=='NULL').length;
+                photoListCount = allDiaries.filter(d => normalizeDateStr(d.date) === dateStr && d.photo).length;
             } catch(e){}
             const hasPhotoFlag = photoListCount > 0;
             const showPhotoPin = (typeof getShowPhotoPin==='function') ? getShowPhotoPin() : (localStorage.getItem('smartDiaryShowPhotoPin') !== 'false');
@@ -8706,18 +8653,7 @@ window.attachPhotoDoubleTap = function(el, handler){
         let filtered = diaries.filter(item => {
             if (item.money && item.money.amount) return false;
             if (!item.text && !item.photo && !item.health && !item.anniversary) return false;
-            var isSameDate = normalizeDateStr(item.date) === dateStr;
-            // [FIXED V3.6] 매일 반복 원인 제거 - 원본 날짜에만 표시 (알람은 별도 처리)
-            var isAnnivMatch = false;
-            try {
-              if(item.anniversary && item.annivRepeat && item.annivRepeat!=='none'){
-                const d = parseDateObj(item.date);
-                const today = parseDateObj(dateStr);
-                if(item.annivRepeat==='yearly' && d.getMonth()===today.getMonth() && d.getDate()===today.getDate()) isAnnivMatch=true;
-                if(item.annivRepeat==='monthly' && d.getDate()===today.getDate()) isAnnivMatch=true;
-              }
-            } catch(e){}
-            return isSameDate || isAnnivMatch;
+            return normalizeDateStr(item.date) === dateStr;
         });
 
         // 시간 내림차순 정렬
@@ -8748,10 +8684,8 @@ window.attachPhotoDoubleTap = function(el, handler){
             itemBox.setAttribute('data-text-preview', previewText);
             if (isReservedDate) itemBox.classList.add('is-reserved');
 
-            const isDailyRepeatItem = !!item.dailyRepeat;
-            const repeatBadge = isDailyRepeatItem ? '<span style="background:#8e44ad; color:#fff; padding:1px 4px; border-radius:3px; font-size:9px; margin-right:3px;">매일</span>' : '';
             const titleText = item.anniversary || '';
-            const titleHTML = `<div class="photo-title-area" style="height:20px; font-size:12px; font-weight:bold; color:#9C6ADE; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; margin-bottom:4px; padding-left:6px;">${repeatBadge}${titleText ? titleText : '&nbsp;'}</div>`;
+            const titleHTML = `<div class="photo-title-area" style="height:20px; font-size:12px; font-weight:bold; color:#9C6ADE; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; margin-bottom:4px; padding-left:6px;">${titleText ? titleText : '&nbsp;'}</div>`;
             const emptyPhotoHTML = !item.photo ? `<div class="diary-photo-wrap empty-photo-wrap" data-empty="true"><div class="diary-photo empty-icon" style="width:100%;aspect-ratio:1/1;background:#f5f0f0;border-radius:10px;min-height:100px;display:flex;align-items:center;justify-content:center;color:#bbb;">📷</div></div>` : '';
             itemBox.innerHTML = `
                 ${titleHTML}
@@ -9946,13 +9880,7 @@ async function showPhotosForDate(dateStr){
         setCategoryStatsVisibility(isCategoryStatsVisible);
         setSearchFilterVisibility(isSearchFilterVisible);
         
-                selectedViewDate = (typeof getTodayStrLocal==='function'?getTodayStrLocal():getTodayStr());
-        // [FIXED] 달력과 다이어리 리스트 날짜 동기화 강제
-        if(typeof calYear!=='undefined'){
-          const todayObj = parseDateObj(selectedViewDate);
-          calYear = todayObj.getFullYear();
-          calMonth = todayObj.getMonth();
-        }
+        selectedViewDate = getTodayStr();
         renderCalendar();
         applyMemoFontSize();
         initSpeechRecognition();
@@ -12547,16 +12475,7 @@ async function showPhotosForDate(dateStr){
   function normDate(d){ try{ return typeof normalizeDateStr==='function'?normalizeDateStr(d):d; }catch(e){return d;} }
   function getFiltered(dateStr){
     var all=getAll(); var n=normDate(dateStr);
-    var isToday = n === (typeof getTodayStr==='function'?getTodayStr():new Date().toISOString().slice(0,10));
-    var f=all.filter(function(it){ 
-      if(it.money && it.money.amount) return false; 
-      if(!it.text && !it.photo && !it.health && !it.anniversary) return false; 
-      var isSameDate = normDate(it.date)===n; 
-      var isDailyRepeat = !!it.dailyRepeat; 
-      var hasTime = !!it.time;
-      if(isToday){ return isSameDate || isDailyRepeat || hasTime; }
-      return isSameDate || isDailyRepeat; 
-    });
+    var f=all.filter(function(it){ if(it.money && it.money.amount) return false; if(!it.text && !it.photo && !it.health && !it.anniversary) return false; return normDate(it.date)===n; });
     f.sort(function(a,b){ return (a.time||'').localeCompare(b.time||''); });
     return f;
   }
@@ -13715,13 +13634,7 @@ function showDailyAlarmNotification(item, timeStr) {
   const titleShort = title.length > 80 ? title.substring(0,80) + '...' : title;
   const dateStr = item.date || '';
   
-  // [FIXED] XSS 방지 - textContent 기반 안전한 렌더링
-  const esc = (s)=>{ const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; };
-  const safeTitle = esc(titleShort);
-  const safeAnniv = esc(item.anniversary || '');
-  const safeDate = esc(dateStr + ' ' + (item.time||''));
-  const safeTime = esc(timeStr);
-  body.innerHTML = `<div style="font-weight:bold; color:#e06d6d; margin-bottom:6px;">⏰ ${safeTime} - ${safeAnniv ? '📌 ' + safeAnniv : ''}</div><div>${safeTitle}</div><div style="font-size:11px; color:#999; margin-top:6px;">${safeDate}</div>`;
+  body.innerHTML = `<div style="font-weight:bold; color:#e06d6d; margin-bottom:6px;">⏰ ${timeStr} - ${item.anniversary ? '📌 ' + item.anniversary : ''}</div><div>${titleShort}</div><div style="font-size:11px; color:#999; margin-top:6px;">${dateStr} ${item.time || ''}</div>`;
   popup.classList.add('show');
   popup.classList.remove('shake');
   setTimeout(()=> popup.classList.add('shake'), 100);
@@ -13773,7 +13686,8 @@ function snoozeDailyAlarm() {
 })();
 
 // saveDiaryEntry 함수 패치 - dailyRepeat 저장
-(function patchSaveFixed(){
+(function patchSave(){
+  // 원본 함수가 로드될 때까지 대기
   const interval = setInterval(()=>{
     if(typeof window.saveDiaryEntry === 'function') {
       clearInterval(interval);
@@ -13782,37 +13696,36 @@ function snoozeDailyAlarm() {
         try {
           const dailyCb = document.getElementById('daily-repeat-checkbox');
           window._tempDailyRepeat = dailyCb ? dailyCb.checked : false;
-          // [FIXED] dailyRepeat를 diaries 배열에 안전하게 주입 - localStorage 패치 없이
-          if(typeof diaries !== 'undefined' && Array.isArray(diaries) && diaries.length>0){
-            // 저장 직후 마지막 아이템에 반영은 orig 내부에서 처리되므로 플래그만 전달
-          }
         } catch(e){}
-        const res = orig.apply(this, arguments);
-        try{
-          // [FIXED] 저장 후 diaries 마지막 항목에 dailyRepeat 플래그 추가
-          if(window._tempDailyRepeat && typeof diaries !== 'undefined' && diaries.length>0){
-            const last = diaries[diaries.length-1];
-            if(last && !last.dailyRepeat){
-              last.dailyRepeat = true;
-              // localStorage에 안전하게 다시 저장 (원본 함수 훼손 없음)
-              try{ localStorage.setItem('smartDiaries', JSON.stringify(diaries)); }catch(e){}
-              try{ localStorage.setItem('smartDiaryList', JSON.stringify(diaries)); }catch(e){}
-            }
-          }
-        }catch(e){}
-        return res;
+        return orig.apply(this, arguments);
       };
-      console.log('[FIXED] saveDiaryEntry patched safely');
+      console.log('[DailyAlarm] saveDiaryEntry patched');
     }
   }, 500);
 })();
 
 // 기존 diaries 저장 시 dailyRepeat 포함하도록 create/update 부분 후킹
 // MutationObserver로 diaries 배열 변경 감지 대신, 저장 직전 데이터에 추가
-// [FIXED V3.1] localStorage 원본 훼손 제거 - dailyRepeat는 saveDiaryEntry에서 직접 처리
-// origLocalStorageSetItem monkey patch removed for data safety
-window._tempDailyRepeat = false;
-console.log('[FIXED] localStorage monkey patch removed');
+const origLocalStorageSetItem = localStorage.setItem;
+localStorage.setItem = function(key, value){
+  try {
+    if(key === 'smartDiaries' || key.includes('diary')) {
+      // diaries에 dailyRepeat 주입
+      if(window._tempDailyRepeat !== undefined) {
+        let arr = JSON.parse(value);
+        if(Array.isArray(arr) && arr.length>0) {
+          // 마지막 아이템 또는 editing 중인 아이템에 dailyRepeat 추가
+          const last = arr[arr.length-1];
+          if(last && !last.dailyRepeat && window._tempDailyRepeat) {
+            last.dailyRepeat = true;
+            value = JSON.stringify(arr);
+          }
+        }
+      }
+    }
+  } catch(e){}
+  return origLocalStorageSetItem.apply(this, arguments);
+};
 
 // 초기화 - 페이지 로드 후
 window.addEventListener('load', function(){
