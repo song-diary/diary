@@ -14257,7 +14257,53 @@ console.log('[DailyAlarm] 스크립트 로드 완료 - testDailyAlarm()으로 �
   console.log('[V4.20] 시스템 소리 삭제, 부드러운 3종 제안');
 })();
 </script>
+
+<script>
+// [V4.21] 중복 알림폼 제거 + 기본 도미솔
+(function(){
+  console.log('[V4.21] 중복 제거 + 기본 도미솔');
+
+  function cleanDupes(){
+    // v19, v20 중복 제거
+    document.querySelectorAll('#v19-alarm-settings, #v20-alarm-settings, #v18-alarm-settings, #v17-settings-test').forEach(el=>{
+      if(el.id!=='v21-alarm-settings') el.remove();
+    });
+    // 혹시 2개 이상 생겼으면 하나만 남기기
+    const all=document.querySelectorAll('[id*="alarm-settings"]');
+    if(all.length>1){
+      for(let i=1;i<all.length;i++) all[i].remove();
+    }
+  }
+
+  // 기본을 도미솔로 변경 - 저장된 값이 없거나 system이었으면 piano로
+  let currentType=localStorage.getItem('smartDiaryAlarmSoundType');
+  if(!currentType || currentType==='system' || currentType==='tiriring'){
+    // 사용자가 도미솔 선호한다고 했으니 기본을 piano로
+    localStorage.setItem('smartDiaryAlarmSoundType', 'piano');
+    console.log('기본 소리 도미솔로 설정');
+  }
+
+  window.addEventListener('load', ()=>{
+    setTimeout(cleanDupes, 500);
+    setTimeout(cleanDupes, 1500);
+    setTimeout(cleanDupes, 3000);
+    
+    // select 값도 piano로
+    setTimeout(()=>{
+      const sel=document.getElementById('alarm-sound-type');
+      if(sel){
+        const saved=localStorage.getItem('smartDiaryAlarmSoundType')||'piano';
+        sel.value=saved;
+        // 도미솔이 기본이므로 select에서 piano 선택된 상태로
+        if(saved==='piano') console.log('현재 기본: 도미솔 포근');
+      }
+    }, 800);
+  });
+  setTimeout(cleanDupes, 800);
+})();
+</script>
 </body>
+
 
 
 
