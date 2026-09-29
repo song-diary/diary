@@ -3430,13 +3430,13 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
             <button class="close-form-btn" onclick="closeDiaryFormPanel()" title="입력창 닫기">✖</button>
         </div>
 
-        <div class="reservation-box" id="reservation-box" style="flex-wrap:wrap; gap:8px;">
+        <div class="reservation-box" id="reservation-box" style="flex-wrap:wrap;">
             <span style="font-size: 12px;">⏰ 알림 받을 시간:</span>
             <input type="time" id="reservation-time-input" style="border:1px solid var(--border-color); border-radius:4px; background:#fff;">
             <label style="display:flex; align-items:center; gap:4px; font-size:12px; cursor:pointer; margin-left:6px;">
-                <input type="checkbox" id="daily-repeat-checkbox" style="width:14px; height:14px;"> 매일 반복
+                <input type="checkbox" id="daily-repeat-checkbox" style="width:14px; height:14px;" onchange="document.getElementById('once-alarm-label').style.display=this.checked?'flex':'none'; if(!this.checked)document.getElementById('once-alarm-checkbox').checked=false;"> 매일 반복
             </label>
-            <label id="once-alarm-label" style="display:none; align-items:center; gap:4px; font-size:11px; cursor:pointer; margin-left:6px; color:#e74c3c; font-weight:bold; background:#fdecea; padding:2px 6px; border-radius:4px;">
+            <label id="once-alarm-label" style="display:none; align-items:center; gap:4px; font-size:11px; cursor:pointer; margin-left:6px; color:#fff; font-weight:bold; background:#e74c3c; padding:3px 8px; border-radius:12px;">
                 <input type="checkbox" id="once-alarm-checkbox" style="width:13px; height:13px;"> 하루만 울림
             </label>
             <label style="display:flex; align-items:center; gap:4px; font-size:12px; cursor:pointer; margin-left:6px; color:#27ae60; font-weight:bold;">
@@ -14715,50 +14715,64 @@ window.updateTitleIconColor=function(){};
 })();
 </script>
 
-<style>
-/* V4.39 추가 - 제목&기념일 반복 연두핀 */
-.cal-cell .cal-photo-corner .pin-emoji.title-green {
-  background: #27ae60 !important;
-  background: linear-gradient(135deg, #82e0aa, #27ae60) !important;
-}
-</style>
 <script>
-// [V4.39] 1) 제목&기념일 반복시 연두 물방울 2) 하루만 울림 체크 옵션
+// [V4.40] 두 기능 확실히 동작
 (function(){
-  console.log('[V4.39] 제목 반복 연두 + 하루만 울림');
+  console.log('[V4.40] 제목 반복 연두 + 하루만 울림 확실히');
 
-  // 매일 반복 체크시 하루만 울림 옵션 표시
-  function toggleOnceOption(){
-    const dailyCb = document.getElementById('daily-repeat-checkbox');
-    const onceLabel = document.getElementById('once-alarm-label');
-    if(!dailyCb || !onceLabel) return;
-    if(dailyCb.checked){
-      onceLabel.style.display = 'flex';
-    } else {
-      onceLabel.style.display = 'none';
-      const onceCb = document.getElementById('once-alarm-checkbox');
-      if(onceCb) onceCb.checked = false;
-    }
+  // 1) 하루만 울림 저장
+  function setupOnceSave(){
+    const interval = setInterval(()=>{
+      if(typeof window.saveDiaryEntry==='function' && !window._v40SavePatched){
+        window._v40SavePatched=true;
+        const orig = window.saveDiaryEntry;
+        window.saveDiaryEntry = function(){
+          try{
+            const onceCb = document.getElementById('once-alarm-checkbox');
+            window._tempOnceAlarm = onceCb ? onceCb.checked : false;
+          }catch(e){}
+          return orig.apply(this, arguments);
+        };
+        clearInterval(interval);
+      }
+    }, 500);
+
+    const origSetItem = localStorage.setItem.bind(localStorage);
+    localStorage.setItem = function(k,v){
+      try{
+        if(k==='smartDiaryList' && window._tempOnceAlarm!==undefined){
+          let arr = JSON.parse(v);
+          if(Array.isArray(arr) && arr.length>0){
+            const editingId = window.editingDiaryId;
+            let target = editingId ? arr.find(x=>String(x.id)===String(editingId)) : arr[arr.length-1];
+            if(target){
+              target.onceAlarm = !!window._tempOnceAlarm;
+              v = JSON.stringify(arr);
+            }
+            window._tempOnceAlarm=undefined;
+          }
+        }
+      }catch(e){}
+      return origSetItem(k,v);
+    };
   }
+  setupOnceSave();
 
-  document.addEventListener('change', function(e){
-    if(e.target && e.target.id === 'daily-repeat-checkbox'){
-      toggleOnceOption();
-    }
-  });
-
-  // 폼 열릴때도 체크
+  // 폼 열때 once 값 복원 + once 라벨 표시
   const origOpen = window.openDiaryForm;
   if(origOpen){
     window.openDiaryForm = function(...args){
       const r = origOpen.apply(this, args);
-      setTimeout(toggleOnceOption, 200);
-      // 기존 once 값 복원
       setTimeout(()=>{
+        const dailyCb = document.getElementById('daily-repeat-checkbox');
+        const onceLabel = document.getElementById('once-alarm-label');
+        const onceCb = document.getElementById('once-alarm-checkbox');
+        if(dailyCb && onceLabel){
+          onceLabel.style.display = dailyCb.checked ? 'flex' : 'none';
+        }
         try{
           const existingItem = args[1];
-          const onceCb = document.getElementById('once-alarm-checkbox');
-          if(onceCb && existingItem){
+          if(existingItem && onceCb){
             onceCb.checked = !!existingItem.onceAlarm;
           }
         }catch(e){}
@@ -14767,137 +14781,22 @@ window.updateTitleIconColor=function(){};
     };
   }
 
-  // 저장시 onceAlarm 저장 - saveDiaryEntry 패치
-  function patchSave(){
-    // 기존 저장 로직에서 dailyRepeat, annivRepeat 등을 읽음
-    // 우리는 localStorage에 저장된 마지막 아이템에 onceAlarm 주입
-    const origSetItem = localStorage.setItem;
-    // 이미 패치되어 있을 수 있으므로 중복 방지
-    if(window._v39SetItemPatched) return;
-    window._v39SetItemPatched = true;
-    
-    // saveDiaryEntry 함수 후킹
-    const checkInterval = setInterval(()=>{
-      if(typeof window.saveDiaryEntry === 'function' && !window._v39SavePatched){
-        window._v39SavePatched = true;
-        const origSave = window.saveDiaryEntry;
-        window.saveDiaryEntry = function(){
-          try{
-            const onceCb = document.getElementById('once-alarm-checkbox');
-            window._tempOnceAlarm = onceCb ? onceCb.checked : false;
-            console.log('[V4.39] onceAlarm', window._tempOnceAlarm);
-          }catch(e){}
-          return origSave.apply(this, arguments);
-        };
-        clearInterval(checkInterval);
-      }
-    }, 500);
+  // 2) 달력 핀 - 제목&기념일 반복 연두
+  function updatePinsV40(){
+    let all=[];
+    try{ all = JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); }catch(e){}
+    const photoMap={}, dailyMap={}, titleRepeatDates=new Set();
 
-    // localStorage 저장시 onceAlarm 주입
-    const originalSetItem = localStorage.setItem.bind(localStorage);
-    localStorage.setItem = function(k,v){
-      try{
-        if(k==='smartDiaryList' && window._tempOnceAlarm !== undefined){
-          let arr = JSON.parse(v);
-          if(Array.isArray(arr) && arr.length>0){
-            // editing 중이면 해당 id 찾기
-            const editingId = window.editingDiaryId;
-            let target = null;
-            if(editingId){
-              target = arr.find(x=>String(x.id)===String(editingId));
-            } else {
-              target = arr[arr.length-1];
-            }
-            if(target){
-              target.onceAlarm = !!window._tempOnceAlarm;
-              // 하루만 울림이면 dailyRepeat는 true지만 한번만 울리도록 표시
-              if(target.onceAlarm){
-                target.dailyRepeat = true;
-              }
-              v = JSON.stringify(arr);
-              console.log('[V4.39] 저장 onceAlarm', target.onceAlarm, 'daily', target.dailyRepeat);
-            }
-            window._tempOnceAlarm = undefined;
-          }
-        }
-      }catch(e){ console.log('V4.39 setItem error', e); }
-      return originalSetItem(k,v);
-    };
-  }
-  patchSave();
-
-  // 알림 체크시 하루만 울림 처리 - 울린 후 dailyRepeat 해제
-  function patchAlarmCheck(){
-    const interval = setInterval(()=>{
-      if(window.checkDailyAlarmV19 || window.checkDailyAlarm || window.checkAlarm){
-        clearInterval(interval);
-        // 기존 알람 체크 함수들을 감싸서 onceAlarm 처리
-        const funcNames = ['checkDailyAlarmV19','checkDailyAlarmV20','checkDailyAlarmV26','checkAlarm','checkDailyAlarm'];
-        funcNames.forEach(fname=>{
-          if(typeof window[fname]==='function' && !window['_v39_'+fname]){
-            window['_v39_'+fname]=true;
-            const orig = window[fname];
-            window[fname]=function(...args){
-              // 원래 알림 체크
-              const result = orig.apply(this, args);
-              // onceAlarm인 것들 중에서 오늘 울린 후에는 dailyRepeat 해제
-              try{
-                const now = new Date();
-                const cur = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-                // 최근에 울린 알림이 onceAlarm이면 해제
-                // localStorage에서 확인
-                let diaries = JSON.parse(localStorage.getItem('smartDiaryList')||'[]');
-                let changed = false;
-                diaries.forEach(d=>{
-                  if(d.onceAlarm && d.dailyRepeat && d.time===cur){
-                    // 오늘 날짜와 같을 때만 해제 (예약일이 오늘이거나 과거)
-                    // 결혼식 알림처럼 하루만 울리고 끄기
-                    // 1분 후에 해제하도록 setTimeout
-                    setTimeout(()=>{
-                      let arr = JSON.parse(localStorage.getItem('smartDiaryList')||'[]');
-                      let idx = arr.findIndex(x=>String(x.id)===String(d.id));
-                      if(idx>=0){
-                        arr[idx].dailyRepeat = false;
-                        arr[idx].onceAlarm = false;
-                        arr[idx].onceAlarmFired = true;
-                        arr[idx].onceAlarmFiredDate = new Date().toISOString().slice(0,10);
-                        localStorage.setItem('smartDiaryList', JSON.stringify(arr));
-                        console.log(`[V4.39] 하루만 울림 해제: ${d.anniversary||d.text?.slice(0,10)}`);
-                        if(window.renderCalendar) window.renderCalendar();
-                      }
-                    }, 2000);
-                  }
-                });
-              }catch(e){}
-              return result;
-            };
-          }
-        });
-      }
-    }, 1000);
-  }
-  patchAlarmCheck();
-
-  // 달력 핀 업데이트 - 제목&기념일 반복도 연두
-  function updatePinsV39(){
-    const all = JSON.parse(localStorage.getItem('smartDiaryList')||'[]');
-    const photoMap = {};
-    const dailyMap = {};
-    const titleRepeatMap = {}; // 제목&기념일 반복 (annivRepeat != none)
-    
     all.forEach(d=>{
       const ds = (d.date||'').slice(0,10);
       if(!ds) return;
       if(d.photo) photoMap[ds]=true;
       if(d.dailyRepeat) dailyMap[ds]=true;
       if(d.anniversary && d.annivRepeat && d.annivRepeat!=='none'){
-        // 반복 설정된 제목&기념일 - 해당 반복 날짜에도 표시해야 함
-        // 여기서는 원본 날짜만 표시, 반복 계산은 getAnniversaryForDate로
-        titleRepeatMap[ds]=true;
+        titleRepeatDates.add(ds);
       }
     });
 
-    // 반복 기념일이 실제 달력에 표시되는 날짜들도 찾기
     document.querySelectorAll('.cal-cell').forEach(cell=>{
       if(cell.classList.contains('adjacent-month')) return;
       const dayEl = cell.querySelector('.cal-cell-inner span');
@@ -14910,36 +14809,27 @@ window.updateTitleIconColor=function(){};
 
       const hasPhoto = !!photoMap[dateStr];
       const isDaily = !!dailyMap[dateStr];
-      // 기념일 반복이 이 날짜에 해당하는지 체크
-      let isTitleRepeat = !!titleRepeatMap[dateStr];
-      // 추가로 getAnniversaryForDate로 반복 기념일 체크
+      let isTitleRepeat = titleRepeatDates.has(dateStr);
+      // 반복 기념일이 이 날짜에 해당하는지 추가 체크
       try{
         if(typeof getAnniversaryForDate==='function'){
-          const annivText = getAnniversaryForDate(dateStr);
-          if(annivText) isTitleRepeat = true;
+          const txt = getAnniversaryForDate(dateStr);
+          if(txt) isTitleRepeat = true;
         }
       }catch(e){}
 
       let corner = cell.querySelector('.cal-photo-corner');
-      if(isDaily && !corner){
+      if((isDaily || isTitleRepeat) && !corner){
         corner = document.createElement('div');
-        corner.className = 'cal-photo-corner';
+        corner.className='cal-photo-corner';
         corner.setAttribute('data-date', dateStr);
-        corner.innerHTML = '<span class="pin-emoji red-pin"></span>';
-        cell.appendChild(corner);
-      }
-      if(isTitleRepeat && !corner && !hasPhoto && !isDaily){
-        // 제목 반복만 있어도 연두핀 생성
-        corner = document.createElement('div');
-        corner.className = 'cal-photo-corner';
-        corner.setAttribute('data-date', dateStr);
-        corner.innerHTML = '<span class="pin-emoji title-green"></span>';
+        corner.innerHTML='<span class="pin-emoji"></span>';
         cell.appendChild(corner);
       }
       if(!corner) return;
       let pin = corner.querySelector('.pin-emoji');
       if(!pin){
-        corner.innerHTML = '<span class="pin-emoji"></span>';
+        corner.innerHTML='<span class="pin-emoji"></span>';
         pin = corner.querySelector('.pin-emoji');
       }
       pin.textContent='';
@@ -14947,36 +14837,36 @@ window.updateTitleIconColor=function(){};
       if(isDaily){
         pin.className='pin-emoji red-pin';
         corner.style.display='flex';
-        corner.title=`${dateStr} 매일반복`;
+        corner.title='매일반복 - 빨강';
+      } else if(isTitleRepeat){
+        // 1) 제목&기념일 반복 -> 연두
+        pin.className='pin-emoji green-pin';
+        corner.style.display='flex';
+        corner.title='제목/기념일 반복 - 연두';
+        pin.style.background='#27ae60';
+        pin.style.background='linear-gradient(135deg, #82e0aa, #27ae60)';
       } else if(hasPhoto){
         pin.className='pin-emoji green-pin';
         corner.style.display='flex';
-        corner.title=`${dateStr} 사진`;
-      } else if(isTitleRepeat){
-        // 1) 제목&기념일 반복 -> 연두색
-        pin.className='pin-emoji title-green';
-        corner.style.display='flex';
-        corner.title=`${dateStr} 제목/기념일 반복 - 연두`;
+        corner.title='사진 - 연두';
       } else {
         corner.style.display='none';
       }
     });
   }
 
-  // 기존 updatePins 덮어쓰기
-  window.updatePins = updatePinsV39;
+  window.updatePins = updatePinsV40;
   const origRender = window.renderCalendar;
-  if(origRender && !window._v39RenderPatched){
-    window._v39RenderPatched=true;
-    window.renderCalendar = function(...args){
-      const r = origRender.apply(this, args);
-      setTimeout(updatePinsV39, 150);
-      setTimeout(updatePinsV39, 500);
+  if(origRender){
+    window.renderCalendar = function(...a){
+      const r = origRender.apply(this, a);
+      setTimeout(updatePinsV40, 150);
+      setTimeout(updatePinsV40, 600);
       return r;
     };
   }
-  setInterval(updatePinsV39, 2000);
-  console.log('V4.39 ready - 제목 반복 연두 + 하루만 울림');
+  setInterval(updatePinsV40, 2000);
+  window.addEventListener('load', ()=>{ setTimeout(updatePinsV40, 1000); });
 })();
 </script>
 </body>
