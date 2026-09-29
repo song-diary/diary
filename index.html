@@ -13957,7 +13957,150 @@ console.log('[DailyAlarm] 스크립트 로드 완료 - testDailyAlarm()으로 �
   document.addEventListener('backbutton', e=>handleBack(e), true);
 })();
 </script>
+
+<script>
+// [V4.14] 알람 울리지 않음 수정 - 소리 + 진동 + 상단 팝업 + 테스트 버튼
+(function(){
+  console.log('[V4.14] 알람 강화 버전');
+
+  // 오디오 생성
+  let audioCtx=null;
+  function playBeep(){
+    try{
+      if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+      const osc=audioCtx.createOscillator();
+      const gain=audioCtx.createGain();
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.frequency.value=880;
+      gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      osc.start();
+      osc.stop(audioCtx.currentTime+0.5);
+      setTimeout(()=>{
+        const osc2=audioCtx.createOscillator();
+        const gain2=audioCtx.createGain();
+        osc2.connect(gain2); gain2.connect(audioCtx.destination);
+        osc2.frequency.value=880;
+        gain2.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        osc2.start();
+        osc2.stop(audioCtx.currentTime+0.5);
+      }, 600);
+    }catch(e){ console.log('beep error', e); }
+  }
+
+  function showAlarmPopup(item, curTime){
+    console.log('[V4.14] 알람 울림!', curTime, item.text);
+    
+    // 진동
+    try{ if(navigator.vibrate) navigator.vibrate([500,200,500,200,500]); }catch(e){}
+
+    // 소리
+    playBeep();
+
+    // 팝업 - 상단 고정으로 변경
+    let p=document.getElementById('daily-alarm-popup');
+    if(!p){
+      p=document.createElement('div'); p.id='daily-alarm-popup';
+      p.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#fff;border:3px solid #6366f1;border-radius:16px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,0.3);z-index:999999;min-width:320px;max-width:90vw;display:none;animation: popIn 0.3s ease;';
+      p.innerHTML=`<style>@keyframes popIn{from{transform:translateX(-50%) scale(0.8); opacity:0;} to{transform:translateX(-50%) scale(1); opacity:1;}}</style><div id="daily-alarm-body"></div><div style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end;"><button onclick="document.getElementById('daily-alarm-popup').style.display='none'" style="padding:8px 16px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;">닫기</button><button onclick="this.parentElement.parentElement.style.display='none'" style="padding:8px 16px;border:none;border-radius:8px;background:#6366f1;color:#fff;cursor:pointer;font-weight:bold;">확인</button></div>`;
+      document.body.appendChild(p);
+    }
+    document.getElementById('daily-alarm-body').innerHTML=`<div style="font-weight:bold;color:#6366f1;font-size:16px;">🔁 매일 알림 ${curTime}</div><div style="margin-top:10px;font-size:16px;font-weight:bold;">${item.text||'알림'}</div><div style="margin-top:6px;font-size:12px;color:#666;">${item.date||''} ${item.time||''}</div>`;
+    p.style.display='block';
+
+    // 브라우저 알림
+    try{
+      if('Notification' in window){
+        if(Notification.permission==='granted'){
+          new Notification('🔁 매일 알림 '+curTime, {body: item.text||'알림', requireInteraction:true, icon:''});
+        } else if(Notification.permission!=='denied'){
+          Notification.requestPermission().then(perm=>{
+            if(perm==='granted'){
+              new Notification('🔁 매일 알림 '+curTime, {body: item.text||'알림', requireInteraction:true});
+            }
+          });
+        }
+      }
+    }catch(e){}
+
+    // 10초 후 자동 닫기
+    setTimeout(()=>{ if(p) p.style.display='none'; }, 15000);
+  }
+
+  // 기존 checkAlarm 덮어쓰기
+  let lastKey='';
+  window.checkDailyAlarmV14 = function(){
+    try{
+      const now=new Date();
+      const cur=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+      const sec=now.getSeconds();
+      const key=`${now.toISOString().slice(0,10)}-${cur}`;
+      // 00~05초 사이에만 울림 (중복 방지)
+      if(lastKey===key && sec>10) return;
+      const diaries=JSON.parse(localStorage.getItem('smartDiaryList')||'[]');
+      const toAlarm=diaries.filter(it=>it.dailyRepeat && it.time===cur);
+      if(toAlarm.length>0){
+        if(lastKey!==key){
+          console.log('[V4.14] 알람 조건 만족', cur, toAlarm.length+'개');
+          lastKey=key;
+          toAlarm.forEach(it=>showAlarmPopup(it, cur));
+        }
+      }
+    }catch(e){ console.error('[V4.14] check error', e); }
+  };
+
+  // 테스트 버튼 추가 - 다이어리 카드에
+  function addTestButton(){
+    const card=document.getElementById('diary-around-today-card') || document.getElementById('calendar-card');
+    if(!card) { setTimeout(addTestButton, 1000); return; }
+    if(document.getElementById('v14-test-btn')) return;
+    const btn=document.createElement('button');
+    btn.id='v14-test-btn';
+    btn.textContent='🔔 매일 알람 테스트';
+    btn.style.cssText='margin:8px; padding:6px 12px; background:#6366f1; color:#fff; border:none; border-radius:8px; font-size:12px; cursor:pointer;';
+    btn.onclick=()=>{
+      const diaries=JSON.parse(localStorage.getItem('smartDiaryList')||'[]');
+      const daily=diaries.filter(it=>it.dailyRepeat);
+      if(daily.length===0){
+        alert('매일 반복으로 저장된 항목이 없습니다.\n시간 + 매일 반복 체크해서 저장하세요.');
+        return;
+      }
+      const now=new Date();
+      const cur=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+      showAlarmPopup(daily[0], cur);
+      alert(`테스트 알람: ${daily[0].text} ${daily[0].time}\n실제 알람은 매일 ${daily[0].time}에 울립니다.`);
+    };
+    // 다이어리 리스트 상단에 추가
+    const listTitle=document.getElementById('diary-list-card-main-title');
+    if(listTitle && listTitle.parentNode){
+      listTitle.parentNode.appendChild(btn);
+    } else {
+      card.appendChild(btn);
+    }
+  }
+
+  window.addEventListener('load', ()=>{
+    setTimeout(()=>{
+      addTestButton();
+      setInterval(window.checkDailyAlarmV14, 1000); // 1초마다 체크
+      window.checkDailyAlarmV14();
+      console.log('[V4.14] 알람 체크 시작 - 1초마다');
+      // 오디오 컨텍스트 활성화 (사용자 제스처 필요)
+      document.addEventListener('click', ()=>{
+        if(!audioCtx){
+          try{ audioCtx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
+        }
+      }, {once:true});
+    }, 1000);
+  });
+
+  // 기존 checkAlarm도 덮어쓰기
+  window.checkAlarm = window.checkDailyAlarmV14;
+
+  console.log('[V4.14] 알람 울리지 않음 수정 완료 - 테스트 버튼으로 확인하세요');
+})();
+</script>
 </body>
+
 
 
 
