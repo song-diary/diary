@@ -14545,7 +14545,115 @@ console.log('[DailyAlarm] 스크립트 로드 완료 - testDailyAlarm()으로 �
   window.updateTitleIconColor = updateTitleIconColor;
 })();
 </script>
+
+<style>
+/* V4.28 달력 아이콘 색 - 사진 빨강, 매일/기념일 연두 */
+.cal-cell .cal-photo-corner.daily-pin .pin-emoji {
+  color: #27ae60 !important;
+  filter: hue-rotate(80deg) brightness(1.2);
+}
+.cal-cell .cal-photo-corner.anniv-pin .pin-emoji {
+  color: #27ae60 !important;
+}
+.cal-cell .cal-photo-corner.photo-only .pin-emoji {
+  color: #e74c3c !important;
+}
+.cal-cell.has-daily .cal-photo-corner .pin-emoji {
+  color: #27ae60 !important;
+}
+.cal-cell.has-daily .cal-photo-corner {
+  background: rgba(39,174,96,0.15) !important;
+  border-radius: 4px !important;
+}
+</style>
+<script>
+// [V4.28] 달력 아이콘 색 - 사진 빨강, 매일/제목 연두 (매일 우선)
+(function(){
+  console.log('[V4.28] 달력 아이콘 색 구분');
+
+  function getDiariesForDate(dateStr){
+    try{
+      const all = JSON.parse(localStorage.getItem('smartDiaryList')||'[]');
+      return all.filter(d=>d.date===dateStr);
+    }catch(e){ return []; }
+  }
+
+  function updateCalendarIcons(){
+    const all = JSON.parse(localStorage.getItem('smartDiaryList')||'[]');
+    const dailyDates = new Set(all.filter(d=>d.dailyRepeat).map(d=>d.date));
+    const annivDates = new Set(all.filter(d=>d.anniversary).map(d=>d.date));
+    const photoDates = new Set(all.filter(d=>d.photo).map(d=>d.date));
+
+    document.querySelectorAll('.cal-cell').forEach(cell=>{
+      if(cell.classList.contains('adjacent-month')) return;
+      const corner = cell.querySelector('.cal-photo-corner');
+      if(!corner) return;
+      const dateStr = corner.getAttribute('data-date');
+      if(!dateStr) return;
+      
+      const isDaily = dailyDates.has(dateStr);
+      const isAnniv = annivDates.has(dateStr);
+      const isPhoto = photoDates.has(dateStr);
+
+      // 초기화
+      corner.classList.remove('daily-pin','anniv-pin','photo-only');
+      cell.classList.remove('has-daily','has-anniv');
+
+      const emojiSpan = corner.querySelector('.pin-emoji');
+      
+      if(isDaily || isAnniv){
+        // 매일 또는 기념일 -> 연두색 (매일 우선)
+        corner.classList.add('daily-pin');
+        cell.classList.add('has-daily');
+        if(emojiSpan){
+          emojiSpan.textContent = '📌';
+          emojiSpan.style.color = '#27ae60';
+          emojiSpan.style.filter = 'none';
+          emojiSpan.style.fontWeight = 'bold';
+        }
+        corner.style.background = 'rgba(39,174,96,0.18)';
+        corner.style.borderRadius = '4px';
+        console.log(`[V4.28] ${dateStr} 연두색 (매일/기념일)`);
+      } else if(isPhoto){
+        // 사진만 -> 빨간색
+        corner.classList.add('photo-only');
+        if(emojiSpan){
+          emojiSpan.textContent = '📌';
+          emojiSpan.style.color = '#e74c3c';
+          emojiSpan.style.filter = 'none';
+        }
+        corner.style.background = 'transparent';
+      }
+    });
+  }
+
+  // renderCalendar 후킹
+  function hookRender(){
+    const orig = window.renderCalendar;
+    if(!orig || window._v28Hooked) return;
+    window._v28Hooked = true;
+    window.renderCalendar = function(...args){
+      const res = orig.apply(this, args);
+      setTimeout(updateCalendarIcons, 100);
+      setTimeout(updateCalendarIcons, 500);
+      return res;
+    };
+    console.log('V4.28 renderCalendar hooked');
+  }
+
+  window.addEventListener('load', ()=>{
+    setTimeout(()=>{ hookRender(); updateCalendarIcons(); }, 1000);
+    setTimeout(updateCalendarIcons, 2000);
+  });
+
+  // 달력 변경시에도 업데이트
+  setInterval(updateCalendarIcons, 1500);
+
+  window.updateCalendarIcons = updateCalendarIcons;
+})();
+</script>
 </body>
+
 
 
 
