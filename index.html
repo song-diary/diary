@@ -14452,97 +14452,15 @@ console.log('[DailyAlarm] 스크립트 로드 완료 - testDailyAlarm()으로 �
 
 <style>
 /* V4.27 매일 알림시 제목 아이콘 연두색 */
+/* V4.29 설정 연두 배경 제거 - 아이콘 색만 변경 안함 */
 .anniv-input-row.daily-active {
-    background: #e8f5e9 !important;
-    border: 1px solid #a5d6a7 !important;
-    border-radius: 10px !important;
-}
-.anniv-input-row.daily-active div span:first-child {
-    color: #27ae60 !important;
-}
-#anniv-input-row.daily-active input#anniv-input {
-    border-color: #81c784 !important;
-    background: #f1f8e9 !important;
+    background: transparent !important;
+    border: none !important;
 }
 </style>
 <script>
-// [V4.27] 매일 알림 설정시 제목 아이콘 연두색
-(function(){
-  console.log('[V4.27] 제목 아이콘 연두색 연동');
-
-  function updateTitleIconColor(){
-    const dailyCb = document.getElementById('daily-repeat-checkbox');
-    const annivRow = document.getElementById('anniv-input-row');
-    if(!annivRow) return;
-    
-    const isDaily = dailyCb ? dailyCb.checked : false;
-    
-    if(isDaily){
-      annivRow.classList.add('daily-active');
-      // 제목 아이콘 🎉 -> ✅ 연두색으로 변경 시각적 효과
-      const iconSpan = annivRow.querySelector('span');
-      if(iconSpan && iconSpan.textContent.includes('🎉')){
-        iconSpan.textContent = '✅';
-        iconSpan.style.color = '#27ae60';
-        iconSpan.style.fontSize = '16px';
-      }
-      // 라벨도 연두색
-      const labelSpans = annivRow.querySelectorAll('span');
-      labelSpans.forEach(s=>{
-        if(s.textContent.includes('제목') || s.textContent.includes('기념일')){
-          s.style.color = '#2e7d32';
-          s.style.fontWeight = 'bold';
-        }
-      });
-      console.log('매일 체크 ON - 제목 연두색');
-    } else {
-      annivRow.classList.remove('daily-active');
-      const iconSpan = annivRow.querySelector('span');
-      if(iconSpan && iconSpan.textContent.includes('✅')){
-        iconSpan.textContent = '🎉';
-        iconSpan.style.color = '';
-      }
-      const labelSpans = annivRow.querySelectorAll('span');
-      labelSpans.forEach(s=>{
-        if(s.textContent.includes('제목') || s.textContent.includes('기념일')){
-          s.style.color = '';
-          s.style.fontWeight = '';
-        }
-      });
-      console.log('매일 체크 OFF - 제목 원래색');
-    }
-  }
-
-  // 체크박스 이벤트 연결
-  function attachListeners(){
-    const dailyCb = document.getElementById('daily-repeat-checkbox');
-    if(dailyCb){
-      dailyCb.addEventListener('change', updateTitleIconColor);
-      // 초기 상태 반영
-      updateTitleIconColor();
-    }
-  }
-
-  window.addEventListener('load', ()=>{
-    setTimeout(attachListeners, 800);
-    setTimeout(attachListeners, 2000);
-  });
-
-  // 폼 열릴 때도 체크 (다이어리 편집시)
-  const originalOpen = window.openDiaryFormPanel;
-  if(originalOpen){
-    window.openDiaryFormPanel = function(...args){
-      const result = originalOpen.apply(this, args);
-      setTimeout(updateTitleIconColor, 300);
-      setTimeout(attachListeners, 400);
-      return result;
-    };
-  }
-
-  // 기존 edit 함수 후킹
-  setInterval(updateTitleIconColor, 1000); // 폼이 열려있을 때 실시간 반영
-
-  window.updateTitleIconColor = updateTitleIconColor;
+// [V4.27] 설정 연두 배경 제거됨 - V4.29에서 삭제
+window.updateTitleIconColor=function(){};
 })();
 </script>
 
@@ -14561,9 +14479,9 @@ console.log('[DailyAlarm] 스크립트 로드 완료 - testDailyAlarm()으로 �
 .cal-cell.has-daily .cal-photo-corner .pin-emoji {
   color: #27ae60 !important;
 }
+/* V4.29 고정핀 색만 - 배경 없음 */
 .cal-cell.has-daily .cal-photo-corner {
-  background: rgba(39,174,96,0.15) !important;
-  border-radius: 4px !important;
+  background: transparent !important;
 }
 </style>
 <script>
@@ -14611,8 +14529,7 @@ console.log('[DailyAlarm] 스크립트 로드 완료 - testDailyAlarm()으로 �
           emojiSpan.style.filter = 'none';
           emojiSpan.style.fontWeight = 'bold';
         }
-        corner.style.background = 'rgba(39,174,96,0.18)';
-        corner.style.borderRadius = '4px';
+        corner.style.background = 'transparent';
         console.log(`[V4.28] ${dateStr} 연두색 (매일/기념일)`);
       } else if(isPhoto){
         // 사진만 -> 빨간색
