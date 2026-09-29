@@ -14569,7 +14569,107 @@ window.updateTitleIconColor=function(){};
   window.updateCalendarIcons = updateCalendarIcons;
 })();
 </script>
+
+<style>
+/* V4.31 고정핀 색 확실하게 - 이모지 자체 변경 */
+.cal-cell .cal-photo-corner .pin-emoji.green-pin {
+  color: #27ae60 !important;
+  font-size: 11px !important;
+}
+.cal-cell .cal-photo-corner .pin-emoji.red-pin {
+  color: #e74c3c !important;
+  font-size: 11px !important;
+}
+</style>
+<script>
+// [V4.31] 고정핀 색 확실히 - 사진 빨강, 매일 연두 (data-date 없어도 동작)
+(function(){
+  console.log('[V4.31] 고정핀 색 확실하게');
+
+  function getAllDiaries(){
+    try { return JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); }
+    catch(e){ return []; }
+  }
+
+  function normDate(s){ return s ? s.slice(0,10) : ''; }
+
+  function updatePins(){
+    const all = getAllDiaries();
+    const dailySet = new Set(all.filter(d=>d.dailyRepeat).map(d=>normDate(d.date)));
+    const annivSet = new Set(all.filter(d=>d.anniversary).map(d=>normDate(d.date)));
+
+    document.querySelectorAll('.cal-cell').forEach(cell=>{
+      if(cell.classList.contains('adjacent-month')) return;
+      const corner = cell.querySelector('.cal-photo-corner');
+      if(!corner) return;
+      
+      let dateStr = corner.getAttribute('data-date');
+      if(!dateStr){
+        // data-date 없으면 달력 날짜로 계산
+        const dayEl = cell.querySelector('.cal-cell-inner span');
+        if(!dayEl) return;
+        const day = parseInt(dayEl.textContent.trim());
+        if(isNaN(day)) return;
+        const y = typeof calYear!=='undefined'?calYear:new Date().getFullYear();
+        const m = typeof calMonth!=='undefined'?calMonth:new Date().getMonth();
+        dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      }
+      dateStr = normDate(dateStr);
+
+      const isDaily = dailySet.has(dateStr);
+      const isAnniv = annivSet.has(dateStr);
+      let emoji = corner.querySelector('.pin-emoji');
+
+      // 핀이 없으면 생성 (V3 마지막 버전은 pin-emoji 없을 수도 있음)
+      if(!emoji){
+        corner.innerHTML = '<span class="pin-emoji">📌</span>';
+        emoji = corner.querySelector('.pin-emoji');
+      }
+
+      if(isDaily || isAnniv){
+        // 연두 고정핀 - ✅로 변경해서 확실히 연두 보이게
+        emoji.textContent = '✅';
+        emoji.className = 'pin-emoji green-pin';
+        emoji.style.color = '#27ae60';
+        emoji.style.fontSize = '10px';
+        emoji.style.fontWeight = 'bold';
+        corner.style.background = 'transparent';
+        console.log(`[V4.31] ${dateStr} -> 연두 ✅`);
+      } else {
+        // 빨간 고정핀 - 📌 빨강
+        emoji.textContent = '📌';
+        emoji.className = 'pin-emoji red-pin';
+        emoji.style.color = '#e74c3c';
+        emoji.style.fontSize = '10px';
+        corner.style.background = 'transparent';
+      }
+    });
+  }
+
+  // renderCalendar 후킹
+  const orig = window.renderCalendar;
+  if(orig){
+    window.renderCalendar = function(...args){
+      const r = orig.apply(this, args);
+      setTimeout(updatePins, 200);
+      setTimeout(updatePins, 600);
+      return r;
+    };
+  }
+
+  // 초기 실행 + 주기적
+  window.addEventListener('load', ()=>{
+    setTimeout(updatePins, 800);
+    setTimeout(updatePins, 2000);
+  });
+  setInterval(updatePins, 2000);
+
+  window.updatePins = updatePins;
+  console.log('V4.31 ready');
+})();
+</script>
 </body>
+
 
 
 
