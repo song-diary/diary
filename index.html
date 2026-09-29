@@ -3437,7 +3437,7 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
                 <label style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer;">
                     <input type="checkbox" id="daily-repeat-checkbox" style="width:14px; height:14px;"> 매일 반복
                 </label>
-                <label id="once-alarm-label" style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer;">
+                <label style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer;">
                     <input type="checkbox" id="once-alarm-checkbox" style="width:14px; height:14px;"> 하루만 울림
                 </label>
             </div>
@@ -14576,7 +14576,6 @@ window.updateTitleIconColor=function(){};
 </script>
 
 <style>
-/* V4.38 사진 연두 / 매일 빨강 - 사진 없어도 매일 빨강 표시 */
 .cal-cell .cal-photo-corner {
   background: transparent !important;
   border: none !important;
@@ -14590,18 +14589,18 @@ window.updateTitleIconColor=function(){};
 }
 .cal-cell .cal-photo-corner .pin-emoji {
   display: block !important;
-  width: 10px !important;
-  height: 10px !important;
+  width: 11px !important;
+  height: 11px !important;
   border-radius: 50% 50% 50% 0 !important;
   transform: rotate(-45deg) !important;
   font-size: 0 !important;
   position: relative !important;
   top: -1px !important;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.25) !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3) !important;
 }
 .cal-cell .cal-photo-corner .pin-emoji.red-pin {
   background: #e74c3c !important;
-  background: linear-gradient(135deg, #ff6b6b, #e74c3c) !important;
+  background: linear-gradient(135deg, #ff6b6b, #c0392b) !important;
 }
 .cal-cell .cal-photo-corner .pin-emoji.green-pin {
   background: #27ae60 !important;
@@ -14610,123 +14609,26 @@ window.updateTitleIconColor=function(){};
 .cal-cell .cal-photo-corner .pin-emoji::after {
   content: '' !important;
   position: absolute !important;
-  width: 3px !important;
-  height: 3px !important;
+  width: 3.5px !important;
+  height: 3.5px !important;
   background: #fff !important;
   border-radius: 50% !important;
-  top: 2px !important;
-  left: 2px !important;
-  display: block !important;
+  top: 2.5px !important;
+  left: 2.5px !important;
 }
 </style>
 <script>
-// [V4.38] 사진 연두 / 매일 빨강 - 사진 없어도 매일 빨강 표시 (현재 안나오는 버그 수정)
+// [V4.43] 최종 - 언더스탠 완료!
+// 빨강: 1)매일반복 2)하루만울림 3)제목 매년반복 4)매월반복 (사진 있건 없건)
+// 연두: 일반 사진만
 (function(){
-  console.log('[V4.38] 사진 연두 / 매일 빨강 - 매일 단독도 표시');
-
-  function getAll(){
-    try { return JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); }
-    catch(e){ return []; }
-  }
-  function norm(s){ return s ? s.slice(0,10) : ''; }
-
-  function updatePins(){
-    const all = getAll();
-    // 디버그
-    const dailies = all.filter(d=>d.dailyRepeat);
-    console.log('[V4.38] 매일반복 데이터:', dailies.map(d=>`${d.date} ${d.anniversary||d.text?.slice(0,10)}`));
-
-    const photoMap = {};
-    const dailyMap = {};
-    all.forEach(d=>{
-      const ds = norm(d.date);
-      if(!ds) return;
-      if(d.photo) photoMap[ds] = true;
-      if(d.dailyRepeat) dailyMap[ds] = true;
-    });
-
-    document.querySelectorAll('.cal-cell').forEach(cell=>{
-      if(cell.classList.contains('adjacent-month')) return;
-      const dayEl = cell.querySelector('.cal-cell-inner span');
-      if(!dayEl) return;
-      const day = parseInt(dayEl.textContent.trim());
-      if(isNaN(day)) return;
-      const y = typeof calYear!=='undefined'?calYear:new Date().getFullYear();
-      const m = typeof calMonth!=='undefined'?calMonth:new Date().getMonth();
-      const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-
-      const hasPhoto = !!photoMap[dateStr];
-      const isDaily = !!dailyMap[dateStr];
-
-      let corner = cell.querySelector('.cal-photo-corner');
-      
-      // 매일 반복인데 코너가 없으면 생성해야 함 (사진 없어도 표시)
-      if(isDaily && !corner){
-        corner = document.createElement('div');
-        corner.className = 'cal-photo-corner';
-        corner.setAttribute('data-date', dateStr);
-        corner.innerHTML = '<span class="pin-emoji red-pin"></span>';
-        cell.appendChild(corner);
-      }
-      
-      if(!corner) return;
-      
-      let pin = corner.querySelector('.pin-emoji');
-      if(!pin){
-        corner.innerHTML = '<span class="pin-emoji"></span>';
-        pin = corner.querySelector('.pin-emoji');
-      }
-      pin.textContent = '';
-
-      if(isDaily){
-        // 매일반복 (사진 유무 관계없이) -> 빨간핀, 매일 우선
-        pin.className = 'pin-emoji red-pin';
-        corner.style.display = 'flex';
-        corner.title = `${dateStr} 매일반복 - 빨강`;
-      } else if(hasPhoto){
-        // 사진만 -> 연두핀
-        pin.className = 'pin-emoji green-pin';
-        corner.style.display = 'flex';
-        corner.title = `${dateStr} 사진 - 연두`;
-      } else {
-        // 둘 다 없으면 핀 숨김
-        corner.style.display = 'none';
-      }
-    });
-  }
-
-  const orig = window.renderCalendar;
-  if(orig && !window._v38Patched){
-    window._v38Patched = true;
-    window.renderCalendar = function(...args){
-      const r = orig.apply(this, args);
-      setTimeout(updatePins, 100);
-      setTimeout(updatePins, 500);
-      setTimeout(updatePins, 900);
-      return r;
-    };
-  }
-
-  window.addEventListener('load', ()=>{
-    setTimeout(updatePins, 800);
-    setTimeout(updatePins, 2000);
-  });
-  setInterval(updatePins, 2000);
-  window.updatePins = updatePins;
-  window.getDailyData = ()=>{ return JSON.parse(localStorage.getItem('smartDiaryList')||'[]').filter(d=>d.dailyRepeat); };
-})();
-</script>
-
-<script>
-// [V4.41] 하루만 울림 항상 표시 + 위아래 일렬 정렬 + 같은 체크모양
-(function(){
-  console.log('[V4.41] 하루만 울림 독립 + 위아래 정렬');
+  console.log('[V4.43] 최종 - 빨강 강조 4가지 + 사진 연두');
 
   // 저장 패치
-  function setupSave(){
+  (function(){
     const interval = setInterval(()=>{
-      if(typeof window.saveDiaryEntry==='function' && !window._v41SavePatched){
-        window._v41SavePatched=true;
+      if(typeof window.saveDiaryEntry==='function' && !window._v43SavePatched){
+        window._v43SavePatched=true;
         const orig = window.saveDiaryEntry;
         window.saveDiaryEntry = function(){
           try{
@@ -14761,23 +14663,22 @@ window.updateTitleIconColor=function(){};
       }catch(e){}
       return origSetItem(k,v);
     };
-  }
-  setupSave();
+  })();
 
-  // 폼 열때 복원
+  // 폼 복원
   const origOpen = window.openDiaryForm;
-  if(origOpen && !window._v41OpenPatched){
-    window._v41OpenPatched=true;
+  if(origOpen && !window._v43OpenPatched){
+    window._v43OpenPatched=true;
     window.openDiaryForm = function(...args){
       const r = origOpen.apply(this, args);
       setTimeout(()=>{
         try{
-          const existingItem = args[1];
+          const item = args[1];
           const onceCb = document.getElementById('once-alarm-checkbox');
           const dailyCb = document.getElementById('daily-repeat-checkbox');
-          if(existingItem){
-            if(onceCb) onceCb.checked = !!existingItem.onceAlarm;
-            if(dailyCb) dailyCb.checked = !!existingItem.dailyRepeat;
+          if(item){
+            if(onceCb) onceCb.checked = !!item.onceAlarm;
+            if(dailyCb) dailyCb.checked = !!item.dailyRepeat;
           } else {
             if(onceCb) onceCb.checked = false;
             if(dailyCb) dailyCb.checked = false;
@@ -14788,20 +14689,29 @@ window.updateTitleIconColor=function(){};
     };
   }
 
-  // 달력 핀 - 제목 반복 연두 + 매일 빨강 + 사진 연두
-  function updatePinsV41(){
+  // 핀 로직 - 최종!
+  function updatePinsFinal(){
     let all=[];
     try{ all = JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); }catch(e){}
-    const photoMap={}, dailyMap={}, onceMap={}, titleRepeatSet=new Set();
+    
+    // 날짜별 플래그
+    const flags = {}; // dateStr -> {hasPhoto, isDaily, isOnce, isYearly, isMonthly, isTitleRepeat}
+    
     all.forEach(d=>{
       const ds = (d.date||'').slice(0,10);
       if(!ds) return;
-      if(d.photo) photoMap[ds]=true;
-      if(d.dailyRepeat) dailyMap[ds]=true;
-      if(d.onceAlarm) onceMap[ds]=true;
-      if(d.anniversary && d.annivRepeat && d.annivRepeat!=='none') titleRepeatSet.add(ds);
+      if(!flags[ds]) flags[ds] = {hasPhoto:false, isDaily:false, isOnce:false, isYearly:false, isMonthly:false, isTitleRepeat:false};
+      if(d.photo) flags[ds].hasPhoto = true;
+      if(d.dailyRepeat) flags[ds].isDaily = true;
+      if(d.onceAlarm) flags[ds].isOnce = true;
+      if(d.anniversary){
+        if(d.annivRepeat==='yearly') { flags[ds].isYearly = true; flags[ds].isTitleRepeat = true; }
+        if(d.annivRepeat==='monthly') { flags[ds].isMonthly = true; flags[ds].isTitleRepeat = true; }
+        if(d.annivRepeat && d.annivRepeat!=='none') flags[ds].isTitleRepeat = true;
+      }
     });
 
+    // 반복 기념일이 실제 표시되는 모든 날짜 체크
     document.querySelectorAll('.cal-cell').forEach(cell=>{
       if(cell.classList.contains('adjacent-month')) return;
       const dayEl = cell.querySelector('.cal-cell-inner span');
@@ -14812,164 +14722,77 @@ window.updateTitleIconColor=function(){};
       const m = typeof calMonth!=='undefined'?calMonth:new Date().getMonth();
       const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
 
-      const hasPhoto = !!photoMap[dateStr];
-      const isDaily = !!dailyMap[dateStr];
-      const isOnce = !!onceMap[dateStr];
-      let isTitleRepeat = titleRepeatSet.has(dateStr);
-      try{ if(typeof getAnniversaryForDate==='function' && getAnniversaryForDate(dateStr)) isTitleRepeat=true; }catch(e){}
-
-      let corner = cell.querySelector('.cal-photo-corner');
-      if((isDaily || isTitleRepeat || isOnce) && !corner){
-        corner = document.createElement('div');
-        corner.className='cal-photo-corner';
-        corner.setAttribute('data-date', dateStr);
-        corner.innerHTML='<span class="pin-emoji"></span>';
-        cell.appendChild(corner);
-      }
-      if(!corner) return;
-      let pin = corner.querySelector('.pin-emoji');
-      if(!pin){ corner.innerHTML='<span class="pin-emoji"></span>'; pin=corner.querySelector('.pin-emoji'); }
-      pin.textContent='';
-
-      if(isDaily || isOnce){
-        // 매일 반복 또는 하루만 울림 -> 빨강 (매일 우선)
-        pin.className='pin-emoji red-pin';
-        corner.style.display='flex';
-        corner.title = isOnce ? '하루만 울림 - 빨강' : '매일반복 - 빨강';
-      } else if(isTitleRepeat){
-        pin.className='pin-emoji green-pin';
-        corner.style.display='flex';
-        corner.title='제목/기념일 반복 - 연두';
-      } else if(hasPhoto){
-        pin.className='pin-emoji green-pin';
-        corner.style.display='flex';
-        corner.title='사진 - 연두';
-      } else {
-        corner.style.display='none';
-      }
-    });
-  }
-
-  window.updatePins = updatePinsV41;
-  const origRender = window.renderCalendar;
-  if(origRender && !window._v41RenderPatched){
-    window._v41RenderPatched=true;
-    window.renderCalendar = function(...a){
-      const r = origRender.apply(this, a);
-      setTimeout(updatePinsV41, 150);
-      setTimeout(updatePinsV41, 600);
-      return r;
-    };
-  }
-  setInterval(updatePinsV41, 2000);
-  window.addEventListener('load', ()=>setTimeout(updatePinsV41, 1000));
-})();
-</script>
-
-<script>
-// [V4.42] 특별한 날은 빨강 - 제목/기념일 반복 빨강
-(function(){
-  console.log('[V4.42] 특별한 날 빨강 - 사진+제목반복 빨강');
-
-  function updatePinsV42(){
-    let all=[];
-    try{ all = JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); }catch(e){}
-    const photoMap={}, dailyMap={}, onceMap={}, titleRepeatSet=new Set();
-    
-    // 반복 기념일이 실제로 표시되는 날짜 맵도 구축
-    const titleRepeatAllDates = new Set();
-    
-    all.forEach(d=>{
-      const ds = (d.date||'').slice(0,10);
-      if(!ds) return;
-      if(d.photo) photoMap[ds]=true;
-      if(d.dailyRepeat) dailyMap[ds]=true;
-      if(d.onceAlarm) onceMap[ds]=true;
-      if(d.anniversary && d.annivRepeat && d.annivRepeat!=='none'){
-        titleRepeatSet.add(ds);
-      }
-    });
-
-    // 모든 날짜에 대해 반복 기념일 체크 (getAnniversaryForDate)
-    // 달력 렌더 후 체크하므로 여기서는 일단 원본만
-
-    document.querySelectorAll('.cal-cell').forEach(cell=>{
-      if(cell.classList.contains('adjacent-month')) return;
-      const dayEl = cell.querySelector('.cal-cell-inner span');
-      if(!dayEl) return;
-      const day = parseInt(dayEl.textContent.trim());
-      if(isNaN(day)) return;
-      const y = typeof calYear!=='undefined'?calYear:new Date().getFullYear();
-      const m = typeof calMonth!=='undefined'?calMonth:new Date().getMonth();
-      const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-
-      const hasPhoto = !!photoMap[dateStr];
-      const isDaily = !!dailyMap[dateStr];
-      const isOnce = !!onceMap[dateStr];
-      let isTitleRepeat = titleRepeatSet.has(dateStr);
-      try{ 
+      let f = flags[dateStr] || {hasPhoto:false, isDaily:false, isOnce:false, isYearly:false, isMonthly:false, isTitleRepeat:false};
+      
+      // 추가: getAnniversaryForDate로 반복 체크 (매년/매월 반복이 이 날짜에 표시되는 경우)
+      try{
         if(typeof getAnniversaryForDate==='function'){
           const txt = getAnniversaryForDate(dateStr);
-          if(txt) isTitleRepeat = true;
+          if(txt){
+            // 이 날짜에 반복 기념일이 표시됨 -> 빨강
+            f.isTitleRepeat = true;
+            // yearly/monthly 구분 없이 일단 titleRepeat로
+          }
         }
       }catch(e){}
 
+      const isRed = f.isDaily || f.isOnce || f.isYearly || f.isMonthly || f.isTitleRepeat;
+      const isGreen = f.hasPhoto && !isRed; // 사진만 있고 빨강 조건 없을 때만 연두
+
       let corner = cell.querySelector('.cal-photo-corner');
-      if((isDaily || isTitleRepeat || isOnce) && !corner){
+      if(isRed && !corner){
         corner = document.createElement('div');
         corner.className='cal-photo-corner';
         corner.setAttribute('data-date', dateStr);
         corner.innerHTML='<span class="pin-emoji"></span>';
         cell.appendChild(corner);
       }
+      if(!corner && !f.hasPhoto) return;
       if(!corner) return;
+      
       let pin = corner.querySelector('.pin-emoji');
       if(!pin){ corner.innerHTML='<span class="pin-emoji"></span>'; pin=corner.querySelector('.pin-emoji'); }
       pin.textContent='';
 
-      // 특별한 날은 빨강! - 제목/기념일 반복, 매일 반복, 하루만 울림 모두 빨강
-      // 사진만 있을 때만 연두
-      if(isTitleRepeat){
-        // 1) 제목&기념일 반복 (생일, 기념일) -> 빨강 - 특별한 날
+      if(isRed){
+        // 1)매일반복 2)하루만울림 3)매년반복 4)매월반복 -> 빨강 (사진 있건 없건)
         pin.className='pin-emoji red-pin';
         corner.style.display='flex';
-        corner.title='제목/기념일 반복 - 빨강 (특별한날)';
-      } else if(isDaily || isOnce){
-        // 매일 반복, 하루만 울림 -> 빨강
-        pin.className='pin-emoji red-pin';
-        corner.style.display='flex';
-        corner.title = isOnce ? '하루만 울림 - 빨강' : '매일반복 - 빨강';
-      } else if(hasPhoto){
-        // 사진만 -> 연두
+        let reason = [];
+        if(f.isDaily) reason.push('매일반복');
+        if(f.isOnce) reason.push('하루만울림');
+        if(f.isYearly) reason.push('매년반복');
+        if(f.isMonthly) reason.push('매월반복');
+        if(f.isTitleRepeat && !f.isYearly && !f.isMonthly) reason.push('제목반복');
+        corner.title = `${dateStr} ${reason.join('+')} - 빨강 강조`;
+      } else if(f.hasPhoto){
+        // 일반 사진만 -> 연두
         pin.className='pin-emoji green-pin';
         corner.style.display='flex';
-        corner.title='사진 - 연두';
+        corner.title = `${dateStr} 일반 사진 - 연두`;
       } else {
         corner.style.display='none';
       }
     });
   }
 
-  window.updatePins = updatePinsV42;
+  window.updatePins = updatePinsFinal;
   const origRender = window.renderCalendar;
-  if(origRender && !window._v42Patched){
-    window._v42Patched=true;
-    const prev = window.renderCalendar;
+  if(origRender){
     window.renderCalendar = function(...a){
-      const r = prev.apply(this, a);
-      setTimeout(updatePinsV42, 150);
-      setTimeout(updatePinsV42, 600);
+      const r = origRender.apply(this, a);
+      setTimeout(updatePinsFinal, 100);
+      setTimeout(updatePinsFinal, 500);
+      setTimeout(updatePinsFinal, 1000);
       return r;
     };
   }
-  setInterval(updatePinsV42, 2000);
-  window.addEventListener('load', ()=>setTimeout(updatePinsV42, 1000));
-  console.log('[V4.42] 핀: 특별한날 빨강, 사진 연두');
+  setInterval(updatePinsFinal, 2000);
+  window.addEventListener('load', ()=>setTimeout(updatePinsFinal, 1200));
+  console.log('[V4.43] 최종 로직 적용 완료!');
 })();
 </script>
 </body>
-
-
 
 
 
