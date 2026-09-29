@@ -14099,7 +14099,158 @@ console.log('[DailyAlarm] 스크립트 로드 완료 - testDailyAlarm()으로 �
   console.log('[V4.14] 알람 울리지 않음 수정 완료 - 테스트 버튼으로 확인하세요');
 })();
 </script>
+
+<script>
+// [V4.15] 소리 부드럽게 + 테스트 버튼 위치 수정
+(function(){
+  console.log('[V4.15] 부드러운 알람 + 테스트 버튼');
+
+  // 기존 팝업 제거 후 재생성
+  const oldPopup=document.getElementById('daily-alarm-popup');
+  if(oldPopup) oldPopup.remove();
+  const oldBtn=document.getElementById('v14-test-btn');
+  if(oldBtn) oldBtn.remove();
+
+  let audioCtx=null;
+  function playSoftBeep(){
+    try{
+      if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+      const osc=audioCtx.createOscillator();
+      const gain=audioCtx.createGain();
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.type='sine'; // 부드러운 사인파
+      osc.frequency.value=523; // C5 - 부드러운 도
+      gain.gain.setValueAtTime(0, audioCtx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime+0.1); // 0.15로 낮춤
+      gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime+0.8);
+      osc.start();
+      osc.stop(audioCtx.currentTime+0.8);
+    }catch(e){ console.log('beep error', e); }
+  }
+
+  function showAlarmPopup(item, curTime){
+    console.log('[V4.15] 알람', curTime, item.text);
+    try{ if(navigator.vibrate) navigator.vibrate([200]); }catch(e){} // 짧은 진동 1번
+    playSoftBeep();
+
+    let p=document.getElementById('daily-alarm-popup');
+    if(!p){
+      p=document.createElement('div'); p.id='daily-alarm-popup';
+      p.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#fff;border:2px solid #6366f1;border-radius:16px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,0.25);z-index:999999;min-width:300px;max-width:90vw;display:none;';
+      p.innerHTML='<div id="daily-alarm-body"></div><div style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end;"><button onclick="document.getElementById(\'daily-alarm-popup\').style.display=\'none\'" style="padding:8px 16px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;">닫기</button><button onclick="this.parentElement.parentElement.style.display=\'none\'" style="padding:8px 16px;border:none;border-radius:8px;background:#6366f1;color:#fff;cursor:pointer;font-weight:bold;">확인</button></div>';
+      document.body.appendChild(p);
+    }
+    document.getElementById('daily-alarm-body').innerHTML=`<div style="font-weight:bold;color:#6366f1;font-size:15px;">🔔 매일 ${curTime}</div><div style="margin-top:10px;font-size:15px;">${item.text||'알림'}</div>`;
+    p.style.display='block';
+    setTimeout(()=>{ if(p) p.style.display='none'; }, 10000);
+
+    try{
+      if('Notification' in window && Notification.permission==='granted'){
+        new Notification('🔔 매일 '+curTime, {body: item.text||'알림'});
+      }
+    }catch(e){}
+  }
+
+  // 테스트 버튼 - 메모 입력 폼 바로 위에 확실하게 표시
+  function addTestButton(){
+    if(document.getElementById('v15-test-btn')) return;
+    
+    // 1. 메모 폼 카드 찾기
+    const formCard=document.getElementById('memo-form-card');
+    const diaryCard=document.getElementById('diary-around-today-card');
+    
+    let container=null;
+    if(formCard){
+      container=formCard;
+    } else if(diaryCard){
+      container=diaryCard;
+    } else {
+      container=document.body;
+    }
+
+    const wrapper=document.createElement('div');
+    wrapper.id='v15-test-btn';
+    wrapper.style.cssText='background:#eef2ff; border:2px dashed #6366f1; border-radius:10px; padding:10px; margin:10px; display:flex; justify-content:space-between; align-items:center;';
+
+    wrapper.innerHTML=`
+      <div style="font-size:12px; color:#6366f1;">
+        <div style="font-weight:bold;">🔔 매일 알림 테스트</div>
+        <div style="font-size:11px; color:#666; margin-top:2px;">알람 소리가 부드러운지 확인</div>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <button id="v15-test-sound" style="padding:6px 12px; background:#fff; color:#6366f1; border:1px solid #6366f1; border-radius:6px; font-size:12px; cursor:pointer;">소리 테스트</button>
+        <button id="v15-test-alarm" style="padding:6px 12px; background:#6366f1; color:#fff; border:none; border-radius:6px; font-size:12px; cursor:pointer; font-weight:bold;">알람 테스트</button>
+      </div>
+    `;
+
+    // 폼 카드 바로 앞에 삽입
+    if(formCard && formCard.parentNode){
+      formCard.parentNode.insertBefore(wrapper, formCard);
+    } else if(container){
+      container.insertBefore(wrapper, container.firstChild);
+    }
+
+    document.getElementById('v15-test-sound').onclick=()=>{
+      playSoftBeep();
+      try{ if(navigator.vibrate) navigator.vibrate([200]); }catch(e){}
+    };
+
+    document.getElementById('v15-test-alarm').onclick=()=>{
+      const diaries=JSON.parse(localStorage.getItem('smartDiaryList')||'[]');
+      const daily=diaries.filter(it=>it.dailyRepeat);
+      const now=new Date();
+      const cur=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+      if(daily.length===0){
+        showAlarmPopup({text:'테스트 알림입니다', time:cur}, cur);
+      } else {
+        showAlarmPopup(daily[0], daily[0].time||cur);
+      }
+    };
+
+    console.log('[V4.15] 테스트 버튼 추가됨', wrapper);
+  }
+
+  // 기존 알람 체크 덮어쓰기 - 부드러운 버전
+  let lastKey='';
+  window.checkDailyAlarmV14 = window.checkDailyAlarmV15 = function(){
+    try{
+      const now=new Date();
+      const cur=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+      const key=`${now.toISOString().slice(0,10)}-${cur}`;
+      if(lastKey===key) return;
+      const diaries=JSON.parse(localStorage.getItem('smartDiaryList')||'[]');
+      const toAlarm=diaries.filter(it=>it.dailyRepeat&&it.time===cur);
+      if(toAlarm.length>0){
+        lastKey=key;
+        console.log('[V4.15] 알람', cur, toAlarm.length+'개');
+        toAlarm.forEach(it=>showAlarmPopup(it, cur));
+      }
+    }catch(e){ console.error(e); }
+  };
+  window.checkAlarm = window.checkDailyAlarmV15;
+
+  window.addEventListener('load', ()=>{
+    setTimeout(()=>{
+      addTestButton();
+      setInterval(window.checkDailyAlarmV15, 1000);
+      window.checkDailyAlarmV15();
+      document.addEventListener('click', ()=>{
+        if(!audioCtx){
+          try{ audioCtx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
+        }
+      }, {once:true});
+    }, 1000);
+  });
+
+  // 2초 후에도 버튼 없으면 다시 시도
+  setTimeout(addTestButton, 2000);
+  setTimeout(addTestButton, 4000);
+
+  console.log('[V4.15] 부드러운 알람 적용');
+})();
+</script>
 </body>
+
 
 
 
