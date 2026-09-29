@@ -14792,7 +14792,147 @@ window.updateTitleIconColor=function(){};
   console.log('[V4.43] 최종 로직 적용 완료!');
 })();
 </script>
+
+<script>
+// [V4.44] 최종 확정 - 스크린샷 기준
+// 🔴 빨강: 1)매일반복 2)하루만울림 3)매년반복 4)매월반복 (사진 있건 없건)
+// 🟢 연두: 일반 사진만
+(function(){
+  console.log('[V4.44] 최종 확정 - 빨강 4조건 / 연두 사진만');
+
+  function updatePinsFinal(){
+    let all=[];
+    try{ all = JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); }catch(e){}
+    
+    // 날짜별 원본 데이터
+    const rawMap = {};
+    all.forEach(d=>{
+      const ds = (d.date||'').slice(0,10);
+      if(!ds) return;
+      if(!rawMap[ds]) rawMap[ds] = [];
+      rawMap[ds].push(d);
+    });
+
+    document.querySelectorAll('.cal-cell').forEach(cell=>{
+      if(cell.classList.contains('adjacent-month')) return;
+      const dayEl = cell.querySelector('.cal-cell-inner span');
+      if(!dayEl) return;
+      const day = parseInt(dayEl.textContent.trim());
+      if(isNaN(day)) return;
+      const y = typeof calYear!=='undefined'?calYear:new Date().getFullYear();
+      const m = typeof calMonth!=='undefined'?calMonth:new Date().getMonth();
+      const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+
+      // 이 날짜의 원본 데이터
+      const items = rawMap[dateStr] || [];
+      let hasPhoto = false, isDaily = false, isOnce = false, isYearly = false, isMonthly = false, hasTitle = false;
+
+      items.forEach(d=>{
+        if(d.photo) hasPhoto = true;
+        if(d.dailyRepeat) isDaily = true;
+        if(d.onceAlarm) isOnce = true;
+        if(d.anniversary){
+          hasTitle = true;
+          if(d.annivRepeat==='yearly') isYearly = true;
+          if(d.annivRepeat==='monthly') isMonthly = true;
+        }
+      });
+
+      // 반복으로 표시되는 기념일 체크 (다른 날짜의 기념일이 이 날짜에 반복 표시되는 경우)
+      let isRepeatedTitle = false;
+      try{
+        if(typeof getAnniversaryForDate==='function'){
+          const txt = getAnniversaryForDate(dateStr);
+          if(txt && txt.trim()!==''){
+            // 원본이 아닌 반복 표시된 경우
+            if(!rawMap[dateStr] || rawMap[dateStr].length===0 || !rawMap[dateStr].some(d=>d.anniversary===txt)){
+              isRepeatedTitle = true;
+            } else {
+              // 원본에도 있으면 이미 위에서 체크됨
+              if(hasTitle) isRepeatedTitle = true;
+            }
+          }
+        }
+      }catch(e){}
+
+      // 최종 빨강 조건
+      const isRed = isDaily || isOnce || isYearly || isMonthly || isRepeatedTitle || (hasTitle && (isYearly || isMonthly));
+      // 추가로 annivRepeat가 none이 아닌 모든 기념일은 빨강으로 (매년/매월)
+      const isAnyRepeatTitle = hasTitle && (isYearly || isMonthly || isRepeatedTitle);
+      
+      // 더 넓게: anniversary가 있고 annivRepeat가 none이 아니면 빨강
+      let isAnyAnnivRepeat = false;
+      items.forEach(d=>{
+        if(d.anniversary && d.annivRepeat && d.annivRepeat!=='none') isAnyAnnivRepeat = true;
+      });
+      if(isRepeatedTitle) isAnyAnnivRepeat = true;
+
+      const finalRed = isDaily || isOnce || isAnyAnnivRepeat;
+      const finalGreen = hasPhoto && !finalRed;
+
+      let corner = cell.querySelector('.cal-photo-corner');
+      if(finalRed && !corner){
+        corner = document.createElement('div');
+        corner.className='cal-photo-corner';
+        corner.setAttribute('data-date', dateStr);
+        corner.innerHTML='<span class="pin-emoji"></span>';
+        cell.appendChild(corner);
+      }
+      if(!corner){
+        // 사진만 있는 경우에도 코너가 없을 수 있으므로 생성
+        if(hasPhoto){
+          corner = document.createElement('div');
+          corner.className='cal-photo-corner';
+          corner.setAttribute('data-date', dateStr);
+          corner.innerHTML='<span class="pin-emoji"></span>';
+          cell.appendChild(corner);
+        } else {
+          return;
+        }
+      }
+      
+      let pin = corner.querySelector('.pin-emoji');
+      if(!pin){ corner.innerHTML='<span class="pin-emoji"></span>'; pin=corner.querySelector('.pin-emoji'); }
+      pin.textContent='';
+
+      if(finalRed){
+        pin.className='pin-emoji red-pin';
+        corner.style.display='flex';
+        let r=[];
+        if(isDaily) r.push('매일반복');
+        if(isOnce) r.push('하루만울림');
+        if(isYearly) r.push('매년');
+        if(isMonthly) r.push('매월');
+        if(isAnyAnnivRepeat && r.length===0) r.push('기념일반복');
+        corner.title = `${dateStr} ${r.join('+')} 빨강`;
+      } else if(finalGreen){
+        pin.className='pin-emoji green-pin';
+        corner.style.display='flex';
+        corner.title = `${dateStr} 사진 연두`;
+      } else {
+        corner.style.display='none';
+      }
+    });
+  }
+
+  window.updatePins = updatePinsFinal;
+  const origRender = window.renderCalendar;
+  if(origRender && !window._v44Patched){
+    window._v44Patched=true;
+    window.renderCalendar = function(...a){
+      const r = origRender.apply(this, a);
+      setTimeout(updatePinsFinal, 120);
+      setTimeout(updatePinsFinal, 500);
+      setTimeout(updatePinsFinal, 900);
+      return r;
+    };
+  }
+  setInterval(updatePinsFinal, 2000);
+  window.addEventListener('load', ()=>setTimeout(updatePinsFinal, 1000));
+})();
+</script>
 </body>
+
 
 
 
