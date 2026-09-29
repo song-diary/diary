@@ -14571,7 +14571,7 @@ window.updateTitleIconColor=function(){};
 </script>
 
 <style>
-/* V4.35 핀 정리 - 사진 빨강, 매일 연두, 기념일 구분 */
+/* V4.38 사진 연두 / 매일 빨강 - 사진 없어도 매일 빨강 표시 */
 .cal-cell .cal-photo-corner {
   background: transparent !important;
   border: none !important;
@@ -14596,13 +14596,11 @@ window.updateTitleIconColor=function(){};
 }
 .cal-cell .cal-photo-corner .pin-emoji.red-pin {
   background: #e74c3c !important;
+  background: linear-gradient(135deg, #ff6b6b, #e74c3c) !important;
 }
 .cal-cell .cal-photo-corner .pin-emoji.green-pin {
   background: #27ae60 !important;
   background: linear-gradient(135deg, #2ecc71, #27ae60) !important;
-}
-.cal-cell .cal-photo-corner .pin-emoji.blue-pin {
-  background: #3498db !important;
 }
 .cal-cell .cal-photo-corner .pin-emoji::after {
   content: '' !important;
@@ -14617,13 +14615,9 @@ window.updateTitleIconColor=function(){};
 }
 </style>
 <script>
-// [V4.35] 기준 명확화
-// - 사진만: 빨간핀
-// - 매일반복(사진+매일 포함): 연두핀 (매일 우선)
-// - 기념일(제목): 파란핀 or 표시 안함 -> 일단 연두에서 제외, 필요하면 파란핀
-// - 9월 28일만 매일반복인데 27일에 빨간핀 뜨는 이유: 데이터 확인용 로그 추가
+// [V4.38] 사진 연두 / 매일 빨강 - 사진 없어도 매일 빨강 표시 (현재 안나오는 버그 수정)
 (function(){
-  console.log('[V4.35] 핀 기준 정리');
+  console.log('[V4.38] 사진 연두 / 매일 빨강 - 매일 단독도 표시');
 
   function getAll(){
     try { return JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); }
@@ -14633,9 +14627,9 @@ window.updateTitleIconColor=function(){};
 
   function updatePins(){
     const all = getAll();
-    // 디버그: 9월 데이터
-    const sept = all.filter(d=>d.date && d.date.startsWith('2026-09'));
-    console.log('9월 데이터', sept.map(d=>`${d.date} ${d.anniversary||''} daily:${d.dailyRepeat} photo:${!!d.photo}`));
+    // 디버그
+    const dailies = all.filter(d=>d.dailyRepeat);
+    console.log('[V4.38] 매일반복 데이터:', dailies.map(d=>`${d.date} ${d.anniversary||d.text?.slice(0,10)}`));
 
     const photoMap = {};
     const dailyMap = {};
@@ -14648,61 +14642,73 @@ window.updateTitleIconColor=function(){};
 
     document.querySelectorAll('.cal-cell').forEach(cell=>{
       if(cell.classList.contains('adjacent-month')) return;
-      const corner = cell.querySelector('.cal-photo-corner');
-      if(!corner) return;
-      let dateStr = corner.getAttribute('data-date');
-      if(!dateStr){
-        const dayEl = cell.querySelector('.cal-cell-inner span');
-        if(!dayEl) return;
-        const day = parseInt(dayEl.textContent.trim());
-        if(isNaN(day)) return;
-        const y = typeof calYear!=='undefined'?calYear:new Date().getFullYear();
-        const m = typeof calMonth!=='undefined'?calMonth:new Date().getMonth();
-        dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-      }
-      dateStr = norm(dateStr);
+      const dayEl = cell.querySelector('.cal-cell-inner span');
+      if(!dayEl) return;
+      const day = parseInt(dayEl.textContent.trim());
+      if(isNaN(day)) return;
+      const y = typeof calYear!=='undefined'?calYear:new Date().getFullYear();
+      const m = typeof calMonth!=='undefined'?calMonth:new Date().getMonth();
+      const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+
       const hasPhoto = !!photoMap[dateStr];
       const isDaily = !!dailyMap[dateStr];
 
+      let corner = cell.querySelector('.cal-photo-corner');
+      
+      // 매일 반복인데 코너가 없으면 생성해야 함 (사진 없어도 표시)
+      if(isDaily && !corner){
+        corner = document.createElement('div');
+        corner.className = 'cal-photo-corner';
+        corner.setAttribute('data-date', dateStr);
+        corner.innerHTML = '<span class="pin-emoji red-pin"></span>';
+        cell.appendChild(corner);
+      }
+      
+      if(!corner) return;
+      
       let pin = corner.querySelector('.pin-emoji');
       if(!pin){
-        corner.innerHTML = '<span class="pin-emoji red-pin"></span>';
+        corner.innerHTML = '<span class="pin-emoji"></span>';
         pin = corner.querySelector('.pin-emoji');
       }
       pin.textContent = '';
 
-      // 로직: 매일 우선 - 반대로 (사진 연두, 매일 빨강)
       if(isDaily){
+        // 매일반복 (사진 유무 관계없이) -> 빨간핀, 매일 우선
         pin.className = 'pin-emoji red-pin';
+        corner.style.display = 'flex';
         corner.title = `${dateStr} 매일반복 - 빨강`;
       } else if(hasPhoto){
+        // 사진만 -> 연두핀
         pin.className = 'pin-emoji green-pin';
+        corner.style.display = 'flex';
         corner.title = `${dateStr} 사진 - 연두`;
       } else {
-        // 사진도 매일도 아니면 핀 숨김 (기념일만 있는 날은 핀 안찍음 - 깔끔)
+        // 둘 다 없으면 핀 숨김
         corner.style.display = 'none';
-        return;
       }
-      corner.style.display = 'flex';
     });
   }
 
   const orig = window.renderCalendar;
-  if(orig && !window._v35Patched){
-    window._v35Patched = true;
+  if(orig && !window._v38Patched){
+    window._v38Patched = true;
     window.renderCalendar = function(...args){
       const r = orig.apply(this, args);
-      setTimeout(updatePins, 150);
+      setTimeout(updatePins, 100);
       setTimeout(updatePins, 500);
+      setTimeout(updatePins, 900);
       return r;
     };
   }
+
   window.addEventListener('load', ()=>{
     setTimeout(updatePins, 800);
     setTimeout(updatePins, 2000);
   });
   setInterval(updatePins, 2000);
   window.updatePins = updatePins;
+  window.getDailyData = ()=>{ return JSON.parse(localStorage.getItem('smartDiaryList')||'[]').filter(d=>d.dailyRepeat); };
 })();
 </script>
 </body>
