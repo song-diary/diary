@@ -14571,51 +14571,54 @@ window.updateTitleIconColor=function(){};
 </script>
 
 <style>
-/* V4.32 핀 모양 그대로 색만 변경 - CSS로 핀 직접 그리기 */
+/* V4.34 연두색 핀 - 빨간핀 모양 그대로 색만 연두 */
 .cal-cell .cal-photo-corner {
   background: transparent !important;
-  width: 14px !important;
-  height: 14px !important;
-  top: 2px !important;
-  left: 3px !important;
+  border: none !important;
+  box-shadow: none !important;
+  width: 16px !important;
+  height: 16px !important;
+  top: 1px !important;
+  left: 2px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
 }
 .cal-cell .cal-photo-corner .pin-emoji {
-  display: inline-block !important;
-  width: 10px !important;
-  height: 10px !important;
+  display: block !important;
+  width: 11px !important;
+  height: 11px !important;
   border-radius: 50% 50% 50% 0 !important;
   transform: rotate(-45deg) !important;
   position: relative !important;
-  top: -1px !important;
   font-size: 0 !important;
   line-height: 0 !important;
+  top: -1px !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.25) !important;
 }
 .cal-cell .cal-photo-corner .pin-emoji.red-pin {
   background: #e74c3c !important;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.3) !important;
 }
 .cal-cell .cal-photo-corner .pin-emoji.green-pin {
-  background: #27ae60 !important;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.3) !important;
+  background: #2ecc71 !important; /* 이쁜 연두색 */
+  background: linear-gradient(135deg, #2ecc71, #27ae60) !important;
 }
 .cal-cell .cal-photo-corner .pin-emoji::after {
   content: '' !important;
   position: absolute !important;
   width: 4px !important;
   height: 4px !important;
-  background: rgba(255,255,255,0.9) !important;
+  background: rgba(255,255,255,0.95) !important;
   border-radius: 50% !important;
-  top: 2px !important;
-  left: 2px !important;
+  top: 2.5px !important;
+  left: 2.5px !important;
+  display: block !important;
 }
 </style>
 <script>
-// [V4.32] 핀 모양 그대로 색만 빨강/연두
+// [V4.34] 연두색 핀 - 빨간핀 모양 그대로 연두색 (이쁜 버전)
 (function(){
-  console.log('[V4.32] 핀 모양 그대로 색 변경');
+  console.log('[V4.34] 연두색 핀 - 모양 그대로 색만 변경');
 
   function getAll(){
     try { return JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); }
@@ -14625,12 +14628,13 @@ window.updateTitleIconColor=function(){};
 
   function updatePins(){
     const all = getAll();
+    const photoSet = new Set(all.filter(d=>d.photo).map(d=>norm(d.date)));
     const dailySet = new Set(all.filter(d=>d.dailyRepeat).map(d=>norm(d.date)));
     const annivSet = new Set(all.filter(d=>d.anniversary).map(d=>norm(d.date)));
 
     document.querySelectorAll('.cal-cell').forEach(cell=>{
       if(cell.classList.contains('adjacent-month')) return;
-      let corner = cell.querySelector('.cal-photo-corner');
+      const corner = cell.querySelector('.cal-photo-corner');
       if(!corner) return;
 
       let dateStr = corner.getAttribute('data-date');
@@ -14644,29 +14648,30 @@ window.updateTitleIconColor=function(){};
         dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
       }
       dateStr = norm(dateStr);
-      const isDaily = dailySet.has(dateStr);
-      const isAnniv = annivSet.has(dateStr);
+      const hasPhoto = photoSet.has(dateStr);
+      const isDaily = dailySet.has(dateStr) || annivSet.has(dateStr);
 
-      let emoji = corner.querySelector('.pin-emoji');
-      if(!emoji){
+      let pin = corner.querySelector('.pin-emoji');
+      if(!pin){
         corner.innerHTML = '<span class="pin-emoji red-pin"></span>';
-        emoji = corner.querySelector('.pin-emoji');
+        pin = corner.querySelector('.pin-emoji');
       }
+      pin.textContent = ''; // 이모지 텍스트 제거, CSS 핀으로
 
-      // 기존 이모지 텍스트 제거하고 CSS 핀으로
-      emoji.textContent = '';
-      
-      if(isDaily || isAnniv){
-        emoji.className = 'pin-emoji green-pin';
-        console.log(`[V4.32] ${dateStr} 연두핀`);
+      if(isDaily){
+        pin.className = 'pin-emoji green-pin';
+      } else if(hasPhoto){
+        pin.className = 'pin-emoji red-pin';
       } else {
-        emoji.className = 'pin-emoji red-pin';
+        // 혹시 사진 없는 날에 핀이 남아있으면 숨김
+        pin.className = 'pin-emoji red-pin';
       }
     });
   }
 
   const orig = window.renderCalendar;
-  if(orig){
+  if(orig && !window._v34Patched){
+    window._v34Patched = true;
     window.renderCalendar = function(...args){
       const r = orig.apply(this, args);
       setTimeout(updatePins, 100);
@@ -14677,10 +14682,10 @@ window.updateTitleIconColor=function(){};
   }
 
   window.addEventListener('load', ()=>{
-    setTimeout(updatePins, 600);
-    setTimeout(updatePins, 1500);
+    setTimeout(updatePins, 700);
+    setTimeout(updatePins, 1600);
   });
-  setInterval(updatePins, 1500);
+  setInterval(updatePins, 1200);
   window.updatePins = updatePins;
 })();
 </script>
