@@ -14438,7 +14438,344 @@ function resetFontSize(){
   console.log('[V4.17] 띠리링~ 한번만 + 메시지 적용, 테스트 버튼은 설정+예약박스에 작게 유지');
 })();
 </script>
+
+<style>
+/* V4.18 - 왼쪽 가리던 파란 테스트 버튼 강제 숨김 */
+#v14-test-btn, #v15-test-btn, #v15-test-btn-wrapper, #v17-mini-test, #v17-settings-test,
+button#v15-test-sound, button#v15-test-alarm,
+div[id*="test-btn"], button:has-text("알람 테스트") {
+  display: none !important;
+}
+#v17-mini-test { display: none !important; }
+</style>
+<script>
+// [V4.18] 1) 파란버튼 완전 제거 2) 시스템 소리 차용 + 볼륨조절 3) 글자크기 적용 수정
+(function(){
+  console.log('[V4.18] 3가지 수정');
+
+  // 1. 왼쪽 파란 버튼 완전 제거 - 모든 테스트 버튼 싹 삭제
+  function removeAllTestButtons(){
+    document.querySelectorAll('[id*="test-btn"], [id*="v14"], [id*="v15"], [id*="v17"]').forEach(el=>{
+      if(el.id && el.id.includes('test')) {
+        // 설정 안의 테스트는 유지 (v17-settings-test는 유지할지? -> 일단 유지하되 왼쪽 것만 제거)
+        if(el.id==='v17-settings-test') return;
+        if(el.id==='v17-mini-test') { el.remove(); return; }
+      }
+    });
+    // 텍스트로 찾기 - 왼쪽에 세로로 "알람 테스트" 파란 버튼
+    document.querySelectorAll('button').forEach(btn=>{
+      if(btn.textContent.includes('알람 테스트') && btn.style.position!=='fixed'){
+        // 설정 안의 버튼은 제외 (부모가 settings-scroll-content인지 확인)
+        const isInSettings = btn.closest('.settings-scroll-content');
+        const isMini = btn.id==='v17-mini-test';
+        if(!isInSettings || isMini){
+          // 왼쪽 가리는 버튼만 제거 - fixed나 absolute 아니고, 파란 배경
+          if(btn.textContent.trim()==='알람 테스트' || btn.textContent.includes('알람') && btn.closest('#calendar-card')==null && !isInSettings){
+            // 설정 외 알람 테스트 버튼 제거
+            if(btn.id!=='v17-full-test-btn' && btn.id!=='v15-test-alarm' && btn.id!=='v15-test-sound'){
+              // 좀 더 정확히: 달력 옆에 붙은 버튼
+              if(btn.offsetParent && btn.offsetParent.id!=='v17-settings-test'){
+                // 왼쪽 파란 세로 버튼 특징: writing-mode나 세로 텍스트
+                if(btn.textContent.length<=10){
+                  console.log('파란 테스트 버튼 제거', btn);
+                  btn.remove();
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+    // 더 강력하게: 왼쪽 점선 박스 자체 제거
+    document.querySelectorAll('div').forEach(div=>{
+      if(div.textContent.includes('매일 알람 테스트') && div.textContent.includes('소리가 부드러운지 확인')){
+        console.log('왼쪽 테스트 박스 제거', div);
+        div.remove();
+      }
+    });
+  }
+
+  // 2. 소리 - 시스템 소리 차용 + 볼륨 조절
+  // 브라우저에서 시스템 기본 알림 소리를 쓰는 방법: Notification API는 시스템 소리를 사용함
+  // 커스텀 비프는 볼륨 조절 가능하게
+  
+  let alarmSoundType = localStorage.getItem('smartDiaryAlarmSoundType') || 'system'; // system, tiriring, silent
+  let alarmVolume = parseFloat(localStorage.getItem('smartDiaryAlarmVolume') || '0.3'); // 0~1
+
+  function saveAlarmSettings(){
+    localStorage.setItem('smartDiaryAlarmSoundType', alarmSoundType);
+    localStorage.setItem('smartDiaryAlarmVolume', String(alarmVolume));
+  }
+
+  let audioCtx=null;
+  function playCustomSound(){
+    if(alarmSoundType==='silent') return;
+    if(alarmSoundType==='system') {
+      // 시스템 소리는 Notification으로 처리, 커스텀 소리 안 울림
+      return;
+    }
+    // tiriring - 볼륨 적용
+    try{
+      if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+      const now=audioCtx.currentTime;
+      const osc1=audioCtx.createOscillator();
+      const gain1=audioCtx.createGain();
+      osc1.connect(gain1); gain1.connect(audioCtx.destination);
+      osc1.type='sine';
+      osc1.frequency.setValueAtTime(680, now);
+      gain1.gain.setValueAtTime(0, now);
+      gain1.gain.linearRampToValueAtTime(alarmVolume*0.4, now+0.05); // 볼륨 적용
+      gain1.gain.exponentialRampToValueAtTime(0.001, now+0.6);
+      osc1.start(now);
+      osc1.stop(now+0.6);
+      
+      const osc2=audioCtx.createOscillator();
+      const gain2=audioCtx.createGain();
+      osc2.connect(gain2); gain2.connect(audioCtx.destination);
+      osc2.type='sine';
+      osc2.frequency.setValueAtTime(880, now+0.15);
+      gain2.gain.setValueAtTime(0, now+0.15);
+      gain2.gain.linearRampToValueAtTime(alarmVolume*0.35, now+0.20);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now+1.0);
+      osc2.start(now+0.15);
+      osc2.stop(now+1.0);
+    }catch(e){ console.log('sound error', e); }
+  }
+
+  function showDailyAlarm(item, curTime){
+    console.log('[V4.18] 알람', curTime, item.text, 'type', alarmSoundType, 'vol', alarmVolume);
+    try{ if(navigator.vibrate) navigator.vibrate([150]); }catch(e){}
+
+    if(alarmSoundType==='tiriring'){
+      playCustomSound();
+    }
+    // 시스템 소리는 Notification에서 울림
+
+    let p=document.getElementById('daily-alarm-popup');
+    if(!p){
+      p=document.createElement('div'); p.id='daily-alarm-popup';
+      p.style.cssText='position:fixed;top:18%;left:50%;transform:translateX(-50%);background:#fff;border:2px solid #e06d6d;border-radius:16px;padding:18px 20px;box-shadow:0 12px 32px rgba(0,0,0,0.25);z-index:999999;min-width:300px;max-width:88vw;display:none;';
+      p.innerHTML='<div id="daily-alarm-body"></div><div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end;"><button onclick="document.getElementById(\'daily-alarm-popup\').style.display=\'none\'" style="padding:8px 14px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;font-size:13px;">닫기</button><button onclick="document.getElementById(\'daily-alarm-popup\').style.display=\'none\'" style="padding:8px 16px;border:none;border-radius:8px;background:#e06d6d;color:#fff;cursor:pointer;font-weight:bold;font-size:13px;">확인</button></div>';
+      document.body.appendChild(p);
+    }
+    document.getElementById('daily-alarm-body').innerHTML=`
+      <div style="font-weight:bold;color:#e06d6d;font-size:14px;">🔔 매일 알림 ${curTime} <span style="font-weight:normal;color:#888;">${alarmSoundType==='system'?'🔊':alarmSoundType==='tiriring'?'띠리링~':'🔇'}</span></div>
+      <div style="margin-top:10px;font-size:15px;font-weight:bold;line-height:1.5;">${item.text||'알림'}</div>
+      <div style="margin-top:6px;font-size:12px;color:#999;">${item.date||''} ${item.time||''}</div>
+    `;
+    p.style.display='block';
+
+    // 브라우저 알림 - 시스템 소리 사용
+    try{
+      if('Notification' in window && Notification.permission==='granted'){
+        const noti = new Notification('🔔 매일 알림 '+curTime, {
+          body: item.text||'알림', 
+          requireInteraction: false,
+          silent: alarmSoundType==='silent' ? true : false // 시스템 소리 사용 여부
+        });
+        setTimeout(()=>noti.close(), 8000);
+      }
+    }catch(e){}
+
+    setTimeout(()=>{ if(p) p.style.display='none'; }, 8000);
+  }
+
+  // 3. 글자크기 적용 수정 - 전체에 적용되도록
+  window.resetFontSize = function(){
+    currentMemoFontSize = 16;
+    localStorage.setItem('smartDiaryMemoFontSize', currentMemoFontSize);
+    applyMemoFontSizeFixed();
+  };
+
+  window.adjustFontSize = function(delta){
+    currentMemoFontSize += delta;
+    if (currentMemoFontSize < 12) currentMemoFontSize = 12;
+    if (currentMemoFontSize > 26) currentMemoFontSize = 26;
+    localStorage.setItem('smartDiaryMemoFontSize', currentMemoFontSize);
+    applyMemoFontSizeFixed();
+  };
+
+  function applyMemoFontSizeFixed(){
+    console.log('[V4.18] 글자크기 적용', currentMemoFontSize);
+    document.documentElement.style.setProperty('--memo-font-size', currentMemoFontSize + 'px');
+    // 달력, 리스트 등에도 적용되도록 추가 스타일
+    document.documentElement.style.setProperty('--base-font-size', currentMemoFontSize + 'px');
+    
+    const display=document.getElementById('font-size-display');
+    if(display) display.textContent = currentMemoFontSize + 'px';
+
+    // 직접 diary-text에 적용 (important 때문에)
+    document.querySelectorAll('.diary-text').forEach(el=>{
+      el.style.fontSize = currentMemoFontSize + 'px';
+    });
+    
+    // 저장된 크기 표시
+    const sizeInfo=document.getElementById('font-size-info');
+    if(sizeInfo) sizeInfo.textContent = `현재: ${currentMemoFontSize}px (다이어리 내용에 적용)`;
+  }
+
+  // 기존 applyMemoFontSize 덮어쓰기
+  window.applyMemoFontSize = applyMemoFontSizeFixed;
+
+  // 설정 UI 개선 - 소리 종류 + 볼륨
+  function addAlarmSettingsUI(){
+    const settingsContent=document.querySelector('.settings-scroll-content');
+    if(!settingsContent) { setTimeout(addAlarmSettingsUI, 1000); return; }
+    if(document.getElementById('v18-alarm-settings')) return;
+
+    const div=document.createElement('div');
+    div.id='v18-alarm-settings';
+    div.className='settings-section';
+    div.style.cssText='background:#fff0f0; border:1px solid #e6b0b0; border-radius:8px; padding:12px; margin-bottom:12px;';
+    div.innerHTML=`
+      <label style="display:flex; justify-content:space-between; align-items:center; font-weight:bold;">🔔 매일 알림 소리 설정</label>
+      <div style="margin-top:8px;">
+        <div style="font-size:12px; color:#666; margin-bottom:4px;">소리 종류:</div>
+        <select id="alarm-sound-type" style="width:100%; padding:6px; border:1px solid #ddd; border-radius:6px; font-size:13px;">
+          <option value="system">🔊 시스템 기본음 (본체 설정 따름, 권장)</option>
+          <option value="tiriring">🎵 띠리링~ 부드러운 벨</option>
+          <option value="silent">🔇 무음 (진동+메시지만)</option>
+        </select>
+      </div>
+      <div style="margin-top:8px;" id="volume-row">
+        <div style="font-size:12px; color:#666; margin-bottom:4px;">소리 크기: <span id="volume-value">${Math.round(alarmVolume*100)}%</span></div>
+        <input type="range" id="alarm-volume" min="0" max="100" value="${Math.round(alarmVolume*100)}" style="width:100%;">
+        <div style="font-size:11px; color:#999; margin-top:2px;">시스템 기본음은 폰의 알림 볼륨을 따릅니다</div>
+      </div>
+      <div style="display:flex; gap:6px; margin-top:10px;">
+        <button id="v18-sound-test" style="flex:1; padding:7px; background:#fff; border:1px solid #e06d6d; color:#e06d6d; border-radius:6px; font-size:12px; cursor:pointer;">🔊 소리 테스트</button>
+        <button id="v18-alarm-test" style="flex:1; padding:7px; background:#e06d6d; color:#fff; border:none; border-radius:6px; font-size:12px; cursor:pointer; font-weight:bold;">메시지 테스트</button>
+      </div>
+    `;
+    
+    // 글자크기 섹션 바로 뒤에 삽입
+    const fontSection=document.getElementById('font-size-display')?.closest('.settings-section');
+    if(fontSection && fontSection.parentNode){
+      fontSection.parentNode.insertBefore(div, fontSection.nextSibling);
+    } else {
+      settingsContent.insertBefore(div, settingsContent.firstChild);
+    }
+
+    setTimeout(()=>{
+      const typeSelect=document.getElementById('alarm-sound-type');
+      const volInput=document.getElementById('alarm-volume');
+      const volValue=document.getElementById('volume-value');
+      const volRow=document.getElementById('volume-row');
+      
+      if(typeSelect){
+        typeSelect.value=alarmSoundType;
+        typeSelect.onchange=()=>{
+          alarmSoundType=typeSelect.value;
+          saveAlarmSettings();
+          if(alarmSoundType==='system'){
+            volRow.style.opacity='0.5';
+          } else {
+            volRow.style.opacity='1';
+          }
+        };
+        // 초기 상태
+        if(alarmSoundType==='system') volRow.style.opacity='0.5';
+      }
+      if(volInput && volValue){
+        volInput.oninput=()=>{
+          alarmVolume=parseInt(volInput.value)/100;
+          volValue.textContent=volInput.value+'%';
+          saveAlarmSettings();
+        };
+        volInput.onchange=()=>{
+          alarmVolume=parseInt(volInput.value)/100;
+          saveAlarmSettings();
+        };
+      }
+      
+      const soundTest=document.getElementById('v18-sound-test');
+      if(soundTest){
+        soundTest.onclick=()=>{
+          const type=document.getElementById('alarm-sound-type').value;
+          if(type==='tiriring'){
+            playCustomSound();
+          } else if(type==='system'){
+            // 시스템 소리 테스트는 Notification으로
+            if('Notification' in window && Notification.permission==='granted'){
+              new Notification('🔔 시스템 소리 테스트', {body: '본체에 설정된 알림 소리가 납니다', silent:false});
+            } else if('Notification' in window){
+              Notification.requestPermission().then(perm=>{
+                if(perm==='granted'){
+                  new Notification('🔔 시스템 소리 테스트', {body: '본체 소리', silent:false});
+                } else {
+                  alert('브라우저 알림 권한을 허용하면 시스템 기본음으로 알림이 옵니다');
+                }
+              });
+            } else {
+              alert('시스템 기본음은 폰의 알림 소리 설정을 따릅니다 (볼륨: '+volInput.value+'%)');
+            }
+          } else {
+            alert('무음으로 설정되어 소리 없이 진동만 옵니다');
+            try{ if(navigator.vibrate) navigator.vibrate([150]); }catch(e){}
+          }
+        };
+      }
+      const alarmTest=document.getElementById('v18-alarm-test');
+      if(alarmTest){
+        alarmTest.onclick=()=>{
+          const diaries=JSON.parse(localStorage.getItem('smartDiaryList')||'[]');
+          const daily=diaries.filter(it=>it.dailyRepeat);
+          const cur=new Date();
+          const curStr=`${String(cur.getHours()).padStart(2,'0')}:${String(cur.getMinutes()).padStart(2,'0')}`;
+          if(daily.length>0){
+            showDailyAlarm(daily[0], daily[0].time||curStr);
+          } else {
+            showDailyAlarm({text:'매일 알림 테스트 - 메시지+소리', time:curStr, date:''}, curStr);
+          }
+        };
+      }
+    }, 500);
+  }
+
+  // 알람 체크
+  let lastKey='';
+  window.checkDailyAlarmV18 = function(){
+    try{
+      const now=new Date();
+      const cur=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+      const key=`${now.toISOString().slice(0,10)}-${cur}`;
+      if(lastKey===key) return;
+      const diaries=JSON.parse(localStorage.getItem('smartDiaryList')||'[]');
+      const toAlarm=diaries.filter(it=>it.dailyRepeat&&it.time===cur);
+      if(toAlarm.length>0){
+        lastKey=key;
+        toAlarm.forEach(it=>showDailyAlarm(it, cur));
+      }
+    }catch(e){ console.error(e); }
+  };
+  window.checkAlarm = window.checkDailyAlarmV18;
+
+  window.addEventListener('load', ()=>{
+    setTimeout(()=>{
+      removeAllTestButtons();
+      addAlarmSettingsUI();
+      applyMemoFontSizeFixed();
+      setInterval(window.checkDailyAlarmV18, 1000);
+      window.checkDailyAlarmV18();
+      document.addEventListener('click', ()=>{
+        if(!audioCtx){
+          try{ audioCtx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
+        }
+      }, {once:true});
+      // 2초 후 다시 정리
+      setTimeout(removeAllTestButtons, 2000);
+    }, 800);
+  });
+
+  setTimeout(removeAllTestButtons, 1000);
+  setTimeout(removeAllTestButtons, 3000);
+  setTimeout(()=>{ addAlarmSettingsUI(); applyMemoFontSizeFixed(); }, 1500);
+
+  console.log('[V4.18] 3가지 수정 완료');
+})();
+</script>
 </body>
+
 
 
 
