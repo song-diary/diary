@@ -14138,7 +14138,127 @@ console.log('[DailyAlarm] 스크립트 로드 완료 - testDailyAlarm()으로 �
   setTimeout(nukeTestButtons, 500);
 })();
 </script>
+
+<script>
+// [V4.20] 시스템 소리 삭제 + 부드러운 소리 3종 제안
+(function(){
+  console.log('[V4.20] 부드러운 소리 3종');
+
+  let alarmSoundType = localStorage.getItem('smartDiaryAlarmSoundType') || 'tiriring';
+  if(alarmSoundType==='system') alarmSoundType='tiriring'; // 시스템이었던 사람은 띠리링으로
+  let alarmVolume = parseFloat(localStorage.getItem('smartDiaryAlarmVolume') || '0.25'); // 기본 25% 아주 작게
+  let audioCtx=null;
+
+  function playSound(type, vol=alarmVolume){
+    try{
+      if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+      const now=audioCtx.currentTime;
+      if(type==='tiriring'){
+        // 기존 띠리링 - 가장 부드러움
+        const o1=audioCtx.createOscillator(), g1=audioCtx.createGain(); o1.connect(g1); g1.connect(audioCtx.destination);
+        o1.type='sine'; o1.frequency.setValueAtTime(660, now);
+        g1.gain.setValueAtTime(0, now); g1.gain.linearRampToValueAtTime(vol*0.35, now+0.04); g1.gain.exponentialRampToValueAtTime(0.001, now+0.5);
+        o1.start(now); o1.stop(now+0.5);
+        const o2=audioCtx.createOscillator(), g2=audioCtx.createGain(); o2.connect(g2); g2.connect(audioCtx.destination);
+        o2.type='sine'; o2.frequency.setValueAtTime(880, now+0.12);
+        g2.gain.setValueAtTime(0, now+0.12); g2.gain.linearRampToValueAtTime(vol*0.30, now+0.16); g2.gain.exponentialRampToValueAtTime(0.001, now+0.9);
+        o2.start(now+0.12); o2.stop(now+0.9);
+      } else if(type==='drop'){
+        // 또르르 물방울 - 더 짧고 귀여움
+        const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination);
+        o.type='sine'; o.frequency.setValueAtTime(1200, now); o.frequency.exponentialRampToValueAtTime(600, now+0.3);
+        g.gain.setValueAtTime(0, now); g.gain.linearRampToValueAtTime(vol*0.4, now+0.01); g.gain.exponentialRampToValueAtTime(0.001, now+0.4);
+        o.start(now); o.stop(now+0.4);
+      } else if(type==='piano'){
+        // 포근한 피아노 도-미-솔
+        [261, 329, 392].forEach((freq,i)=>{
+          const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination);
+          o.type='triangle'; o.frequency.setValueAtTime(freq, now+i*0.08);
+          g.gain.setValueAtTime(0, now+i*0.08); g.gain.linearRampToValueAtTime(vol*0.25, now+i*0.08+0.03); g.gain.exponentialRampToValueAtTime(0.001, now+i*0.08+0.6);
+          o.start(now+i*0.08); o.stop(now+i*0.08+0.6);
+        });
+      }
+    }catch(e){ console.log(e); }
+  }
+
+  function showDailyAlarm(item, curTime){
+    try{ if(navigator.vibrate) navigator.vibrate([100]); }catch(e){}
+    if(alarmSoundType!=='silent') playSound(alarmSoundType);
+    let p=document.getElementById('daily-alarm-popup');
+    if(!p){
+      p=document.createElement('div'); p.id='daily-alarm-popup';
+      p.style.cssText='position:fixed;top:18%;left:50%;transform:translateX(-50%);background:#fff;border:2px solid #e06d6d;border-radius:16px;padding:18px 20px;box-shadow:0 12px 32px rgba(0,0,0,0.25);z-index:999999;min-width:300px;max-width:88vw;display:none;';
+      p.innerHTML='<div id="daily-alarm-body"></div><div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end;"><button onclick="document.getElementById(\'daily-alarm-popup\').style.display=\'none\'" style="padding:8px 14px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;">닫기</button><button onclick="document.getElementById(\'daily-alarm-popup\').style.display=\'none\'" style="padding:8px 16px;border:none;border-radius:8px;background:#e06d6d;color:#fff;cursor:pointer;font-weight:bold;">확인</button></div>';
+      document.body.appendChild(p);
+    }
+    const soundEmoji = alarmSoundType==='tiriring'?'🔔띠리링~':alarmSoundType==='drop'?'💧또르르':alarmSoundType==='piano'?'🎹포근':'🔇';
+    document.getElementById('daily-alarm-body').innerHTML=`<div style="font-weight:bold;color:#e06d6d;">🔔 매일 ${curTime} <span style="font-weight:normal;color:#888;">${soundEmoji}</span></div><div style="margin-top:10px;font-size:15px;font-weight:bold;">${item.text||'알림'}</div>`;
+    p.style.display='block';
+    setTimeout(()=>{ if(p) p.style.display='none'; }, 8000);
+  }
+
+  let lastKey='';
+  window.checkDailyAlarmV20 = function(){
+    const now=new Date(); const cur=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    const key=`${now.toISOString().slice(0,10)}-${cur}`; if(lastKey===key) return;
+    const diaries=JSON.parse(localStorage.getItem('smartDiaryList')||'[]');
+    const toAlarm=diaries.filter(it=>it.dailyRepeat&&it.time===cur);
+    if(toAlarm.length>0){ lastKey=key; toAlarm.forEach(it=>showDailyAlarm(it, cur)); }
+  };
+  window.checkAlarm = window.checkDailyAlarmV20;
+
+  // 설정 UI 교체
+  function updateSettingsUI(){
+    const el=document.getElementById('v19-alarm-settings');
+    if(el) el.remove();
+    const sc=document.querySelector('.settings-scroll-content');
+    if(!sc) { setTimeout(updateSettingsUI, 500); return; }
+    const div=document.createElement('div'); div.id='v20-alarm-settings'; div.className='settings-section';
+    div.style.cssText='background:#fff8f0; border:1px solid #e6b0b0; border-radius:8px; padding:12px;';
+    div.innerHTML=`
+      <label style="font-weight:bold;">🔔 매일 알림 소리 (부드러운 3종)</label>
+      <div style="font-size:11px; color:#888; margin-top:2px;">소리 1번만, 조용하게 울립니다</div>
+      <select id="alarm-sound-type" style="width:100%; padding:8px; margin-top:8px; border:1px solid #ddd; border-radius:6px; font-size:13px;">
+        <option value="tiriring">🔔 띠리링~ (기본, 벨 2음)</option>
+        <option value="drop">💧 또르르 (물방울, 짧고 귀여움)</option>
+        <option value="piano">🎹 포근 (도미솔 피아노)</option>
+        <option value="silent">🔇 무음 (진동만)</option>
+      </select>
+      <div style="margin-top:10px;"><div style="font-size:12px;">크기: <span id="vol-val">${Math.round(alarmVolume*100)}%</span> <span style="font-size:11px; color:#999;">(권장 20-30%)</span></div><input type="range" id="vol" min="0" max="100" value="${Math.round(alarmVolume*100)}" style="width:100%;"></div>
+      <div style="display:flex; gap:6px; margin-top:10px;">
+        <button id="snd-test" style="flex:1; padding:8px; background:#fff; border:1px solid #e06d6d; color:#e06d6d; border-radius:6px; font-size:12px; cursor:pointer;">🔊 소리 테스트</button>
+        <button id="msg-test" style="flex:1; padding:8px; background:#e06d6d; color:#fff; border:none; border-radius:6px; font-size:12px; cursor:pointer; font-weight:bold;">메시지 테스트</button>
+      </div>
+    `;
+    const fontSec=document.getElementById('font-size-display')?.closest('.settings-section');
+    if(fontSec) fontSec.parentNode.insertBefore(div, fontSec.nextSibling); else sc.insertBefore(div, sc.firstChild);
+    setTimeout(()=>{
+      const sel=document.getElementById('alarm-sound-type'); if(sel){ sel.value=alarmSoundType; sel.onchange=()=>{ alarmSoundType=sel.value; localStorage.setItem('smartDiaryAlarmSoundType', alarmSoundType); playSound(alarmSoundType); }; }
+      const vol=document.getElementById('vol'); const vv=document.getElementById('vol-val');
+      if(vol){ vol.oninput=()=>{ alarmVolume=vol.value/100; vv.textContent=vol.value+'%'; localStorage.setItem('smartDiaryAlarmVolume', String(alarmVolume)); }; }
+      document.getElementById('snd-test').onclick=()=>{ playSound(sel.value); };
+      document.getElementById('msg-test').onclick=()=>{
+        const diaries=JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); const daily=diaries.filter(it=>it.dailyRepeat);
+        const cur=new Date(); const curStr=`${String(cur.getHours()).padStart(2,'0')}:${String(cur.getMinutes()).padStart(2,'0')}`;
+        if(daily.length>0) showDailyAlarm(daily[0], daily[0].time||curStr); else showDailyAlarm({text:'매일 알림 테스트', time:curStr}, curStr);
+      };
+    }, 300);
+  }
+
+  window.addEventListener('load', ()=>{
+    setTimeout(()=>{
+      updateSettingsUI();
+      setInterval(window.checkDailyAlarmV20, 1000);
+      window.checkDailyAlarmV20();
+    }, 800);
+  });
+  setTimeout(updateSettingsUI, 1000);
+
+  console.log('[V4.20] 시스템 소리 삭제, 부드러운 3종 제안');
+})();
+</script>
 </body>
+
 
 
 
