@@ -14583,64 +14583,89 @@ window.updateTitleIconColor=function(){};
 .cal-cell .cal-photo-corner .pin-emoji::after{ content:''!important; position:absolute!important; width:3.5px!important; height:3.5px!important; background:#fff!important; border-radius:50%!important; top:2.5px!important; left:2.5px!important; }
 </style>
 <script>
-// [V4.45] 최종 - 빨강 2개만 (9/23, 9/27) - 시스템 절기는 제외!
+// [V4.46] 하루만 울림 저장 확실히 + 빨강 2개만
 (function(){
-  console.log('[V4.45] 빨강은 내가 체크한 4개만 - 시스템 기념일 제외');
+  console.log('[V4.46] 하루만 울림 저장 수정 + 빨강 2개');
 
-  // 저장 패치
-  (function(){
-    const interval = setInterval(()=>{
-      if(typeof window.saveDiaryEntry==='function' && !window._v45SavePatched){
-        window._v45SavePatched=true;
-        const orig = window.saveDiaryEntry;
-        window.saveDiaryEntry = function(){
-          try{
-            const onceCb = document.getElementById('once-alarm-checkbox');
-            const dailyCb = document.getElementById('daily-repeat-checkbox');
-            window._tempOnceAlarm = onceCb ? onceCb.checked : false;
-            window._tempDailyRepeat = dailyCb ? dailyCb.checked : false;
-          }catch(e){}
-          return orig.apply(this, arguments);
-        };
-        clearInterval(interval);
-      }
-    }, 500);
-    const origSetItem = localStorage.setItem.bind(localStorage);
-    localStorage.setItem = function(k,v){
-      try{
-        if(k==='smartDiaryList' && (window._tempOnceAlarm!==undefined || window._tempDailyRepeat!==undefined)){
-          let arr = JSON.parse(v);
-          if(Array.isArray(arr) && arr.length>0){
-            const editingId = window.editingDiaryId;
-            let target = editingId ? arr.find(x=>String(x.id)===String(editingId)) : arr[arr.length-1];
-            if(target){
-              if(window._tempDailyRepeat!==undefined) target.dailyRepeat = !!window._tempDailyRepeat;
-              if(window._tempOnceAlarm!==undefined) target.onceAlarm = !!window._tempOnceAlarm;
-              v = JSON.stringify(arr);
-            }
-            window._tempOnceAlarm=undefined;
-            window._tempDailyRepeat=undefined;
+  // 1) 저장 로직을 원본 saveDiaryEntry 내부에서 직접 수정
+  // 원본 saveDiaryEntry가 diaries 배열을 만드는 부분을 후킹하기 위해 전체를 덮어쓰기
+
+  function waitAndPatch(){
+    const check = setInterval(()=>{
+      if(typeof window.saveDiaryEntry !== 'function') return;
+      clearInterval(check);
+      
+      // 이미 패치된 경우 중복 방지
+      if(window._v46Patched) return;
+      window._v46Patched = true;
+      
+      const origSave = window.saveDiaryEntry;
+      
+      window.saveDiaryEntry = function(){
+        // 체크박스 값 읽기
+        const dailyCb = document.getElementById('daily-repeat-checkbox');
+        const onceCb = document.getElementById('once-alarm-checkbox');
+        const isDaily = dailyCb ? dailyCb.checked : false;
+        const isOnce = onceCb ? onceCb.checked : false;
+        
+        console.log('[V4.46] 저장 시도 - daily:', isDaily, 'once:', isOnce);
+        
+        // 원본 함수 실행
+        const result = origSave.apply(this, arguments);
+        
+        // 저장 직후 localStorage에서 해당 아이템 찾아서 onceAlarm 추가
+        try{
+          let diaries = JSON.parse(localStorage.getItem('smartDiaryList')||'[]');
+          let editingId = window.editingDiaryId;
+          let target = null;
+          
+          if(editingId){
+            target = diaries.find(d=>String(d.id)===String(editingId));
+          } else {
+            // 마지막 저장된 것
+            target = diaries[diaries.length-1];
           }
+          
+          if(target){
+            target.dailyRepeat = isDaily;
+            target.onceAlarm = isOnce;
+            // 하루만 울림이면 dailyRepeat도 true로? 아니면 once만? - once만 빨강이므로 once만 true면 됨
+            // 하지만 알림 울리려면 time 필요 - dailyRepeat와 별개로 onceAlarm도 알림 대상으로 처리
+            if(isOnce && !target.time){
+              // 시간이 없으면 기본 08:00
+              const timeInput = document.getElementById('reservation-time-input');
+              target.time = timeInput ? timeInput.value || '08:00' : '08:00';
+            }
+            localStorage.setItem('smartDiaryList', JSON.stringify(diaries));
+            console.log('[V4.46] 저장 완료 - daily:', target.dailyRepeat, 'once:', target.onceAlarm, 'id:', target.id);
+          }
+        }catch(e){
+          console.error('[V4.46] 저장 후 패치 실패', e);
         }
-      }catch(e){}
-      return origSetItem(k,v);
-    };
-  })();
+        
+        return result;
+      };
+      
+      console.log('[V4.46] saveDiaryEntry 패치 완료');
+    }, 300);
+  }
+  
+  waitAndPatch();
 
-  // 폼 복원
+  // 폼 열때 값 복원
   const origOpen = window.openDiaryForm;
-  if(origOpen && !window._v45OpenPatched){
-    window._v45OpenPatched=true;
-    window.openDiaryForm = function(...args){
-      const r = origOpen.apply(this, args);
+  if(typeof origOpen === 'function' && !window._v46OpenPatched){
+    window._v46OpenPatched = true;
+    window.openDiaryForm = function(dateStr, existingItem, mode){
+      const r = origOpen.apply(this, arguments);
       setTimeout(()=>{
         try{
-          const item = args[1];
           const onceCb = document.getElementById('once-alarm-checkbox');
           const dailyCb = document.getElementById('daily-repeat-checkbox');
-          if(item){
-            if(onceCb) onceCb.checked = !!item.onceAlarm;
-            if(dailyCb) dailyCb.checked = !!item.dailyRepeat;
+          if(existingItem){
+            if(onceCb) onceCb.checked = !!existingItem.onceAlarm;
+            if(dailyCb) dailyCb.checked = !!existingItem.dailyRepeat;
+            console.log('[V4.46] 폼 복원 - daily:', existingItem.dailyRepeat, 'once:', existingItem.onceAlarm);
           } else {
             if(onceCb) onceCb.checked = false;
             if(dailyCb) dailyCb.checked = false;
@@ -14651,11 +14676,12 @@ window.updateTitleIconColor=function(){};
     };
   }
 
-  function updatePinsV45(){
+  // 2) 핀 업데이트 - 빨강 4조건만, 시스템 기념일 제외
+  function updatePinsV46(){
     let all=[];
     try{ all = JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); }catch(e){}
     
-    const map = {}; // date -> {hasPhoto, isDaily, isOnce, isYearly, isMonthly}
+    const map = {};
     all.forEach(d=>{
       const ds = (d.date||'').slice(0,10);
       if(!ds) return;
@@ -14663,14 +14689,14 @@ window.updateTitleIconColor=function(){};
       if(d.photo) map[ds].hasPhoto = true;
       if(d.dailyRepeat) map[ds].isDaily = true;
       if(d.onceAlarm) map[ds].isOnce = true;
-      // 오직 내가 설정한 기념일 반복만 빨강 - 시스템 절기 제외
       if(d.anniversary && d.annivRepeat){
         if(d.annivRepeat==='yearly') map[ds].isYearly = true;
         if(d.annivRepeat==='monthly') map[ds].isMonthly = true;
       }
     });
 
-    console.log('[V4.45] 빨강 대상:', Object.entries(map).filter(([k,v])=>v.isDaily||v.isOnce||v.isYearly||v.isMonthly).map(([k,v])=>`${k} daily:${v.isDaily} once:${v.isOnce} yearly:${v.isYearly} monthly:${v.isMonthly}`));
+    const reds = Object.entries(map).filter(([k,v])=>v.isDaily||v.isOnce||v.isYearly||v.isMonthly);
+    console.log('[V4.46] 빨강 대상:', reds.map(([k,v])=>`${k} D:${v.isDaily} O:${v.isOnce} Y:${v.isYearly} M:${v.isMonthly}`));
 
     document.querySelectorAll('.cal-cell').forEach(cell=>{
       if(cell.classList.contains('adjacent-month')) return;
@@ -14683,9 +14709,9 @@ window.updateTitleIconColor=function(){};
       const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
 
       const f = map[dateStr];
+      let corner = cell.querySelector('.cal-photo-corner');
+      
       if(!f){
-        // 이 날짜에 내 데이터 없으면 핀 숨김 (시스템 기념일은 핀 없음)
-        const corner = cell.querySelector('.cal-photo-corner');
         if(corner) corner.style.display='none';
         return;
       }
@@ -14693,7 +14719,6 @@ window.updateTitleIconColor=function(){};
       const isRed = f.isDaily || f.isOnce || f.isYearly || f.isMonthly;
       const isGreen = f.hasPhoto && !isRed;
 
-      let corner = cell.querySelector('.cal-photo-corner');
       if((isRed || isGreen) && !corner){
         corner = document.createElement('div');
         corner.className='cal-photo-corner';
@@ -14709,12 +14734,7 @@ window.updateTitleIconColor=function(){};
       if(isRed){
         pin.className='pin-emoji red-pin';
         corner.style.display='flex';
-        let r=[];
-        if(f.isDaily) r.push('매일반복');
-        if(f.isOnce) r.push('하루만울림');
-        if(f.isYearly) r.push('매년');
-        if(f.isMonthly) r.push('매월');
-        corner.title = `${dateStr} ${r.join('+')} 빨강`;
+        corner.title = `${dateStr} 빨강`;
       } else if(isGreen){
         pin.className='pin-emoji green-pin';
         corner.style.display='flex';
@@ -14725,18 +14745,29 @@ window.updateTitleIconColor=function(){};
     });
   }
 
-  window.updatePins = updatePinsV45;
+  window.updatePins = updatePinsV46;
   const origRender = window.renderCalendar;
-  if(origRender){
+  if(typeof origRender === 'function'){
     window.renderCalendar = function(...a){
       const r = origRender.apply(this, a);
-      setTimeout(updatePinsV45, 120);
-      setTimeout(updatePinsV45, 500);
+      setTimeout(updatePinsV46, 150);
+      setTimeout(updatePinsV46, 600);
       return r;
     };
   }
-  setInterval(updatePinsV45, 2500);
-  window.addEventListener('load', ()=>setTimeout(updatePinsV45, 1200));
+  setInterval(updatePinsV46, 2500);
+  window.addEventListener('load', ()=>setTimeout(updatePinsV46, 1200));
+  
+  // 디버그 함수
+  window.debugDiaries = function(){
+    const all = JSON.parse(localStorage.getItem('smartDiaryList')||'[]');
+    console.log('전체', all);
+    console.log('하루만 울림', all.filter(d=>d.onceAlarm));
+    console.log('매일반복', all.filter(d=>d.dailyRepeat));
+    console.log('매년', all.filter(d=>d.annivRepeat==='yearly'));
+    console.log('매월', all.filter(d=>d.annivRepeat==='monthly'));
+    return all;
+  };
 })();
 </script>
 </body>
