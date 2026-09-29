@@ -14302,7 +14302,48 @@ console.log('[DailyAlarm] 스크립트 로드 완료 - testDailyAlarm()으로 �
   setTimeout(cleanDupes, 800);
 })();
 </script>
+
+<script>
+// [V4.25] 복구 - 메인 정상 + 매일 체크 소리 복구 + 경량화는 CSS만 살짝
+(function(){
+  console.log('[V4.25] 복구 버전 - V4.21 기반');
+  // 건강은 숨김만 (구조 유지)
+  const style=document.createElement('style');
+  style.textContent=`
+    #health-input-section, #health-stats-modal-overlay, #health-stats-card { display:none !important; }
+    #health-input-body, #health-toggle-icon { display:none !important; }
+  `;
+  document.head.appendChild(style);
+  
+  // 중복 알림폼 정리 - v21만 남기기
+  setTimeout(()=>{
+    document.querySelectorAll('[id*="alarm-settings"]').forEach(el=>{
+      if(el.id!=='v21-alarm-settings' && el.id!=='v20-alarm-settings'){
+        // v21이 있으면 v21만 남기고 나머지 삭제, v21 없으면 v20 남기기
+        const v21=document.getElementById('v21-alarm-settings');
+        const v20=document.getElementById('v20-alarm-settings');
+        if(v21 && el.id!=='v21-alarm-settings') el.remove();
+        else if(!v21 && v20 && el.id!=='v20-alarm-settings') el.remove();
+      }
+    });
+    // v19, v18, v17 테스트 정리
+    document.querySelectorAll('#v19-alarm-settings, #v18-alarm-settings, #v17-settings-test, #v17-mini-test, #v14-test-btn, #v15-test-btn').forEach(el=>el.remove());
+    // 왼쪽 파란 버튼 제거
+    document.querySelectorAll('button').forEach(btn=>{
+      if(btn.textContent.trim()==='알람 테스트' && !btn.closest('.settings-scroll-content')){
+        btn.remove();
+      }
+    });
+  }, 800);
+
+  // 기본 도미솔 유지
+  if(!localStorage.getItem('smartDiaryAlarmSoundType')){
+    localStorage.setItem('smartDiaryAlarmSoundType','piano');
+  }
+})();
+</script>
 </body>
+
 
 
 
