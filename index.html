@@ -3243,6 +3243,18 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
                 <button class="action-btn" style="width:100%; padding:12px; font-size:14px; font-weight:800; border-radius:10px; background:#e06d6d; color:#fff; border:none;" onclick="saveSajuBirthInfo()">💾 저장하고 오늘의 운세 보기</button>
                 <div id="saju-saved-info" style="font-size:13.5px; color: var(--text-sub); margin-top:8px; padding:8px; background:#fff; border-radius:8px; border:1px dashed #e6d8d8;"></div>
                 </div>
+            
+            <div class="settings-section" style="background:#f0f4ff; border:1px solid #c5d0f0; border-radius:8px; padding:12px;">
+                <label style="display:flex; justify-content:space-between; align-items:center;">🔤 글자 크기 조정 <span id="font-size-display" style="font-weight:bold; color:#6366f1;">16px</span></label>
+                <div style="display:flex; gap:8px; margin-top:8px;">
+                    <button class="action-btn" style="flex:1; padding:8px; background:#fff; border:1px solid #6366f1; color:#6366f1;" onclick="adjustFontSize(-1)">A- 작게</button>
+                    <button class="action-btn" style="flex:1; padding:8px; background:#6366f1; color:#fff;" onclick="adjustFontSize(1)">A+ 크게</button>
+                    <button class="action-btn" style="flex:1; padding:8px; background:#fff; border:1px solid #ddd;" onclick="resetFontSize()">기본</button>
+                </div>
+                <div style="font-size:11px; color:#666; margin-top:6px;">다이어리 내용 글씨 크기를 조절합니다 (12px~26px)</div>
+            </div>
+
+
             <div class="settings-section" style="padding-top: 5px;">
                 <button class="action-btn" style="background-color: var(--accent-today); width:100%; font-size:14px; padding:6px;" onclick="resetAllData()">⚠️ 데이터 초기화 (새로 시작)</button>
             </div>
@@ -14249,7 +14261,16 @@ console.log('[DailyAlarm] 스크립트 로드 완료 - testDailyAlarm()으로 �
   console.log('[V4.15] 부드러운 알람 적용');
 })();
 </script>
+
+<script>
+function resetFontSize(){
+  currentMemoFontSize = 16;
+  localStorage.setItem('smartDiaryMemoFontSize', currentMemoFontSize);
+  applyMemoFontSize();
+}
+</script>
 </body>
+
 
 
 
