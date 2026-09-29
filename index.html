@@ -14269,7 +14269,177 @@ function resetFontSize(){
   applyMemoFontSize();
 }
 </script>
+
+<script>
+// [V4.17] 매일 반복 소리 부드럽게 "띠리링~" 한번만 + 메시지 + 테스트 버튼 정리
+(function(){
+  console.log('[V4.17] 띠리링~ 한번만');
+
+  // 기존 팝업/버튼 제거
+  const oldPopup=document.getElementById('daily-alarm-popup');
+  if(oldPopup) oldPopup.remove();
+  const oldBtn=document.getElementById('v14-test-btn');
+  if(oldBtn) oldBtn.remove();
+  const oldBtn2=document.getElementById('v15-test-btn');
+  if(oldBtn2) oldBtn2.remove();
+
+  let audioCtx=null;
+  function playTiriring(){
+    try{
+      if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+      // 띠리링~ : 부드러운 벨 소리 2음
+      const now=audioCtx.currentTime;
+      
+      // 첫음 - 띠
+      const osc1=audioCtx.createOscillator();
+      const gain1=audioCtx.createGain();
+      osc1.connect(gain1); gain1.connect(audioCtx.destination);
+      osc1.type='sine';
+      osc1.frequency.setValueAtTime(680, now);
+      gain1.gain.setValueAtTime(0, now);
+      gain1.gain.linearRampToValueAtTime(0.12, now+0.05); // 볼륨 0.12로 아주 조용하게
+      gain1.gain.exponentialRampToValueAtTime(0.001, now+0.6);
+      osc1.start(now);
+      osc1.stop(now+0.6);
+      
+      // 두번째 - 리링~ (조금 높은 음)
+      const osc2=audioCtx.createOscillator();
+      const gain2=audioCtx.createGain();
+      osc2.connect(gain2); gain2.connect(audioCtx.destination);
+      osc2.type='sine';
+      osc2.frequency.setValueAtTime(880, now+0.15);
+      gain2.gain.setValueAtTime(0, now+0.15);
+      gain2.gain.linearRampToValueAtTime(0.10, now+0.20);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now+1.0);
+      osc2.start(now+0.15);
+      osc2.stop(now+1.0);
+      
+    }catch(e){ console.log('tiriring error', e); }
+  }
+
+  function showDailyAlarm(item, curTime){
+    console.log('[V4.17] 띠리링~', curTime, item.text);
+    try{ if(navigator.vibrate) navigator.vibrate([150]); }catch(e){}
+    playTiriring();
+
+    let p=document.getElementById('daily-alarm-popup');
+    if(!p){
+      p=document.createElement('div'); p.id='daily-alarm-popup';
+      p.style.cssText='position:fixed;top:18%;left:50%;transform:translateX(-50%);background:#fff;border:2px solid #e06d6d;border-radius:16px;padding:18px 20px;box-shadow:0 12px 32px rgba(0,0,0,0.25);z-index:999999;min-width:300px;max-width:88vw;display:none;';
+      p.innerHTML='<div id="daily-alarm-body"></div><div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end;"><button onclick="document.getElementById(\'daily-alarm-popup\').style.display=\'none\'" style="padding:8px 14px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;font-size:13px;">닫기</button><button onclick="document.getElementById(\'daily-alarm-popup\').style.display=\'none\'" style="padding:8px 16px;border:none;border-radius:8px;background:#e06d6d;color:#fff;cursor:pointer;font-weight:bold;font-size:13px;">확인</button></div>';
+      document.body.appendChild(p);
+    }
+    document.getElementById('daily-alarm-body').innerHTML=`
+      <div style="font-weight:bold;color:#e06d6d;font-size:14px;">🔔 매일 알림 ${curTime} <span style="font-weight:normal;color:#888;">띠리링~</span></div>
+      <div style="margin-top:10px;font-size:15px;font-weight:bold;line-height:1.5;">${item.text||'알림'}</div>
+      <div style="margin-top:6px;font-size:12px;color:#999;">${item.date||''} ${item.time||''}</div>
+    `;
+    p.style.display='block';
+    setTimeout(()=>{ if(p) p.style.display='none'; }, 8000);
+  }
+
+  // 체크 로직 - 한번만
+  let lastKey='';
+  window.checkDailyAlarmV17 = function(){
+    try{
+      const now=new Date();
+      const cur=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+      const key=`${now.toISOString().slice(0,10)}-${cur}`;
+      if(lastKey===key) return;
+      const diaries=JSON.parse(localStorage.getItem('smartDiaryList')||'[]');
+      const toAlarm=diaries.filter(it=>it.dailyRepeat&&it.time===cur);
+      if(toAlarm.length>0){
+        lastKey=key;
+        toAlarm.forEach(it=>showDailyAlarm(it, cur));
+      }
+    }catch(e){ console.error(e); }
+  };
+  window.checkAlarm = window.checkDailyAlarmV17;
+  window.checkDailyAlarmV14 = window.checkDailyAlarmV17;
+  window.checkDailyAlarmV15 = window.checkDailyAlarmV17;
+
+  // 테스트 버튼 - 설정 안에 넣기 + 예약 박스 옆에 작은 버튼으로
+  function addTestButtons(){
+    // 1. 기존 테스트 버튼 정리 - 왼쪽에 가리던 버튼 제거됨
+    // 2. 예약 박스 안에 작은 테스트 버튼 추가
+    const resBox=document.getElementById('reservation-box');
+    if(resBox && !document.getElementById('v17-mini-test')){
+      const miniBtn=document.createElement('button');
+      miniBtn.id='v17-mini-test';
+      miniBtn.textContent='🔔 테스트';
+      miniBtn.style.cssText='padding:3px 8px; font-size:11px; border:1px solid #e06d6d; background:#fff; color:#e06d6d; border-radius:6px; cursor:pointer; margin-left:6px;';
+      miniBtn.title='매일 알람 소리 테스트 - 띠리링~';
+      miniBtn.onclick=()=>{
+        playTiriring();
+        const diaries=JSON.parse(localStorage.getItem('smartDiaryList')||'[]');
+        const daily=diaries.filter(it=>it.dailyRepeat);
+        if(daily.length>0){
+          showDailyAlarm(daily[0], daily[0].time||'테스트');
+        } else {
+          showDailyAlarm({text:'테스트 알림이에요 - 띠리링~', time:'', date:''}, '테스트');
+        }
+      };
+      resBox.appendChild(miniBtn);
+    }
+
+    // 3. 설정 안에 테스트 버튼 (항상 유지 여부 선택 가능)
+    const settingsContent=document.querySelector('.settings-scroll-content');
+    if(settingsContent && !document.getElementById('v17-settings-test')){
+      const div=document.createElement('div');
+      div.id='v17-settings-test';
+      div.className='settings-section';
+      div.style.cssText='background:#fff8f0; border:1px solid #f0d0b0; border-radius:8px; padding:12px;';
+      div.innerHTML=`
+        <label style="display:flex; justify-content:space-between; align-items:center;">🔔 매일 알림 테스트 <span style="font-size:11px; color:#888;">띠리링~ 한번만</span></label>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button onclick="(function(){ try{ const ac=new (window.AudioContext||window.webkitAudioContext)(); const o=ac.createOscillator(); const g=ac.createGain(); o.connect(g); g.connect(ac.destination); o.type='sine'; o.frequency.setValueAtTime(680, ac.currentTime); g.gain.setValueAtTime(0, ac.currentTime); g.gain.linearRampToValueAtTime(0.12, ac.currentTime+0.05); g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime+0.6); o.start(); o.stop(ac.currentTime+0.6); const o2=ac.createOscillator(); const g2=ac.createGain(); o2.connect(g2); g2.connect(ac.destination); o2.type='sine'; o2.frequency.setValueAtTime(880, ac.currentTime+0.15); g2.gain.setValueAtTime(0, ac.currentTime+0.15); g2.gain.linearRampToValueAtTime(0.10, ac.currentTime+0.20); g2.gain.exponentialRampToValueAtTime(0.001, ac.currentTime+1.0); o2.start(ac.currentTime+0.15); o2.stop(ac.currentTime+1.0); }catch(e){} })()" style="flex:1; padding:8px; background:#fff; border:1px solid #e06d6d; color:#e06d6d; border-radius:6px; font-size:12px; cursor:pointer;">띠리링~ 소리만</button>
+          <button id="v17-full-test-btn" style="flex:1; padding:8px; background:#e06d6d; color:#fff; border:none; border-radius:6px; font-size:12px; cursor:pointer; font-weight:bold;">메시지+소리 테스트</button>
+        </div>
+        <div style="font-size:11px; color:#888; margin-top:6px;">• 소리는 1번만 부드럽게 띠리링~ 울립니다<br>• 실제 알람은 설정한 시간에 메시지와 함께 한번만 울려요</div>
+      `;
+      settingsContent.insertBefore(div, settingsContent.firstChild);
+      
+      setTimeout(()=>{
+        const btn=document.getElementById('v17-full-test-btn');
+        if(btn){
+          btn.onclick=()=>{
+            playTiriring();
+            const diaries=JSON.parse(localStorage.getItem('smartDiaryList')||'[]');
+            const daily=diaries.filter(it=>it.dailyRepeat);
+            const cur=new Date();
+            const curStr=`${String(cur.getHours()).padStart(2,'0')}:${String(cur.getMinutes()).padStart(2,'0')}`;
+            if(daily.length>0){
+              showDailyAlarm(daily[0], daily[0].time||curStr);
+            } else {
+              showDailyAlarm({text:'매일 반복 테스트 - 띠리링~', time:curStr, date:''}, curStr);
+            }
+          };
+        }
+      }, 500);
+    }
+  }
+
+  window.addEventListener('load', ()=>{
+    setTimeout(()=>{
+      addTestButtons();
+      setInterval(window.checkDailyAlarmV17, 1000);
+      window.checkDailyAlarmV17();
+      document.addEventListener('click', ()=>{
+        if(!audioCtx){
+          try{ audioCtx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
+        }
+      }, {once:true});
+    }, 1000);
+  });
+
+  setTimeout(addTestButtons, 2000);
+  setTimeout(addTestButtons, 4000);
+
+  console.log('[V4.17] 띠리링~ 한번만 + 메시지 적용, 테스트 버튼은 설정+예약박스에 작게 유지');
+})();
+</script>
 </body>
+
 
 
 
