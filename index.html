@@ -9597,13 +9597,11 @@ async function showPhotosForDate(dateStr){
         if (editingDiaryId) {
             diaries = diaries.map(item => {
                 if (item.id === editingDiaryId) {
-                    const dailyCbEl = document.getElementById('daily-repeat-checkbox'); const isDailyRepeat = dailyCbEl ? dailyCbEl.checked : false; return { ...item, date: finalDateStr, text: content, time: timeVal, photo: photoKey, money: moneyObj, health: healthObj, anniversary: annivVal || null, annivRepeat: annivRepeatVal, annivCalType: annivCalTypeVal, dailyRepeat: isDailyRepeat };
+                    return { ...item, date: finalDateStr, text: content, time: timeVal, photo: photoKey, money: moneyObj, health: healthObj, anniversary: annivVal || null, annivRepeat: annivRepeatVal, annivCalType: annivCalTypeVal };
                 }
                 return item;
             });
         } else {
-            const dailyCbEl2 = document.getElementById('daily-repeat-checkbox');
-            const isDailyRepeat2 = dailyCbEl2 ? dailyCbEl2.checked : false;
             const newItem = {
                 id: diaryId,
                 date: finalDateStr || selectedReservationDate,
@@ -9614,8 +9612,7 @@ async function showPhotosForDate(dateStr){
                 health: healthObj,
                 anniversary: annivVal || null,
                 annivRepeat: annivRepeatVal,
-                annivCalType: annivCalTypeVal,
-                dailyRepeat: isDailyRepeat2
+                annivCalType: annivCalTypeVal
             };
             diaries.push(newItem);
         }
@@ -13751,7 +13748,7 @@ console.log('[DailyAlarm] 스크립트 로드 완료 - testDailyAlarm()으로 �
 
 
 <style>
-/* [V4.11] 고정핀 배경 제거 + 예약시간 항상 활성화 */
+/* [V4.10] 고정핀 배경 제거 + 예약시간 항상 활성화 */
 #cal-days-grid .cal-cell .cal-photo-corner,
 #cal-days-grid .cal-cell.has-photo .cal-photo-corner,
 #cal-days-grid .cal-cell.has-photo.sunday .cal-photo-corner,
@@ -13762,46 +13759,127 @@ console.log('[DailyAlarm] 스크립트 로드 완료 - testDailyAlarm()으로 �
   border: none !important;
   box-shadow: none !important;
 }
+.reservation-box {
+  display: flex !important;
+  opacity: 1 !important;
+}
+.reservation-box input, .reservation-box label {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
 </style>
 <script>
-// [V4.11] 매일반복 체크 하나 하면 전부 체크되는 버그 수정
-// 원인: 기존 V4.8~10에서 localStorage.setItem 몽키패칭으로 마지막 항목에만 dailyRepeat 주입 -> 전체에 영향
-// 수정: saveDiaryEntry에서 해당 항목에만 dailyRepeat 저장 (체크한 내용만 체크 적용)
+// [V4.10] 단순화 - 예약시간 입력란을 매일 입력란에 활성화 + 수정란에도 활성화 + 예약 시간에 텍스트와 알람
+// 요구사항 그대로: 현재 오늘 이후 입력 폼의 예약시간 입력란 -> 매일 입력란 활성화, 수정란 활성화, 예약 시간에 알람
 
 (function(){
-  console.log('[V4.11] 체크한 내용만 체크 적용 - per item 저장');
+  console.log('[V4.10] 단순 매일 알림 - 예약시간 매일 활성화');
 
+  // 1. 예약시간 입력란 항상 활성화 (오늘 이후만 활성화되던 것 -> 매일 활성화)
+  function enableReservationBox(){
+    const box=document.getElementById('reservation-box');
+    const timeInput=document.getElementById('reservation-time-input');
+    const dailyCb=document.getElementById('daily-repeat-checkbox');
+    if(box){
+      box.style.display='flex';
+      box.style.opacity='1';
+      box.style.pointerEvents='auto';
+    }
+    if(timeInput){
+      timeInput.disabled=false;
+      timeInput.style.opacity='1';
+      timeInput.style.pointerEvents='auto';
+    }
+    if(dailyCb){
+      dailyCb.disabled=false;
+      dailyCb.parentElement.style.opacity='1';
+      dailyCb.parentElement.style.display='flex';
+    }
+  }
+
+  // 2. 고정핀 배경 제거
   function fixPin(){
     document.querySelectorAll('.cal-photo-corner').forEach(el=>{
       el.style.setProperty('background','transparent','important');
       el.style.setProperty('background-color','transparent','important');
       el.style.setProperty('border','none','important');
+      el.style.setProperty('box-shadow','none','important');
     });
   }
 
-  function enableReservation(){
-    const box=document.getElementById('reservation-box');
-    const t=document.getElementById('reservation-time-input');
-    const cb=document.getElementById('daily-repeat-checkbox');
-    if(box){ box.style.display='flex'; box.style.opacity='1'; }
-    if(t){ t.disabled=false; t.style.opacity='1'; }
-    if(cb){ cb.disabled=false; cb.parentElement.style.opacity='1'; }
+  // 3. 저장 - 시간 + 텍스트 + 매일 체크 = 매일 알림
+  let patched=false;
+  function patchSave(){
+    if(patched) return;
+    if(typeof window.saveDiaryEntry !== 'function'){ setTimeout(patchSave, 300); return; }
+    const orig=window.saveDiaryEntry;
+    window.saveDiaryEntry=function(){
+      try{
+        const cb=document.getElementById('daily-repeat-checkbox');
+        const tInput=document.getElementById('reservation-time-input');
+        if(cb && cb.checked){
+          if(!tInput || !tInput.value){
+            alert('매일 알림은 시간을 지정해야 합니다.');
+            return;
+          }
+          window._v10Daily=true;
+          window._v10Time=tInput.value;
+        } else {
+          window._v10Daily=false;
+        }
+      }catch(e){}
+      return orig.apply(this, arguments);
+    };
+    patched=true;
   }
+  patchSave();
 
-  // 렌더 - 매일 반복은 해당 항목만 매일 표시
+  const origSetItem=localStorage.setItem.bind(localStorage);
+  localStorage.setItem=function(k,v){
+    try{
+      if((k==='smartDiaryList'||k==='smartDiaries') && window._v10Daily!==undefined){
+        let arr=JSON.parse(v);
+        if(Array.isArray(arr)&&arr.length>0){
+          let target=null;
+          if(window.editingDiaryId||window.editingMemoId){
+            const eid=window.editingDiaryId||window.editingMemoId;
+            target=arr.find(x=>String(x.id)===String(eid));
+          }
+          if(!target) target=arr[arr.length-1];
+          if(target){
+            if(window._v10Daily){
+              target.dailyRepeat=true;
+              if(window._v10Time) target.time=window._v10Time;
+              target.annivRepeat='none';
+            } else {
+              target.dailyRepeat=false;
+            }
+            v=JSON.stringify(arr);
+          }
+        }
+        setTimeout(()=>{ window._v10Daily=undefined; window._v10Time=undefined; }, 200);
+      }
+    }catch(e){}
+    return origSetItem(k,v);
+  };
+
+  // 4. 렌더 - 매일 반복은 매일 리스트에 표시 (수정/해지 위해 매일 활성화)
   function patchRender(){
     if(typeof window.renderDiaryAroundToday !== 'function'){ setTimeout(patchRender, 300); return; }
     const orig=window.renderDiaryAroundToday;
     window.renderDiaryAroundToday=function(){
       const r=orig.apply(this, arguments);
       try{
-        enableReservation(); fixPin();
+        enableReservationBox();
+        fixPin();
         const listEl=document.getElementById('diary-around-today-list');
         const dateStr=window.selectedViewDate||'';
         if(!listEl||!dateStr) return r;
         const diaries=JSON.parse(localStorage.getItem('smartDiaryList')||'[]');
-        const dailyItems=diaries.filter(it=>it.dailyRepeat && (it.date||'')!==dateStr);
-        dailyItems.forEach(item=>{
+        const dailyAll=diaries.filter(it=>it.dailyRepeat);
+        // 오늘 날짜가 아닌 매일 반복을 오늘 리스트에도 표시 (수정란 활성화 위해)
+        dailyAll.forEach(item=>{
+          if((item.date||'')===dateStr) return;
           if(listEl.querySelector(`[data-daily-id="${item.id}"]`)) return;
           const div=document.createElement('div');
           div.dataset.dailyId=item.id;
@@ -13815,21 +13893,22 @@ console.log('[DailyAlarm] 스크립트 로드 완료 - testDailyAlarm()으로 �
   }
   patchRender();
 
-  // 수정 폼에서 기존 체크 상태 복원 - 해당 항목만
+  // 5. 수정 폼 열릴 때도 예약시간 활성화
   function patchEdit(){
-    if(typeof window.editDiaryEntry !== 'function'){ setTimeout(patchEdit, 300); return; }
+    if(typeof window.editDiaryEntry !== 'function'){ setTimeout(patchEdit, 500); return; }
     const orig=window.editDiaryEntry;
     window.editDiaryEntry=function(id){
       const r=orig.apply(this, arguments);
       setTimeout(()=>{
-        enableReservation();
+        enableReservationBox();
+        // 기존 값 복원
         try{
           const diaries=JSON.parse(localStorage.getItem('smartDiaryList')||'[]');
           const item=diaries.find(x=>String(x.id)===String(id));
           if(item){
             const tInput=document.getElementById('reservation-time-input');
             const cb=document.getElementById('daily-repeat-checkbox');
-            if(tInput) tInput.value=item.time||'';
+            if(tInput && item.time) tInput.value=item.time;
             if(cb) cb.checked=!!item.dailyRepeat;
           }
         }catch(e){}
@@ -13839,7 +13918,7 @@ console.log('[DailyAlarm] 스크립트 로드 완료 - testDailyAlarm()으로 �
   }
   patchEdit();
 
-  // 알람
+  // 6. 알람 - 예약 시간에 텍스트와 알람 알려주기
   let lastKey='';
   function checkAlarm(){
     try{
@@ -13852,6 +13931,11 @@ console.log('[DailyAlarm] 스크립트 로드 완료 - testDailyAlarm()으로 �
       if(toAlarm.length>0){
         lastKey=key;
         toAlarm.forEach(it=>{
+          // 텍스트와 알람 알려주기
+          if('Notification' in window && Notification.permission==='granted'){
+            try{ new Notification('🔁 매일 알림 '+cur, {body: it.text||'알림', requireInteraction:true}); }catch(e){}
+          }
+          // 팝업
           let p=document.getElementById('daily-alarm-popup');
           if(!p){
             p=document.createElement('div'); p.id='daily-alarm-popup';
@@ -13861,6 +13945,7 @@ console.log('[DailyAlarm] 스크립트 로드 완료 - testDailyAlarm()으로 �
           }
           document.getElementById('daily-alarm-body').innerHTML=`<div style="font-weight:bold;color:#6366f1;">🔁 매일 ${cur}</div><div style="margin-top:6px;font-size:14px;">${it.text||''}</div>`;
           p.style.display='block';
+          try{ if(typeof playAlarmSound==='function') playAlarmSound(); }catch(e){}
         });
       }
     }catch(e){}
@@ -13868,26 +13953,31 @@ console.log('[DailyAlarm] 스크립트 로드 완료 - testDailyAlarm()으로 �
 
   window.addEventListener('load', ()=>{
     setTimeout(()=>{
-      enableReservation(); fixPin();
+      enableReservationBox();
+      fixPin();
       setInterval(checkAlarm, 30000);
       checkAlarm();
+      if('Notification' in window && Notification.permission==='default') Notification.requestPermission();
+      if(typeof renderCalendar==='function'){
+        const origCal=window.renderCalendar;
+        window.renderCalendar=function(){ const r=origCal.apply(this, arguments); setTimeout(()=>{ enableReservationBox(); fixPin(); }, 100); return r; };
+      }
     }, 800);
   });
 
+  // 폼 열릴 때마다 활성화
+  const observer=new MutationObserver(()=>{ enableReservationBox(); fixPin(); });
   const formCard=document.getElementById('memo-form-card');
-  if(formCard){
-    const obs=new MutationObserver(()=>{ enableReservation(); fixPin(); });
-    obs.observe(formCard, {attributes:true, childList:true, subtree:true});
-  }
+  if(formCard) observer.observe(formCard, {attributes:true, childList:true, subtree:true});
 
-  console.log('[V4.11] 체크한 항목만 매일 반복 적용 완료');
+  console.log('[V4.10] 예약시간 매일 활성화 + 수정란 활성화 + 예약 시간에 텍스트와 알람');
 })();
 </script>
 <script>
 // 뒤로가기 한 번에 종료
 (function(){
   function getOpen(){ return Array.from(document.querySelectorAll('.modal-overlay.active')).filter(el=>getComputedStyle(el).display!=='none'); }
-  function closeAll(){ document.querySelectorAll('.modal-overlay.active').forEach(el=>{ el.classList.remove('active'); el.style.display='none'; }); try{ document.documentElement.style.overflow=''; document.body.style.overflow=''; }catch(e){} }
+  function closeAll(){ document.querySelectorAll('.modal-overlay.active').forEach(el=>{ el.classList.remove('active'); el.style.display='none'; }); try{ if(typeof modalLockCount!=='undefined') modalLockCount=0; document.documentElement.style.overflow=''; document.body.style.overflow=''; }catch(e){} }
   function doExit(){ try{ if(window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.App) window.Capacitor.Plugins.App.exitApp(); else if(navigator.app&&navigator.app.exitApp) navigator.app.exitApp(); else window.close(); }catch(e){} }
   function handleBack(e){ if(e){ e.preventDefault(); e.stopPropagation(); } const o=getOpen(); if(o.length>0){ closeAll(); return false; } doExit(); return false; }
   if(window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.App) window.Capacitor.Plugins.App.addListener('backButton', ()=>handleBack());
