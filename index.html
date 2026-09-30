@@ -8237,17 +8237,47 @@ window.attachPhotoDoubleTap = function(el, handler){
                 indicatorHTML += `<div class="cal-anniv-label">${formatCalLabel(annivText)}</div>`;
             }
 
-                                    // V200 - 세모 + 안전한 async 로드
+                                    // [V4.53 ROOT FIX] 빨강/연두 통합 로직 - 누적 패치 제거, 원인 해결
+            let allDiariesForPin = [];
+            try { allDiariesForPin = getAllDiaries(); } catch(e){}
             let photoListCount = 0;
+            let isDailyRepeatFlag = false;
+            let isOnceAlarmFlag = false;
             try {
-                const allDiaries = getAllDiaries();
-                photoListCount = allDiaries.filter(d => normalizeDateStr(d.date) === dateStr && d.photo).length;
+                const sameDateDiaries = allDiariesForPin.filter(d => normalizeDateStr(d.date) === dateStr);
+                photoListCount = sameDateDiaries.filter(d => d.photo).length;
+                isDailyRepeatFlag = sameDateDiaries.some(d => d.dailyRepeat);
+                isOnceAlarmFlag = sameDateDiaries.some(d => d.onceAlarm);
             } catch(e){}
+            // 양력/음력 매년/매월 반복 체크 - sajuAnniversaryMatches 사용
+            let isYearlyRepeat = false;
+            let isMonthlyRepeat = false;
+            try {
+                if(typeof sajuAnniversaryMatches === 'function'){
+                    for(let dd of allDiariesForPin){
+                        if(dd.anniversary && dd.annivRepeat && dd.annivRepeat!=='none'){
+                            if(sajuAnniversaryMatches(dd, dateStr)){
+                                if(dd.annivRepeat==='yearly') isYearlyRepeat = true;
+                                if(dd.annivRepeat==='monthly') isMonthlyRepeat = true;
+                            }
+                        }
+                    }
+                }
+            } catch(e){}
+
             const hasPhotoFlag = photoListCount > 0;
             const showPhotoPin = (typeof getShowPhotoPin==='function') ? getShowPhotoPin() : (localStorage.getItem('smartDiaryShowPhotoPin') !== 'false');
-            const showPinIcon = hasPhotoFlag && showPhotoPin;
+            
+            // ROOT CAUSE: 빨강은 설정과 무관하게 항상 표시, 연두만 설정 영향
+            const isRedPin = isDailyRepeatFlag || isOnceAlarmFlag || isYearlyRepeat || isMonthlyRepeat;
+            const isGreenPin = hasPhotoFlag && !isRedPin && showPhotoPin;
+            
+            const showPinIcon = isRedPin || isGreenPin;
+            const pinColorClass = isRedPin ? 'red-pin' : 'green-pin';
+            
             if(showPinIcon) cell.classList.add('has-photo');
-            cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + (showPinIcon ? `<div class="cal-photo-corner has-pin-icon" data-date="${dateStr}"><span class="pin-emoji">📌</span></div>` : '');
+            // 핀 1개만 생성, 색으로 구분 - 이중 생성 없음, 깜빡임 없음
+            cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + (showPinIcon ? `<div class="cal-photo-corner has-pin-icon ${isRedPin?'red':'green'}" data-date="${dateStr}"><span class="pin-emoji ${pinColorClass}"></span></div>` : '');
             cell.onclick = async (e) => {
                 try{       try{ if(navigator.vibrate) window.triggerVibration(80) || navigator.vibrate(80); else if(window.navigator && window.navigator.vibrate) window.triggerVibration(80) || (window.navigator && window.navigator.vibrate && window.window.triggerVibration(80) || navigator.vibrate(80)); }catch(e){} }catch(err){}
                 const target = e.target.closest('.cal-photo-corner');
@@ -14578,7 +14608,7 @@ window.updateTitleIconColor=function(){};
 </script>
 
 <style>
-/* V4.51 - 깜빡임 없는 안정적인 핀 */
+/* V4.53 - 깜빡임 없는 핀, 1개만 */
 .cal-cell .cal-photo-corner{
   background:transparent!important; border:none!important;
   width:16px!important; height:16px!important;
@@ -14604,172 +14634,14 @@ window.updateTitleIconColor=function(){};
 }
 </style>
 <script>
-// [V4.51] 깜빡임 제거 + 이중핀 제거 + 설정 살림 - 안정적인 한 번만 그리기
+// [V4.53 ROOT FIX] 누적 패치 제거, 원인 직접 수정
 (function(){
-  console.log('[V4.51] 안정화 버전 - interval 제거');
-
-  function getShowPhotoPinSafe(){
-    try{
-      if(typeof getShowPhotoPin==='function') return getShowPhotoPin();
-      const v = localStorage.getItem('smartDiaryShowPhotoPin');
-      return v===null ? true : v!=='false';
-    }catch(e){ return true; }
-  }
-
-  // 원본 renderCalendar를 한 번만 래핑 - 깜빡임 제거를 위해 interval 사용 안 함
-  function applyPinColors(){
-    let all=[];
-    try{ all = JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); }catch(e){}
-
-    const directMap = {};
-    all.forEach(d=>{
-      const ds = (d.date||'').slice(0,10);
-      if(!ds) return;
-      if(!directMap[ds]) directMap[ds] = {hasPhoto:false, isDaily:false, isOnce:false, hasYearly:false, hasMonthly:false};
-      if(d.photo) directMap[ds].hasPhoto = true;
-      if(d.dailyRepeat) directMap[ds].isDaily = true;
-      if(d.onceAlarm) directMap[ds].isOnce = true;
-      if(d.anniversary && d.annivRepeat){
-        if(d.annivRepeat==='yearly') directMap[ds].hasYearly = true;
-        if(d.annivRepeat==='monthly') directMap[ds].hasMonthly = true;
-      }
-    });
-
-    const showPhotoPin = getShowPhotoPinSafe();
-    //console.log('[V4.52] showPhotoPin setting:', showPhotoPin);
-
-    document.querySelectorAll('.cal-cell').forEach(cell=>{
-      if(cell.classList.contains('adjacent-month')) return;
-      const dayEl = cell.querySelector('.cal-cell-inner span');
-      if(!dayEl) return;
-      const day = parseInt(dayEl.textContent.trim());
-      if(isNaN(day)) return;
-      const y = typeof calYear!=='undefined'?calYear:new Date().getFullYear();
-      const m = typeof calMonth!=='undefined'?calMonth:new Date().getMonth();
-      const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-
-      // 이중 핀 제거
-      let corners = cell.querySelectorAll('.cal-photo-corner');
-      if(corners.length > 1){
-        for(let i=1;i<corners.length;i++) corners[i].remove();
-      }
-
-      const direct = directMap[dateStr] || {hasPhoto:false, isDaily:false, isOnce:false, hasYearly:false, hasMonthly:false};
-      
-      let isYearly = direct.hasYearly;
-      let isMonthly = direct.hasMonthly;
-      let repeatLabels = [];
-      
-      if(typeof sajuAnniversaryMatches === 'function'){
-        for(let d of all){
-          if(d.anniversary && d.annivRepeat && d.annivRepeat!=='none'){
-            try{
-              if(sajuAnniversaryMatches(d, dateStr)){
-                if(d.annivRepeat==='yearly'){ isYearly = true; if(!repeatLabels.includes(d.annivCalType==='lunar'?'음력매년':'양력매년')) repeatLabels.push(d.annivCalType==='lunar'?'음력매년':'양력매년'); }
-                if(d.annivRepeat==='monthly'){ isMonthly = true; if(!repeatLabels.includes(d.annivCalType==='lunar'?'음력매월':'양력매월')) repeatLabels.push(d.annivCalType==='lunar'?'음력매월':'양력매월'); }
-              }
-            }catch(e){}
-          }
-        }
-      }
-
-      const isRed = direct.isDaily || direct.isOnce || isYearly || isMonthly;
-      const hasPhoto = direct.hasPhoto;
-      
-      // *** 핵심 수정: 빨강은 설정과 무관하게 항상 표시, 연두만 설정 영향 ***
-      const isGreen = hasPhoto && !isRed;
-
-      let corner = cell.querySelector('.cal-photo-corner');
-
-      if(isRed){
-        // 빨강은 설정 OFF여도 항상 표시
-        if(!corner){
-          corner = document.createElement('div');
-          corner.className='cal-photo-corner';
-          corner.setAttribute('data-date', dateStr);
-          corner.innerHTML='<span class="pin-emoji"></span>';
-          cell.appendChild(corner);
-        }
-        let pin = corner.querySelector('.pin-emoji');
-        if(!pin){ corner.innerHTML='<span class="pin-emoji"></span>'; pin=corner.querySelector('.pin-emoji'); }
-        pin.textContent='';
-        pin.className='pin-emoji red-pin';
-        corner.style.display='flex';
-        let labels = [];
-        if(direct.isDaily) labels.push('매일반복');
-        if(direct.isOnce) labels.push('하루만울림');
-        labels = labels.concat(repeatLabels);
-        labels = [...new Set(labels)];
-        corner.title = (labels.length?labels.join('+'):'반복') + ' 빨강 (설정 무관 항상 표시)';
-        return;
-      }
-
-      if(isGreen){
-        // 연두는 설정 ON일 때만 표시
-        if(!showPhotoPin){
-          if(corner) corner.style.display='none';
-          return;
-        }
-        if(!corner){
-          corner = document.createElement('div');
-          corner.className='cal-photo-corner';
-          corner.setAttribute('data-date', dateStr);
-          corner.innerHTML='<span class="pin-emoji"></span>';
-          cell.appendChild(corner);
-        }
-        let pin = corner.querySelector('.pin-emoji');
-        if(!pin){ corner.innerHTML='<span class="pin-emoji"></span>'; pin=corner.querySelector('.pin-emoji'); }
-        pin.textContent='';
-        pin.className='pin-emoji green-pin';
-        corner.style.display='flex';
-        corner.title = '사진 연두 (설정 ON)';
-        return;
-      }
-
-      // 빨강도 연두도 아니면 숨김
-      if(corner) corner.style.display='none';
-    });
-  }
-
-  // renderCalendar를 한 번만 패치 - interval 없이 안정적
-  function patchRender(){
-    if(typeof window.renderCalendar !== 'function') {
-      setTimeout(patchRender, 200);
-      return;
-    }
-    if(window._v51Patched) return;
-    window._v51Patched = true;
-    
-    const orig = window.renderCalendar;
-    window.renderCalendar = function(...args){
-      const result = orig.apply(this, args);
-      // 렌더 직후 한 번만 핀 색 적용 (깜빡임 없음)
-      setTimeout(applyPinColors, 30);
-      return result;
-    };
-    console.log('[V4.51] renderCalendar 패치 완료 - interval 없음');
-    
-    // 초기 1회 적용
-    setTimeout(applyPinColors, 300);
-  }
-
-  patchRender();
-
-  // 설정 토글 패치
-  if(typeof window.onShowPhotoPinToggle === 'function' && !window._v51TogglePatched){
-    window._v51TogglePatched = true;
-    const origToggle = window.onShowPhotoPinToggle;
-    window.onShowPhotoPinToggle = function(){
-      const r = origToggle.apply(this, arguments);
-      setTimeout(applyPinColors, 50);
-      return r;
-    };
-  }
+  console.log('[V4.53] ROOT FIX - 원본 로직 직접 수정, interval 없음');
 
   // 폼 열때 체크박스 복원
   const origOpen = window.openDiaryForm;
-  if(typeof origOpen === 'function' && !window._v51OpenPatched){
-    window._v51OpenPatched = true;
+  if(typeof origOpen === 'function' && !window._v53OpenPatched){
+    window._v53OpenPatched = true;
     window.openDiaryForm = function(dateStr, existingItem, mode){
       const r = origOpen.apply(this, arguments);
       setTimeout(()=>{
@@ -14788,10 +14660,6 @@ window.updateTitleIconColor=function(){};
       return r;
     };
   }
-
-  window.updatePins = applyPinColors; // 호환성
-
-  window.addEventListener('load', ()=>setTimeout(applyPinColors, 500));
 })();
 </script>
 </body>
