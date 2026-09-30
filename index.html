@@ -14730,6 +14730,137 @@ window.updateTitleIconColor=function(){};
   setTimeout(()=>{ if(typeof syncPhotoPinToggle==='function') syncPhotoPinToggle(); }, 400);
 })();
 </script>
+
+<script>
+// [V4.69] 다른 핸드폰에서 밑에칸이 위를 가리는 겹침 버그 수정
+(function(){
+  const origRender = window.renderCalendar;
+  window.renderCalendar = function(){
+    const title = document.getElementById('cal-month-title');
+    const grid = document.getElementById('cal-days-grid');
+    if (!title || !grid) return origRender ? origRender() : null;
+
+    title.textContent = `${calYear}년 ${calMonth + 1}월`;
+    grid.innerHTML = '';
+
+    const firstDay = new Date(calYear, calMonth, 1).getDay();
+    const lastDate = new Date(calYear, calMonth + 1, 0).getDate();
+    const prevYear = calMonth === 0 ? calYear - 1 : calYear;
+    const prevMonth = calMonth === 0 ? 11 : calMonth - 1;
+    const prevLastDate = new Date(prevYear, prevMonth + 1, 0).getDate();
+    const nextYear = calMonth === 11 ? calYear + 1 : calYear;
+    const nextMonth = calMonth === 11 ? 0 : calMonth + 1;
+
+    const holidays = getKoreanHolidays(calYear);
+    const todayStr = getTodayStr();
+
+    const gap = 4; // 기존 2 -> 4로 늘려서 겹침 방지
+    const gridWidth = grid.getBoundingClientRect().width || grid.parentElement.getBoundingClientRect().width;
+    const cellSize = (gridWidth - gap * 6) / 7;
+    // 기존 1.25 -> 1.45로 세로 높이 증가 (다른 폰에서 글씨 커져도 겹치지 않게)
+    const rowHeightFactor = 1.45;
+
+    const totalCells = firstDay + lastDate;
+    const totalRows = Math.ceil(totalCells / 7);
+    const totalVisibleCells = totalRows * 7;
+
+    const rowHeights = new Array(totalRows).fill(cellSize * rowHeightFactor);
+    const rowTops = [];
+    let currentTop = 0;
+    for (let r = 0; r < totalRows; r++) {
+        rowTops[r] = currentTop;
+        currentTop += rowHeights[r] + (r < totalRows - 1 ? gap : 0);
+    }
+    grid.style.height = `${currentTop}px`;
+
+    function placeCell(el, cellIndex){
+        const col = cellIndex % 7;
+        const row = Math.floor(cellIndex / 7);
+        el.style.left = `${col * (cellSize + gap)}px`;
+        el.style.top = `${rowTops[row]}px`;
+        el.style.width = `${cellSize}px`;
+        el.style.height = `${rowHeights[row]}px`;
+        // 밑에칸이 위를 가리지 않도록 위쪽 행이 더 높은 z-index를 가지게
+        el.style.zIndex = String(totalRows - row);
+    }
+
+    function makeAdjacentDateCell(dateStr, day, cellIndex){
+        const cell = document.createElement('div');
+        cell.className = 'cal-cell adjacent-month';
+        placeCell(cell, cellIndex);
+        try{
+            const todayStrAdj = getTodayStr();
+            if (dateStr === todayStrAdj) cell.classList.add('today-date');
+            if (selectedViewDate && dateStr === selectedViewDate) cell.classList.add('selected-date');
+        }catch(e){}
+        const specialInfo = getSpecialDayLabel(dateStr);
+        const annivText = getAnniversaryForDate(dateStr);
+        let indicatorHTML = '';
+        if (specialInfo) indicatorHTML += `<div class="cal-special-label cal-special-${specialInfo.type}">${formatCalLabel(specialInfo.label)}</div>`;
+        if (annivText) indicatorHTML += `<div class="cal-anniv-label">${formatCalLabel(annivText)}</div>`;
+        cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>`;
+        cell.onclick = () => {
+            const target = normalizeDateStr(dateStr);
+            const targetObj = new Date(Number(target.slice(0,4)), Number(target.slice(5,7))-1, Number(target.slice(8,10)));
+            calYear = targetObj.getFullYear(); calMonth = targetObj.getMonth();
+            calEnlargedDate = null; selectedViewDate = target;
+            renderCalendar(); renderDiaryAroundToday(); renderMoneyAroundToday();
+            if (typeof isDiarySearchFilterOpen !== 'undefined' && isDiarySearchFilterOpen && typeof filterDiaryCustomList==='function') filterDiaryCustomList();
+        };
+        grid.appendChild(cell);
+    }
+
+    for (let i = 0; i < firstDay; i++){
+        const day = prevLastDate - firstDay + i + 1;
+        const dateStr = `${prevYear}-${String(prevMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        makeAdjacentDateCell(dateStr, day, i);
+    }
+
+    for (let day = 1; day <= lastDate; day++){
+        const mStr = String(calMonth+1).padStart(2,'0'); const dStr = String(day).padStart(2,'0');
+        const dateStr = `${calYear}-${mStr}-${dStr}`;
+        const cell = document.createElement('div'); cell.className = 'cal-cell';
+        const dObj = new Date(calYear, calMonth, day); const dayOfWeek = dObj.getDay();
+        const cellIndex = firstDay + (day-1);
+        placeCell(cell, cellIndex);
+        if (dateStr === todayStr) cell.classList.add('today-date');
+        if (selectedViewDate && dateStr === selectedViewDate) cell.classList.add('selected-date');
+        if (dayOfWeek === 0 || holidays.has(dateStr)) cell.classList.add('sunday');
+        else if (dayOfWeek === 6) cell.classList.add('saturday');
+        const specialInfo = getSpecialDayLabel(dateStr); const annivText = getAnniversaryForDate(dateStr);
+        let indicatorHTML = '';
+        if (specialInfo) indicatorHTML += `<div class="cal-special-label cal-special-${specialInfo.type}">${formatCalLabel(specialInfo.label)}</div>`;
+        if (annivText) indicatorHTML += `<div class="cal-anniv-label">${formatCalLabel(annivText)}</div>`;
+        let photoListCount = 0;
+        try{ const allDiaries = getAllDiaries(); photoListCount = allDiaries.filter(d => normalizeDateStr(d.date) === dateStr && d.photo).length; }catch(e){}
+        const hasPhotoFlag = photoListCount > 0;
+        const showPhotoPin = (typeof getShowPhotoPin==='function') ? getShowPhotoPin() : (localStorage.getItem('smartDiaryShowPhotoPin') !== 'false');
+        const showPinIcon = hasPhotoFlag && showPhotoPin;
+        if(showPinIcon) cell.classList.add('has-photo');
+        cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + (showPinIcon ? `<div class="cal-photo-corner has-pin-icon" data-date="${dateStr}"><span class="pin-emoji">📌</span></div>` : '');
+        cell.onclick = async (e) => {
+            const target = e.target.closest('.cal-photo-corner');
+            if(target){ e.stopPropagation(); const dStr = target.getAttribute('data-date'); await showPhotosForDate(dStr); return; }
+            selectDiaryDate(dateStr);
+        };
+        grid.appendChild(cell);
+    }
+
+    const trailingCount = totalVisibleCells - totalCells;
+    for (let i = 1; i <= trailingCount; i++){
+        const dateStr = `${nextYear}-${String(nextMonth+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+        const cellIndex = totalCells + (i-1);
+        makeAdjacentDateCell(dateStr, i, cellIndex);
+    }
+    updateMoneySummary();
+    // 빨강핀 보장 다시 호출
+    setTimeout(()=>{ if(typeof ensureRedPins==='function') ensureRedPins(); }, 50);
+  };
+  console.log('[V4.69] 달력 겹침 방지 패치 적용 - gap 4px, 높이 1.45배, zIndex 역순');
+})();
+</script>
+</body>
+
 </body>
 
 
