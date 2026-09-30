@@ -9610,7 +9610,7 @@ async function showPhotosForDate(dateStr){
         if (editingDiaryId) {
             diaries = diaries.map(item => {
                 if (item.id === editingDiaryId) {
-                    const dailyCbEl = document.getElementById('daily-repeat-checkbox'); const isDailyRepeat = dailyCbEl ? dailyCbEl.checked : false; const onceCbEl = document.getElementById('once-alarm-checkbox'); const isOnceAlarm = onceCbEl ? onceCbEl.checked : false; console.log('[V4.47] save edit daily', isDailyRepeat, 'once', isOnceAlarm, 'id', item.id); return { ...item, date: finalDateStr, text: content, time: timeVal, photo: photoKey, money: moneyObj, health: healthObj, anniversary: annivVal || null, annivRepeat: annivRepeatVal, annivCalType: annivCalTypeVal, dailyRepeat: isDailyRepeat, onceAlarm: isOnceAlarm };
+                    const dailyCbEl = document.getElementById('daily-repeat-checkbox'); const isDailyRepeat = dailyCbEl ? dailyCbEl.checked : false; const onceCbEl = document.getElementById('once-alarm-checkbox'); const isOnceAlarm = onceCbEl ? onceCbEl.checked : false; return { ...item, date: finalDateStr, text: content, time: timeVal, photo: photoKey, money: moneyObj, health: healthObj, anniversary: annivVal || null, annivRepeat: annivRepeatVal, annivCalType: annivCalTypeVal, dailyRepeat: isDailyRepeat, onceAlarm: isOnceAlarm };
                 }
                 return item;
             });
@@ -9619,7 +9619,6 @@ async function showPhotosForDate(dateStr){
             const isDailyRepeat2 = dailyCbEl2 ? dailyCbEl2.checked : false;
             const onceCbEl2 = document.getElementById('once-alarm-checkbox');
             const isOnceAlarm2 = onceCbEl2 ? onceCbEl2.checked : false;
-            console.log('[V4.47] save new daily', isDailyRepeat2, 'once', isOnceAlarm2);
             const newItem = {
                 id: diaryId,
                 date: finalDateStr || selectedReservationDate,
@@ -14579,370 +14578,35 @@ window.updateTitleIconColor=function(){};
 </script>
 
 <style>
-.cal-cell .cal-photo-corner{ background:transparent!important; border:none!important; width:16px!important; height:16px!important; top:1px!important; left:3px!important; display:flex!important; align-items:center!important; justify-content:center!important; }
-.cal-cell .cal-photo-corner .pin-emoji{ display:block!important; width:11px!important; height:11px!important; border-radius:50% 50% 50% 0!important; transform:rotate(-45deg)!important; font-size:0!important; position:relative!important; top:-1px!important; box-shadow:0 1px 3px rgba(0,0,0,0.3)!important; }
-.cal-cell .cal-photo-corner .pin-emoji.red-pin{ background:#e74c3c!important; background:linear-gradient(135deg, #ff6b6b, #c0392b)!important; }
-.cal-cell .cal-photo-corner .pin-emoji.green-pin{ background:#27ae60!important; background:linear-gradient(135deg, #2ecc71, #27ae60)!important; }
-.cal-cell .cal-photo-corner .pin-emoji::after{ content:''!important; position:absolute!important; width:3.5px!important; height:3.5px!important; background:#fff!important; border-radius:50%!important; top:2.5px!important; left:2.5px!important; }
+/* V4.51 - 깜빡임 없는 안정적인 핀 */
+.cal-cell .cal-photo-corner{
+  background:transparent!important; border:none!important;
+  width:16px!important; height:16px!important;
+  top:1px!important; left:3px!important;
+  display:flex!important; align-items:center!important; justify-content:center!important;
+  opacity:1!important; transition:none!important; animation:none!important;
+}
+.cal-cell .cal-photo-corner .pin-emoji{
+  display:block!important; width:11px!important; height:11px!important;
+  border-radius:50% 50% 50% 0!important; transform:rotate(-45deg)!important;
+  font-size:0!important; position:relative!important; top:-1px!important;
+  box-shadow:0 1px 3px rgba(0,0,0,0.3)!important;
+}
+.cal-cell .cal-photo-corner .pin-emoji.red-pin{
+  background:linear-gradient(135deg, #ff6b6b, #c0392b)!important;
+}
+.cal-cell .cal-photo-corner .pin-emoji.green-pin{
+  background:linear-gradient(135deg, #2ecc71, #27ae60)!important;
+}
+.cal-cell .cal-photo-corner .pin-emoji::after{
+  content:''!important; position:absolute!important; width:3.5px!important; height:3.5px!important;
+  background:#fff!important; border-radius:50%!important; top:2.5px!important; left:2.5px!important;
+}
 </style>
 <script>
-// [V4.47] 하루만 울림 원본 코드에 직접 추가 - 저장 확실히
+// [V4.51] 깜빡임 제거 + 이중핀 제거 + 설정 살림 - 안정적인 한 번만 그리기
 (function(){
-  console.log('[V4.47] 원본 저장 로직에 onceAlarm 직접 추가됨');
-
-  // 폼 열때 복원
-  const origOpen = window.openDiaryForm;
-  if(typeof origOpen === 'function' && !window._v47OpenPatched){
-    window._v47OpenPatched = true;
-    window.openDiaryForm = function(dateStr, existingItem, mode){
-      const r = origOpen.apply(this, arguments);
-      setTimeout(()=>{
-        try{
-          const onceCb = document.getElementById('once-alarm-checkbox');
-          const dailyCb = document.getElementById('daily-repeat-checkbox');
-          if(existingItem){
-            if(onceCb) onceCb.checked = !!existingItem.onceAlarm;
-            if(dailyCb) dailyCb.checked = !!existingItem.dailyRepeat;
-          } else {
-            if(onceCb) onceCb.checked = false;
-            if(dailyCb) dailyCb.checked = false;
-          }
-        }catch(e){}
-      }, 300);
-      return r;
-    };
-  }
-
-  function updatePinsV47(){
-    let all=[];
-    try{ all = JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); }catch(e){}
-    const map = {};
-    all.forEach(d=>{
-      const ds = (d.date||'').slice(0,10);
-      if(!ds) return;
-      if(!map[ds]) map[ds] = {hasPhoto:false, isDaily:false, isOnce:false, isYearly:false, isMonthly:false};
-      if(d.photo) map[ds].hasPhoto = true;
-      if(d.dailyRepeat) map[ds].isDaily = true;
-      if(d.onceAlarm) map[ds].isOnce = true;
-      if(d.anniversary && d.annivRepeat){
-        if(d.annivRepeat==='yearly') map[ds].isYearly = true;
-        if(d.annivRepeat==='monthly') map[ds].isMonthly = true;
-      }
-    });
-
-    document.querySelectorAll('.cal-cell').forEach(cell=>{
-      if(cell.classList.contains('adjacent-month')) return;
-      const dayEl = cell.querySelector('.cal-cell-inner span');
-      if(!dayEl) return;
-      const day = parseInt(dayEl.textContent.trim());
-      if(isNaN(day)) return;
-      const y = typeof calYear!=='undefined'?calYear:new Date().getFullYear();
-      const m = typeof calMonth!=='undefined'?calMonth:new Date().getMonth();
-      const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-
-      const f = map[dateStr];
-      let corner = cell.querySelector('.cal-photo-corner');
-      if(!f){
-        if(corner) corner.style.display='none';
-        return;
-      }
-      const isRed = f.isDaily || f.isOnce || f.isYearly || f.isMonthly;
-      const isGreen = f.hasPhoto && !isRed;
-
-      if((isRed || isGreen) && !corner){
-        corner = document.createElement('div');
-        corner.className='cal-photo-corner';
-        corner.setAttribute('data-date', dateStr);
-        corner.innerHTML='<span class="pin-emoji"></span>';
-        cell.appendChild(corner);
-      }
-      if(!corner) return;
-      let pin = corner.querySelector('.pin-emoji');
-      if(!pin){ corner.innerHTML='<span class="pin-emoji"></span>'; pin=corner.querySelector('.pin-emoji'); }
-      pin.textContent='';
-
-      if(isRed){
-        pin.className='pin-emoji red-pin';
-        corner.style.display='flex';
-      } else if(isGreen){
-        pin.className='pin-emoji green-pin';
-        corner.style.display='flex';
-      } else {
-        corner.style.display='none';
-      }
-    });
-  }
-
-  window.updatePins = updatePinsV47;
-  const origRender = window.renderCalendar;
-  if(typeof origRender === 'function'){
-    window.renderCalendar = function(...a){
-      const r = origRender.apply(this, a);
-      setTimeout(updatePinsV47, 150);
-      setTimeout(updatePinsV47, 600);
-      return r;
-    };
-  }
-  setInterval(updatePinsV47, 2500);
-  window.addEventListener('load', ()=>setTimeout(updatePinsV47, 1200));
-})();
-</script>
-
-<script>
-// [V4.48] 매년/매월 반복 내년/다음달에도 빨강 표시
-(function(){
-  console.log('[V4.48] 매년/매월 반복 미래 표시 수정');
-
-  function isRepeatOnDate(diary, targetDateStr){
-    if(!diary.anniversary || !diary.annivRepeat || diary.annivRepeat==='none') return false;
-    const origDate = (diary.date||'').slice(0,10);
-    if(!origDate) return false;
-    try{
-      const orig = new Date(origDate);
-      const target = new Date(targetDateStr);
-      if(isNaN(orig) || isNaN(target)) return false;
-      
-      if(diary.annivRepeat==='yearly'){
-        // 같은 월/일이면 매년 반복
-        return orig.getMonth()===target.getMonth() && orig.getDate()===target.getDate();
-      }
-      if(diary.annivRepeat==='monthly'){
-        // 같은 일이면 매월 반복 (말일 처리)
-        return orig.getDate()===target.getDate();
-      }
-    }catch(e){}
-    return false;
-  }
-
-  function updatePinsV48(){
-    let all=[];
-    try{ all = JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); }catch(e){}
-    
-    const map = {}; // date -> {hasPhoto, isDaily, isOnce, isYearly, isMonthly} for direct
-    all.forEach(d=>{
-      const ds = (d.date||'').slice(0,10);
-      if(!ds) return;
-      if(!map[ds]) map[ds] = {hasPhoto:false, isDaily:false, isOnce:false, isYearly:false, isMonthly:false};
-      if(d.photo) map[ds].hasPhoto = true;
-      if(d.dailyRepeat) map[ds].isDaily = true;
-      if(d.onceAlarm) map[ds].isOnce = true;
-      if(d.anniversary && d.annivRepeat){
-        if(d.annivRepeat==='yearly') map[ds].isYearly = true;
-        if(d.annivRepeat==='monthly') map[ds].isMonthly = true;
-      }
-    });
-
-    document.querySelectorAll('.cal-cell').forEach(cell=>{
-      if(cell.classList.contains('adjacent-month')) return;
-      const dayEl = cell.querySelector('.cal-cell-inner span');
-      if(!dayEl) return;
-      const day = parseInt(dayEl.textContent.trim());
-      if(isNaN(day)) return;
-      const y = typeof calYear!=='undefined'?calYear:new Date().getFullYear();
-      const m = typeof calMonth!=='undefined'?calMonth:new Date().getMonth();
-      const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-
-      let f = map[dateStr] || {hasPhoto:false, isDaily:false, isOnce:false, isYearly:false, isMonthly:false};
-      
-      // 미래 반복 체크: 모든 일기를 순회해서 이 날짜에 반복되는지 확인
-      let repeatYearly = f.isYearly;
-      let repeatMonthly = f.isMonthly;
-      
-      for(let d of all){
-        if(isRepeatOnDate(d, dateStr)){
-          if(d.annivRepeat==='yearly') repeatYearly = true;
-          if(d.annivRepeat==='monthly') repeatMonthly = true;
-        }
-      }
-
-      const isRed = f.isDaily || f.isOnce || repeatYearly || repeatMonthly;
-      const isGreen = f.hasPhoto && !isRed;
-
-      let corner = cell.querySelector('.cal-photo-corner');
-      if(!f.hasPhoto && !isRed && !isGreen){
-        // 반복으로 빨강인 경우도 코너 생성 필요
-        if(isRed){
-          if(!corner){
-            corner = document.createElement('div');
-            corner.className='cal-photo-corner';
-            corner.setAttribute('data-date', dateStr);
-            corner.innerHTML='<span class="pin-emoji"></span>';
-            cell.appendChild(corner);
-          }
-        } else {
-          if(corner) corner.style.display='none';
-          return;
-        }
-      }
-
-      if((isRed || isGreen) && !corner){
-        corner = document.createElement('div');
-        corner.className='cal-photo-corner';
-        corner.setAttribute('data-date', dateStr);
-        corner.innerHTML='<span class="pin-emoji"></span>';
-        cell.appendChild(corner);
-      }
-      if(!corner) return;
-      let pin = corner.querySelector('.pin-emoji');
-      if(!pin){ corner.innerHTML='<span class="pin-emoji"></span>'; pin=corner.querySelector('.pin-emoji'); }
-      pin.textContent='';
-
-      if(isRed){
-        pin.className='pin-emoji red-pin';
-        corner.style.display='flex';
-        let r=[];
-        if(f.isDaily) r.push('매일반복');
-        if(f.isOnce) r.push('하루만울림');
-        if(repeatYearly) r.push('매년');
-        if(repeatMonthly) r.push('매월');
-        corner.title = `${dateStr} ${r.join('+')} 빨강`;
-      } else if(isGreen){
-        pin.className='pin-emoji green-pin';
-        corner.style.display='flex';
-        corner.title = `${dateStr} 사진 연두`;
-      } else {
-        corner.style.display='none';
-      }
-    });
-  }
-
-  window.updatePins = updatePinsV48;
-  const origRender = window.renderCalendar;
-  if(typeof origRender === 'function'){
-    window.renderCalendar = function(...a){
-      const r = origRender.apply(this, a);
-      setTimeout(updatePinsV48, 150);
-      setTimeout(updatePinsV48, 600);
-      return r;
-    };
-  }
-  setInterval(updatePinsV48, 2500);
-  window.addEventListener('load', ()=>setTimeout(updatePinsV48, 1200));
-  
-  console.log('[V4.48] 매년/매월 내년 표시 수정 완료');
-})();
-</script>
-
-<script>
-// [V4.49] 양력/음력 구분 - 내년에도 정확히 표시
-(function(){
-  console.log('[V4.49] 양력/음력 구분 - sajuAnniversaryMatches 사용');
-
-  function updatePinsV49(){
-    let all=[];
-    try{ all = JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); }catch(e){}
-    
-    // 직접 저장된 날짜 맵 (사진, 매일반복, 하루만울림)
-    const directMap = {};
-    all.forEach(d=>{
-      const ds = (d.date||'').slice(0,10);
-      if(!ds) return;
-      if(!directMap[ds]) directMap[ds] = {hasPhoto:false, isDaily:false, isOnce:false};
-      if(d.photo) directMap[ds].hasPhoto = true;
-      if(d.dailyRepeat) directMap[ds].isDaily = true;
-      if(d.onceAlarm) directMap[ds].isOnce = true;
-    });
-
-    document.querySelectorAll('.cal-cell').forEach(cell=>{
-      if(cell.classList.contains('adjacent-month')) return;
-      const dayEl = cell.querySelector('.cal-cell-inner span');
-      if(!dayEl) return;
-      const day = parseInt(dayEl.textContent.trim());
-      if(isNaN(day)) return;
-      const y = typeof calYear!=='undefined'?calYear:new Date().getFullYear();
-      const m = typeof calMonth!=='undefined'?calMonth:new Date().getMonth();
-      const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-
-      const direct = directMap[dateStr] || {hasPhoto:false, isDaily:false, isOnce:false};
-      
-      // 양력/음력 구분하여 매년/매월 반복 체크 - sajuAnniversaryMatches 사용
-      let isYearlyRepeat = false;
-      let isMonthlyRepeat = false;
-      let repeatType = ''; // solar/yearly, lunar/yearly 등
-      
-      try{
-        if(typeof sajuAnniversaryMatches === 'function'){
-          for(let d of all){
-            if(d.anniversary && d.annivRepeat && d.annivRepeat!=='none'){
-              if(sajuAnniversaryMatches(d, dateStr)){
-                if(d.annivRepeat==='yearly') {
-                  isYearlyRepeat = true;
-                  repeatType = (d.annivCalType||'solar') + '/yearly';
-                }
-                if(d.annivRepeat==='monthly') {
-                  isMonthlyRepeat = true;
-                  repeatType = (d.annivCalType||'solar') + '/monthly';
-                }
-              }
-            }
-          }
-        }
-      }catch(e){
-        console.log('repeat check error', e);
-      }
-
-      const isRed = direct.isDaily || direct.isOnce || isYearlyRepeat || isMonthlyRepeat;
-      const isGreen = direct.hasPhoto && !isRed;
-
-      let corner = cell.querySelector('.cal-photo-corner');
-      if(!direct.hasPhoto && !isRed){
-        if(corner) corner.style.display='none';
-        return;
-      }
-
-      if((isRed || isGreen) && !corner){
-        corner = document.createElement('div');
-        corner.className='cal-photo-corner';
-        corner.setAttribute('data-date', dateStr);
-        corner.innerHTML='<span class="pin-emoji"></span>';
-        cell.appendChild(corner);
-      }
-      if(!corner) return;
-      let pin = corner.querySelector('.pin-emoji');
-      if(!pin){ corner.innerHTML='<span class="pin-emoji"></span>'; pin=corner.querySelector('.pin-emoji'); }
-      pin.textContent='';
-
-      if(isRed){
-        pin.className='pin-emoji red-pin';
-        corner.style.display='flex';
-        let r=[];
-        if(direct.isDaily) r.push('매일반복');
-        if(direct.isOnce) r.push('하루만울림');
-        if(isYearlyRepeat) r.push(repeatType.includes('lunar') ? '음력매년' : '양력매년');
-        if(isMonthlyRepeat) r.push(repeatType.includes('lunar') ? '음력매월' : '양력매월');
-        corner.title = `${dateStr} ${r.join('+')} 빨강`;
-      } else if(isGreen){
-        pin.className='pin-emoji green-pin';
-        corner.style.display='flex';
-        corner.title = `${dateStr} 사진 연두`;
-      } else {
-        corner.style.display='none';
-      }
-    });
-  }
-
-  window.updatePins = updatePinsV49;
-  const origRender = window.renderCalendar;
-  if(typeof origRender === 'function' && !window._v49Patched){
-    window._v49Patched = true;
-    window.renderCalendar = function(...a){
-      const r = origRender.apply(this, a);
-      setTimeout(updatePinsV49, 150);
-      setTimeout(updatePinsV49, 600);
-      return r;
-    };
-  }
-  setInterval(updatePinsV49, 2500);
-  window.addEventListener('load', ()=>setTimeout(updatePinsV49, 1200));
-  
-  console.log('[V4.49] 양력/음력 구분 적용 완료');
-})();
-</script>
-
-<script>
-// [V4.50] 1) 음력 반복 시 빨강 2중 방지 2) 사진고정핀 설정 살리기
-(function(){
-  console.log('[V4.50] 이중 빨강 방지 + 사진핀 설정 살림');
+  console.log('[V4.51] 안정화 버전 - interval 제거');
 
   function getShowPhotoPinSafe(){
     try{
@@ -14952,21 +14616,26 @@ window.updateTitleIconColor=function(){};
     }catch(e){ return true; }
   }
 
-  function updatePinsV50(){
+  // 원본 renderCalendar를 한 번만 래핑 - 깜빡임 제거를 위해 interval 사용 안 함
+  function applyPinColors(){
     let all=[];
     try{ all = JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); }catch(e){}
-    
+
     const directMap = {};
     all.forEach(d=>{
       const ds = (d.date||'').slice(0,10);
       if(!ds) return;
-      if(!directMap[ds]) directMap[ds] = {hasPhoto:false, isDaily:false, isOnce:false};
+      if(!directMap[ds]) directMap[ds] = {hasPhoto:false, isDaily:false, isOnce:false, hasYearly:false, hasMonthly:false};
       if(d.photo) directMap[ds].hasPhoto = true;
       if(d.dailyRepeat) directMap[ds].isDaily = true;
       if(d.onceAlarm) directMap[ds].isOnce = true;
+      if(d.anniversary && d.annivRepeat){
+        if(d.annivRepeat==='yearly') directMap[ds].hasYearly = true;
+        if(d.annivRepeat==='monthly') directMap[ds].hasMonthly = true;
+      }
     });
 
-    const showPhotoPinSetting = getShowPhotoPinSafe();
+    const showPhotoPin = getShowPhotoPinSafe();
 
     document.querySelectorAll('.cal-cell').forEach(cell=>{
       if(cell.classList.contains('adjacent-month')) return;
@@ -14978,55 +14647,48 @@ window.updateTitleIconColor=function(){};
       const m = typeof calMonth!=='undefined'?calMonth:new Date().getMonth();
       const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
 
-      // 이중 핀 방지: 기존 핀 전부 제거 후 새로 1개만 생성
-      const existingCorners = cell.querySelectorAll('.cal-photo-corner');
-      if(existingCorners.length > 1){
-        // 1개 제외하고 모두 제거
-        for(let i=1;i<existingCorners.length;i++) existingCorners[i].remove();
+      // 이중 핀 제거: 2개 이상이면 모두 제거하고 1개만 다시 만듦
+      let corners = cell.querySelectorAll('.cal-photo-corner');
+      if(corners.length > 1){
+        corners.forEach((c,i)=>{ if(i>0) c.remove(); });
+        corners = cell.querySelectorAll('.cal-photo-corner');
       }
 
-      const direct = directMap[dateStr] || {hasPhoto:false, isDaily:false, isOnce:false};
+      const direct = directMap[dateStr];
       
-      // 양력/음력 반복 체크
-      let isYearlyRepeat = false;
-      let isMonthlyRepeat = false;
-      let repeatInfo = [];
+      // 반복 체크 (양력/음력)
+      let isYearly = false, isMonthly = false;
+      let repeatLabels = [];
       
-      try{
-        if(typeof sajuAnniversaryMatches === 'function'){
-          for(let d of all){
-            if(d.anniversary && d.annivRepeat && d.annivRepeat!=='none'){
+      if(typeof sajuAnniversaryMatches === 'function'){
+        for(let d of all){
+          if(d.anniversary && d.annivRepeat && d.annivRepeat!=='none'){
+            try{
               if(sajuAnniversaryMatches(d, dateStr)){
-                if(d.annivRepeat==='yearly') {
-                  isYearlyRepeat = true;
-                  repeatInfo.push((d.annivCalType||'solar')==='lunar' ? '음력매년' : '양력매년');
-                }
-                if(d.annivRepeat==='monthly') {
-                  isMonthlyRepeat = true;
-                  repeatInfo.push((d.annivCalType||'solar')==='lunar' ? '음력매월' : '양력매월');
-                }
+                if(d.annivRepeat==='yearly'){ isYearly = true; repeatLabels.push((d.annivCalType==='lunar'?'음력매년':'양력매년')); }
+                if(d.annivRepeat==='monthly'){ isMonthly = true; repeatLabels.push((d.annivCalType==='lunar'?'음력매월':'양력매월')); }
               }
-            }
+            }catch(e){}
           }
         }
-      }catch(e){}
+      }
 
-      // 중복 제거: 같은 종류 중복은 하나만
-      repeatInfo = [...new Set(repeatInfo)];
+      // 직접 저장된 것도 포함
+      if(direct && direct.hasYearly) isYearly = true;
+      if(direct && direct.hasMonthly) isMonthly = true;
 
-      const isRed = direct.isDaily || direct.isOnce || isYearlyRepeat || isMonthlyRepeat;
-      // 사진 고정핀 설정이 OFF면 연두는 숨김, 빨강은 항상 표시
-      const isGreen = direct.hasPhoto && !isRed && showPhotoPinSetting;
+      const isRed = (direct && (direct.isDaily || direct.isOnce)) || isYearly || isMonthly;
+      const hasPhoto = direct ? direct.hasPhoto : false;
+      // 설정 OFF면 연두 숨김
+      const isGreen = hasPhoto && !isRed && showPhotoPin;
 
       let corner = cell.querySelector('.cal-photo-corner');
 
-      // 빨강도 없고 연두도 없으면 핀 숨김
       if(!isRed && !isGreen){
         if(corner) corner.style.display='none';
         return;
       }
 
-      // 핀이 없으면 생성, 있으면 재사용 (1개만 유지)
       if(!corner){
         corner = document.createElement('div');
         corner.className='cal-photo-corner';
@@ -15042,58 +14704,85 @@ window.updateTitleIconColor=function(){};
       if(isRed){
         pin.className='pin-emoji red-pin';
         corner.style.display='flex';
-        let r=[];
-        if(direct.isDaily) r.push('매일반복');
-        if(direct.isOnce) r.push('하루만울림');
-        r = r.concat(repeatInfo);
-        corner.title = `${dateStr} ${[...new Set(r)].join('+')} 빨강`;
-      } else if(isGreen){
+        // 중복 라벨 제거
+        let labels = [];
+        if(direct && direct.isDaily) labels.push('매일반복');
+        if(direct && direct.isOnce) labels.push('하루만울림');
+        labels = labels.concat(repeatLabels);
+        labels = [...new Set(labels)];
+        corner.title = labels.join('+') + ' 빨강';
+      }else if(isGreen){
         pin.className='pin-emoji green-pin';
         corner.style.display='flex';
-        corner.title = `${dateStr} 사진 연두`;
-      } else {
-        corner.style.display='none';
+        corner.title = '사진 연두';
       }
     });
   }
 
-  window.updatePins = updatePinsV50;
-  // 기존 renderCalendar 후킹 유지
-  const origRender = window.renderCalendar;
-  if(typeof origRender === 'function' && !window._v50Patched){
-    window._v50Patched = true;
-    // 원본을 한 번 더 래핑하지 않고, 이미 래핑된 경우도 처리
-    const prev = window.renderCalendar;
-    window.renderCalendar = function(...a){
-      const r = (typeof prev === 'function' ? prev : origRender).apply(this, a);
-      setTimeout(updatePinsV50, 120);
-      setTimeout(updatePinsV50, 500);
+  // renderCalendar를 한 번만 패치 - interval 없이 안정적
+  function patchRender(){
+    if(typeof window.renderCalendar !== 'function') {
+      setTimeout(patchRender, 200);
+      return;
+    }
+    if(window._v51Patched) return;
+    window._v51Patched = true;
+    
+    const orig = window.renderCalendar;
+    window.renderCalendar = function(...args){
+      const result = orig.apply(this, args);
+      // 렌더 직후 한 번만 핀 색 적용 (깜빡임 없음)
+      setTimeout(applyPinColors, 30);
+      return result;
+    };
+    console.log('[V4.51] renderCalendar 패치 완료 - interval 없음');
+    
+    // 초기 1회 적용
+    setTimeout(applyPinColors, 300);
+  }
+
+  patchRender();
+
+  // 설정 토글 패치
+  if(typeof window.onShowPhotoPinToggle === 'function' && !window._v51TogglePatched){
+    window._v51TogglePatched = true;
+    const origToggle = window.onShowPhotoPinToggle;
+    window.onShowPhotoPinToggle = function(){
+      const r = origToggle.apply(this, arguments);
+      setTimeout(applyPinColors, 50);
       return r;
     };
   }
 
-  // 설정 토글 시 즉시 반영
-  const origToggle = window.onShowPhotoPinToggle;
-  if(typeof origToggle === 'function' && !window._v50TogglePatched){
-    window._v50TogglePatched = true;
-    window.onShowPhotoPinToggle = function(){
-      const res = origToggle.apply(this, arguments);
-      setTimeout(updatePinsV50, 100);
-      setTimeout(updatePinsV50, 400);
-      return res;
+  // 폼 열때 체크박스 복원
+  const origOpen = window.openDiaryForm;
+  if(typeof origOpen === 'function' && !window._v51OpenPatched){
+    window._v51OpenPatched = true;
+    window.openDiaryForm = function(dateStr, existingItem, mode){
+      const r = origOpen.apply(this, arguments);
+      setTimeout(()=>{
+        try{
+          const onceCb = document.getElementById('once-alarm-checkbox');
+          const dailyCb = document.getElementById('daily-repeat-checkbox');
+          if(existingItem){
+            if(onceCb) onceCb.checked = !!existingItem.onceAlarm;
+            if(dailyCb) dailyCb.checked = !!existingItem.dailyRepeat;
+          }else{
+            if(onceCb) onceCb.checked = false;
+            if(dailyCb) dailyCb.checked = false;
+          }
+        }catch(e){}
+      }, 200);
+      return r;
     };
   }
 
-  setInterval(updatePinsV50, 2500);
-  window.addEventListener('load', ()=>setTimeout(updatePinsV50, 1000));
-  
-  console.log('[V4.50] 이중 방지 + 설정 살림 완료');
+  window.updatePins = applyPinColors; // 호환성
+
+  window.addEventListener('load', ()=>setTimeout(applyPinColors, 500));
 })();
 </script>
 </body>
-
-
-
 
 
 
