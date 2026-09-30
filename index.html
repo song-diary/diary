@@ -14585,7 +14585,7 @@ window.updateTitleIconColor=function(){};
 .cal-cell .cal-photo-corner .pin-emoji::after{ content:''!important; position:absolute!important; width:3.5px!important; height:3.5px!important; background:#fff!important; border-radius:50%!important; top:2.5px!important; left:2.5px!important; }
 </style>
 <script>
-// [V4.65] 하루만 울림은 그날만 빨강, 지나면 사라짐 + 내년에도 안 나옴
+// [V4.66] 음력 체크 - 음력은 음력으로만, 양력은 양력으로만, 중복 제거
 (function(){
   window.forcePin = function(){};
   window.updatePins = function(){};
@@ -14599,31 +14599,22 @@ window.updateTitleIconColor=function(){};
   };
 
   function isRedForDate(dateStr, allDiaries){
-    // 1) 매일 반복: 어떤 일기든 dailyRepeat면 매일 빨강
+    // 1) 매일 반복: 매일 빨강
     if(allDiaries.some(d=>d.dailyRepeat)) return true;
 
-    // 2) 하루만 울림: 정확한 날짜에만 빨강, 내년에는 안 나옴
-    // dateStr이 2026-10-04이고, 일기가 2026-10-04 once이면 빨강
-    // dateStr이 2027-10-04이면 exact match 실패로 빨강 아님
-    const exactOnce = allDiaries.filter(d=> (d.date||'').slice(0,10)===dateStr && d.onceAlarm);
-    if(exactOnce.length>0) return true;
+    // 2) 하루만 울림: 정확한 날짜에만 빨강 (내년에는 안 나옴)
+    if(allDiaries.some(d=> (d.date||'').slice(0,10)===dateStr && d.onceAlarm)) return true;
 
-    // 3) 매년/매월 기념일
+    // 3) 기념일: sajuAnniversaryMatches로만 판단 - 음력은 음력끼리, 양력은 양력끼리
+    // fallback 제거로 중복 방지
     if(typeof sajuAnniversaryMatches==='function'){
         for(let dd of allDiaries){
-            if(dd.anniversary && dd.annivRepeat && dd.annivRepeat!=='none' && !dd.onceAlarm){
-                try{ if(sajuAnniversaryMatches(dd, dateStr)) return true; }catch(e){}
+            if(dd.anniversary && dd.annivRepeat && dd.annivRepeat!=='none' && !dd.onceAlarm && !dd.dailyRepeat){
+                try{ 
+                    if(sajuAnniversaryMatches(dd, dateStr)) return true; 
+                }catch(e){}
             }
         }
-    }
-    for(let dd of allDiaries){
-        if(!dd.anniversary || !dd.annivRepeat || dd.annivRepeat==='none' || dd.onceAlarm) continue;
-        const orig = (dd.date||'').slice(0,10);
-        if(!orig) continue;
-        const oM = parseInt(orig.slice(5,7)), oD = parseInt(orig.slice(8,10));
-        const tM = parseInt(dateStr.slice(5,7)), tD = parseInt(dateStr.slice(8,10));
-        if(dd.annivRepeat==='yearly' && oM===tM && oD===tD) return true;
-        if(dd.annivRepeat==='monthly' && oD===tD) return true;
     }
     return false;
   }
@@ -14687,8 +14678,8 @@ window.updateTitleIconColor=function(){};
 
   function patch(){
     if(typeof window.renderCalendar !== 'function'){ setTimeout(patch, 300); return; }
-    if(window._v65Patched) return;
-    window._v65Patched=true;
+    if(window._v66Patched) return;
+    window._v66Patched=true;
     const orig = window.renderCalendar;
     window.renderCalendar = function(){
         const r = orig.apply(this, arguments);
@@ -14735,6 +14726,7 @@ window.updateTitleIconColor=function(){};
   patch();
   setInterval(ensureRedPins, 1500);
   setTimeout(()=>{ if(typeof syncPhotoPinToggle==='function') syncPhotoPinToggle(); }, 400);
+  console.log('[V4.66] 음력/양력 중복 제거 완료');
 })();
 </script>
 </body>
