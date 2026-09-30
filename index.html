@@ -14583,25 +14583,19 @@ window.updateTitleIconColor=function(){};
 .cal-cell .cal-photo-corner .pin-emoji.red-pin{ background:linear-gradient(135deg, #ff6b6b, #c0392b)!important; }
 .cal-cell .cal-photo-corner .pin-emoji.green-pin{ background:linear-gradient(135deg, #2ecc71, #27ae60)!important; }
 .cal-cell .cal-photo-corner .pin-emoji::after{ content:''!important; position:absolute!important; width:3.5px!important; height:3.5px!important; background:#fff!important; border-radius:50%!important; top:2.5px!important; left:2.5px!important; }
-#v63-debug{ position:fixed; bottom:0; left:0; right:0; background:rgba(0,0,0,0.95); color:#0f0; font-size:11px; padding:8px; z-index:999999; font-family:monospace; max-height:120px; overflow:auto; }
 </style>
-<div id="v63-debug"></div>
 <script>
-// [V4.63 FINAL] MutationObserver로 빨강 강제 보장 - 스윙2앱 대응
+// [V4.64 FINAL CLEAN] 빨강 강제 보장 - 디버그 제거, 깔끔
 (function(){
-  const debugEl = document.getElementById('v63-debug');
-  function log(msg){
-    console.log(msg);
-    if(debugEl){ debugEl.innerHTML += msg + '<br>'; debugEl.scrollTop = debugEl.scrollHeight; }
-  }
-  log('[V4.63] 시작 - MutationObserver 모드');
-
   window.forcePin = function(){};
   window.updatePins = function(){};
-
   window.getShowPhotoPin = function(){
     const v = localStorage.getItem('smartDiaryShowPhotoPin');
     return v===null ? true : v!=='false';
+  };
+  window.syncPhotoPinToggle = function(){
+    const chk = document.getElementById('settings-show-photo-pin');
+    if(chk){ const v=localStorage.getItem('smartDiaryShowPhotoPin'); chk.checked = v===null ? true : v!=='false'; }
   };
 
   function isRedForDate(dateStr, allDiaries){
@@ -14637,23 +14631,17 @@ window.updateTitleIconColor=function(){};
     const showPhotoPin = window.getShowPhotoPin();
     const grid = document.getElementById('cal-days-grid');
     if(!grid) return;
-
-    let redCnt=0, greenCnt=0;
     grid.querySelectorAll('.cal-cell:not(.adjacent-month)').forEach(cell=>{
         const dayEl = cell.querySelector('.cal-cell-inner span');
         if(!dayEl) return;
         const day = parseInt(dayEl.textContent.trim());
         if(isNaN(day)) return;
         const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-
         const isRed = isRedForDate(dateStr, allDiaries);
         const hasPhoto = hasPhotoForDate(dateStr, allDiaries);
         const isGreen = hasPhoto && !isRed && showPhotoPin;
-
         let corner = cell.querySelector('.cal-photo-corner');
-
         if(isRed){
-            redCnt++;
             if(!corner){
                 corner = document.createElement('div');
                 corner.className = 'cal-photo-corner has-pin-icon red';
@@ -14669,7 +14657,6 @@ window.updateTitleIconColor=function(){};
             }
             cell.classList.add('has-photo');
         }else if(isGreen){
-            greenCnt++;
             if(!corner){
                 corner = document.createElement('div');
                 corner.className = 'cal-photo-corner has-pin-icon green';
@@ -14689,31 +14676,12 @@ window.updateTitleIconColor=function(){};
             cell.classList.remove('has-photo');
         }
     });
-    log(`[보장] ${calYear}/${calMonth+1} 설정=${showPhotoPin} 빨강=${redCnt} 연두=${greenCnt} 전체=${allDiaries.length}`);
   }
 
-  // MutationObserver로 달력 그리드 변화 감시
-  function startObserver(){
-    const grid = document.getElementById('cal-days-grid');
-    if(!grid){ setTimeout(startObserver, 300); return; }
-    const observer = new MutationObserver(()=>{
-        setTimeout(ensureRedPins, 50);
-    });
-    observer.observe(grid, {childList:true, subtree:true});
-    log('[Observer] 달력 감시 시작');
-    ensureRedPins();
-  }
-
-  // renderCalendar 래핑
-  let attempts=0;
   function patch(){
-    attempts++;
-    if(typeof window.renderCalendar !== 'function'){
-        if(attempts<20) setTimeout(patch, 300);
-        return;
-    }
-    if(window._v63Patched) return;
-    window._v63Patched=true;
+    if(typeof window.renderCalendar !== 'function'){ setTimeout(patch, 300); return; }
+    if(window._v64Patched) return;
+    window._v64Patched=true;
     const orig = window.renderCalendar;
     window.renderCalendar = function(){
         const r = orig.apply(this, arguments);
@@ -14721,9 +14689,12 @@ window.updateTitleIconColor=function(){};
         setTimeout(ensureRedPins, 200);
         return r;
     };
-    log('[래핑] renderCalendar 강제 보장 래핑 완료');
-    setTimeout(ensureRedPins, 500);
-    startObserver();
+    const grid = document.getElementById('cal-days-grid');
+    if(grid){
+        const observer = new MutationObserver(()=>{ setTimeout(ensureRedPins, 50); });
+        observer.observe(grid, {childList:true, subtree:true});
+    }
+    setTimeout(()=>{ if(typeof window.renderCalendar==='function') window.renderCalendar(); }, 500);
   }
 
   window.onShowPhotoPinToggle = function(){
@@ -14731,7 +14702,6 @@ window.updateTitleIconColor=function(){};
     if(chk) localStorage.setItem('smartDiaryShowPhotoPin', chk.checked ? 'true' : 'false');
     if(typeof renderCalendar==='function') renderCalendar();
     setTimeout(ensureRedPins, 50);
-    setTimeout(ensureRedPins, 300);
   };
 
   const origOpen = window.openDiaryForm;
@@ -14757,6 +14727,7 @@ window.updateTitleIconColor=function(){};
 
   patch();
   setInterval(ensureRedPins, 1500);
+  setTimeout(()=>{ if(typeof syncPhotoPinToggle==='function') syncPhotoPinToggle(); }, 400);
 })();
 </script>
 </body>
