@@ -14578,32 +14578,27 @@ window.updateTitleIconColor=function(){};
 </script>
 
 <style>
-.cal-cell .cal-photo-corner{ background:transparent!important; border:none!important; width:16px!important; height:16px!important; top:1px!important; left:3px!important; display:flex!important; align-items:center!important; justify-content:center!important; opacity:1!important; transition:none!important; pointer-events:auto!important; }
+.cal-cell .cal-photo-corner{ background:transparent!important; border:none!important; width:16px!important; height:16px!important; top:1px!important; left:3px!important; display:flex!important; align-items:center!important; justify-content:center!important; opacity:1!important; transition:none!important; }
 .cal-cell .cal-photo-corner .pin-emoji{ display:block!important; width:11px!important; height:11px!important; border-radius:50% 50% 50% 0!important; transform:rotate(-45deg)!important; font-size:0!important; position:relative!important; top:-1px!important; box-shadow:0 1px 3px rgba(0,0,0,0.3)!important; }
 .cal-cell .cal-photo-corner .pin-emoji.red-pin{ background:linear-gradient(135deg, #ff6b6b, #c0392b)!important; }
 .cal-cell .cal-photo-corner .pin-emoji.green-pin{ background:linear-gradient(135deg, #2ecc71, #27ae60)!important; }
 .cal-cell .cal-photo-corner .pin-emoji::after{ content:''!important; position:absolute!important; width:3.5px!important; height:3.5px!important; background:#fff!important; border-radius:50%!important; top:2.5px!important; left:2.5px!important; }
 </style>
 <script>
-// [V4.58] ROOT FIX - 오래된 forcePin 등 전부 무력화 + 빨강 설정 완전 분리
+// [V4.59] 9월 OFF->10월 이동 시 빨강 사라짐 수정 - 월 이동 시에도 빨강 유지
 (function(){
-  console.log('[V4.58] ROOT FIX - forcePin 무력화 + 빨강 항상');
+  console.log('[V4.59] 월 이동 시 빨강 유지 수정');
 
-  // 1) 오래된 함수들 전부 무력화 - 원인 제거
-  window.forcePin = function(){ console.log('[V4.58] forcePin 무력화'); };
+  window.forcePin = function(){};
   window.syncPhotoPinToggle = function(){
     const chk = document.getElementById('settings-show-photo-pin');
-    if(chk){
-      const v = localStorage.getItem('smartDiaryShowPhotoPin');
-      chk.checked = v===null ? true : v!=='false';
-    }
+    if(chk){ const v=localStorage.getItem('smartDiaryShowPhotoPin'); chk.checked = v===null ? true : v!=='false'; }
   };
   window.getShowPhotoPin = function(){
     const v = localStorage.getItem('smartDiaryShowPhotoPin');
     return v===null ? true : v!=='false';
   };
 
-  // 2) 완전히 새로운 renderCalendar - 1개만
   window.renderCalendar = function(){
     const title = document.getElementById('cal-month-title');
     const grid = document.getElementById('cal-days-grid');
@@ -14643,62 +14638,69 @@ window.updateTitleIconColor=function(){};
         return v===null ? true : v!=='false';
     })();
 
+    // [ROOT FIX] isRedForDate - 월 이동 시에도 정확히 판단, 사진 설정과 완전 분리
     function isRedForDate(dateStr){
+        // 1) 같은 날짜에 daily/once 직접 저장된 경우
         const same = allDiaries.filter(d=>{
-            try{ const ds = typeof normalizeDateStr==='function'?normalizeDateStr(d.date):(d.date||'').slice(0,10); return ds===dateStr; }
-            catch(e){ return (d.date||'').slice(0,10)===dateStr; }
+            const ds = (d.date||'').slice(0,10);
+            return ds===dateStr;
         });
         if(same.some(d=>d.dailyRepeat)) return true;
         if(same.some(d=>d.onceAlarm)) return true;
-        if(typeof sajuAnniversaryMatches==='function'){
-            for(let dd of allDiaries){
-                if(dd.anniversary && dd.annivRepeat && dd.annivRepeat!=='none'){
-                    try{ if(sajuAnniversaryMatches(dd, dateStr)) return true; }catch(e){}
-                }
-            }
-        }
-        // fallback solar
+
+        // 2) 기념일 매년/매월 - 원본 날짜 기준으로 판단 (중요!)
+        // sajuAnniversaryMatches 사용 + fallback
         for(let dd of allDiaries){
-            if(dd.anniversary && dd.annivRepeat){
+            if(!dd.anniversary) continue;
+            const rep = dd.annivRepeat||'none';
+            if(rep==='none') continue;
+            
+            // sajuAnniversaryMatches가 가장 정확
+            if(typeof sajuAnniversaryMatches==='function'){
                 try{
-                    const orig = (dd.date||'').slice(0,10);
-                    const o = new Date(orig);
-                    const t = new Date(dateStr);
-                    if(dd.annivRepeat==='yearly' && o.getMonth()===t.getMonth() && o.getDate()===t.getDate()) return true;
-                    if(dd.annivRepeat==='monthly' && o.getDate()===t.getDate()) return true;
+                    if(sajuAnniversaryMatches(dd, dateStr)) return true;
                 }catch(e){}
             }
+            // fallback: 같은 월/일 또는 같은 일
+            try{
+                const orig = (dd.date||'').slice(0,10);
+                if(!orig) continue;
+                const oParts = orig.split('-');
+                const tParts = dateStr.split('-');
+                if(oParts.length<3 || tParts.length<3) continue;
+                const oM = parseInt(oParts[1]), oD = parseInt(oParts[2]);
+                const tM = parseInt(tParts[1]), tD = parseInt(tParts[2]);
+                if(rep==='yearly' && oM===tM && oD===tD) return true;
+                if(rep==='monthly' && oD===tD) return true;
+            }catch(e){}
         }
         return false;
     }
 
     function hasPhotoForDate(dateStr){
-        return allDiaries.some(d=>{
-            try{
-                const ds = typeof normalizeDateStr==='function'?normalizeDateStr(d.date):(d.date||'').slice(0,10);
-                return ds===dateStr && d.photo;
-            }catch(e){ return (d.date||'').slice(0,10)===dateStr && d.photo; }
-        });
+        return allDiaries.some(d=> (d.date||'').slice(0,10)===dateStr && d.photo);
     }
 
     // 전월
     for (let i = 0; i < firstDay; i++) {
-        const day = prevLastDate - firstDay + i + 1;
         const cell = document.createElement('div');
         cell.className = 'cal-cell adjacent-month';
         placeCell(cell, i);
+        const day = prevLastDate - firstDay + i + 1;
         cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span></div>`;
         grid.appendChild(cell);
     }
 
-    // 이번 달 - ROOT 로직
+    // 이번 달
+    let redCount=0, greenCount=0;
     for (let day = 1; day <= lastDate; day++) {
         const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const cellIndex = firstDay + day - 1;
         const cell = document.createElement('div');
         cell.className = 'cal-cell';
-        if (new Date(calYear, calMonth, day).getDay() === 0) cell.classList.add('sunday');
-        if (new Date(calYear, calMonth, day).getDay() === 6) cell.classList.add('saturday');
+        const dow = new Date(calYear, calMonth, day).getDay();
+        if (dow === 0) cell.classList.add('sunday');
+        if (dow === 6) cell.classList.add('saturday');
         placeCell(cell, cellIndex);
 
         const specialInfo = typeof getSpecialDayLabel==='function' ? getSpecialDayLabel(dateStr) : null;
@@ -14709,19 +14711,18 @@ window.updateTitleIconColor=function(){};
 
         const isRed = isRedForDate(dateStr);
         const hasPhoto = hasPhotoForDate(dateStr);
-        
-        // ROOT: 빨강은 설정과 무관하게 항상, 연두만 설정 영향
         const isGreen = hasPhoto && !isRed && showPhotoPinSetting;
         const showPin = isRed || isGreen;
-        const pinClass = isRed ? 'red-pin' : 'green-pin';
-        const colorName = isRed ? 'red' : 'green';
+
+        if(isRed) redCount++;
+        if(isGreen) greenCount++;
 
         if(showPin) cell.classList.add('has-photo');
+        const pinClass = isRed ? 'red-pin' : 'green-pin';
+        const colorName = isRed ? 'red' : 'green';
         cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + (showPin ? `<div class="cal-photo-corner has-pin-icon ${colorName}" data-date="${dateStr}"><span class="pin-emoji ${pinClass}"></span></div>` : '');
 
-        cell.onclick = ()=>{
-            if(typeof selectDiaryDate==='function') selectDiaryDate(dateStr);
-        };
+        cell.onclick = ()=>{ if(typeof selectDiaryDate==='function') selectDiaryDate(dateStr); };
         grid.appendChild(cell);
     }
 
@@ -14734,20 +14735,18 @@ window.updateTitleIconColor=function(){};
         cell.innerHTML = `<div class="cal-cell-inner"><span>${i}</span></div>`;
         grid.appendChild(cell);
     }
+
+    console.log(`[V4.59] ${calYear}/${calMonth+1} 설정=${showPhotoPinSetting} 빨강=${redCount} 연두=${greenCount}`);
   };
 
-  // 3) 설정 토글 - 오래된 로직 완전 교체
   window.onShowPhotoPinToggle = function(){
     const chk = document.getElementById('settings-show-photo-pin');
     if(chk){
       localStorage.setItem('smartDiaryShowPhotoPin', chk.checked ? 'true' : 'false');
-      console.log('[V4.58] 설정 변경:', chk.checked, '빨강은 항상 유지');
     }
-    // 우리 renderCalendar만 호출
     if(typeof renderCalendar==='function') renderCalendar();
   };
 
-  // 4) 폼 복원
   const origOpen = window.openDiaryForm;
   window.openDiaryForm = function(dateStr, existingItem, mode){
     const r = origOpen.apply(this, arguments);
@@ -14767,12 +14766,35 @@ window.updateTitleIconColor=function(){};
     return r;
   };
 
-  setTimeout(()=>{ 
+  // 월 이동 버튼 재연결 - 혹시 오래된 리스너가 있으면 덮어쓰기
+  setTimeout(()=>{
+    const prevBtn = document.getElementById('cal-prev-month');
+    const nextBtn = document.getElementById('cal-next-month');
+    if(prevBtn){
+      const newPrev = prevBtn.cloneNode(true);
+      prevBtn.parentNode.replaceChild(newPrev, prevBtn);
+      newPrev.addEventListener('click', ()=>{
+        calMonth--;
+        if(calMonth<0){ calMonth=11; calYear--; }
+        renderCalendar();
+        if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday();
+      });
+    }
+    if(nextBtn){
+      const newNext = nextBtn.cloneNode(true);
+      nextBtn.parentNode.replaceChild(newNext, nextBtn);
+      newNext.addEventListener('click', ()=>{
+        calMonth++;
+        if(calMonth>11){ calMonth=0; calYear++; }
+        renderCalendar();
+        if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday();
+      });
+    }
     if(typeof syncPhotoPinToggle==='function') syncPhotoPinToggle();
-    if(typeof renderCalendar==='function') renderCalendar(); 
-  }, 300);
+    renderCalendar();
+  }, 400);
 
-  console.log('[V4.58] ROOT FIX 완료 - forcePin 무력화, 빨강 항상 표시');
+  console.log('[V4.59] 월 이동 시 빨강 유지 수정 완료');
 })();
 </script>
 </body>
