@@ -14585,7 +14585,7 @@ window.updateTitleIconColor=function(){};
 .cal-cell .cal-photo-corner .pin-emoji::after{ content:''!important; position:absolute!important; width:3.5px!important; height:3.5px!important; background:#fff!important; border-radius:50%!important; top:2.5px!important; left:2.5px!important; }
 </style>
 <script>
-// [V4.66] 음력 체크 - 음력은 음력으로만, 양력은 양력으로만, 중복 제거
+// [V4.67] 모든 날짜 빨강 버그 수정 + 음력/양력 중복 제거 + 하루만은 그날만
 (function(){
   window.forcePin = function(){};
   window.updatePins = function(){};
@@ -14599,14 +14599,16 @@ window.updateTitleIconColor=function(){};
   };
 
   function isRedForDate(dateStr, allDiaries){
-    // 1) 매일 반복: 매일 빨강
-    if(allDiaries.some(d=>d.dailyRepeat)) return true;
+    // 같은 날짜에 있는 일기만 확인 - 매일 반복도 원래 날짜에만 빨강 (알림은 매일 울리지만 핀은 원래 날짜에만)
+    const same = allDiaries.filter(d=> (d.date||'').slice(0,10)===dateStr);
+    
+    // 1) 매일 반복: 같은 날짜에 매일반복 체크된 일기가 있으면 빨강
+    if(same.some(d=>d.dailyRepeat)) return true;
 
-    // 2) 하루만 울림: 정확한 날짜에만 빨강 (내년에는 안 나옴)
-    if(allDiaries.some(d=> (d.date||'').slice(0,10)===dateStr && d.onceAlarm)) return true;
+    // 2) 하루만 울림: 같은 날짜에 하루만 체크된 일기가 있으면 빨강 (정확히 그날만, 내년엔 안 나옴)
+    if(same.some(d=>d.onceAlarm)) return true;
 
-    // 3) 기념일: sajuAnniversaryMatches로만 판단 - 음력은 음력끼리, 양력은 양력끼리
-    // fallback 제거로 중복 방지
+    // 3) 기념일: 음력은 음력끼리, 양력은 양력끼리만 (중복 제거)
     if(typeof sajuAnniversaryMatches==='function'){
         for(let dd of allDiaries){
             if(dd.anniversary && dd.annivRepeat && dd.annivRepeat!=='none' && !dd.onceAlarm && !dd.dailyRepeat){
@@ -14678,8 +14680,8 @@ window.updateTitleIconColor=function(){};
 
   function patch(){
     if(typeof window.renderCalendar !== 'function'){ setTimeout(patch, 300); return; }
-    if(window._v66Patched) return;
-    window._v66Patched=true;
+    if(window._v67Patched) return;
+    window._v67Patched=true;
     const orig = window.renderCalendar;
     window.renderCalendar = function(){
         const r = orig.apply(this, arguments);
@@ -14726,7 +14728,6 @@ window.updateTitleIconColor=function(){};
   patch();
   setInterval(ensureRedPins, 1500);
   setTimeout(()=>{ if(typeof syncPhotoPinToggle==='function') syncPhotoPinToggle(); }, 400);
-  console.log('[V4.66] 음력/양력 중복 제거 완료');
 })();
 </script>
 </body>
