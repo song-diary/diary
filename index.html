@@ -14583,11 +14583,18 @@ window.updateTitleIconColor=function(){};
 .cal-cell .cal-photo-corner .pin-emoji.red-pin{ background:linear-gradient(135deg, #ff6b6b, #c0392b)!important; }
 .cal-cell .cal-photo-corner .pin-emoji.green-pin{ background:linear-gradient(135deg, #2ecc71, #27ae60)!important; }
 .cal-cell .cal-photo-corner .pin-emoji::after{ content:''!important; position:absolute!important; width:3.5px!important; height:3.5px!important; background:#fff!important; border-radius:50%!important; top:2.5px!important; left:2.5px!important; }
+#v63-debug{ position:fixed; bottom:0; left:0; right:0; background:rgba(0,0,0,0.95); color:#0f0; font-size:11px; padding:8px; z-index:999999; font-family:monospace; max-height:120px; overflow:auto; }
 </style>
+<div id="v63-debug"></div>
 <script>
-// [V4.62 FINAL GUARANTEE] 빨강핀 강제 보장 - 달력 그린 후 무조건 빨강 붙임
+// [V4.63 FINAL] MutationObserver로 빨강 강제 보장 - 스윙2앱 대응
 (function(){
-  console.log('[V4.62] 빨강 강제 보장 모드');
+  const debugEl = document.getElementById('v63-debug');
+  function log(msg){
+    console.log(msg);
+    if(debugEl){ debugEl.innerHTML += msg + '<br>'; debugEl.scrollTop = debugEl.scrollHeight; }
+  }
+  log('[V4.63] 시작 - MutationObserver 모드');
 
   window.forcePin = function(){};
   window.updatePins = function(){};
@@ -14596,12 +14603,7 @@ window.updateTitleIconColor=function(){};
     const v = localStorage.getItem('smartDiaryShowPhotoPin');
     return v===null ? true : v!=='false';
   };
-  window.syncPhotoPinToggle = function(){
-    const chk = document.getElementById('settings-show-photo-pin');
-    if(chk){ const v=localStorage.getItem('smartDiaryShowPhotoPin'); chk.checked = v===null ? true : v!=='false'; }
-  };
 
-  // 빨강 여부 판단 - 설정과 완전 무관
   function isRedForDate(dateStr, allDiaries){
     const same = allDiaries.filter(d=> (d.date||'').slice(0,10)===dateStr);
     if(same.some(d=>d.dailyRepeat)) return true;
@@ -14629,13 +14631,15 @@ window.updateTitleIconColor=function(){};
     return allDiaries.some(d=> (d.date||'').slice(0,10)===dateStr && d.photo);
   }
 
-  // 빨강핀 강제 보장 함수 - 달력 그린 후 호출
   function ensureRedPins(){
     let allDiaries = [];
     try { allDiaries = typeof getAllDiaries==='function'?getAllDiaries():JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); } catch(e){ allDiaries=[]; }
     const showPhotoPin = window.getShowPhotoPin();
+    const grid = document.getElementById('cal-days-grid');
+    if(!grid) return;
 
-    document.querySelectorAll('.cal-cell:not(.adjacent-month)').forEach(cell=>{
+    let redCnt=0, greenCnt=0;
+    grid.querySelectorAll('.cal-cell:not(.adjacent-month)').forEach(cell=>{
         const dayEl = cell.querySelector('.cal-cell-inner span');
         if(!dayEl) return;
         const day = parseInt(dayEl.textContent.trim());
@@ -14649,7 +14653,7 @@ window.updateTitleIconColor=function(){};
         let corner = cell.querySelector('.cal-photo-corner');
 
         if(isRed){
-            // 빨강은 무조건 보장 - 없으면 만들고, 있으면 빨강으로 강제
+            redCnt++;
             if(!corner){
                 corner = document.createElement('div');
                 corner.className = 'cal-photo-corner has-pin-icon red';
@@ -14665,6 +14669,7 @@ window.updateTitleIconColor=function(){};
             }
             cell.classList.add('has-photo');
         }else if(isGreen){
+            greenCnt++;
             if(!corner){
                 corner = document.createElement('div');
                 corner.className = 'cal-photo-corner has-pin-icon green';
@@ -14680,38 +14685,46 @@ window.updateTitleIconColor=function(){};
             }
             cell.classList.add('has-photo');
         }else{
-            if(corner) corner.style.display='none';
+            if(corner){ corner.style.display='none'; }
             cell.classList.remove('has-photo');
         }
     });
-
-    const reds = document.querySelectorAll('.cal-cell .red-pin').length;
-    const greens = document.querySelectorAll('.cal-cell .green-pin').length;
-    console.log(`[V4.62 ensure] ${calYear}/${calMonth+1} 설정=${showPhotoPin} 빨강=${reds} 연두=${greens}`);
+    log(`[보장] ${calYear}/${calMonth+1} 설정=${showPhotoPin} 빨강=${redCnt} 연두=${greenCnt} 전체=${allDiaries.length}`);
   }
 
-  // 원본 renderCalendar를 래핑 - 그린 후 ensureRedPins 강제 실행
-  function patchRenderCalendar(){
+  // MutationObserver로 달력 그리드 변화 감시
+  function startObserver(){
+    const grid = document.getElementById('cal-days-grid');
+    if(!grid){ setTimeout(startObserver, 300); return; }
+    const observer = new MutationObserver(()=>{
+        setTimeout(ensureRedPins, 50);
+    });
+    observer.observe(grid, {childList:true, subtree:true});
+    log('[Observer] 달력 감시 시작');
+    ensureRedPins();
+  }
+
+  // renderCalendar 래핑
+  let attempts=0;
+  function patch(){
+    attempts++;
     if(typeof window.renderCalendar !== 'function'){
-        setTimeout(patchRenderCalendar, 200);
+        if(attempts<20) setTimeout(patch, 300);
         return;
     }
-    if(window._v62Patched) return;
-    window._v62Patched = true;
+    if(window._v63Patched) return;
+    window._v63Patched=true;
     const orig = window.renderCalendar;
     window.renderCalendar = function(){
-        const result = orig.apply(this, arguments);
-        // 원본이 그린 직후 빨강 강제 보장
+        const r = orig.apply(this, arguments);
         setTimeout(ensureRedPins, 30);
         setTimeout(ensureRedPins, 200);
-        return result;
+        return r;
     };
-    console.log('[V4.62] renderCalendar 래핑 완료 - 빨강 강제 보장');
-    // 초기 실행
-    setTimeout(()=>{ if(typeof window.renderCalendar==='function') window.renderCalendar(); }, 500);
+    log('[래핑] renderCalendar 강제 보장 래핑 완료');
+    setTimeout(ensureRedPins, 500);
+    startObserver();
   }
-
-  patchRenderCalendar();
 
   window.onShowPhotoPinToggle = function(){
     const chk = document.getElementById('settings-show-photo-pin');
@@ -14722,28 +14735,28 @@ window.updateTitleIconColor=function(){};
   };
 
   const origOpen = window.openDiaryForm;
-  window.openDiaryForm = function(dateStr, existingItem, mode){
-    const r = origOpen.apply(this, arguments);
-    setTimeout(()=>{
-      try{
-        const onceCb = document.getElementById('once-alarm-checkbox');
-        const dailyCb = document.getElementById('daily-repeat-checkbox');
-        if(existingItem){
-          if(onceCb) onceCb.checked = !!existingItem.onceAlarm;
-          if(dailyCb) dailyCb.checked = !!existingItem.dailyRepeat;
-        }else{
-          if(onceCb) onceCb.checked = false;
-          if(dailyCb) dailyCb.checked = false;
-        }
-      }catch(e){}
-    }, 200);
-    return r;
-  };
+  if(typeof origOpen==='function'){
+    window.openDiaryForm = function(dateStr, existingItem, mode){
+      const r = origOpen.apply(this, arguments);
+      setTimeout(()=>{
+        try{
+          const onceCb = document.getElementById('once-alarm-checkbox');
+          const dailyCb = document.getElementById('daily-repeat-checkbox');
+          if(existingItem){
+            if(onceCb) onceCb.checked = !!existingItem.onceAlarm;
+            if(dailyCb) dailyCb.checked = !!existingItem.dailyRepeat;
+          }else{
+            if(onceCb) onceCb.checked = false;
+            if(dailyCb) dailyCb.checked = false;
+          }
+        }catch(e){}
+      }, 200);
+      return r;
+    };
+  }
 
-  // 월 이동 시에도 보장 - 1초마다 감시
-  setInterval(ensureRedPins, 1000);
-
-  setTimeout(()=>{ if(typeof syncPhotoPinToggle==='function') syncPhotoPinToggle(); }, 400);
+  patch();
+  setInterval(ensureRedPins, 1500);
 })();
 </script>
 </body>
