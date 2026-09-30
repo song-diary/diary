@@ -14687,7 +14687,260 @@ window.updateTitleIconColor=function(){};
   window.addEventListener('load', ()=>setTimeout(updatePinsV47, 1200));
 })();
 </script>
+
+<script>
+// [V4.48] 매년/매월 반복 내년/다음달에도 빨강 표시
+(function(){
+  console.log('[V4.48] 매년/매월 반복 미래 표시 수정');
+
+  function isRepeatOnDate(diary, targetDateStr){
+    if(!diary.anniversary || !diary.annivRepeat || diary.annivRepeat==='none') return false;
+    const origDate = (diary.date||'').slice(0,10);
+    if(!origDate) return false;
+    try{
+      const orig = new Date(origDate);
+      const target = new Date(targetDateStr);
+      if(isNaN(orig) || isNaN(target)) return false;
+      
+      if(diary.annivRepeat==='yearly'){
+        // 같은 월/일이면 매년 반복
+        return orig.getMonth()===target.getMonth() && orig.getDate()===target.getDate();
+      }
+      if(diary.annivRepeat==='monthly'){
+        // 같은 일이면 매월 반복 (말일 처리)
+        return orig.getDate()===target.getDate();
+      }
+    }catch(e){}
+    return false;
+  }
+
+  function updatePinsV48(){
+    let all=[];
+    try{ all = JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); }catch(e){}
+    
+    const map = {}; // date -> {hasPhoto, isDaily, isOnce, isYearly, isMonthly} for direct
+    all.forEach(d=>{
+      const ds = (d.date||'').slice(0,10);
+      if(!ds) return;
+      if(!map[ds]) map[ds] = {hasPhoto:false, isDaily:false, isOnce:false, isYearly:false, isMonthly:false};
+      if(d.photo) map[ds].hasPhoto = true;
+      if(d.dailyRepeat) map[ds].isDaily = true;
+      if(d.onceAlarm) map[ds].isOnce = true;
+      if(d.anniversary && d.annivRepeat){
+        if(d.annivRepeat==='yearly') map[ds].isYearly = true;
+        if(d.annivRepeat==='monthly') map[ds].isMonthly = true;
+      }
+    });
+
+    document.querySelectorAll('.cal-cell').forEach(cell=>{
+      if(cell.classList.contains('adjacent-month')) return;
+      const dayEl = cell.querySelector('.cal-cell-inner span');
+      if(!dayEl) return;
+      const day = parseInt(dayEl.textContent.trim());
+      if(isNaN(day)) return;
+      const y = typeof calYear!=='undefined'?calYear:new Date().getFullYear();
+      const m = typeof calMonth!=='undefined'?calMonth:new Date().getMonth();
+      const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+
+      let f = map[dateStr] || {hasPhoto:false, isDaily:false, isOnce:false, isYearly:false, isMonthly:false};
+      
+      // 미래 반복 체크: 모든 일기를 순회해서 이 날짜에 반복되는지 확인
+      let repeatYearly = f.isYearly;
+      let repeatMonthly = f.isMonthly;
+      
+      for(let d of all){
+        if(isRepeatOnDate(d, dateStr)){
+          if(d.annivRepeat==='yearly') repeatYearly = true;
+          if(d.annivRepeat==='monthly') repeatMonthly = true;
+        }
+      }
+
+      const isRed = f.isDaily || f.isOnce || repeatYearly || repeatMonthly;
+      const isGreen = f.hasPhoto && !isRed;
+
+      let corner = cell.querySelector('.cal-photo-corner');
+      if(!f.hasPhoto && !isRed && !isGreen){
+        // 반복으로 빨강인 경우도 코너 생성 필요
+        if(isRed){
+          if(!corner){
+            corner = document.createElement('div');
+            corner.className='cal-photo-corner';
+            corner.setAttribute('data-date', dateStr);
+            corner.innerHTML='<span class="pin-emoji"></span>';
+            cell.appendChild(corner);
+          }
+        } else {
+          if(corner) corner.style.display='none';
+          return;
+        }
+      }
+
+      if((isRed || isGreen) && !corner){
+        corner = document.createElement('div');
+        corner.className='cal-photo-corner';
+        corner.setAttribute('data-date', dateStr);
+        corner.innerHTML='<span class="pin-emoji"></span>';
+        cell.appendChild(corner);
+      }
+      if(!corner) return;
+      let pin = corner.querySelector('.pin-emoji');
+      if(!pin){ corner.innerHTML='<span class="pin-emoji"></span>'; pin=corner.querySelector('.pin-emoji'); }
+      pin.textContent='';
+
+      if(isRed){
+        pin.className='pin-emoji red-pin';
+        corner.style.display='flex';
+        let r=[];
+        if(f.isDaily) r.push('매일반복');
+        if(f.isOnce) r.push('하루만울림');
+        if(repeatYearly) r.push('매년');
+        if(repeatMonthly) r.push('매월');
+        corner.title = `${dateStr} ${r.join('+')} 빨강`;
+      } else if(isGreen){
+        pin.className='pin-emoji green-pin';
+        corner.style.display='flex';
+        corner.title = `${dateStr} 사진 연두`;
+      } else {
+        corner.style.display='none';
+      }
+    });
+  }
+
+  window.updatePins = updatePinsV48;
+  const origRender = window.renderCalendar;
+  if(typeof origRender === 'function'){
+    window.renderCalendar = function(...a){
+      const r = origRender.apply(this, a);
+      setTimeout(updatePinsV48, 150);
+      setTimeout(updatePinsV48, 600);
+      return r;
+    };
+  }
+  setInterval(updatePinsV48, 2500);
+  window.addEventListener('load', ()=>setTimeout(updatePinsV48, 1200));
+  
+  console.log('[V4.48] 매년/매월 내년 표시 수정 완료');
+})();
+</script>
+
+<script>
+// [V4.49] 양력/음력 구분 - 내년에도 정확히 표시
+(function(){
+  console.log('[V4.49] 양력/음력 구분 - sajuAnniversaryMatches 사용');
+
+  function updatePinsV49(){
+    let all=[];
+    try{ all = JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); }catch(e){}
+    
+    // 직접 저장된 날짜 맵 (사진, 매일반복, 하루만울림)
+    const directMap = {};
+    all.forEach(d=>{
+      const ds = (d.date||'').slice(0,10);
+      if(!ds) return;
+      if(!directMap[ds]) directMap[ds] = {hasPhoto:false, isDaily:false, isOnce:false};
+      if(d.photo) directMap[ds].hasPhoto = true;
+      if(d.dailyRepeat) directMap[ds].isDaily = true;
+      if(d.onceAlarm) directMap[ds].isOnce = true;
+    });
+
+    document.querySelectorAll('.cal-cell').forEach(cell=>{
+      if(cell.classList.contains('adjacent-month')) return;
+      const dayEl = cell.querySelector('.cal-cell-inner span');
+      if(!dayEl) return;
+      const day = parseInt(dayEl.textContent.trim());
+      if(isNaN(day)) return;
+      const y = typeof calYear!=='undefined'?calYear:new Date().getFullYear();
+      const m = typeof calMonth!=='undefined'?calMonth:new Date().getMonth();
+      const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+
+      const direct = directMap[dateStr] || {hasPhoto:false, isDaily:false, isOnce:false};
+      
+      // 양력/음력 구분하여 매년/매월 반복 체크 - sajuAnniversaryMatches 사용
+      let isYearlyRepeat = false;
+      let isMonthlyRepeat = false;
+      let repeatType = ''; // solar/yearly, lunar/yearly 등
+      
+      try{
+        if(typeof sajuAnniversaryMatches === 'function'){
+          for(let d of all){
+            if(d.anniversary && d.annivRepeat && d.annivRepeat!=='none'){
+              if(sajuAnniversaryMatches(d, dateStr)){
+                if(d.annivRepeat==='yearly') {
+                  isYearlyRepeat = true;
+                  repeatType = (d.annivCalType||'solar') + '/yearly';
+                }
+                if(d.annivRepeat==='monthly') {
+                  isMonthlyRepeat = true;
+                  repeatType = (d.annivCalType||'solar') + '/monthly';
+                }
+              }
+            }
+          }
+        }
+      }catch(e){
+        console.log('repeat check error', e);
+      }
+
+      const isRed = direct.isDaily || direct.isOnce || isYearlyRepeat || isMonthlyRepeat;
+      const isGreen = direct.hasPhoto && !isRed;
+
+      let corner = cell.querySelector('.cal-photo-corner');
+      if(!direct.hasPhoto && !isRed){
+        if(corner) corner.style.display='none';
+        return;
+      }
+
+      if((isRed || isGreen) && !corner){
+        corner = document.createElement('div');
+        corner.className='cal-photo-corner';
+        corner.setAttribute('data-date', dateStr);
+        corner.innerHTML='<span class="pin-emoji"></span>';
+        cell.appendChild(corner);
+      }
+      if(!corner) return;
+      let pin = corner.querySelector('.pin-emoji');
+      if(!pin){ corner.innerHTML='<span class="pin-emoji"></span>'; pin=corner.querySelector('.pin-emoji'); }
+      pin.textContent='';
+
+      if(isRed){
+        pin.className='pin-emoji red-pin';
+        corner.style.display='flex';
+        let r=[];
+        if(direct.isDaily) r.push('매일반복');
+        if(direct.isOnce) r.push('하루만울림');
+        if(isYearlyRepeat) r.push(repeatType.includes('lunar') ? '음력매년' : '양력매년');
+        if(isMonthlyRepeat) r.push(repeatType.includes('lunar') ? '음력매월' : '양력매월');
+        corner.title = `${dateStr} ${r.join('+')} 빨강`;
+      } else if(isGreen){
+        pin.className='pin-emoji green-pin';
+        corner.style.display='flex';
+        corner.title = `${dateStr} 사진 연두`;
+      } else {
+        corner.style.display='none';
+      }
+    });
+  }
+
+  window.updatePins = updatePinsV49;
+  const origRender = window.renderCalendar;
+  if(typeof origRender === 'function' && !window._v49Patched){
+    window._v49Patched = true;
+    window.renderCalendar = function(...a){
+      const r = origRender.apply(this, a);
+      setTimeout(updatePinsV49, 150);
+      setTimeout(updatePinsV49, 600);
+      return r;
+    };
+  }
+  setInterval(updatePinsV49, 2500);
+  window.addEventListener('load', ()=>setTimeout(updatePinsV49, 1200));
+  
+  console.log('[V4.49] 양력/음력 구분 적용 완료');
+})();
+</script>
 </body>
+
+
 
 
 
