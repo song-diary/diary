@@ -14636,6 +14636,7 @@ window.updateTitleIconColor=function(){};
     });
 
     const showPhotoPin = getShowPhotoPinSafe();
+    //console.log('[V4.52] showPhotoPin setting:', showPhotoPin);
 
     document.querySelectorAll('.cal-cell').forEach(cell=>{
       if(cell.classList.contains('adjacent-month')) return;
@@ -14647,17 +14648,16 @@ window.updateTitleIconColor=function(){};
       const m = typeof calMonth!=='undefined'?calMonth:new Date().getMonth();
       const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
 
-      // 이중 핀 제거: 2개 이상이면 모두 제거하고 1개만 다시 만듦
+      // 이중 핀 제거
       let corners = cell.querySelectorAll('.cal-photo-corner');
       if(corners.length > 1){
-        corners.forEach((c,i)=>{ if(i>0) c.remove(); });
-        corners = cell.querySelectorAll('.cal-photo-corner');
+        for(let i=1;i<corners.length;i++) corners[i].remove();
       }
 
-      const direct = directMap[dateStr];
+      const direct = directMap[dateStr] || {hasPhoto:false, isDaily:false, isOnce:false, hasYearly:false, hasMonthly:false};
       
-      // 반복 체크 (양력/음력)
-      let isYearly = false, isMonthly = false;
+      let isYearly = direct.hasYearly;
+      let isMonthly = direct.hasMonthly;
       let repeatLabels = [];
       
       if(typeof sajuAnniversaryMatches === 'function'){
@@ -14665,57 +14665,69 @@ window.updateTitleIconColor=function(){};
           if(d.anniversary && d.annivRepeat && d.annivRepeat!=='none'){
             try{
               if(sajuAnniversaryMatches(d, dateStr)){
-                if(d.annivRepeat==='yearly'){ isYearly = true; repeatLabels.push((d.annivCalType==='lunar'?'음력매년':'양력매년')); }
-                if(d.annivRepeat==='monthly'){ isMonthly = true; repeatLabels.push((d.annivCalType==='lunar'?'음력매월':'양력매월')); }
+                if(d.annivRepeat==='yearly'){ isYearly = true; if(!repeatLabels.includes(d.annivCalType==='lunar'?'음력매년':'양력매년')) repeatLabels.push(d.annivCalType==='lunar'?'음력매년':'양력매년'); }
+                if(d.annivRepeat==='monthly'){ isMonthly = true; if(!repeatLabels.includes(d.annivCalType==='lunar'?'음력매월':'양력매월')) repeatLabels.push(d.annivCalType==='lunar'?'음력매월':'양력매월'); }
               }
             }catch(e){}
           }
         }
       }
 
-      // 직접 저장된 것도 포함
-      if(direct && direct.hasYearly) isYearly = true;
-      if(direct && direct.hasMonthly) isMonthly = true;
-
-      const isRed = (direct && (direct.isDaily || direct.isOnce)) || isYearly || isMonthly;
-      const hasPhoto = direct ? direct.hasPhoto : false;
-      // 설정 OFF면 연두 숨김
-      const isGreen = hasPhoto && !isRed && showPhotoPin;
+      const isRed = direct.isDaily || direct.isOnce || isYearly || isMonthly;
+      const hasPhoto = direct.hasPhoto;
+      
+      // *** 핵심 수정: 빨강은 설정과 무관하게 항상 표시, 연두만 설정 영향 ***
+      const isGreen = hasPhoto && !isRed;
 
       let corner = cell.querySelector('.cal-photo-corner');
 
-      if(!isRed && !isGreen){
-        if(corner) corner.style.display='none';
+      if(isRed){
+        // 빨강은 설정 OFF여도 항상 표시
+        if(!corner){
+          corner = document.createElement('div');
+          corner.className='cal-photo-corner';
+          corner.setAttribute('data-date', dateStr);
+          corner.innerHTML='<span class="pin-emoji"></span>';
+          cell.appendChild(corner);
+        }
+        let pin = corner.querySelector('.pin-emoji');
+        if(!pin){ corner.innerHTML='<span class="pin-emoji"></span>'; pin=corner.querySelector('.pin-emoji'); }
+        pin.textContent='';
+        pin.className='pin-emoji red-pin';
+        corner.style.display='flex';
+        let labels = [];
+        if(direct.isDaily) labels.push('매일반복');
+        if(direct.isOnce) labels.push('하루만울림');
+        labels = labels.concat(repeatLabels);
+        labels = [...new Set(labels)];
+        corner.title = (labels.length?labels.join('+'):'반복') + ' 빨강 (설정 무관 항상 표시)';
         return;
       }
 
-      if(!corner){
-        corner = document.createElement('div');
-        corner.className='cal-photo-corner';
-        corner.setAttribute('data-date', dateStr);
-        corner.innerHTML='<span class="pin-emoji"></span>';
-        cell.appendChild(corner);
-      }
-
-      let pin = corner.querySelector('.pin-emoji');
-      if(!pin){ corner.innerHTML='<span class="pin-emoji"></span>'; pin=corner.querySelector('.pin-emoji'); }
-      pin.textContent='';
-
-      if(isRed){
-        pin.className='pin-emoji red-pin';
-        corner.style.display='flex';
-        // 중복 라벨 제거
-        let labels = [];
-        if(direct && direct.isDaily) labels.push('매일반복');
-        if(direct && direct.isOnce) labels.push('하루만울림');
-        labels = labels.concat(repeatLabels);
-        labels = [...new Set(labels)];
-        corner.title = labels.join('+') + ' 빨강';
-      }else if(isGreen){
+      if(isGreen){
+        // 연두는 설정 ON일 때만 표시
+        if(!showPhotoPin){
+          if(corner) corner.style.display='none';
+          return;
+        }
+        if(!corner){
+          corner = document.createElement('div');
+          corner.className='cal-photo-corner';
+          corner.setAttribute('data-date', dateStr);
+          corner.innerHTML='<span class="pin-emoji"></span>';
+          cell.appendChild(corner);
+        }
+        let pin = corner.querySelector('.pin-emoji');
+        if(!pin){ corner.innerHTML='<span class="pin-emoji"></span>'; pin=corner.querySelector('.pin-emoji'); }
+        pin.textContent='';
         pin.className='pin-emoji green-pin';
         corner.style.display='flex';
-        corner.title = '사진 연두';
+        corner.title = '사진 연두 (설정 ON)';
+        return;
       }
+
+      // 빨강도 연두도 아니면 숨김
+      if(corner) corner.style.display='none';
     });
   }
 
