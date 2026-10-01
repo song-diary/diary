@@ -7529,12 +7529,30 @@ window.attachPhotoDoubleTap = function(el, handler){
                 </div>
             </div>
 
+            
+            <div class="fp-share-section" style="margin-top:14px; padding:16px; background:rgba(255,255,255,0.06); border-radius:16px; border:1px solid rgba(255,255,255,0.1);">
+                <div style="font-size:13px; font-weight:700; color:#E8D5FF; margin-bottom:10px;">📸 공유카드 (하루 1회)</div>
+                <div id="fp-share-preview" style="width:100%; aspect-ratio:9/16; max-height:420px; border-radius:14px; overflow:hidden; position:relative; background:linear-gradient(180deg,#2D1B4E 0%,#5B3A8C 30%,#C9A86A 100%); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;">
+                    <div style="font-size:12px; color:#FFD88A; letter-spacing:1px; margin-bottom:14px;">${dateLabel}</div>
+                    <div style="font-size:28px; margin-bottom:8px;">🌙</div>
+                    <div style="font-size:64px; font-weight:900; color:#FFDDAA; line-height:1; text-shadow:0 2px 20px rgba(255,220,150,0.5); margin-bottom:12px;">${score}점</div>
+                    <div style="font-size:14px; color:#FFF; text-align:center; line-height:1.5; opacity:0.95;">${oneLine}</div>
+                    <div style="position:absolute; bottom:12px; font-size:10px; color:rgba(255,255,255,0.5); letter-spacing:1px;">Smart Diary</div>
+                </div>
+                <canvas id="share-card-canvas" width="1080" height="1920" style="display:none;"></canvas>
+                <div style="display:flex; gap:8px; margin-top:12px;">
+                    <button style="flex:1; padding:12px; border-radius:12px; border:none; font-weight:800; font-size:13px; cursor:pointer; background:#FFD88A; color:#2A2340;" onclick="if(window.genCard) genCard(); saveFortuneCard();">💾 이미지 저장</button>
+                    <button style="flex:1; padding:12px; border-radius:12px; border:none; font-weight:800; font-size:13px; cursor:pointer; background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.2);" onclick="if(window.genCard) genCard(); shareFortuneCard();">💬 공유하기</button>
+                </div>
+            </div>
+
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:10px;">
+
                 <div class="fp-my-saju-link-big" onclick="openSajuDetailModal()" style="margin:0; text-align:center; padding:10px; font-size:13px;">📜 나의 사주풀이</div>
                 <div class="fp-my-saju-link-big" onclick="openBucketListModal()" style="margin:0; text-align:center; padding:10px; font-size:13px; background:linear-gradient(120deg, #A8EDEA, #FED6E3); color:#2A2340;">🎯 나의 버킷 리스트</div>
             </div>
 
-            <div style="margin-top:16px; text-align:center;"><button onclick="openLottoGeneratorModal()" style="width:100%; background:linear-gradient(120deg, #FFD98E, #FF9AC2); color:#2A2340; border:none; padding:14px; border-radius:14px; font-weight:800; font-size:14.5px; box-shadow:0 4px 14px rgba(255,154,194,0.25);">🎱 사주기반 로또 생성기 입장하기 →</button><!-- V244 - 문구 삭제 --></div>
+            <!-- lotto button removed V5.3 -->
                 <div class="fp-exit-sticky"><button onclick="closeFortunePopup()" style="width:100%;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:14px;border-radius:14px;font-weight:800;font-size:15px;">종료</button></div>`;
 
         fortunePopupOverlay.classList.add('active'); lockBodyScroll(); } function saveFortuneCard_DISABLED(){
@@ -14570,230 +14588,87 @@ window.updateTitleIconColor=function(){};
 })();
 </script>
 
-<style>
-/* V4.72 small pin 8px + lotto hidden */
-#lotto-generator-modal-overlay, #lotto-toggle-card { display:none !important; }
-.cal-cell .cal-photo-corner{ background:transparent!important; border:none!important; width:12px!important; height:12px!important; top:2px!important; left:3px!important; display:flex!important; align-items:center!important; justify-content:center!important; opacity:1!important; }
-.cal-cell .cal-photo-corner .pin-emoji{ display:block!important; width:8px!important; height:8px!important; border-radius:50% 50% 50% 0!important; transform:rotate(-45deg)!important; font-size:0!important; position:relative!important; top:-1px!important; box-shadow:0 1px 3px rgba(0,0,0,0.3)!important; }
-.cal-cell .cal-photo-corner .pin-emoji.red-pin{ background:linear-gradient(135deg, #ff6b6b, #c0392b)!important; }
-.cal-cell .cal-photo-corner .pin-emoji.green-pin{ background:linear-gradient(135deg, #2ecc71, #27ae60)!important; }
-.cal-cell .cal-photo-corner .pin-emoji::after{ content:''!important; position:absolute!important; width:2.5px!important; height:2.5px!important; background:#fff!important; border-radius:50%!important; top:1.8px!important; left:1.8px!important; }
-
-        /* V5.0 공유카드 */
-        .fp-share-section{ margin-top:18px; padding:16px; background:rgba(255,255,255,0.06); border-radius:16px; border:1px solid rgba(255,255,255,0.1); }
-        .fp-share-title{ font-size:13px; font-weight:700; color:#E8D5FF; margin-bottom:10px; letter-spacing:0.5px; }
-        .fp-share-preview{ width:100%; aspect-ratio:9/16; max-height:380px; border-radius:14px; overflow:hidden; position:relative; background:linear-gradient(180deg,#2D1B4E 0%,#5B3A8C 30%,#C9A86A 100%); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; box-sizing:border-box; }
-        .fp-share-preview .sc-date{ font-size:12px; color:#FFD88A; letter-spacing:1px; margin-bottom:14px; }
-        .fp-share-preview .sc-moon{ font-size:28px; margin-bottom:8px; }
-        .fp-share-preview .sc-score{ font-size:64px; font-weight:900; color:#FFDDAA; line-height:1; text-shadow:0 2px 20px rgba(255,220,150,0.5); margin-bottom:12px; }
-        .fp-share-preview .sc-text{ font-size:14px; color:#FFF; text-align:center; line-height:1.5; opacity:0.95; }
-        .fp-share-preview .sc-footer{ position:absolute; bottom:12px; font-size:10px; color:rgba(255,255,255,0.5); letter-spacing:1px; }
-        .fp-share-btns{ display:flex; gap:8px; margin-top:12px; }
-        .fp-share-btn{ flex:1; padding:12px; border-radius:12px; border:none; font-weight:800; font-size:13px; cursor:pointer; }
-        .fp-share-btn.save{ background:#FFD88A; color:#2D1B4E; }
-        .fp-share-btn.share{ background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.2); }
-        #share-card-canvas{ display:none; }
-
-</style>
 <script>
-(function(){
-  window.openLottoGeneratorModal = function(){ return; };
-  window.closeLottoGeneratorModal = function(){ return; };
-  window.getShowPhotoPin = function(){ const v=localStorage.getItem('smartDiaryShowPhotoPin'); return v===null?true:v!=='false'; };
-  window.syncPhotoPinToggle = function(){ const chk=document.getElementById('settings-show-photo-pin'); if(chk){ const v=localStorage.getItem('smartDiaryShowPhotoPin'); chk.checked=v===null?true:v!=='false'; } };
-  function isRedForDate(dateStr, allDiaries){
-    const same = allDiaries.filter(d=> (d.date||'').slice(0,10)===dateStr);
-    if(same.some(d=>d.dailyRepeat)) return true;
-    if(same.some(d=>d.onceAlarm)) return true;
-    if(typeof sajuAnniversaryMatches==='function'){
-        for(let dd of allDiaries){
-            if(dd.anniversary && dd.annivRepeat && dd.annivRepeat!=='none' && !dd.onceAlarm && !dd.dailyRepeat){
-                try{ if(sajuAnniversaryMatches(dd, dateStr)) return true; }catch(e){}
-            }
-        }
+window.generateFortuneShareCard = function(score, dateLabel, oneLine, luckyColor){
+    const canvas = document.getElementById('share-card-canvas');
+    if(!canvas) return null;
+    const ctx = canvas.getContext('2d');
+    const W=1080, H=1920;
+    canvas.width=W; canvas.height=H;
+    const grad = ctx.createLinearGradient(0,0,0,H);
+    grad.addColorStop(0,'#2D1B4E'); grad.addColorStop(0.35,'#5B3A8C'); grad.addColorStop(0.7,'#8B6AAE'); grad.addColorStop(1,'#E8C99A');
+    ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='rgba(255,255,255,0.8)';
+    for(let i=0;i<40;i++){ const x=Math.random()*W; const y=Math.random()*H*0.6; const r=Math.random()*3+0.5; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill(); }
+    ctx.font='80px serif'; ctx.textAlign='center'; ctx.fillText('🌙', W/2, 420);
+    ctx.fillStyle='#FFD88A'; ctx.font='bold 32px sans-serif'; ctx.fillText(dateLabel, W/2, 520);
+    ctx.fillStyle='#FFDDAA'; ctx.font='900 180px sans-serif'; ctx.fillText(score+'점', W/2, 850);
+    ctx.shadowColor='rgba(255,220,150,0.6)'; ctx.shadowBlur=30; ctx.fillText(score+'점', W/2, 850); ctx.shadowBlur=0;
+    ctx.fillStyle='#FFFFFF'; ctx.font='600 42px sans-serif';
+    // wrap
+    const words = oneLine.split(' ');
+    let line=''; let y=1020;
+    ctx.textAlign='center';
+    for(let w of words){
+        const test = line + ' ' + w;
+        if(ctx.measureText(test).width > W-160 && line!==''){ ctx.fillText(line, W/2, y); y+=60; line=w; } else line=test;
     }
-    return false;
-  }
-  function hasPhotoForDate(dateStr, allDiaries){
-    return allDiaries.some(d=> (d.date||'').slice(0,10)===dateStr && d.photo);
-  }
-  function ensureRedPins(){
-    let allDiaries=[]; try{ allDiaries=typeof getAllDiaries==='function'?getAllDiaries():JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); }catch(e){ allDiaries=[]; }
-    const showPhotoPin = window.getShowPhotoPin();
-    const grid=document.getElementById('cal-days-grid'); if(!grid) return;
-    grid.querySelectorAll('.cal-cell:not(.adjacent-month)').forEach(cell=>{
-        const dayEl=cell.querySelector('.cal-cell-inner span'); if(!dayEl) return;
-        const day=parseInt(dayEl.textContent.trim()); if(isNaN(day)) return;
-        const dateStr=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-        const isRed=isRedForDate(dateStr, allDiaries); const hasPhoto=hasPhotoForDate(dateStr, allDiaries);
-        const isGreen=hasPhoto && !isRed && showPhotoPin;
-        let corner=cell.querySelector('.cal-photo-corner');
-        if(isRed){
-            if(!corner){ corner=document.createElement('div'); corner.className='cal-photo-corner has-pin-icon red'; corner.setAttribute('data-date', dateStr); corner.innerHTML='<span class="pin-emoji red-pin"></span>'; cell.appendChild(corner); }
-            else{ let pin=corner.querySelector('.pin-emoji'); if(!pin){ corner.innerHTML='<span class="pin-emoji red-pin"></span>'; }else{ pin.className='pin-emoji red-pin'; pin.textContent=''; } corner.className='cal-photo-corner has-pin-icon red'; corner.style.display='flex'; }
-            cell.classList.add('has-photo');
-        }else if(isGreen){
-            if(!corner){ corner=document.createElement('div'); corner.className='cal-photo-corner has-pin-icon green'; corner.setAttribute('data-date', dateStr); corner.innerHTML='<span class="pin-emoji green-pin"></span>'; cell.appendChild(corner); }
-            else{ let pin=corner.querySelector('.pin-emoji'); if(!pin){ corner.innerHTML='<span class="pin-emoji green-pin"></span>'; }else{ pin.className='pin-emoji green-pin'; pin.textContent=''; } corner.className='cal-photo-corner has-pin-icon green'; corner.style.display='flex'; }
-            cell.classList.add('has-photo');
-        }else{ if(corner){ corner.style.display='none'; } cell.classList.remove('has-photo'); }
-    });
-  }
-  window.onShowPhotoPinToggle=function(){ const chk=document.getElementById('settings-show-photo-pin'); if(chk) localStorage.setItem('smartDiaryShowPhotoPin', chk.checked?'true':'false'); if(typeof renderCalendar==='function') renderCalendar(); setTimeout(ensureRedPins,50); };
-  const origOpen=window.openDiaryForm;
-  if(typeof origOpen==='function'){
-    window.openDiaryForm=function(dateStr, existingItem, mode){
-      const r=origOpen.apply(this, arguments);
-      setTimeout(()=>{ try{ const onceCb=document.getElementById('once-alarm-checkbox'); const dailyCb=document.getElementById('daily-repeat-checkbox'); if(existingItem){ if(onceCb) onceCb.checked=!!existingItem.onceAlarm; if(dailyCb) dailyCb.checked=!!existingItem.dailyRepeat; }else{ if(onceCb) onceCb.checked=false; if(dailyCb) dailyCb.checked=false; } }catch(e){} },200);
-      return r;
-    };
-  }
-  // 겹침 방지 - 기존 renderCalendar 래핑
-  const origRender=window.renderCalendar;
-  window.renderCalendar=function(){
-    if(!origRender) return;
-    // gap과 높이만 패치 - 기존 로직 호출 후 zIndex 수정
-    const res=origRender.apply(this, arguments);
+    if(line) { ctx.fillText(line, W/2, y); y+=80; }
+    ctx.fillStyle='rgba(255,255,255,0.7)'; ctx.font='32px sans-serif'; ctx.fillText('행운의 색: '+(luckyColor||'골드'), W/2, y+40);
+    ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.font='24px sans-serif'; ctx.fillText('Smart Diary • 오늘의 운세', W/2, H-80);
+    return canvas;
+};
+window.saveFortuneCard = function(){
+    const canvas=document.getElementById('share-card-canvas');
+    if(!canvas){ alert('카드 준비중...'); return; }
+    const url=canvas.toDataURL('image/png');
+    const a=document.createElement('a'); a.href=url; a.download='오늘의운세_'+(new Date().toISOString().slice(0,10))+'.png'; a.click();
+};
+window.shareFortuneCard = async function(){
+    const canvas=document.getElementById('share-card-canvas');
+    const bodyEl=document.getElementById('fortune-popup-body');
+    const text=bodyEl ? bodyEl.innerText.slice(0,200) : '오늘의 운세';
     try{
-        const grid=document.getElementById('cal-days-grid');
-        if(grid){
-            const cells=grid.querySelectorAll('.cal-cell');
-            const totalRows=Math.ceil(cells.length/7);
-            cells.forEach((cell,idx)=>{
-                const row=Math.floor(idx/7);
-                cell.style.zIndex=String(totalRows-row);
-                // 간격 확보
-                cell.style.marginBottom='2px';
-            });
-        }
-    }catch(e){}
-    setTimeout(ensureRedPins,80);
-    return res;
-  };
-  
-    // V5.0 공유카드 생성
-    window.generateFortuneShareCard = function(score, dateLabel, oneLine, luckyColor){
-        const canvas = document.getElementById('share-card-canvas');
-        if(!canvas) return null;
-        const ctx = canvas.getContext('2d');
-        const W=1080, H=1920;
-        canvas.width=W; canvas.height=H;
-        // gradient
-        const grad = ctx.createLinearGradient(0,0,0,H);
-        grad.addColorStop(0,'#2D1B4E'); grad.addColorStop(0.35,'#5B3A8C'); grad.addColorStop(0.7,'#8B6AAE'); grad.addColorStop(1,'#E8C99A');
-        ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
-        // stars
-        ctx.fillStyle='rgba(255,255,255,0.8)';
-        for(let i=0;i<40;i++){ const x=Math.random()*W; const y=Math.random()*H*0.6; const r=Math.random()*3+0.5; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill(); }
-        // moon
-        ctx.font='80px serif'; ctx.fillText('🌙', W/2-40, 420);
-        // date
-        ctx.fillStyle='#FFD88A'; ctx.font='bold 32px sans-serif'; ctx.textAlign='center'; ctx.fillText(dateLabel, W/2, 520);
-        // score
-        ctx.fillStyle='#FFDDAA'; ctx.font='900 180px sans-serif'; ctx.fillText(score+'점', W/2, 850);
-        // shadow
-        ctx.shadowColor='rgba(255,220,150,0.6)'; ctx.shadowBlur=30;
-        ctx.fillText(score+'점', W/2, 850);
-        ctx.shadowBlur=0;
-        // one line
-        ctx.fillStyle='#FFFFFF'; ctx.font='600 42px sans-serif';
-        const lines = wrapText(ctx, oneLine, W-160);
-        let ly=1000;
-        lines.forEach(line=>{ ctx.fillText(line, W/2, ly); ly+=60; });
-        // lucky color
-        ctx.fillStyle='rgba(255,255,255,0.7)'; ctx.font='32px sans-serif';
-        ctx.fillText('행운의 색: '+(luckyColor||'골드'), W/2, ly+80);
-        // footer
-        ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.font='24px sans-serif'; ctx.fillText('Smart Diary • 오늘의 운세', W/2, H-80);
-        return canvas;
-    };
-    function wrapText(ctx, text, maxWidth){
-        const words=text.split(' '); let lines=[]; let cur='';
-        words.forEach(w=>{ const test=cur+' '+w; if(ctx.measureText(test).width>maxWidth){ lines.push(cur); cur=w; }else{ cur=test; } });
-        if(cur) lines.push(cur);
-        // if too long single sentence without space, split by char
-        if(lines.length===0){ let cur=''; for(let ch of text){ if(ctx.measureText(cur+ch).width>maxWidth){ lines.push(cur); cur=ch; }else cur+=ch; } if(cur) lines.push(cur); }
-        return lines;
-    }
-    window.saveFortuneCard = function(){
-        const canvas=document.getElementById('share-card-canvas');
-        if(!canvas){ alert('카드가 아직 준비 안 됐어요'); return; }
-        const url=canvas.toDataURL('image/png');
-        const a=document.createElement('a'); a.href=url; a.download='오늘의운세_'+(new Date().toISOString().slice(0,10))+'.png'; a.click();
-    };
-    window.shareFortuneCard = async function(){
-        const canvas=document.getElementById('share-card-canvas');
-        const bodyEl=document.getElementById('fortune-popup-body');
-        const text=bodyEl ? bodyEl.innerText.slice(0,200) : '오늘의 운세';
-        try{
-            if(canvas && canvas.toBlob && navigator.canShare){
-                canvas.toBlob(async (blob)=>{
+        if(canvas && canvas.toBlob){
+            canvas.toBlob(async (blob)=>{
+                try{
                     const file=new File([blob],'fortune.png',{type:'image/png'});
-                    if(navigator.canShare({files:[file]})){
-                        await navigator.share({title:'오늘의 운세', text:text, files:[file]});
-                        return;
+                    if(navigator.canShare && navigator.canShare({files:[file]})){
+                        await navigator.share({title:'오늘의 운세', text:text, files:[file]}); return;
                     }
-                    // fallback
-                    if(navigator.share){ await navigator.share({title:'오늘의 운세', text:text}); }
-                    else{ await navigator.clipboard.writeText(text); alert('복사됐어요! 카톡에 붙여넣기 해보세요'); }
-                });
-            }else if(navigator.share){
-                await navigator.share({title:'오늘의 운세', text:text});
-            }else{
-                await navigator.clipboard.writeText(text);
-                alert('복사됐어요! 카톡에 붙여넣기 해보세요');
-            }
-        }catch(e){ console.log(e); }
-    };
-
-  setInterval(ensureRedPins,1500);
-  setTimeout(()=>{ if(typeof renderCalendar==='function') renderCalendar(); },500);
-})();
-</script>
-
-<script>
-(function(){
-  const _origOpenFortune = window.openFortunePopup;
+                }catch(e){}
+                if(navigator.share){ await navigator.share({title:'오늘의 운세', text:text}); }
+                else{ await navigator.clipboard.writeText(text); alert('복사됐어요!'); }
+            });
+        } else if(navigator.share){ await navigator.share({title:'오늘의 운세', text:text}); }
+    }catch(e){ console.log(e); }
+};
+// closure to capture current fortune vars
+let _fortuneCtx=null;
+const _origOpen = window.openFortunePopup;
+if(_origOpen){
   window.openFortunePopup = function(){
-    const res = _origOpenFortune ? _origOpenFortune.apply(this, arguments) : null;
-    try{
+    const r = _origOpen.apply(this, arguments);
+    setTimeout(()=>{
+      try{
         const bodyEl=document.getElementById('fortune-popup-body');
-        if(!bodyEl || bodyEl.querySelector('.fp-share-section')) return res;
-        // Extract info from body
-        const scoreMatch = bodyEl.innerHTML.match(/(\d{1,3})점/);
+        const scoreMatch = bodyEl ? bodyEl.innerHTML.match(/(\d{1,3})점/) : null;
         const score = scoreMatch ? scoreMatch[1] : '88';
-        const dateEl = document.querySelector('.fp-date-label');
-        const dateLabel = dateEl ? dateEl.textContent : new Date().toLocaleDateString('ko-KR');
-        const oneLineEl = bodyEl.querySelector('.fp-oneliner');
+        const dateEl = bodyEl ? bodyEl.innerHTML.match(/(\d+월 \d+일 \([일월화수목금토]\))/):null;
+        const dateLabel = dateEl ? dateEl[1] : new Date().toLocaleDateString('ko-KR');
+        const oneLineEl = document.querySelector('.fp-hero div:nth-child(2)');
         const oneLine = oneLineEl ? oneLineEl.textContent : '오늘 하루 행운이 함께해요';
-        const colorEl = bodyEl.querySelector('.fp-color-chip');
-        const luckyColor = colorEl ? colorEl.textContent : '골드';
-        const shareSection = document.createElement('div');
-        shareSection.className='fp-share-section';
-        shareSection.innerHTML = `
-                <div class="fp-share-title">📸 공유카드 (하루 1회)</div>
-                <div class="fp-share-preview" id="fp-share-preview">
-                    <div class="sc-date">${dateLabel}</div>
-                    <div class="sc-moon">🌙</div>
-                    <div class="sc-score">${score}점</div>
-                    <div class="sc-text">${oneLine}</div>
-                    <div class="sc-footer">Smart Diary</div>
-                </div>
-                <canvas id="share-card-canvas" width="1080" height="1920" style="display:none"></canvas>
-                <div class="fp-share-btns">
-                    <button class="fp-share-btn save" onclick="window._sc_score='${score}'; window._sc_date='${dateLabel}'; window._sc_line='${oneLine.replace(/'/g,"")}'; window._sc_color='${luckyColor.replace(/'/g,"")}'; generateFortuneShareCard(window._sc_score, window._sc_date, window._sc_line, window._sc_color); saveFortuneCard();">💾 이미지 저장</button>
-                    <button class="fp-share-btn share" onclick="window._sc_score='${score}'; window._sc_date='${dateLabel}'; window._sc_line='${oneLine.replace(/'/g,"")}'; window._sc_color='${luckyColor.replace(/'/g,"")}'; generateFortuneShareCard(window._sc_score, window._sc_date, window._sc_line, window._sc_color); shareFortuneCard();">💬 카톡/인스타 공유</button>
-                </div>
-        `;
-        bodyEl.appendChild(shareSection);
-        setTimeout(()=>{ try{ generateFortuneShareCard(score, dateLabel, oneLine, luckyColor); }catch(e){} }, 200);
-    }catch(e){ console.log('share card inject error', e); }
-    return res;
+        const color = '골드';
+        _fortuneCtx={score, dateLabel, oneLine, color};
+        window.genCard = function(){ return generateFortuneShareCard(score, dateLabel, oneLine, color); };
+        genCard();
+      }catch(e){ console.log('share init', e); }
+    }, 300);
+    return r;
   };
-})();
+}
 </script>
 </body>
-
 
 
 
