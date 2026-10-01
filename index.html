@@ -13679,7 +13679,7 @@ window.updateTitleIconColor=function(){};
   });
 
   // 달력 변경시에도 업데이트
-  setInterval(updateCalendarIcons, 1500);
+  // removed flicker interval V5.8
 
   window.updateCalendarIcons = updateCalendarIcons;
 })();
@@ -13774,22 +13774,7 @@ window.updateTitleIconColor=function(){};
 })();
 </script>
 
-<style id="V5_7_PIN">
-/* V5.7 물풍선 핀 - 단일, APK 호환 */
-.cal-cell .cal-photo-corner,
-.cal-cell.has-photo .cal-photo-corner {
-  position:absolute !important;
-  top:1px !important; left:2px !important;
-  width:auto !important; height:auto !important;
-  background:transparent !important; border:none !important; box-shadow:none !important;
-  padding:0 !important; margin:0 !important;
-}
-.cal-cell .cal-photo-corner .pin-emoji {
-  background:transparent !important; border:none !important;
-  font-size:8px !important; line-height:1 !important;
-  padding:0 !important; margin:0 !important;
-}
-</style>
+
 <script id="V5_7_FINAL">
 // V5.7 최종 - 물풍선 핀 + 공유카드 (V4.72 기반, 단일 후킹)
 (function(){
@@ -13797,7 +13782,6 @@ window.updateTitleIconColor=function(){};
     try{ return JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); }catch(e){ return []; }
   }
   function updateIcons(){
-    // 깜빡임 방지 버전
     try{
       const all=getDiaries();
       const dailySet=new Set(all.filter(d=>d.dailyRepeat).map(d=>d.date));
@@ -13843,7 +13827,7 @@ window.updateTitleIconColor=function(){};
   hookCal();
   setTimeout(updateIcons, 600);
   setTimeout(updateIcons, 1600);
-  // flicker fix - no interval
+  // removed flicker interval V5.8
   window.updateCalendarIcons=updateIcons;
 
   // 공유카드
@@ -13915,6 +13899,46 @@ window.updateTitleIconColor=function(){};
   }
 })();
 </script>
+
+<style id="V5_8_PIN">.cal-cell .cal-photo-corner{position:absolute!important;top:1px!important;left:2px!important;width:auto!important;height:auto!important;background:transparent!important;border:none!important;box-shadow:none!important;padding:0!important;margin:0!important}.cal-cell .cal-photo-corner .pin-emoji{background:transparent!important;border:none!important;font-size:8px!important;line-height:1!important;padding:0!important;margin:0!important}</style>
+<script id="V5_8_NOFlicker">
+(function(){
+  function getDiaries(){try{return JSON.parse(localStorage.getItem('smartDiaryList')||'[]')}catch(e){return []}}
+  function syncPins(){
+    try{
+      var all=getDiaries();
+      var daily=new Set(all.filter(d=>d.dailyRepeat).map(d=>d.date));
+      var anniv=new Set(all.filter(d=>d.annivTitle||d.anniversary).map(d=>d.date));
+      var once=new Set(all.filter(d=>d.onceAlarm).map(d=>d.date));
+      var photo=new Set(all.filter(d=>d.photo).map(d=>d.date).filter(Boolean));
+      var y=typeof calYear!=='undefined'?calYear:new Date().getFullYear();
+      var m=typeof calMonth!=='undefined'?calMonth:new Date().getMonth();
+      document.querySelectorAll('.cal-cell:not(.adjacent-month)').forEach(function(cell){
+        var inner=cell.querySelector('.cal-cell-inner span'); if(!inner) return;
+        var day=parseInt(inner.textContent); if(isNaN(day)) return;
+        var ds=y+'-'+String(m+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+        var corner=cell.querySelector('.cal-photo-corner'); if(!corner) return;
+        var emoji=corner.querySelector('.pin-emoji'); if(!emoji) return;
+        var isDaily=daily.has(ds)||anniv.has(ds)||once.has(ds);
+        var isPhoto=photo.has(ds);
+        corner.classList.remove('daily-pin','anniv-pin','photo-only');
+        if(isDaily){ corner.classList.add('daily-pin'); emoji.textContent='📌'; emoji.style.color='#27ae60'; }
+        else if(isPhoto){ corner.classList.add('photo-only'); emoji.textContent='📌'; emoji.style.color='#e74c3c'; }
+      });
+    }catch(e){}
+  }
+  function hook(){
+    if(window._v58Hooked) return;
+    if(typeof window.renderCalendar!=='function'){ setTimeout(hook,300); return; }
+    var orig=window.renderCalendar;
+    window.renderCalendar=function(){ var r=orig.apply(this, arguments); syncPins(); return r; };
+    window._v58Hooked=true;
+  }
+  hook();
+  window.updateCalendarIcons=syncPins;
+})();
+</script>
+
 </body>
 
 
