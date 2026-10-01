@@ -1817,9 +1817,9 @@ body { touch-action: pan-x pan-y pinch-zoom !important; }
 #cal-days-grid { background:var(--bg-color, #faf6f3) !important; margin:0 !important; padding:2px 0 8px !important; gap:2px !important; overflow:visible !important; }
 .cal-cell { box-sizing:border-box !important; border-radius:8px !important; border:1px solid #eee !important; background:#fff !important; overflow:hidden !important; position:absolute !important; }
 
-.cal-cell.has-photo.sunday .cal-photo-corner { background: #f2c9c9 !important; }
-.cal-cell.has-photo.saturday .cal-photo-corner { background: #c9daf2 !important; }
-.cal-cell.has-photo.today-date .cal-photo-corner { background: #b8e0d8 !important; }
+.cal-cell.has-photo.sunday 
+.cal-cell.has-photo.saturday 
+.cal-cell.has-photo.today-date 
 
 .cal-cell.sunday { background:#fdf2f2 !important; border-color:#f7d6d6 !important; }
 .cal-cell.sunday span { color:#e74c3c !important; }
@@ -2960,15 +2960,14 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
 
 
 
-<style id="V69_ORIGINAL_PIN_RESTORED">
+<style id="V9_FINAL_PIN_CORRECT">
 .cal-cell .cal-photo-corner,
-.cal-cell.has-photo .cal-photo-corner,
-.cal-cell.saturday .cal-photo-corner,
-.cal-cell.sunday .cal-photo-corner {
+.cal-cell.has-photo .cal-photo-corner {
   position:absolute !important;
   top:2px !important; left:3px !important;
   width:12px !important; height:12px !important;
-  background:transparent !important; border:none !important;
+  background:transparent !important; background-color:transparent !important;
+  border:none !important; box-shadow:none !important;
   display:flex !important; align-items:center !important; justify-content:center !important;
   opacity:1 !important; transition:none !important;
 }
@@ -2982,11 +2981,11 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
   top:-1px !important;
   box-shadow:0 1px 3px rgba(0,0,0,0.3) !important;
 }
-.cal-cell .cal-photo-corner .pin-emoji.red-pin{
-  background:linear-gradient(135deg, #ff6b6b, #c0392b) !important;
-}
 .cal-cell .cal-photo-corner .pin-emoji.green-pin{
   background:linear-gradient(135deg, #2ecc71, #27ae60) !important;
+}
+.cal-cell .cal-photo-corner .pin-emoji.red-pin{
+  background:linear-gradient(135deg, #ff6b6b, #c0392b) !important;
 }
 .cal-cell .cal-photo-corner .pin-emoji::after{
   content:'' !important;
@@ -2996,6 +2995,7 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
   border-radius:50% !important;
   top:1.8px !important; left:1.8px !important;
 }
+.cal-photo-corner { background:transparent !important; }
 </style>
 
 </head>
@@ -3230,8 +3230,7 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
                 <div class="toggle-card"><span class="toggle-card-label">🔍 검색/기간필터</span><label class="toggle-switch"><input type="checkbox" id="toggle-search-filter" checked onchange="setSearchFilterVisibility(this.checked)"><span class="toggle-slider"></span></label></div>
                 <div class="toggle-card"><span class="toggle-card-label">🔮 오늘의 운세</span><label class="toggle-switch"><input type="checkbox" id="settings-show-fortune" checked onchange="onShowFortuneToggle()"><span class="toggle-slider"></span></label></div>
                 <div class="toggle-card" id="fortune-auto-toggle-card"><span class="toggle-card-label">⏰ 운세 자동팝업</span><label class="toggle-switch"><input type="checkbox" id="settings-fortune-auto" checked onchange="onFortuneAutoToggle()"><span class="toggle-slider"></span></label></div>
-                                <div class="toggle-card" id="photo-pin-toggle-card"><span class="toggle-card-label">📌 사진고정핀 표시</span><label class="toggle-switch"><input type="checkbox" id="settings-show-photo-pin" checked onchange="onShowPhotoPinToggle()"><span class="toggle-slider"></span></label></div>
-            </div>
+                
 
             <div class="settings-section">
                 <label>🏷️ 지출 계정 과목 관리</label>
@@ -3313,12 +3312,12 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
 </div>
 
 
-<!-- 🎱  (V210) -->
+<!-- 🎱 사주기반 로또 생성기 (V210) -->
 <div class="modal-overlay" id="lotto-generator-modal-overlay" style="display:none;" onclick="handleLottoGeneratorModalBackgroundClick(event)">
   <div class="lotto-generator-card" id="lotto-generator-card" onclick="event.stopPropagation()" style="width:100%; max-width:460px; margin:0 auto; border-radius:22px; padding:22px 18px 20px; background:linear-gradient(165deg, #23264A 0%, #171933 60%, #14152B 100%); border:1px solid rgba(255,255,255,0.12); box-shadow:0 20px 50px rgba(0,0,0,0.5); position:relative;">
     <button class="fortune-popup-close" onclick="closeLottoGeneratorModal()" style="position:absolute; top:14px; right:14px; background:rgba(255,255,255,0.1); border:none; color:#F2EFFF; width:30px; height:30px; border-radius:50%;">✖</button>
     <div style="text-align:center; margin-bottom:14px;">
-      <div style="display:inline-flex; align-items:center; gap:6px; font-size:18px; font-weight:900; letter-spacing:-0.02em; color:#2A2340; background:linear-gradient(120deg, #FFD98E, #FF9AC2); padding:10px 22px; border-radius:999px; box-shadow:0 4px 12px rgba(255,154,194,0.3);">🎱 </div>
+      <div style="display:inline-flex; align-items:center; gap:6px; font-size:18px; font-weight:900; letter-spacing:-0.02em; color:#2A2340; background:linear-gradient(120deg, #FFD98E, #FF9AC2); padding:10px 22px; border-radius:999px; box-shadow:0 4px 12px rgba(255,154,194,0.3);">🎱 사주기반 로또 생성기</div>
     </div>
     <div class="lotto-section" style="margin-top:0; background:rgba(255,255,255,0.05);">
         <div class="lotto-section-title">🔮 100만명 사주분석(최고사주 기반 추천번호)</div>
@@ -6556,7 +6555,7 @@ window.attachPhotoDoubleTap = function(el, handler){
         const fortuneChk = document.getElementById('settings-show-fortune');
         if (fortuneChk) fortuneChk.checked = getShowFortune();
         syncFortuneToggles();
-        // lotto removed V8 try{ if(typeof syncPhotoPinToggle==="function") syncPhotoPinToggle(); }catch(e){}
+        syncLottoToggle(); try{ if(typeof syncPhotoPinToggle==="function") syncPhotoPinToggle(); }catch(e){}
         const healthChk = document.getElementById('settings-show-health');
         if (healthChk) healthChk.checked = getShowHealth();
         const moneySummaryChk = document.getElementById('toggle-money-summary');
@@ -6836,7 +6835,15 @@ window.attachPhotoDoubleTap = function(el, handler){
     function onFortuneAutoToggle(){ const chk = document.getElementById('settings-fortune-auto'); if(!chk) return; localStorage.setItem('smartDiaryFortuneAuto', chk.checked ? '1' : '0'); }
     function syncFortuneToggles(){ const autoChk = document.getElementById('settings-fortune-auto'); if(autoChk) autoChk.checked = getFortuneAutoEnabled(); const showChk = document.getElementById('settings-show-fortune'); const autoCard = document.getElementById('fortune-auto-toggle-card'); if(showChk && autoCard) autoCard.style.opacity = showChk.checked ? '1' : '0.4'; }
 
-        function syncLottoToggle(){ const chk = document.getElementById('settings-show-lotto'); if(chk) chk.checked = getShowLotto(); }
+    function getShowLotto(){ const v = localStorage.getItem('smartDiaryShowLotto'); return v===null ? true : v==='true'; }
+    function onShowLottoToggle(){ const chk = document.getElementById('settings-show-lotto'); if(!chk) return; localStorage.setItem('smartDiaryShowLotto', chk.checked ? 'true' : 'false'); applyLottoVisibility(); }
+    function applyLottoVisibility(){
+        const show = getShowLotto();
+        // 운세 팝업 안에 로또 버튼 숨김 처리는 팝업 렌더시 처리, 여기서는 설정에서만
+        const lottoCard = document.getElementById('lotto-toggle-card');
+        if(lottoCard) lottoCard.style.opacity = '1';
+    }
+    function syncLottoToggle(){ const chk = document.getElementById('settings-show-lotto'); if(chk) chk.checked = getShowLotto(); }
     // V99 사진고정핀 표시 ON/OFF - 달력 핀 표시 제어 (제목/별표 안 건드림)
     function getShowPhotoPin(){ const v = localStorage.getItem('smartDiaryShowPhotoPin'); return v===null ? true : v!=='false'; }
     function onShowPhotoPinToggle(){
@@ -7417,9 +7424,9 @@ window.attachPhotoDoubleTap = function(el, handler){
     }
 
     function openFortunePopup() {
+        try{ var t=getTodayStr(); localStorage.setItem('smartDiarySajuLastShown', t); sessionStorage.setItem('fortuneShownSession', t); }catch(e){}
         const bodyEl = document.getElementById('fortune-popup-body');
         if (!bodyEl) return;
-        try{ const t=getTodayStr(); localStorage.setItem('smartDiarySajuLastShown', t); sessionStorage.setItem('fortuneShownSession', t); }catch(e){}
 
         if (!sajuBirthInfo || !sajuBirthInfo.date || !sajuDayMasterElem) {
             bodyEl.innerHTML = `
@@ -7573,12 +7580,11 @@ window.attachPhotoDoubleTap = function(el, handler){
                     <div style="font-size:28px; margin-bottom:8px;">🌙</div>
                     <div id="share-score" style="font-size:64px; font-weight:900; color:#FFDDAA; line-height:1; text-shadow:0 2px 20px rgba(255,220,150,0.5); margin-bottom:12px;">88점</div>
                     <div id="share-oneline" style="font-size:14px; color:#FFF; text-align:center; line-height:1.5; opacity:0.95;">오늘 하루 행운이 함께해요</div>
-                    <div style="position:absolute; bottom:12px; font-size:10px; color:rgba(255,255,255,0.5); letter-spacing:1px;">Smart Diary</div>
                 </div>
                 <canvas id="share-card-canvas" width="1080" height="1920" style="display:none;"></canvas>
                 <div style="display:flex; gap:8px; margin-top:12px;">
-                    <button style="flex:1; padding:12px; border-radius:12px; border:none; font-weight:800; font-size:13px; cursor:pointer; background:#FFD88A; color:#2A2340;" onclick="saveFortuneCard()">💾 이미지 저장</button>
-                    <button style="flex:1; padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.2); font-weight:800; font-size:13px; cursor:pointer; background:rgba(255,255,255,0.15); color:#fff;" onclick="shareFortuneCard()">💬 공유하기</button>
+                    <button style="flex:1; padding:12px; border-radius:12px; border:none; font-weight:800; font-size:13px; cursor:pointer; background:#FFD88A; color:#2A2340;" onclick="saveFortuneCard()">💾 저장</button>
+                    <button style="flex:1; padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.2); font-weight:800; font-size:13px; cursor:pointer; background:rgba(255,255,255,0.15); color:#fff;" onclick="shareFortuneCard()">💬 공유</button>
                 </div>
             </div>
 
@@ -7588,7 +7594,7 @@ window.attachPhotoDoubleTap = function(el, handler){
                 <div class="fp-my-saju-link-big" onclick="openBucketListModal()" style="margin:0; text-align:center; padding:10px; font-size:13px; background:linear-gradient(120deg, #A8EDEA, #FED6E3); color:#2A2340;">🎯 나의 버킷 리스트</div>
             </div>
 
-            <!-- V8 lotto removed --><!-- V8 lotto removed -->
+            <!-- V9 lotto button removed -->
                 <div class="fp-exit-sticky"><button onclick="closeFortunePopup()" style="width:100%;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:14px;border-radius:14px;font-weight:800;font-size:15px;">종료</button></div>`;
 
         fortunePopupOverlay.classList.add('active'); lockBodyScroll(); } function saveFortuneCard_DISABLED(){
@@ -7620,7 +7626,8 @@ window.attachPhotoDoubleTap = function(el, handler){
         if (!sajuBirthInfo || !sajuBirthInfo.date || !sajuDayMasterElem) return;
         const urlParams = new URLSearchParams(window.location.search);
         const forceOpen = urlParams.get('autobrief') === '1';
-        const today = getTodayStr(); const lastShown = localStorage.getItem('smartDiarySajuLastShown'); if (!forceOpen && lastShown === today) return; const sess = sessionStorage.getItem('fortuneShownSession'); if (!forceOpen && sess === today) return; try{ localStorage.setItem('smartDiarySajuLastShown', today); sessionStorage.setItem('fortuneShownSession', today); }catch(e){}
+        const lastShown = localStorage.getItem('smartDiarySajuLastShown');
+        if (!forceOpen && lastShown === getTodayStr()) return;
         openFortunePopup();
     }
 
@@ -7754,7 +7761,7 @@ window.attachPhotoDoubleTap = function(el, handler){
     let bucketPwVerified = false;
 
     function openBucketListModal() {
-        try{ const fOverlay=document.getElementById('fortune-popup-overlay'); if(fOverlay && fOverlay.classList.contains('active')) window._bucketOpenedFromFortune=true; }catch(e){}
+        try{ var fOverlay=document.getElementById('fortune-popup-overlay'); if(fOverlay && fOverlay.classList.contains('active')) window._bucketOpenedFromFortune=true; }catch(e){}
         try {
             const savedPw = getBucketPassword();
             if(savedPw && !bucketPwVerified){
@@ -7880,8 +7887,8 @@ window.attachPhotoDoubleTap = function(el, handler){
             const overlay = document.getElementById('bucket-list-modal-overlay');
             if (overlay) overlay.style.display = 'none';
             unlockBodyScrollStrong();
-            try{ const fromFortune = window._bucketOpenedFromFortune === true; if(fromFortune){ window._bucketOpenedFromFortune = false; setTimeout(()=>{ if(typeof openFortunePopup==='function') openFortunePopup(); }, 80); } }catch(e){}
-            setTimeout(()=>{ bucketPwVerified = false; }, 5*60*1000);
+            try{ if(window._bucketOpenedFromFortune){ window._bucketOpenedFromFortune=false; setTimeout(function(){ if(typeof openFortunePopup==='function') openFortunePopup(); }, 80); } }catch(e){}
+            setTimeout(function(){ bucketPwVerified = false; }, 5*60*1000);
         } catch(e){ unlockBodyScrollStrong(); }
     }
     function handleBucketListModalBackgroundClick(event) {
@@ -10193,7 +10200,42 @@ async function showPhotosForDate(dateStr){
 
 
 </script>
-<!-- V8 removed calendar override script -->
+<script>
+// v43 2줄 고정 + 인접월 흐릿 처리
+(function(){
+  function ensureStickyWrap(){
+    const card=document.getElementById('calendar-card');
+    if(!card) return;
+    const header=card.querySelector('.calendar-header');
+    const weekdays=document.getElementById('cal-days-name-grid');
+    const grid=document.getElementById('cal-days-grid');
+    if(!header||!weekdays) return;
+    let wrap=card.querySelector('.calendar-sticky-wrap');
+    if(!wrap){
+      wrap=document.createElement('div');
+      wrap.className='calendar-sticky-wrap';
+      card.insertBefore(wrap, header);
+      wrap.appendChild(header);
+      wrap.appendChild(weekdays);
+    }
+    wrap.style.position='sticky'; wrap.style.top='0px'; wrap.style.zIndex='100';
+    if(grid){ grid.style.overflow='visible'; grid.style.maxHeight='none'; }
+    card.style.overflow='visible';
+  }
+  function init(){
+    ensureStickyWrap();
+    if(window.renderCalendar && !window.renderCalendar._v43){
+      const orig=window.renderCalendar;
+      window.renderCalendar=function(...a){ const r=orig.apply(this,a); setTimeout(ensureStickyWrap,20); setTimeout(ensureStickyWrap,150); return r; };
+      window.renderCalendar._v43=true;
+    }
+  }
+  document.addEventListener('DOMContentLoaded', init);
+  window.addEventListener('load', ()=>{ init(); setTimeout(init,200); setTimeout(init,600); });
+  window.addEventListener('resize', ()=> setTimeout(ensureStickyWrap,50));
+  setTimeout(init,100); setTimeout(init,500); setTimeout(init,1200);
+})();
+</script>
 
 <script>
 (function(){
@@ -10843,7 +10885,7 @@ async function showPhotosForDate(dateStr){
   // 기존 renderCalendar를 래핑해서 셀 클릭에서 세모 영역 무시
   const _origRender = window.renderCalendar;
   if(_origRender && !_origRender._patchedL){
-    // V8 removed duplicate renderCalendar
+    // V9 removed
           }
         });
       }, 50);
@@ -11106,15 +11148,15 @@ async function showPhotosForDate(dateStr){
 
 
 
-<!-- V8 removed full calendar rewrite -->
+<!-- V9 removed V301 calendar override -->
 
 
 
-<!-- V8 removed full calendar rewrite -->
+<!-- V9 removed V301 calendar override -->
 
 
 
-<!-- V8 removed full calendar rewrite -->
+<!-- V9 removed V301 calendar override -->
 
 
 <script>
@@ -11168,7 +11210,7 @@ async function showPhotosForDate(dateStr){
 </script>
 
 
-<!-- V8 removed full calendar rewrite -->
+<!-- V9 removed V301 calendar override -->
 
 
 
@@ -12151,7 +12193,7 @@ async function showPhotosForDate(dateStr){
 
   var origCal=window.renderCalendar;
   if(origCal && !origCal._vFinal){
-    // V8 removed duplicate renderCalendar
+    // V9 removed
     window.renderCalendar._vFinal=true;
   }
   var origList=window.renderDiaryAroundToday;
@@ -13262,7 +13304,7 @@ console.log('[DailyAlarm] 스크립트 로드 완료 - testDailyAlarm()으로 �
   function patchCalendar(){
     if(typeof window.renderCalendar !== 'function'){ setTimeout(patchCalendar, 300); return; }
     const orig=window.renderCalendar;
-    // V8 removed duplicate renderCalendar
+    // V9 removed
   }
   patchCalendar();
 
@@ -13910,7 +13952,7 @@ window.updateTitleIconColor=function(){};
     const orig = window.renderCalendar;
     if(!orig || window._v28Hooked) return;
     window._v28Hooked = true;
-    // V8 removed duplicate renderCalendar
+    // V9 removed
     console.log('V4.28 renderCalendar hooked');
   }
 
@@ -13920,7 +13962,7 @@ window.updateTitleIconColor=function(){};
   });
 
   // 달력 변경시에도 업데이트
-  // V8 removed flicker interval
+  // V9 removed flicker
 
   window.updateCalendarIcons = updateCalendarIcons;
 })();
@@ -13933,29 +13975,176 @@ window.updateTitleIconColor=function(){};
 .cal-cell .cal-photo-corner .pin-emoji.green-pin{ background:linear-gradient(135deg, #2ecc71, #27ae60)!important; }
 .cal-cell .cal-photo-corner .pin-emoji::after{ content:''!important; position:absolute!important; width:2.5px!important; height:2.5px!important; background:#fff!important; border-radius:50%!important; top:1.8px!important; left:1.8px!important; }
 </style>
-<!-- V8 removed calendar override script -->
-
-<!-- V8 removed full calendar rewrite -->
-
-
-<!-- V8_FINAL to be replaced -->
-
-<script id="V8_FINAL_RESTORED">
-// V8 최종 - V69 물풍선 원본 그대로 복구
+<script>
+// [V4.67] 모든 날짜 빨강 버그 수정 + 음력/양력 중복 제거 + 하루만은 그날만
 (function(){
-  function getDiaries(){try{return JSON.parse(localStorage.getItem('smartDiaryList')||'[]')}catch(e){return []}}
-  function isDailyForDate(dateStr, allDiaries){
-    var same = allDiaries.filter(function(d){ return (d.date||'').slice(0,10)===dateStr; });
-    if(same.some(function(d){ return d.dailyRepeat; })) return true;
-    if(same.some(function(d){ return d.onceAlarm; })) return true;
-    if(same.some(function(d){ return d.anniversary || d.annivTitle; })) return true;
+  window.forcePin = function(){};
+  window.updatePins = function(){};
+  window.getShowPhotoPin = function(){
+    const v = localStorage.getItem('smartDiaryShowPhotoPin');
+    return v===null ? true : v!=='false';
+  };
+  window.syncPhotoPinToggle = function(){
+    const chk = document.getElementById('settings-show-photo-pin');
+    if(chk){ const v=localStorage.getItem('smartDiaryShowPhotoPin'); chk.checked = v===null ? true : v!=='false'; }
+  };
+
+  function isRedForDate(dateStr, allDiaries){
+    // 같은 날짜에 있는 일기만 확인 - 매일 반복도 원래 날짜에만 빨강 (알림은 매일 울리지만 핀은 원래 날짜에만)
+    const same = allDiaries.filter(d=> (d.date||'').slice(0,10)===dateStr);
+    
+    // 1) 매일 반복: 같은 날짜에 매일반복 체크된 일기가 있으면 빨강
+    if(same.some(d=>d.dailyRepeat)) return true;
+
+    // 2) 하루만 울림: 같은 날짜에 하루만 체크된 일기가 있으면 빨강 (정확히 그날만, 내년엔 안 나옴)
+    if(same.some(d=>d.onceAlarm)) return true;
+
+    // 3) 기념일: 음력은 음력끼리, 양력은 양력끼리만 (중복 제거)
     if(typeof sajuAnniversaryMatches==='function'){
-        for(var i=0;i<allDiaries.length;i++){
-            var dd=allDiaries[i];
+        for(let dd of allDiaries){
             if(dd.anniversary && dd.annivRepeat && dd.annivRepeat!=='none' && !dd.onceAlarm && !dd.dailyRepeat){
-                try{ if(sajuAnniversaryMatches(dd, dateStr)) return true; }catch(e){}
+                try{ 
+                    if(sajuAnniversaryMatches(dd, dateStr)) return true; 
+                }catch(e){}
             }
         }
+    }
+    return false;
+  }
+
+  function hasPhotoForDate(dateStr, allDiaries){
+    return allDiaries.some(d=> (d.date||'').slice(0,10)===dateStr && d.photo);
+  }
+
+  function ensureRedPins(){
+    let allDiaries = [];
+    try { allDiaries = typeof getAllDiaries==='function'?getAllDiaries():JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); } catch(e){ allDiaries=[]; }
+    const showPhotoPin = window.getShowPhotoPin();
+    const grid = document.getElementById('cal-days-grid');
+    if(!grid) return;
+    grid.querySelectorAll('.cal-cell:not(.adjacent-month)').forEach(cell=>{
+        const dayEl = cell.querySelector('.cal-cell-inner span');
+        if(!dayEl) return;
+        const day = parseInt(dayEl.textContent.trim());
+        if(isNaN(day)) return;
+        const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        const isRed = isRedForDate(dateStr, allDiaries);
+        const hasPhoto = hasPhotoForDate(dateStr, allDiaries);
+        const isGreen = hasPhoto && !isRed && showPhotoPin;
+        let corner = cell.querySelector('.cal-photo-corner');
+        if(isRed){
+            if(!corner){
+                corner = document.createElement('div');
+                corner.className = 'cal-photo-corner has-pin-icon red';
+                corner.setAttribute('data-date', dateStr);
+                corner.innerHTML = '<span class="pin-emoji red-pin"></span>';
+                cell.appendChild(corner);
+            }else{
+                let pin = corner.querySelector('.pin-emoji');
+                if(!pin){ corner.innerHTML='<span class="pin-emoji red-pin"></span>'; }
+                else{ pin.className='pin-emoji red-pin'; pin.textContent=''; }
+                corner.className = 'cal-photo-corner has-pin-icon red';
+                corner.style.display='flex';
+            }
+            cell.classList.add('has-photo');
+        }else if(isGreen){
+            if(!corner){
+                corner = document.createElement('div');
+                corner.className = 'cal-photo-corner has-pin-icon green';
+                corner.setAttribute('data-date', dateStr);
+                corner.innerHTML = '<span class="pin-emoji green-pin"></span>';
+                cell.appendChild(corner);
+            }else{
+                let pin = corner.querySelector('.pin-emoji');
+                if(!pin){ corner.innerHTML='<span class="pin-emoji green-pin"></span>'; }
+                else{ pin.className='pin-emoji green-pin'; pin.textContent=''; }
+                corner.className = 'cal-photo-corner has-pin-icon green';
+                corner.style.display='flex';
+            }
+            cell.classList.add('has-photo');
+        }else{
+            if(corner){ corner.style.display='none'; }
+            cell.classList.remove('has-photo');
+        }
+    });
+  }
+
+  function patch(){
+    if(typeof window.renderCalendar !== 'function'){ setTimeout(patch, 300); return; }
+    if(window._v67Patched) return;
+    window._v67Patched=true;
+    const orig = window.renderCalendar;
+    // V9 removed
+    const grid = document.getElementById('cal-days-grid');
+    if(grid){
+        const observer = new MutationObserver(()=>{ setTimeout(ensureRedPins, 50); });
+        observer.observe(grid, {childList:true, subtree:true});
+    }
+    setTimeout(()=>{ if(typeof window.renderCalendar==='function') window.renderCalendar(); }, 500);
+  }
+
+  window.onShowPhotoPinToggle = function(){
+    const chk = document.getElementById('settings-show-photo-pin');
+    if(chk) localStorage.setItem('smartDiaryShowPhotoPin', chk.checked ? 'true' : 'false');
+    if(typeof renderCalendar==='function') renderCalendar();
+    setTimeout(ensureRedPins, 50);
+  };
+
+  const origOpen = window.openDiaryForm;
+  if(typeof origOpen==='function'){
+    window.openDiaryForm = function(dateStr, existingItem, mode){
+      const r = origOpen.apply(this, arguments);
+      setTimeout(()=>{
+        try{
+          const onceCb = document.getElementById('once-alarm-checkbox');
+          const dailyCb = document.getElementById('daily-repeat-checkbox');
+          if(existingItem){
+            if(onceCb) onceCb.checked = !!existingItem.onceAlarm;
+            if(dailyCb) dailyCb.checked = !!existingItem.dailyRepeat;
+          }else{
+            if(onceCb) onceCb.checked = false;
+            if(dailyCb) dailyCb.checked = false;
+          }
+        }catch(e){}
+      }, 200);
+      return r;
+    };
+  }
+
+  patch();
+  // V9 removed flicker
+  setTimeout(()=>{ if(typeof syncPhotoPinToggle==='function') syncPhotoPinToggle(); }, 400);
+})();
+</script>
+
+<!-- V9 removed old calendar override -->
+
+<script id="V9_FINAL_LOGIC">
+(function(){
+  function getDiaries(){try{return JSON.parse(localStorage.getItem('smartDiaryList')||'[]')}catch(e){return []}}
+  function getTodayStr(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  function isAlarmForDate(dateStr, allDiaries){
+    var todayStr = getTodayStr();
+    for(var i=0;i<allDiaries.length;i++){
+      var dd=allDiaries[i];
+      if((dd.date||'').slice(0,10)!==dateStr) continue;
+      if(dd.onceAlarm){
+        if(dateStr < todayStr) continue;
+        return true;
+      }
+      if(dd.dailyRepeat) return true;
+      if(dd.anniversary || dd.annivTitle) return true;
+    }
+    if(typeof sajuAnniversaryMatches==='function'){
+      for(var j=0;j<allDiaries.length;j++){
+        var ad=allDiaries[j];
+        if(ad.anniversary && ad.annivRepeat && ad.annivRepeat!=='none' && !ad.onceAlarm && !ad.dailyRepeat){
+          try{ if(sajuAnniversaryMatches(ad, dateStr)) return true; }catch(e){}
+        }
+      }
+    }
+    if(typeof getAnniversaryForDate==='function'){
+      try{ var ann=getAnniversaryForDate(dateStr); if(ann) return true; }catch(e){}
     }
     return false;
   }
@@ -13971,47 +14160,46 @@ window.updateTitleIconColor=function(){};
         var dayEl=cell.querySelector('.cal-cell-inner span'); if(!dayEl) return;
         var day=parseInt(dayEl.textContent.trim()); if(isNaN(day)) return;
         var ds=y+'-'+String(m+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
-        var isDaily = isDailyForDate(ds, all);
+        var isAlarm = isAlarmForDate(ds, all);
         var hasPhoto = hasPhotoForDate(ds, all);
-        var isPhotoOnly = hasPhoto && !isDaily;
         var corner=cell.querySelector('.cal-photo-corner');
-        if(isDaily){
-            if(!corner){
-                corner=document.createElement('div');
-                corner.className='cal-photo-corner has-pin-icon daily-pin';
-                corner.setAttribute('data-date', ds);
-                corner.innerHTML='<span class="pin-emoji green-pin"></span>';
-                cell.appendChild(corner);
-            }else{
-                var pin=corner.querySelector('.pin-emoji');
-                if(!pin){ corner.innerHTML='<span class="pin-emoji green-pin"></span>'; }
-                else{ pin.className='pin-emoji green-pin'; pin.textContent=''; }
-                corner.className='cal-photo-corner has-pin-icon daily-pin';
-                corner.style.display='flex';
-            }
-        }else if(isPhotoOnly){
-            if(!corner){
-                corner=document.createElement('div');
-                corner.className='cal-photo-corner has-pin-icon photo-only';
-                corner.setAttribute('data-date', ds);
-                corner.innerHTML='<span class="pin-emoji red-pin"></span>';
-                cell.appendChild(corner);
-            }else{
-                var pin=corner.querySelector('.pin-emoji');
-                if(!pin){ corner.innerHTML='<span class="pin-emoji red-pin"></span>'; }
-                else{ pin.className='pin-emoji red-pin'; pin.textContent=''; }
-                corner.className='cal-photo-corner has-pin-icon photo-only';
-                corner.style.display='flex';
-            }
+        if(isAlarm){
+          if(!corner){
+            corner=document.createElement('div');
+            corner.className='cal-photo-corner has-pin-icon alarm-pin';
+            corner.setAttribute('data-date', ds);
+            corner.innerHTML='<span class="pin-emoji red-pin"></span>';
+            cell.appendChild(corner);
+          }else{
+            var pin=corner.querySelector('.pin-emoji');
+            if(!pin){ corner.innerHTML='<span class="pin-emoji red-pin"></span>'; }
+            else{ pin.className='pin-emoji red-pin'; pin.textContent=''; }
+            corner.className='cal-photo-corner has-pin-icon alarm-pin';
+            corner.style.display='flex';
+          }
+        }else if(hasPhoto){
+          if(!corner){
+            corner=document.createElement('div');
+            corner.className='cal-photo-corner has-pin-icon photo-only';
+            corner.setAttribute('data-date', ds);
+            corner.innerHTML='<span class="pin-emoji green-pin"></span>';
+            cell.appendChild(corner);
+          }else{
+            var pin=corner.querySelector('.pin-emoji');
+            if(!pin){ corner.innerHTML='<span class="pin-emoji green-pin"></span>'; }
+            else{ pin.className='pin-emoji green-pin'; pin.textContent=''; }
+            corner.className='cal-photo-corner has-pin-icon photo-only';
+            corner.style.display='flex';
+          }
         }else{
-            if(corner){ corner.style.display='none'; }
+          if(corner){ corner.style.display='none'; }
         }
       });
-    }catch(e){ console.log('pin err', e); }
+    }catch(e){ console.log('V9 pin err', e); }
   }
   function hook(){
-    if(window._v8Hooked) return;
-    if(typeof window.renderCalendar!=='function' && typeof renderCalendar!=='function'){ setTimeout(hook,300); return; }
+    if(window._v9Hooked) return;
+    if(typeof window.renderCalendar!=='function' && typeof renderCalendar!=='function'){ setTimeout(hook,200); return; }
     if(window.renderCalendar){
       var o=window.renderCalendar;
       window.renderCalendar=function(){ var r=o.apply(this, arguments); syncPins(); return r; };
@@ -14021,7 +14209,8 @@ window.updateTitleIconColor=function(){};
       renderCalendar=function(){ var r=window._origRender.apply(this, arguments); syncPins(); return r; };
       window.renderCalendar=renderCalendar;
     }
-    window._v8Hooked=true;
+    window._v9Hooked=true;
+    setTimeout(syncPins, 50);
   }
   hook();
   window.updateCalendarIcons=syncPins;
@@ -14029,8 +14218,7 @@ window.updateTitleIconColor=function(){};
 })();
 </script>
 
-<script id="V8_SHARE">
-// 공유카드 로직 - V69 기반 추가
+<script id="V9_SHARE">
 (function(){
   window.generateFortuneShareCard=function(score, dateLabel, oneLine, luckyColor){
     var canvas=document.getElementById('share-card-canvas'); if(!canvas) return null;
@@ -14049,11 +14237,6 @@ window.updateTitleIconColor=function(){};
     if(line){ ctx.fillText(line,W/2,yy); yy+=80; }
     ctx.fillStyle='rgba(255,255,255,0.7)'; ctx.font='32px sans-serif'; ctx.fillText('행운의 색: '+(luckyColor||'골드'),W/2,yy+40);
     ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.font='24px sans-serif'; ctx.fillText('Smart Diary • 오늘의 운세',W/2,H-80);
-    try{
-      var dl=document.getElementById('share-date-label'); if(dl) dl.textContent=dateLabel||new Date().toLocaleDateString('ko-KR');
-      var sc=document.getElementById('share-score'); if(sc) sc.textContent=(score||'88')+'점';
-      var ol=document.getElementById('share-oneline'); if(ol) ol.textContent=oneLine||'오늘 하루 행운이 함께해요';
-    }catch(e){}
     return canvas;
   };
   window.saveFortuneCard=function(){
@@ -14076,53 +14259,68 @@ window.updateTitleIconColor=function(){};
       } else if(navigator.share){ navigator.share({title:'오늘의 운세', text:text}); }
     }catch(e){}
   };
-  var _origOpen=window.openFortunePopup;
-  if(_origOpen && !_origOpen._v8){
-    window.openFortunePopup=function(){
-      var r=_origOpen.apply(this, arguments);
-      setTimeout(function(){
-        try{
-          var bodyEl=document.getElementById('fortune-popup-body');
-          var scoreMatch=bodyEl?bodyEl.innerHTML.match(/(\d{1,3})점/):null;
-          var score=scoreMatch?scoreMatch[1]:'88';
-          var oneLineEl=document.querySelector('.fp-hero div:nth-child(2)');
-          var oneLine=oneLineEl?oneLineEl.textContent:'오늘 하루 행운이 함께해요';
-          var dateLabel=new Date().toLocaleDateString('ko-KR');
-          window.genCard=function(){ return generateFortuneShareCard(score, dateLabel, oneLine, '골드'); };
-          genCard();
-        }catch(e){}
-      },300);
-      return r;
-    };
-    window.openFortunePopup._v8=true;
-  }
 })();
 </script>
+
+<style id="V9_OVERRIDE_FINAL">
+/* 최종 덮어쓰기 - 파란/분홍 배경 제거, 물풍선만 */
+.cal-cell .cal-photo-corner,
+.cal-cell.has-photo .cal-photo-corner,
+.cal-cell.saturday .cal-photo-corner,
+.cal-cell.sunday .cal-photo-corner,
+.cal-cell.saturday.has-photo .cal-photo-corner,
+.cal-cell.sunday.has-photo .cal-photo-corner,
+.cal-cell .cal-photo-corner.has-pin-icon,
+.cal-cell .cal-photo-corner.daily-pin,
+.cal-cell .cal-photo-corner.photo-only,
+.cal-cell .cal-photo-corner.alarm-pin {
+  background:transparent !important;
+  background-color:transparent !important;
+  background-image:none !important;
+  border:none !important;
+  box-shadow:none !important;
+}
+.cal-cell .cal-photo-corner .pin-emoji.green-pin {
+  background:linear-gradient(135deg, #2ecc71, #27ae60) !important;
+  font-size:0 !important;
+}
+.cal-cell .cal-photo-corner .pin-emoji.red-pin {
+  background:linear-gradient(135deg, #ff6b6b, #c0392b) !important;
+  font-size:0 !important;
+}
+</style>
 </body>
 
 
 
 
 
-
-
-
-<script id="V8_FINAL_RESTORED">
-// V8 최종 - V69 물풍선 원본 그대로 복구
+<script id="V9_FINAL_LOGIC">
 (function(){
   function getDiaries(){try{return JSON.parse(localStorage.getItem('smartDiaryList')||'[]')}catch(e){return []}}
-  function isDailyForDate(dateStr, allDiaries){
-    var same = allDiaries.filter(function(d){ return (d.date||'').slice(0,10)===dateStr; });
-    if(same.some(function(d){ return d.dailyRepeat; })) return true;
-    if(same.some(function(d){ return d.onceAlarm; })) return true;
-    if(same.some(function(d){ return d.anniversary || d.annivTitle; })) return true;
+  function getTodayStr(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  function isAlarmForDate(dateStr, allDiaries){
+    var todayStr = getTodayStr();
+    for(var i=0;i<allDiaries.length;i++){
+      var dd=allDiaries[i];
+      if((dd.date||'').slice(0,10)!==dateStr) continue;
+      if(dd.onceAlarm){
+        if(dateStr < todayStr) continue;
+        return true;
+      }
+      if(dd.dailyRepeat) return true;
+      if(dd.anniversary || dd.annivTitle) return true;
+    }
     if(typeof sajuAnniversaryMatches==='function'){
-        for(var i=0;i<allDiaries.length;i++){
-            var dd=allDiaries[i];
-            if(dd.anniversary && dd.annivRepeat && dd.annivRepeat!=='none' && !dd.onceAlarm && !dd.dailyRepeat){
-                try{ if(sajuAnniversaryMatches(dd, dateStr)) return true; }catch(e){}
-            }
+      for(var j=0;j<allDiaries.length;j++){
+        var ad=allDiaries[j];
+        if(ad.anniversary && ad.annivRepeat && ad.annivRepeat!=='none' && !ad.onceAlarm && !ad.dailyRepeat){
+          try{ if(sajuAnniversaryMatches(ad, dateStr)) return true; }catch(e){}
         }
+      }
+    }
+    if(typeof getAnniversaryForDate==='function'){
+      try{ var ann=getAnniversaryForDate(dateStr); if(ann) return true; }catch(e){}
     }
     return false;
   }
@@ -14138,47 +14336,46 @@ window.updateTitleIconColor=function(){};
         var dayEl=cell.querySelector('.cal-cell-inner span'); if(!dayEl) return;
         var day=parseInt(dayEl.textContent.trim()); if(isNaN(day)) return;
         var ds=y+'-'+String(m+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
-        var isDaily = isDailyForDate(ds, all);
+        var isAlarm = isAlarmForDate(ds, all);
         var hasPhoto = hasPhotoForDate(ds, all);
-        var isPhotoOnly = hasPhoto && !isDaily;
         var corner=cell.querySelector('.cal-photo-corner');
-        if(isDaily){
-            if(!corner){
-                corner=document.createElement('div');
-                corner.className='cal-photo-corner has-pin-icon daily-pin';
-                corner.setAttribute('data-date', ds);
-                corner.innerHTML='<span class="pin-emoji green-pin"></span>';
-                cell.appendChild(corner);
-            }else{
-                var pin=corner.querySelector('.pin-emoji');
-                if(!pin){ corner.innerHTML='<span class="pin-emoji green-pin"></span>'; }
-                else{ pin.className='pin-emoji green-pin'; pin.textContent=''; }
-                corner.className='cal-photo-corner has-pin-icon daily-pin';
-                corner.style.display='flex';
-            }
-        }else if(isPhotoOnly){
-            if(!corner){
-                corner=document.createElement('div');
-                corner.className='cal-photo-corner has-pin-icon photo-only';
-                corner.setAttribute('data-date', ds);
-                corner.innerHTML='<span class="pin-emoji red-pin"></span>';
-                cell.appendChild(corner);
-            }else{
-                var pin=corner.querySelector('.pin-emoji');
-                if(!pin){ corner.innerHTML='<span class="pin-emoji red-pin"></span>'; }
-                else{ pin.className='pin-emoji red-pin'; pin.textContent=''; }
-                corner.className='cal-photo-corner has-pin-icon photo-only';
-                corner.style.display='flex';
-            }
+        if(isAlarm){
+          if(!corner){
+            corner=document.createElement('div');
+            corner.className='cal-photo-corner has-pin-icon alarm-pin';
+            corner.setAttribute('data-date', ds);
+            corner.innerHTML='<span class="pin-emoji red-pin"></span>';
+            cell.appendChild(corner);
+          }else{
+            var pin=corner.querySelector('.pin-emoji');
+            if(!pin){ corner.innerHTML='<span class="pin-emoji red-pin"></span>'; }
+            else{ pin.className='pin-emoji red-pin'; pin.textContent=''; }
+            corner.className='cal-photo-corner has-pin-icon alarm-pin';
+            corner.style.display='flex';
+          }
+        }else if(hasPhoto){
+          if(!corner){
+            corner=document.createElement('div');
+            corner.className='cal-photo-corner has-pin-icon photo-only';
+            corner.setAttribute('data-date', ds);
+            corner.innerHTML='<span class="pin-emoji green-pin"></span>';
+            cell.appendChild(corner);
+          }else{
+            var pin=corner.querySelector('.pin-emoji');
+            if(!pin){ corner.innerHTML='<span class="pin-emoji green-pin"></span>'; }
+            else{ pin.className='pin-emoji green-pin'; pin.textContent=''; }
+            corner.className='cal-photo-corner has-pin-icon photo-only';
+            corner.style.display='flex';
+          }
         }else{
-            if(corner){ corner.style.display='none'; }
+          if(corner){ corner.style.display='none'; }
         }
       });
-    }catch(e){ console.log('pin err', e); }
+    }catch(e){ console.log('V9 pin err', e); }
   }
   function hook(){
-    if(window._v8Hooked) return;
-    if(typeof window.renderCalendar!=='function' && typeof renderCalendar!=='function'){ setTimeout(hook,300); return; }
+    if(window._v9Hooked) return;
+    if(typeof window.renderCalendar!=='function' && typeof renderCalendar!=='function'){ setTimeout(hook,200); return; }
     if(window.renderCalendar){
       var o=window.renderCalendar;
       window.renderCalendar=function(){ var r=o.apply(this, arguments); syncPins(); return r; };
@@ -14188,7 +14385,8 @@ window.updateTitleIconColor=function(){};
       renderCalendar=function(){ var r=window._origRender.apply(this, arguments); syncPins(); return r; };
       window.renderCalendar=renderCalendar;
     }
-    window._v8Hooked=true;
+    window._v9Hooked=true;
+    setTimeout(syncPins, 50);
   }
   hook();
   window.updateCalendarIcons=syncPins;
@@ -14196,8 +14394,7 @@ window.updateTitleIconColor=function(){};
 })();
 </script>
 
-<script id="V8_SHARE">
-// 공유카드 로직 - V69 기반 추가
+<script id="V9_SHARE">
 (function(){
   window.generateFortuneShareCard=function(score, dateLabel, oneLine, luckyColor){
     var canvas=document.getElementById('share-card-canvas'); if(!canvas) return null;
@@ -14216,11 +14413,6 @@ window.updateTitleIconColor=function(){};
     if(line){ ctx.fillText(line,W/2,yy); yy+=80; }
     ctx.fillStyle='rgba(255,255,255,0.7)'; ctx.font='32px sans-serif'; ctx.fillText('행운의 색: '+(luckyColor||'골드'),W/2,yy+40);
     ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.font='24px sans-serif'; ctx.fillText('Smart Diary • 오늘의 운세',W/2,H-80);
-    try{
-      var dl=document.getElementById('share-date-label'); if(dl) dl.textContent=dateLabel||new Date().toLocaleDateString('ko-KR');
-      var sc=document.getElementById('share-score'); if(sc) sc.textContent=(score||'88')+'점';
-      var ol=document.getElementById('share-oneline'); if(ol) ol.textContent=oneLine||'오늘 하루 행운이 함께해요';
-    }catch(e){}
     return canvas;
   };
   window.saveFortuneCard=function(){
@@ -14243,28 +14435,36 @@ window.updateTitleIconColor=function(){};
       } else if(navigator.share){ navigator.share({title:'오늘의 운세', text:text}); }
     }catch(e){}
   };
-  var _origOpen=window.openFortunePopup;
-  if(_origOpen && !_origOpen._v8){
-    window.openFortunePopup=function(){
-      var r=_origOpen.apply(this, arguments);
-      setTimeout(function(){
-        try{
-          var bodyEl=document.getElementById('fortune-popup-body');
-          var scoreMatch=bodyEl?bodyEl.innerHTML.match(/(\d{1,3})점/):null;
-          var score=scoreMatch?scoreMatch[1]:'88';
-          var oneLineEl=document.querySelector('.fp-hero div:nth-child(2)');
-          var oneLine=oneLineEl?oneLineEl.textContent:'오늘 하루 행운이 함께해요';
-          var dateLabel=new Date().toLocaleDateString('ko-KR');
-          window.genCard=function(){ return generateFortuneShareCard(score, dateLabel, oneLine, '골드'); };
-          genCard();
-        }catch(e){}
-      },300);
-      return r;
-    };
-    window.openFortunePopup._v8=true;
-  }
 })();
 </script>
+
+<style id="V9_OVERRIDE_FINAL">
+/* 최종 덮어쓰기 - 파란/분홍 배경 제거, 물풍선만 */
+.cal-cell .cal-photo-corner,
+.cal-cell.has-photo .cal-photo-corner,
+.cal-cell.saturday .cal-photo-corner,
+.cal-cell.sunday .cal-photo-corner,
+.cal-cell.saturday.has-photo .cal-photo-corner,
+.cal-cell.sunday.has-photo .cal-photo-corner,
+.cal-cell .cal-photo-corner.has-pin-icon,
+.cal-cell .cal-photo-corner.daily-pin,
+.cal-cell .cal-photo-corner.photo-only,
+.cal-cell .cal-photo-corner.alarm-pin {
+  background:transparent !important;
+  background-color:transparent !important;
+  background-image:none !important;
+  border:none !important;
+  box-shadow:none !important;
+}
+.cal-cell .cal-photo-corner .pin-emoji.green-pin {
+  background:linear-gradient(135deg, #2ecc71, #27ae60) !important;
+  font-size:0 !important;
+}
+.cal-cell .cal-photo-corner .pin-emoji.red-pin {
+  background:linear-gradient(135deg, #ff6b6b, #c0392b) !important;
+  font-size:0 !important;
+}
+</style>
 </body>
 
 
