@@ -7844,6 +7844,14 @@ window.attachPhotoDoubleTap = function(el, handler){
             const overlay = document.getElementById('bucket-list-modal-overlay');
             if (overlay) overlay.style.display = 'none';
             unlockBodyScrollStrong();
+            // V5.4 버킷 종료시 전단계(오늘의 운세)로 복귀
+            try{
+                const fortuneOverlay = document.getElementById('fortune-popup-overlay');
+                // 버킷이 운세에서 열린 경우 운세로 복귀, 아니면 그냥 닫기
+                if(fortuneOverlay){
+                    setTimeout(()=>{ openFortunePopup(); }, 100);
+                }
+            }catch(e){}
             setTimeout(()=>{ bucketPwVerified = false; }, 5*60*1000);
         } catch(e){ unlockBodyScrollStrong(); }
     }
