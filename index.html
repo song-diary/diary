@@ -13797,6 +13797,7 @@ window.updateTitleIconColor=function(){};
     try{ return JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); }catch(e){ return []; }
   }
   function updateIcons(){
+    // 깜빡임 방지 버전
     try{
       const all=getDiaries();
       const dailySet=new Set(all.filter(d=>d.dailyRepeat).map(d=>d.date));
@@ -13842,7 +13843,7 @@ window.updateTitleIconColor=function(){};
   hookCal();
   setTimeout(updateIcons, 600);
   setTimeout(updateIcons, 1600);
-  setInterval(updateIcons, 2500);
+  // flicker fix - no interval
   window.updateCalendarIcons=updateIcons;
 
   // 공유카드
