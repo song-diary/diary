@@ -3191,7 +3191,8 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
                 <div class="toggle-card"><span class="toggle-card-label">🔍 검색/기간필터</span><label class="toggle-switch"><input type="checkbox" id="toggle-search-filter" checked onchange="setSearchFilterVisibility(this.checked)"><span class="toggle-slider"></span></label></div>
                 <div class="toggle-card"><span class="toggle-card-label">🔮 오늘의 운세</span><label class="toggle-switch"><input type="checkbox" id="settings-show-fortune" checked onchange="onShowFortuneToggle()"><span class="toggle-slider"></span></label></div>
                 <div class="toggle-card" id="fortune-auto-toggle-card"><span class="toggle-card-label">⏰ 운세 자동팝업</span><label class="toggle-switch"><input type="checkbox" id="settings-fortune-auto" checked onchange="onFortuneAutoToggle()"><span class="toggle-slider"></span></label></div>
-                                <div class="toggle-card" id="photo-pin-toggle-card"><span class="toggle-card-label">📌 사진고정핀 표시</span><label class="toggle-switch"><input type="checkbox" id="settings-show-photo-pin" checked onchange="onShowPhotoPinToggle()"><span class="toggle-slider"></span></label></div>
+                <div class="toggle-card" id="lotto-toggle-card"><span class="toggle-card-label">🎱 로또 생성기</span><label class="toggle-switch"><input type="checkbox" id="settings-show-lotto" checked onchange="onShowLottoToggle()"><span class="toggle-slider"></span></label></div>
+                <div class="toggle-card" id="photo-pin-toggle-card"><span class="toggle-card-label">📌 사진고정핀 표시</span><label class="toggle-switch"><input type="checkbox" id="settings-show-photo-pin" checked onchange="onShowPhotoPinToggle()"><span class="toggle-slider"></span></label></div>
             </div>
 
             <div class="settings-section">
@@ -6512,7 +6513,7 @@ window.attachPhotoDoubleTap = function(el, handler){
         const fortuneChk = document.getElementById('settings-show-fortune');
         if (fortuneChk) fortuneChk.checked = getShowFortune();
         syncFortuneToggles();
-        // lotto toggle removed V5.7 try{ if(typeof syncPhotoPinToggle==="function") syncPhotoPinToggle(); }catch(e){}
+        syncLottoToggle(); try{ if(typeof syncPhotoPinToggle==="function") syncPhotoPinToggle(); }catch(e){}
         const healthChk = document.getElementById('settings-show-health');
         if (healthChk) healthChk.checked = getShowHealth();
         const moneySummaryChk = document.getElementById('toggle-money-summary');
@@ -6792,7 +6793,26 @@ window.attachPhotoDoubleTap = function(el, handler){
     function onFortuneAutoToggle(){ const chk = document.getElementById('settings-fortune-auto'); if(!chk) return; localStorage.setItem('smartDiaryFortuneAuto', chk.checked ? '1' : '0'); }
     function syncFortuneToggles(){ const autoChk = document.getElementById('settings-fortune-auto'); if(autoChk) autoChk.checked = getFortuneAutoEnabled(); const showChk = document.getElementById('settings-show-fortune'); const autoCard = document.getElementById('fortune-auto-toggle-card'); if(showChk && autoCard) autoCard.style.opacity = showChk.checked ? '1' : '0.4'; }
 
-            function syncPhotoPinToggle(){ const chk = document.getElementById('settings-show-photo-pin'); if(chk) chk.checked = getShowPhotoPin(); }
+    function getShowLotto(){ const v = localStorage.getItem('smartDiaryShowLotto'); return v===null ? true : v==='true'; }
+    function onShowLottoToggle(){ const chk = document.getElementById('settings-show-lotto'); if(!chk) return; localStorage.setItem('smartDiaryShowLotto', chk.checked ? 'true' : 'false'); applyLottoVisibility(); }
+    function applyLottoVisibility(){
+        const show = getShowLotto();
+        // 운세 팝업 안에 로또 버튼 숨김 처리는 팝업 렌더시 처리, 여기서는 설정에서만
+        const lottoCard = document.getElementById('lotto-toggle-card');
+        if(lottoCard) lottoCard.style.opacity = '1';
+    }
+    function syncLottoToggle(){ const chk = document.getElementById('settings-show-lotto'); if(chk) chk.checked = getShowLotto(); }
+    // V99 사진고정핀 표시 ON/OFF - 달력 핀 표시 제어 (제목/별표 안 건드림)
+    function getShowPhotoPin(){ const v = localStorage.getItem('smartDiaryShowPhotoPin'); return v===null ? true : v!=='false'; }
+    function onShowPhotoPinToggle(){
+        const chk = document.getElementById('settings-show-photo-pin');
+        if(!chk) return;
+        localStorage.setItem('smartDiaryShowPhotoPin', chk.checked ? 'true' : 'false');
+        if(typeof renderCalendar==='function') renderCalendar();
+        // forcePin이 있으면 다시 실행해서 핀 제거/생성
+        setTimeout(function(){ if(typeof forcePin==='function') forcePin(); }, 100);
+    }
+    function syncPhotoPinToggle(){ const chk = document.getElementById('settings-show-photo-pin'); if(chk) chk.checked = getShowPhotoPin(); }
 
 
     // 오늘 날짜의 干支(일진) 및 오행을 계산
@@ -7364,7 +7384,6 @@ window.attachPhotoDoubleTap = function(el, handler){
     function openFortunePopup() {
         const bodyEl = document.getElementById('fortune-popup-body');
         if (!bodyEl) return;
-        try{ const t=getTodayStr(); localStorage.setItem('smartDiarySajuLastShown', t); sessionStorage.setItem('fortuneShownSession', t); }catch(e){}
 
         if (!sajuBirthInfo || !sajuBirthInfo.date || !sajuDayMasterElem) {
             bodyEl.innerHTML = `
@@ -7510,30 +7529,12 @@ window.attachPhotoDoubleTap = function(el, handler){
                 </div>
             </div>
 
-            
-            <div class="fp-share-section" style="margin-top:14px; padding:16px; background:rgba(255,255,255,0.06); border-radius:16px; border:1px solid rgba(255,255,255,0.1);">
-                <div style="font-size:13px; font-weight:700; color:#E8D5FF; margin-bottom:10px;">📸 공유카드 (하루 1회)</div>
-                <div id="fp-share-preview" style="width:100%; aspect-ratio:9/16; max-height:420px; border-radius:14px; overflow:hidden; position:relative; background:linear-gradient(180deg,#2D1B4E 0%,#5B3A8C 30%,#C9A86A 100%); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;">
-                    <div style="font-size:12px; color:#FFD88A; letter-spacing:1px; margin-bottom:14px;">${dateLabel}</div>
-                    <div style="font-size:28px; margin-bottom:8px;">🌙</div>
-                    <div style="font-size:64px; font-weight:900; color:#FFDDAA; line-height:1; text-shadow:0 2px 20px rgba(255,220,150,0.5); margin-bottom:12px;">${score}점</div>
-                    <div style="font-size:14px; color:#FFF; text-align:center; line-height:1.5; opacity:0.95;">${oneLine}</div>
-                    <div style="position:absolute; bottom:12px; font-size:10px; color:rgba(255,255,255,0.5); letter-spacing:1px;">Smart Diary</div>
-                </div>
-                <canvas id="share-card-canvas" width="1080" height="1920" style="display:none;"></canvas>
-                <div style="display:flex; gap:8px; margin-top:12px;">
-                    <button style="flex:1; padding:12px; border-radius:12px; border:none; font-weight:800; font-size:13px; cursor:pointer; background:#FFD88A; color:#2A2340;" onclick="if(window.genCard) genCard(); saveFortuneCard();">💾 이미지 저장</button>
-                    <button style="flex:1; padding:12px; border-radius:12px; border:none; font-weight:800; font-size:13px; cursor:pointer; background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.2);" onclick="if(window.genCard) genCard(); shareFortuneCard();">💬 공유하기</button>
-                </div>
-            </div>
-
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:10px;">
-
                 <div class="fp-my-saju-link-big" onclick="openSajuDetailModal()" style="margin:0; text-align:center; padding:10px; font-size:13px;">📜 나의 사주풀이</div>
                 <div class="fp-my-saju-link-big" onclick="openBucketListModal()" style="margin:0; text-align:center; padding:10px; font-size:13px; background:linear-gradient(120deg, #A8EDEA, #FED6E3); color:#2A2340;">🎯 나의 버킷 리스트</div>
             </div>
 
-            <!-- V5.7 lotto button removed -->
+            <div style="margin-top:16px; text-align:center;"><button onclick="openLottoGeneratorModal()" style="width:100%; background:linear-gradient(120deg, #FFD98E, #FF9AC2); color:#2A2340; border:none; padding:14px; border-radius:14px; font-weight:800; font-size:14.5px; box-shadow:0 4px 14px rgba(255,154,194,0.25);">🎱 사주기반 로또 생성기 입장하기 →</button><!-- V244 - 문구 삭제 --></div>
                 <div class="fp-exit-sticky"><button onclick="closeFortunePopup()" style="width:100%;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:14px;border-radius:14px;font-weight:800;font-size:15px;">종료</button></div>`;
 
         fortunePopupOverlay.classList.add('active'); lockBodyScroll(); } function saveFortuneCard_DISABLED(){
@@ -7559,18 +7560,14 @@ window.attachPhotoDoubleTap = function(el, handler){
     // V259: 하루 1번, 처음 앱 켰을 때만 자동 표시 (기본 ON)
     function maybeAutoShowFortunePopup() {
         const autoSetting = localStorage.getItem('smartDiaryFortuneAuto');
-        const autoEnabled = autoSetting === null ? true : autoSetting === '1';
+        const autoEnabled = autoSetting === null ? true : autoSetting === '1'; // 기본 켜짐, 0이면 끔
         if (!autoEnabled) return;
         if (!getShowFortune()) return;
         if (!sajuBirthInfo || !sajuBirthInfo.date || !sajuDayMasterElem) return;
         const urlParams = new URLSearchParams(window.location.search);
         const forceOpen = urlParams.get('autobrief') === '1';
-        const today = getTodayStr();
         const lastShown = localStorage.getItem('smartDiarySajuLastShown');
-        if (!forceOpen && lastShown === today) return;
-        const sess = sessionStorage.getItem('fortuneShownSession');
-        if (!forceOpen && sess === today) return;
-        try{ localStorage.setItem('smartDiarySajuLastShown', today); sessionStorage.setItem('fortuneShownSession', today); }catch(e){}
+        if (!forceOpen && lastShown === getTodayStr()) return;
         openFortunePopup();
     }
 
@@ -7704,7 +7701,6 @@ window.attachPhotoDoubleTap = function(el, handler){
     let bucketPwVerified = false;
 
     function openBucketListModal() {
-        try{ const fOverlay=document.getElementById('fortune-popup-overlay'); if(fOverlay && fOverlay.classList.contains('active')) window._bucketOpenedFromFortune=true; }catch(e){}
         try {
             const savedPw = getBucketPassword();
             if(savedPw && !bucketPwVerified){
@@ -7830,13 +7826,6 @@ window.attachPhotoDoubleTap = function(el, handler){
             const overlay = document.getElementById('bucket-list-modal-overlay');
             if (overlay) overlay.style.display = 'none';
             unlockBodyScrollStrong();
-            try{
-                const fromFortune = window._bucketOpenedFromFortune === true;
-                if(fromFortune){
-                    window._bucketOpenedFromFortune = false;
-                    setTimeout(()=>{ if(typeof openFortunePopup==='function') openFortunePopup(); }, 80);
-                }
-            }catch(e){}
             setTimeout(()=>{ bucketPwVerified = false; }, 5*60*1000);
         } catch(e){ unlockBodyScrollStrong(); }
     }
@@ -10824,7 +10813,68 @@ async function showPhotosForDate(dateStr){
 
 
 
-<!-- removed dup V301 for V5.7 -->
+<script>
+// V301-L - 달력 세모 클릭 완전 차단 + 줄간격 더 좁게
+(function(){
+  console.log('[V301-L] 달력 세모 완전 차단 시도');
+
+  // 기존 renderCalendar를 래핑해서 셀 클릭에서 세모 영역 무시
+  const _origRender = window.renderCalendar;
+  if(_origRender && !_origRender._patchedL){
+    window.renderCalendar = function(){
+      const result = _origRender.apply(this, arguments);
+      // 렌더 후 모든 셀의 onclick 재정의
+      setTimeout(()=>{
+        document.querySelectorAll('.cal-cell.has-photo').forEach(cell=>{
+          const origClick = cell.onclick;
+          if(origClick && !cell._patchedL){
+            cell._patchedL = true;
+            const oldHandler = origClick;
+            cell.onclick = function(e){
+              // 세모 영역 클릭이면 무시 - 셀 선택도 안 하고, 사진도 안 열고
+              const rect = this.getBoundingClientRect();
+              const x = e.clientX - rect.left;
+              const y = e.clientY - rect.top;
+              // 왼쪽 위 36x36 영역 = 세모 표시 영역
+              if(x < 36 && y < 36){
+                console.log('[V301-L] 세모 영역 클릭 무시');
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+              }
+              // 그 외 영역은 원래 날짜 선택 동작만
+              return oldHandler.call(this, e);
+            };
+          }
+        });
+      }, 50);
+      return result;
+    };
+    window.renderCalendar._patchedL = true;
+  }
+
+  // window 레벨에서도 혹시 모를 호출 차단
+  window.showPhotosForDate = function(){ console.log('[V301-L] 차단됨'); return; };
+  window.showPhotosForDateFixed = function(){ console.log('[V301-L] 차단됨'); return; };
+
+  // 추가로 document 레벨 capture에서 세모 클릭을 먼저 잡아서 stop
+  document.addEventListener('click', function(e){
+    const cell = e.target.closest('.cal-cell.has-photo');
+    if(cell){
+      const rect = cell.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      if(x < 36 && y < 36){
+        e.stopImmediatePropagation();
+        e.preventDefault();
+        console.log('[V301-L] capture 차단 - 세모');
+        return false;
+      }
+    }
+  }, true);
+
+})();
+</script>
 
 <style>#photo-lightbox-actions{display:none !important;}</style>
 
@@ -10980,25 +11030,773 @@ async function showPhotosForDate(dateStr){
 
 
 
-<!-- removed dup V301 for V5.7 -->
+<script>
+// V301-Q 가로모드 달력 폭 버그 완전 수정
+(function(){
+  console.log('[V301-Q] 가로모드 수정 시작');
+
+  // 기존 autoResizeCalendar를 완전히 덮어쓰기 - 순서 수정: 컨테이너 폭 먼저, 그 다음 렌더
+  window.autoResizeCalendar = function(){
+    const isLandscape = window.innerWidth > window.innerHeight;
+    const container = document.querySelector('.container');
+    const card = document.getElementById('calendar-card');
+    const grid = document.getElementById('cal-days-grid');
+    
+    // 1. 먼저 컨테이너 폭을 확실히 설정
+    if(container){
+      if(isLandscape){
+        container.style.maxWidth = '96vw';
+        container.style.width = '96vw';
+        if(card){
+          card.style.width = '100%';
+          card.style.maxWidth = '100%';
+        }
+        if(grid){
+          grid.style.width = '100%';
+          grid.style.maxWidth = '100%';
+        }
+      }else{
+        container.style.maxWidth = '600px';
+        container.style.width = '100%';
+        if(card){
+          card.style.width = '';
+          card.style.maxWidth = '';
+        }
+        if(grid){
+          grid.style.width = '100%';
+          grid.style.maxWidth = '';
+        }
+      }
+    }
+
+    // 2. 강제 reflow
+    if(card) { void card.offsetWidth; }
+
+    // 3. 그 다음 달력 렌더 - 이제 gridWidth가 96vw 기준으로 계산됨
+    if(typeof renderCalendar === 'function'){
+      try{ renderCalendar(); }catch(e){ console.error(e); }
+    }
+  };
+
+  // orientationchange, resize 모두에 2번 렌더링으로 확실히
+  let resizeTimeout = null;
+  window.addEventListener('resize', function(){
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(()=>{
+      window.autoResizeCalendar();
+      setTimeout(window.autoResizeCalendar, 150);
+    }, 100);
+  });
+  
+  window.addEventListener('orientationchange', function(){
+    setTimeout(window.autoResizeCalendar, 100);
+    setTimeout(window.autoResizeCalendar, 400);
+    setTimeout(window.autoResizeCalendar, 800);
+  });
+
+  window.addEventListener('load', function(){
+    setTimeout(window.autoResizeCalendar, 200);
+  });
+
+  // 초기 실행
+  setTimeout(window.autoResizeCalendar, 300);
+
+  console.log('[V301-Q] 가로모드 수정 완료');
+})();
+</script>
 
 
 
-<!-- removed dup V301 for V5.7 -->
+<script>
+// V301-R 요일 간격 정렬 수정 + 셀 계산 gap 통일
+(function(){
+  console.log('[V301-R] 요일 빈공간 수정');
+
+  const _origRenderCal = window.renderCalendar;
+  if(_origRenderCal && !_origRenderCal._patchedR){
+    window.renderCalendar = function(){
+      // 요일 헤더와 일자 그리드 gap을 동일하게 강제
+      const isLandscape = window.innerWidth > window.innerHeight;
+      const gap = isLandscape ? 4 : 2; // 가로/세로 모두 동일 gap으로 통일
+
+      const nameGrid = document.getElementById('cal-days-name-grid');
+      const daysGrid = document.getElementById('cal-days-grid');
+      if(nameGrid){
+        nameGrid.style.gap = gap + 'px';
+        nameGrid.style.width = '100%';
+      }
+      if(daysGrid){
+        daysGrid.style.width = '100%';
+      }
+
+      // 원래 렌더 호출 전에 gap 값을 window에 저장해서 placeCell이 같은 gap 쓰게
+      window._currentCalGap = gap;
+      
+      return _origRenderCal.apply(this, arguments);
+    };
+    window.renderCalendar._patchedR = true;
+
+    // placeCell에서 쓰는 gap을 통일 - 원래 함수 내부에서 gap=2로 하드코딩 되어있어서 오버라이드
+    // renderCalendar 내부 로직을 패치: gap 변수를 window._currentCalGap으로 사용
+    // 가장 간단한 방법은 renderCalendar 재정의 전체를 복사해서 gap만 통일
+    const originalRender = _origRenderCal;
+    window.renderCalendar = function(){
+      const title = document.getElementById('cal-month-title');
+      const grid = document.getElementById('cal-days-grid');
+      if (!title || !grid) return;
+
+      title.textContent = `${calYear}년 ${calMonth + 1}월`;
+      grid.innerHTML = '';
+
+      const firstDay = new Date(calYear, calMonth, 1).getDay();
+      const lastDate = new Date(calYear, calMonth + 1, 0).getDate();
+      const prevYear = calMonth === 0 ? calYear - 1 : calYear;
+      const prevMonth = calMonth === 0 ? 11 : calMonth - 1;
+      const prevLastDate = new Date(prevYear, prevMonth + 1, 0).getDate();
+      const nextYear = calMonth === 11 ? calYear + 1 : calYear;
+      const nextMonth = calMonth === 11 ? 0 : calMonth + 1;
+
+      const holidays = getKoreanHolidays(calYear);
+      const todayStr = getTodayStr();
+
+      const isLandscapeNow = window.innerWidth > window.innerHeight;
+      const gap = isLandscapeNow ? 4 : 2; // 요일 헤더와 동일 gap
+      
+      // gridWidth를 부모 기준으로 정확히
+      const gridWidth = grid.clientWidth || grid.parentElement.clientWidth || grid.getBoundingClientRect().width;
+      const cellSize = (gridWidth - gap * 6) / 7;
+      const compactHeight = cellSize;
+
+      const totalCells = firstDay + lastDate;
+      const totalRows = Math.ceil(totalCells / 7);
+      const totalVisibleCells = totalRows * 7;
+
+      let maxExtra = 0;
+      for (let day = 1; day <= lastDate; day++) {
+          const mStr = String(calMonth + 1).padStart(2, '0');
+          const dStr = String(day).padStart(2, '0');
+          const dateStr = `${calYear}-${mStr}-${dStr}`;
+          const specialInfo = getSpecialDayLabel(dateStr);
+          const annivText = getAnniversaryForDate(dateStr);
+          if (specialInfo || annivText) {
+              maxExtra = Math.max(maxExtra, specialInfo && annivText ? 10 : 6);
+          }
+      }
+      const rowHeights = new Array(totalRows).fill(cellSize * 1.25);
+      const rowTops = [];
+      let currentTop = 0;
+      for (let r = 0; r < totalRows; r++) {
+          rowTops[r] = currentTop;
+          currentTop += rowHeights[r] + (r < totalRows - 1 ? gap : 0);
+      }
+      grid.style.height = `${currentTop}px`;
+
+      function placeCell(el, cellIndex, rowSpan = 1) {
+          const col = cellIndex % 7;
+          const row = Math.floor(cellIndex / 7);
+          el.style.left = `${col * (cellSize + gap)}px`;
+          el.style.top = `${rowTops[row]}px`;
+          el.style.width = `${cellSize}px`;
+          let height = rowHeights[row];
+          for (let r = 1; r < rowSpan && row + r < totalRows; r++) {
+              height += gap + rowHeights[row + r];
+          }
+          el.style.height = `${height}px`;
+      }
+
+      function makeAdjacentDateCell(dateStr, day, cellIndex) {
+          const cell = document.createElement('div');
+          cell.className = 'cal-cell adjacent-month';
+          placeCell(cell, cellIndex, 1);
+          const specialInfo = getSpecialDayLabel(dateStr);
+          const annivText = getAnniversaryForDate(dateStr);
+          let indicatorHTML = '';
+          if (specialInfo) {
+              indicatorHTML += `<div class="cal-special-label cal-special-${specialInfo.type}">${formatCalLabel(specialInfo.label)}</div>`;
+          }
+          if (annivText) {
+              indicatorHTML += `<div class="cal-anniv-label">${formatCalLabel(annivText)}</div>`;
+          }
+          cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>`;
+          cell.onclick = () => {
+              const target = normalizeDateStr(dateStr);
+              const targetObj = new Date(Number(target.slice(0, 4)), Number(target.slice(5, 7)) - 1, Number(target.slice(8, 10)));
+              calYear = targetObj.getFullYear();
+              calMonth = targetObj.getMonth();
+              calEnlargedDate = null;
+              selectedViewDate = target;
+              renderCalendar();
+              renderDiaryAroundToday();
+              renderMoneyAroundToday();
+              if (isDiarySearchFilterOpen) filterDiaryCustomList();
+          };
+          grid.appendChild(cell);
+      }
+
+      for (let i = 0; i < firstDay; i++) {
+          const day = prevLastDate - firstDay + i + 1;
+          const dateStr = `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+          makeAdjacentDateCell(dateStr, day, i);
+      }
+
+      for (let day = 1; day <= lastDate; day++) {
+          const mStr = String(calMonth + 1).padStart(2, '0');
+          const dStr = String(day).padStart(2, '0');
+          const dateStr = `${calYear}-${mStr}-${dStr}`;
+          const cell = document.createElement('div');
+          cell.className = 'cal-cell';
+          const dObj = new Date(calYear, calMonth, day);
+          const dayOfWeek = dObj.getDay();
+          const cellIndex = firstDay + (day - 1);
+          placeCell(cell, cellIndex, 1);
+          if (dateStr === todayStr) cell.classList.add('today-date');
+          if (selectedViewDate && dateStr === selectedViewDate) cell.classList.add('selected-date');
+          if (dayOfWeek === 0 || holidays.has(dateStr)) cell.classList.add('sunday');
+          else if (dayOfWeek === 6) cell.classList.add('saturday');
+          const specialInfo = getSpecialDayLabel(dateStr);
+          const annivText = getAnniversaryForDate(dateStr);
+          let indicatorHTML = '';
+          if (specialInfo) {
+              indicatorHTML += `<div class="cal-special-label cal-special-${specialInfo.type}">${formatCalLabel(specialInfo.label)}</div>`;
+          }
+          if (annivText) {
+              indicatorHTML += `<div class="cal-anniv-label">${formatCalLabel(annivText)}</div>`;
+          }
+          let photoListCount = 0;
+          try {
+              const allDiaries = getAllDiaries();
+              photoListCount = allDiaries.filter(d => normalizeDateStr(d.date) === dateStr && d.photo).length;
+          } catch(e){}
+          const hasPhotoFlag = photoListCount > 0;
+          if(hasPhotoFlag) cell.classList.add('has-photo');
+          cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + (hasPhotoFlag ? `<div class="cal-photo-corner has-pin-icon" data-date="${dateStr}"><span class="pin-emoji">📌</span></div>` : '');
+          cell.onclick = async (e) => {
+              try{       try{ if(navigator.vibrate) window.triggerVibration(80) || navigator.vibrate(80); else if(window.navigator && window.navigator.vibrate) window.triggerVibration(80) || (window.navigator && window.navigator.vibrate && window.window.triggerVibration(80) || navigator.vibrate(80)); }catch(e){} }catch(err){}
+              const rect = cell.getBoundingClientRect();
+              const x = e.clientX - rect.left;
+              const y = e.clientY - rect.top;
+              if(x < 36 && y < 36 && hasPhotoFlag){
+                e.stopPropagation();
+                console.log('[V301-R] 세모 영역 무시');
+                return false;
+              }
+              selectDiaryDate(dateStr);
+          };
+          grid.appendChild(cell);
+      }
+
+      const trailingCount = totalVisibleCells - totalCells;
+      for (let i = 1; i <= trailingCount; i++) {
+          const dateStr = `${nextYear}-${String(nextMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+          const cellIndex = totalCells + (i - 1);
+          makeAdjacentDateCell(dateStr, i, cellIndex);
+      }
+
+      updateMoneySummary();
+    };
+    window.renderCalendar._patchedR = true;
+  }
+
+  console.log('[V301-R] 요일 빈공간 & 정렬 수정 완료');
+})();
+</script>
 
 
 
-<!-- removed dup V301 for V5.7 -->
+<script>
+// V301-S 주간(30,31,1,2,3,4,5 와 6,7,8,9...) 사이 빈공간 제거
+(function(){
+  console.log('[V301-S] 주간 빈공간 제거');
+
+  window.renderCalendar = function(){
+    const title = document.getElementById('cal-month-title');
+    const grid = document.getElementById('cal-days-grid');
+    if (!title || !grid) return;
+
+    title.textContent = `${calYear}년 ${calMonth + 1}월`;
+    grid.innerHTML = '';
+
+    const firstDay = new Date(calYear, calMonth, 1).getDay();
+    const lastDate = new Date(calYear, calMonth + 1, 0).getDate();
+    const prevYear = calMonth === 0 ? calYear - 1 : calYear;
+    const prevMonth = calMonth === 0 ? 11 : calMonth - 1;
+    const prevLastDate = new Date(prevYear, prevMonth + 1, 0).getDate();
+    const nextYear = calMonth === 11 ? calYear + 1 : calYear;
+    const nextMonth = calMonth === 11 ? 0 : calMonth + 1;
+
+    const holidays = typeof getKoreanHolidays==='function'?getKoreanHolidays(calYear):new Set();
+    const todayStr = typeof getTodayStr==='function'?getTodayStr():'';
+
+    const isLandscapeNow = window.innerWidth > window.innerHeight;
+    const gap = isLandscapeNow ? 4 : 2; // 가로/세로 gap 통일
+    
+    const gridWidth = grid.clientWidth || grid.parentElement.clientWidth || grid.getBoundingClientRect().width || 320;
+    const cellSize = (gridWidth - gap * 6) / 7;
+
+    const totalCells = firstDay + lastDate;
+    const totalRows = Math.ceil(totalCells / 7);
+    const totalVisibleCells = totalRows * 7;
+
+    // V301-S 핵심: 세로 높이 = 가로와 동일하게 정사각형으로 - 빈공간 제거
+    // 이전 1.25 -> 1.0 으로 변경해서 주간 사이 빈공간 없앰
+    const rowHeights = new Array(totalRows).fill(cellSize); // 정사각형
+    const rowTops = [];
+    let currentTop = 0;
+    for (let r = 0; r < totalRows; r++) {
+        rowTops[r] = currentTop;
+        currentTop += rowHeights[r] + (r < totalRows - 1 ? gap : 0);
+    }
+    grid.style.height = `${currentTop}px`;
+    grid.style.width = '100%';
+
+    function placeCell(el, cellIndex){
+        const col = cellIndex % 7;
+        const row = Math.floor(cellIndex / 7);
+        el.style.left = `${col * (cellSize + gap)}px`;
+        el.style.top = `${rowTops[row]}px`;
+        el.style.width = `${cellSize}px`;
+        el.style.height = `${rowHeights[row]}px`;
+    }
+
+    function makeAdjacentDateCell(dateStr, day, cellIndex) {
+        const cell = document.createElement('div');
+        cell.className = 'cal-cell adjacent-month';
+        placeCell(cell, cellIndex);
+        const specialInfo = typeof getSpecialDayLabel==='function'?getSpecialDayLabel(dateStr):null;
+        const annivText = typeof getAnniversaryForDate==='function'?getAnniversaryForDate(dateStr):null;
+        let indicatorHTML = '';
+        if (specialInfo) indicatorHTML += `<div class="cal-special-label">${formatCalLabel(specialInfo.label)}</div>`;
+        if (annivText) indicatorHTML += `<div class="cal-anniv-label">${formatCalLabel(annivText)}</div>`;
+        cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>`;
+        cell.onclick = () => {
+            const target = normalizeDateStr(dateStr);
+            const targetObj = new Date(Number(target.slice(0,4)), Number(target.slice(5,7))-1, Number(target.slice(8,10)));
+            calYear = targetObj.getFullYear();
+            calMonth = targetObj.getMonth();
+            calEnlargedDate = null;
+            selectedViewDate = target;
+            renderCalendar();
+            if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday();
+            if(typeof renderMoneyAroundToday==='function') renderMoneyAroundToday();
+            if (typeof isDiarySearchFilterOpen!=='undefined' && isDiarySearchFilterOpen && typeof filterDiaryCustomList==='function') filterDiaryCustomList();
+        };
+        grid.appendChild(cell);
+    }
+
+    for (let i = 0; i < firstDay; i++) {
+        const day = prevLastDate - firstDay + i + 1;
+        const dateStr = `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        makeAdjacentDateCell(dateStr, day, i);
+    }
+
+    for (let day = 1; day <= lastDate; day++) {
+        const mStr = String(calMonth + 1).padStart(2, '0');
+        const dStr = String(day).padStart(2, '0');
+        const dateStr = `${calYear}-${mStr}-${dStr}`;
+        const cell = document.createElement('div');
+        cell.className = 'cal-cell';
+        const dObj = new Date(calYear, calMonth, day);
+        const dayOfWeek = dObj.getDay();
+        const cellIndex = firstDay + (day - 1);
+        placeCell(cell, cellIndex);
+        if (dateStr === todayStr) cell.classList.add('today-date');
+        if (typeof selectedViewDate!=='undefined' && selectedViewDate && dateStr === selectedViewDate) cell.classList.add('selected-date');
+        if (dayOfWeek === 0 || (holidays.has && holidays.has(dateStr))) cell.classList.add('sunday');
+        else if (dayOfWeek === 6) cell.classList.add('saturday');
+        const specialInfo = typeof getSpecialDayLabel==='function'?getSpecialDayLabel(dateStr):null;
+        const annivText = typeof getAnniversaryForDate==='function'?getAnniversaryForDate(dateStr):null;
+        let indicatorHTML = '';
+        if (specialInfo) indicatorHTML += `<div class="cal-special-label cal-special-${specialInfo.type}">${formatCalLabel(specialInfo.label)}</div>`;
+        if (annivText) indicatorHTML += `<div class="cal-anniv-label">${formatCalLabel(annivText)}</div>`;
+        let photoListCount = 0;
+        try {
+            const allDiaries = typeof getAllDiaries==='function'?getAllDiaries():[];
+            photoListCount = allDiaries.filter(d => (typeof normalizeDateStr==='function'?normalizeDateStr(d.date):d.date) === dateStr && d.photo).length;
+        } catch(e){}
+        const hasPhotoFlag = photoListCount > 0;
+        if(hasPhotoFlag) cell.classList.add('has-photo');
+        cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + (hasPhotoFlag ? `<div class="cal-photo-corner" data-date="${dateStr}"><span class="pin-emoji">📌</span></div>` : '');
+        cell.onclick = (e) => {
+            try{       try{ if(navigator.vibrate) window.triggerVibration(80) || navigator.vibrate(80); else if(window.navigator && window.navigator.vibrate) window.triggerVibration(80) || (window.navigator && window.navigator.vibrate && window.window.triggerVibration(80) || navigator.vibrate(80)); }catch(e){} }catch(err){}
+            const rect = cell.getBoundingClientRect();
+            const x = e.clientX - rect.left; const y = e.clientY - rect.top;
+            if(x < 36 && y < 36 && hasPhotoFlag){ e.stopPropagation(); return false; }
+            if(typeof selectDiaryDate==='function') selectDiaryDate(dateStr);
+        };
+        grid.appendChild(cell);
+    }
+
+    const trailingCount = totalVisibleCells - totalCells;
+    for (let i = 1; i <= trailingCount; i++) {
+        const dateStr = `${nextYear}-${String(nextMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+        const cellIndex = totalCells + (i - 1);
+        makeAdjacentDateCell(dateStr, i, cellIndex);
+    }
+
+    if(typeof updateMoneySummary==='function') updateMoneySummary();
+  };
+
+  // 리사이즈 핸들러 재등록
+  window.autoResizeCalendar = function(){
+    const isLandscape = window.innerWidth > window.innerHeight;
+    const container = document.querySelector('.container');
+    const card = document.getElementById('calendar-card');
+    const grid = document.getElementById('cal-days-grid');
+    if(container){
+      if(isLandscape){
+        container.style.maxWidth = '96vw';
+        container.style.width = '96vw';
+      }else{
+        container.style.maxWidth = '600px';
+        container.style.width = '100%';
+      }
+    }
+    if(card) void card.offsetWidth;
+    if(typeof renderCalendar==='function') renderCalendar();
+  };
+
+  setTimeout(window.autoResizeCalendar, 100);
+  console.log('[V301-S] 주간 빈공간 제거 완료 - 정사각형 셀');
+})();
+</script>
 
 
 
-<!-- removed dup V301 for V5.7 -->
+<script>
+// V301-T 주간 사이 빈공간 0에 가깝게
+(function(){
+  console.log('[V301-T] 주간 빈공간 0 도전');
+
+  window.renderCalendar = function(){
+    const title = document.getElementById('cal-month-title');
+    const grid = document.getElementById('cal-days-grid');
+    if (!title || !grid) return;
+    title.textContent = `${calYear}년 ${calMonth + 1}월`;
+    grid.innerHTML = '';
+
+    const firstDay = new Date(calYear, calMonth, 1).getDay();
+    const lastDate = new Date(calYear, calMonth + 1, 0).getDate();
+    const prevYear = calMonth === 0 ? calYear - 1 : calYear;
+    const prevMonth = calMonth === 0 ? 11 : calMonth - 1;
+    const prevLastDate = new Date(prevYear, prevMonth + 1, 0).getDate();
+    const nextYear = calMonth === 11 ? calYear + 1 : calYear;
+    const nextMonth = calMonth === 11 ? 0 : calMonth + 1;
+
+    const holidays = typeof getKoreanHolidays==='function'?getKoreanHolidays(calYear):new Set();
+    const todayStr = typeof getTodayStr==='function'?getTodayStr():'';
+
+    const isLandscapeNow = window.innerWidth > window.innerHeight;
+    const gapH = isLandscapeNow ? 3 : 2; // 가로 간격
+    const gapV = 1; // 세로 간격은 1px로 최소화 - 주간 사이 빈공간 제거
+    
+    const gridWidth = grid.clientWidth || grid.parentElement.clientWidth || 320;
+    const cellSize = (gridWidth - gapH * 6) / 7; // 가로는 gapH로 계산
+
+    const totalCells = firstDay + lastDate;
+    const totalRows = Math.ceil(totalCells / 7);
+    const totalVisibleCells = totalRows * 7;
+
+    const rowHeights = new Array(totalRows).fill(cellSize); // 정사각형
+    const rowTops = [];
+    let currentTop = 0;
+    for (let r = 0; r < totalRows; r++) {
+        rowTops[r] = currentTop;
+        currentTop += rowHeights[r] + (r < totalRows - 1 ? gapV : 0); // 세로는 gapV 1px만
+    }
+    grid.style.height = `${currentTop}px`;
+
+    function placeCell(el, cellIndex){
+        const col = cellIndex % 7;
+        const row = Math.floor(cellIndex / 7);
+        el.style.left = `${col * (cellSize + gapH)}px`;
+        el.style.top = `${rowTops[row]}px`;
+        el.style.width = `${cellSize}px`;
+        el.style.height = `${rowHeights[row]}px`;
+        el.style.margin = '0';
+        el.style.boxSizing = 'border-box';
+    }
+
+    function makeAdjacentDateCell(dateStr, day, cellIndex) {
+        const cell = document.createElement('div');
+        cell.className = 'cal-cell adjacent-month';
+        placeCell(cell, cellIndex);
+        const specialInfo = typeof getSpecialDayLabel==='function'?getSpecialDayLabel(dateStr):null;
+        const annivText = typeof getAnniversaryForDate==='function'?getAnniversaryForDate(dateStr):null;
+        let indicatorHTML = '';
+        if (specialInfo) indicatorHTML += `<div class="cal-special-label">${formatCalLabel(specialInfo.label)}</div>`;
+        if (annivText) indicatorHTML += `<div class="cal-anniv-label">${formatCalLabel(annivText)}</div>`;
+        cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>`;
+        cell.onclick = () => {
+            const target = normalizeDateStr(dateStr);
+            const targetObj = new Date(Number(target.slice(0,4)), Number(target.slice(5,7))-1, Number(target.slice(8,10)));
+            calYear = targetObj.getFullYear(); calMonth = targetObj.getMonth(); calEnlargedDate = null; selectedViewDate = target;
+            renderCalendar(); 
+            if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday();
+            if(typeof renderMoneyAroundToday==='function') renderMoneyAroundToday();
+        };
+        grid.appendChild(cell);
+    }
+
+    for (let i = 0; i < firstDay; i++) {
+        const day = prevLastDate - firstDay + i + 1;
+        const dateStr = `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        makeAdjacentDateCell(dateStr, day, i);
+    }
+
+    for (let day = 1; day <= lastDate; day++) {
+        const mStr = String(calMonth + 1).padStart(2, '0');
+        const dStr = String(day).padStart(2, '0');
+        const dateStr = `${calYear}-${mStr}-${dStr}`;
+        const cell = document.createElement('div');
+        cell.className = 'cal-cell';
+        const dObj = new Date(calYear, calMonth, day);
+        const dayOfWeek = dObj.getDay();
+        const cellIndex = firstDay + (day - 1);
+        placeCell(cell, cellIndex);
+        if (dateStr === todayStr) cell.classList.add('today-date');
+        if (typeof selectedViewDate!=='undefined' && selectedViewDate && dateStr === selectedViewDate) cell.classList.add('selected-date');
+        if (dayOfWeek === 0 || (holidays.has && holidays.has(dateStr))) cell.classList.add('sunday');
+        else if (dayOfWeek === 6) cell.classList.add('saturday');
+        const specialInfo = typeof getSpecialDayLabel==='function'?getSpecialDayLabel(dateStr):null;
+        const annivText = typeof getAnniversaryForDate==='function'?getAnniversaryForDate(dateStr):null;
+        let indicatorHTML = '';
+        if (specialInfo) indicatorHTML += `<div class="cal-special-label cal-special-${specialInfo.type}">${formatCalLabel(specialInfo.label)}</div>`;
+        if (annivText) indicatorHTML += `<div class="cal-anniv-label">${formatCalLabel(annivText)}</div>`;
+        let photoListCount = 0;
+        try {
+            const allDiaries = typeof getAllDiaries==='function'?getAllDiaries():[];
+            photoListCount = allDiaries.filter(d => (typeof normalizeDateStr==='function'?normalizeDateStr(d.date):d.date) === dateStr && d.photo).length;
+        } catch(e){}
+        const hasPhotoFlag = photoListCount > 0;
+        if(hasPhotoFlag) cell.classList.add('has-photo');
+        cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + (hasPhotoFlag ? `<div class="cal-photo-corner"></div>` : '');
+        cell.onclick = (e) => {
+            try{       try{ if(navigator.vibrate) window.triggerVibration(80) || navigator.vibrate(80); else if(window.navigator && window.navigator.vibrate) window.triggerVibration(80) || (window.navigator && window.navigator.vibrate && window.window.triggerVibration(80) || navigator.vibrate(80)); }catch(e){} }catch(err){}
+            const rect = cell.getBoundingClientRect();
+            const x = e.clientX - rect.left; const y = e.clientY - rect.top;
+            if(x < 36 && y < 36 && hasPhotoFlag){ e.stopPropagation(); return false; }
+            if(typeof selectDiaryDate==='function') selectDiaryDate(dateStr);
+        };
+        grid.appendChild(cell);
+    }
+
+    const trailingCount = totalVisibleCells - totalCells;
+    for (let i = 1; i <= trailingCount; i++) {
+        const dateStr = `${nextYear}-${String(nextMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+        const cellIndex = totalCells + (i - 1);
+        makeAdjacentDateCell(dateStr, i, cellIndex);
+    }
+    if(typeof updateMoneySummary==='function') updateMoneySummary();
+  };
+
+  window.autoResizeCalendar = function(){
+    const container = document.querySelector('.container');
+    const isLandscape = window.innerWidth > window.innerHeight;
+    if(container){
+      if(isLandscape){ container.style.maxWidth='96vw'; container.style.width='96vw'; }
+      else { container.style.maxWidth='600px'; container.style.width='100%'; }
+    }
+    if(typeof renderCalendar==='function') renderCalendar();
+  };
+
+  setTimeout(window.autoResizeCalendar, 100);
+  console.log('[V301-T] gapV=1px로 빈공간 최소화');
+})();
+</script>
 
 
-<!-- removed dup V301 for V5.7 -->
+<script>
+// V301-U 1) 종료 후 재진입시 운세 자동팝업 금지
+(function(){
+  console.log('[V301-U] 운세 자동팝업 완전 차단');
+
+  // 기존 maybeAutoShowFortunePopup 덮어쓰기 - 절대 자동 안 뜸, 수동 클릭시에만 뜸
+  window.maybeAutoShowFortunePopup = function(){
+    console.log('[V301-U] 자동 운세 팝업 차단됨 - 수동 클릭시에만 열림');
+    return;
+  };
+
+  // 혹시 다른 곳에서 직접 openFortunePopup 호출하는 타이머도 차단
+  const _origOpenFortune = window.openFortunePopup;
+  let _fortuneManuallyAllowed = false;
+
+  // 운세 배너 클릭 시에만 허용 플래그
+  document.addEventListener('click', function(e){
+    if(e.target.closest('#fortune-teaser')){
+      _fortuneManuallyAllowed = true;
+      console.log('[V301-U] 운세 수동 클릭 허용');
+      setTimeout(()=>{ _fortuneManuallyAllowed = false; }, 2000);
+    }
+  }, true);
+
+  // openFortunePopup을 감싸서 자동 호출은 차단하되, 수동은 허용
+  // 단, V301-H 로직이 이미 3초 이내 자동 차단하고 있으므로, 여기서는 maybeAutoShow만 차단하면 충분
+  // 추가 안전장치: DOMContentLoaded에서 자동 호출된 경우 lastShown이 오늘이라도 팝업 안 뜨게
+
+  // localStorage에 오늘 봤다고 미리 기록해서 maybeAutoShow가 뜨더라도 조건에서 걸리게? No, we already disabled.
+
+  // 앱 시작 시 메인 탭을 diary로 강제 + 운세 팝업 닫기
+  window.addEventListener('load', function(){
+    setTimeout(()=>{
+      const fortuneEl = document.getElementById('fortune-popup-overlay');
+      if(fortuneEl && fortuneEl.classList.contains('active')){
+        fortuneEl.classList.remove('active');
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow='';
+        console.log('[V301-U] 시작시 떠있는 운세 팝업 강제 닫기');
+      }
+      if(typeof switchMainTab==='function'){
+        switchMainTab('diary');
+      }
+    }, 500);
+  });
+
+  console.log('[V301-U] 1번 문제 수정 완료');
+})();
+</script>
 
 
-<!-- removed dup V301 for V5.7 -->
+<script>
+// V301-V 달력 네모칸 크기 복구 + 빈공간 없음 유지
+(function(){
+  console.log('[V301-V] 달력 크기 복구');
+
+  window.renderCalendar = function(){
+    const title = document.getElementById('cal-month-title');
+    const grid = document.getElementById('cal-days-grid');
+    if (!title || !grid) return;
+    title.textContent = `${calYear}년 ${calMonth + 1}월`;
+    grid.innerHTML = '';
+
+    const firstDay = new Date(calYear, calMonth, 1).getDay();
+    const lastDate = new Date(calYear, calMonth + 1, 0).getDate();
+    const prevYear = calMonth === 0 ? calYear - 1 : calYear;
+    const prevMonth = calMonth === 0 ? 11 : calMonth - 1;
+    const prevLastDate = new Date(prevYear, prevMonth + 1, 0).getDate();
+    const nextYear = calMonth === 11 ? calYear + 1 : calYear;
+    const nextMonth = calMonth === 11 ? 0 : calMonth + 1;
+
+    const holidays = typeof getKoreanHolidays==='function'?getKoreanHolidays(calYear):new Set();
+    const todayStr = typeof getTodayStr==='function'?getTodayStr():'';
+
+    const isLandscapeNow = window.innerWidth > window.innerHeight;
+    const gapH = 2; // 가로 간격 원래대로 2px 통일 - 크기 복구 핵심
+    const gapV = 2; // 세로 간격도 2px로 - 빈공간 거의 없지만 너무 붙지 않게
+    
+    const gridWidth = grid.clientWidth || grid.parentElement.clientWidth || 320;
+    const cellSize = (gridWidth - gapH * 6) / 7;
+
+    const totalCells = firstDay + lastDate;
+    const totalRows = Math.ceil(totalCells / 7);
+    const totalVisibleCells = totalRows * 7;
+
+    // 크기 복구: 1.2배로 - 예전처럼 크게, 하지만 1.25보다 살짝 작게 해서 빈공간 덜 보이게
+    const rowHeights = new Array(totalRows).fill(cellSize * 1.18);
+    const rowTops = [];
+    let currentTop = 0;
+    for (let r = 0; r < totalRows; r++) {
+        rowTops[r] = currentTop;
+        currentTop += rowHeights[r] + (r < totalRows - 1 ? gapV : 0);
+    }
+    grid.style.height = `${currentTop}px`;
+
+    function placeCell(el, cellIndex){
+        const col = cellIndex % 7;
+        const row = Math.floor(cellIndex / 7);
+        el.style.left = `${col * (cellSize + gapH)}px`;
+        el.style.top = `${rowTops[row]}px`;
+        el.style.width = `${cellSize}px`;
+        el.style.height = `${rowHeights[row]}px`;
+        el.style.margin = '0';
+    }
+
+    function makeAdjacentDateCell(dateStr, day, cellIndex) {
+        const cell = document.createElement('div');
+        cell.className = 'cal-cell adjacent-month';
+        placeCell(cell, cellIndex);
+        const specialInfo = typeof getSpecialDayLabel==='function'?getSpecialDayLabel(dateStr):null;
+        const annivText = typeof getAnniversaryForDate==='function'?getAnniversaryForDate(dateStr):null;
+        let indicatorHTML = '';
+        if (specialInfo) indicatorHTML += `<div class="cal-special-label">${formatCalLabel(specialInfo.label)}</div>`;
+        if (annivText) indicatorHTML += `<div class="cal-anniv-label">${formatCalLabel(annivText)}</div>`;
+        cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>`;
+        cell.onclick = () => {
+            const target = normalizeDateStr(dateStr);
+            const targetObj = new Date(Number(target.slice(0,4)), Number(target.slice(5,7))-1, Number(target.slice(8,10)));
+            calYear = targetObj.getFullYear(); calMonth = targetObj.getMonth(); calEnlargedDate = null; selectedViewDate = target;
+            renderCalendar(); 
+            if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday();
+            if(typeof renderMoneyAroundToday==='function') renderMoneyAroundToday();
+        };
+        grid.appendChild(cell);
+    }
+
+    for (let i = 0; i < firstDay; i++) {
+        const day = prevLastDate - firstDay + i + 1;
+        const dateStr = `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        makeAdjacentDateCell(dateStr, day, i);
+    }
+
+    for (let day = 1; day <= lastDate; day++) {
+        const mStr = String(calMonth + 1).padStart(2, '0');
+        const dStr = String(day).padStart(2, '0');
+        const dateStr = `${calYear}-${mStr}-${dStr}`;
+        const cell = document.createElement('div');
+        cell.className = 'cal-cell';
+        const dObj = new Date(calYear, calMonth, day);
+        const dayOfWeek = dObj.getDay();
+        const cellIndex = firstDay + (day - 1);
+        placeCell(cell, cellIndex);
+        if (dateStr === todayStr) cell.classList.add('today-date');
+        if (typeof selectedViewDate!=='undefined' && selectedViewDate && dateStr === selectedViewDate) cell.classList.add('selected-date');
+        if (dayOfWeek === 0 || (holidays.has && holidays.has(dateStr))) cell.classList.add('sunday');
+        else if (dayOfWeek === 6) cell.classList.add('saturday');
+        const specialInfo = typeof getSpecialDayLabel==='function'?getSpecialDayLabel(dateStr):null;
+        const annivText = typeof getAnniversaryForDate==='function'?getAnniversaryForDate(dateStr):null;
+        let indicatorHTML = '';
+        if (specialInfo) indicatorHTML += `<div class="cal-special-label cal-special-${specialInfo.type}">${formatCalLabel(specialInfo.label)}</div>`;
+        if (annivText) indicatorHTML += `<div class="cal-anniv-label">${formatCalLabel(annivText)}</div>`;
+        let photoListCount = 0;
+        try {
+            const allDiaries = typeof getAllDiaries==='function'?getAllDiaries():[];
+            photoListCount = allDiaries.filter(d => (typeof normalizeDateStr==='function'?normalizeDateStr(d.date):d.date) === dateStr && d.photo).length;
+        } catch(e){}
+        const hasPhotoFlag = photoListCount > 0;
+        if(hasPhotoFlag) cell.classList.add('has-photo');
+        cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + (hasPhotoFlag ? `<div class="cal-photo-corner"></div>` : '');
+        cell.onclick = (e) => {
+            try{       try{ if(navigator.vibrate) window.triggerVibration(80) || navigator.vibrate(80); else if(window.navigator && window.navigator.vibrate) window.triggerVibration(80) || (window.navigator && window.navigator.vibrate && window.window.triggerVibration(80) || navigator.vibrate(80)); }catch(e){} }catch(err){}
+            const rect = cell.getBoundingClientRect();
+            const x = e.clientX - rect.left; const y = e.clientY - rect.top;
+            if(x < 36 && y < 36 && hasPhotoFlag){ e.stopPropagation(); return false; }
+            if(typeof selectDiaryDate==='function') selectDiaryDate(dateStr);
+        };
+        grid.appendChild(cell);
+    }
+
+    const trailingCount = totalVisibleCells - totalCells;
+    for (let i = 1; i <= trailingCount; i++) {
+        const dateStr = `${nextYear}-${String(nextMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+        const cellIndex = totalCells + (i - 1);
+        makeAdjacentDateCell(dateStr, i, cellIndex);
+    }
+    if(typeof updateMoneySummary==='function') updateMoneySummary();
+  };
+
+  window.autoResizeCalendar = function(){
+    const container = document.querySelector('.container');
+    const isLandscape = window.innerWidth > window.innerHeight;
+    if(container){
+      if(isLandscape){ container.style.maxWidth='96vw'; container.style.width='96vw'; }
+      else { container.style.maxWidth='600px'; container.style.width='100%'; }
+    }
+    if(typeof renderCalendar==='function') renderCalendar();
+  };
+
+  setTimeout(window.autoResizeCalendar, 100);
+  console.log('[V301-V] 크기 복구 완료 - 1.18배 + gap 2px');
+})();
+</script>
 
 
 
@@ -11014,7 +11812,94 @@ async function showPhotosForDate(dateStr){
 
 
 
-<!-- removed dup V301 for V5.7 -->
+<script>
+// V301-AJ 최종 - 단순하고 확실하게
+(function(){
+  console.log('[V301-AJ] 최종 깔끔 시작');
+  
+  // 1. 안내문구 삭제
+  document.querySelectorAll('div').forEach(d=>{
+    if(d.textContent && d.textContent.includes('두번 탭하면 확대')){
+      d.remove();
+    }
+  });
+
+  // 2. 라이트박스 로직 단순화 - 기존 복잡한 핀치 로직 무력화
+  // 기존 initPhotoZoomHandlers는 그대로 두되, reset이 너무 자주 되는 것만 방지
+  const origReset = window.resetPhotoZoom;
+  const origApply = window.applyPhotoZoomTransform;
+
+  // 싱글클릭 확대/축소 - 가장 단순하게
+  function setupSimpleZoom(){
+    const img=document.getElementById('photo-lightbox-img');
+    if(!img || img._ajSetup) return;
+    img._ajSetup=true;
+    let zoomed=false;
+    img.addEventListener('click', function(e){
+      e.stopPropagation();
+      if(!zoomed){
+        this.style.transform='scale(2.2)';
+        this.style.transformOrigin='center center';
+        this.classList.add('zoomed');
+        zoomed=true;
+      }else{
+        this.style.transform='scale(1)';
+        this.classList.remove('zoomed');
+        zoomed=false;
+      }
+    });
+    // 더블클릭도 동일하게
+    img.addEventListener('dblclick', function(e){
+      e.preventDefault(); e.stopPropagation();
+      this.click();
+    });
+  }
+
+  // 검은바 제거 + no-photo 클래스
+  function checkNoPhoto(){
+    const img=document.getElementById('photo-lightbox-img');
+    const ov=document.getElementById('photo-lightbox-overlay');
+    const ct=document.getElementById('photo-lightbox-content');
+    if(!img) return;
+    const src=(img.getAttribute('src')||'').trim();
+    const isEmpty=!src || src.length<8;
+    if(isEmpty){
+      img.style.display='none';
+      img.alt='';
+      if(ov) ov.classList.add('no-photo');
+      if(ct) ct.classList.add('no-photo');
+    }else{
+      img.style.display='block';
+      if(ov) ov.classList.remove('no-photo');
+      if(ct) ct.classList.remove('no-photo');
+    }
+  }
+
+  // open 함수 래핑 - 가볍게
+  ['openPhotoLightbox','openMemoLightboxOnly'].forEach(name=>{
+    const orig=window[name];
+    if(orig && !orig._aj){
+      window[name]=function(){
+        const r=orig.apply(this, arguments);
+        setTimeout(()=>{ checkNoPhoto(); setupSimpleZoom(); }, 30);
+        return r;
+      };
+      window[name]._aj=true;
+    }
+  });
+
+  // overlay 열릴 때 체크
+  const ov=document.getElementById('photo-lightbox-overlay');
+  if(ov){
+    new MutationObserver(()=>{ setTimeout(checkNoPhoto, 10); }).observe(ov, {attributes:true, attributeFilter:['class']});
+  }
+
+  document.addEventListener('DOMContentLoaded', ()=>{ setupSimpleZoom(); });
+  setTimeout(setupSimpleZoom, 500);
+
+  console.log('[V301-AJ] 완료 - 싱글클릭만, 핀치는 브라우저 기본');
+})();
+</script>
 
 
 
@@ -13679,7 +14564,7 @@ window.updateTitleIconColor=function(){};
   });
 
   // 달력 변경시에도 업데이트
-  // removed flicker interval V5.8
+  setInterval(updateCalendarIcons, 1500);
 
   window.updateCalendarIcons = updateCalendarIcons;
 })();
@@ -13687,7 +14572,7 @@ window.updateTitleIconColor=function(){};
 
 <style>
 /* V4.72 small pin 8px + lotto hidden */
-#lotto-generator-modal-overlay, #lotto-removed { display:none !important; }
+#lotto-generator-modal-overlay, #lotto-toggle-card { display:none !important; }
 .cal-cell .cal-photo-corner{ background:transparent!important; border:none!important; width:12px!important; height:12px!important; top:2px!important; left:3px!important; display:flex!important; align-items:center!important; justify-content:center!important; opacity:1!important; }
 .cal-cell .cal-photo-corner .pin-emoji{ display:block!important; width:8px!important; height:8px!important; border-radius:50% 50% 50% 0!important; transform:rotate(-45deg)!important; font-size:0!important; position:relative!important; top:-1px!important; box-shadow:0 1px 3px rgba(0,0,0,0.3)!important; }
 .cal-cell .cal-photo-corner .pin-emoji.red-pin{ background:linear-gradient(135deg, #ff6b6b, #c0392b)!important; }
@@ -13773,174 +14658,7 @@ window.updateTitleIconColor=function(){};
   setTimeout(()=>{ if(typeof renderCalendar==='function') renderCalendar(); },500);
 })();
 </script>
-
-
-<script id="V5_7_FINAL">
-// V5.7 최종 - 물풍선 핀 + 공유카드 (V4.72 기반, 단일 후킹)
-(function(){
-  function getDiaries(){
-    try{ return JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); }catch(e){ return []; }
-  }
-  function updateIcons(){
-    try{
-      const all=getDiaries();
-      const dailySet=new Set(all.filter(d=>d.dailyRepeat).map(d=>d.date));
-      const annivSet=new Set(all.filter(d=>d.annivTitle||d.anniversary).map(d=>d.date));
-      const photoSet=new Set(all.filter(d=>d.photo).map(d=>d.date).filter(Boolean));
-      document.querySelectorAll('.cal-cell:not(.adjacent-month)').forEach(cell=>{
-        const inner=cell.querySelector('.cal-cell-inner span');
-        if(!inner) return;
-        const day=parseInt(inner.textContent);
-        if(isNaN(day)) return;
-        const y=typeof calYear!=='undefined'?calYear:new Date().getFullYear();
-        const m=typeof calMonth!=='undefined'?calMonth:new Date().getMonth();
-        const ds=y+'-'+String(m+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
-        const corner=cell.querySelector('.cal-photo-corner');
-        if(!corner) return;
-        const emoji=corner.querySelector('.pin-emoji');
-        if(!emoji) return;
-        corner.classList.remove('daily-pin','anniv-pin','photo-only');
-        if(dailySet.has(ds) || annivSet.has(ds)){
-          corner.classList.add('daily-pin');
-          emoji.textContent='📌';
-          emoji.style.color='#27ae60';
-        } else if(photoSet.has(ds)){
-          corner.classList.add('photo-only');
-          emoji.textContent='📌';
-          emoji.style.color='#e74c3c';
-        }
-      });
-    }catch(e){}
-  }
-  function hookCal(){
-    if(window._v57Hooked) return;
-    if(typeof window.renderCalendar!=='function'){ setTimeout(hookCal,300); return; }
-    const orig=window.renderCalendar;
-    window.renderCalendar=function(...a){
-      const r=orig.apply(this,a);
-      setTimeout(updateIcons, 100);
-      setTimeout(updateIcons, 500);
-      return r;
-    };
-    window._v57Hooked=true;
-  }
-  hookCal();
-  setTimeout(updateIcons, 600);
-  setTimeout(updateIcons, 1600);
-  // removed flicker interval V5.8
-  window.updateCalendarIcons=updateIcons;
-
-  // 공유카드
-  window.generateFortuneShareCard=function(score, dateLabel, oneLine, luckyColor){
-    const canvas=document.getElementById('share-card-canvas');
-    if(!canvas) return null;
-    const ctx=canvas.getContext('2d');
-    const W=1080,H=1920; canvas.width=W; canvas.height=H;
-    const grad=ctx.createLinearGradient(0,0,0,H);
-    grad.addColorStop(0,'#2D1B4E'); grad.addColorStop(0.35,'#5B3A8C'); grad.addColorStop(0.7,'#8B6AAE'); grad.addColorStop(1,'#E8C99A');
-    ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
-    ctx.fillStyle='rgba(255,255,255,0.8)';
-    for(let i=0;i<40;i++){ const x=Math.random()*W; const y=Math.random()*H*0.6; const r=Math.random()*3+0.5; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill(); }
-    ctx.font='80px serif'; ctx.textAlign='center'; ctx.fillText('🌙', W/2, 420);
-    ctx.fillStyle='#FFD88A'; ctx.font='bold 32px sans-serif'; ctx.fillText(dateLabel, W/2, 520);
-    ctx.fillStyle='#FFDDAA'; ctx.font='900 180px sans-serif'; ctx.fillText(score+'점', W/2, 850);
-    ctx.shadowColor='rgba(255,220,150,0.6)'; ctx.shadowBlur=30; ctx.fillText(score+'점', W/2, 850); ctx.shadowBlur=0;
-    ctx.fillStyle='#FFFFFF'; ctx.font='600 42px sans-serif';
-    let line=''; let y=1020;
-    const words=oneLine.split(' ');
-    for(let w of words){ const test=line+' '+w; if(ctx.measureText(test).width>W-160 && line!==''){ ctx.fillText(line,W/2,y); y+=60; line=w; } else line=test; }
-    if(line){ ctx.fillText(line,W/2,y); y+=80; }
-    ctx.fillStyle='rgba(255,255,255,0.7)'; ctx.font='32px sans-serif'; ctx.fillText('행운의 색: '+(luckyColor||'골드'),W/2,y+40);
-    ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.font='24px sans-serif'; ctx.fillText('Smart Diary • 오늘의 운세',W/2,H-80);
-    return canvas;
-  };
-  window.saveFortuneCard=function(){
-    const c=document.getElementById('share-card-canvas');
-    if(!c){ alert('카드 준비중...'); return; }
-    const url=c.toDataURL('image/png');
-    const a=document.createElement('a'); a.href=url; a.download='오늘의운세_'+(new Date().toISOString().slice(0,10))+'.png'; a.click();
-  };
-  window.shareFortuneCard=async function(){
-    const c=document.getElementById('share-card-canvas');
-    const bodyEl=document.getElementById('fortune-popup-body');
-    const text=bodyEl?bodyEl.innerText.slice(0,200):'오늘의 운세';
-    try{
-      if(c && c.toBlob){
-        c.toBlob(async (blob)=>{
-          try{
-            const file=new File([blob],'fortune.png',{type:'image/png'});
-            if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({title:'오늘의 운세', text:text, files:[file]}); return; }
-          }catch(e){}
-          if(navigator.share){ await navigator.share({title:'오늘의 운세', text:text}); }
-          else{ await navigator.clipboard.writeText(text); alert('복사됐어요!'); }
-        });
-      } else if(navigator.share){ await navigator.share({title:'오늘의 운세', text:text}); }
-    }catch(e){}
-  };
-  let _origOpen=window.openFortunePopup;
-  if(_origOpen && !_origOpen._v57){
-    window.openFortunePopup=function(){
-      const r=_origOpen.apply(this, arguments);
-      setTimeout(()=>{
-        try{
-          const bodyEl=document.getElementById('fortune-popup-body');
-          const m=bodyEl?bodyEl.innerHTML.match(/(\d{1,3})점/):null;
-          const score=m?m[1]:'88';
-          const oneLineEl=document.querySelector('.fp-hero div:nth-child(2)');
-          const oneLine=oneLineEl?oneLineEl.textContent:'오늘 하루 행운이 함께해요';
-          const dateLabel=new Date().toLocaleDateString('ko-KR');
-          window.genCard=function(){ return generateFortuneShareCard(score, dateLabel, oneLine, '골드'); };
-          genCard();
-        }catch(e){}
-      },300);
-      return r;
-    };
-    window.openFortunePopup._v57=true;
-  }
-})();
-</script>
-
-<style id="V5_8_PIN">.cal-cell .cal-photo-corner{position:absolute!important;top:1px!important;left:2px!important;width:auto!important;height:auto!important;background:transparent!important;border:none!important;box-shadow:none!important;padding:0!important;margin:0!important}.cal-cell .cal-photo-corner .pin-emoji{background:transparent!important;border:none!important;font-size:8px!important;line-height:1!important;padding:0!important;margin:0!important}</style>
-<script id="V5_8_NOFlicker">
-(function(){
-  function getDiaries(){try{return JSON.parse(localStorage.getItem('smartDiaryList')||'[]')}catch(e){return []}}
-  function syncPins(){
-    try{
-      var all=getDiaries();
-      var daily=new Set(all.filter(d=>d.dailyRepeat).map(d=>d.date));
-      var anniv=new Set(all.filter(d=>d.annivTitle||d.anniversary).map(d=>d.date));
-      var once=new Set(all.filter(d=>d.onceAlarm).map(d=>d.date));
-      var photo=new Set(all.filter(d=>d.photo).map(d=>d.date).filter(Boolean));
-      var y=typeof calYear!=='undefined'?calYear:new Date().getFullYear();
-      var m=typeof calMonth!=='undefined'?calMonth:new Date().getMonth();
-      document.querySelectorAll('.cal-cell:not(.adjacent-month)').forEach(function(cell){
-        var inner=cell.querySelector('.cal-cell-inner span'); if(!inner) return;
-        var day=parseInt(inner.textContent); if(isNaN(day)) return;
-        var ds=y+'-'+String(m+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
-        var corner=cell.querySelector('.cal-photo-corner'); if(!corner) return;
-        var emoji=corner.querySelector('.pin-emoji'); if(!emoji) return;
-        var isDaily=daily.has(ds)||anniv.has(ds)||once.has(ds);
-        var isPhoto=photo.has(ds);
-        corner.classList.remove('daily-pin','anniv-pin','photo-only');
-        if(isDaily){ corner.classList.add('daily-pin'); emoji.textContent='📌'; emoji.style.color='#27ae60'; }
-        else if(isPhoto){ corner.classList.add('photo-only'); emoji.textContent='📌'; emoji.style.color='#e74c3c'; }
-      });
-    }catch(e){}
-  }
-  function hook(){
-    if(window._v58Hooked) return;
-    if(typeof window.renderCalendar!=='function'){ setTimeout(hook,300); return; }
-    var orig=window.renderCalendar;
-    window.renderCalendar=function(){ var r=orig.apply(this, arguments); syncPins(); return r; };
-    window._v58Hooked=true;
-  }
-  hook();
-  window.updateCalendarIcons=syncPins;
-})();
-</script>
-
 </body>
-
 
 
 
