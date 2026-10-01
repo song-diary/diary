@@ -3191,8 +3191,7 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
                 <div class="toggle-card"><span class="toggle-card-label">🔍 검색/기간필터</span><label class="toggle-switch"><input type="checkbox" id="toggle-search-filter" checked onchange="setSearchFilterVisibility(this.checked)"><span class="toggle-slider"></span></label></div>
                 <div class="toggle-card"><span class="toggle-card-label">🔮 오늘의 운세</span><label class="toggle-switch"><input type="checkbox" id="settings-show-fortune" checked onchange="onShowFortuneToggle()"><span class="toggle-slider"></span></label></div>
                 <div class="toggle-card" id="fortune-auto-toggle-card"><span class="toggle-card-label">⏰ 운세 자동팝업</span><label class="toggle-switch"><input type="checkbox" id="settings-fortune-auto" checked onchange="onFortuneAutoToggle()"><span class="toggle-slider"></span></label></div>
-                <div class="toggle-card" id="lotto-toggle-card"><span class="toggle-card-label">🎱 로또 생성기</span><label class="toggle-switch"><input type="checkbox" id="settings-show-lotto" checked onchange="onShowLottoToggle()"><span class="toggle-slider"></span></label></div>
-                <div class="toggle-card" id="photo-pin-toggle-card"><span class="toggle-card-label">📌 사진고정핀 표시</span><label class="toggle-switch"><input type="checkbox" id="settings-show-photo-pin" checked onchange="onShowPhotoPinToggle()"><span class="toggle-slider"></span></label></div>
+                                <div class="toggle-card" id="photo-pin-toggle-card"><span class="toggle-card-label">📌 사진고정핀 표시</span><label class="toggle-switch"><input type="checkbox" id="settings-show-photo-pin" checked onchange="onShowPhotoPinToggle()"><span class="toggle-slider"></span></label></div>
             </div>
 
             <div class="settings-section">
@@ -6513,7 +6512,7 @@ window.attachPhotoDoubleTap = function(el, handler){
         const fortuneChk = document.getElementById('settings-show-fortune');
         if (fortuneChk) fortuneChk.checked = getShowFortune();
         syncFortuneToggles();
-        syncLottoToggle(); try{ if(typeof syncPhotoPinToggle==="function") syncPhotoPinToggle(); }catch(e){}
+        // lotto toggle removed try{ if(typeof syncPhotoPinToggle==="function") syncPhotoPinToggle(); }catch(e){}
         const healthChk = document.getElementById('settings-show-health');
         if (healthChk) healthChk.checked = getShowHealth();
         const moneySummaryChk = document.getElementById('toggle-money-summary');
@@ -6793,26 +6792,7 @@ window.attachPhotoDoubleTap = function(el, handler){
     function onFortuneAutoToggle(){ const chk = document.getElementById('settings-fortune-auto'); if(!chk) return; localStorage.setItem('smartDiaryFortuneAuto', chk.checked ? '1' : '0'); }
     function syncFortuneToggles(){ const autoChk = document.getElementById('settings-fortune-auto'); if(autoChk) autoChk.checked = getFortuneAutoEnabled(); const showChk = document.getElementById('settings-show-fortune'); const autoCard = document.getElementById('fortune-auto-toggle-card'); if(showChk && autoCard) autoCard.style.opacity = showChk.checked ? '1' : '0.4'; }
 
-    function getShowLotto(){ const v = localStorage.getItem('smartDiaryShowLotto'); return v===null ? true : v==='true'; }
-    function onShowLottoToggle(){ const chk = document.getElementById('settings-show-lotto'); if(!chk) return; localStorage.setItem('smartDiaryShowLotto', chk.checked ? 'true' : 'false'); applyLottoVisibility(); }
-    function applyLottoVisibility(){
-        const show = getShowLotto();
-        // 운세 팝업 안에 로또 버튼 숨김 처리는 팝업 렌더시 처리, 여기서는 설정에서만
-        const lottoCard = document.getElementById('lotto-toggle-card');
-        if(lottoCard) lottoCard.style.opacity = '1';
-    }
-    function syncLottoToggle(){ const chk = document.getElementById('settings-show-lotto'); if(chk) chk.checked = getShowLotto(); }
-    // V99 사진고정핀 표시 ON/OFF - 달력 핀 표시 제어 (제목/별표 안 건드림)
-    function getShowPhotoPin(){ const v = localStorage.getItem('smartDiaryShowPhotoPin'); return v===null ? true : v!=='false'; }
-    function onShowPhotoPinToggle(){
-        const chk = document.getElementById('settings-show-photo-pin');
-        if(!chk) return;
-        localStorage.setItem('smartDiaryShowPhotoPin', chk.checked ? 'true' : 'false');
-        if(typeof renderCalendar==='function') renderCalendar();
-        // forcePin이 있으면 다시 실행해서 핀 제거/생성
-        setTimeout(function(){ if(typeof forcePin==='function') forcePin(); }, 100);
-    }
-    function syncPhotoPinToggle(){ const chk = document.getElementById('settings-show-photo-pin'); if(chk) chk.checked = getShowPhotoPin(); }
+            function syncPhotoPinToggle(){ const chk = document.getElementById('settings-show-photo-pin'); if(chk) chk.checked = getShowPhotoPin(); }
 
 
     // 오늘 날짜의 干支(일진) 및 오행을 계산
@@ -7384,6 +7364,7 @@ window.attachPhotoDoubleTap = function(el, handler){
     function openFortunePopup() {
         const bodyEl = document.getElementById('fortune-popup-body');
         if (!bodyEl) return;
+        try{ const t=getTodayStr(); localStorage.setItem('smartDiarySajuLastShown', t); sessionStorage.setItem('fortuneShownSession', t); }catch(e){}
 
         if (!sajuBirthInfo || !sajuBirthInfo.date || !sajuDayMasterElem) {
             bodyEl.innerHTML = `
@@ -7578,14 +7559,21 @@ window.attachPhotoDoubleTap = function(el, handler){
     // V259: 하루 1번, 처음 앱 켰을 때만 자동 표시 (기본 ON)
     function maybeAutoShowFortunePopup() {
         const autoSetting = localStorage.getItem('smartDiaryFortuneAuto');
-        const autoEnabled = autoSetting === null ? true : autoSetting === '1'; // 기본 켜짐, 0이면 끔
+        const autoEnabled = autoSetting === null ? true : autoSetting === '1';
         if (!autoEnabled) return;
         if (!getShowFortune()) return;
         if (!sajuBirthInfo || !sajuBirthInfo.date || !sajuDayMasterElem) return;
         const urlParams = new URLSearchParams(window.location.search);
         const forceOpen = urlParams.get('autobrief') === '1';
         const lastShown = localStorage.getItem('smartDiarySajuLastShown');
-        if (!forceOpen && lastShown === getTodayStr()) return;
+        const today = getTodayStr();
+        // 하루에 한번만 - 오늘 이미 봤으면 강제 아니면 리턴
+        if (!forceOpen && lastShown === today) return;
+        // 세션에서도 한번만 체크 (앱 재실행시 localStorage가 우선)
+        const sess = sessionStorage.getItem('fortuneShownSession');
+        if (!forceOpen && sess === today) return;
+        // 열기 전에 바로 저장해서 나갔다 들어와도 다시 안 뜨게
+        try{ localStorage.setItem('smartDiarySajuLastShown', today); sessionStorage.setItem('fortuneShownSession', today); }catch(e){}
         openFortunePopup();
     }
 
@@ -7719,6 +7707,7 @@ window.attachPhotoDoubleTap = function(el, handler){
     let bucketPwVerified = false;
 
     function openBucketListModal() {
+        try{ const fOverlay=document.getElementById('fortune-popup-overlay'); if(fOverlay && fOverlay.classList.contains('active')) window._bucketOpenedFromFortune=true; }catch(e){}
         try {
             const savedPw = getBucketPassword();
             if(savedPw && !bucketPwVerified){
@@ -7844,12 +7833,15 @@ window.attachPhotoDoubleTap = function(el, handler){
             const overlay = document.getElementById('bucket-list-modal-overlay');
             if (overlay) overlay.style.display = 'none';
             unlockBodyScrollStrong();
-            // V5.4 버킷 종료시 전단계(오늘의 운세)로 복귀
+            // V5.4 버킷 종료시 전단계(오늘의 운세)로 복귀 - 단, 운세는 이미 오늘 본 것으로 처리되어 자동 팝업은 안 뜸
             try{
-                const fortuneOverlay = document.getElementById('fortune-popup-overlay');
-                // 버킷이 운세에서 열린 경우 운세로 복귀, 아니면 그냥 닫기
-                if(fortuneOverlay){
-                    setTimeout(()=>{ openFortunePopup(); }, 100);
+                const fromFortune = window._bucketOpenedFromFortune === true;
+                if(fromFortune){
+                    window._bucketOpenedFromFortune = false;
+                    setTimeout(()=>{ 
+                        // 운세로 복귀 (daily once 저장은 이미 되어 있으므로 추가 저장 불필요)
+                        if(typeof openFortunePopup==='function') openFortunePopup(); 
+                    }, 80);
                 }
             }catch(e){}
             setTimeout(()=>{ bucketPwVerified = false; }, 5*60*1000);
