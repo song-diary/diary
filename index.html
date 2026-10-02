@@ -3430,12 +3430,7 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
             <button class="close-form-btn" onclick="closeDiaryFormPanel()" title="입력창 닫기">✖</button>
         </div>
 
-                            <label style="display:flex; align-items:center; gap:4px; font-size:12px; cursor:pointer; margin-left:6px; color:#27ae60; font-weight:bold;">
-                <input type="checkbox" id="daily-alarm-enabled" checked style="width:14px; height:14px;"> 매일 체크
-            </label>
-        </div>
-
-        <!-- 💵 가계부 입력 영역: 가계부_입력폼 모드에서만 표시 -->
+                        <!-- 💵 가계부 입력 영역: 가계부_입력폼 모드에서만 표시 -->
         <div class="money-input-box" id="money-input-section">
             <label style="font-size: 14px; font-weight: bold; color: #27ae60;" id="money-input-label">💰 가계부 입력</label>
             <!-- 📅 날짜 입력란: 가계부 일자 바로 밑에 위치 (V284) -->
@@ -3499,7 +3494,7 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
 
         <!-- 제목&기념일 입력란: 달력에 짧은 메모로 표시됨, 매년/매달 반복 가능 -->
                         
-        <!-- 🎉 제목&기념일 + 알림 통합 영역 (V17) -->
+        <!-- 🎉 제목&기념일 + 알림 통합 영역 (V18 Fixed) -->
         <div class="unified-title-alarm-box" id="unified-title-alarm-box" style="background:#FDF3E7; border-radius:12px; padding:12px; margin-bottom:10px; border:1px solid #f5d6b8;">
             <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:bold; color:#5a3e2b; margin-bottom:10px;">
                 <span>🎉</span><span>제목 & 기념일 & 알림</span>
@@ -14872,22 +14867,30 @@ window.updateTitleIconColor=function(){};
 </body>
 
 
-<style id="V16_PIN_COLORS_COMPLETE">
+<style id="V18_PIN_COLORS_COMPLETE">
 .cal-cell .cal-photo-corner { position:absolute !important; top:2px !important; left:3px !important; width:12px !important; height:12px !important; background:transparent !important; border:none !important; display:flex !important; align-items:center !important; justify-content:center !important; }
 .cal-cell .cal-photo-corner .pin-emoji{ display:block !important; width:8px !important; height:8px !important; border-radius:50% 50% 50% 0 !important; transform:rotate(-45deg) !important; font-size:0 !important; position:relative !important; box-shadow:0 1px 3px rgba(0,0,0,0.3) !important; }
 .cal-cell .cal-photo-corner .pin-emoji.green-pin{ background:linear-gradient(135deg, #2ecc71, #27ae60) !important; }
-.cal-cell .cal-photo-corner .pin-emoji.yellow-pin, .cal-cell .cal-photo-corner .pin-emoji.sky-pin{ background:linear-gradient(135deg, #ffeb3b, #f9a825) !important; }
+.cal-cell .cal-photo-corner .pin-emoji.yellow-pin{ background:linear-gradient(135deg, #ffeb3b, #f9a825) !important; }
+.cal-cell .cal-photo-corner .pin-emoji.sky-pin{ background:linear-gradient(135deg, #ffeb3b, #f9a825) !important; }
 .cal-cell .cal-photo-corner .pin-emoji.red-pin{ background:linear-gradient(135deg, #ff6b6b, #c0392b) !important; }
 .cal-cell .cal-photo-corner .pin-emoji::after{ content:'' !important; position:absolute !important; width:2.5px !important; height:2.5px !important; background:#fff !important; border-radius:50% !important; top:1.8px !important; left:1.8px !important; }
 #fortune-teaser { cursor:pointer !important; pointer-events:auto !important; }
 .toggle-card { display:flex !important; align-items:center !important; justify-content:space-between !important; padding:8px 12px !important; width:100% !important; box-sizing:border-box !important; margin-bottom:4px !important; }
 </style>
-<script id="V17_FINAL_ALL">
-// V17 - 통합폼 + 올바른 핀 색상
+<script id="V18_FINAL_PIN_LOGIC">
 (function(){
   window.userClickedFortune = true;
   function getDiaries(){try{return JSON.parse(localStorage.getItem('smartDiaryList')||'[]')}catch(e){return []}}
   function getPinTypeForDate(dateStr, allDiaries){
+    // 매일/하루만 = 노랑 최우선 (지나도 유지)
+    for(var i=0;i<allDiaries.length;i++){
+      var dd=allDiaries[i];
+      if((dd.date||'').slice(0,10)!==dateStr) continue;
+      if(dd.dailyRepeat === true) return 'yellow';
+      if(dd.onceAlarm === true) return 'yellow';
+    }
+    // 기념일 매년/매월 = 빨강
     if(typeof sajuAnniversaryMatches==='function'){
       for(var j=0;j<allDiaries.length;j++){
         var ad=allDiaries[j];
@@ -14895,12 +14898,6 @@ window.updateTitleIconColor=function(){};
         if(!ad.annivRepeat || ad.annivRepeat==='none') continue;
         try{ if(sajuAnniversaryMatches(ad, dateStr)) return 'red'; }catch(e){}
       }
-    }
-    for(var i=0;i<allDiaries.length;i++){
-      var dd=allDiaries[i];
-      if((dd.date||'').slice(0,10)!==dateStr) continue;
-      if(dd.dailyRepeat === true) return 'yellow';
-      if(dd.onceAlarm === true) return 'yellow';
     }
     for(var k=0;k<allDiaries.length;k++){
       var d=allDiaries[k];
@@ -14933,17 +14930,13 @@ window.updateTitleIconColor=function(){};
     }catch(e){}
   }
   function hook(){
-    if(window._v17Hooked) return;
+    if(window._v18Hooked) return;
     if(typeof window.renderCalendar!=='function' && typeof renderCalendar!=='function'){ setTimeout(hook,200); return; }
     if(window.renderCalendar){ var o=window.renderCalendar; window.renderCalendar=function(){ var r=o.apply(this, arguments); syncPins(); return r; }; }
     if(typeof renderCalendar==='function' && !window._origRender){ window._origRender=renderCalendar; renderCalendar=function(){ var r=window._origRender.apply(this, arguments); syncPins(); return r; }; window.renderCalendar=renderCalendar; }
-    window._v17Hooked=true; setTimeout(syncPins, 100);
+    window._v18Hooked=true; setTimeout(syncPins, 100);
   }
   hook(); window.updateCalendarIcons=syncPins; window.ensureRedPins=syncPins;
-  setTimeout(function(){
-    var teaser=document.getElementById('fortune-teaser');
-    if(teaser){ teaser.style.cursor='pointer'; teaser.onclick=function(){ if(typeof openFortunePopup==='function') openFortunePopup(); }; }
-  }, 300);
 })();
 </script>
 </body>
