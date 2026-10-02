@@ -8596,6 +8596,13 @@ window.attachPhotoDoubleTap = function(el, handler){
             document.getElementById('anniv-repeat-select').value = existingItem.annivRepeat || 'none';
             document.getElementById('anniv-cal-solar').checked = (existingItem.annivCalType || 'solar') === 'solar';
             document.getElementById('anniv-cal-lunar').checked = existingItem.annivCalType === 'lunar';
+            // 매일/하루만 체크 복원 (V22 fix)
+            try {
+              const dailyCb = document.getElementById('daily-repeat-checkbox');
+              const onceCb = document.getElementById('once-alarm-checkbox');
+              if(dailyCb) dailyCb.checked = !!existingItem.dailyRepeat;
+              if(onceCb) onceCb.checked = !!existingItem.onceAlarm;
+            } catch(e){}
         } else {
             textOutput.innerText = '';
             if (moneyNoteInput) moneyNoteInput.value = '';
@@ -13854,16 +13861,20 @@ console.log('[DailyAlarm] 스크립트 로드 완료 - testDailyAlarm()으로 �
             if(item){
               const tInput=document.getElementById('reservation-time-input');
               const cb=document.getElementById('daily-repeat-checkbox');
+              const onceCb=document.getElementById('once-alarm-checkbox');
               if(tInput) tInput.value=item.time||'08:00';
               if(cb) cb.checked=!!item.dailyRepeat;
-              console.log('[V4.13] open form restore', item.text, 'daily', !!item.dailyRepeat, 'time', item.time);
+              if(onceCb) onceCb.checked=!!item.onceAlarm;
+              console.log('[V4.13] open form restore', item.text, 'daily', !!item.dailyRepeat, 'once', !!item.onceAlarm, 'time', item.time);
             }
           } else {
             // 새 글
             const tInput=document.getElementById('reservation-time-input');
             const cb=document.getElementById('daily-repeat-checkbox');
+            const onceCb=document.getElementById('once-alarm-checkbox');
             if(tInput && !tInput.value) tInput.value='08:00';
             if(cb) cb.checked=false;
+            if(onceCb) onceCb.checked=false;
           }
         }catch(e){}
       }, 150);
