@@ -3429,23 +3429,7 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
             <button class="close-form-btn" onclick="closeDiaryFormPanel()" title="입력창 닫기">✖</button>
         </div>
 
-                <div class="reservation-box" id="reservation-box" style="flex-wrap:wrap; gap:10px; align-items:center;">
-            <span style="font-size: 12px;">⏰ 알림 받을 시간:</span>
-            <input type="time" id="reservation-time-input" style="border:1px solid var(--border-color); border-radius:4px; background:#fff;">
-            <div style="display:flex; flex-direction:column; gap:5px; margin-left:10px; border-left:2px solid #eee; padding-left:10px;">
-                <label style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer;">
-                    <input type="checkbox" id="daily-repeat-checkbox" style="width:14px; height:14px;"> 매일 반복
-                </label>
-                <label style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer;">
-                    <input type="checkbox" id="once-alarm-checkbox" style="width:14px; height:14px;"> 하루만 울림
-                </label>
-            </div>
-            <label style="display:flex; align-items:center; gap:4px; font-size:12px; cursor:pointer; margin-left:6px; color:#27ae60; font-weight:bold;">
-                <input type="checkbox" id="daily-alarm-enabled" checked style="width:14px; height:14px;"> 매일 체크
-            </label>
-        </div>
-
-        <!-- 💵 가계부 입력 영역: 가계부_입력폼 모드에서만 표시 -->
+                        <!-- 💵 가계부 입력 영역: 가계부_입력폼 모드에서만 표시 -->
         <div class="money-input-box" id="money-input-section">
             <label style="font-size: 14px; font-weight: bold; color: #27ae60;" id="money-input-label">💰 가계부 입력</label>
             <!-- 📅 날짜 입력란: 가계부 일자 바로 밑에 위치 (V284) -->
@@ -3508,19 +3492,40 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
         </div>
 
         <!-- 제목&기념일 입력란: 달력에 짧은 메모로 표시됨, 매년/매달 반복 가능 -->
-                <div class="anniv-input-row" id="anniv-input-row" style="display:flex; flex-direction:column; gap:6px; padding:0 0 10px 0; background:transparent; border-radius:0; margin-bottom:6px; align-items:flex-start; width:100%;">
-            <div style="display:flex; align-items:center; gap:5px; font-size:14px; font-weight:bold; color:var(--weekday-color); margin-bottom:2px;">
-                <span>🎉</span><span>제목&amp;기념일</span>
+                        
+        <!-- 🎉 제목&기념일 + 알림 통합 (V16 노랑 유지, 아래로 합침) -->
+        <div class="unified-title-alarm-box" id="unified-title-alarm-box" style="background:#FDF3E7; border-radius:12px; padding:12px; margin-bottom:10px; border:1px solid #f5d6b8;">
+            <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:bold; color:#5a3e2b; margin-bottom:10px;">
+                <span>🎉</span><span>제목 & 기념일 & 알림</span>
             </div>
-            <div style="display:flex; align-items:center; gap:6px; flex-wrap:nowrap; width:100%; background:#FDF3E7; border-radius:8px; padding:8px 10px; box-sizing:border-box;">
-                <input type="text" id="anniv-input" maxlength="6" placeholder="예: 생일" style="flex:1 1 auto; min-width:0; padding:8px 10px; border:1px solid var(--border-color); border-radius:6px; font-size:14.5px; background:#fff;">
-                <select id="anniv-repeat-select" class="anniv-repeat-select" style="flex:0 0 78px; font-size:11.5px; padding:5px 2px;">
+            <div style="display:flex; gap:6px; margin-bottom:8px;">
+                <input type="text" id="anniv-input" maxlength="20" placeholder="제목 (예: 생일, 병원, 약)" style="flex:1; padding:10px 12px; border:1px solid #e6d8d8; border-radius:8px; font-size:14px; background:#fff;">
+            </div>
+            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; background:#fff; border-radius:8px; padding:8px 10px; margin-bottom:8px;">
+                <span style="font-size:11px; color:#7a5a3a; font-weight:bold;">🔁 반복:</span>
+                <select id="anniv-repeat-select" class="anniv-repeat-select" style="flex:0 0 90px; font-size:12px; padding:6px 4px; border-radius:6px; border:1px solid #e6d8d8;">
                     <option value="none">반복 안 함</option>
-                    <option value="yearly">매년 반복</option>
-                    <option value="monthly">매달 반복</option>
+                    <option value="yearly">매년 반복 🔴</option>
+                    <option value="monthly">매달 반복 🔴</option>
                 </select>
-                <label class="anniv-cal-radio" style="flex-shrink:0; font-size:12px; margin:0;"><input type="radio" name="anniv-cal-type" id="anniv-cal-solar" value="solar" checked> 양력</label>
-                <label class="anniv-cal-radio" style="flex-shrink:0; font-size:12px; margin:0;"><input type="radio" name="anniv-cal-type" id="anniv-cal-lunar" value="lunar"> 음력</label>
+                <label class="anniv-cal-radio" style="font-size:12px; margin:0; cursor:pointer;"><input type="radio" name="anniv-cal-type" id="anniv-cal-solar" value="solar" checked> 양력</label>
+                <label class="anniv-cal-radio" style="font-size:12px; margin:0; cursor:pointer;"><input type="radio" name="anniv-cal-type" id="anniv-cal-lunar" value="lunar"> 음력</label>
+            </div>
+            <div class="reservation-box" id="reservation-box" style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; background:#fff; border-radius:8px; padding:8px 10px;">
+                <span style="font-size:11px; font-weight:bold; color:#7a5a3a;">⏰ 알림:</span>
+                <input type="time" id="reservation-time-input" style="border:1px solid #e6d8d8; border-radius:6px; padding:5px 6px; font-size:12px; background:#fff;">
+                <label style="display:flex; align-items:center; gap:4px; font-size:11px; cursor:pointer; background:#fffde7; padding:4px 6px; border-radius:6px; border:1px solid #ffec99;">
+                    <input type="checkbox" id="daily-repeat-checkbox" style="width:14px; height:14px;"> 매일 반복 🟡
+                </label>
+                <label style="display:flex; align-items:center; gap:4px; font-size:11px; cursor:pointer; background:#fffde7; padding:4px 6px; border-radius:6px; border:1px solid #ffec99;">
+                    <input type="checkbox" id="once-alarm-checkbox" style="width:14px; height:14px;"> 하루만 🟡
+                </label>
+                <label style="display:flex; align-items:center; gap:4px; font-size:11px; cursor:pointer; background:#e8f5e9; padding:4px 6px; border-radius:6px; border:1px solid #a5d6a7; color:#2e7d32; font-weight:bold;">
+                    <input type="checkbox" id="daily-alarm-enabled" checked style="width:14px; height:14px;"> 매일 체크
+                </label>
+            </div>
+            <div style="font-size:10px; color:#8d6e63; margin-top:6px; line-height:1.4;">
+                💡 매년/매월=🔴빨강, 매일/하루만=🟡노랑, 사진=🟢연두
             </div>
         </div>
 
