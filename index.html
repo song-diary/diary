@@ -14754,12 +14754,46 @@ window.updateTitleIconColor=function(){};
 
 
 
-<style id="V15_YELLOW_PIN">
+
+</body>
+
+
+
+
+
+</body>
+
+
+
+
+<style id="V16_PIN_COLORS_COMPLETE">
+.cal-cell .cal-photo-corner {
+  position:absolute !important;
+  top:2px !important; left:3px !important;
+  width:12px !important; height:12px !important;
+  background:transparent !important; border:none !important;
+  display:flex !important; align-items:center !important; justify-content:center !important;
+}
+.cal-cell .cal-photo-corner .pin-emoji{
+  display:block !important;
+  width:8px !important; height:8px !important;
+  border-radius:50% 50% 50% 0 !important;
+  transform:rotate(-45deg) !important;
+  font-size:0 !important;
+  position:relative !important;
+  box-shadow:0 1px 3px rgba(0,0,0,0.3) !important;
+}
+.cal-cell .cal-photo-corner .pin-emoji.green-pin{
+  background:linear-gradient(135deg, #2ecc71, #27ae60) !important;
+}
+.cal-cell .cal-photo-corner .pin-emoji.yellow-pin,
 .cal-cell .cal-photo-corner .pin-emoji.sky-pin{
-  background:linear-gradient(135deg, #ffeb3b, #fbc02d) !important;
   background:linear-gradient(135deg, #ffeb3b, #f9a825) !important;
 }
-.cal-cell .cal-photo-corner .pin-emoji.sky-pin::after{
+.cal-cell .cal-photo-corner .pin-emoji.red-pin{
+  background:linear-gradient(135deg, #ff6b6b, #c0392b) !important;
+}
+.cal-cell .cal-photo-corner .pin-emoji::after{
   content:'' !important;
   position:absolute !important;
   width:2.5px !important; height:2.5px !important;
@@ -14768,36 +14802,29 @@ window.updateTitleIconColor=function(){};
   top:1.8px !important; left:1.8px !important;
 }
 </style>
-</body>
-
-
-<script id="V14_FINAL_PIN_LOGIC">
-// V14 최종 - 올바른 색상 패턴
-// 사진=연두, 매일/하루만=하늘색(지나도 유지), 매년/매월=빨강
+<script id="V16_FINAL_PIN_LOGIC">
+// V16 최종 - 기념일 매년/매월=빨강, 매일/하루만=노랑, 사진=연두, 제목만=없음
 (function(){
   function getDiaries(){try{return JSON.parse(localStorage.getItem('smartDiaryList')||'[]')}catch(e){return []}}
-  function getTodayStr(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
   
   function getPinTypeForDate(dateStr, allDiaries){
-    // 1. 매일반복, 하루만 울림 = 하늘색 (지나도 유지)
-    for(var i=0;i<allDiaries.length;i++){
-      var dd=allDiaries[i];
-      if((dd.date||'').slice(0,10)!==dateStr) continue;
-      if(dd.dailyRepeat === true) return 'sky';
-      if(dd.onceAlarm === true) return 'sky';
-    }
-    // 2. 기념일 매년/매월 반복 = 빨강 (음력 고려, 내년까지 연결)
+    // 1. 기념일 매년/매월 반복 = 빨강 (최우선, 음력 고려)
     if(typeof sajuAnniversaryMatches==='function'){
       for(var j=0;j<allDiaries.length;j++){
         var ad=allDiaries[j];
         if(!ad.anniversary && !ad.annivTitle) continue;
         if(!ad.annivRepeat || ad.annivRepeat==='none') continue;
-        // 매일/하루만은 이미 위에서 처리
-        if(ad.dailyRepeat === true || ad.onceAlarm === true) continue;
         try{ 
           if(sajuAnniversaryMatches(ad, dateStr)) return 'red'; 
         }catch(e){}
       }
+    }
+    // 2. 매일반복, 하루만 울림 = 노랑 (지나도 유지)
+    for(var i=0;i<allDiaries.length;i++){
+      var dd=allDiaries[i];
+      if((dd.date||'').slice(0,10)!==dateStr) continue;
+      if(dd.dailyRepeat === true) return 'yellow';
+      if(dd.onceAlarm === true) return 'yellow';
     }
     // 3. 사진만 = 연두
     for(var k=0;k<allDiaries.length;k++){
@@ -14819,22 +14846,20 @@ window.updateTitleIconColor=function(){};
         var pinType = getPinTypeForDate(ds, all);
         var corner=cell.querySelector('.cal-photo-corner');
         
-        if(pinType==='sky'){
-          // 하늘색 - 매일반복/하루만 (지나도 유지)
+        if(pinType==='yellow'){
           if(!corner){
             corner=document.createElement('div');
             corner.className='cal-photo-corner';
             corner.setAttribute('data-date', ds);
-            corner.innerHTML='<span class="pin-emoji sky-pin"></span>';
+            corner.innerHTML='<span class="pin-emoji yellow-pin"></span>';
             cell.appendChild(corner);
           }else{
             var pin=corner.querySelector('.pin-emoji');
-            if(!pin){ corner.innerHTML='<span class="pin-emoji sky-pin"></span>'; }
-            else{ pin.className='pin-emoji sky-pin'; pin.textContent=''; }
+            if(!pin){ corner.innerHTML='<span class="pin-emoji yellow-pin"></span>'; }
+            else{ pin.className='pin-emoji yellow-pin'; pin.textContent=''; }
             corner.style.display='flex';
           }
         }else if(pinType==='red'){
-          // 빨강 - 매년/매월 기념일
           if(!corner){
             corner=document.createElement('div');
             corner.className='cal-photo-corner';
@@ -14848,7 +14873,6 @@ window.updateTitleIconColor=function(){};
             corner.style.display='flex';
           }
         }else if(pinType==='green'){
-          // 연두 - 사진만
           if(!corner){
             corner=document.createElement('div');
             corner.className='cal-photo-corner';
@@ -14862,59 +14886,28 @@ window.updateTitleIconColor=function(){};
             corner.style.display='flex';
           }
         }else{
-          // 제목/내용만, 사진없고 체크없으면 풍선 없음
           if(corner){ corner.style.display='none'; }
         }
       });
-    }catch(e){ console.log('V14 pin err', e); }
+      console.log('[V16] 핀 동기화 완료 - 빨강:기념일, 노랑:매일/하루, 연두:사진');
+    }catch(e){ console.log('V16 pin err', e); }
   }
   
   function hook(){
-    if(window._v14Hooked) return;
+    if(window._v16Hooked) return;
     if(typeof window.renderCalendar!=='function' && typeof renderCalendar!=='function'){ setTimeout(hook,200); return; }
     if(window.renderCalendar){ var o=window.renderCalendar; window.renderCalendar=function(){ var r=o.apply(this, arguments); syncPins(); return r; }; }
     if(typeof renderCalendar==='function' && !window._origRender){ window._origRender=renderCalendar; renderCalendar=function(){ var r=window._origRender.apply(this, arguments); syncPins(); return r; }; window.renderCalendar=renderCalendar; }
-    window._v14Hooked=true; 
-    window._v11Hooked=true;
-    setTimeout(syncPins, 50);
+    window._v16Hooked=true; window._v14Hooked=true; window._v11Hooked=true;
+    setTimeout(syncPins, 100);
   }
   hook(); 
   window.updateCalendarIcons=syncPins; 
   window.ensureRedPins=syncPins;
+  window.syncPins=syncPins;
 })();
 </script>
-
-<style id="V15_YELLOW_PIN">
-.cal-cell .cal-photo-corner .pin-emoji.sky-pin{
-  background:linear-gradient(135deg, #ffeb3b, #fbc02d) !important;
-  background:linear-gradient(135deg, #ffeb3b, #f9a825) !important;
-}
-.cal-cell .cal-photo-corner .pin-emoji.sky-pin::after{
-  content:'' !important;
-  position:absolute !important;
-  width:2.5px !important; height:2.5px !important;
-  background:#fff !important;
-  border-radius:50% !important;
-  top:1.8px !important; left:1.8px !important;
-}
-</style>
 </body>
-
-
-<style id="V15_YELLOW_PIN">
-.cal-cell .cal-photo-corner .pin-emoji.sky-pin{
-  background:linear-gradient(135deg, #ffeb3b, #fbc02d) !important;
-  background:linear-gradient(135deg, #ffeb3b, #f9a825) !important;
-}
-.cal-cell .cal-photo-corner .pin-emoji.sky-pin::after{
-  content:'' !important;
-  position:absolute !important;
-  width:2.5px !important; height:2.5px !important;
-  background:#fff !important;
-  border-radius:50% !important;
-  top:1.8px !important; left:1.8px !important;
-}
-</style>
 </body>
 
 
