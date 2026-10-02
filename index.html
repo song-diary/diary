@@ -14869,16 +14869,18 @@ window.updateTitleIconColor=function(){};
 
 
 
-<style id="V19_PIN_COLORS_COMPLETE">
+
+
+
+<style id="V20_PIN_COLORS">
 .cal-cell .cal-photo-corner { position:absolute !important; top:2px !important; left:3px !important; width:12px !important; height:12px !important; background:transparent !important; border:none !important; display:flex !important; align-items:center !important; justify-content:center !important; z-index:10 !important; }
-.cal-cell .cal-photo-corner .pin-emoji{ display:block !important; width:10px !important; height:10px !important; border-radius:50% 50% 50% 0 !important; transform:rotate(-45deg) !important; font-size:0 !important; position:relative !important; box-shadow:0 2px 4px rgba(0,0,0,0.4) !important; }
+.cal-cell .cal-photo-corner .pin-emoji{ display:block !important; width:8px !important; height:8px !important; border-radius:50% 50% 50% 0 !important; transform:rotate(-45deg) !important; font-size:0 !important; position:relative !important; box-shadow:0 1px 3px rgba(0,0,0,0.3) !important; }
 .cal-cell .cal-photo-corner .pin-emoji.green-pin{ background:linear-gradient(135deg, #2ecc71, #27ae60) !important; }
-.cal-cell .cal-photo-corner .pin-emoji.yellow-pin{ background:linear-gradient(135deg, #ffeb3b, #ff9800) !important; background:linear-gradient(135deg, #ffee58, #f9a825) !important; border:1px solid #f57f17 !important; }
-.cal-cell .cal-photo-corner .pin-emoji.sky-pin{ background:linear-gradient(135deg, #ffeb3b, #ff9800) !important; background:linear-gradient(135deg, #ffee58, #f9a825) !important; }
-.cal-cell .cal-photo-corner .pin-emoji.red-pin{ background:linear-gradient(135deg, #ff5252, #c62828) !important; }
-.cal-cell .cal-photo-corner .pin-emoji::after{ content:'' !important; position:absolute !important; width:3px !important; height:3px !important; background:#fff !important; border-radius:50% !important; top:2px !important; left:2px !important; }
+.cal-cell .cal-photo-corner .pin-emoji.yellow-pin{ background:linear-gradient(135deg, #ffeb3b, #f9a825) !important; }
+.cal-cell .cal-photo-corner .pin-emoji.sky-pin{ background:linear-gradient(135deg, #ffeb3b, #f9a825) !important; }
+.cal-cell .cal-photo-corner .pin-emoji.red-pin{ background:linear-gradient(135deg, #ff6b6b, #c0392b) !important; }
+.cal-cell .cal-photo-corner .pin-emoji::after{ content:'' !important; position:absolute !important; width:2.5px !important; height:2.5px !important; background:#fff !important; border-radius:50% !important; top:1.8px !important; left:1.8px !important; }
 #fortune-teaser { cursor:pointer !important; pointer-events:auto !important; }
-.toggle-card { display:flex !important; align-items:center !important; justify-content:space-between !important; padding:8px 12px !important; width:100% !important; box-sizing:border-box !important; margin-bottom:4px !important; }
 </style>
 
 <script id="V18_FINAL_PIN_LOGIC">
@@ -14886,15 +14888,11 @@ window.updateTitleIconColor=function(){};
   window.userClickedFortune = true;
   function getDiaries(){try{return JSON.parse(localStorage.getItem('smartDiaryList')||'[]')}catch(e){return []}}
   function getPinTypeForDate(dateStr, allDiaries){
-    // 매일 반복 = 노랑 (매일 표시, 최우선)
-    for(var i=0;i<allDiaries.length;i++){
-      var dd=allDiaries[i];
-      if(dd.dailyRepeat === true) return 'yellow';
-    }
-    // 하루만 울림 = 노랑 (원래 날짜에 표시, 지나도 유지)
+    // 매일 반복, 하루만 울림 = 노랑 (원래 날짜에만, 지나도 유지, 최우선)
     for(var i=0;i<allDiaries.length;i++){
       var dd=allDiaries[i];
       if((dd.date||'').slice(0,10)!==dateStr) continue;
+      if(dd.dailyRepeat === true) return 'yellow';
       if(dd.onceAlarm === true) return 'yellow';
     }
     // 기념일 매년/매월 = 빨강
