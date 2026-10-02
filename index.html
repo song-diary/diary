@@ -2955,6 +2955,22 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
 
 
 
+
+<style id="SKY_PIN_CSS">
+.cal-cell .cal-photo-corner .pin-emoji.sky-pin{
+  background:linear-gradient(135deg, #6ec6ff, #2196f3) !important;
+  background:linear-gradient(135deg, #81d4fa, #0288d1) !important;
+}
+.cal-cell .cal-photo-corner .pin-emoji.sky-pin::after{
+  content:'' !important;
+  position:absolute !important;
+  width:2.5px !important; height:2.5px !important;
+  background:#fff !important;
+  border-radius:50% !important;
+  top:1.8px !important; left:1.8px !important;
+}
+</style>
+
 </head>
 <body>
 
@@ -14609,7 +14625,7 @@ window.updateTitleIconColor=function(){};
 <style>
 .cal-cell .cal-photo-corner{ background:transparent!important; border:none!important; width:12px!important; height:12px!important; top:2px!important; left:3px!important; display:flex!important; align-items:center!important; justify-content:center!important; opacity:1!important; transition:none!important; }
 .cal-cell .cal-photo-corner .pin-emoji{ display:block!important; width:8px!important; height:8px!important; border-radius:50% 50% 50% 0!important; transform:rotate(-45deg)!important; font-size:0!important; position:relative!important; top:-1px!important; box-shadow:0 1px 3px rgba(0,0,0,0.3)!important; }
-.cal-cell .cal-photo-corner .pin-emoji.red-pin{ background:linear-gradient(135deg, #ff6b6b, #c0392b)!important; }
+.cal-cell .cal-photo-corner .pin-emoji.red-pin, .cal-cell .cal-photo-corner .pin-emoji.sky-pin{ background:linear-gradient(135deg, #ff6b6b, #c0392b)!important; }
 .cal-cell .cal-photo-corner .pin-emoji.green-pin{ background:linear-gradient(135deg, #2ecc71, #27ae60)!important; }
 .cal-cell .cal-photo-corner .pin-emoji::after{ content:''!important; position:absolute!important; width:2.5px!important; height:2.5px!important; background:#fff!important; border-radius:50%!important; top:1.8px!important; left:1.8px!important; }
 </style>
@@ -14743,7 +14759,27 @@ window.updateTitleIconColor=function(){};
   console.log('[V4.69] 달력 겹침 방지 패치 적용 - gap 4px, 높이 1.45배, zIndex 역순');
 })();
 </script>
+
+<style id="FINAL_SKY_PIN">
+.cal-cell .cal-photo-corner .pin-emoji.sky-pin{
+  background:linear-gradient(135deg, #6ec6ff, #2196f3) !important;
+  background:linear-gradient(135deg, #81d4fa, #0288d1) !important;
+}
+.cal-cell .cal-photo-corner .pin-emoji.sky-pin::after{
+  content:'' !important;
+  position:absolute !important;
+  width:2.5px !important; height:2.5px !important;
+  background:#fff !important;
+  border-radius:50% !important;
+  top:1.8px !important; left:1.8px !important;
+}
+/* 매일반복/하루만 = 하늘색 */
+.cal-cell .cal-photo-corner .pin-emoji.red-pin{
+  background:linear-gradient(135deg, #6ec6ff, #2196f3) !important;
+}
+</style>
 </body>
+
 
 
 <style id="V11_FIX_ALL">
@@ -14751,7 +14787,8 @@ window.updateTitleIconColor=function(){};
 .cal-cell .cal-photo-corner { position:absolute !important; top:2px !important; left:3px !important; width:12px !important; height:12px !important; background:transparent !important; border:none !important; display:flex !important; }
 .cal-cell .cal-photo-corner .pin-emoji{ display:block !important; width:8px !important; height:8px !important; border-radius:50% 50% 50% 0 !important; transform:rotate(-45deg) !important; font-size:0 !important; box-shadow:0 1px 3px rgba(0,0,0,0.3) !important; }
 .cal-cell .cal-photo-corner .pin-emoji.green-pin{ background:linear-gradient(135deg, #2ecc71, #27ae60) !important; }
-.cal-cell .cal-photo-corner .pin-emoji.red-pin{ background:linear-gradient(135deg, #ff6b6b, #c0392b) !important; }
+.cal-cell .cal-photo-corner .pin-emoji.red-pin, .cal-cell .cal-photo-corner .pin-emoji.sky-pin{ background:linear-gradient(135deg, #ff6b6b, #c0392b) !important; }
+.cal-cell .cal-photo-corner .pin-emoji.sky-pin{ background:linear-gradient(135deg, #6ec6ff, #2196f3) !important; }
 .cal-cell .cal-photo-corner .pin-emoji::after{ content:'' !important; position:absolute !important; width:2.5px !important; height:2.5px !important; background:#fff !important; border-radius:50% !important; top:1.8px !important; left:1.8px !important; }
 #fortune-teaser { cursor:pointer !important; pointer-events:auto !important; }
 </style>
@@ -14794,12 +14831,11 @@ window.updateTitleIconColor=function(){};
   function getDiaries(){try{return JSON.parse(localStorage.getItem('smartDiaryList')||'[]')}catch(e){return []}}
   function getTodayStr(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
   function isAlarmForDate(dateStr, allDiaries){
-    var todayStr = getTodayStr();
     for(var i=0;i<allDiaries.length;i++){
       var dd=allDiaries[i];
       if((dd.date||'').slice(0,10)!==dateStr) continue;
       if(dd.dailyRepeat === true) return true;
-      if(dd.onceAlarm === true){ if(dateStr < todayStr) continue; return true; }
+      if(dd.onceAlarm === true) return true;
     }
     return false;
   }
@@ -14819,8 +14855,8 @@ window.updateTitleIconColor=function(){};
         var hasPhoto = hasPhotoForDate(ds, all);
         var corner=cell.querySelector('.cal-photo-corner');
         if(isAlarm){
-          if(!corner){ corner=document.createElement('div'); corner.className='cal-photo-corner'; corner.setAttribute('data-date', ds); corner.innerHTML='<span class="pin-emoji red-pin"></span>'; cell.appendChild(corner); }
-          else{ var pin=corner.querySelector('.pin-emoji'); if(!pin){ corner.innerHTML='<span class="pin-emoji red-pin"></span>'; }else{ pin.className='pin-emoji red-pin'; pin.textContent=''; } corner.style.display='flex'; }
+          if(!corner){ corner=document.createElement('div'); corner.className='cal-photo-corner'; corner.setAttribute('data-date', ds); corner.innerHTML='<span class="pin-emoji sky-pin"></span>'; cell.appendChild(corner); }
+          else{ var pin=corner.querySelector('.pin-emoji'); if(!pin){ corner.innerHTML='<span class="pin-emoji sky-pin"></span>'; }else{ pin.className='pin-emoji sky-pin'; pin.textContent=''; } corner.style.display='flex'; }
         }else if(hasPhoto){
           if(!corner){ corner=document.createElement('div'); corner.className='cal-photo-corner'; corner.setAttribute('data-date', ds); corner.innerHTML='<span class="pin-emoji green-pin"></span>'; cell.appendChild(corner); }
           else{ var pin=corner.querySelector('.pin-emoji'); if(!pin){ corner.innerHTML='<span class="pin-emoji green-pin"></span>'; }else{ pin.className='pin-emoji green-pin'; pin.textContent=''; } corner.style.display='flex'; }
@@ -14838,8 +14874,48 @@ window.updateTitleIconColor=function(){};
   hook(); window.updateCalendarIcons=syncPins; window.ensureRedPins=syncPins;
 })();
 </script>
+
+<style id="FINAL_SKY_PIN">
+.cal-cell .cal-photo-corner .pin-emoji.sky-pin{
+  background:linear-gradient(135deg, #6ec6ff, #2196f3) !important;
+  background:linear-gradient(135deg, #81d4fa, #0288d1) !important;
+}
+.cal-cell .cal-photo-corner .pin-emoji.sky-pin::after{
+  content:'' !important;
+  position:absolute !important;
+  width:2.5px !important; height:2.5px !important;
+  background:#fff !important;
+  border-radius:50% !important;
+  top:1.8px !important; left:1.8px !important;
+}
+/* 매일반복/하루만 = 하늘색 */
+.cal-cell .cal-photo-corner .pin-emoji.red-pin{
+  background:linear-gradient(135deg, #6ec6ff, #2196f3) !important;
+}
+</style>
 </body>
+
+
+<style id="FINAL_SKY_PIN">
+.cal-cell .cal-photo-corner .pin-emoji.sky-pin{
+  background:linear-gradient(135deg, #6ec6ff, #2196f3) !important;
+  background:linear-gradient(135deg, #81d4fa, #0288d1) !important;
+}
+.cal-cell .cal-photo-corner .pin-emoji.sky-pin::after{
+  content:'' !important;
+  position:absolute !important;
+  width:2.5px !important; height:2.5px !important;
+  background:#fff !important;
+  border-radius:50% !important;
+  top:1.8px !important; left:1.8px !important;
+}
+/* 매일반복/하루만 = 하늘색 */
+.cal-cell .cal-photo-corner .pin-emoji.red-pin{
+  background:linear-gradient(135deg, #6ec6ff, #2196f3) !important;
+}
+</style>
 </body>
+
 
 
 
