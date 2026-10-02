@@ -358,7 +358,11 @@
             margin-bottom: 10px;
         }
         .toggle-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
-        .toggle-card { display: flex; align-items: center; justify-content: space-between; gap: 6px; background: #f7f5f0; border: 1px solid var(--border-color); border-radius: 10px; padding: 8px 12px; margin-bottom:4px; }
+        .toggle-card {
+            display: flex; align-items: center; justify-content: space-between; gap: 6px;
+            background: #f7f5f0; border: 1px solid var(--border-color); border-radius: 10px;
+            padding: 10px 10px;
+        }
         .toggle-card-label {
             font-size: 12.5px; font-weight: 700; color: var(--text-color);
             display: flex; align-items: center; gap: 5px; line-height: 1.3;
@@ -2955,9 +2959,6 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
 
 
 
-
-
-
 </head>
 <body>
 
@@ -3502,15 +3503,10 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
         <div class="unified-title-alarm-box" id="unified-title-alarm-box" style="background:#FDF3E7; border-radius:12px; padding:12px; margin-bottom:10px; border:1px solid #f5d6b8;">
             <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:bold; color:#5a3e2b; margin-bottom:10px;">
                 <span>🎉</span><span>제목 & 기념일 & 알림</span>
-                <span style="font-size:10px; color:#a08060; font-weight:normal; margin-left:6px;">비슷한 기능 한곳에!</span>
             </div>
-            
-            <!-- 1줄: 제목 입력 -->
             <div style="display:flex; gap:6px; margin-bottom:8px;">
                 <input type="text" id="anniv-input" maxlength="20" placeholder="제목 (예: 생일, 병원, 약)" style="flex:1; padding:10px 12px; border:1px solid #e6d8d8; border-radius:8px; font-size:14px; background:#fff;">
             </div>
-            
-            <!-- 2줄: 반복 설정 -->
             <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; background:#fff; border-radius:8px; padding:8px 10px; margin-bottom:8px;">
                 <span style="font-size:11px; color:#7a5a3a; font-weight:bold;">🔁 반복:</span>
                 <select id="anniv-repeat-select" class="anniv-repeat-select" style="flex:0 0 90px; font-size:12px; padding:6px 4px; border-radius:6px; border:1px solid #e6d8d8;">
@@ -3521,8 +3517,6 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
                 <label class="anniv-cal-radio" style="font-size:12px; margin:0; cursor:pointer;"><input type="radio" name="anniv-cal-type" id="anniv-cal-solar" value="solar" checked> 양력</label>
                 <label class="anniv-cal-radio" style="font-size:12px; margin:0; cursor:pointer;"><input type="radio" name="anniv-cal-type" id="anniv-cal-lunar" value="lunar"> 음력</label>
             </div>
-            
-            <!-- 3줄: 알림 시간 + 체크들 -->
             <div class="reservation-box" id="reservation-box" style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; background:#fff; border-radius:8px; padding:8px 10px;">
                 <span style="font-size:11px; font-weight:bold; color:#7a5a3a;">⏰ 알림:</span>
                 <input type="time" id="reservation-time-input" style="border:1px solid #e6d8d8; border-radius:6px; padding:5px 6px; font-size:12px; background:#fff;">
@@ -3537,7 +3531,7 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
                 </label>
             </div>
             <div style="font-size:10px; color:#8d6e63; margin-top:6px; line-height:1.4;">
-                💡 <b>색상:</b> 매년/매월=🔴빨강, 매일/하루만=🟡노랑, 사진=🟢연두, 제목만=없음
+                💡 색상: 매년/매월=🔴빨강, 매일/하루만=🟡노랑, 사진=🟢연두, 제목만=없음
             </div>
         </div>
 
@@ -7414,22 +7408,6 @@ window.attachPhotoDoubleTap = function(el, handler){
                 </div>
                 <div class="fp-setup-msg">생년월일을 한 번만 입력해두면<br>매일 다른, 나만의 오늘의 운세를 볼 수 있어요.</div>
                 <button class="fp-cta" onclick="closeFortunePopup(); openSettingsModal();">생년월일 입력하러 가기</button>
-            
-            <div class="fp-share-section" id="fp-share-section" style="margin-top:14px; padding:12px; background:rgba(255,255,255,0.06); border-radius:12px; border:1px solid rgba(255,255,255,0.1);">
-                <div style="font-size:12px; font-weight:700; color:#E8D5FF; margin-bottom:8px;">📸 공유카드</div>
-                <div id="fp-share-preview" style="width:100%; aspect-ratio:9/16; max-height:300px; border-radius:10px; overflow:hidden; position:relative; background:linear-gradient(180deg,#2D1B4E 0%,#5B3A8C 30%,#C9A86A 100%); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:16px; box-sizing:border-box;">
-                    <div id="share-date-label" style="font-size:11px; color:#FFD88A; margin-bottom:10px;"></div>
-                    <div style="font-size:24px; margin-bottom:6px;">🌙</div>
-                    <div id="share-score" style="font-size:48px; font-weight:900; color:#FFDDAA; margin-bottom:8px;">88점</div>
-                    <div id="share-oneline" style="font-size:12px; color:#FFF; text-align:center; line-height:1.4;">오늘 하루 행운이 함께해요</div>
-                </div>
-                <canvas id="share-card-canvas" width="1080" height="1920" style="display:none;"></canvas>
-                <div style="display:flex; gap:6px; margin-top:8px;">
-                    <button style="flex:1; padding:10px; border-radius:10px; border:none; font-weight:800; font-size:12px; cursor:pointer; background:#FFD88A; color:#2A2340;" onclick="saveFortuneCard()">💾 저장</button>
-                    <button style="flex:1; padding:10px; border-radius:10px; border:1px solid rgba(255,255,255,0.2); font-weight:800; font-size:12px; cursor:pointer; background:rgba(255,255,255,0.15); color:#fff;" onclick="shareFortuneCard()">💬 공유</button>
-                </div>
-            </div>
-
             <div class="fp-exit-sticky" style="margin-top:12px; background:transparent; border-top:none;"><button onclick="closeFortunePopup()" style="width:100%;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:14px;border-radius:14px;font-weight:800;font-size:15px;">종료</button></div>
             `;
             fortunePopupOverlay.classList.add('active');
@@ -7571,24 +7549,8 @@ window.attachPhotoDoubleTap = function(el, handler){
                 <div class="fp-my-saju-link-big" onclick="openBucketListModal()" style="margin:0; text-align:center; padding:10px; font-size:13px; background:linear-gradient(120deg, #A8EDEA, #FED6E3); color:#2A2340;">🎯 나의 버킷 리스트</div>
             </div>
 
-            <div style="margin-top:16px; text-align:center;"><button onclick="openLottoGeneratorModal()" style="width:100%; background:linear-gradient(120deg, #FFD98E, #FF9AC2); color:#2A2340; border:none; padding:14px; border-radius:14px; font-weight:800; font-size:14.5px; box-shadow:0 4px 14px rgba(255,154,194,0.25);"> </button><!-- V244 - 문구 삭제 --></div>
-                
-            <div class="fp-share-section" id="fp-share-section" style="margin-top:14px; padding:12px; background:rgba(255,255,255,0.06); border-radius:12px; border:1px solid rgba(255,255,255,0.1);">
-                <div style="font-size:12px; font-weight:700; color:#E8D5FF; margin-bottom:8px;">📸 공유카드</div>
-                <div id="fp-share-preview" style="width:100%; aspect-ratio:9/16; max-height:300px; border-radius:10px; overflow:hidden; position:relative; background:linear-gradient(180deg,#2D1B4E 0%,#5B3A8C 30%,#C9A86A 100%); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:16px; box-sizing:border-box;">
-                    <div id="share-date-label" style="font-size:11px; color:#FFD88A; margin-bottom:10px;"></div>
-                    <div style="font-size:24px; margin-bottom:6px;">🌙</div>
-                    <div id="share-score" style="font-size:48px; font-weight:900; color:#FFDDAA; margin-bottom:8px;">88점</div>
-                    <div id="share-oneline" style="font-size:12px; color:#FFF; text-align:center; line-height:1.4;">오늘 하루 행운이 함께해요</div>
-                </div>
-                <canvas id="share-card-canvas" width="1080" height="1920" style="display:none;"></canvas>
-                <div style="display:flex; gap:6px; margin-top:8px;">
-                    <button style="flex:1; padding:10px; border-radius:10px; border:none; font-weight:800; font-size:12px; cursor:pointer; background:#FFD88A; color:#2A2340;" onclick="saveFortuneCard()">💾 저장</button>
-                    <button style="flex:1; padding:10px; border-radius:10px; border:1px solid rgba(255,255,255,0.2); font-weight:800; font-size:12px; cursor:pointer; background:rgba(255,255,255,0.15); color:#fff;" onclick="shareFortuneCard()">💬 공유</button>
-                </div>
-            </div>
-
-            <div class="fp-exit-sticky"><button onclick="closeFortunePopup()" style="width:100%;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:14px;border-radius:14px;font-weight:800;font-size:15px;">종료</button></div>`;
+            <div style="margin-top:16px; text-align:center;"><button onclick="openLottoGeneratorModal()" style="width:100%; background:linear-gradient(120deg, #FFD98E, #FF9AC2); color:#2A2340; border:none; padding:14px; border-radius:14px; font-weight:800; font-size:14.5px; box-shadow:0 4px 14px rgba(255,154,194,0.25);"></button><!-- V244 - 문구 삭제 --></div>
+                <div class="fp-exit-sticky"><button onclick="closeFortunePopup()" style="width:100%;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:14px;border-radius:14px;font-weight:800;font-size:15px;">종료</button></div>`;
 
         fortunePopupOverlay.classList.add('active'); lockBodyScroll(); } function saveFortuneCard_DISABLED(){
         alert('캡처해서 저장해보세요! (이미지 저장 기능은 다음 버전에서 자동 저장으로 업그레이드할게요)');
@@ -9703,7 +9665,6 @@ async function showPhotosForDate(dateStr){
         diaries = diaries.filter(d => d.id !== id);
         localStorage.setItem('smartDiaryList', JSON.stringify(diaries));
         renderCalendar();
-        setTimeout(function(){ if(typeof updateCalendarIcons==='function') updateCalendarIcons(); if(typeof ensureRedPins==='function') ensureRedPins(); }, 100);
         updateMoneySummary();
         if (isSearchFilterOpen) filterCustomList();
         renderDiaryAroundToday();
@@ -14629,11 +14590,156 @@ window.updateTitleIconColor=function(){};
 <style>
 .cal-cell .cal-photo-corner{ background:transparent!important; border:none!important; width:12px!important; height:12px!important; top:2px!important; left:3px!important; display:flex!important; align-items:center!important; justify-content:center!important; opacity:1!important; transition:none!important; }
 .cal-cell .cal-photo-corner .pin-emoji{ display:block!important; width:8px!important; height:8px!important; border-radius:50% 50% 50% 0!important; transform:rotate(-45deg)!important; font-size:0!important; position:relative!important; top:-1px!important; box-shadow:0 1px 3px rgba(0,0,0,0.3)!important; }
-.cal-cell .cal-photo-corner .pin-emoji.red-pin, .cal-cell .cal-photo-corner .pin-emoji.sky-pin{ background:linear-gradient(135deg, #ffeb3b, #fbc02d) !important; }
+.cal-cell .cal-photo-corner .pin-emoji.red-pin{ background:linear-gradient(135deg, #ff6b6b, #c0392b)!important; }
 .cal-cell .cal-photo-corner .pin-emoji.green-pin{ background:linear-gradient(135deg, #2ecc71, #27ae60)!important; }
 .cal-cell .cal-photo-corner .pin-emoji::after{ content:''!important; position:absolute!important; width:2.5px!important; height:2.5px!important; background:#fff!important; border-radius:50%!important; top:1.8px!important; left:1.8px!important; }
 </style>
-<!-- V12 removed old ensureRedPins that caused red for text-only -->
+<script>
+// [V4.67] 모든 날짜 빨강 버그 수정 + 음력/양력 중복 제거 + 하루만은 그날만
+(function(){
+  window.forcePin = function(){};
+  window.updatePins = function(){};
+  window.getShowPhotoPin = function(){
+    const v = localStorage.getItem('smartDiaryShowPhotoPin');
+    return v===null ? true : v!=='false';
+  };
+  window.syncPhotoPinToggle = function(){
+    const chk = document.getElementById('settings-show-photo-pin');
+    if(chk){ const v=localStorage.getItem('smartDiaryShowPhotoPin'); chk.checked = v===null ? true : v!=='false'; }
+  };
+
+  function isRedForDate(dateStr, allDiaries){
+    // 같은 날짜에 있는 일기만 확인 - 매일 반복도 원래 날짜에만 빨강 (알림은 매일 울리지만 핀은 원래 날짜에만)
+    const same = allDiaries.filter(d=> (d.date||'').slice(0,10)===dateStr);
+    
+    // 1) 매일 반복: 같은 날짜에 매일반복 체크된 일기가 있으면 빨강
+    if(same.some(d=>d.dailyRepeat)) return true;
+
+    // 2) 하루만 울림: 같은 날짜에 하루만 체크된 일기가 있으면 빨강 (정확히 그날만, 내년엔 안 나옴)
+    if(same.some(d=>d.onceAlarm)) return true;
+
+    // 3) 기념일: 음력은 음력끼리, 양력은 양력끼리만 (중복 제거)
+    if(typeof sajuAnniversaryMatches==='function'){
+        for(let dd of allDiaries){
+            if(dd.anniversary && dd.annivRepeat && dd.annivRepeat!=='none' && !dd.onceAlarm && !dd.dailyRepeat){
+                try{ 
+                    if(sajuAnniversaryMatches(dd, dateStr)) return true; 
+                }catch(e){}
+            }
+        }
+    }
+    return false;
+  }
+
+  function hasPhotoForDate(dateStr, allDiaries){
+    return allDiaries.some(d=> (d.date||'').slice(0,10)===dateStr && d.photo);
+  }
+
+  function ensureRedPins(){
+    let allDiaries = [];
+    try { allDiaries = typeof getAllDiaries==='function'?getAllDiaries():JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); } catch(e){ allDiaries=[]; }
+    const showPhotoPin = window.getShowPhotoPin();
+    const grid = document.getElementById('cal-days-grid');
+    if(!grid) return;
+    grid.querySelectorAll('.cal-cell:not(.adjacent-month)').forEach(cell=>{
+        const dayEl = cell.querySelector('.cal-cell-inner span');
+        if(!dayEl) return;
+        const day = parseInt(dayEl.textContent.trim());
+        if(isNaN(day)) return;
+        const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        const isRed = isRedForDate(dateStr, allDiaries);
+        const hasPhoto = hasPhotoForDate(dateStr, allDiaries);
+        const isGreen = hasPhoto && !isRed && showPhotoPin;
+        let corner = cell.querySelector('.cal-photo-corner');
+        if(isRed){
+            if(!corner){
+                corner = document.createElement('div');
+                corner.className = 'cal-photo-corner has-pin-icon red';
+                corner.setAttribute('data-date', dateStr);
+                corner.innerHTML = '<span class="pin-emoji red-pin"></span>';
+                cell.appendChild(corner);
+            }else{
+                let pin = corner.querySelector('.pin-emoji');
+                if(!pin){ corner.innerHTML='<span class="pin-emoji red-pin"></span>'; }
+                else{ pin.className='pin-emoji red-pin'; pin.textContent=''; }
+                corner.className = 'cal-photo-corner has-pin-icon red';
+                corner.style.display='flex';
+            }
+            cell.classList.add('has-photo');
+        }else if(isGreen){
+            if(!corner){
+                corner = document.createElement('div');
+                corner.className = 'cal-photo-corner has-pin-icon green';
+                corner.setAttribute('data-date', dateStr);
+                corner.innerHTML = '<span class="pin-emoji green-pin"></span>';
+                cell.appendChild(corner);
+            }else{
+                let pin = corner.querySelector('.pin-emoji');
+                if(!pin){ corner.innerHTML='<span class="pin-emoji green-pin"></span>'; }
+                else{ pin.className='pin-emoji green-pin'; pin.textContent=''; }
+                corner.className = 'cal-photo-corner has-pin-icon green';
+                corner.style.display='flex';
+            }
+            cell.classList.add('has-photo');
+        }else{
+            if(corner){ corner.style.display='none'; }
+            cell.classList.remove('has-photo');
+        }
+    });
+  }
+
+  function patch(){
+    if(typeof window.renderCalendar !== 'function'){ setTimeout(patch, 300); return; }
+    if(window._v67Patched) return;
+    window._v67Patched=true;
+    const orig = window.renderCalendar;
+    window.renderCalendar = function(){
+        const r = orig.apply(this, arguments);
+        setTimeout(ensureRedPins, 30);
+        setTimeout(ensureRedPins, 200);
+        return r;
+    };
+    const grid = document.getElementById('cal-days-grid');
+    if(grid){
+        const observer = new MutationObserver(()=>{ setTimeout(ensureRedPins, 50); });
+        observer.observe(grid, {childList:true, subtree:true});
+    }
+    setTimeout(()=>{ if(typeof window.renderCalendar==='function') window.renderCalendar(); }, 500);
+  }
+
+  window.onShowPhotoPinToggle = function(){
+    const chk = document.getElementById('settings-show-photo-pin');
+    if(chk) localStorage.setItem('smartDiaryShowPhotoPin', chk.checked ? 'true' : 'false');
+    if(typeof renderCalendar==='function') renderCalendar();
+    setTimeout(ensureRedPins, 50);
+  };
+
+  const origOpen = window.openDiaryForm;
+  if(typeof origOpen==='function'){
+    window.openDiaryForm = function(dateStr, existingItem, mode){
+      const r = origOpen.apply(this, arguments);
+      setTimeout(()=>{
+        try{
+          const onceCb = document.getElementById('once-alarm-checkbox');
+          const dailyCb = document.getElementById('daily-repeat-checkbox');
+          if(existingItem){
+            if(onceCb) onceCb.checked = !!existingItem.onceAlarm;
+            if(dailyCb) dailyCb.checked = !!existingItem.dailyRepeat;
+          }else{
+            if(onceCb) onceCb.checked = false;
+            if(dailyCb) dailyCb.checked = false;
+          }
+        }catch(e){}
+      }, 200);
+      return r;
+    };
+  }
+
+  patch();
+  setInterval(ensureRedPins, 1500);
+  setTimeout(()=>{ if(typeof syncPhotoPinToggle==='function') syncPhotoPinToggle(); }, 400);
+})();
+</script>
 
 <script>
 // [V4.69] 다른 핸드폰에서 밑에칸이 위를 가리는 겹침 버그 수정
@@ -14763,94 +14869,45 @@ window.updateTitleIconColor=function(){};
   console.log('[V4.69] 달력 겹침 방지 패치 적용 - gap 4px, 높이 1.45배, zIndex 역순');
 })();
 </script>
-
-
-<!-- removed old V11 pin logic -->
-
-
-
-
-
-
 </body>
-
-
-
-
-
-</body>
-
-
 
 
 <style id="V16_PIN_COLORS_COMPLETE">
-.cal-cell .cal-photo-corner {
-  position:absolute !important;
-  top:2px !important; left:3px !important;
-  width:12px !important; height:12px !important;
-  background:transparent !important; border:none !important;
-  display:flex !important; align-items:center !important; justify-content:center !important;
-}
-.cal-cell .cal-photo-corner .pin-emoji{
-  display:block !important;
-  width:8px !important; height:8px !important;
-  border-radius:50% 50% 50% 0 !important;
-  transform:rotate(-45deg) !important;
-  font-size:0 !important;
-  position:relative !important;
-  box-shadow:0 1px 3px rgba(0,0,0,0.3) !important;
-}
-.cal-cell .cal-photo-corner .pin-emoji.green-pin{
-  background:linear-gradient(135deg, #2ecc71, #27ae60) !important;
-}
-.cal-cell .cal-photo-corner .pin-emoji.yellow-pin,
-.cal-cell .cal-photo-corner .pin-emoji.sky-pin{
-  background:linear-gradient(135deg, #ffeb3b, #f9a825) !important;
-}
-.cal-cell .cal-photo-corner .pin-emoji.red-pin{
-  background:linear-gradient(135deg, #ff6b6b, #c0392b) !important;
-}
-.cal-cell .cal-photo-corner .pin-emoji::after{
-  content:'' !important;
-  position:absolute !important;
-  width:2.5px !important; height:2.5px !important;
-  background:#fff !important;
-  border-radius:50% !important;
-  top:1.8px !important; left:1.8px !important;
-}
+.cal-cell .cal-photo-corner { position:absolute !important; top:2px !important; left:3px !important; width:12px !important; height:12px !important; background:transparent !important; border:none !important; display:flex !important; align-items:center !important; justify-content:center !important; }
+.cal-cell .cal-photo-corner .pin-emoji{ display:block !important; width:8px !important; height:8px !important; border-radius:50% 50% 50% 0 !important; transform:rotate(-45deg) !important; font-size:0 !important; position:relative !important; box-shadow:0 1px 3px rgba(0,0,0,0.3) !important; }
+.cal-cell .cal-photo-corner .pin-emoji.green-pin{ background:linear-gradient(135deg, #2ecc71, #27ae60) !important; }
+.cal-cell .cal-photo-corner .pin-emoji.yellow-pin, .cal-cell .cal-photo-corner .pin-emoji.sky-pin{ background:linear-gradient(135deg, #ffeb3b, #f9a825) !important; }
+.cal-cell .cal-photo-corner .pin-emoji.red-pin{ background:linear-gradient(135deg, #ff6b6b, #c0392b) !important; }
+.cal-cell .cal-photo-corner .pin-emoji::after{ content:'' !important; position:absolute !important; width:2.5px !important; height:2.5px !important; background:#fff !important; border-radius:50% !important; top:1.8px !important; left:1.8px !important; }
+#fortune-teaser { cursor:pointer !important; pointer-events:auto !important; }
+.toggle-card { display:flex !important; align-items:center !important; justify-content:space-between !important; padding:8px 12px !important; width:100% !important; box-sizing:border-box !important; margin-bottom:4px !important; }
 </style>
-<script id="V16_FINAL_PIN_LOGIC">
-// V16 최종 - 기념일 매년/매월=빨강, 매일/하루만=노랑, 사진=연두, 제목만=없음
+<script id="V17_FINAL_ALL">
+// V17 - 통합폼 + 올바른 핀 색상
 (function(){
+  window.userClickedFortune = true;
   function getDiaries(){try{return JSON.parse(localStorage.getItem('smartDiaryList')||'[]')}catch(e){return []}}
-  
   function getPinTypeForDate(dateStr, allDiaries){
-    // 1. 기념일 매년/매월 반복 = 빨강 (최우선, 음력 고려)
     if(typeof sajuAnniversaryMatches==='function'){
       for(var j=0;j<allDiaries.length;j++){
         var ad=allDiaries[j];
         if(!ad.anniversary && !ad.annivTitle) continue;
         if(!ad.annivRepeat || ad.annivRepeat==='none') continue;
-        try{ 
-          if(sajuAnniversaryMatches(ad, dateStr)) return 'red'; 
-        }catch(e){}
+        try{ if(sajuAnniversaryMatches(ad, dateStr)) return 'red'; }catch(e){}
       }
     }
-    // 2. 매일반복, 하루만 울림 = 노랑 (지나도 유지)
     for(var i=0;i<allDiaries.length;i++){
       var dd=allDiaries[i];
       if((dd.date||'').slice(0,10)!==dateStr) continue;
       if(dd.dailyRepeat === true) return 'yellow';
       if(dd.onceAlarm === true) return 'yellow';
     }
-    // 3. 사진만 = 연두
     for(var k=0;k<allDiaries.length;k++){
       var d=allDiaries[k];
       if((d.date||'').slice(0,10)===dateStr && d.photo) return 'green';
     }
     return null;
   }
-  
   function syncPins(){
     try{
       var all=getDiaries();
@@ -14862,72 +14919,35 @@ window.updateTitleIconColor=function(){};
         var ds=y+'-'+String(m+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
         var pinType = getPinTypeForDate(ds, all);
         var corner=cell.querySelector('.cal-photo-corner');
-        
         if(pinType==='yellow'){
-          if(!corner){
-            corner=document.createElement('div');
-            corner.className='cal-photo-corner';
-            corner.setAttribute('data-date', ds);
-            corner.innerHTML='<span class="pin-emoji yellow-pin"></span>';
-            cell.appendChild(corner);
-          }else{
-            var pin=corner.querySelector('.pin-emoji');
-            if(!pin){ corner.innerHTML='<span class="pin-emoji yellow-pin"></span>'; }
-            else{ pin.className='pin-emoji yellow-pin'; pin.textContent=''; }
-            corner.style.display='flex';
-          }
+          if(!corner){ corner=document.createElement('div'); corner.className='cal-photo-corner'; corner.setAttribute('data-date', ds); corner.innerHTML='<span class="pin-emoji yellow-pin"></span>'; cell.appendChild(corner); }
+          else{ var pin=corner.querySelector('.pin-emoji'); if(!pin){ corner.innerHTML='<span class="pin-emoji yellow-pin"></span>'; }else{ pin.className='pin-emoji yellow-pin'; } corner.style.display='flex'; }
         }else if(pinType==='red'){
-          if(!corner){
-            corner=document.createElement('div');
-            corner.className='cal-photo-corner';
-            corner.setAttribute('data-date', ds);
-            corner.innerHTML='<span class="pin-emoji red-pin"></span>';
-            cell.appendChild(corner);
-          }else{
-            var pin=corner.querySelector('.pin-emoji');
-            if(!pin){ corner.innerHTML='<span class="pin-emoji red-pin"></span>'; }
-            else{ pin.className='pin-emoji red-pin'; pin.textContent=''; }
-            corner.style.display='flex';
-          }
+          if(!corner){ corner=document.createElement('div'); corner.className='cal-photo-corner'; corner.setAttribute('data-date', ds); corner.innerHTML='<span class="pin-emoji red-pin"></span>'; cell.appendChild(corner); }
+          else{ var pin=corner.querySelector('.pin-emoji'); if(!pin){ corner.innerHTML='<span class="pin-emoji red-pin"></span>'; }else{ pin.className='pin-emoji red-pin'; } corner.style.display='flex'; }
         }else if(pinType==='green'){
-          if(!corner){
-            corner=document.createElement('div');
-            corner.className='cal-photo-corner';
-            corner.setAttribute('data-date', ds);
-            corner.innerHTML='<span class="pin-emoji green-pin"></span>';
-            cell.appendChild(corner);
-          }else{
-            var pin=corner.querySelector('.pin-emoji');
-            if(!pin){ corner.innerHTML='<span class="pin-emoji green-pin"></span>'; }
-            else{ pin.className='pin-emoji green-pin'; pin.textContent=''; }
-            corner.style.display='flex';
-          }
-        }else{
-          if(corner){ corner.style.display='none'; }
-        }
+          if(!corner){ corner=document.createElement('div'); corner.className='cal-photo-corner'; corner.setAttribute('data-date', ds); corner.innerHTML='<span class="pin-emoji green-pin"></span>'; cell.appendChild(corner); }
+          else{ var pin=corner.querySelector('.pin-emoji'); if(!pin){ corner.innerHTML='<span class="pin-emoji green-pin"></span>'; }else{ pin.className='pin-emoji green-pin'; } corner.style.display='flex'; }
+        }else{ if(corner){ corner.style.display='none'; } }
       });
-      console.log('[V16] 핀 동기화 완료 - 빨강:기념일, 노랑:매일/하루, 연두:사진');
-    }catch(e){ console.log('V16 pin err', e); }
+    }catch(e){}
   }
-  
   function hook(){
-    if(window._v16Hooked) return;
+    if(window._v17Hooked) return;
     if(typeof window.renderCalendar!=='function' && typeof renderCalendar!=='function'){ setTimeout(hook,200); return; }
     if(window.renderCalendar){ var o=window.renderCalendar; window.renderCalendar=function(){ var r=o.apply(this, arguments); syncPins(); return r; }; }
     if(typeof renderCalendar==='function' && !window._origRender){ window._origRender=renderCalendar; renderCalendar=function(){ var r=window._origRender.apply(this, arguments); syncPins(); return r; }; window.renderCalendar=renderCalendar; }
-    window._v16Hooked=true; window._v14Hooked=true; window._v11Hooked=true;
-    setTimeout(syncPins, 100);
+    window._v17Hooked=true; setTimeout(syncPins, 100);
   }
-  hook(); 
-  window.updateCalendarIcons=syncPins; 
-  window.ensureRedPins=syncPins;
-  window.syncPins=syncPins;
+  hook(); window.updateCalendarIcons=syncPins; window.ensureRedPins=syncPins;
+  setTimeout(function(){
+    var teaser=document.getElementById('fortune-teaser');
+    if(teaser){ teaser.style.cursor='pointer'; teaser.onclick=function(){ if(typeof openFortunePopup==='function') openFortunePopup(); }; }
+  }, 300);
 })();
 </script>
 </body>
 </body>
-
-
 
 
 
