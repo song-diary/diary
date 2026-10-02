@@ -13595,11 +13595,16 @@ function checkDailyAlarms() {
     const todayStr = getTodayStrLocal();
     const todayKey = todayStr + ' ' + curTime;
     
-    // 이미 오늘 이 시간에 알림했으면 중복 방지 (같은 분)
     if(lastNotifiedKeys.has(todayKey)) return;
     
-    // diaries 배열이 없으면 리턴
-    if(typeof diaries === 'undefined' || !Array.isArray(diaries)) return;
+    // diaries를 getAllDiaries()로 가져오기 (글로벌 변수 대신)
+    let diaries = [];
+    try {
+      if(typeof getAllDiaries === 'function') diaries = getAllDiaries();
+      else diaries = JSON.parse(localStorage.getItem('smartDiaryList')||'[]');
+    } catch(e){ diaries = []; }
+    
+    if(!Array.isArray(diaries) || diaries.length===0) return;
     
     let matched = [];
     diaries.forEach(item=>{
@@ -13607,17 +13612,18 @@ function checkDailyAlarms() {
       const itemTime = (item.time || '').substring(0,5);
       if(itemTime !== curTime) return;
       
-      // 조건 1: 오늘 날짜인 경우
       if(item.date === todayStr) {
         matched.push(item);
         return;
       }
-      // 조건 2: 매일 반복 체크된 항목
       if(item.dailyRepeat) {
         matched.push(item);
         return;
       }
-      // 조건 3: 기념일 반복이 오늘이 생일/기념일인 경우
+      if(item.onceAlarm && item.date === todayStr) {
+        matched.push(item);
+        return;
+      }
       if(item.anniversary && item.annivRepeat) {
         try {
           const itemDate = new Date(item.date);
