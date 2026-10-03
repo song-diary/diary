@@ -7486,9 +7486,7 @@ window.attachPhotoDoubleTap = function(el, handler){
                 <div class="fp-my-saju-link-big" onclick="openBucketListModal()" style="margin:0; text-align:center; padding:10px; font-size:13px; background:linear-gradient(120deg, #A8EDEA, #FED6E3); color:#2A2340;">🎯 나의 버킷 리스트</div>
             </div>
 
-            <div style="margin-top:16px; text-align:center;"><button onclick="openLottoGeneratorModal()" style="width:100%; background:linear-gradient(120deg, #FFD98E, #FF9AC2); color:#2A2340; border:none; padding:14px; border-radius:14px; font-weight:800; font-size:14.5px; box-shadow:0 4px 14px rgba(255,154,194,0.25);"> </button><!-- V244 - 문구 삭제 --></div>
-                
-            <div class="fp-share-section" id="fp-share-section" style="margin-top:14px; padding:12px; background:rgba(255,255,255,0.06); border-radius:12px; border:1px solid rgba(255,255,255,0.1);">
+                        <div class="fp-share-section" id="fp-share-section" style="margin-top:14px; padding:12px; background:rgba(255,255,255,0.06); border-radius:12px; border:1px solid rgba(255,255,255,0.1);">
                 <div style="font-size:12px; font-weight:700; color:#E8D5FF; margin-bottom:8px;">📸 공유카드</div>
                 <div id="fp-share-preview" style="width:100%; aspect-ratio:9/16; max-height:300px; border-radius:10px; overflow:hidden; position:relative; background:linear-gradient(180deg,#2D1B4E 0%,#5B3A8C 30%,#C9A86A 100%); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:16px; box-sizing:border-box;">
                     <div id="share-date-label" style="font-size:11px; color:#FFD88A; margin-bottom:10px;"></div>
@@ -7525,18 +7523,10 @@ window.attachPhotoDoubleTap = function(el, handler){
     }
 
     // V259: 하루 1번, 처음 앱 켰을 때만 자동 표시 (기본 ON)
-    function maybeAutoShowFortunePopup() {
-        const autoSetting = localStorage.getItem('smartDiaryFortuneAuto');
-        const autoEnabled = autoSetting === null ? true : autoSetting === '1'; // 기본 켜짐, 0이면 끔
-        if (!autoEnabled) return;
-        if (!getShowFortune()) return;
-        if (!sajuBirthInfo || !sajuBirthInfo.date || !sajuDayMasterElem) return;
-        const urlParams = new URLSearchParams(window.location.search);
-        const forceOpen = urlParams.get('autobrief') === '1';
-        const lastShown = localStorage.getItem('smartDiarySajuLastShown');
-        if (!forceOpen && lastShown === getTodayStr()) return;
-        openFortunePopup();
-    }
+    window.maybeAutoShowFortunePopup = function(){
+    console.log('[Fix] 운세 자동팝업 완전 차단 - 수동 클릭시에만 열림');
+    return;
+  };
 
     // ----- 내 사주 상세 모달 -----
     function openSajuDetailModal() {
@@ -14542,5 +14532,12 @@ window.updateTitleIconColor=function(){};
 })();
 </script>
 >
+
+<script id="FINAL_FORTUNE_FIX">
+console.log('[FINAL FIX] 운세 자동팝업 차단 + 빈 버튼바 제거');
+window.maybeAutoShowFortunePopup = function(){ console.log('[FINAL] 자동팝업 차단 - 수동만 허용'); return; };
+function maybeAutoShowFortunePopup(){ return; }
+</script>
+
 </body>
 </html>
