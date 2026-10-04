@@ -47,7 +47,7 @@
         .app-container {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 2px; /* V37-2: 운세-달력 간격 15px→2px로 대폭 축소 */
         }
 
         .card {
@@ -839,7 +839,7 @@
             gap: 10px;
             padding: 13px 16px;
             border-radius: 14px;
-            margin-bottom: 4px; /* V37: 운세와 달력 사이폭 줄임 - 12px→4px */
+            margin-bottom: 2px; /* V37-1: 운세와 달력 사이폭 2px로 더 줄임 - 12px→4px */
             background: linear-gradient(120deg, #2C2F5B, #4A3B77 55%, #2C2F5B);
             color: #F4F0FF;
             cursor: pointer;
@@ -2891,10 +2891,12 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
 </style>
 <style id="V36_HIDE_MONEY_LABEL">#money-input-label { display:none !important; }</style>
 <style id="V37_FORTUNE_CALENDAR_GAP">
-        /* V37: 오늘의 운세와 달력 사이폭 더 줄이기 */
-        #fortune-teaser { margin-bottom: 4px !important; }
-        #calendar-card { margin-top: 0px !important; }
-        .card#calendar-card { margin-top: 4px !important; }
+        /* V37-2: 운세와 달력 사이 간격 진짜 2px로 줄임 - app-container gap이 원인! */
+        .app-container { gap: 2px !important; }
+        .app-container .fortune-teaser { margin-bottom: 0px !important; }
+        .app-container .fortune-teaser + .card#calendar-card { margin-top: 0px !important; }
+        #fortune-teaser { margin-bottom: 0px !important; }
+        #calendar-card { margin-top: 0px !important; margin-bottom: 2px !important; }
 </style>
 </head>
 <body>
