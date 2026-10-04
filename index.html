@@ -2898,36 +2898,41 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
         #fortune-teaser { margin-bottom: 0px !important; }
         #calendar-card { margin-top: 0px !important; margin-bottom: 2px !important; }
 </style>
-<style id="V40_PHOTO_TOP_ALIGN">
-/* V40: 앨범1, 앨범2 사진 위로 정렬 - 사람사진 머리 잘림 방지 */
+
+<style id="V41_PHOTO_CONTAIN">
+/* V41: 사진 원본 전체가 다 나오도록 축소 - contain 모드 */
+/* cover = 잘라서 채움 (머리 잘림), contain = 전체가 다 나오도록 축소 */
+
+#diary-around-today-list .sub-memo-item .diary-photo-wrap,
+#diary-around-today-list.gallery-mode .sub-memo-item .diary-photo-wrap,
+#diary-around-today-list:not(.gallery-mode) .sub-memo-item .diary-photo-wrap,
+#diary-around-today-list .sub-memo-item .empty-photo-wrap {
+    background: #f8f5f0 !important; /* 빈 공간 배경색 */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
 #diary-around-today-list .sub-memo-item .diary-photo-wrap .diary-photo,
 #diary-around-today-list .sub-memo-item .diary-photo,
 #diary-around-today-list.gallery-mode .sub-memo-item .diary-photo-wrap .diary-photo,
 #diary-around-today-list.gallery-mode .sub-memo-item .diary-photo,
 #diary-around-today-list:not(.gallery-mode) .sub-memo-item .diary-photo-wrap .diary-photo,
-#diary-around-today-list:not(.gallery-mode) .sub-memo-item .diary-photo {
-    object-fit: cover !important;
-    object-position: top center !important; /* V40: 가운데 → 위로 정렬, 머리 잘림 방지 */
-    /* object-position: center top도 동일 */
-}
-
-/* 앨범2 그리드에서도 위로 정렬 */
-#diary-around-today-list.gallery-mode .sub-memo-item .diary-photo-wrap {
-    align-items: flex-start !important; /* 가운데 → 위로 */
-}
-#diary-around-today-list.gallery-mode .sub-memo-item .empty-photo-wrap {
-    align-items: flex-start !important;
-}
-
-/* 앨범1 리스트 모드에서도 위로 정렬 */
-#diary-around-today-list:not(.gallery-mode) .sub-memo-item .diary-photo-wrap,
-#diary-around-today-list:not(.gallery-mode) .sub-memo-item .empty-photo-wrap {
-    align-items: flex-start !important; /* 가운데 → 위로 */
-}
-
-/* 사진 자체도 위쪽 기준으로 */
+#diary-around-today-list:not(.gallery-mode) .sub-memo-item .diary-photo,
 .diary-photo {
-    object-position: top center !important;
+    object-fit: contain !important; /* V41: cover → contain (전체 다 나오도록 축소) */
+    object-position: center center !important; /* 가운데 정렬 */
+    width: 100% !important;
+    height: 100% !important;
+    background: #f8f5f0 !important;
+}
+
+/* 앨범1, 앨범2 공통 - 현재 설정된 화면 크기 유지하면서 전체 표시 */
+#diary-around-today-list.gallery-mode .sub-memo-item .diary-photo-wrap,
+#diary-around-today-list:not(.gallery-mode) .sub-memo-item .diary-photo-wrap {
+    aspect-ratio: 1/1 !important; /* 정사각형 유지 */
+    overflow: hidden !important;
+    /* background로 빈 공간 채움 */
 }
 </style>
 </head>
