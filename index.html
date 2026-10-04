@@ -4988,9 +4988,11 @@ window.attachPhotoDoubleTap = function(el, handler){
     }
 
     function scrollToInput(element) {
-        setTimeout(() => {
-            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 300);
+        // V38: 화면 깜빡임 방지 - smooth 스크롤 제거, 포커스 시에만 부드럽게
+        // setTimeout 제거로 깜빡임 방지
+        try {
+            // element.scrollIntoView({ behavior: 'auto', block: 'nearest' });
+        } catch(e) {}
     }
 
     function setMoneySummaryVisibility(isVisible) {
@@ -10248,13 +10250,7 @@ async function showPhotosForDate(dateStr){
         })();
 </script>
 
-<script>
-(function(){
-  function focusAnniv(){ var el=document.getElementById('anniv-input'); if(el){ setTimeout(function(){ el.focus(); },200); } }
-  var mo=document.getElementById('memo-modal-overlay');
-  if(mo){ var obs=new MutationObserver(function(){ if(mo.classList.contains('active')) focusAnniv(); }); obs.observe(mo,{attributes:true, attributeFilter:['class']}); }
-})();
-</script>
+<!-- V38: 자동 포커스 제거 - 키보드 자동 팝업 방지 -->
 
 <script>
 (function(){
@@ -14556,7 +14552,6 @@ window.updateTitleIconColor=function(){};
   window.syncPins=syncPins;
 })();
 </script>
->
 
 <script id="FINAL_FORTUNE_FIX">
 console.log('[FINAL FIX] 운세 자동팝업 차단 + 빈 버튼바 제거');
