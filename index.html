@@ -14439,12 +14439,13 @@ window.updateTitleIconColor=function(){};
   function getDiaries(){try{return JSON.parse(localStorage.getItem('smartDiaryList')||'[]')}catch(e){return []}}
   
   function getPinTypeForDate(dateStr, allDiaries){
-    // 1. 매일반복, 하루만 울림 = 노랑 (원래 날짜에만, 지나도 유지, 최우선!)
+    // 1. 매일반복, 하루만 울림 = 노랑 (원래 날짜에만, 지나도 유지, 최우선! - 사진 있어도 노랑!)
     for(var i=0;i<allDiaries.length;i++){
       var dd=allDiaries[i];
       if((dd.date||'').slice(0,10)!==dateStr) continue;
-      if(dd.dailyRepeat === true) return 'yellow';
-      if(dd.onceAlarm === true) return 'yellow';
+      if(dd.dailyRepeat || dd.dailyRepeat===true || dd.dailyRepeat==='true') return 'yellow';
+      if(dd.onceAlarm || dd.onceAlarm===true || dd.onceAlarm==='true') return 'yellow';
+      if(dd.dailyAlarm || dd.once) return 'yellow';
     }
     // 2. 기념일 매년/매월 반복 = 빨강 (음력 고려)
     if(typeof sajuAnniversaryMatches==='function'){
@@ -14457,7 +14458,7 @@ window.updateTitleIconColor=function(){};
         }catch(e){}
       }
     }
-    // 3. 사진만 = 연두
+    // 3. 사진만 = 연두 (노랑/빨강 없을 때만)
     for(var k=0;k<allDiaries.length;k++){
       var d=allDiaries[k];
       if((d.date||'').slice(0,10)===dateStr && d.photo) return 'green';
