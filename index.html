@@ -9524,7 +9524,21 @@ async function showPhotosForDate(dateStr){
         const content = (currentFormMode === 'money')
             ? (moneyNoteInput ? moneyNoteInput.value.trim() : '')
             : (textOutput.innerText || textOutput.textContent || '').trim();
-        const timeVal = reservationTimeInput.value;
+        // V39: 시간 기준 수정 - 일기 입력시간 = 실제 저장 시점 시간, 미래 예약만 알림시간 사용
+        let timeVal = reservationTimeInput.value;
+        // 일기 모드이고 오늘/과거 날짜면 현재 시간으로 저장 (입력시간)
+        try {
+            const formDateElTmp = document.getElementById('form-date-input');
+            const finalDateTmp = (formDateElTmp && formDateElTmp.value) ? normalizeDateStr(formDateElTmp.value) : selectedReservationDate;
+            if (currentFormMode !== 'money' && !isFutureDate(finalDateTmp)) {
+                // 오늘/과거 일기는 저장 순간의 실제 시간을 입력시간으로 사용
+                timeVal = getCurrentTimeStr();
+            } else if (!timeVal) {
+                timeVal = '08:00';
+            }
+        } catch(e) {
+            if (!timeVal) timeVal = getCurrentTimeStr();
+        }
         const moneyCategory = moneyCategorySelect.value;
         const rawAmount = moneyAmountInput.value.replace(/[^0-9]/g, '').trim();
         const isCardPending = !!(currentMoneyType === 'expense' && cardPendingCheckbox && cardPendingCheckbox.checked);
@@ -10614,7 +10628,24 @@ async function showPhotosForDate(dateStr){
     if(item){
       memoEl.textContent = item.text || '';
       memoEl.style.display = item.text ? 'block' : 'none';
-      dateEl.textContent = (dateStr || item.date || '') + (totalCount>1 ? ` (1/${totalCount})` : '');
+      // V39: 시간 표시 수정 - 입력시간(저장시간) 표시, 8시 고정 버그 수정
+      let displayDate = dateStr || item.date || '';
+      let displayTime = item.time || '';
+      // 날짜 포맷: 2026-10-04 -> 2026년 10월 4일 + 시간
+      try {
+        if (displayDate) {
+          const d = typeof parseDateObj==='function' ? parseDateObj(displayDate) : new Date(displayDate);
+          if (!isNaN(d.getTime())) {
+            displayDate = d.getFullYear()+'년 '+(d.getMonth()+1)+'월 '+d.getDate()+'일';
+            // 요일 추가
+            try {
+              const dayStr = typeof getDayOfWeekStr==='function' ? getDayOfWeekStr(item.date || dateStr) : '';
+              if (dayStr) displayDate += ' ('+dayStr+')';
+            } catch(e){}
+          }
+        }
+      } catch(e){}
+      dateEl.textContent = displayDate + (displayTime ? ' ' + displayTime : '') + (totalCount>1 ? ` (1/${totalCount})` : '');
       window.currentLightboxItemId = item.id;
       if(actionsEl) actionsEl.style.display='flex';
     }else{
