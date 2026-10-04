@@ -14669,5 +14669,56 @@ function maybeAutoShowFortunePopup(){ return; }
 })();
 </script>
 
+<style id="V42_PHOTO_CONTAIN_FINAL">
+/* V42: 사진 원본 전체가 다 나오도록 최종 오버라이드 - 가장 마지막에 위치하여 모든 cover 덮어쓰기 */
+#diary-around-today-list .sub-memo-item .diary-photo-wrap,
+#diary-around-today-list.gallery-mode .sub-memo-item .diary-photo-wrap,
+#diary-around-today-list:not(.gallery-mode) .sub-memo-item .diary-photo-wrap,
+#diary-around-today-list .sub-memo-item .empty-photo-wrap,
+#diary-around-today-list.gallery-mode .sub-memo-item .empty-photo-wrap,
+#diary-around-today-list:not(.gallery-mode) .sub-memo-item .empty-photo-wrap {
+    background: #f8f5f0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+}
+
+#diary-around-today-list .sub-memo-item .diary-photo-wrap .diary-photo,
+#diary-around-today-list .sub-memo-item .diary-photo,
+#diary-around-today-list.gallery-mode .sub-memo-item .diary-photo-wrap .diary-photo,
+#diary-around-today-list.gallery-mode .sub-memo-item .diary-photo,
+#diary-around-today-list:not(.gallery-mode) .sub-memo-item .diary-photo-wrap .diary-photo,
+#diary-around-today-list:not(.gallery-mode) .sub-memo-item .diary-photo,
+.diary-photo,
+#diary-around-today-list .sub-memo-item .empty-photo-wrap .diary-photo,
+#diary-around-today-list .sub-memo-item .empty-photo-wrap .empty-icon {
+    object-fit: contain !important;
+    object-position: center center !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 100px !important;
+    max-height: none !important;
+    background: #f8f5f0 !important;
+    aspect-ratio: auto !important; /* 원본 비율 유지 */
+}
+
+/* 정사각형 틀은 유지하되 사진은 contain으로 전체 표시 */
+#diary-around-today-list.gallery-mode .sub-memo-item .diary-photo-wrap,
+#diary-around-today-list:not(.gallery-mode) .sub-memo-item .diary-photo-wrap {
+    aspect-ratio: 1/1 !important;
+    height: auto !important;
+    min-height: 120px !important;
+    max-height: 200px !important;
+}
+
+/* 앨범2 그리드에서 3열 정사각형 유지 */
+#diary-around-today-list.gallery-mode .sub-memo-item {
+    aspect-ratio: auto !important;
+}
+#diary-around-today-list.gallery-mode .sub-memo-item .diary-photo-wrap {
+    aspect-ratio: 1/1 !important;
+}
+</style>
 </body>
 </html>
