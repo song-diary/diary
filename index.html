@@ -2059,10 +2059,11 @@ body { touch-action: pan-x pan-y pinch-zoom !important; }
             cursor: default !important;
         }
         #photo-preview-wrap {
-            pointer-events: none !important;
+            pointer-events: auto !important;
         }
         #photo-preview-wrap button {
             pointer-events: auto !important;
+            z-index: 10 !important;
         }
 
         /* v123: 손가락 화면 확대 복구 - pinch-zoom 허용 */
@@ -2093,6 +2094,8 @@ body { touch-action: pan-x pan-y pinch-zoom !important; }
         #photo-preview-wrap {
             display: none;
             width: 100%;
+            position: relative !important;
+            pointer-events: auto !important;
             margin: 8px 0 !important;
             justify-content: center !important;
             align-items: center !important;
@@ -2890,51 +2893,8 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
         #memo-form-card.money-mode-form #reservation-box { display:none !important; }
 </style>
 <style id="V36_HIDE_MONEY_LABEL">#money-input-label { display:none !important; }</style>
-<style id="V37_FORTUNE_CALENDAR_GAP">
-        /* V37-2: 운세와 달력 사이 간격 진짜 2px로 줄임 - app-container gap이 원인! */
-        .app-container { gap: 2px !important; }
-        .app-container .fortune-teaser { margin-bottom: 0px !important; }
-        .app-container .fortune-teaser + .card#calendar-card { margin-top: 0px !important; }
-        #fortune-teaser { margin-bottom: 0px !important; }
-        #calendar-card { margin-top: 0px !important; margin-bottom: 2px !important; }
-</style>
+<style id="V37_FORTUNE_CALENDAR_GAP">.app-container{gap:2px!important}#fortune-teaser{margin-bottom:0!important}#calendar-card{margin-top:0!important;margin-bottom:2px!important}</style>
 
-<style id="V41_PHOTO_CONTAIN">
-/* V41: 사진 원본 전체가 다 나오도록 축소 - contain 모드 */
-/* cover = 잘라서 채움 (머리 잘림), contain = 전체가 다 나오도록 축소 */
-
-#diary-around-today-list .sub-memo-item .diary-photo-wrap,
-#diary-around-today-list.gallery-mode .sub-memo-item .diary-photo-wrap,
-#diary-around-today-list:not(.gallery-mode) .sub-memo-item .diary-photo-wrap,
-#diary-around-today-list .sub-memo-item .empty-photo-wrap {
-    background: #f8f5f0 !important; /* 빈 공간 배경색 */
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-
-#diary-around-today-list .sub-memo-item .diary-photo-wrap .diary-photo,
-#diary-around-today-list .sub-memo-item .diary-photo,
-#diary-around-today-list.gallery-mode .sub-memo-item .diary-photo-wrap .diary-photo,
-#diary-around-today-list.gallery-mode .sub-memo-item .diary-photo,
-#diary-around-today-list:not(.gallery-mode) .sub-memo-item .diary-photo-wrap .diary-photo,
-#diary-around-today-list:not(.gallery-mode) .sub-memo-item .diary-photo,
-.diary-photo {
-    object-fit: contain !important; /* V41: cover → contain (전체 다 나오도록 축소) */
-    object-position: center center !important; /* 가운데 정렬 */
-    width: 100% !important;
-    height: 100% !important;
-    background: #f8f5f0 !important;
-}
-
-/* 앨범1, 앨범2 공통 - 현재 설정된 화면 크기 유지하면서 전체 표시 */
-#diary-around-today-list.gallery-mode .sub-memo-item .diary-photo-wrap,
-#diary-around-today-list:not(.gallery-mode) .sub-memo-item .diary-photo-wrap {
-    aspect-ratio: 1/1 !important; /* 정사각형 유지 */
-    overflow: hidden !important;
-    /* background로 빈 공간 채움 */
-}
-</style>
 </head>
 <body>
 
@@ -3523,8 +3483,15 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
 
             <div id="textOutput" class="diary-textarea" contenteditable="true" placeholder="여기에 메모(일기)를 입력하세요" onfocus="scrollToInput(this)"></div>
 
-            <div id="photo-preview-wrap" style="display:none; justify-content:center; margin:10px 0;">
+            <div id="photo-preview-wrap" style="display:none; position:relative; justify-content:center; margin:10px 0; width:100%;">
                 <img id="image-preview" src="" alt="미리보기" style="width:100%; max-width:100%; max-height:60vh; object-fit:contain; border-radius:10px; display:block; margin:0 auto;">
+                <div style="position:absolute; top:6px; right:6px; display:flex; gap:6px;">
+                    <button type="button" onclick="removeImage()" style="width:36px; height:36px; border-radius:50%; border:none; background:rgba(0,0,0,0.7); color:#fff; font-size:18px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(0,0,0,0.3);" title="사진 삭제">✕</button>
+                </div>
+                <div style="position:absolute; bottom:6px; left:50%; transform:translateX(-50%); display:flex; gap:6px;">
+                    <button type="button" onclick="document.getElementById('diary-photo-input-gallery').click()" style="padding:6px 12px; border-radius:20px; border:none; background:rgba(0,0,0,0.7); color:#fff; font-size:12px; cursor:pointer; display:flex; align-items:center; gap:4px; box-shadow:0 2px 6px rgba(0,0,0,0.3);" title="사진 교체">🔄 교체</button>
+                    <button type="button" onclick="removeImage()" style="padding:6px 12px; border-radius:20px; border:none; background:rgba(231,76,60,0.9); color:#fff; font-size:12px; cursor:pointer; display:flex; align-items:center; gap:4px; box-shadow:0 2px 6px rgba(0,0,0,0.3);" title="사진 삭제">🗑️ 삭제</button>
+                </div>
             </div>
         </div>
 
@@ -9547,11 +9514,32 @@ async function showPhotosForDate(dateStr){
     }
 
     function removeImage() {
-        if (!confirm('사진을 취소할까요? 삭제한 사진은 복구할 수 없어요.')) return;
+        if (!confirm('사진을 삭제할까요?\n삭제 후 저장하면 사진이 완전히 삭제됩니다.\n(교체하려면 갤러리에서 새 사진을 선택하세요)')) return;
         currentPhotoBase64 = null;
+        // 기존 사진 키도 삭제 플래그
+        if (editingDiaryId) {
+            // 수정 중이면 기존 사진 키를 null로 만들어 저장 시 삭제되도록
+            try {
+                const all = getAllDiaries();
+                const old = all.find(d=>d.id===editingDiaryId);
+                if (old && old.photo) {
+                    // oldPhotoKey will be handled in persistCurrentPhoto - null returned
+                }
+            } catch(e){}
+        }
         updatePhotoPreview();
         const fileInput = document.getElementById('diary-photo-input');
+        const camInput = document.getElementById('diary-photo-input-camera');
+        const galInput = document.getElementById('diary-photo-input-gallery');
         if (fileInput) fileInput.value = '';
+        if (camInput) camInput.value = '';
+        if (galInput) galInput.value = '';
+        console.log('[Photo] 사진 삭제됨 - 저장하면 반영');
+    }
+    
+    // V44: 사진 교체용 함수 - 삭제 없이 바로 교체
+    function replacePhoto() {
+        document.getElementById('diary-photo-input-gallery').click();
     }
 
     function _orig_manualSaveDiary_block_check(){ if(currentPhotoBase64 && (currentPhotoBase64.startsWith('data:video/') || currentPhotoBase64.includes('video/'))){ alert('동영상은 저장할 수 없습니다!'); return; } }
@@ -14669,56 +14657,9 @@ function maybeAutoShowFortunePopup(){ return; }
 })();
 </script>
 
-<style id="V42_PHOTO_CONTAIN_FINAL">
-/* V42: 사진 원본 전체가 다 나오도록 최종 오버라이드 - 가장 마지막에 위치하여 모든 cover 덮어쓰기 */
-#diary-around-today-list .sub-memo-item .diary-photo-wrap,
-#diary-around-today-list.gallery-mode .sub-memo-item .diary-photo-wrap,
-#diary-around-today-list:not(.gallery-mode) .sub-memo-item .diary-photo-wrap,
-#diary-around-today-list .sub-memo-item .empty-photo-wrap,
-#diary-around-today-list.gallery-mode .sub-memo-item .empty-photo-wrap,
-#diary-around-today-list:not(.gallery-mode) .sub-memo-item .empty-photo-wrap {
-    background: #f8f5f0 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    overflow: hidden !important;
-}
-
-#diary-around-today-list .sub-memo-item .diary-photo-wrap .diary-photo,
-#diary-around-today-list .sub-memo-item .diary-photo,
-#diary-around-today-list.gallery-mode .sub-memo-item .diary-photo-wrap .diary-photo,
-#diary-around-today-list.gallery-mode .sub-memo-item .diary-photo,
-#diary-around-today-list:not(.gallery-mode) .sub-memo-item .diary-photo-wrap .diary-photo,
-#diary-around-today-list:not(.gallery-mode) .sub-memo-item .diary-photo,
-.diary-photo,
-#diary-around-today-list .sub-memo-item .empty-photo-wrap .diary-photo,
-#diary-around-today-list .sub-memo-item .empty-photo-wrap .empty-icon {
-    object-fit: contain !important;
-    object-position: center center !important;
-    width: 100% !important;
-    height: 100% !important;
-    min-height: 100px !important;
-    max-height: none !important;
-    background: #f8f5f0 !important;
-    aspect-ratio: auto !important; /* 원본 비율 유지 */
-}
-
-/* 정사각형 틀은 유지하되 사진은 contain으로 전체 표시 */
-#diary-around-today-list.gallery-mode .sub-memo-item .diary-photo-wrap,
-#diary-around-today-list:not(.gallery-mode) .sub-memo-item .diary-photo-wrap {
-    aspect-ratio: 1/1 !important;
-    height: auto !important;
-    min-height: 120px !important;
-    max-height: 200px !important;
-}
-
-/* 앨범2 그리드에서 3열 정사각형 유지 */
-#diary-around-today-list.gallery-mode .sub-memo-item {
-    aspect-ratio: auto !important;
-}
-#diary-around-today-list.gallery-mode .sub-memo-item .diary-photo-wrap {
-    aspect-ratio: 1/1 !important;
-}
-</style>
+<style id="V42_PHOTO_CONTAIN_FINAL">/* V42: 사진 전체 표시 - contain, 현재 크기 유지, 전체 다 나오도록 축소 */
+#diary-around-today-list .sub-memo-item .diary-photo-wrap,#diary-around-today-list .sub-memo-item .empty-photo-wrap{background:#f8f5f0!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:hidden!important}
+#diary-around-today-list .sub-memo-item .diary-photo-wrap .diary-photo,#diary-around-today-list .diary-photo,.diary-photo{object-fit:contain!important;object-position:center!important;width:100%!important;height:100%!important;background:#f8f5f0!important;aspect-ratio:auto!important}
+#diary-around-today-list.gallery-mode .sub-memo-item .diary-photo-wrap,#diary-around-today-list:not(.gallery-mode) .sub-memo-item .diary-photo-wrap{aspect-ratio:1/1!important;min-height:120px!important;max-height:200px!important}</style>
 </body>
 </html>
