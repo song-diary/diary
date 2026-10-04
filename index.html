@@ -2883,6 +2883,11 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
 
 </style>
 
+<style id="V33_2_MONEY_NO_ALARM">
+        /* V33-2: 가계부 입력폼에서는 알림란 완전 숨김 - 강제 */
+        body.money-mode #reservation-box { display:none !important; }
+        #memo-form-card.money-mode-form #reservation-box { display:none !important; }
+</style>
 </head>
 <body>
 
@@ -8364,6 +8369,7 @@ window.attachPhotoDoubleTap = function(el, handler){
         const cameraBtn = document.getElementById('camera-btn');
         const galleryBtn = document.getElementById('gallery-btn');
         const reservationBox = document.getElementById('reservation-box');
+        const memoFormCard = document.getElementById('memo-form-card');
         const moneyDateRow = document.getElementById('form-date-row-money');
 
         if (mode === 'money') {
@@ -8382,6 +8388,8 @@ window.attachPhotoDoubleTap = function(el, handler){
             if (galleryBtn) galleryBtn.style.display = 'none';
             // V32: 가계부에서는 알림 표시란 삭제 (알림받을시간, 매일반복, 하루만울림, 매일체크)
             if (reservationBox) reservationBox.style.display = 'none';
+            if (memoFormCard) memoFormCard.classList.add('money-mode-form');
+            document.body.classList.add('money-mode');
         } else {
             if (moneySection) moneySection.style.display = 'none';
             if (diarySection) diarySection.style.display = '';
@@ -8396,6 +8404,8 @@ window.attachPhotoDoubleTap = function(el, handler){
             if (galleryBtn) galleryBtn.style.display = '';
             // 다이어리에서는 알림 표시란 다시 표시
             if (reservationBox) reservationBox.style.display = '';
+            if (memoFormCard) memoFormCard.classList.remove('money-mode-form');
+            document.body.classList.remove('money-mode');
         }
     }
     
@@ -8486,7 +8496,11 @@ window.attachPhotoDoubleTap = function(el, handler){
         }
         const reservationBoxEl = document.getElementById('reservation-box');
         if (reservationBoxEl) {
-            reservationBoxEl.style.display = isFutureDate(selectedReservationDate) ? 'flex' : 'none';
+            if (currentFormMode === 'money') {
+                reservationBoxEl.style.display = 'none';
+            } else {
+    if (currentFormMode === 'money') { reservationBoxEl.style.display = 'none'; } else { reservationBoxEl.style.display = isFutureDate(selectedReservationDate) ? 'flex' : 'none'; }
+            }
             if (isFutureDate(selectedReservationDate) && !reservationTimeInput.value) {
                 reservationTimeInput.value = '08:00';
             }
@@ -8519,10 +8533,14 @@ window.attachPhotoDoubleTap = function(el, handler){
         const formDateInputMoneyEl = document.getElementById('form-date-input-money');
         if (formDateInputMoneyEl) formDateInputMoneyEl.value = selectedReservationDate;
 
-        // ⏰ 예약(미래 날짜)일 때만 시간 입력란을 표시
+                // ⏰ 예약(미래 날짜)일 때만 시간 입력란을 표시 - 가계부에서는 항상 숨김!
         const reservationBoxEl = document.getElementById('reservation-box');
         if (reservationBoxEl) {
-            reservationBoxEl.style.display = isFutureDate(selectedReservationDate) ? 'flex' : 'none';
+            if (currentFormMode === 'money') {
+                reservationBoxEl.style.display = 'none';
+            } else {
+    if (currentFormMode === 'money') { reservationBoxEl.style.display = 'none'; } else { reservationBoxEl.style.display = isFutureDate(selectedReservationDate) ? 'flex' : 'none'; }
+            }
         }
 
         if (existingItem) {
@@ -13492,11 +13510,17 @@ console.log('[DailyAlarm] 스크립트 로드 완료 - testDailyAlarm()으로 �
   }
 
   function enableReservation(){
+    // V33-4: 가계부에서는 알림란 활성화하지 않음!
+    if(window.currentFormMode==='money' || document.body.classList.contains('money-mode') || document.getElementById('memo-form-card')?.classList.contains('money-mode-form')){
+      const boxMoney=document.getElementById('reservation-box');
+      if(boxMoney) boxMoney.style.display='none';
+      return;
+    }
     const box=document.getElementById('reservation-box');
     const t=document.getElementById('reservation-time-input');
     const cb=document.getElementById('daily-repeat-checkbox');
     if(box){
-      box.style.display='flex !important';
+      box.style.display='flex';
       box.style.cssText='display:flex !important; opacity:1 !important; flex-wrap:wrap;';
     }
     if(t){
@@ -14550,6 +14574,48 @@ window.updateTitleIconColor=function(){};
 console.log('[FINAL FIX] 운세 자동팝업 차단 + 빈 버튼바 제거');
 window.maybeAutoShowFortunePopup = function(){ console.log('[FINAL] 자동팝업 차단 - 수동만 허용'); return; };
 function maybeAutoShowFortunePopup(){ return; }
+</script>
+
+
+<script id="V33_4_FINAL_MONEY_NO_ALARM_OVERRIDE">
+(function(){
+  console.log('[V33-4] 가계부 알림란 최종 강제 숨김 - V4.13 패치 무력화');
+  // V4.13의 enableReservation을 다시 패치 - 가계부에서는 무조건 숨김
+  const origEnable = window.enableReservation;
+  // openDiaryForm을 한 번 더 패치 - 가장 마지막에 실행되도록
+  function finalPatch(){
+    if(typeof window.openDiaryForm !== 'function'){ setTimeout(finalPatch, 200); return; }
+    const orig = window.openDiaryForm;
+    window.openDiaryForm = function(){
+      var result = orig.apply(this, arguments);
+      setTimeout(function(){
+        try{
+          var mode = window.currentFormMode;
+          var isMoney = mode === 'money' || document.body.classList.contains('money-mode') || document.getElementById('memo-form-card')?.classList.contains('money-mode-form');
+          if(isMoney){
+            var box = document.getElementById('reservation-box');
+            if(box){ 
+              box.style.display='none !important'; 
+              box.style.setProperty('display','none','important');
+            }
+          }
+        }catch(e){ console.log('final patch err', e); }
+      }, 150);
+      return result;
+    };
+  }
+  finalPatch();
+  
+  // CSS로도 강제 숨김 - 가계부 모드일 때
+  const style = document.createElement('style');
+  style.id = 'final-money-no-alarm';
+  style.textContent = `
+    #memo-form-card.money-mode-form #reservation-box { display:none !important; }
+    body.money-mode #reservation-box { display:none !important; }
+    .money-mode-form #reservation-box { display:none !important; }
+  `;
+  document.head.appendChild(style);
+})();
 </script>
 
 </body>
