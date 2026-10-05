@@ -6496,10 +6496,7 @@ window.attachPhotoDoubleTap = function(el, handler){
     
     // V55: Clean top icon system - fixes main screen not loading + cycle
     
-    // V56: 심플 로직 - 사이클 아님! 아이콘 정상 작동
-    // 다이어리 메인 = 가계부 아이콘(💰) → 가계부 메인으로
-    // 가계부 메인 = 다이어리 아이콘(📔) → 다이어리 메인으로
-    // 잔액/카드 폼 = 가계부 아이콘(💰) → 가계부 메인으로
+    // V57: 최종 심플 - 가계부 메인에서는 반드시 다이어리 아이콘!
     let topIconTimer = null;
     
     function updateTopIconSimple() {
@@ -6507,28 +6504,31 @@ window.attachPhotoDoubleTap = function(el, handler){
         if (!topBtn) return;
         if (topIconTimer) { clearTimeout(topIconTimer); topIconTimer = null; }
         
-        if (currentMainTab === 'diary') {
-            // 다이어리 메인 = 가계부 아이콘
+        // 현재 탭 확인 - window.currentMainTab도 확인
+        const curTab = (typeof currentMainTab !== 'undefined' ? currentMainTab : window.currentMainTab) || 'diary';
+        const curStats = (typeof currentStatsType !== 'undefined' ? currentStatsType : 'expense');
+        
+        console.log('[Icon] curTab:', curTab, 'curStats:', curStats);
+        
+        if (curTab === 'diary') {
             topBtn.innerHTML = '💰';
             topBtn.title = '가계부 메인으로 이동';
             topBtn.onclick = function() { returnToMoneyMainSimple(); };
         } else {
             // 가계부 탭
-            if (typeof currentStatsType !== 'undefined' && currentStatsType === 'balance') {
-                // 잔액/카드 폼 = 가계부 아이콘 → 가계부 메인으로
+            if (curStats === 'balance') {
                 topBtn.innerHTML = '💰';
                 topBtn.title = '가계부 메인으로 이동';
                 topBtn.onclick = function() {
                     if (typeof selectMoneySummaryStat === 'function') selectMoneySummaryStat('expense');
                 };
             } else {
-                // 가계부 메인 = 다이어리 아이콘 → 다이어리 메인으로
+                // ★ 가계부 메인 = 반드시 다이어리 아이콘!
                 topBtn.innerHTML = '📔';
                 topBtn.title = '다이어리 메인으로 이동';
                 topBtn.onclick = function() { returnToDiaryMainSimple(); };
             }
         }
-        // 다이어리 복귀 버튼 숨김 (심플 로직에서는 필요 없음)
         const diaryBtn = document.getElementById('diary-return-btn');
         if (diaryBtn) diaryBtn.style.display = 'none';
     }
@@ -11953,8 +11953,22 @@ async function showPhotosForDate(dateStr){
       const panels = { diary: diaryPanel, money: moneyPanel };
       Object.keys(panels).forEach(function(key){ if(panels[key]) panels[key].classList.toggle('active', key===tabName); });
       window.currentMainTab = tabName;
+      if (typeof currentMainTab !== 'undefined') currentMainTab = tabName;
       const topBtn = document.getElementById('top-toggle-btn');
-      if(topBtn){ if(tabName==='diary'){ topBtn.innerHTML='💰'; topBtn.title='가계부로 이동'; } else { topBtn.innerHTML='📔'; topBtn.title='다이어리로 이동'; } }
+      if(topBtn){ 
+        if(tabName==='diary'){ 
+          topBtn.innerHTML='💰'; topBtn.title='가계부로 이동'; topBtn.onclick = function(){ if(typeof returnToMoneyMainSimple==='function') returnToMoneyMainSimple(); else if(typeof switchMainTab==='function') switchMainTab('money'); };
+        } else { 
+          // 가계부 메인 = 다이어리 아이콘 (balance면 가계부 아이콘)
+          const curStats = (typeof currentStatsType !== 'undefined' ? currentStatsType : 'expense');
+          if(curStats==='balance'){
+            topBtn.innerHTML='💰'; topBtn.title='가계부 메인으로 이동'; topBtn.onclick = function(){ if(typeof selectMoneySummaryStat==='function') selectMoneySummaryStat('expense'); };
+          } else {
+            topBtn.innerHTML='📔'; topBtn.title='다이어리로 이동'; topBtn.onclick = function(){ if(typeof returnToDiaryMainSimple==='function') returnToDiaryMainSimple(); else if(typeof switchMainTab==='function') switchMainTab('diary'); };
+          }
+        } 
+      }
+      setTimeout(function(){ if(typeof updateTopIconSimple==='function') updateTopIconSimple(); }, 100);
       if(tabName==='diary' && typeof renderCalendar==='function') { try{ renderCalendar(); }catch(e){} }
       if(tabName==='money'){ try{ if(typeof renderMoneyAroundToday==='function') renderMoneyAroundToday(); }catch(e){} try{ if(typeof updateMoneySummary==='function') updateMoneySummary(); }catch(e){} }
       localStorage.setItem('smartDiaryMainTab', tabName);
@@ -14907,5 +14921,13 @@ function maybeAutoShowFortunePopup(){ return; }
     box-sizing: border-box !important;
 }
 </style>
+<script>
+// V57-1: 초기 아이콘 강제 설정
+window.addEventListener("load", function() {
+    setTimeout(function() { if(typeof updateTopIconSimple==="function") updateTopIconSimple(); }, 200);
+    setTimeout(function() { if(typeof updateTopIconSimple==="function") updateTopIconSimple(); }, 600);
+    setTimeout(function() { if(typeof updateTopIconSimple==="function") updateTopIconSimple(); }, 1000);
+});
+</script>
 </body>
 </html>
