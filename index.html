@@ -3044,11 +3044,16 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
             <div id="money-around-today-list"></div>
         </div>
 
-        <!-- 💼 잔액 보관처별 분류 / 💳 카드명세 일괄 입력 / ⏳ 카드 대기 지출 버튼 모음 -->
+        <!-- 💼 잔액 보관처별 분류 / 💳 카드명세 일괄 입력 / ⏳ 카드 대기 지출 버튼 모음 + V47 가계부 메인 복귀 -->
         <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:10px;">
             <button class="action-btn" id="balance-location-open-btn" style="display:none; width:100%; padding:10px; background-color:#2980b9;" onclick="openBalanceLocationModal()">💼 잔액 보관처별 분류 / 이월액 관리</button>
             <button class="action-btn" id="card-statement-open-btn" style="display:none; width:100%; padding:10px;" onclick="openCardStatementModal()">💳 카드명세 일괄 입력 열기</button>
             <button class="action-btn" id="card-pending-open-btn" style="display:none; width:100%; padding:10px; background-color:#f39c12;" onclick="openCardPendingModal()">⏳ 카드 대기 지출 확인/정산</button>
+            <!-- V47: 잔액 화면에서 가계부 메인으로 돌아가기 -->
+            <div id="return-to-money-main-row" style="display:flex; gap:6px; margin-top:4px;">
+                <button class="action-btn" style="flex:1; padding:10px; background:linear-gradient(135deg, #27ae60, #229954); color:#fff; border:none;" onclick="returnToMoneyMain()">💰 가계부 메인으로</button>
+                <button class="action-btn" style="flex:1; padding:10px; background:linear-gradient(135deg, #8e6b6b, #7a5a5a); color:#fff; border:none;" onclick="openMoneyInputFromAnywhere()">✏️ 가계부 입력</button>
+            </div>
         </div>
 
         <!-- 💼 잔액 보관처별 분류 / 이월액 관리 모달 -->
@@ -3060,10 +3065,11 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
                 </div>
                 <div id="balance-location-body"></div>
 
-                <!-- V46-2: 가계부 입력폼으로 바로가기 버튼 -->
+                <!-- V47: 가계부 메인/입력으로 복귀 버튼 -->
                 <div style="display:flex; gap:8px; margin-top:12px; margin-bottom:8px;">
-                    <button class="btn btn-primary" onclick="openMoneyFormFromBalance()" style="flex:1; height:44px; background:linear-gradient(135deg, #27ae60, #229954); color:#fff; border:none; border-radius:8px; font-size:14px; font-weight:bold; display:flex; align-items:center; justify-content:center; gap:6px;">✏️ 가계부 입력으로</button>
-                    <button class="btn btn-secondary" onclick="closeBalanceLocationModal()" style="flex:0.6; height:44px; background:#f0f0f0; border:1px solid var(--border-color); border-radius:8px; font-size:14px;">닫기</button>
+                    <button class="btn btn-primary" onclick="returnToMoneyMain()" style="flex:1; height:44px; background:linear-gradient(135deg, #2980b9, #1f6aa5); color:#fff; border:none; border-radius:8px; font-size:14px; font-weight:bold; display:flex; align-items:center; justify-content:center; gap:6px;">💰 가계부 메인으로</button>
+                    <button class="btn btn-primary" onclick="openMoneyInputFromAnywhere()" style="flex:1; height:44px; background:linear-gradient(135deg, #27ae60, #229954); color:#fff; border:none; border-radius:8px; font-size:14px; font-weight:bold; display:flex; align-items:center; justify-content:center; gap:6px;">✏️ 입력</button>
+                    <button class="btn btn-secondary" onclick="closeBalanceLocationModal()" style="flex:0.5; height:44px; background:#f0f0f0; border:1px solid var(--border-color); border-radius:8px; font-size:13px;">닫기</button>
                 </div>
 
                 <!-- 📌 전월 이월액 -->
@@ -3094,6 +3100,11 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
                 <div class="btn-group" style="margin-top: 8px; margin-bottom: 0;">
                     <button class="btn btn-secondary" onclick="addCardStatementRow()">➕ 행 추가</button>
                     <button class="btn btn-primary" onclick="saveCardStatementRows()">💾 전체 저장</button>
+                </div>
+                <!-- V47: 가계부 메인으로 복귀 -->
+                <div style="display:flex; gap:8px; margin-top:10px;">
+                    <button class="btn btn-secondary" onclick="returnToMoneyMain()" style="flex:1; height:40px; background:linear-gradient(135deg, #2980b9, #1f6aa5); color:#fff; border:none;">💰 가계부 메인으로</button>
+                    <button class="btn btn-secondary" onclick="openMoneyInputFromAnywhere()" style="flex:1; height:40px; background:linear-gradient(135deg, #27ae60, #229954); color:#fff; border:none;">✏️ 가계부 입력</button>
                 </div>
             </div>
         </div>
@@ -4847,6 +4858,43 @@ window.attachPhotoDoubleTap = function(el, handler){
             const today = getTodayStr();
             openDiaryForm(today, null, 'money');
         }, 150);
+    }
+
+    
+    // V47: 잔액/카드 화면에서 가계부 메인으로 복귀
+    function returnToMoneyMain() {
+        // 잔액 모달들 닫기
+        if (typeof closeBalanceLocationModal === 'function') closeBalanceLocationModal();
+        if (typeof closeCardStatementModal === 'function') closeCardStatementModal();
+        if (typeof closeCardPendingModal === 'function') closeCardPendingModal();
+        
+        // 가계부 메인 뷰로 복귀 (지출 통계)
+        if (typeof selectMoneySummaryStat === 'function') {
+            selectMoneySummaryStat('expense');
+        }
+        // 가계부 입력 영역이 숨겨진 경우 보이도록
+        const moneyTodayCard = document.getElementById('money-around-today-card');
+        if (moneyTodayCard) moneyTodayCard.style.display = '';
+        const searchFilterCard = document.getElementById('search-filter-card');
+        if (searchFilterCard && typeof isSearchFilterOpen !== 'undefined' && isSearchFilterOpen) {
+            searchFilterCard.style.display = 'block';
+        }
+        
+        // 가계부 메인으로 스크롤
+        setTimeout(() => {
+            const moneyPanel = document.getElementById('money-panel');
+            if (moneyPanel) moneyPanel.scrollIntoView({behavior: 'smooth', block: 'start'});
+        }, 100);
+    }
+    
+    function openMoneyInputFromAnywhere() {
+        returnToMoneyMain();
+        setTimeout(() => {
+            const today = (typeof getTodayStr === 'function') ? getTodayStr() : new Date().toISOString().split('T')[0];
+            if (typeof openDiaryForm === 'function') {
+                openDiaryForm(today, null, 'money');
+            }
+        }, 300);
     }
 
     function closeBalanceLocationModal() {
