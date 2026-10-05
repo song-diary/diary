@@ -14371,33 +14371,25 @@ window.updateTitleIconColor=function(){};
   function getDiaries(){try{return JSON.parse(localStorage.getItem('smartDiaryList')||'[]')}catch(e){return []}}
   
   function getPinTypeForDate(dateStr, allDiaries){
-    // V18.6 FIX: 하루만 울림 = 원래 날짜에만 노랑, 매일 반복 = 매일 노랑
-    // 1. 하루만 울림 = 노랑 (원래 날짜에만)
+    // V18.7 FIX: 하루만 울림, 매일 반복 모두 원래 날짜에만 노랑 - 전체 노랑 버그 수정
     for(var i=0;i<allDiaries.length;i++){
       var dd=allDiaries[i];
-      if((dd.date||'').slice(0,10)!==dateStr) continue;
+      var d = (dd.date||'').slice(0,10);
+      if(d !== dateStr) continue;
+      // 오직 정확히 체크된 것만 노랑
       if(dd.onceAlarm===true || dd.onceAlarm==='true') return 'yellow';
+      if(dd.dailyRepeat===true || dd.dailyRepeat==='true') return 'yellow';
     }
-    // 2. 매일 반복 = 노랑 (해당 날짜가 기록일 이후면 매일 표시)
-    for(var i=0;i<allDiaries.length;i++){
-      var dd=allDiaries[i];
-      if(!(dd.dailyRepeat===true || dd.dailyRepeat==='true')) continue;
-      var entryDate = (dd.date||'').slice(0,10);
-      if(!entryDate) continue;
-      if(dateStr >= entryDate) return 'yellow'; // 기록일 이후 매일
-    }
-    // 3. 기념일 매년/매월 반복 = 빨강
+    // 기념일 매년/매월 반복 = 빨강
     if(typeof sajuAnniversaryMatches==='function'){
       for(var j=0;j<allDiaries.length;j++){
         var ad=allDiaries[j];
         if(!ad.anniversary && !ad.annivTitle) continue;
         if(!ad.annivRepeat || ad.annivRepeat==='none') continue;
-        try{ 
-          if(sajuAnniversaryMatches(ad, dateStr)) return 'red'; 
-        }catch(e){}
+        try{ if(sajuAnniversaryMatches(ad, dateStr)) return 'red'; }catch(e){}
       }
     }
-    // 4. 사진만 = 연두
+    // 사진만 = 연두
     for(var k=0;k<allDiaries.length;k++){
       var d=allDiaries[k];
       if((d.date||'').slice(0,10)===dateStr && d.photo) return 'green';
