@@ -2913,7 +2913,7 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
     <!-- 🔑 달력 카드 -->
     <div class="card" id="calendar-card">
                 <div class="calendar-header">
-            <button id="top-toggle-btn" onclick="returnToMoneyMain()" title="가계부 메인으로" style="font-size:18px; padding:4px 10px; border-radius:8px; border:1px solid #ddd; background:#fff; cursor:pointer; min-width:36px;">💰</button>
+            <button id="top-toggle-btn" onclick="returnToMoneyMain()" title="가계부 메인으로 이동" style="font-size:18px; padding:4px 10px; border-radius:8px; border:1px solid #ddd; background:#fff; cursor:pointer; min-width:36px;">💰</button>
             <h3 id="cal-month-title">0000년 00월</h3>
             <button onclick="openSettingsModal()" title="설정" style="font-size:13px; padding:4px 8px; border-radius:8px; border:1px solid #ddd; background:#fff; cursor:pointer;">⚙️</button>
         </div>
@@ -4846,18 +4846,15 @@ window.attachPhotoDoubleTap = function(el, handler){
 
     
     // V47: 잔액/카드 화면에서 가계부 메인으로 복귀
-    function returnToMoneyMain() {
+        function returnToMoneyMain() {
         console.log('[Money] 가계부 메인으로 이동');
-        // 잔액 모달들 닫기
         try { if (typeof closeBalanceLocationModal === 'function') closeBalanceLocationModal(); } catch(e){}
         try { if (typeof closeCardStatementModal === 'function') closeCardStatementModal(); } catch(e){}
         try { if (typeof closeCardPendingModal === 'function') closeCardPendingModal(); } catch(e){}
         
-        // 가계부 탭으로 전환
         if (typeof switchMainTab === 'function') {
             switchMainTab('money');
         } else {
-            // fallback: 직접 패널 전환
             const diaryPanel = document.getElementById('diary-panel');
             const moneyPanel = document.getElementById('money-panel');
             if (diaryPanel) diaryPanel.classList.remove('active');
@@ -4865,25 +4862,36 @@ window.attachPhotoDoubleTap = function(el, handler){
             if (typeof currentMainTab !== 'undefined') currentMainTab = 'money';
         }
         
-        // 가계부 메인 뷰로 복귀 (지출 통계)
         setTimeout(() => {
             if (typeof selectMoneySummaryStat === 'function') {
-                try { selectMoneySummaryStat('expense'); } catch(e){ console.log(e); }
+                try { selectMoneySummaryStat('expense'); } catch(e){}
             }
             const moneyTodayCard = document.getElementById('money-around-today-card');
             if (moneyTodayCard) moneyTodayCard.style.display = '';
-            
-            // 가계부 메인으로 스크롤
             const moneyPanel = document.getElementById('money-panel');
             if (moneyPanel) moneyPanel.scrollIntoView({behavior: 'smooth', block: 'start'});
-            
-            // 상단 버튼 항상 가계부 아이콘으로 유지
-            const topBtn = document.getElementById('top-toggle-btn');
-            if (topBtn) {
-                topBtn.innerHTML = '💰';
-                topBtn.title = '가계부 메인으로';
-                topBtn.onclick = returnToMoneyMain;
-            }
+        }, 150);
+    }
+    
+    function returnToDiaryMain() {
+        console.log('[Diary] 다이어리 메인으로 이동');
+        try { if (typeof closeBalanceLocationModal === 'function') closeBalanceLocationModal(); } catch(e){}
+        try { if (typeof closeCardStatementModal === 'function') closeCardStatementModal(); } catch(e){}
+        try { if (typeof closeCardPendingModal === 'function') closeCardPendingModal(); } catch(e){}
+        
+        if (typeof switchMainTab === 'function') {
+            switchMainTab('diary');
+        } else {
+            const diaryPanel = document.getElementById('diary-panel');
+            const moneyPanel = document.getElementById('money-panel');
+            if (diaryPanel) diaryPanel.classList.add('active');
+            if (moneyPanel) moneyPanel.classList.remove('active');
+            if (typeof currentMainTab !== 'undefined') currentMainTab = 'diary';
+        }
+        
+        setTimeout(() => {
+            const diaryPanel = document.getElementById('diary-panel');
+            if (diaryPanel) diaryPanel.scrollIntoView({behavior: 'smooth', block: 'start'});
         }, 150);
     }
     
@@ -5884,15 +5892,31 @@ window.attachPhotoDoubleTap = function(el, handler){
         updateMoneySearchDividerVisibility();
 
         const moneyTodayCard = document.getElementById('money-around-today-card');
+        const topBtn = document.getElementById('top-toggle-btn');
         if (type === 'balance') {
-            // 잔액 클릭 시: 위 분류(통계)만 보여주고, 아래 상세 내역 리스트(수정폼으로 연결됨)는
-            // 이 화면 맥락과 안 맞으므로 숨김 (다이어리 탭에 별도로 존재)
+            // 잔액 클릭 시: 위 분류(통계)만 보여주고, 아래 상세 내역 리스트는 숨김
             if (searchFilterCard) searchFilterCard.style.display = 'none';
             if (moneyTodayCard) moneyTodayCard.style.display = 'none';
+            // V51: 잔액보관처폼에서는 상단좌측 아이콘은 가계부 아이콘으로! 그래야 지금까지 수정한게 맞음
+            // 잔액 화면에 갇혔을 때 가계부 메인으로 돌아갈 수 있도록
+            if (topBtn) {
+                topBtn.innerHTML = '💰';
+                topBtn.title = '가계부 메인으로';
+                topBtn.onclick = function() { 
+                    console.log('[Balance] 가계부 메인으로 복귀');
+                    selectMoneySummaryStat('expense'); 
+                };
+            }
         } else {
             if (searchFilterCard && isSearchFilterOpen) searchFilterCard.style.display = 'block';
             if (isSearchFilterOpen) filterCustomList();
             if (moneyTodayCard) moneyTodayCard.style.display = '';
+            // 가계부 메인(지출/수입)에서는 다이어리 아이콘으로
+            if (topBtn) {
+                topBtn.innerHTML = '📔';
+                topBtn.title = '다이어리 메인으로 이동';
+                topBtn.onclick = returnToDiaryMain;
+            }
         }
     }
 
@@ -6494,12 +6518,20 @@ window.attachPhotoDoubleTap = function(el, handler){
             if (panels[key]) panels[key].classList.toggle('active', key === tabName);
         });
         currentMainTab = tabName;
-        // V48-1: 상단 버튼은 항상 가계부 아이콘 유지, 가계부 메인으로 이동
+        // V50: 상단 왼쪽 아이콘 - 현재 탭의 반대 아이콘 표시, 클릭하면 반대 메인으로 이동
         const topBtn = document.getElementById('top-toggle-btn');
         if(topBtn){
-            topBtn.innerHTML = '💰';
-            topBtn.title = '가계부 메인으로';
-            topBtn.onclick = returnToMoneyMain;
+            if(tabName === 'diary'){
+                // 다이어리 메인에서는 가계부 아이콘, 클릭하면 가계부 메인으로
+                topBtn.innerHTML = '💰';
+                topBtn.title = '가계부 메인으로 이동';
+                topBtn.onclick = returnToMoneyMain;
+            } else {
+                // 가계부 메인에서는 다이어리 아이콘, 클릭하면 다이어리 메인으로
+                topBtn.innerHTML = '📔';
+                topBtn.title = '다이어리 메인으로 이동';
+                topBtn.onclick = returnToDiaryMain;
+            }
         }
         if (tabName === 'money') {
             if (typeof updateMoneySummary === 'function') updateMoneySummary();
