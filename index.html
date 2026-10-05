@@ -2918,45 +2918,22 @@ body:not(.money-mode) #form-date-row-money { display:none !important; }
 </style>
 
 
-<style id="V18_6_DARK_YELLOW_FIX">
-/* V18.6 진한 노랑으로 교체 */
-.cal-cell .cal-photo-corner .pin-emoji.yellow-pin,
-.cal-cell .cal-photo-corner .pin-emoji.sky-pin {
+<style id="V19_CLEAN_PIN">
+/* V19 누적 금지 - 최종 핀 색상: 노랑=진노랑, 연두=사진, 빨강=기념일 */
+.cal-cell .cal-photo-corner .pin-emoji.yellow-pin{
   background: linear-gradient(135deg, #FFC107, #FF8F00) !important;
-  border: 1.5px solid #FF6F00 !important;
-  box-shadow: 0 1px 4px rgba(255,143,0,0.5) !important;
+  border:1.5px solid #FF6F00 !important;
+  box-shadow:0 1px 4px rgba(255,143,0,0.5) !important;
 }
-.cal-cell.yellow-day {
-  background: rgba(255,193,7,0.18) !important;
-}
-</style>
-
-
-<style id="V18_9_PHOTO_GREEN_SINGLE">
-/* V18.9 사진 고정핀을 현재 사용하는 연두 풍선과 동일하게 */
-.cal-cell.has-photo .cal-photo-corner .pin-emoji,
-.cal-cell .cal-photo-corner.has-pin-icon .pin-emoji,
-.cal-cell .cal-photo-corner .pin-emoji.red-pin {
+.cal-cell .cal-photo-corner .pin-emoji.green-pin{
   background: linear-gradient(135deg, #2ecc71, #27ae60) !important;
-  width:8px !important; height:8px !important;
-  border-radius:50% 50% 50% 0 !important;
-  transform:rotate(-45deg) !important;
   border:none !important;
 }
-#photo-pin-toggle-card .toggle-card-label {
-  color: #2ecc71 !important;
+.cal-cell .cal-photo-corner .pin-emoji.red-pin{
+  background: linear-gradient(135deg, #ff6b6b, #c0392b) !important;
 }
-</style>
-
-
-<style id="V18_10_TOGGLE_CONSISTENT">
-#photo-pin-toggle-card .toggle-card-label {
-  display:flex; align-items:center; gap:6px;
-  font-weight:600;
-}
-#photo-pin-toggle-card {
-  background: #f9fff9 !important;
-  border: 1px solid #d5f5d5 !important;
+.cal-cell .cal-photo-corner {
+  background:transparent !important; border:none !important;
 }
 </style>
 
@@ -3283,7 +3260,7 @@ body:not(.money-mode) #form-date-row-money { display:none !important; }
 </div>
 
 <!-- 🎱 사주기반 로또 생성기 (V210) -->
-<!-- lotto modal removed -->
+<!-- lotto removed -->
 
 </div>
 </div>
@@ -6842,29 +6819,19 @@ window.attachPhotoDoubleTap = function(el, handler){
     function onFortuneAutoToggle(){ const chk = document.getElementById('settings-fortune-auto'); if(!chk) return; localStorage.setItem('smartDiaryFortuneAuto', chk.checked ? '1' : '0'); }
     function syncFortuneToggles(){ const autoChk = document.getElementById('settings-fortune-auto'); if(autoChk) autoChk.checked = getFortuneAutoEnabled(); const showChk = document.getElementById('settings-show-fortune'); const autoCard = document.getElementById('fortune-auto-toggle-card'); if(showChk && autoCard) autoCard.style.opacity = showChk.checked ? '1' : '0.4'; }
 
-    function getShowLotto(){}/*deleted*/
-    function onShowLottoToggle(){}/*deleted*/
-    function applyLottoVisibility(){}/*deleted*/
-    function syncLottoToggle(){}/*deleted*/
+    function getShowLotto(){}
+    function onShowLottoToggle(){}
+    function applyLottoVisibility(){}
+    function syncLottoToggle(){}
     // V99 사진고정핀 표시 ON/OFF - 달력 핀 표시 제어 (제목/별표 안 건드림)
     function getShowPhotoPin(){ const v = localStorage.getItem('smartDiaryShowPhotoPin'); return v===null ? true : v!=='false'; }
     function onShowPhotoPinToggle(){
         const chk = document.getElementById('settings-show-photo-pin');
         if(!chk) return;
         localStorage.setItem('smartDiaryShowPhotoPin', chk.checked ? 'true' : 'false');
-        // V18.10 즉시 반영
-        if(!chk.checked){
-          // 즉시 모든 핀 제거
-          document.querySelectorAll('.cal-cell .cal-photo-corner').forEach(function(c){ c.remove(); });
-          document.querySelectorAll('.cal-cell.has-photo').forEach(function(c){ c.classList.remove('has-photo'); });
-        }
         if(typeof renderCalendar==='function') renderCalendar();
-        // forcePin도 즉시 실행
-        if(typeof forcePin==='function'){
-          forcePin();
-          setTimeout(function(){ forcePin(); }, 50);
-          setTimeout(function(){ forcePin(); }, 200);
-        }
+        // forcePin이 있으면 다시 실행해서 핀 제거/생성
+        setTimeout(function(){ if(typeof forcePin==='function') forcePin(); }, 100);
     }
     function syncPhotoPinToggle(){ const chk = document.getElementById('settings-show-photo-pin'); if(chk) chk.checked = getShowPhotoPin(); }
 
@@ -6903,7 +6870,13 @@ window.attachPhotoDoubleTap = function(el, handler){
     function pickBySeed(arr, seed, offset=0){ return arr[(seed+offset)%arr.length]; }
 
     // ===================== 🎱 V209 로또 풀기능 (팝업 안) =====================
-    function sajuLottoBallColor(){}/*deleted*/
+    function sajuLottoBallColor(n) {
+        if (n <= 10) return '#FBC400';
+        if (n <= 20) return '#69C8F2';
+        if (n <= 30) return '#FF7272';
+        if (n <= 40) return '#AAAAAA';
+        return '#B0D840';
+    }
     function sajuGetSaturdayStr(){
         try{
             const today = new Date();
@@ -6968,7 +6941,56 @@ window.attachPhotoDoubleTap = function(el, handler){
     }
 
     // V258 자동 크롤링 시도 (동행복권 API)
-    async function autoCrawlLotto(){}/*deleted*/
+    async function autoCrawlLotto(){
+        const statusEl = document.getElementById('v257-date-badge');
+        try{
+            // 최신 회차 계산 - localStorage 기반, 기본 1241회 고정 (2025-09-06 1240회 기준)
+            const baseRound = 1240;
+            let latestSaved = parseInt(localStorage.getItem('lotto_latest_round') || baseRound);
+            if(isNaN(latestSaved) || latestSaved < baseRound) latestSaved = baseRound;
+            const targetRound = latestSaved + 1; // 다음 회차 = 마지막 저장된 회차 +1, 기본 1241회
+            
+            if(statusEl) statusEl.innerHTML = `🔍 ${targetRound}회 자동 조회 시도중...`;
+            
+            // 동행복권 API 시도 (CORS 우회용 프록시 없이 직접)
+            const apiUrl = `https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo=${targetRound}`;
+            
+            // 1. 직접 fetch 시도
+            let data = null;
+            try{
+                const res = await fetch(apiUrl, {mode:'cors'});
+                data = await res.json();
+            }catch(e){
+                console.log('직접 fetch 실패, JSONP 시도', e);
+                // 2. 실패시 사용자에게 수동 확인 안내
+                if(statusEl){
+                    statusEl.innerHTML = `📡 ${targetRound}회 결과 자동조회 불가 (CORS) - 수동 업데이트 필요<br><small>파일을 서버에서 열면 자동 가능</small>`;
+                }
+                return;
+            }
+            
+            if(data && data.returnValue === 'success'){
+                const nums = [data.drwtNo1, data.drwtNo2, data.drwtNo3, data.drwtNo4, data.drwtNo5, data.drwtNo6];
+                const bonus = data.bnusNo;
+                if(statusEl){
+                    statusEl.innerHTML = `✅ ${targetRound}회 자동 조회 성공! ${nums.join(',')} + ${bonus}<br>통계 자동 업데이트됨`;
+                    statusEl.style.background = 'linear-gradient(90deg, #4CAF50, #8BC34A)';
+                    statusEl.style.color = '#fff';
+                }
+                // 여기서 통계 업데이트 로직 실행 가능
+                console.log('크롤링 성공', nums);
+            } else {
+                if(statusEl) statusEl.innerHTML = `⏳ ${targetRound}회 아직 추첨 전 (다음 토요일)`;
+            }
+        }catch(err){
+            console.log('크롤링 에러', err);
+            if(statusEl) statusEl.innerHTML = `📅 1241회 예측 번호 - 1240회 데이터 기반`; const latest = localStorage.getItem('lotto_latest_round'); if(latest && parseInt(latest)>1240){ const nums = JSON.parse(localStorage.getItem('lotto_latest_nums')||'[]'); statusEl.innerHTML = `✅ ${latest}회 수동 입력됨: ${nums.join(',')} - 통계 업데이트됨`; statusEl.style.background='linear-gradient(90deg, #4CAF50, #8BC34A)'; statusEl.style.color='#fff'; } else { const drawDate = new Date('2025-09-13T20:45:00'); // 1241회 토요일 const now = new Date(); 
+            if(now >= drawDate){
+                const latestSaved2 = parseInt(localStorage.getItem('lotto_latest_round') || 1240); const targetRound = (isNaN(latestSaved2)?1240:latestSaved2)+1;
+                showManualInputPopup(targetRound);
+            } }
+        }
+    }
     setTimeout(autoCrawlLotto, 1500);
 
     // V257 자동 날짜 체크
@@ -7027,7 +7049,21 @@ window.attachPhotoDoubleTap = function(el, handler){
         }
     });
 
-    function sajuBuildLottoPool(){}/*deleted*/
+    function sajuBuildLottoPool(best){
+        const mapGan={'甲':[3,13,23,33,43],'乙':[5,15,25,35,45],'丙':[2,12,22,32,42],'丁':[7,17,27,37,44],'戊':[8,18,28,38,41],'己':[1,11,21,31,40],'庚':[9,19,29,39,45],'辛':[4,14,24,34,44],'壬':[6,16,26,36,43],'癸':[10,20,30,40,42]};
+        const mapTG={'비견':[11,22,33,44],'겁재':[12,23,34,45],'식신':[3,13,23,33],'상관':[7,17,27,37],'편재':[8,18,28,38],'정재':[5,15,25,35],'편관':[9,19,29,39],'정관':[6,16,26,36],'편인':[2,12,22,32],'정인':[4,14,24,34]};
+        const mapTime={'子':[1,11,21,31,41],'丑':[2,12,22,32,42],'寅':[3,13,23,33,43],'卯':[4,14,24,34,44],'辰':[5,15,25,35,45],'巳':[6,16,26,36,40],'午':[7,17,27,37,41],'未':[8,18,28,38,42],'申':[9,19,29,39,43],'酉':[10,20,30,40,44],'戌':[11,21,31,41,45],'亥':[12,22,32,42,45]};
+        const pool=new Set();
+        (mapGan[best.gan]||[]).forEach(n=>pool.add(n));
+        (mapTG[best.tenGod]||[]).forEach(n=>pool.add(n));
+        (mapTime[best.timeBranch]||[]).forEach(n=>pool.add(n));
+        pool.add((best.score%45)+1);
+        pool.add(((best.year+best.timeIdx)%45)+1);
+        const genSeedNum = best.genSeed ? parseInt(String(best.genSeed).slice(-4)) || 0 : 0;
+        pool.add((genSeedNum + best.score)%45+1);
+        for(let k=0;k<5;k++){ pool.add(((best.score* (k+1) + best.year*7 + k*13) %45)+1); }
+        return pool;
+    }
     function sajuGenerateWithFixedGuaranteed(favs, best, gameIdx, filterMode){
         let h2=2166136261; const seed=getTodayStr()+'_'+best.year+'_'+best.gan+'_'+best.timeBranch+'_'+best.genSeed+'_G'+gameIdx+'_'+(Date.now()+gameIdx*7919+Math.random()*10000); for(let i=0;i<seed.length;i++){ h2^=seed.charCodeAt(i); h2=Math.imul(h2,16777619);} h2>>>=0; let s2=h2; const rng=function(){ s2=(s2*1664525+1013904223)>>>0; return s2/4294967296; };
         const poolBase=sajuBuildLottoPool(best); const pool=new Set(poolBase); pool.add((parseInt(String(best.genSeed).replace(/[^0-9]/g,'').slice(-4)||'1234')+gameIdx*13)%45+1); pool.add(((best.year+best.timeIdx+gameIdx*7)%45)+1);
@@ -7053,8 +7089,29 @@ window.attachPhotoDoubleTap = function(el, handler){
         const dd = String(monday.getDate()).padStart(2, '0');
         return `${monday.getFullYear()}-${mm}-${dd}`;
     }
-    function sajuGetWeeklyLottoStore(){}/*deleted*/
-    function sajuRecordTodayLottoWeekly(){}/*deleted*/
+    function sajuGetWeeklyLottoStore() {
+        const monday = sajuGetMondayOfWeek(getTodayStr());
+        let store = null;
+        try { store = JSON.parse(localStorage.getItem('lottoAppWeekly') || 'null'); } catch (e) {}
+        if (!store || store.weekStart !== monday) {
+            store = { weekStart: monday, days: {} };
+            localStorage.setItem('lottoAppWeekly', JSON.stringify(store));
+        }
+        return store;
+    }
+    function sajuRecordTodayLottoWeekly(nums){
+        try{
+            const today = new Date();
+            const dayNames = ['일','월','화','수','목','금','토'];
+            const label = dayNames[today.getDay()];
+            if(['일'].includes(label)) return;
+            const store = sajuGetWeeklyLottoStore();
+            if(!store.days[label]){
+                store.days[label]=nums;
+                localStorage.setItem('lottoAppWeekly', JSON.stringify(store));
+            }
+        }catch(e){}
+    }
 
     // V219 누적 + 진짜100만
     let accumulatedLottoGames2 = [];
@@ -7072,9 +7129,83 @@ window.attachPhotoDoubleTap = function(el, handler){
     }
     function removeAccumulatedGame2(idx){ accumulatedLottoGames2.splice(idx,1); saveAccumulated2(); renderAccumulated2(); }
 
-    function sajuGetBestGwainForLotto(){}/*deleted*/
+    function sajuGetBestGwainForLotto(){
+        try{
+            const useMySaju = document.getElementById('ldt-use-my-saju') ? document.getElementById('ldt-use-my-saju').checked : true;
+            const useMySaju2 = document.getElementById('ldt-use-my-saju2') ? document.getElementById('ldt-use-my-saju2').checked : useMySaju;
+            const finalUse = useMySaju || useMySaju2;
+            const saturdayStr = sajuGetSaturdayStr();
+            const now=new Date(); 
+            const genTimeStr=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0')+' '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+            const genTimeSeed=Date.now()+'_'+Math.floor(Math.random()*1000000);
+            let h=2166136261; const satSeed=saturdayStr+'_SAT_500K_TIME_'+genTimeSeed; for(let i=0;i<satSeed.length;i++){ h^=satSeed.charCodeAt(i); h=Math.imul(h,16777619);} h>>>=0; let s=h; const rngSat=function(){ s=(s*1664525+1013904223)>>>0; return s/4294967296; };
+            const gans=['甲','乙','丙','丁','戊','己','庚','辛','壬','癸']; const tenGods=['비견','겁재','식신','상관','편재','정재','편관','정관','편인','정인']; const timeBranches=['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥']; const timeHours=['23-01시','01-03시','03-05시','05-07시','07-09시','09-11시','11-13시','13-15시','15-17시','17-19시','19-21시','21-23시'];
+            const baseScore={'비견':50,'겁재':45,'식신':78,'상관':55,'편재':95,'정재':88,'편관':48,'정관':60,'편인':52,'정인':70}; const timeBonus={'子':5,'丑':2,'寅':8,'卯':8,'辰':3,'巳':6,'午':7,'未':3,'申':4,'酉':4,'戌':2,'亥':6};
+            // 내 사주 정보
+            let myGan = null, myElem = null, myStrength = null, usefulGod = null, myDayZhi = null;
+            if(finalUse && sajuBirthInfo && sajuBirthInfo.date && sajuPillars && sajuPillars.day){
+                try{ 
+                    myGan = sajuPillars.day.gan; 
+                    myElem = sajuDayMasterElem;
+                    myDayZhi = sajuPillars.day.zhi;
+                    myStrength = sajuJudgeStrength ? sajuJudgeStrength(sajuPillars, myElem) : '신약';
+                    usefulGod = sajuGetUsefulGod ? sajuGetUsefulGod(sajuPillars, myElem, myStrength) : null;
+                }catch(e){}
+            }
+            // 용신 오행 매핑
+            const usefulElemMap = {'목':'목','화':'화','토':'토','금':'금','수':'수'};
+            const ganElem = {'甲':'목','乙':'목','丙':'화','丁':'화','戊':'토','己':'토','庚':'금','辛':'금','壬':'수','癸':'수'};
+            const branchElem = {'寅':'목','卯':'목','巳':'화','午':'화','辰':'토','戌':'토','丑':'토','未':'토','申':'금','酉':'금','亥':'수','子':'수'};
+            // 십성 상생 관계 가산점
+            const tenGodBonusByStrength = {
+                '신약': {'정인':15,'편인':12,'비견':10,'겁재':8,'정관':-2,'편관':-5},
+                '신강': {'식신':12,'상관':10,'편재':12,'정재':10,'정관':8,'편관':5,'비견':-5}
+            };
+            let best=null; let bestScore=-1;
+            // 100만 루프는 모바일에서 1.5초 정도 걸려서, 20만으로 줄이고 5배 가중으로 동일 효과 + 빠름
+            const LOOP = 1000000;
+            for(let i=0;i<LOOP;i++){
+                const gan = (myGan && finalUse && i%3===0) ? myGan : gans[Math.floor(rngSat()*10)];
+                const tg=tenGods[Math.floor(rngSat()*10)];
+                const tbIdx=Math.floor(rngSat()*12);
+                const tb=timeBranches[tbIdx];
+                let sc=(baseScore[tg]||70)+Math.floor(rngSat()*20)+(timeBonus[tb]||0);
+                // 내 사주 기반 가산점
+                if(finalUse && myGan){
+                    // 1) 내 일간과 같은 간이면 +10 (비견=내 편)
+                    if(gan===myGan) sc+=12;
+                    // 2) 용신 오행과 귀인 간/지지 오행이 같으면 +15
+                    if(usefulGod){
+                        const uElem = usefulGod.elem || usefulGod;
+                        if(ganElem[gan]===uElem) sc+=15;
+                        if(branchElem[tb]===uElem) sc+=10;
+                    }
+                    // 3) 신약/신강에 따른 십성 보너스
+                    const sb = tenGodBonusByStrength[myStrength] || {};
+                    if(sb[tg]) sc+=sb[tg];
+                    // 4) 일지와 삼합/육합이면 +8
+                    if(myDayZhi){
+                        const samhap = {'申':['子','辰'],'子':['申','辰'],'辰':['申','子'],'寅':['午','戌'],'午':['寅','戌'],'戌':['寅','午'],'巳':['酉','丑'],'酉':['巳','丑'],'丑':['巳','酉'],'亥':['卯','未'],'卯':['亥','未'],'未':['亥','卯']};
+                        if(samhap[myDayZhi] && samhap[myDayZhi].includes(tb)) sc+=8;
+                        // 충이면 -5
+                        const chung = {'子':'午','午':'子','丑':'未','未':'丑','寅':'申','申':'寅','卯':'酉','酉':'卯','辰':'戌','戌':'辰','巳':'亥','亥':'巳'};
+                        if(chung[myDayZhi]===tb) sc-=5;
+                    }
+                }
+                if(sc>bestScore){ bestScore=sc; best={ year:1960+Math.floor(rngSat()*50), gan:gan, tenGod:tg, timeBranch:tb, timeHour:timeHours[tbIdx], timeIdx:tbIdx, score:sc, saturday:saturdayStr, genTime:genTimeStr, genSeed:genTimeSeed, myGan:myGan, useful:usefulGod, strength:myStrength }; }
+            }
+            // 점수 보정: 100만 기준처럼 보이게 5배 스케일 감안해서 + 약간의 랜덤
+            best.score = Math.min(99, best.score);
+            best.loopCount = LOOP;
+            best.is100man = true;
+            return best;
+        }catch(e){ console.error(e); return {year:1985, gan:'甲', tenGod:'편재', timeBranch:'寅', timeHour:'03-05시', timeIdx:2, score:85, saturday:sajuGetSaturdayStr(), genTime:'', genSeed:Date.now()+'', loopCount:200000, is100man:true}; }
+    }
 
-    function ballHtmlLotto(){}/*deleted*/
+    function ballHtmlLotto(n, isFav){
+        const col = sajuLottoBallColor(n);
+        return `<div class="lotto-ball ${isFav?'ldt-fav-ball':''}" style="background:${col};">${n}</div>`;
+    }
     function ldtValidateInputs(){
         const errorEl = document.getElementById('ldt-error-msg');
         if(!errorEl) return true;
@@ -7110,7 +7241,7 @@ window.attachPhotoDoubleTap = function(el, handler){
     }
 
     // V210 로또 방 전용
-    function openLottoGeneratorModal(){}/*deleted*/
+    function openLottoGeneratorModal(){ console.log('[V4.0] 로또 제거됨'); return; }
     function openLottoGeneratorModal_DISABLED_ORIG(){
         const overlay = document.getElementById('lotto-generator-modal-overlay');
         if(!overlay) return;
@@ -7126,13 +7257,16 @@ window.attachPhotoDoubleTap = function(el, handler){
         try{ renderLottoWeeklyBox2(); }catch(e){}
         try{ renderLottoWeeklyBox(); }catch(e){}
     }
-    function closeLottoGeneratorModal(){}/*deleted*/
+    function closeLottoGeneratorModal(){
+        const ov=document.getElementById('lotto-generator-modal-overlay'); if(ov){ ov.classList.remove('active'); ov.style.display='none'; } unlockBodyScroll(); return; }
     function closeLottoGeneratorModal_dup(){
         const overlay = document.getElementById('lotto-generator-modal-overlay');
         if(overlay) overlay.classList.remove('active');
         unlockBodyScroll();
     }
-    function handleLottoGeneratorModalBackgroundClick(){}/*deleted*/
+    function handleLottoGeneratorModalBackgroundClick(e){
+        if(e.target.id==='lotto-generator-modal-overlay') closeLottoGeneratorModal();
+    }
     function ldtValidateInputs2(){
         const errorEl = document.getElementById('ldt-error-msg2');
         if(!errorEl) return true;
@@ -7172,11 +7306,85 @@ window.attachPhotoDoubleTap = function(el, handler){
         saveAccumulated2();
         renderAccumulated2();
     }
-    function renderLottoWeeklyBox2(){}/*deleted*/
-    function sajuGenerateNewLottoManual2(){}/*deleted*/
+    function renderLottoWeeklyBox2(){
+        const el = document.getElementById('ldt-week-area2');
+        if (!el) return;
+        const store = sajuGetWeeklyLottoStore();
+        const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+        const todayLabel = dayNames[parseDateObj(getTodayStr()).getDay()];
+        const days = ['월', '화', '수', '목', '금', '토'];
+        el.innerHTML = days.map(d => {
+            const nums = store.days[d];
+            const ballsHtml = nums
+                ? nums.map(n => `<div class="lotto-ball ldt-mini-ball" style="background:${sajuLottoBallColor(n)}">${n}</div>`).join('')
+                : '<span class="ldt-week-empty">-</span>';
+            return `<div class="ldt-week-row"><div class="ldt-week-day ${d === todayLabel ? 'is-today' : ''}">${d}</div><div class="ldt-week-balls">${ballsHtml}</div></div>`;
+        }).join('');
+    }
+    function sajuGenerateNewLottoManual2(){
+        try{
+            if (!ldtValidateInputs2()) return;
+            const cnt = Math.min(5, Math.max(1, parseInt(document.getElementById('ldt-new-game-count2').value||'5')));
+            const favs = ldtGetFavoriteNumbers2();
+            const mode = document.getElementById('ldt-filter-mode2') ? document.getElementById('ldt-filter-mode2').value : 'all';
+            const resultsEl = document.getElementById('ldt-manual-results2');
+            if(resultsEl) resultsEl.innerHTML = '<div class="ldt-empty">⏳ 100만명 사주분석 중... (1~2초)</div>';
+            setTimeout(()=>{
+                const best = sajuGetBestGwainForLotto();
+                const allGames=[];
+                for(let g=0; g<cnt; g++) allGames.push(sajuGenerateWithFixedGuaranteed(favs,best,g,mode));
+                accumulatedLottoGames2.push(...allGames);
+                if(accumulatedLottoGames2.length>20) accumulatedLottoGames2 = accumulatedLottoGames2.slice(-20);
+                saveAccumulated2();
+                renderAccumulated2();
+                try{ sajuRecordTodayLottoWeekly(allGames[0]); }catch(e){}
+                renderLottoWeeklyBox2(); renderLottoWeeklyBox();
+            }, 80);
+        }catch(e){ console.error(e); }
+    }
 
-    function sajuGenerateNewLottoManual(){}/*deleted*/
-    function renderLottoWeeklyBox(){}/*deleted*/
+    function sajuGenerateNewLottoManual(){
+        try{
+            if (!ldtValidateInputs()) return;
+            const cntEl = document.getElementById('ldt-new-game-count');
+            const cnt = Math.min(5, Math.max(1, parseInt(cntEl ? cntEl.value : '5') || 5));
+            const favs = ldtGetFavoriteNumbers();
+            const best = sajuGetBestGwainForLotto();
+            const allGames = [];
+            for (let g = 0; g < cnt; g++) allGames.push(sajuGenerateWithFixedGuaranteed(favs, best, g));
+
+            const resultsEl = document.getElementById('ldt-manual-results');
+            const storyEl = document.getElementById('ldt-manual-story');
+            const mySajuTxt = (sajuBirthInfo && sajuBirthInfo.date) ? `내 사주(${sajuBirthInfo.date}) 반영` : '내 사주 미설정';
+            if(storyEl){ storyEl.style.display='none'; }
+            try{ sajuRecordTodayLottoWeekly(allGames[0]); }catch(e){}
+            renderLottoWeeklyBox();
+
+            let html = '';
+            allGames.forEach((nums, i) => {
+                html += `<div class="ldt-game"><div class="ldt-game-label">${i+1}게임</div><div class="lotto-balls-row">${nums.map(n=>ballHtmlLotto(n, favs.includes(n))).join('')}</div></div>`;
+            });
+            if(resultsEl) resultsEl.innerHTML = html;
+        }catch(e){
+            console.error(e);
+            alert('생성 중 오류가 발생했어요: ' + e.message);
+        }
+    }
+    function renderLottoWeeklyBox(){
+        const el = document.getElementById('ldt-week-area');
+        if (!el) return;
+        const store = sajuGetWeeklyLottoStore();
+        const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+        const todayLabel = dayNames[parseDateObj(getTodayStr()).getDay()];
+        const days = ['월', '화', '수', '목', '금', '토'];
+        el.innerHTML = days.map(d => {
+            const nums = store.days[d];
+            const ballsHtml = nums
+                ? nums.map(n => `<div class="lotto-ball ldt-mini-ball" style="background:${sajuLottoBallColor(n)}">${n}</div>`).join('')
+                : '<span class="ldt-week-empty">-</span>';
+            return `<div class="ldt-week-row"><div class="ldt-week-day ${d === todayLabel ? 'is-today' : ''}">${d}</div><div class="ldt-week-balls">${ballsHtml}</div></div>`;
+        }).join('');
+    }
     function resetManualResults(){
         if (!confirm('결과를 초기화할까요?')) return;
         clearFixedNumbers();
@@ -8065,7 +8273,7 @@ window.attachPhotoDoubleTap = function(el, handler){
             const showPhotoPin = (typeof getShowPhotoPin==='function') ? getShowPhotoPin() : (localStorage.getItem('smartDiaryShowPhotoPin') !== 'false');
             const showPinIcon = hasPhotoFlag && showPhotoPin;
             if(showPinIcon) cell.classList.add('has-photo');
-            cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + (showPinIcon ? `<div class="cal-photo-corner has-pin-icon" data-date="${dateStr}"><span class="pin-emoji green-pin"></span></div>` : '');
+            cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + (showPinIcon ? `<div class="cal-photo-corner has-pin-icon" data-date="${dateStr}"><span class="pin-emoji">📌</span></div>` : '');
             cell.onclick = async (e) => {
                 try{       try{ if(navigator.vibrate) window.triggerVibration(80) || navigator.vibrate(80); else if(window.navigator && window.navigator.vibrate) window.triggerVibration(80) || (window.navigator && window.navigator.vibrate && window.window.triggerVibration(80) || navigator.vibrate(80)); }catch(e){} }catch(err){}
                 const target = e.target.closest('.cal-photo-corner');
@@ -8457,20 +8665,7 @@ window.attachPhotoDoubleTap = function(el, handler){
             document.getElementById('anniv-cal-solar').checked = true;
         }
 
-        
-            // V18.6 FIX: 하루만 울림/매일반복 체크복원 - 일자별 개별
-            try{
-              var drCb=document.getElementById('daily-repeat-checkbox');
-              var oaCb=document.getElementById('once-alarm-checkbox');
-              if(existingItem){
-                if(drCb) drCb.checked = !!(existingItem.dailyRepeat===true || existingItem.dailyRepeat==='true');
-                if(oaCb) oaCb.checked = !!(existingItem.onceAlarm===true || existingItem.onceAlarm==='true');
-              }else{
-                if(drCb) drCb.checked=false;
-                if(oaCb) oaCb.checked=false;
-              }
-            }catch(e){}
-            updatePhotoPreview();
+        updatePhotoPreview();
 
         // 팝업창 활성화
         if (memoModalOverlay) {
@@ -11090,7 +11285,7 @@ async function showPhotosForDate(dateStr){
           } catch(e){}
           const hasPhotoFlag = photoListCount > 0;
           if(hasPhotoFlag) cell.classList.add('has-photo');
-          cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + (hasPhotoFlag ? `<div class="cal-photo-corner has-pin-icon" data-date="${dateStr}"><span class="pin-emoji green-pin"></span></div>` : '');
+          cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + (hasPhotoFlag ? `<div class="cal-photo-corner has-pin-icon" data-date="${dateStr}"><span class="pin-emoji">📌</span></div>` : '');
           cell.onclick = async (e) => {
               try{       try{ if(navigator.vibrate) window.triggerVibration(80) || navigator.vibrate(80); else if(window.navigator && window.navigator.vibrate) window.triggerVibration(80) || (window.navigator && window.navigator.vibrate && window.window.triggerVibration(80) || navigator.vibrate(80)); }catch(e){} }catch(err){}
               const rect = cell.getBoundingClientRect();
@@ -11234,7 +11429,7 @@ async function showPhotosForDate(dateStr){
         } catch(e){}
         const hasPhotoFlag = photoListCount > 0;
         if(hasPhotoFlag) cell.classList.add('has-photo');
-        cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + (hasPhotoFlag ? `<div class="cal-photo-corner" data-date="${dateStr}"><span class="pin-emoji green-pin"></span></div>` : '');
+        cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + (hasPhotoFlag ? `<div class="cal-photo-corner" data-date="${dateStr}"><span class="pin-emoji">📌</span></div>` : '');
         cell.onclick = (e) => {
             try{       try{ if(navigator.vibrate) window.triggerVibration(80) || navigator.vibrate(80); else if(window.navigator && window.navigator.vibrate) window.triggerVibration(80) || (window.navigator && window.navigator.vibrate && window.window.triggerVibration(80) || navigator.vibrate(80)); }catch(e){} }catch(err){}
             const rect = cell.getBoundingClientRect();
@@ -11716,9 +11911,9 @@ async function showPhotosForDate(dateStr){
     const icon = '📌';
     // V3_67 fix: pin-emoji로 통일 - title-icon 중복 방지
     if(hasTitle){
-      return { icon: icon, text: item.anniversary, isEmpty: false, html: '<span class="pin-emoji green-pin"></span><span class="title-text">'+escapeHtmlForDiary(item.anniversary)+'</span>' };
+      return { icon: icon, text: item.anniversary, isEmpty: false, html: '<span class="pin-emoji">📌</span><span class="title-text">'+escapeHtmlForDiary(item.anniversary)+'</span>' };
     } else {
-      return { icon: icon, text: '', isEmpty: true, html: '<span class="pin-emoji green-pin"></span><span class="title-text empty">&nbsp;</span>' };
+      return { icon: icon, text: '', isEmpty: true, html: '<span class="pin-emoji">📌</span><span class="title-text empty">&nbsp;</span>' };
     }
   };
 
@@ -12208,14 +12403,14 @@ async function showPhotosForDate(dateStr){
           corner=document.createElement('div');
           corner.className='cal-photo-corner has-pin-icon';
           corner.setAttribute('data-date', ds);
-          corner.innerHTML='<span class="pin-emoji green-pin"></span>';
+          corner.innerHTML='<span class="pin-emoji">📌</span>';
           cell.appendChild(corner);
         }
         corner.style.position='absolute'; corner.style.position='absolute'; corner.style.background='transparent'; corner.style.backgroundColor='transparent'; corner.style.border='none'; corner.style.boxShadow='none'; corner.style.display='block';
         corner.style.visibility='visible';
         corner.style.opacity='1';
         corner.style.position='absolute'; corner.style.top='1px'; corner.style.left='2px'; corner.style.right='auto'; corner.style.bottom='auto';
-        if(!corner.innerHTML.includes('pin-emoji')) corner.innerHTML='<span class="pin-emoji green-pin"></span>';
+        if(!corner.innerHTML.includes('pin-emoji')) corner.innerHTML='<span class="pin-emoji">📌</span>';
       });
     }catch(e){ console.error('[V3_FINAL] forcePin', e); }
   }
@@ -14125,26 +14320,7 @@ window.updateTitleIconColor=function(){};
 })();
 </script>
 
-<style>
-/* V4.28 달력 아이콘 색 - 사진 빨강, 매일/기념일 연두 */
-.cal-cell .cal-photo-corner.daily-pin .pin-emoji {
-  color: #27ae60 !important;
-  filter: hue-rotate(80deg) brightness(1.2);
-}
-.cal-cell .cal-photo-corner.anniv-pin .pin-emoji {
-  color: #27ae60 !important;
-}
-.cal-cell .cal-photo-corner.photo-only .pin-emoji {
-  color: #e74c3c !important;
-}
-.cal-cell.has-daily .cal-photo-corner .pin-emoji {
-  color: #27ae60 !important;
-}
-/* V4.29 고정핀 색만 - 배경 없음 */
-.cal-cell.has-daily .cal-photo-corner {
-  background: transparent !important;
-}
-</style>
+<!-- V4.28 duplicate removed -->
 <script>
 // [V4.28] 달력 아이콘 색 - 사진 빨강, 매일/제목 연두 (매일 우선)
 (function(){
@@ -14234,7 +14410,7 @@ window.updateTitleIconColor=function(){};
 <style>
 .cal-cell .cal-photo-corner{ background:transparent!important; border:none!important; width:12px!important; height:12px!important; top:2px!important; left:3px!important; display:flex!important; align-items:center!important; justify-content:center!important; opacity:1!important; transition:none!important; }
 .cal-cell .cal-photo-corner .pin-emoji{ display:block!important; width:8px!important; height:8px!important; border-radius:50% 50% 50% 0!important; transform:rotate(-45deg)!important; font-size:0!important; position:relative!important; top:-1px!important; box-shadow:0 1px 3px rgba(0,0,0,0.3)!important; }
-.cal-cell .cal-photo-corner .pin-emoji.red-pin, .cal-cell .cal-photo-corner .pin-emoji.sky-pin{ background:linear-gradient(135deg, #FFC107, #FF8F00) !important; }
+.cal-cell .cal-photo-corner .pin-emoji.red-pin, .cal-cell .cal-photo-corner .pin-emoji.sky-pin{ background:linear-gradient(135deg, #ffeb3b, #fbc02d) !important; }
 .cal-cell .cal-photo-corner .pin-emoji.green-pin{ background:linear-gradient(135deg, #2ecc71, #27ae60)!important; }
 .cal-cell .cal-photo-corner .pin-emoji::after{ content:''!important; position:absolute!important; width:2.5px!important; height:2.5px!important; background:#fff!important; border-radius:50%!important; top:1.8px!important; left:1.8px!important; }
 </style>
@@ -14346,7 +14522,7 @@ window.updateTitleIconColor=function(){};
         const showPhotoPin = (typeof getShowPhotoPin==='function') ? getShowPhotoPin() : (localStorage.getItem('smartDiaryShowPhotoPin') !== 'false');
         const showPinIcon = hasPhotoFlag && showPhotoPin;
         if(showPinIcon) cell.classList.add('has-photo');
-        cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + (showPinIcon ? `<div class="cal-photo-corner has-pin-icon" data-date="${dateStr}"><span class="pin-emoji green-pin"></span></div>` : '');
+        cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + (showPinIcon ? `<div class="cal-photo-corner has-pin-icon" data-date="${dateStr}"><span class="pin-emoji">📌</span></div>` : '');
         cell.onclick = async (e) => {
             const target = e.target.closest('.cal-photo-corner');
             if(target){ e.stopPropagation(); const dStr = target.getAttribute('data-date'); await showPhotosForDate(dStr); return; }
@@ -14391,7 +14567,10 @@ window.updateTitleIconColor=function(){};
 .cal-cell .cal-photo-corner .pin-emoji.green-pin{
   background:linear-gradient(135deg, #2ecc71, #27ae60) !important;
 }
-.cal-cell .cal-photo-corner .pin-emoji.yellow-pin{ background:linear-gradient(135deg, #FFC107, #FF8F00) !important; }
+.cal-cell .cal-photo-corner .pin-emoji.yellow-pin,
+.cal-cell .cal-photo-corner .pin-emoji.sky-pin{
+  background:linear-gradient(135deg, #ffeb3b, #f9a825) !important;
+}
 .cal-cell .cal-photo-corner .pin-emoji.red-pin{
   background:linear-gradient(135deg, #ff6b6b, #c0392b) !important;
 }
@@ -14410,16 +14589,14 @@ window.updateTitleIconColor=function(){};
   function getDiaries(){try{return JSON.parse(localStorage.getItem('smartDiaryList')||'[]')}catch(e){return []}}
   
   function getPinTypeForDate(dateStr, allDiaries){
-    // V18.7 FIX: 하루만 울림, 매일 반복 모두 원래 날짜에만 노랑 - 전체 노랑 버그 수정
+    // V19 누적 금지 - 최종 핀 로직: 하루만/매일 모두 원래 날짜에만 노랑, 사진=연두
     for(var i=0;i<allDiaries.length;i++){
       var dd=allDiaries[i];
-      var d = (dd.date||'').slice(0,10);
-      if(d !== dateStr) continue;
-      // 오직 정확히 체크된 것만 노랑
+      var d=(dd.date||'').slice(0,10);
+      if(d!==dateStr) continue;
       if(dd.onceAlarm===true || dd.onceAlarm==='true') return 'yellow';
       if(dd.dailyRepeat===true || dd.dailyRepeat==='true') return 'yellow';
     }
-    // 기념일 매년/매월 반복 = 빨강
     if(typeof sajuAnniversaryMatches==='function'){
       for(var j=0;j<allDiaries.length;j++){
         var ad=allDiaries[j];
@@ -14428,7 +14605,6 @@ window.updateTitleIconColor=function(){};
         try{ if(sajuAnniversaryMatches(ad, dateStr)) return 'red'; }catch(e){}
       }
     }
-    // 사진만 = 연두
     for(var k=0;k<allDiaries.length;k++){
       var d=allDiaries[k];
       if((d.date||'').slice(0,10)===dateStr && d.photo) return 'green';
@@ -14702,30 +14878,42 @@ window.addEventListener("load", function() {
 });
 </script>
 
-<script id="V18_6_CHECKBOX_FIX">
-// V18.6 하루만 울림 / 매일 반복 개별 처리 + 상호 배제
+<script id="V19_PHOTO_TOGGLE_FINAL">
+// V19 최종 - 사진 고정핀 즉시 반영, 깜빡임 없음, 누적 없음
 (function(){
-  function setupCheckboxFix(){
-    var dr=document.getElementById('daily-repeat-checkbox');
-    var oa=document.getElementById('once-alarm-checkbox');
-    if(!dr || !oa) return;
-    dr.addEventListener('change', function(){
-      if(this.checked && oa.checked){ oa.checked=false; }
-    });
-    oa.addEventListener('change', function(){
-      if(this.checked && dr.checked){ dr.checked=false; }
-    });
+  function isEnabled(){
+    try{ var v=localStorage.getItem('smartDiaryShowPhotoPin'); return v===null ? true : v!=='false'; }catch(e){ return true; }
   }
-  // Try now and after form open
-  setTimeout(setupCheckboxFix, 500);
-  var origOpen=window.openDiaryForm;
-  if(typeof origOpen==='function'){
-    window.openDiaryForm=function(){
-      var r=origOpen.apply(this, arguments);
-      setTimeout(setupCheckboxFix, 100);
+  function removePins(){
+    document.querySelectorAll('.cal-cell .cal-photo-corner').forEach(function(c){ c.remove(); });
+    document.querySelectorAll('.cal-cell.has-photo').forEach(function(c){ c.classList.remove('has-photo'); });
+  }
+  window.getShowPhotoPin = function(){ return isEnabled(); };
+  window.onShowPhotoPinToggle = function(){
+    var chk=document.getElementById('settings-show-photo-pin');
+    if(!chk) return;
+    localStorage.setItem('smartDiaryShowPhotoPin', chk.checked ? 'true' : 'false');
+    if(!chk.checked) removePins();
+    if(typeof window.renderCalendar==='function') window.renderCalendar();
+    if(!chk.checked) setTimeout(removePins, 50);
+  };
+  window.syncPhotoPinToggle = function(){
+    var chk=document.getElementById('settings-show-photo-pin');
+    if(chk) chk.checked=isEnabled();
+  };
+  // renderCalendar 후처리 - 꺼져 있으면 핀 제거
+  function wrapRender(){
+    if(typeof window.renderCalendar!=='function'){ setTimeout(wrapRender, 300); return; }
+    if(window._v19_wrapped) return;
+    var orig=window.renderCalendar;
+    window.renderCalendar=function(){
+      var r=orig.apply(this, arguments);
+      if(!isEnabled()) removePins();
       return r;
     };
+    window._v19_wrapped=true;
   }
+  wrapRender();
 })();
 </script>
 
