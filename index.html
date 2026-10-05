@@ -4847,28 +4847,44 @@ window.attachPhotoDoubleTap = function(el, handler){
     
     // V47: 잔액/카드 화면에서 가계부 메인으로 복귀
     function returnToMoneyMain() {
+        console.log('[Money] 가계부 메인으로 이동');
         // 잔액 모달들 닫기
-        if (typeof closeBalanceLocationModal === 'function') closeBalanceLocationModal();
-        if (typeof closeCardStatementModal === 'function') closeCardStatementModal();
-        if (typeof closeCardPendingModal === 'function') closeCardPendingModal();
+        try { if (typeof closeBalanceLocationModal === 'function') closeBalanceLocationModal(); } catch(e){}
+        try { if (typeof closeCardStatementModal === 'function') closeCardStatementModal(); } catch(e){}
+        try { if (typeof closeCardPendingModal === 'function') closeCardPendingModal(); } catch(e){}
+        
+        // 가계부 탭으로 전환
+        if (typeof switchMainTab === 'function') {
+            switchMainTab('money');
+        } else {
+            // fallback: 직접 패널 전환
+            const diaryPanel = document.getElementById('diary-panel');
+            const moneyPanel = document.getElementById('money-panel');
+            if (diaryPanel) diaryPanel.classList.remove('active');
+            if (moneyPanel) moneyPanel.classList.add('active');
+            if (typeof currentMainTab !== 'undefined') currentMainTab = 'money';
+        }
         
         // 가계부 메인 뷰로 복귀 (지출 통계)
-        if (typeof selectMoneySummaryStat === 'function') {
-            selectMoneySummaryStat('expense');
-        }
-        // 가계부 입력 영역이 숨겨진 경우 보이도록
-        const moneyTodayCard = document.getElementById('money-around-today-card');
-        if (moneyTodayCard) moneyTodayCard.style.display = '';
-        const searchFilterCard = document.getElementById('search-filter-card');
-        if (searchFilterCard && typeof isSearchFilterOpen !== 'undefined' && isSearchFilterOpen) {
-            searchFilterCard.style.display = 'block';
-        }
-        
-        // 가계부 메인으로 스크롤
         setTimeout(() => {
+            if (typeof selectMoneySummaryStat === 'function') {
+                try { selectMoneySummaryStat('expense'); } catch(e){ console.log(e); }
+            }
+            const moneyTodayCard = document.getElementById('money-around-today-card');
+            if (moneyTodayCard) moneyTodayCard.style.display = '';
+            
+            // 가계부 메인으로 스크롤
             const moneyPanel = document.getElementById('money-panel');
             if (moneyPanel) moneyPanel.scrollIntoView({behavior: 'smooth', block: 'start'});
-        }, 100);
+            
+            // 상단 버튼 항상 가계부 아이콘으로 유지
+            const topBtn = document.getElementById('top-toggle-btn');
+            if (topBtn) {
+                topBtn.innerHTML = '💰';
+                topBtn.title = '가계부 메인으로';
+                topBtn.onclick = returnToMoneyMain;
+            }
+        }, 150);
     }
     
     function openMoneyInputFromAnywhere() {
@@ -6478,23 +6494,20 @@ window.attachPhotoDoubleTap = function(el, handler){
             if (panels[key]) panels[key].classList.toggle('active', key === tabName);
         });
         currentMainTab = tabName;
+        // V48-1: 상단 버튼은 항상 가계부 아이콘 유지, 가계부 메인으로 이동
         const topBtn = document.getElementById('top-toggle-btn');
         if(topBtn){
-            if(tabName === 'diary'){
-                topBtn.innerHTML = '💰';
-                topBtn.title = '가계부로 이동';
-            } else {
-                topBtn.innerHTML = '📔';
-                topBtn.title = '다이어리로 이동';
-            }
+            topBtn.innerHTML = '💰';
+            topBtn.title = '가계부 메인으로';
+            topBtn.onclick = returnToMoneyMain;
         }
         if (tabName === 'money') {
-            updateMoneySummary();
-            renderMoneyAroundToday();
+            if (typeof updateMoneySummary === 'function') updateMoneySummary();
+            if (typeof renderMoneyAroundToday === 'function') renderMoneyAroundToday();
         }
         if (tabName === 'diary') {
-            renderDiaryAroundToday();
-            if (isDiarySearchFilterOpen) filterDiaryCustomList();
+            if (typeof renderDiaryAroundToday === 'function') renderDiaryAroundToday();
+            if (typeof isDiarySearchFilterOpen !== 'undefined' && isDiarySearchFilterOpen && typeof filterDiaryCustomList === 'function') filterDiaryCustomList();
         }
         localStorage.setItem('smartDiaryMainTab', tabName);
     }
