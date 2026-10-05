@@ -2895,6 +2895,28 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
 <style id="V36_HIDE_MONEY_LABEL">#money-input-label { display:none !important; }</style>
 <style id="V37_FORTUNE_CALENDAR_GAP">.app-container{gap:2px!important}#fortune-teaser{margin-bottom:0!important}#calendar-card{margin-top:0!important;margin-bottom:2px!important}</style>
 
+
+<style id="V17_2_MONEY_ONLY_FIX">
+/* V17.2 FIX: 가계부 모드일 때 다이어리 입력폼 완전 숨김 - 메인 버그 픽스 */
+body.money-mode #diary-content-section,
+#memo-form-card.money-mode-form #diary-content-section,
+.money-mode-form #diary-content-section { display:none !important; }
+body.money-mode #anniv-input-row,
+#memo-form-card.money-mode-form #anniv-input-row { display:none !important; }
+body.money-mode #form-date-row { display:none !important; }
+body.money-mode #reservation-box { display:none !important; }
+body.money-mode #record-btn,
+body.money-mode #photo-attach-label,
+body.money-mode #camera-btn,
+body.money-mode #gallery-btn,
+body.money-mode #photo-preview-wrap { display:none !important; }
+
+/* 다이어리 모드일 때 가계부 숨김 */
+body:not(.money-mode) #money-input-section { display:none !important; }
+body:not(.money-mode) #form-date-row-money { display:none !important; }
+#memo-form-card:not(.money-mode-form) #money-input-section { display:none !important; }
+</style>
+
 </head>
 <body>
 
@@ -8480,39 +8502,54 @@ window.attachPhotoDoubleTap = function(el, handler){
         const reservationBox = document.getElementById('reservation-box');
         const memoFormCard = document.getElementById('memo-form-card');
         const moneyDateRow = document.getElementById('form-date-row-money');
+        const photoPreviewWrap = document.getElementById('photo-preview-wrap');
+        const healthSection = document.getElementById('health-input-section');
+        const annivCalRadios = document.querySelectorAll('input[name="anniv-cal-type"]');
+
+        // 헬퍼: 강제 숨김/표시 (important 덮어쓰기 대응)
+        function hide(el){ if(!el) return; el.style.setProperty('display','none','important'); }
+        function showFlex(el){ if(!el) return; el.style.setProperty('display','flex','important'); }
+        function showBlock(el){ if(!el) return; el.style.setProperty('display','block','important'); }
+        function showDefault(el){ if(!el) return; el.style.removeProperty('display'); el.style.display=''; }
 
         if (mode === 'money') {
-            if (moneySection) moneySection.style.display = '';
-            if (diarySection) diarySection.style.display = 'none';
-            if (recordBtnEl) recordBtnEl.style.display = 'none';
-            if (photoAttachLabel) photoAttachLabel.style.display = 'none';
+            // 가계부만 표시
+            if (moneySection) { showDefault(moneySection); moneySection.style.display=''; }
+            if (moneyDateRow) showFlex(moneyDateRow);
             if (moneyLabel) moneyLabel.textContent = '💰 가계부 입력';
-            // V284: 가계부에서는 제목&기념일 + 반복/양력음력 숨김
-            if (annivRow) annivRow.style.display = 'none';
-            // V284: 다이어리용 날짜는 숨기고, 가계부용 날짜는 표시
-            if (formDateRowDiary) formDateRowDiary.style.display = 'none';
-            if (moneyDateRow) moneyDateRow.style.display = 'flex';
-            // V284: 카메라/갤러리 삭제
-            if (cameraBtn) cameraBtn.style.display = 'none';
-            if (galleryBtn) galleryBtn.style.display = 'none';
-            // V32: 가계부에서는 알림 표시란 삭제 (알림받을시간, 매일반복, 하루만울림, 매일체크)
-            if (reservationBox) reservationBox.style.display = 'none';
+
+            // 다이어리 관련 전부 숨김 - 이게 핵심 버그 픽스
+            hide(diarySection);
+            hide(annivRow);
+            hide(formDateRowDiary);
+            hide(reservationBox);
+            hide(recordBtnEl);
+            hide(photoAttachLabel);
+            hide(cameraBtn);
+            hide(galleryBtn);
+            hide(photoPreviewWrap);
+            // 기념일 양력/음력 라디오도 숨김
+            if(annivRow) hide(annivRow);
+            // 건강섹션은 가계부에서도 유지 (공통이므로 표시)
+            // if(healthSection) showDefault(healthSection);
+
             if (memoFormCard) memoFormCard.classList.add('money-mode-form');
             document.body.classList.add('money-mode');
         } else {
-            if (moneySection) moneySection.style.display = 'none';
-            if (diarySection) diarySection.style.display = '';
-            if (recordBtnEl) recordBtnEl.style.display = '';
-            if (photoAttachLabel) photoAttachLabel.style.display = '';
+            // 다이어리만 표시
+            hide(moneySection);
+            hide(moneyDateRow);
+            showBlock(diarySection);
+            showDefault(annivRow);
+            showDefault(formDateRowDiary);
+            showDefault(reservationBox);
+            showDefault(recordBtnEl);
+            showDefault(photoAttachLabel);
+            showDefault(cameraBtn);
+            showDefault(galleryBtn);
+            // photoPreview는 이미지가 있을때만 JS가 다시 표시
             if (moneyLabel) moneyLabel.textContent = '💰 가계부 기록 (선택사항)';
-            // 다이어리에서는 다시 표시
-            if (annivRow) annivRow.style.display = '';
-            if (formDateRowDiary) formDateRowDiary.style.display = '';
-            if (moneyDateRow) moneyDateRow.style.display = 'none';
-            if (cameraBtn) cameraBtn.style.display = '';
-            if (galleryBtn) galleryBtn.style.display = '';
-            // 다이어리에서는 알림 표시란 다시 표시
-            if (reservationBox) reservationBox.style.display = '';
+
             if (memoFormCard) memoFormCard.classList.remove('money-mode-form');
             document.body.classList.remove('money-mode');
         }
@@ -14763,7 +14800,7 @@ function maybeAutoShowFortunePopup(){ return; }
           if(isMoney){
             var box = document.getElementById('reservation-box');
             if(box){ 
-              box.style.display='none !important'; 
+              /* V17 FIX: invalid removed */ 
               box.style.setProperty('display','none','important');
             }
           }
