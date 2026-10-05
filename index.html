@@ -2953,7 +2953,7 @@ body:not(.money-mode) #form-date-row-money { display:none !important; }
 #font-size-display { display:none !important; }
 button[onclick*="adjustFontSize"], button[onclick*="resetFontSize"] { display:none !important; }
 div:has(> button[onclick*="adjustFontSize"]) { display:none !important; }
-/* 4) V20 복구 관련 숨김 - daily alarm V20 텍스트 */
+/* 4) 매일 알림 관련 숨김 - daily alarm V20 텍스트 */
 div:has(> span:V20), .v20-recovery { display:none !important; }
 </style>
 
@@ -14258,8 +14258,8 @@ console.log('[DailyAlarm] 스크립트 로드 완료 - testDailyAlarm()으로 �
     const div=document.createElement('div'); div.id='v26-alarm-settings'; div.className='settings-section';
     div.style.cssText='background:#fff8f0; border:1px solid #e6b0b0; border-radius:8px; padding:12px;';
     div.innerHTML=`
-      <label style="font-weight:bold;">🔔 매일 알림 소리 (V20 복구)</label>
-      <div style="font-size:11px; color:#888; margin-top:2px;">V20에서 좋았던 3종, 기본 도미솔</div>
+      <label style="font-weight:bold;">🔔 매일 알림 소리</label>
+      <div style="font-size:11px; color:#888; margin-top:2px;">부드러운 알림 소리 3종</div>
       <select id="alarm-sound-type" style="width:100%; padding:8px; margin-top:8px; border:1px solid #ddd; border-radius:6px; font-size:13px;">
         <option value="tiriring">🔔 띠리링~ (벨 2음)</option>
         <option value="drop">💧 또르르 (물방울)</option>
@@ -15016,12 +15016,115 @@ window.addEventListener("load", function() {
   window.adjustFontSize = function(){};
   window.resetFontSize = function(){};
 
-  // 4) V20 복구 텍스트 제거 (JS로)
+  // 4) 매일 알림 텍스트 제거 (JS로)
   setTimeout(function(){
-    document.body.innerHTML = document.body.innerHTML.replace(/V20 복구/g, '').replace(/V20에서.*?복구.*?
+    document.body.innerHTML = document.body.innerHTML.replace(/매일 알림/g, '').replace(/V20에서.*?복구.*?
 /g, '');
   }, 1000);
 
+})();
+</script>
+
+
+<script id="V20_FORTUNE_SAVE_FIX">
+// V20 운세 저장 수정 - 달력 선택 시 저장 되게
+(function(){
+  window.syncSajuDateFromCalendar = function(){
+    try{
+      var calDate = document.getElementById('saju-birth-date-calendar');
+      var calTime = document.getElementById('saju-birth-time-calendar');
+      var hiddenDate = document.getElementById('saju-birth-date');
+      var hiddenTime = document.getElementById('saju-birth-time');
+      var ymdBox = document.getElementById('saju-ymd-box');
+      if(calDate && hiddenDate){
+        hiddenDate.value = calDate.value;
+        // Also update YMD hidden for compatibility
+        try{
+          var parts = calDate.value.split('-');
+          if(parts.length===3){
+            var yEl=document.getElementById('saju-birth-year');
+            var mEl=document.getElementById('saju-birth-month');
+            var dEl=document.getElementById('saju-birth-day');
+            if(yEl) yEl.value=parts[0];
+            if(mEl) mEl.value=parseInt(parts[1]);
+            if(dEl) dEl.value=parseInt(parts[2]);
+          }
+        }catch(e){}
+      }
+      if(calTime && hiddenTime){
+        hiddenTime.value = calTime.value;
+      }
+      // Update saved info preview
+      var infoEl=document.getElementById('saju-saved-info');
+      if(infoEl && calDate && calDate.value){
+        infoEl.textContent = '선택됨: ' + calDate.value + (calTime && calTime.value ? ' ' + calTime.value : ' (시간 모름)');
+      }
+    }catch(e){ console.log('sync calendar error', e); }
+  };
+  // Also sync time
+  var calTimeEl=document.getElementById('saju-birth-time-calendar');
+  if(calTimeEl){
+    calTimeEl.addEventListener('change', window.syncSajuDateFromCalendar);
+  }
+})();
+</script>
+
+
+<script id="V20_FLICKER_FINAL">
+// 깜빡임 최종 - 모든 setInterval forcePin 제거
+(function(){
+  // 기존 interval들 제거 시도
+  for(var i=1;i<10000;i++) clearInterval(i);
+  // forcePin을 깔끔하게 재정의 (이전 정의 덮어쓰기)
+  function isPhotoEnabled(){
+    try{ return localStorage.getItem('smartDiaryShowPhotoPin')!=='false'; }catch(e){return true;}
+  }
+  function removePins(){
+    document.querySelectorAll('.cal-cell .cal-photo-corner').forEach(function(c){ c.remove(); });
+    document.querySelectorAll('.cal-cell.has-photo').forEach(function(c){ c.classList.remove('has-photo'); });
+  }
+  window.forcePin = function(){
+    if(!isPhotoEnabled()){ removePins(); return; }
+    try{
+      var all=[]; try{ all=JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); }catch(e){}
+      var photoDates=new Set(all.filter(function(d){return !!d.photo;}).map(function(d){ return (d.date||'').slice(0,10); }));
+      document.querySelectorAll('.cal-cell:not(.adjacent-month)').forEach(function(cell){
+        var dayEl=cell.querySelector('.cal-cell-inner span'); if(!dayEl) return;
+        var day=parseInt(dayEl.textContent.trim()); if(isNaN(day)) return;
+        var y=typeof calYear!=='undefined'?calYear:new Date().getFullYear();
+        var m=typeof calMonth!=='undefined'?calMonth:new Date().getMonth();
+        var ds=y+'-'+String(m+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+        var hasPhoto=photoDates.has(ds);
+        var corner=cell.querySelector('.cal-photo-corner');
+        if(hasPhoto && !corner){
+          corner=document.createElement('div');
+          corner.className='cal-photo-corner has-pin-icon';
+          corner.setAttribute('data-date', ds);
+          corner.innerHTML='<span class="pin-emoji green-pin"></span>';
+          cell.appendChild(corner);
+          cell.classList.add('has-photo');
+        } else if(!hasPhoto && corner){
+          var pin=corner.querySelector('.pin-emoji');
+          if(pin && pin.classList.contains('green-pin')){
+            corner.remove();
+            cell.classList.remove('has-photo');
+          }
+        }
+      });
+    }catch(e){}
+  };
+  // renderCalendar 래핑 - 한 번만
+  if(!window._v20_final_wrapped && typeof window.renderCalendar==='function'){
+    var orig=window.renderCalendar;
+    window.renderCalendar=function(){
+      var r=orig.apply(this, arguments);
+      requestAnimationFrame(function(){ window.forcePin(); });
+      return r;
+    };
+    window._v20_final_wrapped=true;
+  }
+  // 달력 이동 후에도 한 번만 실행되게
+  setTimeout(function(){ window.forcePin(); }, 800);
 })();
 </script>
 
