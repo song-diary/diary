@@ -15239,7 +15239,7 @@ window.addEventListener("load", function() {
 </script>
 
 
-<script id="V20_HISTORY_EMPTY_BOX">
+<!-- OLD HISTORY BOX REMOVED --> <script id="OLD_REMOVED" type="text/template">
 // 과거의 오늘 - 빈 화면 박스
 (function(){
   const TODAY_HISTORY = {
@@ -15369,6 +15369,113 @@ window.addEventListener("load", function() {
   });
 
   console.log('[과거의 오늘] 패치 로드 - 빈 화면에 역사 이야기 표시');
+})();
+</script>
+
+
+<script id="V20_HISTORY_FIX_PERSIST">
+// 빈 화면 잠깐 나오고 마는 버그 수정 - render를 직접 패치
+(function(){
+  function getHistoryHTML(){
+    const TODAY_HISTORY = {
+      "01-01": {year:"2000년", event:"밀레니엄 새해, 전 세계가 Y2K를 넘긴 날", story:"모두가 걱정했지만, 아무 일도 일어나지 않았죠. 당신이 걱정하는 일도, 지나고 보면 별일 아닐 수 있어요."},
+      "01-15": {year:"2001년", event:"위키피디아가 처음 시작된 날", story:"누구나 지식을 나눌 수 있다는 믿음으로 시작됐어요. 당신의 작은 기록도 누군가에겐 큰 도움이 될 수 있어요."},
+      "02-04": {year:"2004년", event:"페이스북이 처음 만들어진 날", story:"기숙사 방에서 시작한 작은 아이디어가 세상을 연결했죠."},
+      "02-14": {year:"1990년", event:"보이저 1호가 창백한 푸른 점을 찍은 날", story:"지구는 우주에서 먼지 같은 점이었어요. 그래도 그 점 안에서 우리는 사랑하고 있어요."},
+      "03-20": {year:"2003년", event:"이라크 전쟁이 시작된 날", story:"낮과 밤이 같은 춘분에 시작된 전쟁. 균형을 잃으면, 어둠이 길어져요."},
+      "04-12": {year:"1961년", event:"인류 최초 우주비행, 가가린이 지구를 본 날", story:"'지구는 푸르다' 첫 우주인은 그렇게 말했어요. 당신의 오늘 하늘은 무슨 색인가요?"},
+      "05-05": {year:"1961년", event:"미국 첫 우주비행사가 탄생한 날", story:"여름의 문턱 입하, 사람은 하늘을 향해 한 걸음 더 갔어요."},
+      "06-12": {year:"1983년", event:"파이오니어 10호가 태양계를 벗어난 날", story:"인류가 만든 물건이 처음으로 태양계를 떠난 날이에요. 당신의 오늘도 어딘가로 떠나기 좋은 날 아닐까요?"},
+      "06-21": {year:"2004년", event:"첫 민간 우주선이 우주에 간 날", story:"하지, 1년 중 낮이 가장 긴 날. 가장 긴 낮처럼, 오늘은 길게 기억될지도 몰라요."},
+      "07-20": {year:"1969년", event:"인류가 처음 달에 발을 디딘 날", story:"'한 사람의 작은 한 걸음' 그 한 걸음이 인류의 역사가 됐어요."},
+      "08-07": {year:"1947년", event:"콘티키호가 태평양을 건넌 날", story:"입추, 가을의 시작. 뗏목 하나로 태평양을 건넜대요. 불가능해 보여도, 시작하면 건널 수 있어요."},
+      "08-15": {year:"1945년", event:"광복절, 빛을 되찾은 날", story:"어둠이 끝나고 빛이 돌아온 날. 당신의 어두운 날도, 끝이 있어요."},
+      "09-23": {year:"1846년", event:"해왕성이 발견된 날", story:"추분, 낮과 밤이 같은 날. 보이지 않던 행성을 찾아낸 날."},
+      "10-04": {year:"1957년", event:"인류 첫 인공위성 스푸트니크 발사", story:"작은 쇠공 하나가 하늘에 올라가 세상을 바꿨어요."},
+      "11-07": {year:"1917년", event:"러시아 혁명이 일어난 날", story:"입동, 겨울이 시작되는 날. 세상은 추워졌지만, 새로운 세상이 시작됐어요."},
+      "11-09": {year:"1989년", event:"베를린 장벽이 무너진 날", story:"28년 동안 갈라져 있던 벽이 무너졌어요. 당신 마음의 벽도, 무너질 수 있어요."},
+      "12-22": {year:"1894년", event:"에펠탑이 처음으로 불을 밝힌 날", story:"동지, 1년 중 밤이 가장 긴 날. 가장 긴 밤이라, 가장 작은 불빛도 가장 밝게 보여요."},
+      "12-25": {year:"1991년", event:"소비에트 연방이 사라진 날", story:"하나의 시대가 끝나고, 새로운 시대가 시작된 날."}
+    };
+    const SEASONAL = {
+      "01-01": "매화 향기가 살짝 - 새해", "02-04": "동풍이 얼음을 녹인다 - 입춘",
+      "03-20": "참새가 집을 짓는다 - 춘분", "06-12": "반딧불이가 나타나는 때 - 망종",
+      "06-21": "매미가 울기 시작한다 - 하지", "08-07": "서늘한 바람이 분다 - 입추",
+      "09-23": "천둥이 멈춘다 - 추분", "11-07": "물이 얼기 시작한다 - 입동", "12-22": "사슴 뿔이 빠진다 - 동지"
+    };
+    const now=new Date();
+    const mmdd=String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+    const m=now.getMonth()+1, d=now.getDate();
+    let keys=Object.keys(TODAY_HISTORY).sort();
+    let closest=TODAY_HISTORY["06-12"];
+    if(TODAY_HISTORY[mmdd]) closest=TODAY_HISTORY[mmdd];
+    else { for(let i=keys.length-1;i>=0;i--){ if(keys[i]<=mmdd){ closest=TODAY_HISTORY[keys[i]]; break; } } }
+    let seasonal=SEASONAL[mmdd] || "오늘, 계절이 바뀌는 때";
+    // 가장 가까운 seasonal 찾기
+    let sKeys=Object.keys(SEASONAL).sort();
+    for(let i=sKeys.length-1;i>=0;i--){ if(sKeys[i]<=mmdd){ seasonal=SEASONAL[sKeys[i]]; break; } }
+    
+    return `
+      <div style="display:block; width:100%; grid-column:1/-1; background: linear-gradient(135deg, #f8f6ff 0%, #fff8f0 100%); border: 1px solid #e8e0ff; border-radius: 18px; padding: 20px; margin: 12px 0; text-align:left; cursor:pointer;" onclick="if(typeof openDiaryForm==='function'){ const t=new Date().toISOString().slice(0,10); openDiaryForm(t); }">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="font-size:12px; font-weight:800; color:#7c6cff; letter-spacing:0.5px;">📅 과거의 오늘 · ${m}월 ${d}일</div>
+          <div style="font-size:11px; color:#aaa;">${closest.year}</div>
+        </div>
+        <div style="font-size:15px; font-weight:700; color:#2d2a4a; margin-top:8px; line-height:1.4;">${closest.event}</div>
+        <div style="font-size:13px; color:#5a5770; margin-top:10px; line-height:1.6; background:rgba(255,255,255,0.75); padding:10px 12px; border-radius:10px;">
+          ${closest.story}<br><br>
+          <span style="color:#7c6cff; font-weight:600;">당신의 오늘은 어떤 이야기가 될까요?</span>
+        </div>
+        <div style="display:flex; gap:6px; margin-top:12px; flex-wrap:wrap;">
+          <span style="font-size:11px; background:#fff; border:1px solid #e8e0ff; padding:4px 8px; border-radius:12px; color:#7c6cff;">🌿 ${seasonal}</span>
+          <span style="font-size:11px; background:#fff7ed; border:1px solid #ffedd5; padding:4px 8px; border-radius:12px; color:#ea580c;">💡 터치하면 오늘 기록하기</span>
+        </div>
+      </div>`;
+  }
+
+  // renderDiaryAroundToday를 감싸서 빈 화면일 때 우리 박스가 유지되게
+  function installFix(){
+    if(typeof window.renderDiaryAroundToday!=='function'){ setTimeout(installFix, 300); return; }
+    const orig=window.renderDiaryAroundToday;
+    window.renderDiaryAroundToday=function(){
+      const result=orig.apply(this, arguments);
+      // 렌더 후 빈 화면 체크
+      setTimeout(function(){
+        const listEl=document.getElementById('diary-around-today-list');
+        if(!listEl) return;
+        // 다이어리가 0개이거나 empty-state-hint만 있을 때
+        const hasRealItems=listEl.querySelectorAll('.diary-item, .diary-card, [data-diary-id]').length>0;
+        const hints=listEl.querySelectorAll('.empty-state-hint');
+        if(!hasRealItems){
+          // 기존 hint가 있으면 교체, 없으면 추가
+          if(hints.length>0){
+            hints.forEach(function(h){
+              if(h.dataset.historyFixed) return;
+              // 이미 우리 박스면 스킵
+              if(h.innerHTML.includes('과거의 오늘')) { h.dataset.historyFixed='1'; return; }
+              const wrapper=document.createElement('div');
+              wrapper.innerHTML=getHistoryHTML();
+              const newNode=wrapper.firstElementChild;
+              h.parentNode.replaceChild(newNode, h);
+            });
+          } else {
+            // hint 자체가 없을 때 - 리스트가 비어있으면 우리가 직접 넣음
+            if(listEl.innerHTML.trim()==='' || listEl.textContent.includes('조건에 일치')){
+              listEl.innerHTML=getHistoryHTML();
+            }
+          }
+        }
+      }, 50);
+      return result;
+    };
+    console.log('[과거의 오늘] 렌더 패치 완료 - 이제 안사라짐');
+  }
+
+  window.addEventListener('load', function(){
+    setTimeout(installFix, 800);
+    setTimeout(installFix, 2000);
+  });
+  installFix();
 })();
 </script>
 
