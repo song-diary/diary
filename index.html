@@ -2937,6 +2937,26 @@ body:not(.money-mode) #form-date-row-money { display:none !important; }
 }
 </style>
 
+
+<style id="V20_ALL_FIXES_CSS">
+/* V20 1) 깜빡임 방지 - transition 제거 */
+.cal-cell .cal-photo-corner { transition:none !important; animation:none !important; }
+/* 2) 운세 숫자 입력 숨김, 달력만 표시 */
+#saju-ymd-box { display:none !important; }
+#btn-ymd-mode { display:none !important; }
+#btn-calendar-mode { display:none !important; }
+#saju-calendar-box { display:flex !important; }
+/* 숫자 입력 인풋 숨김 */
+#saju-birth-year, #saju-birth-month, #saju-birth-day { display:none !important; }
+/* 3) 글자크기조정 숨김 */
+.settings-section:has(#font-size-display) { display:none !important; }
+#font-size-display { display:none !important; }
+button[onclick*="adjustFontSize"], button[onclick*="resetFontSize"] { display:none !important; }
+div:has(> button[onclick*="adjustFontSize"]) { display:none !important; }
+/* 4) V20 복구 관련 숨김 - daily alarm V20 텍스트 */
+div:has(> span:V20), .v20-recovery { display:none !important; }
+</style>
+
 </head>
 <body>
 
@@ -14914,6 +14934,94 @@ window.addEventListener("load", function() {
     window._v19_wrapped=true;
   }
   wrapRender();
+})();
+</script>
+
+
+<script id="V20_ALL_FIXES_JS">
+// V20 최종 - 누적 금지, 4가지 수정 한 번에
+(function(){
+  // 1) 사진 고정핀 깜빡임 방지 - forcePin 단일화
+  function isPhotoEnabled(){
+    try{ return localStorage.getItem('smartDiaryShowPhotoPin')!=='false'; }catch(e){return true;}
+  }
+  function removePins(){
+    document.querySelectorAll('.cal-cell .cal-photo-corner').forEach(function(c){ c.remove(); });
+    document.querySelectorAll('.cal-cell.has-photo').forEach(function(c){ c.classList.remove('has-photo'); });
+  }
+  // 기존 forcePin 덮어쓰기
+  var _origForcePin = window.forcePin;
+  window.forcePin = function(){
+    try{
+      if(!isPhotoEnabled()){ removePins(); return; }
+      var all=[]; try{ all=JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); }catch(e){}
+      var photoDates=new Set(all.filter(function(d){return !!d.photo;}).map(function(d){ return (d.date||'').slice(0,10); }));
+      document.querySelectorAll('.cal-cell:not(.adjacent-month)').forEach(function(cell){
+        var dayEl=cell.querySelector('.cal-cell-inner span'); if(!dayEl) return;
+        var day=parseInt(dayEl.textContent.trim()); if(isNaN(day)) return;
+        var y=typeof calYear!=='undefined'?calYear:new Date().getFullYear();
+        var m=typeof calMonth!=='undefined'?calMonth:new Date().getMonth();
+        var ds=y+'-'+String(m+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+        var hasPhoto=photoDates.has(ds);
+        var corner=cell.querySelector('.cal-photo-corner');
+        if(hasPhoto && !corner){
+          corner=document.createElement('div');
+          corner.className='cal-photo-corner has-pin-icon';
+          corner.setAttribute('data-date', ds);
+          corner.innerHTML='<span class="pin-emoji green-pin"></span>';
+          cell.appendChild(corner);
+          cell.classList.add('has-photo');
+        } else if(!hasPhoto && corner){
+          // 노랑/빨강 핀이 있으면 유지, 사진 핀만 제거? 여기선 사진 없는 날만 제거
+          // 하지만 사진 핀인지 확인 - green-pin만 제거
+          var pin=corner.querySelector('.pin-emoji');
+          if(pin && pin.classList.contains('green-pin')){
+            corner.remove();
+            cell.classList.remove('has-photo');
+          }
+        }
+      });
+    }catch(e){}
+  };
+  window.getShowPhotoPin = function(){ return isPhotoEnabled(); };
+  window.onShowPhotoPinToggle = function(){
+    var chk=document.getElementById('settings-show-photo-pin');
+    if(!chk) return;
+    localStorage.setItem('smartDiaryShowPhotoPin', chk.checked?'true':'false');
+    if(!chk.checked) removePins();
+    if(typeof window.renderCalendar==='function') window.renderCalendar();
+    if(!chk.checked) setTimeout(removePins, 50);
+  };
+  window.syncPhotoPinToggle = function(){
+    var chk=document.getElementById('settings-show-photo-pin');
+    if(chk) chk.checked=isPhotoEnabled();
+  };
+
+  // 2) 운세 숫자 입력 삭제, 달력만
+  window.setSajuInputMode = function(mode){
+    var cal=document.getElementById('saju-calendar-box');
+    if(cal) cal.style.display='flex';
+    var ymd=document.getElementById('saju-ymd-box');
+    if(ymd) ymd.style.display='none';
+  };
+  // 초기 달력 모드 강제
+  setTimeout(function(){
+    var cal=document.getElementById('saju-calendar-box');
+    if(cal) cal.style.display='flex';
+    var ymd=document.getElementById('saju-ymd-box');
+    if(ymd) ymd.style.display='none';
+  }, 500);
+
+  // 3) 글자크기조정 기능 무력화 (삭제는 CSS로 숨김)
+  window.adjustFontSize = function(){};
+  window.resetFontSize = function(){};
+
+  // 4) V20 복구 텍스트 제거 (JS로)
+  setTimeout(function(){
+    document.body.innerHTML = document.body.innerHTML.replace(/V20 복구/g, '').replace(/V20에서.*?복구.*?
+/g, '');
+  }, 1000);
+
 })();
 </script>
 
