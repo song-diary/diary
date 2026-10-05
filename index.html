@@ -2913,7 +2913,7 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
     <!-- 🔑 달력 카드 -->
     <div class="card" id="calendar-card">
                 <div class="calendar-header">
-            <button id="top-toggle-btn" onclick="returnToMoneyMain()" title="가계부 메인으로 이동" style="font-size:18px; padding:4px 10px; border-radius:8px; border:1px solid #ddd; background:#fff; cursor:pointer; min-width:36px;">💰</button>
+            <button id="top-toggle-btn" onclick="returnToMoneyMainClean()" title="가계부 메인으로 이동" style="font-size:18px; padding:4px 10px; border-radius:8px; border:1px solid #ddd; background:#fff; cursor:pointer; min-width:36px;">💰</button>
             <h3 id="cal-month-title">0000년 00월</h3>
             <button onclick="openSettingsModal()" title="설정" style="font-size:13px; padding:4px 8px; border-radius:8px; border:1px solid #ddd; background:#fff; cursor:pointer;">⚙️</button>
         </div>
@@ -5890,36 +5890,17 @@ window.attachPhotoDoubleTap = function(el, handler){
         highlightMoneySummaryBox(type);
         renderCategoryStats();
         updateMoneySearchDividerVisibility();
-
         const moneyTodayCard = document.getElementById('money-around-today-card');
-        const topBtn = document.getElementById('top-toggle-btn');
         if (type === 'balance') {
-            // 잔액 클릭 시: 위 분류(통계)만 보여주고, 아래 상세 내역 리스트는 숨김
             if (searchFilterCard) searchFilterCard.style.display = 'none';
             if (moneyTodayCard) moneyTodayCard.style.display = 'none';
-            // V51: 잔액보관처폼에서는 상단좌측 아이콘은 가계부 아이콘으로! 그래야 지금까지 수정한게 맞음
-            // 잔액 화면에 갇혔을 때 가계부 메인으로 돌아갈 수 있도록
-            if (topBtn) {
-                topBtn.innerHTML = '💰';
-                topBtn.title = '가계부 메인으로';
-                topBtn.onclick = function() { 
-                    console.log('[Balance] 가계부 메인으로 복귀');
-                    selectMoneySummaryStat('expense'); 
-                };
-            }
         } else {
             if (searchFilterCard && isSearchFilterOpen) searchFilterCard.style.display = 'block';
             if (isSearchFilterOpen) filterCustomList();
             if (moneyTodayCard) moneyTodayCard.style.display = '';
-            // 가계부 메인(지출/수입)에서는 다이어리 아이콘으로
-            if (topBtn) {
-                topBtn.innerHTML = '📔';
-                topBtn.title = '다이어리 메인으로 이동';
-                topBtn.onclick = returnToDiaryMain;
-            }
         }
+        setTimeout(function() { if (typeof updateTopIconClean === 'function') updateTopIconClean(); }, 50);
     }
-
     function highlightMoneySummaryBox(type) {
         document.querySelectorAll('#money-summary-grid-box .money-box').forEach(box => {
             box.classList.remove('stat-selected');
@@ -6512,27 +6493,84 @@ window.attachPhotoDoubleTap = function(el, handler){
         switchMainTab('diary');
     }
 
-    function switchMainTab(tabName) {
+    
+    // V55: Clean top icon system - fixes main screen not loading + cycle
+    let topIconTimer = null;
+    
+    function updateTopIconClean() {
+        const topBtn = document.getElementById('top-toggle-btn');
+        if (!topBtn) return;
+        if (topIconTimer) { clearTimeout(topIconTimer); topIconTimer = null; }
+        
+        if (currentMainTab === 'diary') {
+            topBtn.innerHTML = '💰';
+            topBtn.title = '가계부 메인으로 이동';
+            topBtn.onclick = function() { returnToMoneyMainClean(); };
+        } else {
+            if (typeof currentStatsType !== 'undefined' && currentStatsType === 'balance') {
+                topBtn.innerHTML = '💰';
+                topBtn.title = '가계부 메인으로 이동';
+                topBtn.onclick = function() { 
+                    if (typeof selectMoneySummaryStat === 'function') selectMoneySummaryStat('expense');
+                };
+            } else {
+                topBtn.innerHTML = '💰';
+                topBtn.title = '잔액보관처로 이동';
+                topBtn.onclick = function() {
+                    if (typeof selectMoneySummaryStat === 'function') selectMoneySummaryStat('balance');
+                };
+            }
+        }
+        
+        let diaryBtn = document.getElementById('diary-return-btn');
+        if (currentMainTab === 'money') {
+            if (!diaryBtn) {
+                const header = document.querySelector('.calendar-header');
+                if (header) {
+                    diaryBtn = document.createElement('button');
+                    diaryBtn.id = 'diary-return-btn';
+                    diaryBtn.innerHTML = '📔';
+                    diaryBtn.title = '다이어리 메인으로';
+                    diaryBtn.style.cssText = 'font-size:16px; padding:4px 10px; border-radius:8px; border:1px solid #ddd; background:#fff; cursor:pointer; margin-left:6px;';
+                    diaryBtn.onclick = function() { returnToDiaryMainClean(); };
+                    const settingsBtn = header.querySelector('button[onclick="openSettingsModal()"]');
+                    if (settingsBtn) header.insertBefore(diaryBtn, settingsBtn);
+                    else header.appendChild(diaryBtn);
+                }
+            }
+            if (diaryBtn) diaryBtn.style.display = 'inline-block';
+        } else {
+            if (diaryBtn) diaryBtn.style.display = 'none';
+        }
+    }
+    
+    function returnToMoneyMainClean() {
+        if (topIconTimer) { clearTimeout(topIconTimer); topIconTimer = null; }
+        try { if (typeof closeBalanceLocationModal === 'function') closeBalanceLocationModal(); } catch(e){}
+        try { if (typeof closeCardStatementModal === 'function') closeCardStatementModal(); } catch(e){}
+        try { if (typeof closeCardPendingModal === 'function') closeCardPendingModal(); } catch(e){}
+        if (typeof switchMainTab === 'function') switchMainTab('money');
+        topIconTimer = setTimeout(function() {
+            if (typeof selectMoneySummaryStat === 'function') { try { selectMoneySummaryStat('expense'); } catch(e){} }
+            updateTopIconClean();
+        }, 150);
+    }
+    
+    function returnToDiaryMainClean() {
+        if (topIconTimer) { clearTimeout(topIconTimer); topIconTimer = null; }
+        try { if (typeof closeBalanceLocationModal === 'function') closeBalanceLocationModal(); } catch(e){}
+        try { if (typeof closeCardStatementModal === 'function') closeCardStatementModal(); } catch(e){}
+        try { if (typeof closeCardPendingModal === 'function') closeCardPendingModal(); } catch(e){}
+        if (typeof switchMainTab === 'function') switchMainTab('diary');
+        topIconTimer = setTimeout(function() { updateTopIconClean(); }, 150);
+    }
+
+function switchMainTab(tabName) {
         const panels = { diary: diaryPanel, money: moneyPanel };
         Object.keys(panels).forEach(key => {
             if (panels[key]) panels[key].classList.toggle('active', key === tabName);
         });
         currentMainTab = tabName;
-        // V50: 상단 왼쪽 아이콘 - 현재 탭의 반대 아이콘 표시, 클릭하면 반대 메인으로 이동
-        const topBtn = document.getElementById('top-toggle-btn');
-        if(topBtn){
-            if(tabName === 'diary'){
-                // 다이어리 메인에서는 가계부 아이콘, 클릭하면 가계부 메인으로
-                topBtn.innerHTML = '💰';
-                topBtn.title = '가계부 메인으로 이동';
-                topBtn.onclick = returnToMoneyMain;
-            } else {
-                // 가계부 메인에서는 다이어리 아이콘, 클릭하면 다이어리 메인으로
-                topBtn.innerHTML = '📔';
-                topBtn.title = '다이어리 메인으로 이동';
-                topBtn.onclick = returnToDiaryMain;
-            }
-        }
         if (tabName === 'money') {
             if (typeof updateMoneySummary === 'function') updateMoneySummary();
             if (typeof renderMoneyAroundToday === 'function') renderMoneyAroundToday();
@@ -6542,10 +6580,7 @@ window.attachPhotoDoubleTap = function(el, handler){
             if (typeof isDiarySearchFilterOpen !== 'undefined' && isDiarySearchFilterOpen && typeof filterDiaryCustomList === 'function') filterDiaryCustomList();
         }
         localStorage.setItem('smartDiaryMainTab', tabName);
-    }
-    function toggleMainTab(){
-        if(currentMainTab === 'diary') switchMainTab('money');
-        else switchMainTab('diary');
+        setTimeout(function() { if (typeof updateTopIconClean === 'function') updateTopIconClean(); }, 50);
     }
 
     // ===================== ⚙️ 설정 팝업 폼 =====================
