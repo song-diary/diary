@@ -3060,6 +3060,12 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
                 </div>
                 <div id="balance-location-body"></div>
 
+                <!-- V46-2: 가계부 입력폼으로 바로가기 버튼 -->
+                <div style="display:flex; gap:8px; margin-top:12px; margin-bottom:8px;">
+                    <button class="btn btn-primary" onclick="openMoneyFormFromBalance()" style="flex:1; height:44px; background:linear-gradient(135deg, #27ae60, #229954); color:#fff; border:none; border-radius:8px; font-size:14px; font-weight:bold; display:flex; align-items:center; justify-content:center; gap:6px;">✏️ 가계부 입력으로</button>
+                    <button class="btn btn-secondary" onclick="closeBalanceLocationModal()" style="flex:0.6; height:44px; background:#f0f0f0; border:1px solid var(--border-color); border-radius:8px; font-size:14px;">닫기</button>
+                </div>
+
                 <!-- 📌 전월 이월액 -->
                 <div class="carry-over-row" id="carry-over-row">
                     <span class="carry-over-label">📌 전월 이월액</span>
@@ -4830,6 +4836,17 @@ window.attachPhotoDoubleTap = function(el, handler){
         renderBalanceLocationsUI();
         if (balanceLocationModalOverlay) balanceLocationModalOverlay.classList.add('active');
         lockBodyScroll();
+    }
+
+    
+    // V46-2: 잔액카드에서 가계부 입력폼으로 바로 가기
+    function openMoneyFormFromBalance() {
+        closeBalanceLocationModal();
+        // 약간 지연 후 가계부 입력폼 열기
+        setTimeout(() => {
+            const today = getTodayStr();
+            openDiaryForm(today, null, 'money');
+        }, 150);
     }
 
     function closeBalanceLocationModal() {
@@ -14690,6 +14707,103 @@ function maybeAutoShowFortunePopup(){ return; }
 #diary-around-today-list:not(.gallery-mode) .sub-memo-item .empty-photo-wrap .empty-icon {
     object-fit: contain !important;
     object-position: center !important;
+}
+</style>
+<style id="V46_FORM_HEIGHT_UNIFY">
+/* V46: 다이어리폼 기준으로 입력칸 상하폭 통일 - 일자, 기타 폭 */
+/* 다이어리폼: .form-date-row { padding 8px 10px; input padding 7px 8px; font 15px } 기준 */
+#form-date-row {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin-bottom: 10px !important;
+    padding: 8px 10px !important;
+    background: rgba(0,0,0,0.03) !important;
+    border-radius: 8px !important;
+    min-height: 44px !important;
+    box-sizing: border-box !important;
+}
+#form-date-input {
+    flex: 1 !important;
+    padding: 7px 8px !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 6px !important;
+    font-size: 15px !important;
+    background: #fff !important;
+    height: 36px !important;
+    box-sizing: border-box !important;
+}
+
+/* 가계부폼도 다이어리폼과 동일한 상하폭으로 통일 */
+#form-date-row-money {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin-bottom: 10px !important;
+    margin-top: 0 !important;
+    padding: 8px 10px !important;
+    background: rgba(0,0,0,0.03) !important;
+    border: 1px solid #c2e8ce !important;
+    border-radius: 8px !important;
+    min-height: 44px !important;
+    box-sizing: border-box !important;
+}
+#form-date-input-money {
+    flex: 1 !important;
+    padding: 7px 8px !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 6px !important;
+    font-size: 15px !important;
+    background: #fff !important;
+    height: 36px !important;
+    box-sizing: border-box !important;
+}
+
+/* 가계부 입력 필드들도 동일한 높이로 */
+.money-input-field {
+    padding: 7px 8px !important;
+    font-size: 15px !important;
+    height: 36px !important;
+    box-sizing: border-box !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 6px !important;
+}
+#money-category-select,
+#money-amount-input {
+    height: 36px !important;
+    padding: 7px 8px !important;
+    font-size: 15px !important;
+}
+#money-note-input {
+    height: 36px !important;
+    padding: 7px 10px !important;
+    font-size: 14px !important;
+    margin-top: 8px !important;
+}
+
+/* 제목&기념일 입력란도 동일 높이 */
+#anniv-input {
+    padding: 7px 10px !important;
+    font-size: 14px !important;
+    height: 36px !important;
+    box-sizing: border-box !important;
+}
+#anniv-repeat-select {
+    height: 36px !important;
+    padding: 7px 8px !important;
+    font-size: 13px !important;
+}
+
+/* 알림시간 입력란도 동일 높이 */
+#reservation-time-input {
+    height: 32px !important;
+    padding: 5px 8px !important;
+    font-size: 13px !important;
+}
+.reservation-box {
+    padding: 8px 10px !important;
+    min-height: 44px !important;
+    box-sizing: border-box !important;
 }
 </style>
 </body>
