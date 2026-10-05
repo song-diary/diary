@@ -2917,6 +2917,20 @@ body:not(.money-mode) #form-date-row-money { display:none !important; }
 #memo-form-card:not(.money-mode-form) #money-input-section { display:none !important; }
 </style>
 
+
+<style id="V18_6_DARK_YELLOW_FIX">
+/* V18.6 진한 노랑으로 교체 */
+.cal-cell .cal-photo-corner .pin-emoji.yellow-pin,
+.cal-cell .cal-photo-corner .pin-emoji.sky-pin {
+  background: linear-gradient(135deg, #FFC107, #FF8F00) !important;
+  border: 1.5px solid #FF6F00 !important;
+  box-shadow: 0 1px 4px rgba(255,143,0,0.5) !important;
+}
+.cal-cell.yellow-day {
+  background: rgba(255,193,7,0.18) !important;
+}
+</style>
+
 </head>
 <body>
 
@@ -8404,7 +8418,20 @@ window.attachPhotoDoubleTap = function(el, handler){
             document.getElementById('anniv-cal-solar').checked = true;
         }
 
-        updatePhotoPreview();
+        
+            // V18.6 FIX: 하루만 울림/매일반복 체크복원 - 일자별 개별
+            try{
+              var drCb=document.getElementById('daily-repeat-checkbox');
+              var oaCb=document.getElementById('once-alarm-checkbox');
+              if(existingItem){
+                if(drCb) drCb.checked = !!(existingItem.dailyRepeat===true || existingItem.dailyRepeat==='true');
+                if(oaCb) oaCb.checked = !!(existingItem.onceAlarm===true || existingItem.onceAlarm==='true');
+              }else{
+                if(drCb) drCb.checked=false;
+                if(oaCb) oaCb.checked=false;
+              }
+            }catch(e){}
+            updatePhotoPreview();
 
         // 팝업창 활성화
         if (memoModalOverlay) {
@@ -14168,7 +14195,7 @@ window.updateTitleIconColor=function(){};
 <style>
 .cal-cell .cal-photo-corner{ background:transparent!important; border:none!important; width:12px!important; height:12px!important; top:2px!important; left:3px!important; display:flex!important; align-items:center!important; justify-content:center!important; opacity:1!important; transition:none!important; }
 .cal-cell .cal-photo-corner .pin-emoji{ display:block!important; width:8px!important; height:8px!important; border-radius:50% 50% 50% 0!important; transform:rotate(-45deg)!important; font-size:0!important; position:relative!important; top:-1px!important; box-shadow:0 1px 3px rgba(0,0,0,0.3)!important; }
-.cal-cell .cal-photo-corner .pin-emoji.red-pin, .cal-cell .cal-photo-corner .pin-emoji.sky-pin{ background:linear-gradient(135deg, #ffeb3b, #fbc02d) !important; }
+.cal-cell .cal-photo-corner .pin-emoji.red-pin, .cal-cell .cal-photo-corner .pin-emoji.sky-pin{ background:linear-gradient(135deg, #FFC107, #FF8F00) !important; }
 .cal-cell .cal-photo-corner .pin-emoji.green-pin{ background:linear-gradient(135deg, #2ecc71, #27ae60)!important; }
 .cal-cell .cal-photo-corner .pin-emoji::after{ content:''!important; position:absolute!important; width:2.5px!important; height:2.5px!important; background:#fff!important; border-radius:50%!important; top:1.8px!important; left:1.8px!important; }
 </style>
@@ -14325,10 +14352,7 @@ window.updateTitleIconColor=function(){};
 .cal-cell .cal-photo-corner .pin-emoji.green-pin{
   background:linear-gradient(135deg, #2ecc71, #27ae60) !important;
 }
-.cal-cell .cal-photo-corner .pin-emoji.yellow-pin,
-.cal-cell .cal-photo-corner .pin-emoji.sky-pin{
-  background:linear-gradient(135deg, #ffeb3b, #f9a825) !important;
-}
+.cal-cell .cal-photo-corner .pin-emoji.yellow-pin{ background:linear-gradient(135deg, #FFC107, #FF8F00) !important; }
 .cal-cell .cal-photo-corner .pin-emoji.red-pin{
   background:linear-gradient(135deg, #ff6b6b, #c0392b) !important;
 }
@@ -14347,15 +14371,22 @@ window.updateTitleIconColor=function(){};
   function getDiaries(){try{return JSON.parse(localStorage.getItem('smartDiaryList')||'[]')}catch(e){return []}}
   
   function getPinTypeForDate(dateStr, allDiaries){
-    // 1. 매일반복, 하루만 울림 = 노랑 (원래 날짜에만, 지나도 유지, 최우선! - 사진 있어도 노랑!)
+    // V18.6 FIX: 하루만 울림 = 원래 날짜에만 노랑, 매일 반복 = 매일 노랑
+    // 1. 하루만 울림 = 노랑 (원래 날짜에만)
     for(var i=0;i<allDiaries.length;i++){
       var dd=allDiaries[i];
       if((dd.date||'').slice(0,10)!==dateStr) continue;
-      if(dd.dailyRepeat || dd.dailyRepeat===true || dd.dailyRepeat==='true') return 'yellow';
-      if(dd.onceAlarm || dd.onceAlarm===true || dd.onceAlarm==='true') return 'yellow';
-      if(dd.dailyAlarm || dd.once) return 'yellow';
+      if(dd.onceAlarm===true || dd.onceAlarm==='true') return 'yellow';
     }
-    // 2. 기념일 매년/매월 반복 = 빨강 (음력 고려)
+    // 2. 매일 반복 = 노랑 (해당 날짜가 기록일 이후면 매일 표시)
+    for(var i=0;i<allDiaries.length;i++){
+      var dd=allDiaries[i];
+      if(!(dd.dailyRepeat===true || dd.dailyRepeat==='true')) continue;
+      var entryDate = (dd.date||'').slice(0,10);
+      if(!entryDate) continue;
+      if(dateStr >= entryDate) return 'yellow'; // 기록일 이후 매일
+    }
+    // 3. 기념일 매년/매월 반복 = 빨강
     if(typeof sajuAnniversaryMatches==='function'){
       for(var j=0;j<allDiaries.length;j++){
         var ad=allDiaries[j];
@@ -14366,7 +14397,7 @@ window.updateTitleIconColor=function(){};
         }catch(e){}
       }
     }
-    // 3. 사진만 = 연두 (노랑/빨강 없을 때만)
+    // 4. 사진만 = 연두
     for(var k=0;k<allDiaries.length;k++){
       var d=allDiaries[k];
       if((d.date||'').slice(0,10)===dateStr && d.photo) return 'green';
@@ -14639,5 +14670,33 @@ window.addEventListener("load", function() {
     setTimeout(function() { if(typeof updateTopIconSimple==="function") updateTopIconSimple(); }, 1000);
 });
 </script>
+
+<script id="V18_6_CHECKBOX_FIX">
+// V18.6 하루만 울림 / 매일 반복 개별 처리 + 상호 배제
+(function(){
+  function setupCheckboxFix(){
+    var dr=document.getElementById('daily-repeat-checkbox');
+    var oa=document.getElementById('once-alarm-checkbox');
+    if(!dr || !oa) return;
+    dr.addEventListener('change', function(){
+      if(this.checked && oa.checked){ oa.checked=false; }
+    });
+    oa.addEventListener('change', function(){
+      if(this.checked && dr.checked){ dr.checked=false; }
+    });
+  }
+  // Try now and after form open
+  setTimeout(setupCheckboxFix, 500);
+  var origOpen=window.openDiaryForm;
+  if(typeof origOpen==='function'){
+    window.openDiaryForm=function(){
+      var r=origOpen.apply(this, arguments);
+      setTimeout(setupCheckboxFix, 100);
+      return r;
+    };
+  }
+})();
+</script>
+
 </body>
 </html>
