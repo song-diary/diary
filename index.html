@@ -2913,7 +2913,7 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
     <!-- 🔑 달력 카드 -->
     <div class="card" id="calendar-card">
                 <div class="calendar-header">
-            <button id="top-toggle-btn" onclick="returnToMoneyMainClean()" title="가계부 메인으로 이동" style="font-size:18px; padding:4px 10px; border-radius:8px; border:1px solid #ddd; background:#fff; cursor:pointer; min-width:36px;">💰</button>
+            <button id="top-toggle-btn" onclick="returnToMoneyMainSimple()" title="가계부 메인으로 이동" style="font-size:18px; padding:4px 10px; border-radius:8px; border:1px solid #ddd; background:#fff; cursor:pointer; min-width:36px;">💰</button>
             <h3 id="cal-month-title">0000년 00월</h3>
             <button onclick="openSettingsModal()" title="설정" style="font-size:13px; padding:4px 8px; border-radius:8px; border:1px solid #ddd; background:#fff; cursor:pointer;">⚙️</button>
         </div>
@@ -5899,7 +5899,7 @@ window.attachPhotoDoubleTap = function(el, handler){
             if (isSearchFilterOpen) filterCustomList();
             if (moneyTodayCard) moneyTodayCard.style.display = '';
         }
-        setTimeout(function() { if (typeof updateTopIconClean === 'function') updateTopIconClean(); }, 50);
+        setTimeout(function() { if (typeof updateTopIconSimple === 'function') updateTopIconSimple(); }, 50);
     }
     function highlightMoneySummaryBox(type) {
         document.querySelectorAll('#money-summary-grid-box .money-box').forEach(box => {
@@ -6495,56 +6495,45 @@ window.attachPhotoDoubleTap = function(el, handler){
 
     
     // V55: Clean top icon system - fixes main screen not loading + cycle
+    
+    // V56: 심플 로직 - 사이클 아님! 아이콘 정상 작동
+    // 다이어리 메인 = 가계부 아이콘(💰) → 가계부 메인으로
+    // 가계부 메인 = 다이어리 아이콘(📔) → 다이어리 메인으로
+    // 잔액/카드 폼 = 가계부 아이콘(💰) → 가계부 메인으로
     let topIconTimer = null;
     
-    function updateTopIconClean() {
+    function updateTopIconSimple() {
         const topBtn = document.getElementById('top-toggle-btn');
         if (!topBtn) return;
         if (topIconTimer) { clearTimeout(topIconTimer); topIconTimer = null; }
         
         if (currentMainTab === 'diary') {
+            // 다이어리 메인 = 가계부 아이콘
             topBtn.innerHTML = '💰';
             topBtn.title = '가계부 메인으로 이동';
-            topBtn.onclick = function() { returnToMoneyMainClean(); };
+            topBtn.onclick = function() { returnToMoneyMainSimple(); };
         } else {
+            // 가계부 탭
             if (typeof currentStatsType !== 'undefined' && currentStatsType === 'balance') {
+                // 잔액/카드 폼 = 가계부 아이콘 → 가계부 메인으로
                 topBtn.innerHTML = '💰';
                 topBtn.title = '가계부 메인으로 이동';
-                topBtn.onclick = function() { 
+                topBtn.onclick = function() {
                     if (typeof selectMoneySummaryStat === 'function') selectMoneySummaryStat('expense');
                 };
             } else {
-                topBtn.innerHTML = '💰';
-                topBtn.title = '잔액보관처로 이동';
-                topBtn.onclick = function() {
-                    if (typeof selectMoneySummaryStat === 'function') selectMoneySummaryStat('balance');
-                };
+                // 가계부 메인 = 다이어리 아이콘 → 다이어리 메인으로
+                topBtn.innerHTML = '📔';
+                topBtn.title = '다이어리 메인으로 이동';
+                topBtn.onclick = function() { returnToDiaryMainSimple(); };
             }
         }
-        
-        let diaryBtn = document.getElementById('diary-return-btn');
-        if (currentMainTab === 'money') {
-            if (!diaryBtn) {
-                const header = document.querySelector('.calendar-header');
-                if (header) {
-                    diaryBtn = document.createElement('button');
-                    diaryBtn.id = 'diary-return-btn';
-                    diaryBtn.innerHTML = '📔';
-                    diaryBtn.title = '다이어리 메인으로';
-                    diaryBtn.style.cssText = 'font-size:16px; padding:4px 10px; border-radius:8px; border:1px solid #ddd; background:#fff; cursor:pointer; margin-left:6px;';
-                    diaryBtn.onclick = function() { returnToDiaryMainClean(); };
-                    const settingsBtn = header.querySelector('button[onclick="openSettingsModal()"]');
-                    if (settingsBtn) header.insertBefore(diaryBtn, settingsBtn);
-                    else header.appendChild(diaryBtn);
-                }
-            }
-            if (diaryBtn) diaryBtn.style.display = 'inline-block';
-        } else {
-            if (diaryBtn) diaryBtn.style.display = 'none';
-        }
+        // 다이어리 복귀 버튼 숨김 (심플 로직에서는 필요 없음)
+        const diaryBtn = document.getElementById('diary-return-btn');
+        if (diaryBtn) diaryBtn.style.display = 'none';
     }
     
-    function returnToMoneyMainClean() {
+    function returnToMoneyMainSimple() {
         if (topIconTimer) { clearTimeout(topIconTimer); topIconTimer = null; }
         try { if (typeof closeBalanceLocationModal === 'function') closeBalanceLocationModal(); } catch(e){}
         try { if (typeof closeCardStatementModal === 'function') closeCardStatementModal(); } catch(e){}
@@ -6552,20 +6541,20 @@ window.attachPhotoDoubleTap = function(el, handler){
         if (typeof switchMainTab === 'function') switchMainTab('money');
         topIconTimer = setTimeout(function() {
             if (typeof selectMoneySummaryStat === 'function') { try { selectMoneySummaryStat('expense'); } catch(e){} }
-            updateTopIconClean();
-        }, 150);
+            updateTopIconSimple();
+        }, 100);
     }
     
-    function returnToDiaryMainClean() {
+    function returnToDiaryMainSimple() {
         if (topIconTimer) { clearTimeout(topIconTimer); topIconTimer = null; }
         try { if (typeof closeBalanceLocationModal === 'function') closeBalanceLocationModal(); } catch(e){}
         try { if (typeof closeCardStatementModal === 'function') closeCardStatementModal(); } catch(e){}
         try { if (typeof closeCardPendingModal === 'function') closeCardPendingModal(); } catch(e){}
         if (typeof switchMainTab === 'function') switchMainTab('diary');
-        topIconTimer = setTimeout(function() { updateTopIconClean(); }, 150);
+        topIconTimer = setTimeout(function() { updateTopIconSimple(); }, 100);
     }
 
-function switchMainTab(tabName) {
+    function switchMainTab(tabName) {
         const panels = { diary: diaryPanel, money: moneyPanel };
         Object.keys(panels).forEach(key => {
             if (panels[key]) panels[key].classList.toggle('active', key === tabName);
@@ -6580,7 +6569,7 @@ function switchMainTab(tabName) {
             if (typeof isDiarySearchFilterOpen !== 'undefined' && isDiarySearchFilterOpen && typeof filterDiaryCustomList === 'function') filterDiaryCustomList();
         }
         localStorage.setItem('smartDiaryMainTab', tabName);
-        setTimeout(function() { if (typeof updateTopIconClean === 'function') updateTopIconClean(); }, 50);
+        setTimeout(function() { if (typeof updateTopIconSimple === 'function') updateTopIconSimple(); }, 50);
     }
 
     // ===================== ⚙️ 설정 팝업 폼 =====================
