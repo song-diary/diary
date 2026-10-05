@@ -2931,6 +2931,23 @@ body:not(.money-mode) #form-date-row-money { display:none !important; }
 }
 </style>
 
+
+<style id="V18_9_PHOTO_GREEN_SINGLE">
+/* V18.9 사진 고정핀을 현재 사용하는 연두 풍선과 동일하게 */
+.cal-cell.has-photo .cal-photo-corner .pin-emoji,
+.cal-cell .cal-photo-corner.has-pin-icon .pin-emoji,
+.cal-cell .cal-photo-corner .pin-emoji.red-pin {
+  background: linear-gradient(135deg, #2ecc71, #27ae60) !important;
+  width:8px !important; height:8px !important;
+  border-radius:50% 50% 50% 0 !important;
+  transform:rotate(-45deg) !important;
+  border:none !important;
+}
+#photo-pin-toggle-card .toggle-card-label {
+  color: #2ecc71 !important;
+}
+</style>
+
 </head>
 <body>
 
@@ -3172,7 +3189,7 @@ body:not(.money-mode) #form-date-row-money { display:none !important; }
                 <div class="toggle-card" id="fortune-auto-toggle-card"><span class="toggle-card-label">⏰ 운세 자동팝업</span><label class="toggle-switch"><input type="checkbox" id="settings-fortune-auto" checked onchange="onFortuneAutoToggle()"><span class="toggle-slider"></span></label></div>
                 <!-- lotto toggle removed -->
 
-                <div class="toggle-card" id="photo-pin-toggle-card"><span class="toggle-card-label">📌 사진고정핀 표시</span><label class="toggle-switch"><input type="checkbox" id="settings-show-photo-pin" checked onchange="onShowPhotoPinToggle()"><span class="toggle-slider"></span></label></div>
+                <div class="toggle-card" id="photo-pin-toggle-card"><span class="toggle-card-label">사진 고정핀 (연두풍선)</span><label class="toggle-switch"><input type="checkbox" id="settings-show-photo-pin" checked onchange="onShowPhotoPinToggle()"><span class="toggle-slider"></span></label></div>
             </div>
 
             <div class="settings-section">
@@ -8026,7 +8043,7 @@ window.attachPhotoDoubleTap = function(el, handler){
             const showPhotoPin = (typeof getShowPhotoPin==='function') ? getShowPhotoPin() : (localStorage.getItem('smartDiaryShowPhotoPin') !== 'false');
             const showPinIcon = hasPhotoFlag && showPhotoPin;
             if(showPinIcon) cell.classList.add('has-photo');
-            cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + (showPinIcon ? `<div class="cal-photo-corner has-pin-icon" data-date="${dateStr}"><span class="pin-emoji">📌</span></div>` : '');
+            cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + (showPinIcon ? `<div class="cal-photo-corner has-pin-icon" data-date="${dateStr}"><span class="pin-emoji green-pin"></span></div>` : '');
             cell.onclick = async (e) => {
                 try{       try{ if(navigator.vibrate) window.triggerVibration(80) || navigator.vibrate(80); else if(window.navigator && window.navigator.vibrate) window.triggerVibration(80) || (window.navigator && window.navigator.vibrate && window.window.triggerVibration(80) || navigator.vibrate(80)); }catch(e){} }catch(err){}
                 const target = e.target.closest('.cal-photo-corner');
@@ -11051,7 +11068,7 @@ async function showPhotosForDate(dateStr){
           } catch(e){}
           const hasPhotoFlag = photoListCount > 0;
           if(hasPhotoFlag) cell.classList.add('has-photo');
-          cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + (hasPhotoFlag ? `<div class="cal-photo-corner has-pin-icon" data-date="${dateStr}"><span class="pin-emoji">📌</span></div>` : '');
+          cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + (hasPhotoFlag ? `<div class="cal-photo-corner has-pin-icon" data-date="${dateStr}"><span class="pin-emoji green-pin"></span></div>` : '');
           cell.onclick = async (e) => {
               try{       try{ if(navigator.vibrate) window.triggerVibration(80) || navigator.vibrate(80); else if(window.navigator && window.navigator.vibrate) window.triggerVibration(80) || (window.navigator && window.navigator.vibrate && window.window.triggerVibration(80) || navigator.vibrate(80)); }catch(e){} }catch(err){}
               const rect = cell.getBoundingClientRect();
@@ -11195,7 +11212,7 @@ async function showPhotosForDate(dateStr){
         } catch(e){}
         const hasPhotoFlag = photoListCount > 0;
         if(hasPhotoFlag) cell.classList.add('has-photo');
-        cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + (hasPhotoFlag ? `<div class="cal-photo-corner" data-date="${dateStr}"><span class="pin-emoji">📌</span></div>` : '');
+        cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + (hasPhotoFlag ? `<div class="cal-photo-corner" data-date="${dateStr}"><span class="pin-emoji green-pin"></span></div>` : '');
         cell.onclick = (e) => {
             try{       try{ if(navigator.vibrate) window.triggerVibration(80) || navigator.vibrate(80); else if(window.navigator && window.navigator.vibrate) window.triggerVibration(80) || (window.navigator && window.navigator.vibrate && window.window.triggerVibration(80) || navigator.vibrate(80)); }catch(e){} }catch(err){}
             const rect = cell.getBoundingClientRect();
@@ -11677,9 +11694,9 @@ async function showPhotosForDate(dateStr){
     const icon = '📌';
     // V3_67 fix: pin-emoji로 통일 - title-icon 중복 방지
     if(hasTitle){
-      return { icon: icon, text: item.anniversary, isEmpty: false, html: '<span class="pin-emoji">📌</span><span class="title-text">'+escapeHtmlForDiary(item.anniversary)+'</span>' };
+      return { icon: icon, text: item.anniversary, isEmpty: false, html: '<span class="pin-emoji green-pin"></span><span class="title-text">'+escapeHtmlForDiary(item.anniversary)+'</span>' };
     } else {
-      return { icon: icon, text: '', isEmpty: true, html: '<span class="pin-emoji">📌</span><span class="title-text empty">&nbsp;</span>' };
+      return { icon: icon, text: '', isEmpty: true, html: '<span class="pin-emoji green-pin"></span><span class="title-text empty">&nbsp;</span>' };
     }
   };
 
@@ -12169,14 +12186,14 @@ async function showPhotosForDate(dateStr){
           corner=document.createElement('div');
           corner.className='cal-photo-corner has-pin-icon';
           corner.setAttribute('data-date', ds);
-          corner.innerHTML='<span class="pin-emoji">📌</span>';
+          corner.innerHTML='<span class="pin-emoji green-pin"></span>';
           cell.appendChild(corner);
         }
         corner.style.position='absolute'; corner.style.position='absolute'; corner.style.background='transparent'; corner.style.backgroundColor='transparent'; corner.style.border='none'; corner.style.boxShadow='none'; corner.style.display='block';
         corner.style.visibility='visible';
         corner.style.opacity='1';
         corner.style.position='absolute'; corner.style.top='1px'; corner.style.left='2px'; corner.style.right='auto'; corner.style.bottom='auto';
-        if(!corner.innerHTML.includes('pin-emoji')) corner.innerHTML='<span class="pin-emoji">📌</span>';
+        if(!corner.innerHTML.includes('pin-emoji')) corner.innerHTML='<span class="pin-emoji green-pin"></span>';
       });
     }catch(e){ console.error('[V3_FINAL] forcePin', e); }
   }
@@ -14307,7 +14324,7 @@ window.updateTitleIconColor=function(){};
         const showPhotoPin = (typeof getShowPhotoPin==='function') ? getShowPhotoPin() : (localStorage.getItem('smartDiaryShowPhotoPin') !== 'false');
         const showPinIcon = hasPhotoFlag && showPhotoPin;
         if(showPinIcon) cell.classList.add('has-photo');
-        cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + (showPinIcon ? `<div class="cal-photo-corner has-pin-icon" data-date="${dateStr}"><span class="pin-emoji">📌</span></div>` : '');
+        cell.innerHTML = `<div class="cal-cell-inner"><span>${day}</span>${indicatorHTML}</div>` + (showPinIcon ? `<div class="cal-photo-corner has-pin-icon" data-date="${dateStr}"><span class="pin-emoji green-pin"></span></div>` : '');
         cell.onclick = async (e) => {
             const target = e.target.closest('.cal-photo-corner');
             if(target){ e.stopPropagation(); const dStr = target.getAttribute('data-date'); await showPhotosForDate(dStr); return; }
