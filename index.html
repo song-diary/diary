@@ -2958,9 +2958,9 @@ div:has(> span:V20), .v20-recovery { display:none !important; }
 </style>
 
 
-<style id="V31-style">
+<style id="V33-style">
 #diary-around-today-list{ display:grid !important; grid-template-columns:1fr !important; width:100% !important; }
-#V31-box{ grid-column:1 / -1 !important; width:100% !important; box-sizing:border-box !important; }
+#V33-box, #V33-below-box{ grid-column:1 / -1 !important; width:100% !important; box-sizing:border-box !important; }
 </style>
 <script>
 window.goToPastDiary = function(targetDateStr){
@@ -2975,7 +2975,7 @@ window.goToPastDiary = function(targetDateStr){
     localStorage.setItem('smartDiarySelectedDate', targetDateStr);
     if(typeof renderCalendar === 'function') renderCalendar();
     setTimeout(function(){ if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday(); window.scrollTo(0,0); }, 100);
-  }catch(e){ console.log(e); location.reload(); }
+  }catch(e){ location.reload(); }
 };
 window.goToToday = function(){
   var today = (typeof getTodayStr==='function') ? getTodayStr() : new Date().toISOString().slice(0,10);
@@ -2989,8 +2989,16 @@ window.goToToday = function(){
   if(typeof renderCalendar === 'function') renderCalendar();
   setTimeout(function(){ 
     if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday(); 
+    // 오늘로 돌아오면 검색, 매일반복 다시 보이게!
     var sd = document.getElementById('diary-search-divider');
-    if(sd) sd.style.display='';
+    var sc = document.getElementById('diary-search-filter-card');
+    if(sd){ sd.style.display=''; }
+    // 매일반복 다시 보이게 - V4.13이 다시 생성하므로 300ms 후 표시
+    setTimeout(function(){
+      document.querySelectorAll('[data-daily-id]').forEach(function(el){ el.style.display=''; });
+      var sd2 = document.getElementById('diary-search-divider');
+      if(sd2){ sd2.style.display=''; }
+    }, 300);
     window.scrollTo(0,0); 
   }, 100);
 };
@@ -8801,28 +8809,34 @@ window.attachPhotoDoubleTap = function(el, handler){
             else searchDividerEl.classList.remove('floating-bottom');
         }
 
+        // V33 - 매일 반복, 검색 복구 수정
+        var todayStrLocal = (typeof getTodayStr==='function') ? getTodayStr() : new Date().toISOString().slice(0,10);
+        var isPastLocal = dateStr < todayStrLocal;
+        
+        // 검색/매일반복 표시 복구 로직
+        var sdEl = document.getElementById('diary-search-divider');
+        var scEl = document.getElementById('diary-search-filter-card');
+        if (isPastLocal) {
+            if(sdEl) sdEl.style.display='none';
+            if(scEl) scEl.style.display='none';
+        } else {
+            if(sdEl){ sdEl.style.display=''; sdEl.classList.remove('floating-bottom'); if(filtered.length<=2) sdEl.classList.add('floating-bottom'); }
+            if(scEl) scEl.style.display='none'; // 원래는 닫혀있음
+        }
+
         if (filtered.length === 0) {
-            // V31 - 메인 안 망가지게: 과거면 검색 필터 숨김만 추가
-            var todayStrLocal = (typeof getTodayStr==='function') ? getTodayStr() : new Date().toISOString().slice(0,10);
-            if (dateStr < todayStrLocal) {
-                var sd = document.getElementById('diary-search-divider');
-                var sc = document.getElementById('diary-search-filter-card');
-                if(sd) sd.style.display='none';
-                if(sc) sc.style.display='none';
-            }
-            // B안 박스
             var mmdd = dateStr.slice(5);
             var m = parseInt(mmdd.split('-')[0]), d = parseInt(mmdd.split('-')[1]);
-            var NATIONAL_DAY = {"10-03":{n:"개천절",s:"하늘이 열린 날"}, "10-09":{n:"한글날",s:"한글 반포"}};
-            var JEOLGI_MAP = {"10-08":{n:"한로",desc:"찬 이슬이 맺히는 때"}};
-            var HISTORY_MAP = {"10-06":{y:"1927년",e:"첫 유성영화"}, "10-07":{y:"1959년",e:"달 뒷면"}, "10-08":{y:"1871년",e:"시카고 대화재"}};
+            var NATIONAL_DAY = {"10-03":{n:"개천절",s:"하늘이 열린 날",d:"단군 할아버지가 고조선을 세운 날! 4357년 전!\n하늘이 열리고 새로운 나라가 시작됐어요.\n당신도 새로운 시작이 필요한 날 아닐까요?"}, "10-09":{n:"한글날",s:"한글 반포",d:"세종대왕이 한글을 만든 날!\n세계에서 가장 과학적인 글자!\n당신이 쓰는 카톡도 한글 덕분!"}};
+            var JEOLGI_MAP = {"10-08":{n:"한로",desc:"찬 이슬이 맺히는 때",msg:"찬 이슬이 맺히는 아침! 한로(寒露)예요!\n여름의 열기가 가시고 가을이 깊어졌어요.\n풀잎 끝에 맺힌 이슬이 차갑게 느껴지는 때!\n이때부터 단풍이 진짜 예뻐져요. 산에 가기 딱 좋은 날!"}};
+            var HISTORY_MAP = {"10-06":{y:"1927년",e:"첫 유성영화",s:"1927년 오늘, 영화에서 처음으로 소리가 났어요!\n'당신은 아직 아무것도 못 들었소'\n이 한마디가 영화 역사를 바꿨죠!\n무성에서 유성으로! 상상이 가나요?"}, "10-07":{y:"1959년",e:"달 뒷면 첫 촬영",s:"1959년 오늘, 인류가 처음으로 달의 뒷면을 봤어요!\n지구에서는 절대 볼 수 없는 달의 뒤!"}, "10-08":{y:"1871년",e:"시카고 대화재",s:"1871년 오늘, 시카고가 불타버렸어요!\n원인이 소 한 마리라니!"}};
             var nat = NATIONAL_DAY[mmdd]||null;
             var jeolgi = JEOLGI_MAP[mmdd]||null;
             var hist = HISTORY_MAP[mmdd]||null;
-            var title="📅 오늘 · "+m+"월 "+d+"일", shortDesc="계절이 머무는 날", longMsg="당신의 오늘이 역사가 되는 날!";
-            if(jeolgi){ title="🌿 오늘은 "+jeolgi.n; shortDesc=jeolgi.desc; longMsg=jeolgi.desc; }
-            else if(nat){ title="🇰🇷 오늘은 "+nat.n; shortDesc=nat.s; longMsg=nat.s; }
-            else if(hist){ title="📅 과거의 오늘"; shortDesc=hist.y+" "+hist.e; longMsg=hist.e; }
+            var title="📅 오늘 · "+m+"월 "+d+"일", shortDesc="계절이 머무는 날", longMsg="특별한 날이 아니에요.\n당신의 오늘이 역사가 되는 날!\n오늘을 기록하면 1년 뒤 '나의 과거의 오늘'에 뜬답니다.\n지금 바로 한 줄이라도 써보세요!";
+            if(jeolgi){ title="🌿 오늘은 "+jeolgi.n; shortDesc=jeolgi.desc; longMsg=jeolgi.msg; }
+            else if(nat){ title="🇰🇷 오늘은 "+nat.n; shortDesc=nat.s; longMsg=nat.d; }
+            else if(hist){ title="📅 과거의 오늘 · "+hist.y; shortDesc=hist.e; longMsg=hist.s; }
             
             var myPastHTML='';
             try{
@@ -8838,7 +8852,7 @@ window.attachPhotoDoubleTap = function(el, handler){
                 myPastHTML='<div style="margin-top:12px; border-top:2px dashed #e8e0ff; padding-top:10px;"><div style="font-size:15px; font-weight:800; color:#7c6cff; margin-bottom:6px;">📖 나의 과거의 오늘</div>';
                 for(var i=0;i<pasts.length;i++){
                   var p=pasts[i];
-                  myPastHTML+='<div onclick="window.goToPastDiary(\''+p.date+'\')" style="background:#fff; border:1px solid #e8e0ff; border-radius:10px; padding:8px 10px; margin-bottom:5px; cursor:pointer;"><div style="font-size:12px; color:#9a8cc0;">'+p.date+' '+(p.photo?'📷':'')+'</div><div style="font-size:13px;">'+(p.text||'사진').slice(0,28)+'</div></div>';
+                  myPastHTML+='<div onclick="window.goToPastDiary(\''+p.date+'\')" style="background:#fff; border:1px solid #e8e0ff; border-radius:10px; padding:8px 10px; margin-bottom:5px; cursor:pointer;"><div style="font-size:12px; color:#9a8cc0;">'+p.date+' '+(p.photo?'📷':'')+'</div><div style="font-size:13px;">'+(p.text||'사진').slice(0,30)+'</div></div>';
                 }
                 myPastHTML+='</div>';
               }
@@ -8847,10 +8861,10 @@ window.attachPhotoDoubleTap = function(el, handler){
             var isNotToday = dateStr !== todayStrLocal;
             var backBtn = isNotToday ? '<span onclick="window.goToToday()" style="flex:1; text-align:center; font-size:14px; background:#ff7e7e; color:#fff; padding:12px; border-radius:12px; cursor:pointer; font-weight:700;">🏠 오늘로</span>' : '';
             
-            listEl.innerHTML = '<div id="V31-box" class="empty-state-hint" style="width:100% !important; grid-column:1 / -1 !important; background:linear-gradient(135deg,#f8f6ff 0%,#fff8f0 100%); border:1px solid #e8e0ff; border-radius:16px; padding:16px; box-sizing:border-box;">'
+            listEl.innerHTML = '<div id="V33-box" class="empty-state-hint" style="width:100% !important; grid-column:1 / -1 !important; background:linear-gradient(135deg,#f8f6ff 0%,#fff8f0 100%); border:1px solid #e8e0ff; border-radius:16px; padding:16px; box-sizing:border-box;">'
               + '<div style="font-size:16px; font-weight:800; color:#7c6cff;">'+title+'</div>'
               + '<div style="font-size:14px; font-weight:700; margin-top:4px;">'+shortDesc+'</div>'
-              + '<div style="font-size:13px; color:#333; margin-top:6px; background:#fff; padding:10px; border-radius:8px; white-space:pre-line;">'+longMsg+'</div>'
+              + '<div style="font-size:13px; color:#333; margin-top:6px; background:#fff; padding:10px; border-radius:8px; white-space:pre-line; line-height:1.6;">'+longMsg+'</div>'
               + myPastHTML
               + '<div style="display:flex; gap:8px; margin-top:12px;"><span onclick="openDiaryForm(\''+dateStr+'\')" style="flex:1; text-align:center; font-size:14px; background:#7c6cff; color:#fff; padding:12px; border-radius:12px; cursor:pointer; font-weight:700;">✏️ 오늘 기록</span>'+backBtn+'</div>'
               + '</div>';
@@ -8986,30 +9000,66 @@ window.attachPhotoDoubleTap = function(el, handler){
 
             listEl.appendChild(itemBox);
         });
-        // V31 - 사진 있을 때도 오늘로 버튼 (메인 안 망가지게 try-catch)
+        // V33 - 과거면 매일반복 숨김, 현재면 복구
         try{
           var todayStr2 = (typeof getTodayStr==='function') ? getTodayStr() : new Date().toISOString().slice(0,10);
+          var isPast2 = dateStr < todayStr2;
+          
+          // 매일반복 숨김/복구
+          setTimeout(function(){
+            var dailyEls = document.querySelectorAll('[data-daily-id]');
+            dailyEls.forEach(function(el){
+              if(isPast2) el.style.display='none';
+              else el.style.display='';
+            });
+          }, 50);
+          
+          // 검색 필터 복구
+          var sdEl2 = document.getElementById('diary-search-divider');
+          var scEl2 = document.getElementById('diary-search-filter-card');
+          if(isPast2){
+            if(sdEl2) sdEl2.style.display='none';
+            if(scEl2) scEl2.style.display='none';
+          } else {
+            if(sdEl2){ sdEl2.style.display=''; if(filtered.length<=2) sdEl2.classList.add('floating-bottom'); else sdEl2.classList.remove('floating-bottom'); }
+          }
+          
+          // 사진 있을 때도 아래에 재미있는 박스 (과거의 오늘)
+          var mmdd2 = dateStr.slice(5);
+          var NATIONAL_DAY2 = {"10-03":{n:"개천절",s:"하늘이 열린 날",d:"4357년 전 오늘, 단군이 고조선 세운 날!"}, "10-09":{n:"한글날",s:"한글 반포",d:"세종대왕이 한글 만든 날!"}};
+          var JEOLGI_MAP2 = {"10-08":{n:"한로",desc:"찬 이슬이 맺히는 때",msg:"찬 이슬이 맺히는 아침! 한로예요!\n가을이 깊어졌어요!"}};
+          var HISTORY_MAP2 = {"10-06":{y:"1927년",e:"첫 유성영화",s:"1927년 오늘, 첫 소리 나는 영화!"}, "10-07":{y:"1959년",e:"달 뒷면 촬영",s:"달 뒷면 처음 본 날!"}};
+          var nat2 = NATIONAL_DAY2[mmdd2]||null;
+          var jeolgi2 = JEOLGI_MAP2[mmdd2]||null;
+          var hist2 = HISTORY_MAP2[mmdd2]||null;
+          if(nat2 || jeolgi2 || hist2){
+            var t2="", d2="", m2="";
+            if(jeolgi2){ t2="🌿 오늘은 "+jeolgi2.n; d2=jeolgi2.desc; m2=jeolgi2.msg; }
+            else if(nat2){ t2="🇰🇷 오늘은 "+nat2.n; d2=nat2.s; m2=nat2.d; }
+            else if(hist2){ t2="📅 과거의 오늘 · "+hist2.y; d2=hist2.e; m2=hist2.s; }
+            var existBelow = document.getElementById('V33-below-box');
+            if(existBelow) existBelow.remove();
+            var infoBox = document.createElement('div');
+            infoBox.id='V33-below-box';
+            infoBox.style.cssText='width:100%; grid-column:1 / -1; background:linear-gradient(135deg,#f8f6ff 0%,#fff8f0 100%); border:1px solid #e8e0ff; border-radius:16px; padding:14px; margin-top:12px; box-sizing:border-box;';
+            infoBox.innerHTML='<div style="font-size:14px; font-weight:800; color:#7c6cff;">'+t2+'</div><div style="font-size:12px; font-weight:700; margin-top:4px;">'+d2+'</div><div style="font-size:11px; color:#333; margin-top:6px; background:#fff; padding:8px; border-radius:8px; white-space:pre-line;">'+m2+'</div>';
+            listEl.appendChild(infoBox);
+          }
+          
+          // 오늘로 버튼 (사진 있을 때도)
           if (dateStr !== todayStr2) {
+            var existBtn = document.getElementById('V33-today-btn');
+            if(existBtn) existBtn.remove();
             var wrap = document.createElement('div');
-            wrap.id='V31-today-btn';
+            wrap.id='V33-today-btn';
             wrap.style.cssText='width:100%; grid-column:1 / -1; display:flex; gap:8px; margin-top:12px;';
             wrap.innerHTML='<span onclick="window.goToToday()" style="flex:1; text-align:center; font-size:14px; background:#ff7e7e; color:#fff; padding:12px; border-radius:12px; cursor:pointer; font-weight:700;">🏠 오늘('+todayStr2.slice(5)+')로 돌아가기</span>';
-            // 중복 방지
-            var exist = document.getElementById('V31-today-btn');
-            if(exist) exist.remove();
             listEl.appendChild(wrap);
-            // 과거면 검색필터 숨김
-            if(dateStr < todayStr2){
-              var sd2 = document.getElementById('diary-search-divider');
-              var sc2 = document.getElementById('diary-search-filter-card');
-              if(sd2) sd2.style.display='none';
-              if(sc2) sc2.style.display='none';
-            }
           } else {
-            var sd3 = document.getElementById('diary-search-divider');
-            if(sd3) sd3.style.display='';
+            var existBtn2 = document.getElementById('V33-today-btn');
+            if(existBtn2) existBtn2.remove();
           }
-        }catch(e){ console.log('V31 today btn error', e); }
+        }catch(e){ console.log('V33 error', e); }
         
     }
 
@@ -9233,30 +9283,66 @@ window.attachPhotoDoubleTap = function(el, handler){
 
             listEl.appendChild(itemBox);
         });
-        // V31 - 사진 있을 때도 오늘로 버튼 (메인 안 망가지게 try-catch)
+        // V33 - 과거면 매일반복 숨김, 현재면 복구
         try{
           var todayStr2 = (typeof getTodayStr==='function') ? getTodayStr() : new Date().toISOString().slice(0,10);
+          var isPast2 = dateStr < todayStr2;
+          
+          // 매일반복 숨김/복구
+          setTimeout(function(){
+            var dailyEls = document.querySelectorAll('[data-daily-id]');
+            dailyEls.forEach(function(el){
+              if(isPast2) el.style.display='none';
+              else el.style.display='';
+            });
+          }, 50);
+          
+          // 검색 필터 복구
+          var sdEl2 = document.getElementById('diary-search-divider');
+          var scEl2 = document.getElementById('diary-search-filter-card');
+          if(isPast2){
+            if(sdEl2) sdEl2.style.display='none';
+            if(scEl2) scEl2.style.display='none';
+          } else {
+            if(sdEl2){ sdEl2.style.display=''; if(filtered.length<=2) sdEl2.classList.add('floating-bottom'); else sdEl2.classList.remove('floating-bottom'); }
+          }
+          
+          // 사진 있을 때도 아래에 재미있는 박스 (과거의 오늘)
+          var mmdd2 = dateStr.slice(5);
+          var NATIONAL_DAY2 = {"10-03":{n:"개천절",s:"하늘이 열린 날",d:"4357년 전 오늘, 단군이 고조선 세운 날!"}, "10-09":{n:"한글날",s:"한글 반포",d:"세종대왕이 한글 만든 날!"}};
+          var JEOLGI_MAP2 = {"10-08":{n:"한로",desc:"찬 이슬이 맺히는 때",msg:"찬 이슬이 맺히는 아침! 한로예요!\n가을이 깊어졌어요!"}};
+          var HISTORY_MAP2 = {"10-06":{y:"1927년",e:"첫 유성영화",s:"1927년 오늘, 첫 소리 나는 영화!"}, "10-07":{y:"1959년",e:"달 뒷면 촬영",s:"달 뒷면 처음 본 날!"}};
+          var nat2 = NATIONAL_DAY2[mmdd2]||null;
+          var jeolgi2 = JEOLGI_MAP2[mmdd2]||null;
+          var hist2 = HISTORY_MAP2[mmdd2]||null;
+          if(nat2 || jeolgi2 || hist2){
+            var t2="", d2="", m2="";
+            if(jeolgi2){ t2="🌿 오늘은 "+jeolgi2.n; d2=jeolgi2.desc; m2=jeolgi2.msg; }
+            else if(nat2){ t2="🇰🇷 오늘은 "+nat2.n; d2=nat2.s; m2=nat2.d; }
+            else if(hist2){ t2="📅 과거의 오늘 · "+hist2.y; d2=hist2.e; m2=hist2.s; }
+            var existBelow = document.getElementById('V33-below-box');
+            if(existBelow) existBelow.remove();
+            var infoBox = document.createElement('div');
+            infoBox.id='V33-below-box';
+            infoBox.style.cssText='width:100%; grid-column:1 / -1; background:linear-gradient(135deg,#f8f6ff 0%,#fff8f0 100%); border:1px solid #e8e0ff; border-radius:16px; padding:14px; margin-top:12px; box-sizing:border-box;';
+            infoBox.innerHTML='<div style="font-size:14px; font-weight:800; color:#7c6cff;">'+t2+'</div><div style="font-size:12px; font-weight:700; margin-top:4px;">'+d2+'</div><div style="font-size:11px; color:#333; margin-top:6px; background:#fff; padding:8px; border-radius:8px; white-space:pre-line;">'+m2+'</div>';
+            listEl.appendChild(infoBox);
+          }
+          
+          // 오늘로 버튼 (사진 있을 때도)
           if (dateStr !== todayStr2) {
+            var existBtn = document.getElementById('V33-today-btn');
+            if(existBtn) existBtn.remove();
             var wrap = document.createElement('div');
-            wrap.id='V31-today-btn';
+            wrap.id='V33-today-btn';
             wrap.style.cssText='width:100%; grid-column:1 / -1; display:flex; gap:8px; margin-top:12px;';
             wrap.innerHTML='<span onclick="window.goToToday()" style="flex:1; text-align:center; font-size:14px; background:#ff7e7e; color:#fff; padding:12px; border-radius:12px; cursor:pointer; font-weight:700;">🏠 오늘('+todayStr2.slice(5)+')로 돌아가기</span>';
-            // 중복 방지
-            var exist = document.getElementById('V31-today-btn');
-            if(exist) exist.remove();
             listEl.appendChild(wrap);
-            // 과거면 검색필터 숨김
-            if(dateStr < todayStr2){
-              var sd2 = document.getElementById('diary-search-divider');
-              var sc2 = document.getElementById('diary-search-filter-card');
-              if(sd2) sd2.style.display='none';
-              if(sc2) sc2.style.display='none';
-            }
           } else {
-            var sd3 = document.getElementById('diary-search-divider');
-            if(sd3) sd3.style.display='';
+            var existBtn2 = document.getElementById('V33-today-btn');
+            if(existBtn2) existBtn2.remove();
           }
-        }catch(e){ console.log('V31 today btn error', e); }
+        }catch(e){ console.log('V33 error', e); }
         
 
         // 💰 데이터 있을 때도 추가 버튼 표시 (버그 수정)
