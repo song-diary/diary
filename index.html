@@ -15329,12 +15329,41 @@ window.addEventListener("load", function() {
     const myPast=getMyPast(now);
 
     let title, desc, msg, badge, sub='';
-    if(jeolgi){
+    // history가 null이면 절기나 계절 메시지만
+    if(!hist && !jeolgi){
+      // 10/6이면 한로 근처이므로 한로 준비 메시지로
+      const nearJeolgi = (function(){
+        const target = new Date('2024-'+now);
+        let closest=null, minDiff=Infinity;
+        for(let j of JEOLGI){
+          let d=new Date('2024-'+j.mmdd);
+          let diff = d-target;
+          if(diff>=0 && diff<minDiff){ minDiff=diff; closest=j; }
+        }
+        return closest;
+      })();
+      if(nearJeolgi){
+        title=`🌿 곧 ${nearJeolgi.name}(${nearJeolgi.hanja})가 와요`;
+        desc=nearJeolgi.desc + ` · ${m}월 ${d}일`;
+        msg=`${nearJeolgi.name}까지 ${Math.ceil((new Date('2024-'+nearJeolgi.mmdd)-new Date('2024-'+now))/86400000)}일 남았어요.\n${nearJeolgi.msg}`;
+        badge=`${nearJeolgi.name} D-${Math.ceil((new Date('2024-'+nearJeolgi.mmdd)-new Date('2024-'+now))/86400000)}`;
+      } else {
+        title=`📅 오늘 · ${m}월 ${d}일`;
+        desc=`계절이 머무는 날`;
+        msg=`특별한 역사적 사건이 없는 날이에요.\n그래서 당신의 오늘이 역사가 될 수 있는 날이에요.\n오늘을 기록해보세요.`;
+        badge=`${m}월 ${d}일`;
+      }
+    } else if(jeolgi){
       title=`🌿 오늘은 ${jeolgi.name}(${jeolgi.hanja})`;
       desc=jeolgi.desc;
       msg=jeolgi.msg;
       badge=`${jeolgi.name} · ${jeolgi.season}`;
       sub=`<div style="margin-top:12px; background:#fff7ed; border:1px solid #ffedd5; border-radius:10px; padding:10px 12px;"><div style="font-size:11px; font-weight:700; color:#c47a20;">📜 과거의 오늘 · ${hist.y}</div><div style="font-size:12px; color:#6b5a40; margin-top:4px;">${hist.e} - ${hist.s.slice(0,40)}...</div></div>`;
+    } else if(hist){
+      title=`📅 과거의 오늘 · ${m}월 ${d}일`;
+      desc=`${hist.y} ${hist.e}`;
+      msg=hist.s;
+      badge=`${hist.y}`;
     } else {
       title=`📅 과거의 오늘 · ${m}월 ${d}일`;
       desc=`${hist.y} ${hist.e}`;
