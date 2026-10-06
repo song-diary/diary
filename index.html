@@ -2506,7 +2506,7 @@ body { touch-action: pan-x pan-y pinch-zoom !important; }
         .btn-row .btn { flex:1; text-align:center; margin-top:0; }
         .fp-lotto-note { font-size:11.5px; color:rgba(242,239,255,0.5); margin-top:10px; line-height:1.5; }
 
-        /* === V211 APK 스크롤 fix - WebView에서 메인 화면 스크롤 안되는 문제 해결 === */
+        /* === 1 APK 스크롤 fix - WebView에서 메인 화면 스크롤 안되는 문제 해결 === */
         html {
             height: auto !important;
             min-height: 100% !important;
@@ -2967,7 +2967,7 @@ div:has(> span:V20), .v20-recovery { display:none !important; }
   box-sizing: border-box !important;
 }
 #diary-around-today-list .empty-state-hint,
-#V21-box, #V23-box {
+#-box, #V23-box {
   grid-column: 1 / -1 !important;
   width: 100% !important;
   max-width: 100% !important;
@@ -3304,7 +3304,7 @@ div:has(> span:V20), .v20-recovery { display:none !important; }
     </div>
 </div>
 
-<!-- 🎱 사주기반 로또 생성기 (V210) -->
+<!-- 🎱 사주기반 로또 생성기 (0) -->
 <!-- lotto removed -->
 
 </div>
@@ -7158,7 +7158,7 @@ window.attachPhotoDoubleTap = function(el, handler){
         }catch(e){}
     }
 
-    // V219 누적 + 진짜100만
+    // 9 누적 + 진짜100만
     let accumulatedLottoGames2 = [];
     try{ accumulatedLottoGames2 = JSON.parse(localStorage.getItem('lottoAccumulated2') || '[]'); }catch(e){ accumulatedLottoGames2=[]; }
     function saveAccumulated2(){ try{ localStorage.setItem('lottoAccumulated2', JSON.stringify(accumulatedLottoGames2.slice(-20))); }catch(e){} }
@@ -7285,7 +7285,7 @@ window.attachPhotoDoubleTap = function(el, handler){
         ldtValidateInputs();
     }
 
-    // V210 로또 방 전용
+    // 0 로또 방 전용
     function openLottoGeneratorModal(){ console.log('[V4.0] 로또 제거됨'); return; }
     function openLottoGeneratorModal_DISABLED_ORIG(){
         const overlay = document.getElementById('lotto-generator-modal-overlay');
@@ -8788,7 +8788,7 @@ window.attachPhotoDoubleTap = function(el, handler){
         }
 
         if (filtered.length === 0) {
-            // V21 - 과거의 오늘 + 한로 + 나의 과거의 오늘 + 공유
+            //  - 과거의 오늘 + 한로 + 나의 과거의 오늘 + 공유
             const mmdd = dateStr.slice(5); // "10-06"
             const m = parseInt(mmdd.split('-')[0]), d = parseInt(mmdd.split('-')[1]);
             
@@ -8887,50 +8887,28 @@ const JEOLGI_MAP = {
 
             let title, desc, msg, badge, subHTML='';
             if(jeolgi){
-              if(isNearJeolgi){
-                title = `🌿 내일은 ${jeolgi.name}(${jeolgi.hanja}) · D-1`;
-              } else {
-                title = `🌿 오늘은 ${jeolgi.name}(${jeolgi.hanja})`;
-              }
+              title = `🌿 오늘은 ${jeolgi.name}(${jeolgi.hanja})`;
               desc = jeolgi.desc;
               msg = jeolgi.msg;
-              badge = `${jeolgi.name} · V21`;
+              badge = `${jeolgi.name}`;
               if(hist){
-                const nearTag = isNearHist ? '(어제/내일)' : '';
-                subHTML = `<div style="margin-top:8px; background:#fff7ed; border:1px solid #ffedd5; border-radius:8px; padding:6px 8px;"><div style="font-size:10px; font-weight:700; color:#c47a20;">📜 과거의 오늘${nearTag} · ${hist.y}</div><div style="font-size:11px; color:#6b5a40;">${hist.e}</div></div>`;
+                subHTML = `<div style="margin-top:8px; background:#fff7ed; border:1px solid #ffedd5; border-radius:8px; padding:6px 8px;"><div style="font-size:10px; font-weight:700; color:#c47a20;">📜 과거의 오늘 · ${hist.y}</div><div style="font-size:11px; color:#6b5a40;">${hist.e}</div></div>`;
               }
             } else if(hist){
-              title = `📅 과거의 오늘 · ${m}월 ${d}일` + (isNearHist ? ' · 근처' : '');
+              title = `📅 과거의 오늘 · ${m}월 ${d}일`;
               desc = `${hist.y} ${hist.e}`;
               msg = hist.s;
-              badge = `${hist.y} · V21`;
+              badge = `${hist.y}`;
             } else {
-              // 둘 다 없으면 내일 절기 안내
-              const nextJeolgi = (function(){
-                const t = new Date('2024-'+mmdd);
-                let best=null, bestDiff=999;
-                for(let k of Object.keys(JEOLGI_MAP)){
-                  const d = new Date('2024-'+k);
-                  let diff = (d - t)/86400000;
-                  if(diff<0) diff+=365;
-                  if(diff>0 && diff<bestDiff){ bestDiff=diff; best={key:k, data:JEOLGI_MAP[k], diff:Math.ceil(diff)}; }
-                }
-                return best;
-              })();
-              if(nextJeolgi && nextJeolgi.diff<=7){
-                title = `📅 오늘 · ${m}월 ${d}일`;
-                desc = `${nextJeolgi.data.name}까지 D-${nextJeolgi.diff}`;
-                msg = `${nextJeolgi.data.desc}. ${nextJeolgi.data.msg}`;
-                badge = `D-${nextJeolgi.diff} · V21`;
-              } else {
-                title = `📅 오늘 · ${m}월 ${d}일`;
-                desc = `계절이 머무는 날`;
-                msg = `특별한 절기나 역사적 사건이 없는 날이에요. 그래서 당신의 오늘이 역사가 될 수 있는 날이에요.`;
-                badge = `${m}월 ${d}일 · V21`;
-              }
+              title = `📅 오늘 · ${m}월 ${d}일`;
+              desc = `계절이 머무는 날`;
+              msg = `특별한 절기나 역사적 사건이 없는 날이에요.
+그래서 당신의 오늘이 역사가 될 수 있는 날이에요.
+오늘을 기록해보세요.`;
+              badge = `${m}월 ${d}일`;
             }
 
-            listEl.innerHTML = `<div id="V21-box" class="empty-state-hint" style="display:block; width:100% !important; grid-column:1 / -1 !important; background:linear-gradient(135deg,#f8f6ff 0%,#fff8f0 100%); border:2px solid #7c6cff; border-radius:18px; padding:12px 14px; text-align:left; box-shadow:0 4px 12px rgba(124,108,255,0.15);">
+            listEl.innerHTML = `<div id="-box" class="empty-state-hint" style="display:block; width:100% !important; grid-column:1 / -1 !important; background:linear-gradient(135deg,#f8f6ff 0%,#fff8f0 100%); border:2px solid #7c6cff; border-radius:18px; padding:12px 14px; text-align:left; box-shadow:0 4px 12px rgba(124,108,255,0.15);">
               <div style="display:flex; justify-content:space-between; align-items:center;">
                 <div style="font-size:12px; font-weight:900; color:#7c6cff;">${title}</div>
                 <div style="display:flex; gap:4px;"><span style="font-size:10px; background:#fff; border:1px solid #e8e0ff; padding:3px 7px; border-radius:10px; color:#7c6cff;">${badge}</span><button onclick="event.stopPropagation(); const t='${m}월 ${d}일 ' + '${desc}'.replace(/'/g,''); if(navigator.share){ navigator.share({title:'다이어리', text:t}); } else { navigator.clipboard.writeText(t); alert('복사됨!'); }" style="border:none; background:#7c6cff; color:#fff; border-radius:8px; padding:3px 8px; font-size:10px;">🔗 공유</button></div>
@@ -8941,9 +8919,9 @@ const JEOLGI_MAP = {
               ${myPastHTML}
               <div style="display:flex; gap:6px; margin-top:12px;">
                 <span onclick="openDiaryForm('${dateStr}')" style="flex:1; text-align:center; font-size:11px; background:#7c6cff; color:#fff; padding:9px; border-radius:10px; cursor:pointer; font-weight:700;">✏️ 오늘 기록하기</span>
-                <span onclick="alert('V21 전체보기: 24절기 24개 + 과거의 오늘 10개 포함! 달력 길게 누르면 그날 과거도 볼 수 있어요!')" style="flex:1; text-align:center; font-size:11px; background:#fff; border:1px solid #e8e0ff; color:#7c6cff; padding:9px; border-radius:10px; cursor:pointer; font-weight:700;">📜 전체 보기</span>
+                <span onclick="alert(' 전체보기: 24절기 24개 + 과거의 오늘 10개 포함! 달력 길게 누르면 그날 과거도 볼 수 있어요!')" style="flex:1; text-align:center; font-size:11px; background:#fff; border:1px solid #e8e0ff; color:#7c6cff; padding:9px; border-radius:10px; cursor:pointer; font-weight:700;">📜 전체 보기</span>
               </div>
-              <div style="font-size:9px; color:#bbb; margin-top:6px; text-align:center;">V21 · 한로 D-2 · 달력 길게 누르기 지원</div>
+              <div style="font-size:9px; color:#bbb; margin-top:6px; text-align:center;"> 한로 D-2 · 달력 길게 누르기 지원</div>
             </div>`;
             return;
         }
@@ -10555,7 +10533,7 @@ async function showPhotosForDate(dateStr){
 
                 (function(){
           const swCode = `
-            const CACHE_NAME='smartdiary-V213-SINGLE';
+            const CACHE_NAME='smartdiary-3-SINGLE';
             self.addEventListener('install', e=>{ self.skipWaiting(); e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(['./']))); });
             self.addEventListener('activate', e=>{ e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))).then(()=>self.clients.claim())); });
             self.addEventListener('fetch', e=>{ 
@@ -15417,6 +15395,57 @@ window.addEventListener("load", function() {
   
   console.log('[V20药] 패치 완료 - test8pmPillAlarm()으로 8시 약 알림 테스트 가능');
 })();
+</script>
+
+
+<script>
+window.V25_goToPast = function(targetDateStr){
+  // selectedViewDate를 과거 날짜로 바꾸고 렌더링 - 사진/일기 보이게
+  try{
+    // 1. selectedViewDate 전역 설정
+    if(typeof selectedViewDate !== 'undefined'){
+      window.selectedViewDate = targetDateStr;
+      selectedViewDate = targetDateStr;
+    }
+    localStorage.setItem('smartDiarySelectedDate', targetDateStr);
+    // 2. 달력 선택 날짜 업데이트
+    if(typeof window.setSelectedDate === 'function'){
+      window.setSelectedDate(targetDateStr);
+    }
+    // 3. 다이어리 리스트 렌더링
+    if(typeof renderDiaryAroundToday === 'function'){
+      // 먼저 날짜를 바꿔서 렌더
+      const origDate = window.selectedViewDate;
+      window.selectedViewDate = targetDateStr;
+      if(typeof selectedViewDate !== 'undefined') selectedViewDate = targetDateStr;
+      // 달력도 업데이트
+      if(typeof renderCalendar === 'function'){
+        renderCalendar();
+      }
+      renderDiaryAroundToday();
+      // 스크롤 위로
+      window.scrollTo({top:0, behavior:'smooth'});
+      // 해당 날짜에 일기가 있으면 하이라이트
+      setTimeout(()=>{
+        const listEl = document.getElementById('diary-around-today-list');
+        if(listEl){
+          listEl.style.outline='2px solid #7c6cff';
+          setTimeout(()=>{ listEl.style.outline=''; }, 1000);
+        }
+      }, 300);
+    } else {
+      // fallback: 페이지 새로고침으로 이동
+      location.reload();
+    }
+  }catch(e){
+    console.error(e);
+    localStorage.setItem('smartDiarySelectedDate', targetDateStr);
+    location.reload();
+  }
+};
+window.V25_openAll = function(){
+  alert('📜 전체 과거의 오늘: 10/6 재즈싱어, 10/7 달 뒷면, 10/8 시카고 대화재, 8/15 광복절 등 10개 + 24절기 12개 포함');
+};
 </script>
 
 </body>
