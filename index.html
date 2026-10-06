@@ -2957,6 +2957,31 @@ div:has(> button[onclick*="adjustFontSize"]) { display:none !important; }
 div:has(> span:V20), .v20-recovery { display:none !important; }
 </style>
 
+
+<style id="V24-width-fix">
+#diary-around-today-list {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  width: 100% !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+}
+#diary-around-today-list .empty-state-hint,
+#V21-box, #V23-box {
+  grid-column: 1 / -1 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  box-sizing: border-box !important;
+}
+#calendar-card, #calendar {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+</style>
+
 </head>
 <body>
 
@@ -8905,7 +8930,7 @@ const JEOLGI_MAP = {
               }
             }
 
-            listEl.innerHTML = `<div id="V21-box" style="display:block; width:100%; background:linear-gradient(135deg,#f8f6ff 0%,#fff8f0 100%); border:2px solid #7c6cff; border-radius:18px; padding:12px 14px; text-align:left; box-shadow:0 4px 12px rgba(124,108,255,0.15);">
+            listEl.innerHTML = `<div id="V21-box" class="empty-state-hint" style="display:block; width:100% !important; grid-column:1 / -1 !important; background:linear-gradient(135deg,#f8f6ff 0%,#fff8f0 100%); border:2px solid #7c6cff; border-radius:18px; padding:12px 14px; text-align:left; box-shadow:0 4px 12px rgba(124,108,255,0.15);">
               <div style="display:flex; justify-content:space-between; align-items:center;">
                 <div style="font-size:12px; font-weight:900; color:#7c6cff;">${title}</div>
                 <div style="display:flex; gap:4px;"><span style="font-size:10px; background:#fff; border:1px solid #e8e0ff; padding:3px 7px; border-radius:10px; color:#7c6cff;">${badge}</span><button onclick="event.stopPropagation(); const t='${m}월 ${d}일 ' + '${desc}'.replace(/'/g,''); if(navigator.share){ navigator.share({title:'다이어리', text:t}); } else { navigator.clipboard.writeText(t); alert('복사됨!'); }" style="border:none; background:#7c6cff; color:#fff; border-radius:8px; padding:3px 8px; font-size:10px;">🔗 공유</button></div>
