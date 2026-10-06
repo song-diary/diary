@@ -2958,13 +2958,15 @@ div:has(> span:V20), .v20-recovery { display:none !important; }
 </style>
 
 
-<style id="V34-style">
+<style id="V36-style">
 #diary-around-today-list{ display:grid !important; grid-template-columns:1fr !important; width:100% !important; }
-#V34-box, #V34-below-box{ grid-column:1 / -1 !important; width:100% !important; box-sizing:border-box !important; }
-/* V34 - 검색, 매일반복은 다이어리 리스트에서는 항상 숨김 */
+#V36-box, #V36-below-box, #V36-past-box{ grid-column:1 / -1 !important; width:100% !important; box-sizing:border-box !important; }
 #diary-search-divider{ display:none !important; }
 #diary-search-filter-card{ display:none !important; }
 [data-daily-id]{ display:none !important; }
+/* 앨범2에서만 V36 박스들 보이게, 앨범1에서는 숨김 - CSS로도 보험 */
+#diary-around-today-list:not(.gallery-mode) #V36-below-box,
+#diary-around-today-list:not(.gallery-mode) #V36-past-box{ display:none !important; }
 </style>
 <script>
 window.goToPastDiary = function(targetDateStr){
@@ -2993,14 +2995,12 @@ window.goToToday = function(){
   if(typeof renderCalendar === 'function') renderCalendar();
   setTimeout(function(){ 
     if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday(); 
-    // 오늘로 돌아와도 검색, 매일반복은 안 뜨게 (정상이 안 뜨는 것!)
     var sd = document.getElementById('diary-search-divider');
     if(sd) sd.style.display='none';
     document.querySelectorAll('[data-daily-id]').forEach(function(el){ el.style.display='none'; });
     window.scrollTo(0,0); 
   }, 100);
 };
-// V34 - 매일반복 항상 숨김 패치
 (function(){
   setTimeout(function(){
     if(typeof window.renderDiaryAroundToday==='function'){
@@ -8826,22 +8826,28 @@ window.attachPhotoDoubleTap = function(el, handler){
             else searchDividerEl.classList.remove('floating-bottom');
         }
 
-        // V34 - 검색, 매일반복은 다이어리 리스트에서는 항상 숨김 (정상)
+        // V36 - 앨범2에만 표시 + 검색/매일반복 숨김
         var sdEl = document.getElementById('diary-search-divider');
         var scEl = document.getElementById('diary-search-filter-card');
         if(sdEl) sdEl.style.display='none';
         if(scEl) scEl.style.display='none';
+        var isGalleryMode = listEl.classList.contains('gallery-mode'); // 앨범2면 true
 
         if (filtered.length === 0) {
+            // 앨범2가 아니면 기본 문구만
+            if(!isGalleryMode){
+                listEl.innerHTML = `<div class="empty-state-hint" onclick="openDiaryForm('${dateStr}')" style="font-size: var(--memo-font-size); color: var(--text-sub); text-align: center; padding: 22px 10px; cursor:pointer;">✏️ 입력 버튼을 눌러 작성해보세요</div>`;
+                return;
+            }
             var mmdd = dateStr.slice(5);
             var m = parseInt(mmdd.split('-')[0]), d = parseInt(mmdd.split('-')[1]);
-            var NATIONAL_DAY = {"10-03":{n:"개천절",s:"하늘이 열린 날",d:"4357년 전 오늘, 단군이 고조선을 세운 날!\n하늘이 열리고 새로운 나라가 시작됐어요.\n당신도 새로운 시작이 필요한 날 아닐까요?\n오늘 뭔가 시작해보세요!"}, "10-09":{n:"한글날",s:"한글 반포",d:"세종대왕이 한글을 만든 날! 세계에서 가장 과학적인 글자!\n당신이 쓰는 카톡도 한글 덕분이에요!"}};
-            var JEOLGI_MAP = {"10-08":{n:"한로",desc:"찬 이슬이 맺히는 때",msg:"찬 이슬이 맺히는 아침! 한로(寒露)예요!\n여름의 열기가 가시고 가을이 깊어졌어요.\n풀잎 끝에 맺힌 이슬이 차갑게 느껴지는 때!\n이때부터 단풍이 진짜 예뻐져요. 산에 가기 딱 좋은 날!"}};
-            var HISTORY_MAP = {"10-06":{y:"1927년",e:"첫 유성영화",s:"1927년 오늘, 영화에서 처음으로 소리가 났어요!\n'당신은 아직 아무것도 못 들었소'\n이 한마디가 영화 역사를 바꿨죠!\n당신의 작은 한마디도 누군가에겐 큰 울림이에요!"}, "10-07":{y:"1959년",e:"달 뒷면 촬영",s:"1959년 오늘, 달 뒷면을 처음 봤어요!"}, "10-08":{y:"1871년",e:"시카고 대화재",s:"1871년 오늘, 시카고가 불타버렸어요!"}};
+            var NATIONAL_DAY = {"10-03":{n:"개천절",s:"하늘이 열린 날",d:"4357년 전 오늘, 단군이 고조선 세운 날!\n하늘이 열리고 새로운 나라가 시작됐어요!"}, "10-09":{n:"한글날",s:"한글 반포",d:"세종대왕이 한글을 만든 날! 과학적인 글자!"}};
+            var JEOLGI_MAP = {"10-08":{n:"한로",desc:"찬 이슬이 맺히는 때",msg:"찬 이슬이 맺히는 아침! 한로예요!\n가을이 깊어졌어요. 산에 가기 딱 좋은 날!"}};
+            var HISTORY_MAP = {"10-06":{y:"1927년",e:"첫 유성영화",s:"1927년 오늘, 영화에서 처음으로 소리가 났어요!"}, "10-07":{y:"1959년",e:"달 뒷면 촬영",s:"달 뒷면 처음 본 날!"}};
             var nat = NATIONAL_DAY[mmdd]||null;
             var jeolgi = JEOLGI_MAP[mmdd]||null;
             var hist = HISTORY_MAP[mmdd]||null;
-            var title="📅 오늘 · "+m+"월 "+d+"일", shortDesc="계절이 머무는 날", longMsg="특별한 날이 아니에요.\n당신의 오늘이 역사가 되는 날!\n오늘을 기록하면 1년 뒤 '나의 과거의 오늘'에 뜬답니다.\n지금 바로 한 줄이라도 써보세요!";
+            var title="📅 오늘 · "+m+"월 "+d+"일", shortDesc="계절이 머무는 날", longMsg="당신의 오늘이 역사가 되는 날!\n오늘을 기록하면 1년 뒤 '나의 과거의 오늘'에 뜬답니다.";
             if(jeolgi){ title="🌿 오늘은 "+jeolgi.n; shortDesc=jeolgi.desc; longMsg=jeolgi.msg; }
             else if(nat){ title="🇰🇷 오늘은 "+nat.n; shortDesc=nat.s; longMsg=nat.d; }
             else if(hist){ title="📅 과거의 오늘 · "+hist.y; shortDesc=hist.e; longMsg=hist.s; }
@@ -8870,7 +8876,7 @@ window.attachPhotoDoubleTap = function(el, handler){
             var isNotToday = dateStr !== todayStrLocal;
             var backBtn = isNotToday ? '<span onclick="window.goToToday()" style="flex:1; text-align:center; font-size:14px; background:#ff7e7e; color:#fff; padding:12px; border-radius:12px; cursor:pointer; font-weight:700;">🏠 오늘로</span>' : '';
             
-            listEl.innerHTML = '<div id="V34-box" class="empty-state-hint" style="width:100% !important; grid-column:1 / -1 !important; background:linear-gradient(135deg,#f8f6ff 0%,#fff8f0 100%); border:1px solid #e8e0ff; border-radius:16px; padding:16px; box-sizing:border-box;">'
+            listEl.innerHTML = '<div id="V36-box" class="empty-state-hint" style="width:100% !important; grid-column:1 / -1 !important; background:linear-gradient(135deg,#f8f6ff 0%,#fff8f0 100%); border:1px solid #e8e0ff; border-radius:16px; padding:16px; box-sizing:border-box;">'
               + '<div style="font-size:16px; font-weight:800; color:#7c6cff;">'+title+'</div>'
               + '<div style="font-size:14px; font-weight:700; margin-top:4px;">'+shortDesc+'</div>'
               + '<div style="font-size:13px; color:#333; margin-top:6px; background:#fff; padding:10px; border-radius:8px; white-space:pre-line; line-height:1.6;">'+longMsg+'</div>'
@@ -9009,60 +9015,92 @@ window.attachPhotoDoubleTap = function(el, handler){
 
             listEl.appendChild(itemBox);
         });
-        // V34 - 검색, 매일반복은 항상 숨김 (정상이 안 뜨는 것!)
+        // V36 - 앨범2(gallery-mode)일 때만 오늘의 설명 + 나의 과거의 오늘 표시 (과부하 없음, 가볍게!)
         try{
           var sdEl2 = document.getElementById('diary-search-divider');
           var scEl2 = document.getElementById('diary-search-filter-card');
           if(sdEl2) sdEl2.style.display='none';
           if(scEl2) scEl2.style.display='none';
+          setTimeout(function(){ document.querySelectorAll('[data-daily-id]').forEach(function(el){ el.style.display='none'; }); }, 50);
           
-          // 매일반복 (data-daily-id)도 숨김
-          setTimeout(function(){
-            document.querySelectorAll('[data-daily-id]').forEach(function(el){ el.style.display='none'; });
-            var sd3 = document.getElementById('diary-search-divider');
-            if(sd3) sd3.style.display='none';
-          }, 50);
-          setTimeout(function(){
-            document.querySelectorAll('[data-daily-id]').forEach(function(el){ el.style.display='none'; });
-          }, 300);
+          var isGallery = listEl.classList.contains('gallery-mode');
+          if(!isGallery){
+            // 앨범1이면 오늘의 설명, 과거의 오늘 안 띄움
+            var todayStr2 = (typeof getTodayStr==='function') ? getTodayStr() : new Date().toISOString().slice(0,10);
+            if(dateStr !== todayStr2){
+              var existBtn = document.getElementById('V36-today-btn');
+              if(existBtn) existBtn.remove();
+              var wrap = document.createElement('div');
+              wrap.id='V36-today-btn';
+              wrap.style.cssText='width:100%; grid-column:1 / -1; display:flex; gap:8px; margin-top:12px;';
+              wrap.innerHTML='<span onclick="window.goToToday()" style="flex:1; text-align:center; font-size:14px; background:#ff7e7e; color:#fff; padding:12px; border-radius:12px; cursor:pointer; font-weight:700;">🏠 오늘('+todayStr2.slice(5)+')로 돌아가기</span>';
+              listEl.appendChild(wrap);
+            }
+            return;
+          }
           
-          // 사진 있을 때도 아래에 과거의 오늘 박스 (재미있게 3~4줄)
+          // 앨범2일 때만 아래 박스들 표시
           var mmdd2 = dateStr.slice(5);
-          var NATIONAL_DAY2 = {"10-03":{n:"개천절",s:"하늘이 열린 날",d:"4357년 전 오늘! 단군이 고조선 세운 날!\n하늘이 열리고 새로운 나라가 시작됐어요!"}, "10-09":{n:"한글날",s:"한글 반포",d:"세종대왕이 한글 만든 날! 과학적인 글자!"}};
-          var JEOLGI_MAP2 = {"10-08":{n:"한로",desc:"찬 이슬이 맺히는 때",msg:"찬 이슬이 맺히는 아침! 한로(寒露)예요!\n가을이 깊어졌어요!"}};
+          var NATIONAL_DAY2 = {"10-03":{n:"개천절",s:"하늘이 열린 날",d:"4357년 전 오늘! 단군이 고조선 세운 날!"}, "10-09":{n:"한글날",s:"한글 반포",d:"세종대왕이 한글 만든 날!"}};
+          var JEOLGI_MAP2 = {"10-08":{n:"한로",desc:"찬 이슬이 맺히는 때",msg:"찬 이슬이 맺히는 아침! 한로(寒露)예요!\n가을이 깊어졌어요! 단풍이 예뻐요!"}};
           var HISTORY_MAP2 = {"10-06":{y:"1927년",e:"첫 유성영화",s:"1927년 오늘, 첫 소리 나는 영화!"}, "10-07":{y:"1959년",e:"달 뒷면 촬영",s:"달 뒷면 처음 본 날!"}};
           var nat2 = NATIONAL_DAY2[mmdd2]||null;
           var jeolgi2 = JEOLGI_MAP2[mmdd2]||null;
           var hist2 = HISTORY_MAP2[mmdd2]||null;
+          
           if(nat2 || jeolgi2 || hist2){
             var t2="", d2="", m2="";
             if(jeolgi2){ t2="🌿 오늘은 "+jeolgi2.n; d2=jeolgi2.desc; m2=jeolgi2.msg; }
             else if(nat2){ t2="🇰🇷 오늘은 "+nat2.n; d2=nat2.s; m2=nat2.d; }
             else if(hist2){ t2="📅 과거의 오늘 · "+hist2.y; d2=hist2.e; m2=hist2.s; }
-            var existBelow = document.getElementById('V34-below-box');
+            var existBelow = document.getElementById('V36-below-box');
             if(existBelow) existBelow.remove();
             var infoBox = document.createElement('div');
-            infoBox.id='V34-below-box';
+            infoBox.id='V36-below-box';
             infoBox.style.cssText='width:100%; grid-column:1 / -1; background:linear-gradient(135deg,#f8f6ff 0%,#fff8f0 100%); border:1px solid #e8e0ff; border-radius:16px; padding:14px; margin-top:12px; box-sizing:border-box;';
-            infoBox.innerHTML='<div style="font-size:14px; font-weight:800; color:#7c6cff;">'+t2+'</div><div style="font-size:12px; font-weight:700; margin-top:4px;">'+d2+'</div><div style="font-size:11px; color:#333; margin-top:6px; background:#fff; padding:8px; border-radius:8px; white-space:pre-line; line-height:1.5;">'+m2+'</div>';
+            infoBox.innerHTML='<div style="font-size:14px; font-weight:800; color:#7c6cff;">'+t2+'</div><div style="font-size:12px; font-weight:700; margin-top:4px;">'+d2+'</div><div style="font-size:11px; color:#333; margin-top:6px; background:#fff; padding:8px; border-radius:8px; white-space:pre-line;">'+m2+'</div>';
             listEl.appendChild(infoBox);
           }
           
-          // 오늘로 버튼 (사진 있을 때도)
-          var todayStr2 = (typeof getTodayStr==='function') ? getTodayStr() : new Date().toISOString().slice(0,10);
-          if (dateStr !== todayStr2) {
-            var existBtn = document.getElementById('V34-today-btn');
+          try{
+            var all2=getAllDiaries();
+            var viewingYear2=dateStr.split('-')[0];
+            var pasts2=all2.filter(function(it){
+              var ds=(it.date||'').split('T')[0];
+              if(!ds || ds.indexOf('-')===-1) return false;
+              var p=ds.split('-');
+              return (p[1].padStart(2,'0')+'-'+p[2].padStart(2,'0'))===mmdd2 && p[0]!==viewingYear2;
+            }).sort(function(a,b){ return b.date.localeCompare(a.date); }).slice(0,3);
+            if(pasts2.length>0){
+              var existPast = document.getElementById('V36-past-box');
+              if(existPast) existPast.remove();
+              var pastBox = document.createElement('div');
+              pastBox.id='V36-past-box';
+              pastBox.style.cssText='width:100%; grid-column:1 / -1; background:#fff; border:1.5px dashed #d0c8ff; border-radius:16px; padding:14px; margin-top:12px; box-sizing:border-box;';
+              var html='<div style="font-size:14px; font-weight:800; color:#7c6cff; margin-bottom:8px;">📖 나의 과거의 오늘 ('+pasts2.length+'건)</div>';
+              for(var i=0;i<pasts2.length;i++){
+                var p=pasts2[i];
+                html+='<div onclick="window.goToPastDiary(\''+p.date+'\')" style="background:#f8f6ff; border:1px solid #e8e0ff; border-radius:10px; padding:8px 10px; margin-bottom:6px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;"><div><div style="font-size:11px; color:#9a8cc0; font-weight:700;">'+p.date+' '+(p.photo?'📷':'')+'</div><div style="font-size:12px; color:#222;">'+(p.text||'사진').slice(0,30)+'</div></div><div style="font-size:12px; color:#7c6cff; font-weight:700;">보기 →</div></div>';
+              }
+              pastBox.innerHTML=html;
+              listEl.appendChild(pastBox);
+            }
+          }catch(e){}
+          
+          var todayStr2b = (typeof getTodayStr==='function') ? getTodayStr() : new Date().toISOString().slice(0,10);
+          if (dateStr !== todayStr2b) {
+            var existBtn = document.getElementById('V36-today-btn');
             if(existBtn) existBtn.remove();
             var wrap = document.createElement('div');
-            wrap.id='V34-today-btn';
+            wrap.id='V36-today-btn';
             wrap.style.cssText='width:100%; grid-column:1 / -1; display:flex; gap:8px; margin-top:12px;';
-            wrap.innerHTML='<span onclick="window.goToToday()" style="flex:1; text-align:center; font-size:14px; background:#ff7e7e; color:#fff; padding:12px; border-radius:12px; cursor:pointer; font-weight:700;">🏠 오늘('+todayStr2.slice(5)+')로 돌아가기</span>';
+            wrap.innerHTML='<span onclick="window.goToToday()" style="flex:1; text-align:center; font-size:14px; background:#ff7e7e; color:#fff; padding:12px; border-radius:12px; cursor:pointer; font-weight:700;">🏠 오늘('+todayStr2b.slice(5)+')로 돌아가기</span>';
             listEl.appendChild(wrap);
           } else {
-            var existBtn2 = document.getElementById('V34-today-btn');
+            var existBtn2 = document.getElementById('V36-today-btn');
             if(existBtn2) existBtn2.remove();
           }
-        }catch(e){ console.log('V34 error', e); }
+        }catch(e){ console.log('V36 error', e); }
         
     }
 
@@ -9286,60 +9324,92 @@ window.attachPhotoDoubleTap = function(el, handler){
 
             listEl.appendChild(itemBox);
         });
-        // V34 - 검색, 매일반복은 항상 숨김 (정상이 안 뜨는 것!)
+        // V36 - 앨범2(gallery-mode)일 때만 오늘의 설명 + 나의 과거의 오늘 표시 (과부하 없음, 가볍게!)
         try{
           var sdEl2 = document.getElementById('diary-search-divider');
           var scEl2 = document.getElementById('diary-search-filter-card');
           if(sdEl2) sdEl2.style.display='none';
           if(scEl2) scEl2.style.display='none';
+          setTimeout(function(){ document.querySelectorAll('[data-daily-id]').forEach(function(el){ el.style.display='none'; }); }, 50);
           
-          // 매일반복 (data-daily-id)도 숨김
-          setTimeout(function(){
-            document.querySelectorAll('[data-daily-id]').forEach(function(el){ el.style.display='none'; });
-            var sd3 = document.getElementById('diary-search-divider');
-            if(sd3) sd3.style.display='none';
-          }, 50);
-          setTimeout(function(){
-            document.querySelectorAll('[data-daily-id]').forEach(function(el){ el.style.display='none'; });
-          }, 300);
+          var isGallery = listEl.classList.contains('gallery-mode');
+          if(!isGallery){
+            // 앨범1이면 오늘의 설명, 과거의 오늘 안 띄움
+            var todayStr2 = (typeof getTodayStr==='function') ? getTodayStr() : new Date().toISOString().slice(0,10);
+            if(dateStr !== todayStr2){
+              var existBtn = document.getElementById('V36-today-btn');
+              if(existBtn) existBtn.remove();
+              var wrap = document.createElement('div');
+              wrap.id='V36-today-btn';
+              wrap.style.cssText='width:100%; grid-column:1 / -1; display:flex; gap:8px; margin-top:12px;';
+              wrap.innerHTML='<span onclick="window.goToToday()" style="flex:1; text-align:center; font-size:14px; background:#ff7e7e; color:#fff; padding:12px; border-radius:12px; cursor:pointer; font-weight:700;">🏠 오늘('+todayStr2.slice(5)+')로 돌아가기</span>';
+              listEl.appendChild(wrap);
+            }
+            return;
+          }
           
-          // 사진 있을 때도 아래에 과거의 오늘 박스 (재미있게 3~4줄)
+          // 앨범2일 때만 아래 박스들 표시
           var mmdd2 = dateStr.slice(5);
-          var NATIONAL_DAY2 = {"10-03":{n:"개천절",s:"하늘이 열린 날",d:"4357년 전 오늘! 단군이 고조선 세운 날!\n하늘이 열리고 새로운 나라가 시작됐어요!"}, "10-09":{n:"한글날",s:"한글 반포",d:"세종대왕이 한글 만든 날! 과학적인 글자!"}};
-          var JEOLGI_MAP2 = {"10-08":{n:"한로",desc:"찬 이슬이 맺히는 때",msg:"찬 이슬이 맺히는 아침! 한로(寒露)예요!\n가을이 깊어졌어요!"}};
+          var NATIONAL_DAY2 = {"10-03":{n:"개천절",s:"하늘이 열린 날",d:"4357년 전 오늘! 단군이 고조선 세운 날!"}, "10-09":{n:"한글날",s:"한글 반포",d:"세종대왕이 한글 만든 날!"}};
+          var JEOLGI_MAP2 = {"10-08":{n:"한로",desc:"찬 이슬이 맺히는 때",msg:"찬 이슬이 맺히는 아침! 한로(寒露)예요!\n가을이 깊어졌어요! 단풍이 예뻐요!"}};
           var HISTORY_MAP2 = {"10-06":{y:"1927년",e:"첫 유성영화",s:"1927년 오늘, 첫 소리 나는 영화!"}, "10-07":{y:"1959년",e:"달 뒷면 촬영",s:"달 뒷면 처음 본 날!"}};
           var nat2 = NATIONAL_DAY2[mmdd2]||null;
           var jeolgi2 = JEOLGI_MAP2[mmdd2]||null;
           var hist2 = HISTORY_MAP2[mmdd2]||null;
+          
           if(nat2 || jeolgi2 || hist2){
             var t2="", d2="", m2="";
             if(jeolgi2){ t2="🌿 오늘은 "+jeolgi2.n; d2=jeolgi2.desc; m2=jeolgi2.msg; }
             else if(nat2){ t2="🇰🇷 오늘은 "+nat2.n; d2=nat2.s; m2=nat2.d; }
             else if(hist2){ t2="📅 과거의 오늘 · "+hist2.y; d2=hist2.e; m2=hist2.s; }
-            var existBelow = document.getElementById('V34-below-box');
+            var existBelow = document.getElementById('V36-below-box');
             if(existBelow) existBelow.remove();
             var infoBox = document.createElement('div');
-            infoBox.id='V34-below-box';
+            infoBox.id='V36-below-box';
             infoBox.style.cssText='width:100%; grid-column:1 / -1; background:linear-gradient(135deg,#f8f6ff 0%,#fff8f0 100%); border:1px solid #e8e0ff; border-radius:16px; padding:14px; margin-top:12px; box-sizing:border-box;';
-            infoBox.innerHTML='<div style="font-size:14px; font-weight:800; color:#7c6cff;">'+t2+'</div><div style="font-size:12px; font-weight:700; margin-top:4px;">'+d2+'</div><div style="font-size:11px; color:#333; margin-top:6px; background:#fff; padding:8px; border-radius:8px; white-space:pre-line; line-height:1.5;">'+m2+'</div>';
+            infoBox.innerHTML='<div style="font-size:14px; font-weight:800; color:#7c6cff;">'+t2+'</div><div style="font-size:12px; font-weight:700; margin-top:4px;">'+d2+'</div><div style="font-size:11px; color:#333; margin-top:6px; background:#fff; padding:8px; border-radius:8px; white-space:pre-line;">'+m2+'</div>';
             listEl.appendChild(infoBox);
           }
           
-          // 오늘로 버튼 (사진 있을 때도)
-          var todayStr2 = (typeof getTodayStr==='function') ? getTodayStr() : new Date().toISOString().slice(0,10);
-          if (dateStr !== todayStr2) {
-            var existBtn = document.getElementById('V34-today-btn');
+          try{
+            var all2=getAllDiaries();
+            var viewingYear2=dateStr.split('-')[0];
+            var pasts2=all2.filter(function(it){
+              var ds=(it.date||'').split('T')[0];
+              if(!ds || ds.indexOf('-')===-1) return false;
+              var p=ds.split('-');
+              return (p[1].padStart(2,'0')+'-'+p[2].padStart(2,'0'))===mmdd2 && p[0]!==viewingYear2;
+            }).sort(function(a,b){ return b.date.localeCompare(a.date); }).slice(0,3);
+            if(pasts2.length>0){
+              var existPast = document.getElementById('V36-past-box');
+              if(existPast) existPast.remove();
+              var pastBox = document.createElement('div');
+              pastBox.id='V36-past-box';
+              pastBox.style.cssText='width:100%; grid-column:1 / -1; background:#fff; border:1.5px dashed #d0c8ff; border-radius:16px; padding:14px; margin-top:12px; box-sizing:border-box;';
+              var html='<div style="font-size:14px; font-weight:800; color:#7c6cff; margin-bottom:8px;">📖 나의 과거의 오늘 ('+pasts2.length+'건)</div>';
+              for(var i=0;i<pasts2.length;i++){
+                var p=pasts2[i];
+                html+='<div onclick="window.goToPastDiary(\''+p.date+'\')" style="background:#f8f6ff; border:1px solid #e8e0ff; border-radius:10px; padding:8px 10px; margin-bottom:6px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;"><div><div style="font-size:11px; color:#9a8cc0; font-weight:700;">'+p.date+' '+(p.photo?'📷':'')+'</div><div style="font-size:12px; color:#222;">'+(p.text||'사진').slice(0,30)+'</div></div><div style="font-size:12px; color:#7c6cff; font-weight:700;">보기 →</div></div>';
+              }
+              pastBox.innerHTML=html;
+              listEl.appendChild(pastBox);
+            }
+          }catch(e){}
+          
+          var todayStr2b = (typeof getTodayStr==='function') ? getTodayStr() : new Date().toISOString().slice(0,10);
+          if (dateStr !== todayStr2b) {
+            var existBtn = document.getElementById('V36-today-btn');
             if(existBtn) existBtn.remove();
             var wrap = document.createElement('div');
-            wrap.id='V34-today-btn';
+            wrap.id='V36-today-btn';
             wrap.style.cssText='width:100%; grid-column:1 / -1; display:flex; gap:8px; margin-top:12px;';
-            wrap.innerHTML='<span onclick="window.goToToday()" style="flex:1; text-align:center; font-size:14px; background:#ff7e7e; color:#fff; padding:12px; border-radius:12px; cursor:pointer; font-weight:700;">🏠 오늘('+todayStr2.slice(5)+')로 돌아가기</span>';
+            wrap.innerHTML='<span onclick="window.goToToday()" style="flex:1; text-align:center; font-size:14px; background:#ff7e7e; color:#fff; padding:12px; border-radius:12px; cursor:pointer; font-weight:700;">🏠 오늘('+todayStr2b.slice(5)+')로 돌아가기</span>';
             listEl.appendChild(wrap);
           } else {
-            var existBtn2 = document.getElementById('V34-today-btn');
+            var existBtn2 = document.getElementById('V36-today-btn');
             if(existBtn2) existBtn2.remove();
           }
-        }catch(e){ console.log('V34 error', e); }
+        }catch(e){ console.log('V36 error', e); }
         
 
         // 💰 데이터 있을 때도 추가 버튼 표시 (버그 수정)
