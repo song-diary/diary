@@ -2958,58 +2958,54 @@ div:has(> span:V20), .v20-recovery { display:none !important; }
 </style>
 
 
-<style id="V26-style">
-#diary-around-today-list{ display:grid !important; grid-template-columns:1fr !important; width:100% !important; padding:0 !important; }
-#V26-box{ grid-column:1 / -1 !important; width:100% !important; max-width:100% !important; box-sizing:border-box !important; }
-/* 폰트 크게 - 노안 대응 */
-#V26-box div{ font-size:14px !important; }
-#V26-box div[style*="font-size:10px"]{ font-size:12px !important; }
-#V26-box div[style*="font-size:11px"]{ font-size:13px !important; }
-#V26-box div[style*="font-size:12px"]{ font-size:14px !important; }
-#V26-box div[style*="font-size:15px"]{ font-size:16px !important; }
+<style id="V27-style">
+#diary-around-today-list{ display:grid !important; grid-template-columns:1fr !important; width:100% !important; }
+#V27-box{ grid-column:1 / -1 !important; width:100% !important; max-width:100% !important; box-sizing:border-box !important; }
 </style>
 <script>
+// V27 - 달력 이동 진짜 되게!
 window.goToPastDiary = function(targetDateStr){
-  console.log('V26 Go to past', targetDateStr);
+  console.log('V27 goToPast', targetDateStr);
   try{
-    // 전역 변수 모두 업데이트
+    const d = new Date(targetDateStr);
+    const y = d.getFullYear();
+    const m = d.getMonth(); // 0-11
+    
+    // 1. 전역 변수 업데이트 - 이게 핵심!
+    // calYear, calMonth가 달력 월을 결정함
+    if(typeof calYear !== 'undefined'){ calYear = y; window.calYear = y; }
+    if(typeof calMonth !== 'undefined'){ calMonth = m; window.calMonth = m; }
+    if(typeof window.calYear !== 'undefined') window.calYear = y;
+    if(typeof window.calMonth !== 'undefined') window.calMonth = m;
+    
     window.selectedViewDate = targetDateStr;
     if(typeof selectedViewDate !== 'undefined') selectedViewDate = targetDateStr;
     
     localStorage.setItem('smartDiarySelectedDate', targetDateStr);
-    localStorage.setItem('selectedViewDate', targetDateStr);
     
-    // 달력 렌더 - 이게 핵심! 달력이 이동해야 함
+    // 2. 달력 렌더 - 월까지 이동!
     if(typeof renderCalendar === 'function'){
       renderCalendar();
     }
-    if(typeof window.renderCalendar === 'function'){
-      window.renderCalendar();
-    }
-    // 달력 날짜 선택 하이라이트
-    const calCells = document.querySelectorAll('.cal-cell, .calendar-cell, [data-date]');
-    calCells.forEach(cell=>{
-      const d = cell.dataset.date || cell.getAttribute('data-date');
-      if(d===targetDateStr || d===targetDateStr.slice(5)){
-        cell.classList.add('selected', 'active');
-      } else {
-        cell.classList.remove('selected');
-      }
-    });
     
-    // 다이어리 리스트 렌더 - 사진/일기 보이게
-    if(typeof renderDiaryAroundToday === 'function'){
-      setTimeout(()=>{
+    // 3. 다이어리 리스트 렌더 - 사진/일기 보이게!
+    setTimeout(()=>{
+      if(typeof renderDiaryAroundToday === 'function'){
         renderDiaryAroundToday();
-        window.scrollTo({top:0, behavior:'smooth'});
-        // 예약 박스 다시 숨기기
-        const sd = document.getElementById('diary-search-divider');
-        if(sd) sd.style.display='none';
-      }, 100);
-    }
+      }
+      if(typeof renderMoneyAroundToday === 'function'){
+        renderMoneyAroundToday();
+      }
+      // 예약 필터 숨기기
+      const sd = document.getElementById('diary-search-divider');
+      const card = document.getElementById('diary-search-filter-card');
+      if(sd){ sd.style.display='none'; sd.classList.remove('floating-bottom'); }
+      if(card){ card.style.display='none'; }
+      window.scrollTo({top:0, behavior:'smooth'});
+    }, 150);
     
   }catch(e){
-    console.error(e);
+    console.error('goToPast error', e);
     localStorage.setItem('smartDiarySelectedDate', targetDateStr);
     location.reload();
   }
@@ -3017,15 +3013,26 @@ window.goToPastDiary = function(targetDateStr){
 
 window.goToToday = function(){
   const today = (typeof getTodayStr==='function') ? getTodayStr() : new Date().toISOString().slice(0,10);
+  const d = new Date(today);
+  const y = d.getFullYear();
+  const m = d.getMonth();
+  
+  if(typeof calYear !== 'undefined'){ calYear = y; window.calYear = y; }
+  if(typeof calMonth !== 'undefined'){ calMonth = m; window.calMonth = m; }
+  window.calYear = y;
+  window.calMonth = m;
   window.selectedViewDate = today;
   if(typeof selectedViewDate !== 'undefined') selectedViewDate = today;
   localStorage.setItem('smartDiarySelectedDate', today);
+  
   if(typeof renderCalendar === 'function') renderCalendar();
-  if(typeof renderDiaryAroundToday === 'function') renderDiaryAroundToday();
-  // 예약 박스 다시 보이게
-  const sd = document.getElementById('diary-search-divider');
-  if(sd) sd.style.display='';
-  window.scrollTo({top:0, behavior:'smooth'});
+  setTimeout(()=>{
+    if(typeof renderDiaryAroundToday === 'function') renderDiaryAroundToday();
+    if(typeof renderMoneyAroundToday === 'function') renderMoneyAroundToday();
+    const sd = document.getElementById('diary-search-divider');
+    if(sd){ sd.style.display=''; }
+    window.scrollTo({top:0, behavior:'smooth'});
+  }, 100);
 };
 </script>
 
@@ -8835,63 +8842,56 @@ window.attachPhotoDoubleTap = function(el, handler){
         }
 
         if (filtered.length === 0) {
-            // V26 - 6가지 요청 반영
+            // V27 - 6가지 이슈 수정
             const mmdd = dateStr.slice(5);
             const m = parseInt(mmdd.split('-')[0]), d = parseInt(mmdd.split('-')[1]);
             
-            // 국경일 맵
             const NATIONAL_DAY = {
-              "01-01": {name:"신정", desc:"새해 첫날, 새로운 마음으로 시작하는 날"},
-              "03-01": {name:"삼일절", desc:"1919년 3월 1일, 독립을 외친 날. 자유를 위해 목소리를 낸 날이에요."},
-              "05-05": {name:"어린이날", desc:"모든 어린이가 행복해야 하는 날. 당신 안의 어린이도 행복한가요?"},
-              "06-06": {name:"현충일", desc:"나라를 위해 희생한 분들을 기억하는 날. 감사함을 기억하는 날이에요."},
-              "08-15": {name:"광복절", desc:"1945년 빛을 되찾은 날. 어둠이 끝나고 빛이 돌아온 날이에요."},
-              "10-03": {name:"개천절", desc:"하늘이 열린 날, 단군이 고조선을 세운 날. 새로운 시작의 날이에요."},
-              "10-09": {name:"한글날", desc:"1446년 세종대왕이 한글을 반포한 날. 우리의 글자를 기념하는 날이에요."},
-              "12-25": {name:"크리스마스", desc:"사랑과 나눔의 날, 따뜻한 마음을 나누는 날이에요."}
+              "01-01": {name:"신정", short:"새해 첫날", desc:"새해 첫날, 새로운 마음으로 시작하는 날이에요."},
+              "03-01": {name:"삼일절", short:"독립운동", desc:"1919년 3월 1일, 독립을 외친 날.\n자유를 위해 목소리를 낸 날이에요."},
+              "05-05": {name:"어린이날", short:"어린이날", desc:"모든 어린이가 행복해야 하는 날.\n당신 안의 어린이도 행복한가요?"},
+              "06-06": {name:"현충일", short:"순국선열", desc:"나라를 위해 희생한 분들을 기억하는 날.\n감사함을 기억하는 날이에요."},
+              "08-15": {name:"광복절", short:"빛을 되찾은 날", desc:"1945년 빛을 되찾은 날.\n어둠이 끝나고 빛이 돌아온 날이에요."},
+              "10-03": {name:"개천절", short:"하늘이 열린 날", desc:"하늘이 열린 날, 단군이 고조선을 세운 날.\n새로운 시작의 날이에요."},
+              "10-09": {name:"한글날", short:"한글 반포", desc:"1446년 세종대왕이 한글을 반포한 날.\n우리의 글자를 기념하는 날이에요."},
+              "12-25": {name:"크리스마스", short:"성탄절", desc:"사랑과 나눔의 날, 따뜻한 마음을 나누는 날이에요."}
             };
             
             const JEOLGI_MAP = {
-              "02-03": {name:"입춘", desc:"봄의 시작", msg:"차가운 바람 속에서도 봄은 시작되고 있어요.\n당신에게도 새로운 시작이 필요한 때예요."},
-              "02-18": {name:"우수", desc:"눈이 비가 되어 내리는 때", msg:"얼어있던 것이 녹는 때예요. 굳어있던 마음도 녹아내릴 때예요."},
-              "03-05": {name:"경칩", desc:"개구리가 깨어나는 때", msg:"겨울잠 자던 것들이 깨어나요. 당신 안의 꿈도 깨어날 때예요."},
-              "10-08": {name:"한로", desc:"찬 이슬이 맺히는 때", msg:"찬 이슬이 맺히는 아침이에요.\n여름의 열기가 완전히 가시고 가을이 깊어졌어요.\n당신도 뜨거웠던 마음을 식히고 정리하기 좋은 날이에요."},
-              "10-23": {name:"상강", desc:"서리가 내리는 때", msg:"서리가 내리면 단풍이 가장 붉어져요.\n어려움이 당신을 더 아름답게 만들어요."},
-              "12-21": {name:"동지", desc:"1년 중 밤이 가장 긴 날", msg:"오늘은 밤이 가장 길지만 내일부터는 낮이 1분씩 길어져요.\n당신이 지금 가장 어둡다면 내일부터는 밝아진다는 뜻이에요."}
+              "10-08": {name:"한로", short:"찬 이슬", desc:"찬 이슬이 맺히는 때", msg:"찬 이슬이 맺히는 아침이에요.\n여름의 열기가 완전히 가시고 가을이 깊어졌어요."},
+              "10-23": {name:"상강", short:"서리", desc:"서리가 내리는 때", msg:"서리가 내리면 단풍이 가장 붉어져요.\n어려움이 당신을 더 아름답게 만들어요."},
+              "12-21": {name:"동지", short:"가장 긴 밤", desc:"1년 중 밤이 가장 긴 날", msg:"오늘은 밤이 가장 길지만 내일부터는 낮이 1분씩 길어져요."}
             };
             
             const HISTORY_MAP = {
-              "01-01": {y:"2000년", e:"밀레니엄 새해", s:"모두가 걱정했지만 아무 일도 일어나지 않았죠.\n당신의 걱정도 별일 아닐 수 있어요."},
-              "10-06": {y:"1927년", e:"첫 유성영화 '재즈 싱어' 개봉", s:"1927년 오늘, 처음으로 영화에서 소리가 났어요.\n'당신은 아직 아무것도 못 들었소' 그 한마디가 영화 역사를 바꿨죠."},
-              "10-07": {y:"1959년", e:"소련, 달 뒷면 첫 촬영", s:"1959년 오늘, 인류가 처음으로 달의 뒷면을 봤어요.\n보이지 않던 면을 보는 날이에요."},
-              "10-08": {y:"1871년", e:"시카고 대화재", s:"한 마리 소가 건드린 등불에서 도시가 불탔대요.\n작은 불씨가 큰 변화를 만들죠."}
+              "10-06": {y:"1927년", e:"첫 유성영화 개봉", s:"1927년 오늘, 처음으로 영화에서 소리가 났어요.\n'당신은 아직 아무것도 못 들었소' 그 한마디가 역사를 바꿨죠."},
+              "10-07": {y:"1959년", e:"달 뒷면 첫 촬영", s:"1959년 오늘, 인류가 처음으로 달의 뒷면을 봤어요."},
+              "10-08": {y:"1871년", e:"시카고 대화재", s:"한 마리 소가 건드린 등불에서 도시가 불탔대요."}
             };
             
             const nat = NATIONAL_DAY[mmdd] || null;
             const jeolgi = JEOLGI_MAP[mmdd] || null;
             const hist = HISTORY_MAP[mmdd] || null;
 
-            let title, desc, msg;
-            // 우선순위: 절기 > 국경일 > 역사 > 계절
+            let title, shortDesc, longMsg;
             if(jeolgi){
-              title = `🌿 오늘은 ${jeolgi.name}(${jeolgi.hanja})`;
-              desc = jeolgi.desc;
-              msg = jeolgi.msg;
+              title = `🌿 오늘은 ${jeolgi.name}`;
+              shortDesc = jeolgi.desc;
+              longMsg = jeolgi.msg;
             } else if(nat){
               title = `🇰🇷 오늘은 ${nat.name}`;
-              desc = nat.desc;
-              msg = nat.desc + "\n오늘은 특별한 국경일이에요. 그 의미를 한번 생각해보는 날이에요.";
+              shortDesc = nat.short;
+              longMsg = nat.desc;
             } else if(hist){
-              title = `📅 과거의 오늘 · ${m}월 ${d}일`;
-              desc = `${hist.y} ${hist.e}`;
-              msg = hist.s;
+              title = `📅 과거의 오늘`;
+              shortDesc = `${hist.y} ${hist.e}`;
+              longMsg = hist.s;
             } else {
               title = `📅 오늘 · ${m}월 ${d}일`;
-              desc = `계절이 머무는 날`;
-              msg = `특별한 절기나 역사적 사건이 없는 날이에요.\n그래서 당신의 오늘이 역사가 될 수 있는 날이에요.`;
+              shortDesc = `계절이 머무는 날`;
+              longMsg = `특별한 절기나 역사적 사건이 없는 날이에요.\n그래서 당신의 오늘이 역사가 될 수 있는 날이에요.`;
             }
 
-            // 나의 과거의 오늘
             let myPastHTML='';
             try{
               const all = getAllDiaries();
@@ -8902,42 +8902,35 @@ window.attachPhotoDoubleTap = function(el, handler){
                 const p=ds.split('-');
                 return p[1].padStart(2,'0')===mmdd.split('-')[0] && p[2].padStart(2,'0')===mmdd.split('-')[1] && p[0]!==thisYear;
               }).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
-
               if(pasts.length>0){
-                myPastHTML = `<div style="margin-top:14px; border-top:2px dashed #e8e0ff; padding-top:12px;"><div style="font-size:14px; font-weight:800; color:#7c6cff; margin-bottom:8px;">📖 나의 과거의 오늘 (클릭하면 그날로 이동)</div>` + pasts.map(p=>{
-                  const hasPhoto = p.photo ? '📷 ' : '';
-                  const txt = (p.text||'사진 기록').slice(0,35);
-                  return `<div onclick="window.goToPastDiary('${p.date}')" style="background:#fff; border:1.5px solid #e8e0ff; border-radius:12px; padding:10px 12px; margin-bottom:6px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;"><div><div style="font-size:12px; color:#9a8cc0; font-weight:700;">${p.date} ${hasPhoto}</div><div style="font-size:13px; color:#222; margin-top:2px; font-weight:500;">${txt}</div></div><div style="font-size:13px; color:#7c6cff; font-weight:700;">보기 →</div></div>`;
+                myPastHTML = `<div style="margin-top:14px; border-top:2px dashed #e8e0ff; padding-top:12px;"><div style="font-size:15px; font-weight:800; color:#7c6cff; margin-bottom:8px;">📖 나의 과거의 오늘 (클릭하면 이동)</div>` + pasts.map(p=>{
+                  return `<div onclick="window.goToPastDiary('${p.date}')" style="background:#fff; border:1.5px solid #e8e0ff; border-radius:12px; padding:10px 12px; margin-bottom:6px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;"><div><div style="font-size:13px; color:#9a8cc0; font-weight:700;">${p.date} ${p.photo?'📷':''}</div><div style="font-size:14px; color:#222; font-weight:500;">${(p.text||'사진').slice(0,32)}</div></div><div style="font-size:14px; color:#7c6cff; font-weight:700;">보기 →</div></div>`;
                 }).join('') + `</div>`;
-              } else {
-                myPastHTML = `<div style="margin-top:14px; border-top:2px dashed #e8e0ff; padding-top:10px; font-size:13px; color:#999;">📖 나의 과거의 오늘 - 아직 이 날짜 기록 없음</div>`;
               }
             }catch(e){}
 
-            // 오늘로 돌아오기 버튼 표시 (과거로 갔을 때만)
             const todayStr = (typeof getTodayStr==='function') ? getTodayStr() : new Date().toISOString().slice(0,10);
             const isNotToday = dateStr !== todayStr;
-            const backToTodayBtn = isNotToday ? `<span onclick="window.goToToday()" style="flex:1; text-align:center; font-size:13px; background:#ff7e7e; color:#fff; padding:10px; border-radius:12px; cursor:pointer; font-weight:700;">🏠 오늘로 돌아가기</span>` : '';
+            const backBtn = isNotToday ? `<span onclick="window.goToToday()" style="flex:1; text-align:center; font-size:14px; background:#ff7e7e; color:#fff; padding:12px; border-radius:12px; cursor:pointer; font-weight:700;">🏠 오늘로</span>` : '';
 
-            listEl.innerHTML = `<div id="V26-box" class="empty-state-hint" style="width:100% !important; grid-column:1 / -1 !important; background:linear-gradient(135deg,#f8f6ff 0%,#fff8f0 100%); border:1px solid #e8e0ff; border-radius:16px; padding:16px; text-align:left; box-sizing:border-box; margin:0;">
-              <div style="display:flex; justify-content:space-between; align-items:center;">
-                <div style="font-size:15px; font-weight:800; color:#7c6cff; line-height:1.3;">${title}</div>
-              </div>
-              <div style="font-size:15px; font-weight:700; color:#2d2a4a; margin-top:8px; line-height:1.4;">${desc}</div>
-              <div style="font-size:14px; color:#333; margin-top:8px; line-height:1.6; background:rgba(255,255,255,0.95); padding:12px; border-radius:10px; white-space:pre-line; font-weight:500;">${msg}</div>
+            listEl.innerHTML = `<div id="V27-box" class="empty-state-hint" style="width:100% !important; grid-column:1 / -1 !important; background:linear-gradient(135deg,#f8f6ff 0%,#fff8f0 100%); border:1px solid #e8e0ff; border-radius:16px; padding:16px; box-sizing:border-box; margin:0;">
+              <div style="font-size:16px; font-weight:800; color:#7c6cff;">${title}</div>
+              <div style="font-size:15px; font-weight:700; color:#2d2a4a; margin-top:6px;">${shortDesc}</div>
+              <div style="font-size:14px; color:#333; margin-top:8px; line-height:1.6; background:#fff; padding:12px; border-radius:10px; white-space:pre-line;">${longMsg}</div>
               ${myPastHTML}
               <div style="display:flex; gap:8px; margin-top:14px;">
                 <span onclick="openDiaryForm('${dateStr}')" style="flex:1; text-align:center; font-size:14px; background:#7c6cff; color:#fff; padding:12px; border-radius:12px; cursor:pointer; font-weight:700;">✏️ 오늘 기록</span>
-                ${backToTodayBtn}
+                ${backBtn}
               </div>
             </div>`;
             
-            // 예약 박스 숨기기 - 나의 과거로 이동시에도 안 떠있게
-            const searchDivider = document.getElementById('diary-search-divider');
-            if(searchDivider){
-              searchDivider.style.display='none';
-              searchDivider.classList.remove('floating-bottom');
-            }
+            // 예약 필터 숨기기 버그 - 정확히 숨김
+            setTimeout(()=>{
+              const sd = document.getElementById('diary-search-divider');
+              const card = document.getElementById('diary-search-filter-card');
+              if(sd){ sd.style.display='none'; sd.classList.remove('floating-bottom'); }
+              if(card){ card.style.display='none'; }
+            }, 10);
             return;
         }
 
