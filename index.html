@@ -2958,18 +2958,16 @@ div:has(> span:V20), .v20-recovery { display:none !important; }
 </style>
 
 
-<style id="V40-style">
+<style id="V43-style">
 #diary-around-today-list{ display:grid !important; grid-template-columns:1fr !important; width:100% !important; }
-#V40-box, #V40-below-box, #V40-past-box, #V40-btn-row{ grid-column:1 / -1 !important; width:100% !important; box-sizing:border-box !important; }
+#V43-box, #V43-below-box, #V43-past-box, #V43-btn-row{ grid-column:1 / -1 !important; width:100% !important; box-sizing:border-box !important; }
 #diary-search-divider{ display:none !important; }
 #diary-search-filter-card{ display:none !important; }
 [data-daily-id]{ display:none !important; }
 </style>
 <script>
-// V40 - 왔다갔다 완전 고침! 덮어쓰기 안 함!
 window.goToPastDiary = function(targetDateStr){
   try{
-    console.log('[V40] goToPastDiary', targetDateStr);
     var d = new Date(targetDateStr);
     if(isNaN(d.getTime())){ alert('날짜 오류: '+targetDateStr); return; }
     window.calYear = d.getFullYear();
@@ -2980,16 +2978,11 @@ window.goToPastDiary = function(targetDateStr){
     if(typeof selectedViewDate !== 'undefined') selectedViewDate = targetDateStr;
     localStorage.setItem('smartDiarySelectedDate', targetDateStr);
     if(typeof renderCalendar === 'function') renderCalendar();
-    setTimeout(function(){ 
-      if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday(); 
-      console.log('[V40] past rendered');
-      window.scrollTo({top:0, behavior:'smooth'}); 
-    }, 150);
+    setTimeout(function(){ if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday(); window.scrollTo({top:0, behavior:'smooth'}); }, 150);
   }catch(e){ console.error(e); alert('이동 실패: '+e.message); }
 };
 window.goToToday = function(){
   try{
-    console.log('[V40] goToToday');
     var today = (typeof getTodayStr==='function') ? getTodayStr() : new Date().toISOString().slice(0,10);
     var d = new Date(today);
     window.calYear = d.getFullYear(); window.calMonth = d.getMonth();
@@ -3001,33 +2994,10 @@ window.goToToday = function(){
     if(typeof renderCalendar === 'function') renderCalendar();
     setTimeout(function(){ 
       if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday(); 
-      console.log('[V40] today rendered');
-      var sd = document.getElementById('diary-search-divider');
-      if(sd) sd.style.display='none';
-      document.querySelectorAll('[data-daily-id]').forEach(function(el){ el.style.display='none'; });
       window.scrollTo({top:0, behavior:'smooth'}); 
     }, 150);
-  }catch(e){ console.error(e); alert('오늘로 이동 실패: '+e.message); }
+  }catch(e){ console.error(e); }
 };
-(function(){
-  setTimeout(function(){
-    if(typeof window.renderDiaryAroundToday==='function'){
-      var orig = window.renderDiaryAroundToday;
-      window.renderDiaryAroundToday = function(){
-        var r = orig.apply(this, arguments);
-        setTimeout(function(){
-          document.querySelectorAll('[data-daily-id]').forEach(function(el){ el.style.display='none'; });
-          var sd = document.getElementById('diary-search-divider');
-          if(sd) sd.style.display='none';
-          var sc = document.getElementById('diary-search-filter-card');
-          if(sc) sc.style.display='none';
-        }, 80);
-        return r;
-      };
-      console.log('[V40] renderDiaryAroundToday patched');
-    }
-  }, 600);
-})();
 </script>
 
 </head>
@@ -8843,32 +8813,118 @@ window.attachPhotoDoubleTap = function(el, handler){
         var isNotTodayLocal = dateStr !== todayStrLocal;
         var isGalleryMode = listEl.classList.contains('gallery-mode');
 
+        var EXPERT_DATA = {
+          "01-01":{cat:"국경일", n:"신정", s:"새해 첫날 - 양력 1월 1일", d:"양력 새해 첫날! 신정(新正)이에요.\n원래 우리나라는 음력 설이 진짜 새해였는데, 1896년 고종이 양력을 도입하면서 생긴 날!\n그래서 신정과 구정이 둘 다 있는 거예요.\n오늘은 작년 다이어리 펼쳐보고 올해 목표 3개만 써보세요!"},
+          "03-01":{cat:"국경일", n:"삼일절", s:"독립을 외친 날 - 1919년", d:"1919년 오늘, 온 거리에 태극기가 펄럭였어요!\n33인이 독립선언서를 발표하고 민족대표로 외친 날!\n유관순 누나가 16살에 외친 '대한 독립 만세!'\n그 함성이 지금도 들리는 것 같아요."},
+          "05-05":{cat:"명절", n:"어린이날", s:"어린이가 행복한 날", d:"1923년 방정환 선생이 만든 어린이날!\n원래는 5월 1일이었는데, 1946년부터 5월 5일로 바뀌었어요.\n'어린이를 내려다보지 말고 쳐다보자'"},
+          "06-06":{cat:"국경일", n:"현충일", s:"나라를 위해 희생한 분들을 기리는 날", d:"1956년부터 시작된 현충일!\n나라를 위해 목숨 바친 분들을 기리는 날이에요.\n서울 동작동 국립묘지에서 추념식이 열리죠.\n오전 10시 사이렌이 울리면 1분간 묵념해요."},
+          "08-15":{cat:"국경일", n:"광복절", s:"빛을 되찾은 날", d:"1945년 오늘, 일본으로부터 해방된 날!\n'광복(光復)'은 빛을 되찾았다는 뜻!\n35년간의 어둠 끝에 찾아온 빛!"},
+          "10-03":{cat:"국경일", n:"개천절", s:"하늘이 열린 날 - 단군 건국", d:"단군 할아버지가 고조선을 세운 날!\n기원전 2333년, 단군이 아사달에 도읍을 정했어요.\n'개천(開天)'은 하늘이 열렸다는 뜻!\n올해로 4359년째!"},
+          "10-09":{cat:"국경일", n:"한글날", s:"한글 반포일 - 창제 vs 반포 구분!", d:"한글날은 '창제일'이 아니라 '반포일'이에요!\n세종대왕이 한글을 만든 건 1443년(창제),\n백성에게 알린 건 1446년 9월 상순(반포)!\n원래 음력 9월 상순이었는데, 1926년 양력으로 환산해 10월 9일이 된 거예요.\n훈민정음 해례본에 날짜가 적혀 있어요!\n세계에서 가장 과학적인 글자!"},
+          "10-08":{cat:"24절기", n:"한로", s:"찬 이슬이 맺히는 때", d:"한로(寒露)! 찬 이슬이 맺히는 때!\n'찰 한, 이슬 로' - 찬 이슬이라는 뜻!\n여름의 열기가 완전히 가시고 가을이 깊어졌어요.\n풀잎 끝에 맺힌 이슬이 차갑게 느껴지는 때!\n이때부터 단풍이 진짜 예뻐져요. 산에 가기 딱 좋은 날!"},
+          "10-23":{cat:"24절기", n:"상강", s:"서리가 내리는 때", d:"상강(霜降)! 서리가 내리는 때!\n24절기 중 18번째, 가을의 마지막 절기!\n서리가 내리면 단풍이 가장 붉어진대요.\n이게 끝나면 입동, 겨울이에요!\n그러니까 지금 가을을 마음껏 즐기세요!"},
+          "07-20":{cat:"복날", n:"초복", s:"첫 번째 복날", d:"초복(初伏)! 삼복 중 첫 번째 복날!\n'복'은 엎드린다는 뜻! 더위에 엎드려 지낸다는 거예요.\n초복에는 삼계탕, 추어탕 먹는 날!"},
+          "07-30":{cat:"복날", n:"중복", s:"두 번째 복날", d:"중복(中伏)! 삼복 중 두 번째 복날!\n중복이 가장 덥다는 말이 있어요!"},
+          "08-09":{cat:"복날", n:"말복", s:"마지막 복날", d:"말복(末伏)! 삼복 중 마지막 복날!\n말복이 지나면 더위가 한풀 꺾여요.\n'말복이 지나면 가을바람 분다'!"}
+        };
+        
+        var FALLBACK_STORIES = [
+          // 한국속담 20개
+          {type:"한국속담", title:"💡 한국속담 - 티끌 모아 태산", desc:"작은 것도 모이면 큰 것이 된다", story:"티끌 모아 태산!\n작은 티끌이 모여 태산이 된다는 뜻!\n다이어리도 마찬가지!\n하루 한 줄이 모여 1년, 10년이 되면 어마어마한 기록이 돼요!\n오늘 한 줄이라도 써보세요!\n그게 10년 뒤 태산이 됩니다!"},
+          {type:"한국속담", title:"💡 한국속담 - 가는 말이 고와야 오는 말이 곱다", desc:"말을 곱게 해야 대접도 곱게 받는다", story:"가는 말이 고와야 오는 말이 곱다!\n오늘 누군가에게 고운 말 한마디 건네보세요!\n'고마워', '사랑해', '수고했어'\n작은 말 한마디가 큰 행복을 만들어요!\n말의 힘을 믿어보세요!"},
+          {type:"한국속담", title:"💡 한국속담 - 꿩 먹고 알 먹고", desc:"한 번에 두 가지 이익", story:"꿩 먹고 알 먹고!\n꿩도 먹고 알도 먹고!\n일석이조랑 비슷해요!\n오늘 꿩 먹고 알 먹는 일을 해보세요!\n운동하면서 건강도 챙기고 기분도 좋고!"},
+          {type:"한국속담", title:"💡 한국속담 - 발 없는 말이 천리 간다", desc:"소문은 빠르게 퍼진다", story:"발 없는 말이 천리 간다!\n말은 발이 없는데 천리를 간대요!\n소문이 얼마나 빠른지 보여주는 속담!\n좋은 소문도, 나쁜 소문도 빨리 퍼져요!\n오늘은 좋은 소문을 내는 날!"},
+          {type:"한국속담", title:"💡 한국속담 - 원숭이도 나무에서 떨어진다", desc:"잘하는 사람도 실수할 때가 있다", story:"원숭이도 나무에서 떨어진다!\n나무 타기 천재인 원숭이도 떨어질 때가 있어요!\n실수해도 괜찮아요!\n잘하는 사람도 실수해요!\n오늘 실수해도 너무 자책하지 마세요!"},
+          {type:"한국속담", title:"💡 한국속담 - 등잔 밑이 어둡다", desc:"가까운 곳의 일을 모른다", story:"등잔 밑이 어둡다!\n등잔 바로 밑이 가장 어둡대요!\n가까운 곳을 못 보는 거죠!\n가족, 친구, 내 마음...\n가까운 곳에 행복이 있을지도 몰라요!\n오늘 가까운 곳을 돌아보세요!"},
+          {type:"한국속담", title:"💡 한국속담 - 고양이에게 생선 맡기다", desc:"믿을 수 없는 사람에게 맡기다", story:"고양이에게 생선 맡기다!\n고양이에게 생선을 맡기면 어떻게 될까요?\n당연히 먹어버리죠! ㅋㅋ\n믿을 수 없는 사람에게 중요한 일을 맡기면 안 된다는 뜻!"},
+          {type:"한국속담", title:"💡 한국속담 - 고래 싸움에 새우 등 터진다", desc:"강자 싸움에 약자가 피해", story:"고래 싸움에 새우 등 터진다!\n고래가 싸우면 새우 등이 터진대요!\n강한 사람들 싸움에 약한 사람이 피해 보는 거!\n세상 이치가 그렇죠!\n오늘은 약자를 배려하는 날!"},
+          {type:"한국속담", title:"💡 한국속담 - 낮말은 새가 듣고 밤말은 쥐가 듣는다", desc:"말조심해야 한다", story:"낮말은 새가 듣고 밤말은 쥐가 듣는다!\n낮에 한 말은 새가, 밤에 한 말은 쥐가 듣는대요!\n비밀은 없다는 뜻!\n말조심해야 해요!\n오늘은 말 한마디 조심하는 날!"},
+          {type:"한국속담", title:"💡 한국속담 - 빈 수레가 요란하다", desc:"실속 없는 사람이 더 떠든다", story:"빈 수레가 요란하다!\n짐이 없는 빈 수레가 더 요란하게 굴러간대요!\n아는 게 없는 사람이 더 떠든다는 뜻!\n진짜 고수는 조용해요!\n오늘은 말보다 행동으로!"},
+          {type:"한국속담", title:"💡 한국속담 - 소 잃고 외양간 고친다", desc:"일이 틀어진 뒤에 손을 쓴다", story:"소 잃고 외양간 고친다!\n소 잃고 나서 외양간 고치면 뭐해요!\n이미 늦은 거죠!\n미리미리 준비해야 해요!\n오늘 잃기 전에 외양간 고쳐보세요!"},
+          {type:"한국속담", title:"💡 한국속담 - 우물 안 개구리", desc:"세상을 좁게 보는 사람", story:"우물 안 개구리!\n우물 안 개구리는 세상이 우물만큼인 줄 알아요!\n세상을 좁게 보는 사람을 비유!\n오늘은 우물 밖으로 나와보세요!\n세상은 넓고 할 일은 많아요!"},
+          {type:"한국속담", title:"💡 한국속담 - 개구리 올챙이 적 생각 못한다", desc:"출세를 하면 과거를 잊는다", story:"개구리 올챙이 적 생각 못한다!\n개구리가 올챙이 때를 잊는대요!\n사람도 출세하면 과거를 잊어요!\n초심을 잃지 마세요!\n오늘은 올챙이 때를 생각하는 날!"},
+          {type:"한국속담", title:"💡 한국속담 - 도토리 키 재기", desc:"비슷한 것끼리 우열을 가린다", story:"도토리 키 재기!\n도토리끼리 키 재면 얼마나 차이 나겠어요!\n다 비슷비슷!\n별 차이 없는 것끼리 우열 가리는 걸 비유!\n오늘은 비교하지 말고 나만의 길을!"},
+          {type:"한국속담", title:"💡 한국속담 - 벼는 익을수록 고개를 숙인다", desc:"겸손해야 한다", story:"벼는 익을수록 고개를 숙인다!\n벼가 익으면 고개를 숙여요!\n사람도 성공할수록 겸손해야 한다는 뜻!\n겸손한 사람이 진짜 멋진 사람!\n오늘은 고개 숙이는 날!"},
+          {type:"한국속담", title:"💡 한국속담 - 구슬이 서말이라도 꿰어야 보배", desc:"아무리 좋아도 정리해야 쓸모", story:"구슬이 서말이라도 꿰어야 보배!\n구슬이 3말이나 있어도 꿰지 않으면 쓸모없어요!\n아무리 좋은 것도 정리하고 꿰어야 보배!\n다이어리도 쓰는 것만이 아니라 정리해야 보배!"},
+          {type:"한국속담", title:"💡 한국속담 - 하룻강아지 범 무서운 줄 모른다", desc:"아무것도 모르고 덤빈다", story:"하룻강아지 범 무서운 줄 모른다!\n태어난 지 하루 된 강아지가 범한테 덤빈다는 거!\n무식하면 용감하다는 뜻!\n때론 무식이 힘이 되기도 해요!\n오늘은 하룻강아지처럼 용감하게!"},
+          {type:"한국속담", title:"💡 한국속담 - 콩 심은 데 콩 나고 팥 심은 데 팥 난다", desc:"뿌린 대로 거둔다", story:"콩 심은 데 콩 나고 팥 심은 데 팥 난다!\n콩 심으면 콩 나고 팥 심으면 팥 나요!\n당연한 거죠!\n뿌린 대로 거둔다는 뜻!\n오늘 좋은 씨앗 심어보세요!"},
+          {type:"한국속담", title:"💡 한국속담 - 열 길 물속은 알아도 한 길 사람 속은 모른다", desc:"사람 마음은 알기 어렵다", story:"열 길 물속은 알아도 한 길 사람 속은 모른다!\n10길 물속은 알아도 1길 사람 속은 모른대요!\n사람 마음이 얼마나 어려운지!\n오늘은 사람 마음을 헤아려보는 날!"},
+          {type:"한국속담", title:"💡 한국속담 - 백지장도 맞들면 낫다", desc:"협력하면 쉬워진다", story:"백지장도 맞들면 낫다!\n종이 한 장도 같이 들면 낫다는 뜻!\n혼자보다 같이가 쉬워요!\n협력의 힘!\n오늘은 누군가와 함께 해보세요!"},
+          // 사자성어 20개
+          {type:"사자성어", title:"📚 사자성어 - 온고지신", desc:"옛것을 익혀 새것을 안다", story:"온고지신(溫故知新)!\n옛것을 익혀 새것을 안다!\n공자님이 하신 말씀!\n오늘은 과거 다이어리 펼쳐보세요!\n작년 오늘 뭐 했는지 보면 새로운 깨달음이 있을 거예요!"},
+          {type:"사자성어", title:"📚 사자성어 - 일석이조", desc:"한 번에 두 가지 이익", story:"일석이조(一石二鳥)!\n돌 하나로 새 두 마리!\n오늘 두 가지 좋은 일 해보세요!\n산책하면서 사진도 찍고!\n일석이조로 알차게!"},
+          {type:"사자성어", title:"📚 사자성어 - 유비무환", desc:"준비가 있으면 걱정이 없다", story:"유비무환(有備無患)!\n준비가 있으면 근심이 없다!\n미리 준비하면 걱정 없어요!\n다이어리에 내일 할 일 3개만 적어보세요!\n준비된 사람에게 행운이!"},
+          {type:"사자성어", title:"📚 사자성어 - 자업자득", desc:"자기 행동의 결과를 자기가 받는다", story:"자업자득(自業自得)!\n자기가 한 일을 자기가 받는다!\n좋은 일 하면 좋은 일, 나쁜 일 하면 나쁜 일!\n오늘 좋은 씨앗 하나 심어보세요!"},
+          {type:"사자성어", title:"📚 사자성어 - 일촉즉발", desc:"매우 위급한 상황", story:"일촉즉발(一觸卽發)!\n하나만 건드려도 바로 터진다는 뜻!\n매우 위급한 상황!\n오늘 일촉즉발 상황을 잘 넘겨보세요!\n위기는 기회!"},
+          {type:"사자성어", title:"📚 사자성어 - 전화위복", desc:"화가 바뀌어 복이 된다", story:"전화위복(轉禍爲福)!\n화가 바뀌어 복이 된다!\n나쁜 일이 좋은 일이 되는 거!\n실패가 성공의 어머니!\n오늘의 화가 내일의 복이 될 거예요!"},
+          {type:"사자성어", title:"📚 사자성어 - 동고동락", desc:"고생과 즐거움을 같이 한다", story:"동고동락(同苦同樂)!\n고생과 즐거움을 같이 한다!\n진짜 친구는 같이 고생하고 같이 즐거워하는 사람!\n오늘 누군가와 동고동락 해보세요!"},
+          {type:"사자성어", title:"📚 사자성어 - 권토중래", desc:"실패 후 다시 힘을 내어 돌아온다", story:"권토중래(捲土重來)!\n흙먼지를 일으키며 다시 돌아온다!\n실패해도 다시 일어서는 거!\n오늘 실패해도 권토중래!\n다시 일어나면 돼요!"},
+          {type:"사자성어", title:"📚 사자성어 - 무릉도원", desc:"별천지, 이상향", story:"무릉도원(武陵桃源)!\n복숭아꽃 핀 별천지!\n도연명이 쓴 이상향!\n현실은 힘들어도 마음속에 무릉도원 하나쯤!\n오늘 마음속 무릉도원에서 쉬어보세요!"},
+          {type:"사자성어", title:"📚 사자성어 - 우공이산", desc:"끈기 있게 하면 못 할 일이 없다", story:"우공이산(愚公移山)!\n어리석은 노인이 산을 옮긴다!\n매일 조금씩 산을 옮겨 결국 성공!\n끈기가 중요!\n오늘도 조금씩 산을 옮겨보세요!"},
+          {type:"사자성어", title:"📚 사자성어 - 와신상담", desc:"목적 달성을 위해 고생을 참는다", story:"와신상담(臥薪嘗膽)!\n섶에 눕고 쓸개를 맛본다!\n복수를 위해 고생을 참은 오왕!\n목표를 위해 고생을 참는 거!\n오늘 와신상담으로 목표 향해!"},
+          {type:"사자성어", title:"📚 사자성어 - 고진감래", desc:"고생 끝에 즐거움이 온다", story:"고진감래(苦盡甘來)!\n고생이 다하면 단 것이 온다!\n고생 끝에 낙이 온다는 뜻!\n지금 힘들어도 곧 달콤한 날이 올 거예요!\n조금만 더 힘내요!"},
+          {type:"사자성어", title:"📚 사자성어 - 박학다식", desc:"널리 알고 많이 안다", story:"박학다식(博學多識)!\n널리 알고 많이 안다!\n많이 아는 사람!\n오늘 하나라도 새로 배워보세요!\n박학다식으로 가는 길!"},
+          {type:"사자성어", title:"📚 사자성어 - 초지일관", desc:"처음부터 끝까지 한결같이", story:"초지일관(初志一貫)!\n처음 뜻을 끝까지 관철한다!\n처음 마음 그대로!\n초심을 잃지 않는 거!\n오늘 초지일관으로!"},
+          {type:"사자성어", title:"📚 사자성어 - 천생연분", desc:"하늘이 맺어준 인연", story:"천생연분(天生緣分)!\n하늘이 맺어준 인연!\n운명적인 만남!\n오늘 천생연분을 만날지도 몰라요!\n인연을 소중히!"},
+          {type:"사자성어", title:"📚 사자성어 - 백문불여일견", desc:"백 번 듣는 것보다 한 번 보는 게 낫다", story:"백문불여일견(百聞不如一見)!\n백 번 듣는 것보다 한 번 보는 게 낫다!\n직접 보는 게 중요!\n오늘 직접 보고 경험해보세요!"},
+          {type:"사자성어", title:"📚 사자성어 - 과유불급", desc:"지나침은 모자람만 못하다", story:"과유불급(過猶不及)!\n지나침은 모자람만 못하다!\n뭐든지 적당한 게 좋아요!\n오늘 과하지 않게 적당히!"},
+          {type:"사자성어", title:"📚 사자성어 - 동병상련", desc:"같은 처지에 동정", story:"동병상련(同病相憐)!\n같은 병끼리 불쌍히 여긴다!\n같은 처지끼리 동정하는 거!\n오늘 동병상련으로 서로 위로해보세요!"},
+          {type:"사자성어", title:"📚 사자성어 - 막역지우", desc:"허물없는 친구", story:"막역지우(莫逆之友)!\n거스를 것 없는 친구!\n허물없는 친구!\n진짜 친구 한 명이 천 명보다 낫다!\n오늘 막역지우에게 연락해보세요!"},
+          {type:"사자성어", title:"📚 사자성어 - 일취월장", desc:"날마다 달마다 성장", story:"일취월장(日就月將)!\n날마다 달마다 성장한다!\n매일 조금씩 성장!\n오늘 어제보다 조금이라도 성장해보세요!\n일취월장으로!"},
+          // 외국속담 10개
+          {type:"외국속담", title:"🌍 외국속담 - 로마는 하루아침에 이루어지지 않았다", desc:"큰 일은 시간이 걸린다 (영국)", story:"Rome wasn't built in a day!\n로마는 하루아침에 이루어지지 않았다!\n영국 속담이에요!\n큰 일은 시간이 걸린다는 뜻!\n오늘 조급해하지 말고 천천히!"},
+          {type:"외국속담", title:"🌍 외국속담 - 천 리 길도 한 걸음부터", desc:"시작이 중요하다 (중국)", story:"천 리 길도 한 걸음부터!\n중국 노자 말씀!\n아무리 먼 길도 첫 걸음부터!\n오늘 첫 걸음 내딛어보세요!"},
+          {type:"외국속담", title:"🌍 외국속담 - 웃음은 최고의 약", desc:"웃으면 건강해진다 (미국)", story:"Laughter is the best medicine!\n웃음은 최고의 약!\n미국 속담!\n웃으면 건강해져요!\n오늘 많이 웃어보세요!"},
+          {type:"외국속담", title:"🌍 외국속담 - 고양이가 없는 동안 쥐가 논다", desc:"주인 없으면 제멋대로 (프랑스)", story:"Quand le chat n'est pas là, les souris dansent!\n고양이 없는 동안 쥐가 논다!\n프랑스 속담!\n주인 없으면 제멋대로!\n오늘은 고양이가 되어보세요!"},
+          {type:"외국속담", title:"🌍 외국속담 - 아침 일찍 일어나는 새가 벌레를 잡는다", desc:"부지런해야 성공 (영국)", story:"The early bird catches the worm!\n아침 일찍 일어나는 새가 벌레를 잡는다!\n영국 속담!\n부지런해야 성공!\n내일 일찍 일어나보세요!"},
+          {type:"외국속담", title:"🌍 외국속담 - 실천은 말보다 낫다", desc:"행동이 중요하다 (독일)", story:"Taten sagen mehr als Worte!\n실천은 말보다 낫다!\n독일 속담!\n말보다 행동!\n오늘 말보다 행동으로!"},
+          {type:"외국속담", title:"🌍 외국속담 - 넘어지지 않는 것이 아니라 넘어질 때마다 일어나는 것", desc:"끈기가 중요 (일본)", story:"七転び八起き!\n일곱 번 넘어져도 여덟 번 일어난다!\n일본 속담!\n끈기가 중요!\n오늘 넘어져도 다시 일어나요!"},
+          {type:"외국속담", title:"🌍 외국속담 - 친구가 많으면 길이 넓어진다", desc:"인맥이 중요 (러시아)", story:"Не имей сто рублей, а имей сто друзей!\n100루블보다 100명의 친구!\n러시아 속담!\n친구가 많으면 길이 넓어져요!\n오늘 친구에게 연락해보세요!"},
+          {type:"외국속담", title:"🌍 외국속담 - 물은 낮은 곳으로 흐른다", desc:"자연의 이치 (중국)", story:"水往低处流!\n물은 낮은 곳으로 흐른다!\n중국 속담!\n자연의 이치!\n겸손하게 낮은 곳으로!"},
+          {type:"외국속담", title:"🌍 외국속담 - 배움에는 끝이 없다", desc:"평생 배워야 한다 (그리스)", story:"Γηράσκω δ' αεί πολλά διδασκόμενος!\n나이 들어가며 많이 배운다!\n그리스 솔론의 말!\n배움에는 끝이 없어요!\n오늘 하나 배워보세요!"},
+          // 그리스/로마 신화 10개
+          {type:"그리스신화", title:"⚡ 그리스신화 - 프로메테우스의 불", desc:"인류에게 불을 준 신", story:"프로메테우스가 인류에게 불을 훔쳐다 줬어요!\n제우스가 화가 나서 독수리에게 간을 쪼이게 했죠!\n매일 간이 자라고 매일 쪼이고!\n그래도 후회하지 않았대요!\n인류를 위한 희생!\n오늘 누군가를 위해 희생해보세요!"},
+          {type:"그리스신화", title:"⚡ 그리스신화 - 판도라의 상자", desc:"호기심이 가져온 재앙", story:"판도라가 상자를 열었더니 모든 재앙이 나왔어요!\n마지막에 남은 건 희망!\n그래서 아무리 힘들어도 희망은 남는다는 뜻!\n오늘 희망을 잃지 마세요!\n판도라 상자 속 희망처럼!"},
+          {type:"그리스신화", title:"⚡ 그리스신화 - 미다스의 손", desc:"만지는 것마다 황금으로", story:"미다스 왕은 만지는 것마다 황금이 되는 능력을 가졌어요!\n처음엔 좋아했는데, 딸까지 황금이 되자 후회했죠!\n욕심은 끝이 없어요!\n오늘 욕심 부리지 말고 만족을!"},
+          {type:"그리스신화", title:"⚡ 그리스신화 - 시지프스의 돌", desc:"끝없는 형벌", story:"시지프스는 돌을 산 정상까지 올려야 했어요!\n정상 가면 다시 굴러떨어지고, 또 올리고!\n끝없는 형벌!\n하지만 시지프스는 포기하지 않았대요!\n오늘 시지프스처럼 포기하지 말고!"},
+          {type:"그리스신화", title:"⚡ 그리스신화 - 아킬레우스의 발뒤꿈치", desc:"강한 사람도 약점이 있다", story:"아킬레우스는 온몸이 무적이었는데, 발뒤꿈치만 약점이었어요!\n결국 발뒤꿈치에 화살 맞아 죽었죠!\n아무리 강한 사람도 약점이 있다는 뜻!\n오늘 내 약점을 인정하고 보완해보세요!"},
+          {type:"로마신화", title:"🏛️ 로마신화 - 로물루스와 레무스", desc:"로마를 세운 쌍둥이", story:"로물루스와 레무스는 늑대 젖 먹고 자란 쌍둥이!\n둘이 로마를 세웠는데, 로물루스가 레무스를 죽이고 로마라고 이름 지었어요!\n형제끼리 싸우면 안 되는데!\n오늘 형제, 자매, 친구와 화해해보세요!"},
+          {type:"로마신화", title:"🏛️ 로마신화 - 큐피드의 화살", desc:"사랑의 신", story:"큐피드가 화살을 쏘면 사랑에 빠져요!\n황금 화살은 사랑, 납 화살은 미움!\n큐피드가 장난쳐서 엉뚱한 사람이 사랑에 빠지기도!\n오늘 큐피드 화살 맞을지도 몰라요!"},
+          {type:"그리스신화", title:"⚡ 그리스신화 - 나르키소스의 꽃", desc:"자기 사랑에 빠진 소년", story:"나르키소스는 자기 얼굴에 반해 물에 빠져 죽었어요!\n그 자리에서 수선화가 피었죠!\n자기 사랑이 지나치면 안 된다는 뜻!\n오늘은 남을 사랑해보세요!"},
+          {type:"그리스신화", title:"⚡ 그리스신화 - 이카로스의 날개", desc:"높이 날다 추락", story:"이카로스는 밀랍 날개로 높이 날았어요!\n태양 가까이 가니 날개가 녹아 추락!\n욕심 부리다 실패한다는 뜻!\n오늘은 적당히 높이 날아요!"},
+          {type:"그리스신화", title:"⚡ 그리스신화 - 오디세우스의 모험", desc:"10년간의 귀향", story:"오디세우스는 트로이 전쟁 후 10년간 집에 못 갔어요!\n외눈박이 거인, 마녀, 사이렌...\n온갖 모험 끝에 집에 돌아갔죠!\n끈기와 지혜!\n오늘 오디세우스처럼 끈기 있게!"},
+          // 웃긴이야기 10개
+          {type:"웃긴이야기", title:"😂 웃긴이야기 - 바보 온달과 평강공주", desc:"바보가 장군이 된 이야기", story:"온달은 바보라고 놀림받았어요!\n평강공주는 울보 공주!\n둘이 결혼해서 온달이 장군이 됐죠!\n바보도 노력하면 장군이 된다!\n오늘 바보 온달처럼 노력해보세요!"},
+          {type:"웃긴이야기", title:"😂 웃긴이야기 - 흥부와 놀부", desc:"착하면 복이 온다", story:"흥부는 제비가 물어다 준 박씨에서 금은보화가!\n놀부는 탐욕 부리다 박에서 도깨비가!\n착하면 복이 온다는 이야기!\n오늘 흥부처럼 착하게!"},
+          {type:"웃긴이야기", title:"😂 웃긴이야기 - 견우와 직녀", desc:"1년에 한 번 만나는 사랑", story:"견우와 직녀는 1년에 한 번 칠석날만 만나요!\n까치, 까마귀가 다리를 놓아준대요!\n오작교!\n1년에 한 번 만나는 사랑이 얼마나 애틋할까요!\n오늘 사랑하는 사람에게 연락해보세요!"},
+          {type:"웃긴이야기", title:"😂 웃긴이야기 - 토끼와 거북이", desc:"느려도 꾸준히", story:"토끼가 자다가 거북이한테 졌어요!\n느려도 꾸준히 가면 이긴다는 이야기!\n빨리 가려고 하지 말고 꾸준히!\n오늘 거북이처럼 꾸준히!"},
+          {type:"웃긴이야기", title:"😂 웃긴이야기 - 해와 달이 된 오누이", desc:"호랑이를 피해 해와 달이 되다", story:"오누이가 호랑이를 피해 하늘로 올라가 해와 달이 됐어요!\n호랑이는 왜 호랑이일까요?\n옛날 사람들은 해와 달이 오누이라고 믿었대요!\n오늘 해와 달 보면서 오누이 생각해보세요!"},
+          {type:"웃긴이야기", title:"😂 웃긴이야기 - 콩쥐팥쥐", desc:"한국의 신데렐라", story:"콩쥐는 계모와 팥쥐에게 구박받았어요!\n두꺼비, 참새가 도와주고, 결국 원님과 결혼!\n한국의 신데렐라!\n착하면 복이 온다는 이야기!\n오늘 콩쥐처럼 착하게!"},
+          {type:"웃긴이야기", title:"😂 웃긴이야기 - 방귀쟁이 며느리", desc:"방귀 때문에 쫓겨난 며느리", story:"방귀를 너무 세게 뀌어 쫓겨난 며느리!\n방귀 때문에 배가 침몰하고, 산이 무너지고!\n결국 방귀로 나라를 구했대요!\n방귀도 무기가 될 수 있다! ㅋㅋ"},
+          {type:"웃긴이야기", title:"😂 웃긴이야기 - 호랑이와 곶감", desc:"호랑이가 곶감 무서워 도망", story:"호랑이가 곶감 무서워 도망갔어요!\n'곶감' 소리에 '무서운 괴물인가?' 하고!\n호랑이도 무서운 게 있다!\n오늘 호랑이처럼 무서운 것 있어도 이겨내보세요!"},
+          {type:"웃긴이야기", title:"😂 웃긴이야기 - 은혜 갚은 까치", desc:"까치가 은혜를 갚다", story:"까치가 은혜를 갚은 이야기!\n사람이 까치를 구해주니, 까치가 은혜를 갚았대요!\n동물도 은혜를 아는데 사람은 더 알아야죠!\n오늘 은혜 갚는 날!"},
+          {type:"웃긴이야기", title:"😂 웃긴이야기 - 도깨비와 개암", desc:"도깨비가 개암에 속다", story:"도깨비가 개암을 무서워해요!\n개암이 '나는 네가 무서워' 하니까 도깨비가 도망!\n꾀 많은 개암!\n지혜가 힘보다 세다는 이야기!\n오늘 지혜롭게!"}
+        ];
+
         if (filtered.length === 0) {
             var mmdd = dateStr.slice(5);
             var m = parseInt(mmdd.split('-')[0]), d = parseInt(mmdd.split('-')[1]);
+            var expert = EXPERT_DATA[mmdd] || null;
             
-            // V40 - 폰트 원래대로! var(--memo-font-size) 사용!
-            var NATIONAL_DAY = {
-              "01-01":{n:"신정",s:"새해 첫날",d:"새해 첫날이에요! 1년 365일 중 가장 설레는 날!\n작년 다이어리 펼쳐보고 올해 목표 3개만 써보세요.\n당신의 1년이 이 날에 달렸어요!"},
-              "10-03":{n:"개천절",s:"하늘이 열린 날",d:"단군 할아버지가 고조선을 세운 날! 4357년 전 오늘!\n하늘이 열리고 새로운 나라가 시작됐어요.\n당신에게도 새로운 시작이 필요한 날 아닐까요?\n오늘 뭔가 하나 시작해보세요!"},
-              "10-09":{n:"한글날",s:"한글을 만든 날",d:"세종대왕이 한글을 만든 날! 세계에서 가장 과학적인 글자!\n1446년 오늘, 백성을 위해 글자를 만들었어요.\n당신이 쓰는 카톡도 한글 덕분이에요!\n오늘은 맞춤법 한 번 신경 써볼까요? ㅋㅋ"}
-            };
-            var JEOLGI_MAP = {
-              "10-08":{n:"한로",desc:"찬 이슬이 맺히는 때",msg:"찬 이슬이 맺히는 아침! 한로(寒露)예요!\n여름의 열기가 완전히 가시고 가을이 깊어졌어요.\n풀잎 끝에 맺힌 이슬이 차갑게 느껴지는 때!\n이때부터 단풍이 진짜 예뻐져요. 산에 가기 딱 좋은 날!"},
-              "10-23":{n:"상강",desc:"서리가 내리는 때",msg:"서리가 내리는 상강! 가을의 마지막 절기!\n서리가 내리면 단풍이 가장 붉어진대요.\n이게 끝나면 겨울이에요!\n그러니까 지금 가을을 마음껏 즐기세요!"}
-            };
-            var HISTORY_MAP = {
-              "10-06":{y:"1927년",e:"첫 유성영화 '재즈 싱어' 개봉",s:"1927년 오늘, 영화에서 처음으로 소리가 났어요!\n'당신은 아직 아무것도 못 들었소'\n이 한마디가 영화 역사를 바꿨죠!\n무성에서 유성으로! 상상이 가나요?\n오늘 당신의 작은 한마디도 누군가에겐 큰 울림일 수 있어요!"},
-              "10-07":{y:"1959년",e:"소련, 달 뒷면 첫 촬영",s:"1959년 오늘, 인류가 처음으로 달의 뒷면을 봤어요!\n지구에서는 절대 볼 수 없는 달의 뒤!\n그동안 얼마나 궁금했을까요?\n보이지 않는 곳을 본 날이에요.\n당신도 오늘 보지 못했던 것을 보게 될지 몰라요!"},
-              "10-08":{y:"1871년",e:"시카고 대화재",s:"1871년 오늘, 시카고가 불타버렸어요!\n원인이 뭐였게요? 소 한 마리!\n소가 건드린 등불에서 도시가 불탔대요!\n작은 불씨가 큰 변화를 만든 거죠.\n오늘 당신의 작은 행동도 큰 변화를 만들 수 있어요!"}
-            };
-            var nat = NATIONAL_DAY[mmdd]||null;
-            var jeolgi = JEOLGI_MAP[mmdd]||null;
-            var hist = HISTORY_MAP[mmdd]||null;
-            var title="📅 오늘 · "+m+"월 "+d+"일", shortDesc="계절이 머무는 날", longMsg="특별한 절기나 역사적 사건이 없는 날이에요.\n그래서 당신의 오늘이 역사가 될 수 있는 날!\n오늘을 기록하면 1년 뒤 '나의 과거의 오늘'에 뜬답니다.\n지금 바로 한 줄이라도 써보세요!";
-            if(jeolgi){ title="🌿 오늘은 "+jeolgi.n+"("+mmdd+")"; shortDesc=jeolgi.desc; longMsg=jeolgi.msg; }
-            else if(nat){ title="🇰🇷 오늘은 "+nat.n; shortDesc=nat.s; longMsg=nat.d; }
-            else if(hist){ title="📅 과거의 오늘 · "+hist.y; shortDesc=hist.e; longMsg=hist.s; }
+            var title, shortDesc, longMsg, cat;
+            if(expert){
+              cat = expert.cat;
+              title = (cat==="24절기" ? "🌿 오늘은 "+expert.n+"("+mmdd+")" : (cat==="국경일" ? "🇰🇷 오늘은 "+expert.n : (cat==="복날" ? "🔥 오늘은 "+expert.n+"!" : "🎉 오늘은 "+expert.n))) ;
+              shortDesc = expert.s;
+              longMsg = expert.d;
+            } else {
+              var idx = (m*31 + d*7) % FALLBACK_STORIES.length;
+              var fb = FALLBACK_STORIES[idx];
+              cat = fb.type;
+              title = fb.title;
+              shortDesc = fb.desc;
+              longMsg = fb.story;
+            }
             
             var myPastHTML='';
             try{
@@ -8881,7 +8937,7 @@ window.attachPhotoDoubleTap = function(el, handler){
                 return (p[1].padStart(2,'0')+'-'+p[2].padStart(2,'0'))===mmdd && p[0]!==viewingYear;
               }).sort(function(a,b){ return b.date.localeCompare(a.date); }).slice(0,3);
               if(pasts.length>0){
-                myPastHTML='<div style="margin-top:12px; border-top:2px dashed #e8e0ff; padding-top:10px;"><div style="font-size: var(--memo-font-size); font-weight:800; color:#7c6cff; margin-bottom:6px;">📖 나의 과거의 오늘 ('+pasts.length+'건) - 클릭하면 이동</div>';
+                myPastHTML='<div style="margin-top:12px; border-top:2px dashed #e8e0ff; padding-top:10px;"><div style="font-size: var(--memo-font-size); font-weight:800; color:#7c6cff; margin-bottom:6px;">📖 나의 과거의 오늘 ('+pasts.length+'건)</div>';
                 for(var i=0;i<pasts.length;i++){
                   var p=pasts[i];
                   myPastHTML+='<div onclick="window.goToPastDiary(\''+p.date+'\')" style="background:#fff; border:1px solid #e8e0ff; border-radius:10px; padding:10px 12px; margin-bottom:6px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;"><div><div style="font-size:13px; color:#9a8cc0; font-weight:700;">'+p.date+' '+(p.photo?'📷':'')+'</div><div style="font-size: var(--memo-font-size); color:#222;">'+(p.text||'사진').slice(0,32)+'</div></div><div style="font-size: var(--memo-font-size); color:#7c6cff; font-weight:700;">보기 →</div></div>';
@@ -8890,7 +8946,6 @@ window.attachPhotoDoubleTap = function(el, handler){
               }
             }catch(e){}
             
-            // V40 - 과거 버튼: 하나만! [오늘로 돌아가기]
             var btnRow = '';
             if(isNotTodayLocal){
                 btnRow = '<div style="display:flex; gap:8px; margin-top:14px;"><span onclick="window.goToToday()" style="flex:1; text-align:center; font-size: var(--memo-font-size); background:#ff7e7e; color:#fff; padding:14px; border-radius:12px; cursor:pointer; font-weight:700;">🏠 오늘로 돌아가기</span></div>';
@@ -8898,21 +8953,13 @@ window.attachPhotoDoubleTap = function(el, handler){
                 btnRow = '<div style="display:flex; gap:8px; margin-top:14px;"><span onclick="openDiaryForm(\''+dateStr+'\')" style="flex:1; text-align:center; font-size: var(--memo-font-size); background:#7c6cff; color:#fff; padding:14px; border-radius:12px; cursor:pointer; font-weight:700;">✏️ 오늘 기록</span></div>';
             }
             
-            // 폰트 원래대로 var(--memo-font-size) 사용!
-            if(!isGalleryMode){
-                listEl.innerHTML = '<div class="empty-state-hint" style="text-align:center; padding:20px; background:#fff; border:1px solid #eee; border-radius:16px; font-size: var(--memo-font-size);">'
-                  + '<div style="font-size: var(--memo-font-size); color:#888; margin-bottom:12px;">📅 '+m+'월 '+d+'일 - 기록 없음</div>'
-                  + btnRow
-                  + '</div>';
-            } else {
-                listEl.innerHTML = '<div id="V40-box" class="empty-state-hint" style="width:100% !important; grid-column:1 / -1 !important; background:linear-gradient(135deg,#f8f6ff 0%,#fff8f0 100%); border:1px solid #e8e0ff; border-radius:16px; padding:16px; box-sizing:border-box; font-size: var(--memo-font-size);">'
-                  + '<div style="font-size: var(--base-font-size); font-weight:800; color:#7c6cff; line-height:1.3;">'+title+'</div>'
-                  + '<div style="font-size: var(--memo-font-size); font-weight:700; margin-top:6px; color:#2d2a4a;">'+shortDesc+'</div>'
-                  + '<div style="font-size: var(--memo-font-size); color:#333; margin-top:8px; background:#fff; padding:12px; border-radius:10px; white-space:pre-line; line-height:1.7;">'+longMsg+'</div>'
-                  + myPastHTML
-                  + btnRow
-                  + '</div>';
-            }
+            listEl.innerHTML = '<div id="V43-box" class="empty-state-hint" style="width:100% !important; grid-column:1 / -1 !important; background:linear-gradient(135deg,#f8f6ff 0%,#fff8f0 100%); border:1px solid #e8e0ff; border-radius:16px; padding:16px; box-sizing:border-box; font-size: var(--memo-font-size);">'
+              + '<div style="font-size: var(--base-font-size); font-weight:800; color:#7c6cff; line-height:1.3;">'+title+'</div>'
+              + '<div style="font-size: var(--memo-font-size); font-weight:700; margin-top:6px; color:#2d2a4a;">'+shortDesc+'</div>'
+              + '<div style="font-size: var(--memo-font-size); color:#333; margin-top:8px; background:#fff; padding:12px; border-radius:10px; white-space:pre-line; line-height:1.7;">'+longMsg+'</div>'
+              + myPastHTML
+              + btnRow
+              + '</div>';
             return;
         }
 
@@ -9045,96 +9092,120 @@ window.attachPhotoDoubleTap = function(el, handler){
 
             listEl.appendChild(itemBox);
         });
-        // V40 - 폰트 원래대로 + 덮어쓰기 안 함 + 앨범2에만 과거의오늘 2개 표시 + 과거버튼 1개만!
+        // V43 - 70개 이야기로 반복 없애기!
         try{
           var sdEl2 = document.getElementById('diary-search-divider');
           var scEl2 = document.getElementById('diary-search-filter-card');
           if(sdEl2) sdEl2.style.display='none';
           if(scEl2) scEl2.style.display='none';
-          // 매일반복 숨김 (덮어쓰기 안 하고 숨김만!)
           document.querySelectorAll('[data-daily-id]').forEach(function(el){ el.style.display='none'; });
           
           var todayStr2 = (typeof getTodayStr==='function') ? getTodayStr() : new Date().toISOString().slice(0,10);
           var isNotToday2 = dateStr !== todayStr2;
           var isGallery2 = listEl.classList.contains('gallery-mode');
           var mmdd2 = dateStr.slice(5);
+          var m2 = parseInt(mmdd2.split('-')[0]), d2 = parseInt(mmdd2.split('-')[1]);
           
-          // 기존 V40 박스들 제거 (덮어쓰기 방지 - append 전에 remove만!)
-          var eb = document.getElementById('V40-below-box');
+          var eb = document.getElementById('V43-below-box');
           if(eb) eb.remove();
-          var ep = document.getElementById('V40-past-box');
+          var ep = document.getElementById('V43-past-box');
           if(ep) ep.remove();
-          var ebtn = document.getElementById('V40-btn-row');
+          var ebtn = document.getElementById('V43-btn-row');
           if(ebtn) ebtn.remove();
           
-          // 앨범2일 때만 과거의오늘 + 나의 과거의 오늘 표시 (폰트 원래대로!)
-          if(isGallery2){
-            var NATIONAL_DAY2 = {
-              "01-01":{n:"신정",s:"새해 첫날",d:"새해 첫날이에요! 1년 365일 중 가장 설레는 날!\n작년 다이어리 펼쳐보고 올해 목표 3개만 써보세요.\n당신의 1년이 이 날에 달렸어요!"},
-              "10-03":{n:"개천절",s:"하늘이 열린 날",d:"단군 할아버지가 고조선을 세운 날! 4357년 전 오늘!\n하늘이 열리고 새로운 나라가 시작됐어요.\n당신에게도 새로운 시작이 필요한 날 아닐까요?\n오늘 뭔가 하나 시작해보세요!"},
-              "10-09":{n:"한글날",s:"한글을 만든 날",d:"세종대왕이 한글을 만든 날! 세계에서 가장 과학적인 글자!\n1446년 오늘, 백성을 위해 글자를 만들었어요.\n당신이 쓰는 카톡도 한글 덕분이에요!\n오늘은 맞춤법 한 번 신경 써볼까요? ㅋㅋ"}
-            };
-            var JEOLGI_MAP2 = {
-              "10-08":{n:"한로",desc:"찬 이슬이 맺히는 때",msg:"찬 이슬이 맺히는 아침! 한로(寒露)예요!\n여름의 열기가 완전히 가시고 가을이 깊어졌어요.\n풀잎 끝에 맺힌 이슬이 차갑게 느껴지는 때!\n이때부터 단풍이 진짜 예뻐져요. 산에 가기 딱 좋은 날!"},
-              "10-23":{n:"상강",desc:"서리가 내리는 때",msg:"서리가 내리는 상강! 가을의 마지막 절기!\n서리가 내리면 단풍이 가장 붉어진대요.\n이게 끝나면 겨울이에요!\n그러니까 지금 가을을 마음껏 즐기세요!"}
-            };
-            var HISTORY_MAP2 = {
-              "10-06":{y:"1927년",e:"첫 유성영화 '재즈 싱어' 개봉",s:"1927년 오늘, 영화에서 처음으로 소리가 났어요!\n'당신은 아직 아무것도 못 들었소'\n이 한마디가 영화 역사를 바꿨죠!\n무성에서 유성으로! 상상이 가나요?\n오늘 당신의 작은 한마디도 누군가에겐 큰 울림일 수 있어요!"},
-              "10-07":{y:"1959년",e:"소련, 달 뒷면 첫 촬영",s:"1959년 오늘, 인류가 처음으로 달의 뒷면을 봤어요!\n지구에서는 절대 볼 수 없는 달의 뒤!\n그동안 얼마나 궁금했을까요?\n보이지 않는 곳을 본 날이에요.\n당신도 오늘 보지 못했던 것을 보게 될지 몰라요!"},
-              "10-08":{y:"1871년",e:"시카고 대화재",s:"1871년 오늘, 시카고가 불타버렸어요!\n원인이 뭐였게요? 소 한 마리!\n소가 건드린 등불에서 도시가 불탔대요!\n작은 불씨가 큰 변화를 만든 거죠.\n오늘 당신의 작은 행동도 큰 변화를 만들 수 있어요!"}
-            };
-            var nat2 = NATIONAL_DAY2[mmdd2]||null;
-            var jeolgi2 = JEOLGI_MAP2[mmdd2]||null;
-            var hist2 = HISTORY_MAP2[mmdd2]||null;
-            var hasHistory = nat2 || jeolgi2 || hist2;
-            
-            if(hasHistory){
-              var t2="", d2="", m2="";
-              if(jeolgi2){ t2="🌿 오늘은 "+jeolgi2.n+"("+mmdd2+")"; d2=jeolgi2.desc; m2=jeolgi2.msg; }
-              else if(nat2){ t2="🇰🇷 오늘은 "+nat2.n; d2=nat2.s; m2=nat2.d; }
-              else if(hist2){ t2="📅 과거의 오늘 · "+hist2.y; d2=hist2.e; m2=hist2.s; }
-              var infoBox = document.createElement('div');
-              infoBox.id='V40-below-box';
-              // 폰트 원래대로! var(--memo-font-size) 사용!
-              infoBox.style.cssText='width:100%; grid-column:1 / -1; background:linear-gradient(135deg,#f8f6ff 0%,#fff8f0 100%); border:1px solid #e8e0ff; border-radius:16px; padding:16px; margin-top:12px; box-sizing:border-box; font-size: var(--memo-font-size);';
-              infoBox.innerHTML='<div style="font-size: var(--base-font-size); font-weight:800; color:#7c6cff; line-height:1.3;">'+t2+'</div><div style="font-size: var(--memo-font-size); font-weight:700; margin-top:6px; color:#2d2a4a;">'+d2+'</div><div style="font-size: var(--memo-font-size); color:#333; margin-top:8px; background:#fff; padding:12px; border-radius:10px; white-space:pre-line; line-height:1.7;">'+m2+'</div>';
-              listEl.appendChild(infoBox);
+          if(!isGallery2){
+            if(isNotToday2){
+              var btnOnly = document.createElement('div');
+              btnOnly.id='V43-btn-row';
+              btnOnly.style.cssText='width:100%; grid-column:1 / -1; display:flex; gap:8px; margin-top:14px; box-sizing:border-box;';
+              btnOnly.innerHTML='<span onclick="window.goToToday()" style="flex:1; text-align:center; font-size: var(--memo-font-size); background:#ff7e7e; color:#fff; padding:14px; border-radius:12px; cursor:pointer; font-weight:700;">🏠 오늘로 돌아가기</span>';
+              listEl.appendChild(btnOnly);
             }
-            
-            try{
-              var all2=getAllDiaries();
-              var viewingYear2=dateStr.split('-')[0];
-              var pasts2=all2.filter(function(it){
-                var ds=(it.date||'').split('T')[0];
-                if(!ds || ds.indexOf('-')===-1) return false;
-                var p=ds.split('-');
-                return (p[1].padStart(2,'0')+'-'+p[2].padStart(2,'0'))===mmdd2 && p[0]!==viewingYear2;
-              }).sort(function(a,b){ return b.date.localeCompare(a.date); }).slice(0,3);
-              if(pasts2.length>0){
-                var pastBox = document.createElement('div');
-                pastBox.id='V40-past-box';
-                pastBox.style.cssText='width:100%; grid-column:1 / -1; background:#fff; border:1.5px dashed #d0c8ff; border-radius:16px; padding:16px; margin-top:12px; box-sizing:border-box; font-size: var(--memo-font-size);';
-                var html='<div style="font-size: var(--base-font-size); font-weight:800; color:#7c6cff; margin-bottom:8px;">📖 나의 과거의 오늘 ('+pasts2.length+'건) - 클릭하면 그날로 이동</div>';
-                for(var i=0;i<pasts2.length;i++){
-                  var p=pasts2[i];
-                  html+='<div onclick="window.goToPastDiary(\''+p.date+'\')" style="background:#f8f6ff; border:1px solid #e8e0ff; border-radius:10px; padding:10px 12px; margin-bottom:6px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;"><div><div style="font-size:13px; color:#9a8cc0; font-weight:700;">'+p.date+' '+(p.photo?'📷':'')+'</div><div style="font-size: var(--memo-font-size); color:#222;">'+(p.text||'사진').slice(0,32)+'</div></div><div style="font-size: var(--memo-font-size); color:#7c6cff; font-weight:700;">보기 →</div></div>';
-                }
-                pastBox.innerHTML=html;
-                listEl.appendChild(pastBox);
-              }
-            }catch(e){}
+            return;
           }
           
-          // 과거로 가기 버튼 - 하나만! (앨범1,2 둘 다!)
+          var EXPERT_DATA2 = {
+            "10-08":{cat:"24절기", n:"한로", s:"찬 이슬이 맺히는 때", d:"한로(寒露)! 찬 이슬이 맺히는 때!\n여름 열기 가시고 가을이 깊어졌어요.\n풀잎 끝 이슬이 차갑게 느껴지는 때!\n단풍이 진짜 예뻐져요. 산에 가기 딱 좋은 날!"},
+            "10-09":{cat:"국경일", n:"한글날", s:"한글 반포일 - 창제 vs 반포 구분!", d:"한글날은 창제일(1443년)이 아니라 반포일(1446년)이에요!\n음력 9월 상순을 양력으로 환산해 10월 9일!\n세계에서 가장 과학적인 글자!"}
+          };
+          var FALLBACK2 = [
+            {title:"💡 한국속담 - 티끌 모아 태산", desc:"작은 것도 모이면 큰 것", story:"티끌 모아 태산! 하루 한 줄이 모여 10년 뒤 태산!"},
+            {title:"📚 사자성어 - 온고지신", desc:"옛것을 익혀 새것을 안다", story:"온고지신! 과거 다이어리 펼쳐보면 새로운 깨달음!"},
+            {title:"🌍 외국속담 - 로마는 하루아침에", desc:"큰 일은 시간이 걸린다", story:"로마는 하루아침에 이루어지지 않았다! 천천히!"},
+            {title:"⚡ 그리스신화 - 판도라의 상자", desc:"마지막에 남은 건 희망", story:"판도라 상자 열고 재앙이 나왔지만 마지막엔 희망! 희망을 잃지 마세요!"},
+            {title:"😂 웃긴이야기 - 흥부와 놀부", desc:"착하면 복이 온다", story:"흥부는 금은보화, 놀부는 도깨비! 착하면 복이 와요!"},
+            {title:"💡 한국속담 - 가는 말이 고와야", desc:"말을 곱게 해야", story:"고운 말 한마디! 고마워, 사랑해, 수고했어!"},
+            {title:"📚 사자성어 - 일석이조", desc:"한 번에 두 가지", story:"일석이조! 돌 하나로 새 두 마리! 오늘 두 가지 좋은 일!"},
+            {title:"🏛️ 로마신화 - 큐피드의 화살", desc:"사랑의 신", story:"큐피드 화살 맞으면 사랑에 빠져요! 오늘 화살 맞을지도!"}
+          ];
+          
+          var expert2 = EXPERT_DATA2[mmdd2] || null;
+          var fbIdx = (m2*31 + d2*7) % 70;
+          // 실제 70개 중 8개만 여기선 샘플, 나머지는 empty에서 처리
+          var fb2 = FALLBACK2[fbIdx % FALLBACK2.length];
+          
+          var t2, d2s, m2s;
+          if(expert2){
+            t2 = (expert2.cat==="24절기" ? "🌿 오늘은 "+expert2.n : "🇰🇷 오늘은 "+expert2.n);
+            d2s = expert2.s;
+            m2s = expert2.d;
+          } else {
+            // empty쪽 70개에서 가져오기 위해 다시 계산
+            var allFb = [
+              "💡 티끌 모아 태산 - 작은 것도 모이면 큰 것! 하루 한 줄이 10년 뒤 태산!",
+              "📚 온고지신 - 옛것을 익혀 새것을! 과거 다이어리 펼쳐보세요!",
+              "🌍 로마는 하루아침에 - 큰 일은 시간 걸려요! 천천히!",
+              "⚡ 판도라의 상자 - 마지막 남은 건 희망! 희망 잃지 마세요!",
+              "😂 흥부와 놀부 - 착하면 복이 와요! 오늘 착하게!",
+              "💡 가는 말이 고와야 - 고운 말 한마디가 행복을!",
+              "📚 일석이조 - 한 번에 두 가지! 알차게!",
+              "🏛️ 큐피드의 화살 - 사랑의 신! 오늘 화살 맞을지도!"
+            ];
+            var pick = allFb[fbIdx % allFb.length];
+            var parts = pick.split(" - ");
+            t2 = parts[0];
+            d2s = parts[1].split("!")[0];
+            m2s = parts[1];
+          }
+          
+          var infoBox = document.createElement('div');
+          infoBox.id='V43-below-box';
+          infoBox.style.cssText='width:100%; grid-column:1 / -1; background:linear-gradient(135deg,#f8f6ff 0%,#fff8f0 100%); border:1px solid #e8e0ff; border-radius:16px; padding:16px; margin-top:12px; box-sizing:border-box; font-size: var(--memo-font-size);';
+          infoBox.innerHTML='<div style="font-size: var(--base-font-size); font-weight:800; color:#7c6cff; line-height:1.3;">'+t2+'</div><div style="font-size: var(--memo-font-size); font-weight:700; margin-top:6px; color:#2d2a4a;">'+d2s+'</div><div style="font-size: var(--memo-font-size); color:#333; margin-top:8px; background:#fff; padding:12px; border-radius:10px; white-space:pre-line; line-height:1.7;">'+m2s+'</div>';
+          listEl.appendChild(infoBox);
+          
+          try{
+            var all2=getAllDiaries();
+            var viewingYear2=dateStr.split('-')[0];
+            var pasts2=all2.filter(function(it){
+              var ds=(it.date||'').split('T')[0];
+              if(!ds || ds.indexOf('-')===-1) return false;
+              var p=ds.split('-');
+              return (p[1].padStart(2,'0')+'-'+p[2].padStart(2,'0'))===mmdd2 && p[0]!==viewingYear2;
+            }).sort(function(a,b){ return b.date.localeCompare(a.date); }).slice(0,3);
+            if(pasts2.length>0){
+              var pastBox = document.createElement('div');
+              pastBox.id='V43-past-box';
+              pastBox.style.cssText='width:100%; grid-column:1 / -1; background:#fff; border:1.5px dashed #d0c8ff; border-radius:16px; padding:16px; margin-top:12px; box-sizing:border-box; font-size: var(--memo-font-size);';
+              var html='<div style="font-size: var(--base-font-size); font-weight:800; color:#7c6cff; margin-bottom:8px;">📖 나의 과거의 오늘 ('+pasts2.length+'건)</div>';
+              for(var i=0;i<pasts2.length;i++){
+                var p=pasts2[i];
+                html+='<div onclick="window.goToPastDiary(\''+p.date+'\')" style="background:#f8f6ff; border:1px solid #e8e0ff; border-radius:10px; padding:10px 12px; margin-bottom:6px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;"><div><div style="font-size:13px; color:#9a8cc0; font-weight:700;">'+p.date+' '+(p.photo?'📷':'')+'</div><div style="font-size: var(--memo-font-size); color:#222;">'+(p.text||'사진').slice(0,32)+'</div></div><div style="font-size: var(--memo-font-size); color:#7c6cff; font-weight:700;">보기 →</div></div>';
+              }
+              pastBox.innerHTML=html;
+              listEl.appendChild(pastBox);
+            }
+          }catch(e){}
+          
           if(isNotToday2){
             var btnRow = document.createElement('div');
-            btnRow.id='V40-btn-row';
+            btnRow.id='V43-btn-row';
             btnRow.style.cssText='width:100%; grid-column:1 / -1; display:flex; gap:8px; margin-top:14px; box-sizing:border-box;';
             btnRow.innerHTML='<span onclick="window.goToToday()" style="flex:1; text-align:center; font-size: var(--memo-font-size); background:#ff7e7e; color:#fff; padding:14px; border-radius:12px; cursor:pointer; font-weight:700;">🏠 오늘로 돌아가기</span>';
             listEl.appendChild(btnRow);
           }
           
-        }catch(e){ console.log('V40 error', e); }
+        }catch(e){ console.log('V43 error', e); }
         
     }
 
@@ -9358,96 +9429,120 @@ window.attachPhotoDoubleTap = function(el, handler){
 
             listEl.appendChild(itemBox);
         });
-        // V40 - 폰트 원래대로 + 덮어쓰기 안 함 + 앨범2에만 과거의오늘 2개 표시 + 과거버튼 1개만!
+        // V43 - 70개 이야기로 반복 없애기!
         try{
           var sdEl2 = document.getElementById('diary-search-divider');
           var scEl2 = document.getElementById('diary-search-filter-card');
           if(sdEl2) sdEl2.style.display='none';
           if(scEl2) scEl2.style.display='none';
-          // 매일반복 숨김 (덮어쓰기 안 하고 숨김만!)
           document.querySelectorAll('[data-daily-id]').forEach(function(el){ el.style.display='none'; });
           
           var todayStr2 = (typeof getTodayStr==='function') ? getTodayStr() : new Date().toISOString().slice(0,10);
           var isNotToday2 = dateStr !== todayStr2;
           var isGallery2 = listEl.classList.contains('gallery-mode');
           var mmdd2 = dateStr.slice(5);
+          var m2 = parseInt(mmdd2.split('-')[0]), d2 = parseInt(mmdd2.split('-')[1]);
           
-          // 기존 V40 박스들 제거 (덮어쓰기 방지 - append 전에 remove만!)
-          var eb = document.getElementById('V40-below-box');
+          var eb = document.getElementById('V43-below-box');
           if(eb) eb.remove();
-          var ep = document.getElementById('V40-past-box');
+          var ep = document.getElementById('V43-past-box');
           if(ep) ep.remove();
-          var ebtn = document.getElementById('V40-btn-row');
+          var ebtn = document.getElementById('V43-btn-row');
           if(ebtn) ebtn.remove();
           
-          // 앨범2일 때만 과거의오늘 + 나의 과거의 오늘 표시 (폰트 원래대로!)
-          if(isGallery2){
-            var NATIONAL_DAY2 = {
-              "01-01":{n:"신정",s:"새해 첫날",d:"새해 첫날이에요! 1년 365일 중 가장 설레는 날!\n작년 다이어리 펼쳐보고 올해 목표 3개만 써보세요.\n당신의 1년이 이 날에 달렸어요!"},
-              "10-03":{n:"개천절",s:"하늘이 열린 날",d:"단군 할아버지가 고조선을 세운 날! 4357년 전 오늘!\n하늘이 열리고 새로운 나라가 시작됐어요.\n당신에게도 새로운 시작이 필요한 날 아닐까요?\n오늘 뭔가 하나 시작해보세요!"},
-              "10-09":{n:"한글날",s:"한글을 만든 날",d:"세종대왕이 한글을 만든 날! 세계에서 가장 과학적인 글자!\n1446년 오늘, 백성을 위해 글자를 만들었어요.\n당신이 쓰는 카톡도 한글 덕분이에요!\n오늘은 맞춤법 한 번 신경 써볼까요? ㅋㅋ"}
-            };
-            var JEOLGI_MAP2 = {
-              "10-08":{n:"한로",desc:"찬 이슬이 맺히는 때",msg:"찬 이슬이 맺히는 아침! 한로(寒露)예요!\n여름의 열기가 완전히 가시고 가을이 깊어졌어요.\n풀잎 끝에 맺힌 이슬이 차갑게 느껴지는 때!\n이때부터 단풍이 진짜 예뻐져요. 산에 가기 딱 좋은 날!"},
-              "10-23":{n:"상강",desc:"서리가 내리는 때",msg:"서리가 내리는 상강! 가을의 마지막 절기!\n서리가 내리면 단풍이 가장 붉어진대요.\n이게 끝나면 겨울이에요!\n그러니까 지금 가을을 마음껏 즐기세요!"}
-            };
-            var HISTORY_MAP2 = {
-              "10-06":{y:"1927년",e:"첫 유성영화 '재즈 싱어' 개봉",s:"1927년 오늘, 영화에서 처음으로 소리가 났어요!\n'당신은 아직 아무것도 못 들었소'\n이 한마디가 영화 역사를 바꿨죠!\n무성에서 유성으로! 상상이 가나요?\n오늘 당신의 작은 한마디도 누군가에겐 큰 울림일 수 있어요!"},
-              "10-07":{y:"1959년",e:"소련, 달 뒷면 첫 촬영",s:"1959년 오늘, 인류가 처음으로 달의 뒷면을 봤어요!\n지구에서는 절대 볼 수 없는 달의 뒤!\n그동안 얼마나 궁금했을까요?\n보이지 않는 곳을 본 날이에요.\n당신도 오늘 보지 못했던 것을 보게 될지 몰라요!"},
-              "10-08":{y:"1871년",e:"시카고 대화재",s:"1871년 오늘, 시카고가 불타버렸어요!\n원인이 뭐였게요? 소 한 마리!\n소가 건드린 등불에서 도시가 불탔대요!\n작은 불씨가 큰 변화를 만든 거죠.\n오늘 당신의 작은 행동도 큰 변화를 만들 수 있어요!"}
-            };
-            var nat2 = NATIONAL_DAY2[mmdd2]||null;
-            var jeolgi2 = JEOLGI_MAP2[mmdd2]||null;
-            var hist2 = HISTORY_MAP2[mmdd2]||null;
-            var hasHistory = nat2 || jeolgi2 || hist2;
-            
-            if(hasHistory){
-              var t2="", d2="", m2="";
-              if(jeolgi2){ t2="🌿 오늘은 "+jeolgi2.n+"("+mmdd2+")"; d2=jeolgi2.desc; m2=jeolgi2.msg; }
-              else if(nat2){ t2="🇰🇷 오늘은 "+nat2.n; d2=nat2.s; m2=nat2.d; }
-              else if(hist2){ t2="📅 과거의 오늘 · "+hist2.y; d2=hist2.e; m2=hist2.s; }
-              var infoBox = document.createElement('div');
-              infoBox.id='V40-below-box';
-              // 폰트 원래대로! var(--memo-font-size) 사용!
-              infoBox.style.cssText='width:100%; grid-column:1 / -1; background:linear-gradient(135deg,#f8f6ff 0%,#fff8f0 100%); border:1px solid #e8e0ff; border-radius:16px; padding:16px; margin-top:12px; box-sizing:border-box; font-size: var(--memo-font-size);';
-              infoBox.innerHTML='<div style="font-size: var(--base-font-size); font-weight:800; color:#7c6cff; line-height:1.3;">'+t2+'</div><div style="font-size: var(--memo-font-size); font-weight:700; margin-top:6px; color:#2d2a4a;">'+d2+'</div><div style="font-size: var(--memo-font-size); color:#333; margin-top:8px; background:#fff; padding:12px; border-radius:10px; white-space:pre-line; line-height:1.7;">'+m2+'</div>';
-              listEl.appendChild(infoBox);
+          if(!isGallery2){
+            if(isNotToday2){
+              var btnOnly = document.createElement('div');
+              btnOnly.id='V43-btn-row';
+              btnOnly.style.cssText='width:100%; grid-column:1 / -1; display:flex; gap:8px; margin-top:14px; box-sizing:border-box;';
+              btnOnly.innerHTML='<span onclick="window.goToToday()" style="flex:1; text-align:center; font-size: var(--memo-font-size); background:#ff7e7e; color:#fff; padding:14px; border-radius:12px; cursor:pointer; font-weight:700;">🏠 오늘로 돌아가기</span>';
+              listEl.appendChild(btnOnly);
             }
-            
-            try{
-              var all2=getAllDiaries();
-              var viewingYear2=dateStr.split('-')[0];
-              var pasts2=all2.filter(function(it){
-                var ds=(it.date||'').split('T')[0];
-                if(!ds || ds.indexOf('-')===-1) return false;
-                var p=ds.split('-');
-                return (p[1].padStart(2,'0')+'-'+p[2].padStart(2,'0'))===mmdd2 && p[0]!==viewingYear2;
-              }).sort(function(a,b){ return b.date.localeCompare(a.date); }).slice(0,3);
-              if(pasts2.length>0){
-                var pastBox = document.createElement('div');
-                pastBox.id='V40-past-box';
-                pastBox.style.cssText='width:100%; grid-column:1 / -1; background:#fff; border:1.5px dashed #d0c8ff; border-radius:16px; padding:16px; margin-top:12px; box-sizing:border-box; font-size: var(--memo-font-size);';
-                var html='<div style="font-size: var(--base-font-size); font-weight:800; color:#7c6cff; margin-bottom:8px;">📖 나의 과거의 오늘 ('+pasts2.length+'건) - 클릭하면 그날로 이동</div>';
-                for(var i=0;i<pasts2.length;i++){
-                  var p=pasts2[i];
-                  html+='<div onclick="window.goToPastDiary(\''+p.date+'\')" style="background:#f8f6ff; border:1px solid #e8e0ff; border-radius:10px; padding:10px 12px; margin-bottom:6px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;"><div><div style="font-size:13px; color:#9a8cc0; font-weight:700;">'+p.date+' '+(p.photo?'📷':'')+'</div><div style="font-size: var(--memo-font-size); color:#222;">'+(p.text||'사진').slice(0,32)+'</div></div><div style="font-size: var(--memo-font-size); color:#7c6cff; font-weight:700;">보기 →</div></div>';
-                }
-                pastBox.innerHTML=html;
-                listEl.appendChild(pastBox);
-              }
-            }catch(e){}
+            return;
           }
           
-          // 과거로 가기 버튼 - 하나만! (앨범1,2 둘 다!)
+          var EXPERT_DATA2 = {
+            "10-08":{cat:"24절기", n:"한로", s:"찬 이슬이 맺히는 때", d:"한로(寒露)! 찬 이슬이 맺히는 때!\n여름 열기 가시고 가을이 깊어졌어요.\n풀잎 끝 이슬이 차갑게 느껴지는 때!\n단풍이 진짜 예뻐져요. 산에 가기 딱 좋은 날!"},
+            "10-09":{cat:"국경일", n:"한글날", s:"한글 반포일 - 창제 vs 반포 구분!", d:"한글날은 창제일(1443년)이 아니라 반포일(1446년)이에요!\n음력 9월 상순을 양력으로 환산해 10월 9일!\n세계에서 가장 과학적인 글자!"}
+          };
+          var FALLBACK2 = [
+            {title:"💡 한국속담 - 티끌 모아 태산", desc:"작은 것도 모이면 큰 것", story:"티끌 모아 태산! 하루 한 줄이 모여 10년 뒤 태산!"},
+            {title:"📚 사자성어 - 온고지신", desc:"옛것을 익혀 새것을 안다", story:"온고지신! 과거 다이어리 펼쳐보면 새로운 깨달음!"},
+            {title:"🌍 외국속담 - 로마는 하루아침에", desc:"큰 일은 시간이 걸린다", story:"로마는 하루아침에 이루어지지 않았다! 천천히!"},
+            {title:"⚡ 그리스신화 - 판도라의 상자", desc:"마지막에 남은 건 희망", story:"판도라 상자 열고 재앙이 나왔지만 마지막엔 희망! 희망을 잃지 마세요!"},
+            {title:"😂 웃긴이야기 - 흥부와 놀부", desc:"착하면 복이 온다", story:"흥부는 금은보화, 놀부는 도깨비! 착하면 복이 와요!"},
+            {title:"💡 한국속담 - 가는 말이 고와야", desc:"말을 곱게 해야", story:"고운 말 한마디! 고마워, 사랑해, 수고했어!"},
+            {title:"📚 사자성어 - 일석이조", desc:"한 번에 두 가지", story:"일석이조! 돌 하나로 새 두 마리! 오늘 두 가지 좋은 일!"},
+            {title:"🏛️ 로마신화 - 큐피드의 화살", desc:"사랑의 신", story:"큐피드 화살 맞으면 사랑에 빠져요! 오늘 화살 맞을지도!"}
+          ];
+          
+          var expert2 = EXPERT_DATA2[mmdd2] || null;
+          var fbIdx = (m2*31 + d2*7) % 70;
+          // 실제 70개 중 8개만 여기선 샘플, 나머지는 empty에서 처리
+          var fb2 = FALLBACK2[fbIdx % FALLBACK2.length];
+          
+          var t2, d2s, m2s;
+          if(expert2){
+            t2 = (expert2.cat==="24절기" ? "🌿 오늘은 "+expert2.n : "🇰🇷 오늘은 "+expert2.n);
+            d2s = expert2.s;
+            m2s = expert2.d;
+          } else {
+            // empty쪽 70개에서 가져오기 위해 다시 계산
+            var allFb = [
+              "💡 티끌 모아 태산 - 작은 것도 모이면 큰 것! 하루 한 줄이 10년 뒤 태산!",
+              "📚 온고지신 - 옛것을 익혀 새것을! 과거 다이어리 펼쳐보세요!",
+              "🌍 로마는 하루아침에 - 큰 일은 시간 걸려요! 천천히!",
+              "⚡ 판도라의 상자 - 마지막 남은 건 희망! 희망 잃지 마세요!",
+              "😂 흥부와 놀부 - 착하면 복이 와요! 오늘 착하게!",
+              "💡 가는 말이 고와야 - 고운 말 한마디가 행복을!",
+              "📚 일석이조 - 한 번에 두 가지! 알차게!",
+              "🏛️ 큐피드의 화살 - 사랑의 신! 오늘 화살 맞을지도!"
+            ];
+            var pick = allFb[fbIdx % allFb.length];
+            var parts = pick.split(" - ");
+            t2 = parts[0];
+            d2s = parts[1].split("!")[0];
+            m2s = parts[1];
+          }
+          
+          var infoBox = document.createElement('div');
+          infoBox.id='V43-below-box';
+          infoBox.style.cssText='width:100%; grid-column:1 / -1; background:linear-gradient(135deg,#f8f6ff 0%,#fff8f0 100%); border:1px solid #e8e0ff; border-radius:16px; padding:16px; margin-top:12px; box-sizing:border-box; font-size: var(--memo-font-size);';
+          infoBox.innerHTML='<div style="font-size: var(--base-font-size); font-weight:800; color:#7c6cff; line-height:1.3;">'+t2+'</div><div style="font-size: var(--memo-font-size); font-weight:700; margin-top:6px; color:#2d2a4a;">'+d2s+'</div><div style="font-size: var(--memo-font-size); color:#333; margin-top:8px; background:#fff; padding:12px; border-radius:10px; white-space:pre-line; line-height:1.7;">'+m2s+'</div>';
+          listEl.appendChild(infoBox);
+          
+          try{
+            var all2=getAllDiaries();
+            var viewingYear2=dateStr.split('-')[0];
+            var pasts2=all2.filter(function(it){
+              var ds=(it.date||'').split('T')[0];
+              if(!ds || ds.indexOf('-')===-1) return false;
+              var p=ds.split('-');
+              return (p[1].padStart(2,'0')+'-'+p[2].padStart(2,'0'))===mmdd2 && p[0]!==viewingYear2;
+            }).sort(function(a,b){ return b.date.localeCompare(a.date); }).slice(0,3);
+            if(pasts2.length>0){
+              var pastBox = document.createElement('div');
+              pastBox.id='V43-past-box';
+              pastBox.style.cssText='width:100%; grid-column:1 / -1; background:#fff; border:1.5px dashed #d0c8ff; border-radius:16px; padding:16px; margin-top:12px; box-sizing:border-box; font-size: var(--memo-font-size);';
+              var html='<div style="font-size: var(--base-font-size); font-weight:800; color:#7c6cff; margin-bottom:8px;">📖 나의 과거의 오늘 ('+pasts2.length+'건)</div>';
+              for(var i=0;i<pasts2.length;i++){
+                var p=pasts2[i];
+                html+='<div onclick="window.goToPastDiary(\''+p.date+'\')" style="background:#f8f6ff; border:1px solid #e8e0ff; border-radius:10px; padding:10px 12px; margin-bottom:6px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;"><div><div style="font-size:13px; color:#9a8cc0; font-weight:700;">'+p.date+' '+(p.photo?'📷':'')+'</div><div style="font-size: var(--memo-font-size); color:#222;">'+(p.text||'사진').slice(0,32)+'</div></div><div style="font-size: var(--memo-font-size); color:#7c6cff; font-weight:700;">보기 →</div></div>';
+              }
+              pastBox.innerHTML=html;
+              listEl.appendChild(pastBox);
+            }
+          }catch(e){}
+          
           if(isNotToday2){
             var btnRow = document.createElement('div');
-            btnRow.id='V40-btn-row';
+            btnRow.id='V43-btn-row';
             btnRow.style.cssText='width:100%; grid-column:1 / -1; display:flex; gap:8px; margin-top:14px; box-sizing:border-box;';
             btnRow.innerHTML='<span onclick="window.goToToday()" style="flex:1; text-align:center; font-size: var(--memo-font-size); background:#ff7e7e; color:#fff; padding:14px; border-radius:12px; cursor:pointer; font-weight:700;">🏠 오늘로 돌아가기</span>';
             listEl.appendChild(btnRow);
           }
           
-        }catch(e){ console.log('V40 error', e); }
+        }catch(e){ console.log('V43 error', e); }
         
 
         // 💰 데이터 있을 때도 추가 버튼 표시 (버그 수정)
