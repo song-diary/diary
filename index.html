@@ -3045,6 +3045,16 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 </script>
 
+
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='#7c6cff'/><g transform='translate(15 18)'><rect x='2' y='5' width='66' height='52' rx='10' fill='white' opacity='0.95'/><circle cx='18' cy='18' r='6' fill='#ffb86c'/><path d='M2 42 L22 26 L38 38 L52 30 L66 42 Z' fill='#7c6cff' opacity='0.8'/></g><text x='50' y='88' text-anchor='middle' font-size='8' fill='white' font-weight='700'>PHOTO</text></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='#7c6cff'/><g transform='translate(15 18)'><rect x='2' y='5' width='66' height='52' rx='10' fill='white' opacity='0.95'/><circle cx='18' cy='18' r='6' fill='#ffb86c'/><path d='M2 42 L22 26 L38 38 L52 30 L66 42 Z' fill='#7c6cff' opacity='0.8'/></g><text x='50' y='88' text-anchor='middle' font-size='8' fill='white' font-weight='700'>PHOTO</text></svg>">
+<style>
+header h1{ font-size:22px !important; font-weight:800 !important; color:#2d2a4a !important; line-height:1.2 !important; }
+header h1 div{ font-size:13px !important; font-weight:400 !important; color:#9a8cc0 !important; }
+/* 예약 라벨 디자인 개선 - 미래 예약만 표시하고 디자인 이쁘게 */
+.diary-reserve-badge{ background:#7c6cff; color:#fff; font-size:11px; padding:2px 6px; border-radius:6px; margin-right:4px; font-weight:700; }
+</style>
+
 </head>
 <body>
 
@@ -5319,7 +5329,7 @@ window.attachPhotoDoubleTap = function(el, handler){
     }
 
     function isFutureDate(dateStr) {
-        return normalizeDateStr(dateStr) > getTodayStr();
+        try{ return normalizeDateStr(dateStr) > getTodayStr(); }catch(e){ return false; }
     }
 
     // 🌙 양력 날짜 문자열(YYYY-MM-DD)을 받아 "음력 M.D" 형태의 짧은 문자열 반환
@@ -6139,7 +6149,7 @@ window.attachPhotoDoubleTap = function(el, handler){
             if (dateStr !== lastGroupDate) {
                 let dayOfWeek = getDayOfWeekStr(dateStr);
                 let displayDateStr = `${dateStr}(${dayOfWeek})`;
-                let groupReservedBadge = isReserved ? `<span style="background:var(--primary-color); color:white; padding:1px 5px; border-radius:4px; font-size:11px; margin-right:4px; font-weight:bold;">[예약]</span>` : '';
+                let groupReservedBadge = isReserved ? `<span style="background:var(--primary-color); color:white; padding:1px 5px; border-radius:4px; font-size:11px; margin-right:4px; font-weight:bold; diary-reserve-badge">⏰ 예약</span>` : '';
                 const groupHeader = document.createElement('div');
                 groupHeader.className = 'date-group-header';
                 groupHeader.innerHTML = `📅 ${groupReservedBadge}${displayDateStr}`;
@@ -6333,7 +6343,7 @@ window.attachPhotoDoubleTap = function(el, handler){
             if (dateStr !== lastDiaryGroupDate) {
                 let dayOfWeek = getDayOfWeekStr(dateStr);
                 let displayDateStr = `${dateStr}(${dayOfWeek})`;
-                let groupReservedBadge = isReserved ? `<span style="background:var(--primary-color); color:white; padding:1px 5px; border-radius:4px; font-size:11px; margin-right:4px; font-weight:bold;">[예약]</span>` : '';
+                let groupReservedBadge = isReserved ? `<span style="background:var(--primary-color); color:white; padding:1px 5px; border-radius:4px; font-size:11px; margin-right:4px; font-weight:bold; diary-reserve-badge">⏰ 예약</span>` : '';
                 const groupHeader = document.createElement('div');
                 groupHeader.className = 'date-group-header';
                 groupHeader.innerHTML = `📅 ${groupReservedBadge}${displayDateStr}`;
@@ -14119,20 +14129,15 @@ console.log('[DailyAlarm] 스크립트 로드 완료 - testDailyAlarm()으로 �
 (function(){
   console.log('[V4.13] 매일반복 저장 안됨 수정');
 
-  // 1. isFutureDate를 항상 true로 - 예약시간 입력란 매일 활성화
-  const origIsFuture = window.isFutureDate;
-  window.isFutureDate = function(dateStr){
-    return true; // 항상 미래로 처리 -> reservation-box 항상 표시
-  };
-  // 혹시 함수 정의 전이면 나중에 다시 패치
-  setTimeout(()=>{
-    if(typeof isFutureDate !== 'undefined'){
-      // 전역 함수 덮어쓰기
-      try{
-        eval('isFutureDate = function(dateStr){ return true; }');
-      }catch(e){}
-    }
-  }, 500);
+  // V48 Fix: isFutureDate는 건드리지 않음! 예약 배지 버그 해결!
+  // 대신 reservation-box만 항상 표시되도록 CSS로 처리
+  const style = document.createElement('style');
+  style.textContent = `
+    #reservation-box, .reservation-box { display: flex !important; }
+    .reservation-time-row { display: flex !important; }
+  `;
+  document.head.appendChild(style);
+  console.log('[V48] 예약 박스 항상 표시 - isFutureDate는 정상 유지!');
 
   function fixPin(){
     document.querySelectorAll('.cal-photo-corner').forEach(el=>{
