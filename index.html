@@ -3096,6 +3096,19 @@ body:not(.modal-open) { overflow:auto !important; }
 #photo-lightbox-overlay.active { display:flex !important; }
 </style>
 
+
+<style id="V77_PAST_NOTIFY">
+.past-notify-section { background:#f8f5ff; border:1.5px solid #e8e0ff; border-radius:14px; padding:14px; margin:12px 0; }
+.past-notify-section h4 { font-size:14px; font-weight:800; color:#7c6cff; margin:0 0 10px 0; display:flex; align-items:center; gap:6px; }
+.past-notify-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:8px 0; }
+.past-notify-check { display:flex; align-items:center; gap:6px; background:white; padding:8px 10px; border-radius:10px; border:1px solid #eee; cursor:pointer; font-size:13px; }
+.past-notify-check input { width:16px; height:16px; }
+.past-notify-check.active { border-color:#7c6cff; background:#f0ebff; }
+.time-capsule-banner { background:linear-gradient(135deg, #a78bfa 0%, #f472b6 100%); color:white; border-radius:14px; padding:14px; margin:10px 0; display:flex; justify-content:space-between; align-items:center; box-shadow:0 4px 12px rgba(124,108,255,0.3); }
+.time-capsule-card { background:white; border:1.5px solid #e8e0ff; border-left:5px solid #7c6cff; border-radius:12px; padding:12px; margin:8px 0; }
+.countdown-badge { background:#fef3c7; color:#92400e; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:700; }
+</style>
+
 </head>
 <body>
 
@@ -9282,22 +9295,80 @@ window.attachPhotoDoubleTap = function(el, handler){
                 listEl.appendChild(itemBox);
             });
 
-            // 2. 나의 과거 기록
+            // 2. 나의 과거 기록 - V77 타임캡슐! 1개월/3개월/6개월/1년전!
             var mmdd = dateStr.slice(5);
             try{
               var viewingYear = dateStr.split('-')[0];
-              var pasts = diaries.filter(function(it){
+              var settings = (typeof getPastSettings==='function') ? getPastSettings() : {intervals:['1m','3m','6m','1y'], enabled:true};
+              var intervals = settings.intervals || ['1m','3m','6m','1y'];
+              
+              // 기존: 같은 월일 과거 연도
+              var pastsSameDate = diaries.filter(function(it){
                 var ds = (it.date||'').split('T')[0];
                 if(!ds || ds.indexOf('-')===-1) return false;
                 var p = ds.split('-');
-                // V74 Fix: 과거만! viewingYear보다 이전 연도만 과거로! 미래(2026년)는 과거 아님!
                 return (p[1].padStart(2,'0')+'-'+p[2].padStart(2,'0'))===mmdd && p[0] < viewingYear;
-              }).sort(function(a,b){ return b.date.localeCompare(a.date); }).slice(0,3);
-              if(pasts.length>0){
-                var myPastHTML = '<div style="grid-column:1 / -1; width:100%; margin-top:12px; border-top:2px dashed #e8e0ff; padding-top:10px;"><div style="font-size:14px; font-weight:800; color:#7c6cff; margin-bottom:6px;">📖 나의 과거의 오늘 ('+pasts.length+'건)</div>';
-                for(var i=0;i<pasts.length;i++){
-                  var p=pasts[i];
-                  myPastHTML+='<div onclick="window.goToPastDiary(\''+p.date+'\')" style="background:#fff; border:1px solid #e8e0ff; border-radius:10px; padding:10px 12px; margin-bottom:6px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;"><div><div style="font-size:13px; color:#9a8cc0; font-weight:700;">'+p.date+' '+(p.photo?'📷':'')+'</div><div style="font-size:13px; color:#222;">'+(p.text||'사진').slice(0,32)+'</div></div><div style="font-size:13px; color:#7c6cff; font-weight:700;">보기 →</div></div>';
+              }).sort(function(a,b){ return b.date.localeCompare(a.date); });
+              
+              // V77: 1개월전, 3개월전 등 상대적 과거
+              var timeCapsules = [];
+              var todayForCalc = dateStr;
+              for(var ii=0; ii<intervals.length; ii++){
+                var iv = intervals[ii];
+                var pastDateStr = (typeof getPastDateByInterval==='function') ? getPastDateByInterval(todayForCalc, iv) : null;
+                if(!pastDateStr) continue;
+                var found = diaries.filter(function(it){
+                  return (it.date||'').split('T')[0]===pastDateStr && (it.text || it.photo);
+                });
+                if(found.length>0){
+                  for(var f=0; f<found.length; f++){
+                    found[f]._interval = iv;
+                    found[f]._intervalLabel = (typeof getIntervalLabel==='function') ? getIntervalLabel(iv) : iv;
+                    timeCapsules.push(found[f]);
+                  }
+                }
+              }
+              
+              // 합쳐서 표시
+              var allPasts = [];
+              // 타임캡슐 먼저 (1개월,3개월 등)
+              for(var t=0; t<timeCapsules.length; t++) allPasts.push(timeCapsules[t]);
+              // 같은 날짜 과거는 최대 2개만
+              for(var s=0; s<Math.min(pastsSameDate.length,2); s++) {
+                if(!pastsSameDate[s]._interval) {
+                  pastsSameDate[s]._interval = 'same';
+                  pastsSameDate[s]._intervalLabel = pastsSameDate[s].date.split('-')[0]+'년 오늘';
+                }
+                allPasts.push(pastsSameDate[s]);
+              }
+              
+              if(allPasts.length>0){
+                var myPastHTML = '<div style="grid-column:1 / -1; width:100%; margin-top:12px; border-top:2px dashed #e8e0ff; padding-top:10px;"><div style="font-size:14px; font-weight:800; color:#7c6cff; margin-bottom:8px;">📖 타임캡슐 - 나의 과거 ('+allPasts.length+'건)</div>';
+                // 알림 배너 (오늘이면)
+                var todayStr = (typeof getTodayStr==='function') ? getTodayStr() : new Date().toISOString().slice(0,10);
+                if(dateStr===todayStr && settings.enabled && timeCapsules.length>0){
+                  myPastHTML += '<div class="time-capsule-banner"><div><div style="font-size:13px; font-weight:800;">🎉 타임캡슐 도착!</div><div style="font-size:11px; opacity:0.9;">'+timeCapsules.length+'개의 과거가 당신을 기다려요</div></div><div style="font-size:20px;">📬</div></div>';
+                }
+                
+                for(var i=0;i<Math.min(allPasts.length,5);i++){
+                  var p=allPasts[i];
+                  var label = p._intervalLabel || p.date;
+                  var badgeColor = p._interval==='1m' ? '#10b981' : p._interval==='3m' ? '#3b82f6' : p._interval==='6m' ? '#8b5cf6' : p._interval==='1y' ? '#f59e0b' : '#7c6cff';
+                  myPastHTML+='<div onclick="window.goToPastDiary(\''+p.date+'\')" style="background:#fff; border:1px solid #e8e0ff; border-left:4px solid '+badgeColor+'; border-radius:10px; padding:10px 12px; margin-bottom:8px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;"><div style="flex:1;"><div style="display:flex; align-items:center; gap:6px; margin-bottom:2px;"><span style="background:'+badgeColor+'; color:white; padding:2px 6px; border-radius:6px; font-size:10px; font-weight:700;">'+label+'</span><span style="font-size:12px; color:#9a8cc0; font-weight:700;">'+p.date+' '+(p.photo?'📷':'')+'</span></div><div style="font-size:13px; color:#222; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">'+(p.text||'사진').slice(0,30)+'</div></div><div style="font-size:13px; color:#7c6cff; font-weight:700; flex-shrink:0; margin-left:8px;">보기 →</div></div>';
+                }
+                // 데이터 없을 때 카운트다운
+                if(allPasts.length===0){
+                  // 가장 오래된 일기 찾기
+                  var oldest = diaries.filter(d=>d.text||d.photo).sort((a,b)=>a.date.localeCompare(b.date))[0];
+                  if(oldest){
+                    var oldestDate = new Date(oldest.date);
+                    var nowDate = new Date(dateStr);
+                    var diffDays = Math.floor((nowDate - oldestDate)/(1000*60*60*24));
+                    var remain = 30 - diffDays;
+                    if(remain>0){
+                      myPastHTML += '<div style="background:#fffbeb; border:1px dashed #f59e0b; border-radius:10px; padding:12px; text-align:center;"><div style="font-size:13px; font-weight:700; color:#92400e;">⏳ 첫 타임캡슐까지 D-'+remain+'</div><div style="font-size:11px; color:#b45309; margin-top:4px;">30일만 쓰면 1개월 전 추억이 생겨요!<br>현재 '+diffDays+'일째 작성 중! 🔥</div></div>';
+                    }
+                  }
                 }
                 myPastHTML+='</div>';
                 var pastDiv = document.createElement('div');
@@ -9305,8 +9376,26 @@ window.attachPhotoDoubleTap = function(el, handler){
                 pastDiv.style.width='100%';
                 pastDiv.innerHTML = myPastHTML;
                 listEl.appendChild(pastDiv);
+              } else {
+                // 과거 하나도 없을 때 카운트다운 표시
+                var oldest = diaries.filter(d=>d.text||d.photo).sort((a,b)=>a.date.localeCompare(b.date))[0];
+                if(oldest){
+                  var oldestDate = new Date(oldest.date);
+                  var nowDate = new Date(dateStr);
+                  var diffDays = Math.floor((nowDate - oldestDate)/(1000*60*60*24));
+                  var remain = 30 - diffDays;
+                  if(remain>0 && remain<=30){
+                    var myPastHTML = '<div style="grid-column:1 / -1; width:100%; margin-top:12px; border-top:2px dashed #e8e0ff; padding-top:10px;"><div style="font-size:14px; font-weight:800; color:#7c6cff; margin-bottom:6px;">📖 타임캡슐</div>';
+                    myPastHTML += '<div style="background:#fffbeb; border:1px dashed #f59e0b; border-radius:10px; padding:14px; text-align:center;"><div style="font-size:14px; font-weight:800; color:#92400e;">⏳ 첫 타임캡슐까지 D-'+remain+'</div><div style="font-size:12px; color:#b45309; margin-top:6px; line-height:1.4;">30일만 쓰면 1개월 전 추억이 생겨요!<br>현재 '+diffDays+'일째 작성 중! 🔥<br>1개월→3개월→6개월→1년으로 성장하는 재미!</div></div></div>';
+                    var pastDiv = document.createElement('div');
+                    pastDiv.style.gridColumn='1 / -1';
+                    pastDiv.style.width='100%';
+                    pastDiv.innerHTML = myPastHTML;
+                    listEl.appendChild(pastDiv);
+                  }
+                }
               }
-            }catch(e){}
+            }catch(e){ console.log('past error', e); }
 
             // 3. 오늘의 역사 - 365일 매일 1~3개 무조건 표시! (진짜 역사만!)
             var historyList = TODAY_HISTORY_365[mmdd] || null;
@@ -15603,6 +15692,173 @@ window.addEventListener("load", function() {
   };
   
   console.log('[V20药] 패치 완료 - test8pmPillAlarm()으로 8시 약 알림 테스트 가능');
+})();
+</script>
+
+
+<script id="V77_PAST_NOTIFY_JS">
+// V77: 과거의 오늘 알림 설정
+(function(){
+  const DEFAULT_PAST_SETTINGS = {
+    enabled: true,
+    intervals: ['1m','3m','6m','1y'],
+    notifyTime: '08:00',
+    cardStyle: 'instagram'
+  };
+  
+  function getPastSettings(){
+    try{
+      const s = localStorage.getItem('pastNotifySettings');
+      if(s) return JSON.parse(s);
+    }catch(e){}
+    return {...DEFAULT_PAST_SETTINGS};
+  }
+  function savePastSettings(s){
+    try{ localStorage.setItem('pastNotifySettings', JSON.stringify(s)); }catch(e){}
+  }
+  
+  window.getPastSettings = getPastSettings;
+  window.savePastSettings = savePastSettings;
+  
+  // 1개월전, 3개월전 등 날짜 계산
+  function getPastDateByInterval(baseDateStr, interval){
+    const base = new Date(baseDateStr);
+    const d = new Date(base);
+    switch(interval){
+      case '1m': d.setMonth(d.getMonth()-1); break;
+      case '3m': d.setMonth(d.getMonth()-3); break;
+      case '6m': d.setMonth(d.getMonth()-6); break;
+      case '1y': d.setFullYear(d.getFullYear()-1); break;
+      case '2y': d.setFullYear(d.getFullYear()-2); break;
+      case '3y': d.setFullYear(d.getFullYear()-3); break;
+      default: return null;
+    }
+    // Handle month end edge (e.g., Jan 31 -> Feb 31 invalid)
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    const dd = String(d.getDate()).padStart(2,'0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  window.getPastDateByInterval = getPastDateByInterval;
+  
+  function getIntervalLabel(interval){
+    const map = {'1m':'1개월 전','3m':'3개월 전','6m':'6개월 전','1y':'1년 전','2y':'2년 전','3y':'3년 전'};
+    return map[interval] || interval;
+  }
+  window.getIntervalLabel = getIntervalLabel;
+  
+  // 설정 UI 렌더링
+  function renderPastNotifySettingsUI(){
+    const container = document.getElementById('past-notify-settings-container');
+    if(!container) return;
+    const settings = getPastSettings();
+    const intervals = ['1m','3m','6m','1y','2y','3y'];
+    
+    let html = `
+      <div class="past-notify-section">
+        <h4>📖 나의 과거의 오늘 알림 (타임캡슐)</h4>
+        <div style="display:flex; justify-content:space-between; align-items:center; background:white; padding:10px 12px; border-radius:10px; margin-bottom:10px;">
+          <span style="font-size:13px; font-weight:700;">알림 활성화</span>
+          <label style="position:relative; display:inline-block; width:44px; height:24px;">
+            <input type="checkbox" id="past-notify-enabled" ${settings.enabled?'checked':''} style="opacity:0; width:0; height:0;">
+            <span style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:${settings.enabled?'#7c6cff':'#ccc'}; border-radius:24px; transition:.3s;"></span>
+            <span style="position:absolute; content:''; height:18px; width:18px; left:${settings.enabled?'22px':'3px'}; bottom:3px; background:white; border-radius:50%; transition:.3s; display:block;"></span>
+          </label>
+        </div>
+        
+        <div style="font-size:12px; color:#666; margin-bottom:8px; font-weight:700;">⏰ 알림 시간 (매일)</div>
+        <div style="display:flex; gap:8px; margin-bottom:12px;">
+          <select id="past-notify-time" style="flex:1; padding:8px; border-radius:8px; border:1px solid #ddd; font-size:13px;">
+            <option value="08:00" ${settings.notifyTime==='08:00'?'selected':''}>오전 8시 (출근길 추억)</option>
+            <option value="12:00" ${settings.notifyTime==='12:00'?'selected':''}>오후 12시 (점심 추억)</option>
+            <option value="21:00" ${settings.notifyTime==='21:00'?'selected':''}>오후 9시 (하루 마무리)</option>
+            <option value="random" ${settings.notifyTime==='random'?'selected':''}>랜덤 서프라이즈!</option>
+          </select>
+        </div>
+        
+        <div style="font-size:12px; color:#666; margin-bottom:8px; font-weight:700;">📅 보여줄 과거 (체크하면 알림!)</div>
+        <div class="past-notify-grid">
+          ${intervals.map(iv=>{
+            const checked = settings.intervals.includes(iv);
+            return `<label class="past-notify-check ${checked?'active':''}" onclick="this.classList.toggle('active')">
+              <input type="checkbox" value="${iv}" ${checked?'checked':''} onchange="savePastIntervals()"> ${getIntervalLabel(iv)}
+            </label>`;
+          }).join('')}
+        </div>
+        <div style="font-size:11px; color:#9a8cc0; margin-top:8px; line-height:1.4;">
+          💡 <b>1개월부터 시작하면 30일만 써도 추억 생김!</b> 1년은 365일 기다려야 해서 재미없어요. 1개월→3개월→6개월→1년 순서로 성장하는 재미!
+        </div>
+        
+        <div style="font-size:12px; color:#666; margin:12px 0 8px 0; font-weight:700;">🎨 알림 카드 스타일</div>
+        <div style="display:flex; gap:8px;">
+          <label style="flex:1; text-align:center; padding:8px; border:1.5px solid ${settings.cardStyle==='instagram'?'#7c6cff':'#ddd'}; border-radius:10px; cursor:pointer; background:${settings.cardStyle==='instagram'?'#f0ebff':'white'};">
+            <input type="radio" name="cardStyle" value="instagram" ${settings.cardStyle==='instagram'?'checked':''} style="display:none;" onchange="saveCardStyle('instagram')"> 📸<br><span style="font-size:11px;">인스타 감성</span>
+          </label>
+          <label style="flex:1; text-align:center; padding:8px; border:1.5px solid ${settings.cardStyle==='letter'?'#7c6cff':'#ddd'}; border-radius:10px; cursor:pointer; background:${settings.cardStyle==='letter'?'#f0ebff':'white'};">
+            <input type="radio" name="cardStyle" value="letter" ${settings.cardStyle==='letter'?'checked':''} style="display:none;" onchange="saveCardStyle('letter')"> 💌<br><span style="font-size:11px;">편지 감성</span>
+          </label>
+          <label style="flex:1; text-align:center; padding:8px; border:1.5px solid ${settings.cardStyle==='simple'?'#7c6cff':'#ddd'}; border-radius:10px; cursor:pointer; background:${settings.cardStyle==='simple'?'#f0ebff':'white'};">
+            <input type="radio" name="cardStyle" value="simple" ${settings.cardStyle==='simple'?'checked':''} style="display:none;" onchange="saveCardStyle('simple')"> ✨<br><span style="font-size:11px;">심플</span>
+          </label>
+        </div>
+      </div>
+    `;
+    container.innerHTML = html;
+    
+    // 이벤트
+    const enabledChk = document.getElementById('past-notify-enabled');
+    if(enabledChk){
+      enabledChk.addEventListener('change', function(){
+        const s = getPastSettings(); s.enabled = this.checked; savePastSettings(s);
+        renderPastNotifySettingsUI();
+      });
+    }
+    const timeSel = document.getElementById('past-notify-time');
+    if(timeSel){
+      timeSel.addEventListener('change', function(){
+        const s = getPastSettings(); s.notifyTime = this.value; savePastSettings(s);
+      });
+    }
+  }
+  
+  window.savePastIntervals = function(){
+    const checks = document.querySelectorAll('.past-notify-check input:checked');
+    const vals = Array.from(checks).map(c=>c.value);
+    const s = getPastSettings(); s.intervals = vals; savePastSettings(s);
+  };
+  window.saveCardStyle = function(style){
+    const s = getPastSettings(); s.cardStyle = style; savePastSettings(s);
+    renderPastNotifySettingsUI();
+  };
+  
+  // 설정 모달 열릴 때 UI 렌더링
+  const origOpenSettings = window.openSettingsModal;
+  if(origOpenSettings){
+    window.openSettingsModal = function(){
+      origOpenSettings();
+      setTimeout(renderPastNotifySettingsUI, 100);
+    };
+  }
+  
+  // 페이지 로드 시에도 시도
+  window.addEventListener('load', function(){
+    setTimeout(function(){
+      // 설정 컨테이너가 없으면 만들기
+      if(!document.getElementById('past-notify-settings-container')){
+        const settingsCard = document.getElementById('settings-card');
+        if(settingsCard){
+          const div = document.createElement('div');
+          div.id = 'past-notify-settings-container';
+          // 설정 내용 중간에 삽입
+          const scrollContent = settingsCard.querySelector('.settings-scroll-content') || settingsCard;
+          scrollContent.appendChild(div);
+        }
+      }
+      renderPastNotifySettingsUI();
+    }, 500);
+  });
+  
+  console.log('[V77] Past notify settings loaded');
 })();
 </script>
 
