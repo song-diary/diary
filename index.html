@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>Smart Diary V4.0 - UI 원본 동일, 로또 비활성화</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>포토다이어리 - 사진, 추억을 담다</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -2998,6 +2998,51 @@ window.goToToday = function(){
     }, 150);
   }catch(e){ console.error(e); }
 };
+</script>
+
+
+<script>
+// V45 정확성 패치: 타이틀 오해 방지
+document.addEventListener('DOMContentLoaded', function(){
+  console.log('[V45] 정확성 패치: 로마는 하루아침에 이루어지지 않았다 로 명확히!');
+});
+</script>
+
+
+<style>
+#app-header-title::after{
+  content:"사진, 추억을 담다";
+  display:block;
+  font-size:13px;
+  font-weight:400;
+  color:#9a8cc0;
+  margin-top:2px;
+  letter-spacing:1px;
+}
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  // 타이틀 변경
+  document.title = "포토다이어리 - 사진, 추억을 담다";
+  // 헤더에 부제 추가
+  var headers = document.querySelectorAll('h1, .app-title, #app-title');
+  headers.forEach(function(h){
+    if(h.textContent.includes('포토다이어리') && !h.textContent.includes('사진, 추억을 담다')){
+      var sub = document.createElement('div');
+      sub.style.cssText='font-size:13px; font-weight:400; color:#9a8cc0; margin-top:4px; letter-spacing:0.5px;';
+      sub.textContent='사진, 추억을 담다';
+      // 중복 방지
+      if(!h.querySelector('div')) h.appendChild(sub);
+    }
+  });
+  // 첫 화면 타이틀 영역 찾아서 부제 강제 삽입
+  setTimeout(function(){
+    var titleEl = document.querySelector('header h1');
+    if(titleEl){
+      titleEl.innerHTML = '포토다이어리<div style="font-size:13px; font-weight:400; color:#9a8cc0; margin-top:4px; letter-spacing:0.5px;">사진, 추억을 담다</div>';
+    }
+  }, 500);
+});
 </script>
 
 </head>
@@ -8852,7 +8897,7 @@ window.attachPhotoDoubleTap = function(el, handler){
           {type:"한국속담", title:"💡 한국속담 - 백지장도 맞들면 낫다", desc:"협력하면 쉬워진다", story:"백지장도 맞들면 낫다!\n종이 한 장도 같이 들면 낫다는 뜻!\n혼자보다 같이가 쉬워요!\n협력의 힘!\n오늘은 누군가와 함께 해보세요!"},
           // 사자성어 20개
           {type:"사자성어", title:"📚 사자성어 - 온고지신", desc:"옛것을 익혀 새것을 안다", story:"온고지신(溫故知新)!\n옛것을 익혀 새것을 안다!\n공자님이 하신 말씀!\n오늘은 과거 다이어리 펼쳐보세요!\n작년 오늘 뭐 했는지 보면 새로운 깨달음이 있을 거예요!"},
-          {type:"사자성어", title:"📚 사자성어 - 일석이조", desc:"한 번에 두 가지 이익", story:"일석이조(一石二鳥)!\n돌 하나로 새 두 마리!\n오늘 두 가지 좋은 일 해보세요!\n산책하면서 사진도 찍고!\n일석이조로 알차게!"},
+          {type:"사자성어", title:"📚 사자성어 - 일석이조(一石二鳥)", desc:"한 번에 두 가지 이익", story:"일석이조(一石二鳥)!\n돌 하나로 새 두 마리!\n오늘 두 가지 좋은 일 해보세요!\n산책하면서 사진도 찍고!\n일석이조로 알차게!"},
           {type:"사자성어", title:"📚 사자성어 - 유비무환", desc:"준비가 있으면 걱정이 없다", story:"유비무환(有備無患)!\n준비가 있으면 근심이 없다!\n미리 준비하면 걱정 없어요!\n다이어리에 내일 할 일 3개만 적어보세요!\n준비된 사람에게 행운이!"},
           {type:"사자성어", title:"📚 사자성어 - 자업자득", desc:"자기 행동의 결과를 자기가 받는다", story:"자업자득(自業自得)!\n자기가 한 일을 자기가 받는다!\n좋은 일 하면 좋은 일, 나쁜 일 하면 나쁜 일!\n오늘 좋은 씨앗 하나 심어보세요!"},
           {type:"사자성어", title:"📚 사자성어 - 일촉즉발", desc:"매우 위급한 상황", story:"일촉즉발(一觸卽發)!\n하나만 건드려도 바로 터진다는 뜻!\n매우 위급한 상황!\n오늘 일촉즉발 상황을 잘 넘겨보세요!\n위기는 기회!"},
@@ -9131,11 +9176,11 @@ window.attachPhotoDoubleTap = function(el, handler){
           var FALLBACK2 = [
             {title:"💡 한국속담 - 티끌 모아 태산", desc:"작은 것도 모이면 큰 것", story:"티끌 모아 태산! 하루 한 줄이 모여 10년 뒤 태산!"},
             {title:"📚 사자성어 - 온고지신", desc:"옛것을 익혀 새것을 안다", story:"온고지신! 과거 다이어리 펼쳐보면 새로운 깨달음!"},
-            {title:"🌍 외국속담 - 로마는 하루아침에", desc:"큰 일은 시간이 걸린다", story:"로마는 하루아침에 이루어지지 않았다! 천천히!"},
+            {title:"🌍 외국속담 - 로마는 하루아침에 이루어지지 않았다", desc:"큰 일은 시간이 걸린다", story:"로마는 하루아침에 이루어지지 않았다!\n큰 일은 시간이 걸린다는 뜻!\n오늘 조급해하지 말고 천천히!"},
             {title:"⚡ 그리스신화 - 판도라의 상자", desc:"마지막에 남은 건 희망", story:"판도라 상자 열고 재앙이 나왔지만 마지막엔 희망! 희망을 잃지 마세요!"},
             {title:"😂 웃긴이야기 - 흥부와 놀부", desc:"착하면 복이 온다", story:"흥부는 금은보화, 놀부는 도깨비! 착하면 복이 와요!"},
-            {title:"💡 한국속담 - 가는 말이 고와야", desc:"말을 곱게 해야", story:"고운 말 한마디! 고마워, 사랑해, 수고했어!"},
-            {title:"📚 사자성어 - 일석이조", desc:"한 번에 두 가지", story:"일석이조! 돌 하나로 새 두 마리! 오늘 두 가지 좋은 일!"},
+            {title:"💡 한국속담 - 가는 말이 고와야 오는 말이 곱다", desc:"말을 곱게 해야", story:"고운 말 한마디! 고마워, 사랑해, 수고했어!"},
+            {title:"📚 사자성어 - 일석이조(一石二鳥)", desc:"한 번에 두 가지", story:"일석이조! 돌 하나로 새 두 마리! 오늘 두 가지 좋은 일!"},
             {title:"🏛️ 로마신화 - 큐피드의 화살", desc:"사랑의 신", story:"큐피드 화살 맞으면 사랑에 빠져요! 오늘 화살 맞을지도!"}
           ];
           
@@ -9155,7 +9200,7 @@ window.attachPhotoDoubleTap = function(el, handler){
           var allFb = [
               "💡 티끌 모아 태산 - 작은 것도 모이면 큰 것! 하루 한 줄이 10년 뒤 태산!",
               "📚 온고지신 - 옛것을 익혀 새것을! 과거 다이어리 펼쳐보세요!",
-              "🌍 로마는 하루아침에 - 큰 일은 시간 걸려요! 천천히!",
+              "🌍 로마는 하루아침에 이루어지지 않았다 - 큰 일은 시간 걸려요! 천천히!",
               "⚡ 판도라의 상자 - 마지막 남은 건 희망! 희망 잃지 마세요!",
               "😂 흥부와 놀부 - 착하면 복이 와요! 오늘 착하게!",
               "💡 가는 말이 고와야 - 고운 말 한마디가 행복을!",
@@ -9469,11 +9514,11 @@ window.attachPhotoDoubleTap = function(el, handler){
           var FALLBACK2 = [
             {title:"💡 한국속담 - 티끌 모아 태산", desc:"작은 것도 모이면 큰 것", story:"티끌 모아 태산! 하루 한 줄이 모여 10년 뒤 태산!"},
             {title:"📚 사자성어 - 온고지신", desc:"옛것을 익혀 새것을 안다", story:"온고지신! 과거 다이어리 펼쳐보면 새로운 깨달음!"},
-            {title:"🌍 외국속담 - 로마는 하루아침에", desc:"큰 일은 시간이 걸린다", story:"로마는 하루아침에 이루어지지 않았다! 천천히!"},
+            {title:"🌍 외국속담 - 로마는 하루아침에 이루어지지 않았다", desc:"큰 일은 시간이 걸린다", story:"로마는 하루아침에 이루어지지 않았다!\n큰 일은 시간이 걸린다는 뜻!\n오늘 조급해하지 말고 천천히!"},
             {title:"⚡ 그리스신화 - 판도라의 상자", desc:"마지막에 남은 건 희망", story:"판도라 상자 열고 재앙이 나왔지만 마지막엔 희망! 희망을 잃지 마세요!"},
             {title:"😂 웃긴이야기 - 흥부와 놀부", desc:"착하면 복이 온다", story:"흥부는 금은보화, 놀부는 도깨비! 착하면 복이 와요!"},
-            {title:"💡 한국속담 - 가는 말이 고와야", desc:"말을 곱게 해야", story:"고운 말 한마디! 고마워, 사랑해, 수고했어!"},
-            {title:"📚 사자성어 - 일석이조", desc:"한 번에 두 가지", story:"일석이조! 돌 하나로 새 두 마리! 오늘 두 가지 좋은 일!"},
+            {title:"💡 한국속담 - 가는 말이 고와야 오는 말이 곱다", desc:"말을 곱게 해야", story:"고운 말 한마디! 고마워, 사랑해, 수고했어!"},
+            {title:"📚 사자성어 - 일석이조(一石二鳥)", desc:"한 번에 두 가지", story:"일석이조! 돌 하나로 새 두 마리! 오늘 두 가지 좋은 일!"},
             {title:"🏛️ 로마신화 - 큐피드의 화살", desc:"사랑의 신", story:"큐피드 화살 맞으면 사랑에 빠져요! 오늘 화살 맞을지도!"}
           ];
           
@@ -9493,7 +9538,7 @@ window.attachPhotoDoubleTap = function(el, handler){
           var allFb = [
               "💡 티끌 모아 태산 - 작은 것도 모이면 큰 것! 하루 한 줄이 10년 뒤 태산!",
               "📚 온고지신 - 옛것을 익혀 새것을! 과거 다이어리 펼쳐보세요!",
-              "🌍 로마는 하루아침에 - 큰 일은 시간 걸려요! 천천히!",
+              "🌍 로마는 하루아침에 이루어지지 않았다 - 큰 일은 시간 걸려요! 천천히!",
               "⚡ 판도라의 상자 - 마지막 남은 건 희망! 희망 잃지 마세요!",
               "😂 흥부와 놀부 - 착하면 복이 와요! 오늘 착하게!",
               "💡 가는 말이 고와야 - 고운 말 한마디가 행복을!",
@@ -10270,7 +10315,7 @@ async function showPhotosForDate(dateStr){
                 if (recordBtn) { recordBtn.style.background = ''; /* removed */; }
                 let msg = '';
                 if(e.error === 'not-allowed' || e.error === 'permission-denied'){
-                    msg = '🎤 마이크 권한 거부됨!\n\n해결:\n1. 주소창 왼쪽 🔒 클릭\n2. 마이크 > 허용으로 변경\n3. 새로고침\n\n안드로이드 앱이면:\n설정 > 앱 > Smart Diary > 권한 > 마이크 허용';
+                    msg = '🎤 마이크 권한 거부됨!\n\n해결:\n1. 주소창 왼쪽 🔒 클릭\n2. 마이크 > 허용으로 변경\n3. 새로고침\n\n안드로이드 앱이면:\n설정 > 앱 > 포토다이어리 > 권한 > 마이크 허용';
                 } else if(e.error === 'no-speech'){
                     msg = '음성이 감지되지 않았습니다.\n다시 시도해보세요!\n(조용한 곳에서 크게 말해보세요)';
                 } else if(e.error === 'audio-capture'){
