@@ -3086,6 +3086,16 @@ header h1 div{ font-size:13px !important; font-weight:400 !important; color:#9a8
 #diary-around-today-list > div { grid-column:1 / -1 !important; width:100% !important; box-sizing:border-box !important; }
 </style>
 
+
+<style id="V76_ALBUM_FIX">
+.photo-lightbox-overlay:not(.active) { display:none !important; }
+.modal-overlay:not(.active) { display:none !important; }
+body.modal-open { overflow:hidden !important; }
+body:not(.modal-open) { overflow:auto !important; }
+#memo-modal-overlay.active { display:flex !important; }
+#photo-lightbox-overlay.active { display:flex !important; }
+</style>
+
 </head>
 <body>
 
@@ -8823,31 +8833,31 @@ window.attachPhotoDoubleTap = function(el, handler){
         lockBodyScroll();
     }
 
+    
     function closeDiaryFormPanel() {
-        stopVoiceRecording();
-        if (memoModalOverlay) {
-            memoModalOverlay.classList.remove('active');
-            memoModalOverlay.style.display = 'none';
-        }
-        // V75 Fix: 앨범1/2 사진 클릭 후 업로드 시 검은 배경 버그 수정 - 라이트박스도 같이 닫기!
-        var photoOverlay = document.getElementById('photo-lightbox-overlay');
-        if (photoOverlay) {
-            photoOverlay.classList.remove('active');
-            photoOverlay.style.display = 'none';
-            var imgEl = document.getElementById('photo-lightbox-img');
-            if (imgEl) { imgEl.src=''; imgEl.style.display='none'; }
-        }
-        unlockBodyScroll();
-        // 강력 해제
-        try{ document.body.classList.remove('modal-open'); }catch(e){}
-        try{ document.body.style.overflow=''; }catch(e){}
-        editingDiaryId = null;
-        currentPhotoBase64 = null;
-        selectedReservationDate = null;
-        renderDiaryAroundToday();
-        renderMoneyAroundToday();
-        if (isDiarySearchFilterOpen) filterDiaryCustomList();
+        try{ stopVoiceRecording(); }catch(e){}
+        try{
+            var memoOv = document.getElementById('memo-modal-overlay');
+            if (memoOv) { memoOv.classList.remove('active'); memoOv.style.display='none'; }
+            var photoOv = document.getElementById('photo-lightbox-overlay');
+            if (photoOv) { photoOv.classList.remove('active'); photoOv.style.display='none'; }
+            var settingsOv = document.getElementById('settings-modal-overlay');
+            if (settingsOv) { settingsOv.classList.remove('active'); settingsOv.style.display='none'; }
+            // 모든 오버레이 강제 닫기
+            document.querySelectorAll('.modal-overlay, .photo-lightbox-overlay').forEach(function(el){
+                el.classList.remove('active');
+                el.style.display='none';
+            });
+        }catch(e){}
+        try{ unlockBodyScroll(); }catch(e){}
+        try{ document.body.classList.remove('modal-open'); document.body.style.overflow=''; document.documentElement.style.overflow=''; }catch(e){}
+        try{ editingDiaryId = null; currentPhotoBase64 = null; selectedReservationDate = null; }catch(e){}
+        try{ renderDiaryAroundToday(); }catch(e){}
+        try{ renderMoneyAroundToday(); }catch(e){}
+        try{ if (isDiarySearchFilterOpen) filterDiaryCustomList(); }catch(e){}
     }
+    window.closeDiaryFormPanel = closeDiaryFormPanel;
+
 
     function handleModalBackgroundClick(event) {
         // 모달 배경 어두운 부분을 클릭했을 때만 닫히도록 설정
@@ -9892,7 +9902,7 @@ async function showPhotosForDate(dateStr){
         resetPhotoZoom();
         setTimeout(()=>{ if(memoEl.style.display!=='none'){ memoEl.scrollIntoView({behavior:'smooth', block:'nearest'}); } }, 120);
     }
-    function editFromLightbox(){
+    function editFromLightbox(){ try{ closePhotoLightbox(); }catch(e){} 
         if(!currentLightboxItemId) return;
         const all = (typeof getAllDiaries==='function')?getAllDiaries():[];
         const item = all.find(d=>d.id===currentLightboxItemId);
@@ -9901,26 +9911,32 @@ async function showPhotosForDate(dateStr){
             setTimeout(()=> openDiaryForm(item.date, item), 200);
         }
     }
-    function deleteFromLightbox(){
+    function deleteFromLightbox(){ try{ closePhotoLightbox(); }catch(e){} 
         if(!currentLightboxItemId) return;
         closePhotoLightbox();
         setTimeout(()=> deleteDiary(currentLightboxItemId), 200);
     }
 
     function openMemoLightboxOnly(text, diaryItem){ openPhotoLightbox(null, diaryItem || text); }
+    
     function closePhotoLightbox(event) {
-        if (event) event.stopPropagation();
-        var ov = document.getElementById('photo-lightbox-overlay');
-        if(ov){ ov.classList.remove('active'); ov.style.display='none'; }
-        try{ unlockBodyScroll(); }catch(e){}
-        try{ document.body.classList.remove('modal-open'); }catch(e){}
-        try{ document.body.style.overflow=''; }catch(e){}
-        const imgEl = document.getElementById('photo-lightbox-img');
-        const memoEl = document.getElementById('photo-lightbox-memo');
-        if (imgEl) { imgEl.src=''; imgEl.style.display='none'; }
-        if (memoEl) { memoEl.style.display='none'; }
-        resetPhotoZoom();
+        if (event) { try{ event.stopPropagation(); }catch(e){} }
+        try{
+            var ov = document.getElementById('photo-lightbox-overlay');
+            if(ov){ ov.classList.remove('active'); ov.style.display='none'; }
+            var imgEl = document.getElementById('photo-lightbox-img');
+            var memoEl = document.getElementById('photo-lightbox-memo');
+            if (imgEl) { imgEl.src=''; imgEl.style.display='none'; imgEl.style.transform=''; }
+            if (memoEl) { memoEl.style.display='none'; }
+            try{ resetPhotoZoom(); }catch(e){}
+            try{ unlockBodyScroll(); }catch(e){}
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow='';
+            document.documentElement.style.overflow='';
+        }catch(e){ console.log('closePhotoLightbox err', e); }
     }
+    window.closePhotoLightbox = closePhotoLightbox;
+
 
     // ----- 🔍 사진 전용 커스텀 핀치줌/팬/더블탭 확대 (브라우저 기본 페이지줌과 무관하게 동작 - 입력폼 멈춤버그와 충돌 없음) -----
     let photoZoomScale = 1, photoZoomX = 0, photoZoomY = 0;
@@ -11080,13 +11096,10 @@ async function showPhotosForDate(dateStr){
   // 2. 통합 모달 매니저 (뒤로가기 로직 제외 - 닫기만)
   window.closeAllModalsToMain = function(){
     try{
-      document.querySelectorAll('.modal-overlay.active, #fortune-popup-overlay.active, #saju-detail-modal-overlay.active, #photo-lightbox-overlay.active, #settings-modal-overlay.active').forEach(el=>{ el.classList.remove('active'); el.style.display='none'; });
+      document.querySelectorAll('.modal-overlay.active, #fortune-popup-overlay.active, #saju-detail-modal-overlay.active, #photo-lightbox-overlay.active, #settings-modal-overlay.active').forEach(el=>el.classList.remove('active'));
       document.querySelectorAll('[id$="-overlay"]').forEach(el=>{
-        el.classList.remove('active');
         if(el.style.display==='block' || el.style.display==='flex') el.style.display='none';
       });
-      try{ document.body.classList.remove('modal-open'); document.body.style.overflow=''; }catch(e){}
-      try{ unlockBodyScroll(); }catch(e){}
       const bucket = document.getElementById('bucket-list-modal-overlay');
       if(bucket) bucket.style.display='none';
       const lotto = document.getElementById('lotto-generator-modal-overlay');
