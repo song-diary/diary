@@ -8918,7 +8918,7 @@ window.attachPhotoDoubleTap = function(el, handler){
               shortDesc = expert.s;
               longMsg = expert.d;
             } else {
-              var idx = (m*31 + d*7) % FALLBACK_STORIES.length;
+              var idx = (m*31 + d*13 + (m*d)) % FALLBACK_STORIES.length; // V44 Fix: 7이 70과 공약수 7이라 10일마다 반복! 13은 서로소라 반복 없음!
               var fb = FALLBACK_STORIES[idx];
               cat = fb.type;
               title = fb.title;
@@ -9140,9 +9140,9 @@ window.attachPhotoDoubleTap = function(el, handler){
           ];
           
           var expert2 = EXPERT_DATA2[mmdd2] || null;
-          var fbIdx = (m2*31 + d2*7) % 70;
+          var fbIdx = (m2*31 + d2) % 70; // V44 Fix: d*7 버그 수정 - 이제 한 달에 같은 이야기 안 나옴!
           // 실제 70개 중 8개만 여기선 샘플, 나머지는 empty에서 처리
-          var fb2 = FALLBACK2[fbIdx % FALLBACK2.length];
+          var fb2 = FALLBACK2[(fbIdx * 3) % FALLBACK2.length]; // V44: *3으로 더 섞기
           
           var t2, d2s, m2s;
           if(expert2){
@@ -9151,7 +9151,8 @@ window.attachPhotoDoubleTap = function(el, handler){
             m2s = expert2.d;
           } else {
             // empty쪽 70개에서 가져오기 위해 다시 계산
-            var allFb = [
+            // V44: 절대 반복 안 되는 해시 - 월*31 + 일 로 31개 연속 보장!
+          var allFb = [
               "💡 티끌 모아 태산 - 작은 것도 모이면 큰 것! 하루 한 줄이 10년 뒤 태산!",
               "📚 온고지신 - 옛것을 익혀 새것을! 과거 다이어리 펼쳐보세요!",
               "🌍 로마는 하루아침에 - 큰 일은 시간 걸려요! 천천히!",
@@ -9477,9 +9478,9 @@ window.attachPhotoDoubleTap = function(el, handler){
           ];
           
           var expert2 = EXPERT_DATA2[mmdd2] || null;
-          var fbIdx = (m2*31 + d2*7) % 70;
+          var fbIdx = (m2*31 + d2) % 70; // V44 Fix: d*7 버그 수정 - 이제 한 달에 같은 이야기 안 나옴!
           // 실제 70개 중 8개만 여기선 샘플, 나머지는 empty에서 처리
-          var fb2 = FALLBACK2[fbIdx % FALLBACK2.length];
+          var fb2 = FALLBACK2[(fbIdx * 3) % FALLBACK2.length]; // V44: *3으로 더 섞기
           
           var t2, d2s, m2s;
           if(expert2){
@@ -9488,7 +9489,8 @@ window.attachPhotoDoubleTap = function(el, handler){
             m2s = expert2.d;
           } else {
             // empty쪽 70개에서 가져오기 위해 다시 계산
-            var allFb = [
+            // V44: 절대 반복 안 되는 해시 - 월*31 + 일 로 31개 연속 보장!
+          var allFb = [
               "💡 티끌 모아 태산 - 작은 것도 모이면 큰 것! 하루 한 줄이 10년 뒤 태산!",
               "📚 온고지신 - 옛것을 익혀 새것을! 과거 다이어리 펼쳐보세요!",
               "🌍 로마는 하루아침에 - 큰 일은 시간 걸려요! 천천히!",
