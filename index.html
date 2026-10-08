@@ -3109,107 +3109,284 @@ body:not(.modal-open) { overflow:auto !important; }
 .countdown-badge { background:#fef3c7; color:#92400e; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:700; }
 </style>
 
-<link rel="manifest" href="manifest.json">
-<script id="V87_DIRECT_AUTO">
-(function(){
 
-window._pendingAutoOpenId = null;
-window.openPastDiaryDirect = async function(id, dateStr){
+
+<link rel="manifest" href="./manifest.json">
+<script>
+// V80 ULTIMATE Fortune Fix - Swing2App용
+window.openFortunePopupFixed = function(){
   try{
-    console.log('[V87] open direct', id, dateStr);
-    var diaries = (typeof getAllDiaries==='function') ? getAllDiaries() : [];
-    var item = null;
-    for(var i=0;i<diaries.length;i++){ if(diaries[i].id===id){ item=diaries[i]; break; } }
-    if(!item){
-      if(window.goToPastDiary) window.goToPastDiary(dateStr);
-      return;
-    }
-    // 1. 먼저 날짜로 이동
-    if(window.goToPastDiary) window.goToPastDiary(dateStr);
-    window._pendingAutoOpenId = id;
+    console.log('Fortune click!');
+    var overlay = document.getElementById('fortune-popup-overlay');
+    var bodyEl = document.getElementById('fortune-popup-body');
     
-    // 2. 0.8초 후 해당 아이템 찾아서 라이트박스 열기
-    setTimeout(async function(){
-      try{
-        var targetId = window._pendingAutoOpenId;
-        if(!targetId) return;
-        var all = (typeof getAllDiaries==='function') ? getAllDiaries() : [];
-        var target = null;
-        for(var j=0;j<all.length;j++){ if(all[j].id===targetId){ target=all[j]; break; } }
-        if(!target || !target.photo){
-          window._pendingAutoOpenId = null;
-          return;
-        }
-        // 사진 소스 확보
-        var src = '';
-        try{ src = (typeof getPhotoSrc==='function') ? getPhotoSrc(target.photo) : ''; }catch(e){}
-        if(!src && target.photo.indexOf('data:')===0) src = target.photo;
-        if(!src){
-          try{
-            if(typeof openPhotoDB==='function'){
-              var db = await openPhotoDB();
-              var rec = await new Promise(function(res, rej){
-                var tx = db.transaction(PHOTO_STORE_NAME, 'readonly');
-                var st = tx.objectStore(PHOTO_STORE_NAME);
-                var r = st.get(target.photo);
-                r.onsuccess = function(){ res(r.result); };
-                r.onerror = function(){ rej(r.error); };
-              });
-              if(rec && rec.data) src = rec.data;
-            }
-          }catch(e){ console.log('IDB fail', e); }
-        }
-        if(src){
-          if(typeof openPhotoLightbox==='function'){
-            openPhotoLightbox(target.photo, target);
-          } else {
-            var overlay = document.getElementById('photo-lightbox-overlay');
-            var imgEl = document.getElementById('photo-lightbox-img');
-            var memoEl = document.getElementById('photo-lightbox-memo');
-            var dateEl = document.getElementById('photo-lightbox-date');
-            if(overlay && imgEl){
-              imgEl.src = src;
-              imgEl.style.display='block';
-              if(memoEl){ memoEl.textContent = target.text||''; memoEl.style.display='block'; }
-              if(dateEl) dateEl.textContent = target.date;
-              overlay.classList.add('active');
-              overlay.style.display='flex';
-              document.body.classList.add('modal-open');
-            }
-          }
-        } else {
-          // 소스 못 찾으면 해당 아이템으로 스크롤
-          var el = document.querySelector('[data-item-id="'+targetId+'"]');
-          if(el){ el.scrollIntoView({behavior:'smooth', block:'center'}); el.style.outline='3px solid #7c6cff'; setTimeout(function(){ el.style.outline=''; }, 2000); }
-        }
-        window._pendingAutoOpenId = null;
-      }catch(e){ console.log('auto open fail', e); window._pendingAutoOpenId=null; }
-    }, 800);
-  }catch(e){ console.log(e); if(window.goToPastDiary) window.goToPastDiary(dateStr); }
+    if(overlay){
+      overlay.classList.add('active');
+      overlay.style.display='flex';
+      document.body.style.overflow='hidden';
+    }
+    
+    // 기존 함수가 있으면 호출, 없으면 직접 렌더
+    if(typeof openFortunePopup === 'function' && openFortunePopup.toString().indexOf('Fixed')===-1){
+      try{ openFortunePopup(); return; }catch(e){ console.log('orig fortune err', e); }
+    }
+    
+    // Fallback 직접 렌더
+    if(bodyEl){
+      var hasSaju = (typeof sajuBirthInfo !== 'undefined' && sajuBirthInfo && sajuBirthInfo.date);
+      if(!hasSaju){
+        bodyEl.innerHTML = '<div class="fp-hero"><div class="fp-eyebrow">🔮 오늘 하루 브리핑</div><div class="fp-setup-title">아직 준비 전이에요</div></div><div class="fp-setup-msg">생년월일을 한 번만 입력해두면<br>매일 다른, 나만의 오늘의 운세를 볼 수 있어요.</div><button class="fp-cta" onclick="closeFortunePopup(); openSettingsModal();">생년월일 입력하러 가기</button>';
+      } else {
+        if(typeof renderFortunePopup === 'function'){ renderFortunePopup(); }
+        else { bodyEl.innerHTML = '<div style="padding:20px; text-align:center; color:white;">오늘의 운세 로딩중...<br>생년월일을 설정해주세요!</div>'; }
+      }
+    }
+  }catch(err){ alert('운세 오류: '+err.message); console.log(err); }
 };
-document.removeEventListener('click', window._pastDirectHandler, true);
-window._pastDirectHandler = function(e){
-  var el = e.target.closest('.past-direct-item');
-  if(el){
-    e.preventDefault();
-    e.stopPropagation();
-    var id = el.getAttribute('data-id');
-    var date = el.getAttribute('data-date');
-    window.openPastDiaryDirect(id, date);
-  }
-};
-document.addEventListener('click', window._pastDirectHandler, true);
-console.log('[V87] direct view - go to date then auto open');
 
+// 전역 덮어쓰기
+setTimeout(function(){ 
+  try{ window.openFortunePopup = window.openFortunePopupFixed; }catch(e){}
+}, 500);
+
+function closeFortunePopupFixed(){
+  var overlay = document.getElementById('fortune-popup-overlay');
+  if(overlay){ overlay.classList.remove('active'); overlay.style.display='none'; }
+  try{ document.body.style.overflow=''; }catch(e){}
+}
+
+setTimeout(function(){
+  try{ window.closeFortunePopup = closeFortunePopupFixed; }catch(e){}
+}, 500);
+</script>
+
+<style id="V80_FIX">
+.fortune-teaser{ pointer-events:auto !important; cursor:pointer !important; z-index:999 !important; position:relative !important; touch-action: manipulation !important; -webkit-tap-highlight-color: rgba(124,108,255,0.3) !important; }
+#fortune-teaser{ pointer-events:auto !important; }
+#fortune-teaser *{ pointer-events:none !important; }
+#fortune-popup-overlay{ z-index:9999 !important; }
+#fortune-popup-overlay.active{ display:flex !important; }
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
+</style>
+
+<script id="V80_SWING">
+// V80 Swing2App + 8시 알림
+(function(){
+  function fixTeaser(){
+    var teaser = document.getElementById('fortune-teaser');
+    if(!teaser) return;
+    teaser.style.pointerEvents='auto';
+    teaser.style.cursor='pointer';
+    teaser.setAttribute('onclick','openFortunePopupFixed()');
+    // 모든 자식 pointer-events none
+    var childs = teaser.querySelectorAll('*');
+    childs.forEach(function(c){ c.style.pointerEvents='none'; });
+    
+    // 클릭 이벤트 강제
+    teaser.addEventListener('click', function(e){
+      e.preventDefault(); e.stopPropagation();
+      openFortunePopupFixed();
+    }, true);
+    teaser.addEventListener('touchend', function(e){
+      e.preventDefault(); e.stopPropagation();
+      openFortunePopupFixed();
+    }, {passive:false});
+  }
+  
+  window.addEventListener('load', function(){ setTimeout(fixTeaser, 500); setTimeout(fixTeaser, 1500); });
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(fixTeaser, 800); });
+  
+  // 8시 알림 (앱 열면)
+  function check8(){
+    try{
+      var h = new Date().getHours();
+      if(h>=8 && h<=10){
+        setTimeout(function(){
+          var b = document.querySelector('.time-capsule-banner');
+          if(b){ b.style.animation='pulse 1s ease-in-out 3'; try{if(navigator.vibrate) navigator.vibrate([200,100,200]);}catch(e){} }
+        },2000);
+      }
+    }catch(e){}
+  }
+  window.addEventListener('load', function(){ setTimeout(check8, 2500); });
+  
+  window.testTimeCapsuleNotify = function(){
+    localStorage.removeItem('lastCapsuleNotifyDate');
+    var b = document.querySelector('.time-capsule-banner');
+    if(b){ b.style.animation='pulse 1s ease-in-out infinite'; b.scrollIntoView({behavior:'smooth'}); alert('🎉 8시 알림 미리보기! 이런식으로 뜸!'); }
+    else{ alert('⏳ 타임캡슐 데이터 없음 - 30일 쓰면 생김!'); }
+  };
 })();
 </script>
+
+
+<script id="V81_FIX">
+// V81 Fix: 1년전 테스트 + 종료 버튼
+(function(){
+  // 1. 종료 버튼 fix: 한 번만 누르면 종료
+  var lastBackPress = 0;
+  var backHandlerFixed = false;
+  
+  function setupBackButton(){
+    if(backHandlerFixed) return;
+    try{
+      document.removeEventListener('backbutton', window._oldBackHandler);
+    }catch(e){}
+    
+    window._backHandlerV81 = function(e){
+      try{ e.preventDefault(); }catch(err){}
+      
+      // 모달 열려있으면 닫기 (한 번에)
+      var modals = document.querySelectorAll('.modal-overlay.active, .photo-lightbox-overlay.active, #fortune-popup-overlay.active, #saju-detail-modal-overlay.active');
+      var hasModal = false;
+      modals.forEach(function(m){
+        if(m.classList.contains('active') || m.style.display==='flex'){
+          hasModal = true;
+          m.classList.remove('active');
+          m.style.display='none';
+        }
+      });
+      if(hasModal){
+        try{ document.body.style.overflow=''; document.body.classList.remove('modal-open'); }catch(err){}
+        return;
+      }
+      
+      // 모달 없으면 종료: 2초 안에 두 번 누르면 종료, 한 번 누르면 토스트
+      var now = Date.now();
+      if(now - lastBackPress < 2000){
+        try{ 
+          if(navigator.app && navigator.app.exitApp) navigator.app.exitApp();
+          else if(window.s2app && window.s2app.exitApp) window.s2app.exitApp();
+          else window.history.back();
+        }catch(err){ window.history.back(); }
+      } else {
+        lastBackPress = now;
+        // 토스트
+        var toast = document.getElementById('v81-exit-toast');
+        if(!toast){
+          toast = document.createElement('div');
+          toast.id='v81-exit-toast';
+          toast.style.cssText='position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.8); color:white; padding:10px 20px; border-radius:20px; font-size:13px; z-index:10000;';
+          document.body.appendChild(toast);
+        }
+        toast.textContent='한 번 더 누르면 종료됩니다';
+        toast.style.display='block';
+        setTimeout(function(){ toast.style.display='none'; }, 2000);
+      }
+    };
+    
+    document.addEventListener('backbutton', window._backHandlerV81, false);
+    backHandlerFixed = true;
+    console.log('[V81] Backbutton fixed');
+  }
+  
+  window.addEventListener('load', function(){ setTimeout(setupBackButton, 1000); });
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(setupBackButton, 1500); });
+  
+  // 2. 1년전 테스트 데이터 만들기
+  window.createTestCapsuleData = function(){
+    try{
+      var today = new Date();
+      function addDays(date, days){
+        var d = new Date(date);
+        d.setDate(d.getDate()+days);
+        return d;
+      }
+      function formatDate(d){
+        var y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0');
+        return y+'-'+m+'-'+dd;
+      }
+      
+      var testDates = [
+        {offset:-30, label:'1개월 전 테스트', text:'1개월 전 오늘! 이게 타임캡슐로 뜸! 🎉'},
+        {offset:-90, label:'3개월 전 테스트', text:'3개월 전 추억! 벌써 3개월이나 지났네! ⏰'},
+        {offset:-180, label:'6개월 전 테스트', text:'6개월 전! 반년 전 오늘은 뭐했지? 📖'},
+        {offset:-365, label:'1년 전 테스트', text:'1년 전 오늘! 1년 전 나는 뭐하고 있었을까? 🥹 소중한 추억!'}
+      ];
+      
+      var listStr = localStorage.getItem('smartDiaryList');
+      var list = listStr ? JSON.parse(listStr) : [];
+      
+      var created = 0;
+      testDates.forEach(function(td){
+        var d = addDays(today, td.offset);
+        var dateStr = formatDate(d);
+        // 이미 있는지 체크
+        var exists = list.some(function(it){ return it.date===dateStr && it.text.indexOf('테스트')!==-1; });
+        if(!exists){
+          list.push({
+            id: 'test_'+Date.now()+'_'+Math.random().toString(36).slice(2),
+            date: dateStr,
+            time: '12:00',
+            text: td.text,
+            photo: '',
+            anniversary: td.label,
+            money: null
+          });
+          created++;
+        }
+      });
+      
+      localStorage.setItem('smartDiaryList', JSON.stringify(list));
+      alert('✅ 테스트 데이터 '+created+'개 생성!
+
+1개월전, 3개월전, 6개월전, 1년전 일기가 만들어졌어요!
+
+이제 오늘 날짜로 가면 타임캡슐에 뜰 거예요!
+
+오늘 날짜 클릭 → 맨 아래 "타임캡슐" 확인!');
+      
+      // 새로고침
+      if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday();
+      if(typeof renderCalendar==='function') renderCalendar();
+      
+    }catch(e){ alert('오류: '+e.message); }
+  };
+  
+  window.deleteTestCapsuleData = function(){
+    if(!confirm('테스트 데이터를 삭제할까요?')) return;
+    try{
+      var listStr = localStorage.getItem('smartDiaryList');
+      var list = listStr ? JSON.parse(listStr) : [];
+      var before = list.length;
+      list = list.filter(function(it){ return it.text.indexOf('테스트')===-1 || it.text.indexOf('타임캡슐')===-1; });
+      // 더 정확히: test_로 시작하는 id
+      list = list.filter(function(it){ return !(it.id && it.id.startsWith('test_')); });
+      localStorage.setItem('smartDiaryList', JSON.stringify(list));
+      alert('🗑️ 테스트 데이터 '+(before-list.length)+'개 삭제됨!');
+      if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday();
+    }catch(e){ alert('오류: '+e.message); }
+  };
+  
+  // 3. 타임캡슐 테스트 설명 추가
+  window.showCapsuleHelp = function(){
+    alert(
+      '📖 타임캡슐 테스트 방법\n\n'+
+      '1️⃣ 1년 전 일기가 있어야 1년 전이 뜸!\n'+
+      '   → 오늘 2026-05-13이면 2025-05-13에 쓴 일기가 있어야 함!\n\n'+
+      '2️⃣ 테스트 데이터 만들기 버튼으로 가짜 과거 만들기!\n\n'+
+      '3️⃣ 오늘 날짜 클릭 → 맨 아래 타임캡슐 확인!\n\n'+
+      '4️⃣ 데이터 없으면 D-카운트다운 뜸!\n'+
+      '   "첫 타임캡슐까지 D-15" 이런거!'
+    );
+  };
+  
+  console.log('[V81] Test capsule + exit fix loaded');
+})();
+</script>
+<style id="V81_STYLE">
+.v81-test-box{ background:#f0ebff; border:1.5px dashed #7c6cff; border-radius:12px; padding:12px; margin:10px 0; }
+.v81-test-btn{ width:100%; padding:10px; background:#7c6cff; color:white; border:none; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer; margin:4px 0; }
+.v81-test-btn.sub{ background:white; color:#7c6cff; border:1.5px solid #7c6cff; }
+</style>
+
 </head>
 <body>
 
 <div class="app-container">
 
     <!-- 🔮 오늘의 운세 티저 배너 -->
-    <div class="fortune-teaser" id="fortune-teaser" onclick="openFortunePopup()">
+    <div class="fortune-teaser" id="fortune-teaser" onclick="openFortunePopupFixed()">
         <span class="ft-icon">🔮</span>
         <div style="flex:1;">
             <div class="ft-text" id="fortune-teaser-text">오늘의 운세 보기</div>
@@ -9423,45 +9600,56 @@ window.attachPhotoDoubleTap = function(el, handler){
                 }
               }
               
-              // 합쳐서 표시
+              // 합쳐서 표시 - V88 FINAL: 5개 제한 해제 + 그룹화 (일자로 이동만!)
               var allPasts = [];
-              // 타임캡슐 먼저 (1개월,3개월 등)
-              for(var t=0; t<timeCapsules.length; t++) allPasts.push(timeCapsules[t]);
-              // 같은 날짜 과거는 최대 2개만
-              for(var s=0; s<Math.min(pastsSameDate.length,2); s++) {
-                if(!pastsSameDate[s]._interval) {
-                  pastsSameDate[s]._interval = 'same';
-                  pastsSameDate[s]._intervalLabel = pastsSameDate[s].date.split('-')[0]+'년 오늘';
+              var seenIds = {};
+              for(var t=0; t<timeCapsules.length; t++){
+                var tid = timeCapsules[t].id || '';
+                if(tid && !seenIds[tid]){ allPasts.push(timeCapsules[t]); seenIds[tid]=true; }
+                else if(!tid){ allPasts.push(timeCapsules[t]); }
+              }
+              for(var sIdx=0; sIdx<pastsSameDate.length; sIdx++) {
+                var pid = pastsSameDate[sIdx].id || '';
+                if(pid && seenIds[pid]) continue;
+                if(!pastsSameDate[sIdx]._interval) {
+                  pastsSameDate[sIdx]._interval = 'same';
+                  pastsSameDate[sIdx]._intervalLabel = pastsSameDate[sIdx].date.split('-')[0]+'년 오늘';
                 }
-                allPasts.push(pastsSameDate[s]);
+                allPasts.push(pastsSameDate[sIdx]);
+                if(pid) seenIds[pid]=true;
               }
               
               if(allPasts.length>0){
+                var grouped = {};
+                for(var g=0; g<allPasts.length; g++){
+                  var it = allPasts[g];
+                  var key = it._intervalLabel || it._interval || '기타';
+                  if(!grouped[key]) grouped[key]=[];
+                  grouped[key].push(it);
+                }
                 var myPastHTML = '<div style="grid-column:1 / -1; width:100%; margin-top:12px; border-top:2px dashed #e8e0ff; padding-top:10px;"><div style="font-size:14px; font-weight:800; color:#7c6cff; margin-bottom:8px;">📖 타임캡슐 - 나의 과거 ('+allPasts.length+'건)</div>';
-                // 알림 배너 (오늘이면)
-                var todayStr = (typeof getTodayStr==='function') ? getTodayStr() : new Date().toISOString().slice(0,10);
-                if(dateStr===todayStr && settings.enabled && timeCapsules.length>0){
+                var todayStrTmp = (typeof getTodayStr==='function') ? getTodayStr() : new Date().toISOString().slice(0,10);
+                if(dateStr===todayStrTmp && settings.enabled && timeCapsules.length>0){
                   myPastHTML += '<div class="time-capsule-banner"><div><div style="font-size:13px; font-weight:800;">🎉 타임캡슐 도착!</div><div style="font-size:11px; opacity:0.9;">'+timeCapsules.length+'개의 과거가 당신을 기다려요</div></div><div style="font-size:20px;">📬</div></div>';
                 }
-                
-                for(var i=0;i<Math.min(allPasts.length,5);i++){
-                  var p=allPasts[i];
-                  var label = p._intervalLabel || p.date;
-                  var badgeColor = p._interval==='1m' ? '#10b981' : p._interval==='3m' ? '#3b82f6' : p._interval==='6m' ? '#8b5cf6' : p._interval==='1y' ? '#f59e0b' : '#7c6cff';
-                  myPastHTML+='<div onclick="window.goToPastDiary(\''+p.date+'\')" style="background:#fff; border:1px solid #e8e0ff; border-left:4px solid '+badgeColor+'; border-radius:10px; padding:10px 12px; margin-bottom:8px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;"><div style="flex:1;"><div style="display:flex; align-items:center; gap:6px; margin-bottom:2px;"><span style="background:'+badgeColor+'; color:white; padding:2px 6px; border-radius:6px; font-size:10px; font-weight:700;">'+label+'</span><span style="font-size:12px; color:#9a8cc0; font-weight:700;">'+p.date+' '+(p.photo?'📷':'')+'</span></div><div style="font-size:13px; color:#222; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">'+(p.text||'사진').slice(0,30)+'</div></div><div style="font-size:13px; color:#7c6cff; font-weight:700; flex-shrink:0; margin-left:8px;">보기 →</div></div>';
-                }
-                // 데이터 없을 때 카운트다운
-                if(allPasts.length===0){
-                  // 가장 오래된 일기 찾기
-                  var oldest = diaries.filter(d=>d.text||d.photo).sort((a,b)=>a.date.localeCompare(b.date))[0];
-                  if(oldest){
-                    var oldestDate = new Date(oldest.date);
-                    var nowDate = new Date(dateStr);
-                    var diffDays = Math.floor((nowDate - oldestDate)/(1000*60*60*24));
-                    var remain = 30 - diffDays;
-                    if(remain>0){
-                      myPastHTML += '<div style="background:#fffbeb; border:1px dashed #f59e0b; border-radius:10px; padding:12px; text-align:center;"><div style="font-size:13px; font-weight:700; color:#92400e;">⏳ 첫 타임캡슐까지 D-'+remain+'</div><div style="font-size:11px; color:#b45309; margin-top:4px;">30일만 쓰면 1개월 전 추억이 생겨요!<br>현재 '+diffDays+'일째 작성 중! 🔥</div></div>';
-                    }
+                var order = ['1개월 전','3개월 전','6개월 전','1년 전','2년 전','3년 전'];
+                var sortedKeys = Object.keys(grouped).sort(function(a,b){
+                  var ia = order.indexOf(a); var ib = order.indexOf(b);
+                  if(ia===-1 && ib===-1) return a.localeCompare(b);
+                  if(ia===-1) return 1;
+                  if(ib===-1) return -1;
+                  return ia-ib;
+                });
+                for(var k=0; k<sortedKeys.length; k++){
+                  var label = sortedKeys[k];
+                  var items = grouped[label];
+                  if(sortedKeys.length>1){
+                    myPastHTML += '<div style="font-size:12px; font-weight:800; color:#7c6cff; margin:10px 0 6px 2px;">'+label+' ('+items.length+'건)</div>';
+                  }
+                  for(var i=0;i<items.length;i++){
+                    var p=items[i];
+                    var badgeColor = p._interval==='1m' ? '#10b981' : p._interval==='3m' ? '#3b82f6' : p._interval==='6m' ? '#8b5cf6' : p._interval==='1y' ? '#f59e0b' : p._interval==='same' ? '#ef4444' : '#7c6cff';
+                    myPastHTML+='<div onclick="window.goToPastDiary(\''+p.date+'\')" style="background:#fff; border:1px solid #e8e0ff; border-left:4px solid '+badgeColor+'; border-radius:10px; padding:10px 12px; margin-bottom:8px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;"><div style="flex:1;"><div style="display:flex; align-items:center; gap:6px; margin-bottom:2px;"><span style="background:'+badgeColor+'; color:white; padding:2px 6px; border-radius:6px; font-size:10px; font-weight:700;">'+label+'</span><span style="font-size:12px; color:#9a8cc0; font-weight:700;">'+p.date+' '+(p.photo?'📷':'')+'</span></div><div style="font-size:13px; color:#222; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">'+(p.text||'사진').slice(0,30)+'</div></div><div style="font-size:13px; color:#7c6cff; font-weight:700; flex-shrink:0; margin-left:8px;">보기 →</div></div>';
                   }
                 }
                 myPastHTML+='</div>';
@@ -9471,27 +9659,27 @@ window.attachPhotoDoubleTap = function(el, handler){
                 pastDiv.innerHTML = myPastHTML;
                 listEl.appendChild(pastDiv);
               } else {
-                // 과거 하나도 없을 때 카운트다운 표시
-                var oldest = diaries.filter(d=>d.text||d.photo).sort((a,b)=>a.date.localeCompare(b.date))[0];
+                var oldest = diaries.filter(function(d){return d.text||d.photo;}).sort(function(a,b){return a.date.localeCompare(b.date);})[0];
                 if(oldest){
                   var oldestDate = new Date(oldest.date);
                   var nowDate = new Date(dateStr);
                   var diffDays = Math.floor((nowDate - oldestDate)/(1000*60*60*24));
                   var remain = 30 - diffDays;
                   if(remain>0 && remain<=30){
-                    var myPastHTML = '<div style="grid-column:1 / -1; width:100%; margin-top:12px; border-top:2px dashed #e8e0ff; padding-top:10px;"><div style="font-size:14px; font-weight:800; color:#7c6cff; margin-bottom:6px;">📖 타임캡슐</div>';
-                    myPastHTML += '<div style="background:#fffbeb; border:1px dashed #f59e0b; border-radius:10px; padding:14px; text-align:center;"><div style="font-size:14px; font-weight:800; color:#92400e;">⏳ 첫 타임캡슐까지 D-'+remain+'</div><div style="font-size:12px; color:#b45309; margin-top:6px; line-height:1.4;">30일만 쓰면 1개월 전 추억이 생겨요!<br>현재 '+diffDays+'일째 작성 중! 🔥<br>1개월→3개월→6개월→1년으로 성장하는 재미!</div></div></div>';
-                    var pastDiv = document.createElement('div');
-                    pastDiv.style.gridColumn='1 / -1';
-                    pastDiv.style.width='100%';
-                    pastDiv.innerHTML = myPastHTML;
-                    listEl.appendChild(pastDiv);
+                    var myPastHTML2 = '<div style="grid-column:1 / -1; width:100%; margin-top:12px; border-top:2px dashed #e8e0ff; padding-top:10px;"><div style="font-size:14px; font-weight:800; color:#7c6cff; margin-bottom:6px;">📖 타임캡슐</div>';
+                    myPastHTML2 += '<div style="background:#fffbeb; border:1px dashed #f59e0b; border-radius:10px; padding:14px; text-align:center;"><div style="font-size:14px; font-weight:800; color:#92400e;">⏳ 첫 타임캡슐까지 D-'+remain+'</div><div style="font-size:12px; color:#b45309; margin-top:6px; line-height:1.4;">30일만 쓰면 1개월 전 추억이 생겨요!<br>현재 '+diffDays+'일째 작성 중! 🔥<br>1개월→3개월→6개월→1년으로 성장하는 재미!</div></div></div>';
+                    var pastDiv2 = document.createElement('div');
+                    pastDiv2.style.gridColumn='1 / -1';
+                    pastDiv2.style.width='100%';
+                    pastDiv2.innerHTML = myPastHTML2;
+                    listEl.appendChild(pastDiv2);
                   }
                 }
               }
             }catch(e){ console.log('past error', e); }
 
-            // 3. 오늘의 역사 - 365일 매일 1~3개 무조건 표시! (진짜 역사만!)
+            // 3. 오늘의 역사
+// 3. 오늘의 역사 - 365일 매일 1~3개 무조건 표시! (진짜 역사만!)
             var historyList = TODAY_HISTORY_365[mmdd] || null;
             if(historyList && historyList.length>0){
                 var historyHTML = '<div style="grid-column:1 / -1; background:white; border:1.5px solid #fde68a; border-left:6px solid #f59e0b; border-radius:14px; padding:18px; width:100%; box-sizing:border-box;">'
@@ -15880,7 +16068,7 @@ window.addEventListener("load", function() {
           }).join('')}
         </div>
         <div style="font-size:11px; color:#9a8cc0; margin-top:8px; line-height:1.4;">
-          💡 <b>1개월부터 시작하면 30일만 써도 추억 생김!</b> 1년은 365일 기다려야 해서 재미없어요. 1개월→3개월→6개월→1년 순서로 성장하는 재미!<br><button onclick="testTimeCapsuleNotify()" style="margin-top:8px; width:100%; padding:8px; background:#7c6cff; color:white; border:none; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">🔔 타임캡슐 알림 테스트 (지금 보기)</button><div style="font-size:10px; color:#666; margin-top:4px;">※ 8시 알림은 앱을 열었을 때 상단에 배너로 표시돼요! 푸시 알림은 다음 버전에서!</div>
+          <div class="v81-test-box"><div style="font-size:12px; font-weight:800; color:#7c6cff; margin-bottom:6px;">🧪 타임캡슐 테스트 (1년전 안뜰때)</div><button class="v81-test-btn" onclick="createTestCapsuleData()">📅 1개월/3개월/6개월/1년 전 테스트 데이터 만들기</button><button class="v81-test-btn sub" onclick="deleteTestCapsuleData()">🗑️ 테스트 데이터 삭제</button><button class="v81-test-btn sub" onclick="showCapsuleHelp()">❓ 왜 안뜨는지 설명보기</button><div style="font-size:10px; color:#666; margin-top:4px;">테스트 데이터 만들면 오늘 날짜에 타임캡슐 뜸!</div></div>💡 <b>1개월부터 시작하면 30일만 써도 추억 생김!</b> 1년은 365일 기다려야 해서 재미없어요. 1개월→3개월→6개월→1년 순서로 성장하는 재미!<br><button onclick="testTimeCapsuleNotify()" style="margin-top:8px; width:100%; padding:8px; background:#7c6cff; color:white; border:none; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">🔔 타임캡슐 알림 테스트 (지금 보기)</button><div style="font-size:10px; color:#666; margin-top:4px;">※ 8시 알림은 앱을 열었을 때 상단에 배너로 표시돼요! 푸시 알림은 다음 버전에서!</div>
         </div>
         
         <div style="font-size:12px; color:#666; margin:12px 0 8px 0; font-weight:700;">🎨 알림 카드 스타일</div>
@@ -15957,122 +16145,8 @@ window.addEventListener("load", function() {
 </script>
 
 
-<script id="V78_FORTUNE_FIX">
-// V78 Fix: 오늘의 운세 버튼 클릭 안됨 수정
-(function(){
-  function ensureFortuneClick(){
-    var teaser = document.getElementById('fortune-teaser');
-    if(teaser){
-      // 기존 onclick 유지하고 addEventListener 추가
-      teaser.style.cursor='pointer';
-      teaser.style.pointerEvents='auto';
-      teaser.addEventListener('click', function(e){
-        e.stopPropagation();
-        try{ if(typeof openFortunePopup==='function') openFortunePopup(); }catch(err){ console.log('fortune err', err); }
-      }, {capture:false});
-      // 터치도
-      teaser.addEventListener('touchend', function(e){
-        e.preventDefault();
-        try{ if(typeof openFortunePopup==='function') openFortunePopup(); }catch(err){}
-      }, {passive:false});
-    }
-  }
-  // 여러 시점에 시도
-  window.addEventListener('load', function(){ setTimeout(ensureFortuneClick, 300); setTimeout(ensureFortuneClick, 1000); });
-  document.addEventListener('DOMContentLoaded', function(){ setTimeout(ensureFortuneClick, 500); });
-  // openSettingsModal 오버라이드 시 fortune 깨지지 않게 보존
-  setTimeout(ensureFortuneClick, 800);
-  
-  // V78: 8시 알림 테스트 및 자동 알림
-  function checkTimeCapsuleNotify(){
-    try{
-      var settings = (typeof getPastSettings==='function') ? getPastSettings() : null;
-      if(!settings || !settings.enabled) return;
-      
-      var now = new Date();
-      var currentHour = now.getHours();
-      var currentMin = now.getMinutes();
-      var notifyTime = settings.notifyTime || '08:00';
-      
-      // 테스트 모드: localStorage에 lastNotifyDate 저장해서 하루 1번만
-      var todayStr = now.toISOString().slice(0,10);
-      var lastNotify = localStorage.getItem('lastCapsuleNotifyDate');
-      
-      var shouldNotify = false;
-      if(notifyTime==='08:00' && currentHour===8) shouldNotify = true;
-      else if(notifyTime==='12:00' && currentHour===12) shouldNotify = true;
-      else if(notifyTime==='21:00' && currentHour===21) shouldNotify = true;
-      else if(notifyTime==='random'){
-        // 랜덤: 매 시간 10% 확률로
-        shouldNotify = Math.random() < 0.1;
-      }
-      
-      // 테스트용: ?testCapsule=1 파라미터면 무조건 표시
-      if(window.location.search.indexOf('testCapsule')!==-1) shouldNotify = true;
-      
-      if(shouldNotify && lastNotify!==todayStr){
-        // 타임캡슐 있는지 확인
-        if(typeof getPastDateByInterval==='function' && typeof getAllDiaries==='function'){
-          var diaries = getAllDiaries();
-          var hasCapsule = false;
-          var intervals = settings.intervals || ['1m','3m','6m','1y'];
-          for(var i=0;i<intervals.length;i++){
-            var pd = getPastDateByInterval(todayStr, intervals[i]);
-            if(diaries.some(d=>d.date===pd && (d.text||d.photo))){ hasCapsule=true; break; }
-          }
-          if(hasCapsule || window.location.search.indexOf('testCapsule')!==-1){
-            // 배너가 이미 있으면 강조 애니메이션
-            setTimeout(function(){
-              var banner = document.querySelector('.time-capsule-banner');
-              if(banner){
-                banner.style.animation = 'pulse 1s ease-in-out 3';
-                // 상단으로 스크롤
-                try{ banner.scrollIntoView({behavior:'smooth', block:'center'}); }catch(e){}
-              }
-            }, 1000);
-            localStorage.setItem('lastCapsuleNotifyDate', todayStr);
-            console.log('[V78] 타임캡슐 알림 표시:', todayStr);
-          }
-        }
-      }
-    }catch(e){ console.log('notify check err', e); }
-  }
-  
-  // 1분마다 체크 (8시 정각 감지)
-  setInterval(checkTimeCapsuleNotify, 60000);
-  window.addEventListener('load', function(){ setTimeout(checkTimeCapsuleNotify, 2000); });
-  
-  // 수동 테스트 함수
-  window.testTimeCapsuleNotify = function(){
-    localStorage.removeItem('lastCapsuleNotifyDate');
-    // 오늘 날짜 섹션으로 이동
-    try{
-      var todayStr = (typeof getTodayStr==='function') ? getTodayStr() : new Date().toISOString().slice(0,10);
-      if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday();
-      setTimeout(function(){
-        var banner = document.querySelector('.time-capsule-banner');
-        if(banner){
-          banner.style.animation = 'pulse 1.5s ease-in-out infinite';
-          banner.scrollIntoView({behavior:'smooth', block:'center'});
-          alert('🎉 타임캡슐 알림!\n8시에 이렇게 보여요!\n\n'+banner.textContent.slice(0,50));
-        } else {
-          // 배너 없으면 타임캡슐 섹션으로
-          var pastSection = document.querySelector('[style*="타임캡슐"]');
-          if(pastSection){
-            pastSection.scrollIntoView({behavior:'smooth'});
-            alert('📖 타임캡슐 섹션으로 이동!\n과거 기록이 여기에 표시됩니다!');
-          } else {
-            alert('⏳ 아직 타임캡슐 데이터가 없어요!\nD-카운트다운이 표시됩니다!\n\n30일 쓰면 1개월 전 추억 생겨요!');
-          }
-        }
-      }, 500);
-    }catch(e){ alert('테스트 오류: '+e.message); }
-  };
-  
-  console.log('[V78] Fortune fix + Time capsule notify loaded');
-})();
-</script>
-<style id="V78_FIX_CSS">
+
+<style id="V78_FIX_CSS_OLD">
 @keyframes pulse { 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.05); box-shadow:0 6px 20px rgba(124,108,255,0.5); } }
 .fortune-teaser { pointer-events:auto !important; cursor:pointer !important; z-index:10 !important; position:relative; }
 #fortune-teaser { pointer-events:auto !important; }
@@ -16080,85 +16154,7 @@ window.addEventListener("load", function() {
 </style>
 
 
-<script id="V79_SWING2APP">
-// V79: 스윙2앱 + 깃허브 최적화
-(function(){
-  // Swing2App 웹뷰 감지
-  var isSwing2App = /Swing2App|wv/.test(navigator.userAgent) || window.s2app !== undefined;
-  console.log('[V79] Swing2App mode:', isSwing2App, navigator.userAgent);
-  
-  // 8시 알림: 스윙2App에서도 앱 열면 체크
-  function checkCapsuleForSwing(){
-    try{
-      var now = new Date();
-      var todayStr = now.toISOString().slice(0,10);
-      var settings = (typeof getPastSettings==='function') ? getPastSettings() : {enabled:true, intervals:['1m','3m','6m','1y'], notifyTime:'08:00'};
-      if(!settings.enabled) return;
-      
-      var hour = now.getHours();
-      var notifyHour = parseInt((settings.notifyTime||'08:00').split(':')[0]);
-      
-      // 8시~10시 사이에 앱 열면 타임캡슐 강조
-      if(hour >= notifyHour && hour <= notifyHour+2){
-        setTimeout(function(){
-          var banner = document.querySelector('.time-capsule-banner');
-          if(banner){
-            banner.style.animation = 'pulse 1s ease-in-out 3';
-            // 스윙2앱에서는 진동도!
-            try{ if(navigator.vibrate) navigator.vibrate([200,100,200]); }catch(e){}
-          }
-          // 오늘 날짜 자동 스크롤
-          try{
-            var todayStr = (typeof getTodayStr==='function') ? getTodayStr() : new Date().toISOString().slice(0,10);
-            var el = document.querySelector('[data-date="'+todayStr+'"]');
-            if(el) el.scrollIntoView({behavior:'smooth', block:'center'});
-          }catch(e){}
-        }, 1500);
-      }
-      
-      // Swing2App 푸시: 로컬 알림 스케줄 (스윙2앱 API 있으면)
-      if(isSwing2App && window.s2app && window.s2app.setPushAlarm){
-        try{
-          // 매일 8시 푸시 예약 (스윙2앱 API)
-          window.s2app.setPushAlarm({
-            hour: notifyHour,
-            minute: 0,
-            message: '📬 타임캡슐 도착! 과거의 오늘이 당신을 기다려요!',
-            repeat: 'daily'
-          });
-        }catch(e){ console.log('s2app push err', e); }
-      }
-    }catch(e){ console.log('swing check err', e); }
-  }
-  
-  window.addEventListener('load', function(){ setTimeout(checkCapsuleForSwing, 2000); });
-  
-  // 깃허브 Pages용: base href 처리
-  if(window.location.hostname.indexOf('github.io')!==-1){
-    console.log('[V79] GitHub Pages mode detected');
-  }
-  
-  // 스윙2앱에서 뒤로가기 처리 개선
-  if(isSwing2App){
-    document.addEventListener('backbutton', function(e){
-      e.preventDefault();
-      try{
-        // 모달 열려있으면 닫기
-        var modals = document.querySelectorAll('.modal-overlay.active, .photo-lightbox-overlay.active');
-        if(modals.length>0){
-          modals.forEach(function(m){ m.classList.remove('active'); m.style.display='none'; });
-          try{ document.body.style.overflow=''; }catch(err){}
-          return;
-        }
-      }catch(err){}
-      // 아니면 앱 종료 확인
-      if(confirm('앱을 종료할까요?')){ try{ navigator.app.exitApp(); }catch(err){ window.history.back(); } }
-    }, false);
-  }
-  
-  console.log('[V79] Swing2App + GitHub optimized loaded');
-})();
-</script>
+
 
 </body>
 </html>
