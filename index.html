@@ -3109,14 +3109,123 @@ body:not(.modal-open) { overflow:auto !important; }
 .countdown-badge { background:#fef3c7; color:#92400e; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:700; }
 </style>
 
-<link rel="manifest" href="manifest.json">
+
+
+<link rel="manifest" href="./manifest.json">
+<script>
+// V80 ULTIMATE Fortune Fix - Swing2App용
+window.openFortunePopupFixed = function(){
+  try{
+    console.log('Fortune click!');
+    var overlay = document.getElementById('fortune-popup-overlay');
+    var bodyEl = document.getElementById('fortune-popup-body');
+    
+    if(overlay){
+      overlay.classList.add('active');
+      overlay.style.display='flex';
+      document.body.style.overflow='hidden';
+    }
+    
+    // 기존 함수가 있으면 호출, 없으면 직접 렌더
+    if(typeof openFortunePopup === 'function' && openFortunePopup.toString().indexOf('Fixed')===-1){
+      try{ openFortunePopup(); return; }catch(e){ console.log('orig fortune err', e); }
+    }
+    
+    // Fallback 직접 렌더
+    if(bodyEl){
+      var hasSaju = (typeof sajuBirthInfo !== 'undefined' && sajuBirthInfo && sajuBirthInfo.date);
+      if(!hasSaju){
+        bodyEl.innerHTML = '<div class="fp-hero"><div class="fp-eyebrow">🔮 오늘 하루 브리핑</div><div class="fp-setup-title">아직 준비 전이에요</div></div><div class="fp-setup-msg">생년월일을 한 번만 입력해두면<br>매일 다른, 나만의 오늘의 운세를 볼 수 있어요.</div><button class="fp-cta" onclick="closeFortunePopup(); openSettingsModal();">생년월일 입력하러 가기</button>';
+      } else {
+        if(typeof renderFortunePopup === 'function'){ renderFortunePopup(); }
+        else { bodyEl.innerHTML = '<div style="padding:20px; text-align:center; color:white;">오늘의 운세 로딩중...<br>생년월일을 설정해주세요!</div>'; }
+      }
+    }
+  }catch(err){ alert('운세 오류: '+err.message); console.log(err); }
+};
+
+// 전역 덮어쓰기
+setTimeout(function(){ 
+  try{ window.openFortunePopup = window.openFortunePopupFixed; }catch(e){}
+}, 500);
+
+function closeFortunePopupFixed(){
+  var overlay = document.getElementById('fortune-popup-overlay');
+  if(overlay){ overlay.classList.remove('active'); overlay.style.display='none'; }
+  try{ document.body.style.overflow=''; }catch(e){}
+}
+
+setTimeout(function(){
+  try{ window.closeFortunePopup = closeFortunePopupFixed; }catch(e){}
+}, 500);
+</script>
+
+<style id="V80_FIX">
+.fortune-teaser{ pointer-events:auto !important; cursor:pointer !important; z-index:999 !important; position:relative !important; touch-action: manipulation !important; -webkit-tap-highlight-color: rgba(124,108,255,0.3) !important; }
+#fortune-teaser{ pointer-events:auto !important; }
+#fortune-teaser *{ pointer-events:none !important; }
+#fortune-popup-overlay{ z-index:9999 !important; }
+#fortune-popup-overlay.active{ display:flex !important; }
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
+</style>
+
+<script id="V80_SWING">
+// V80 Swing2App + 8시 알림
+(function(){
+  function fixTeaser(){
+    var teaser = document.getElementById('fortune-teaser');
+    if(!teaser) return;
+    teaser.style.pointerEvents='auto';
+    teaser.style.cursor='pointer';
+    teaser.setAttribute('onclick','openFortunePopupFixed()');
+    // 모든 자식 pointer-events none
+    var childs = teaser.querySelectorAll('*');
+    childs.forEach(function(c){ c.style.pointerEvents='none'; });
+    
+    // 클릭 이벤트 강제
+    teaser.addEventListener('click', function(e){
+      e.preventDefault(); e.stopPropagation();
+      openFortunePopupFixed();
+    }, true);
+    teaser.addEventListener('touchend', function(e){
+      e.preventDefault(); e.stopPropagation();
+      openFortunePopupFixed();
+    }, {passive:false});
+  }
+  
+  window.addEventListener('load', function(){ setTimeout(fixTeaser, 500); setTimeout(fixTeaser, 1500); });
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(fixTeaser, 800); });
+  
+  // 8시 알림 (앱 열면)
+  function check8(){
+    try{
+      var h = new Date().getHours();
+      if(h>=8 && h<=10){
+        setTimeout(function(){
+          var b = document.querySelector('.time-capsule-banner');
+          if(b){ b.style.animation='pulse 1s ease-in-out 3'; try{if(navigator.vibrate) navigator.vibrate([200,100,200]);}catch(e){} }
+        },2000);
+      }
+    }catch(e){}
+  }
+  window.addEventListener('load', function(){ setTimeout(check8, 2500); });
+  
+  window.testTimeCapsuleNotify = function(){
+    localStorage.removeItem('lastCapsuleNotifyDate');
+    var b = document.querySelector('.time-capsule-banner');
+    if(b){ b.style.animation='pulse 1s ease-in-out infinite'; b.scrollIntoView({behavior:'smooth'}); alert('🎉 8시 알림 미리보기! 이런식으로 뜸!'); }
+    else{ alert('⏳ 타임캡슐 데이터 없음 - 30일 쓰면 생김!'); }
+  };
+})();
+</script>
+
 </head>
 <body>
 
 <div class="app-container">
 
     <!-- 🔮 오늘의 운세 티저 배너 -->
-    <div class="fortune-teaser" id="fortune-teaser" onclick="openFortunePopup()">
+    <div class="fortune-teaser" id="fortune-teaser" onclick="openFortunePopupFixed()">
         <span class="ft-icon">🔮</span>
         <div style="flex:1;">
             <div class="ft-text" id="fortune-teaser-text">오늘의 운세 보기</div>
@@ -15864,122 +15973,8 @@ window.addEventListener("load", function() {
 </script>
 
 
-<script id="V78_FORTUNE_FIX">
-// V78 Fix: 오늘의 운세 버튼 클릭 안됨 수정
-(function(){
-  function ensureFortuneClick(){
-    var teaser = document.getElementById('fortune-teaser');
-    if(teaser){
-      // 기존 onclick 유지하고 addEventListener 추가
-      teaser.style.cursor='pointer';
-      teaser.style.pointerEvents='auto';
-      teaser.addEventListener('click', function(e){
-        e.stopPropagation();
-        try{ if(typeof openFortunePopup==='function') openFortunePopup(); }catch(err){ console.log('fortune err', err); }
-      }, {capture:false});
-      // 터치도
-      teaser.addEventListener('touchend', function(e){
-        e.preventDefault();
-        try{ if(typeof openFortunePopup==='function') openFortunePopup(); }catch(err){}
-      }, {passive:false});
-    }
-  }
-  // 여러 시점에 시도
-  window.addEventListener('load', function(){ setTimeout(ensureFortuneClick, 300); setTimeout(ensureFortuneClick, 1000); });
-  document.addEventListener('DOMContentLoaded', function(){ setTimeout(ensureFortuneClick, 500); });
-  // openSettingsModal 오버라이드 시 fortune 깨지지 않게 보존
-  setTimeout(ensureFortuneClick, 800);
-  
-  // V78: 8시 알림 테스트 및 자동 알림
-  function checkTimeCapsuleNotify(){
-    try{
-      var settings = (typeof getPastSettings==='function') ? getPastSettings() : null;
-      if(!settings || !settings.enabled) return;
-      
-      var now = new Date();
-      var currentHour = now.getHours();
-      var currentMin = now.getMinutes();
-      var notifyTime = settings.notifyTime || '08:00';
-      
-      // 테스트 모드: localStorage에 lastNotifyDate 저장해서 하루 1번만
-      var todayStr = now.toISOString().slice(0,10);
-      var lastNotify = localStorage.getItem('lastCapsuleNotifyDate');
-      
-      var shouldNotify = false;
-      if(notifyTime==='08:00' && currentHour===8) shouldNotify = true;
-      else if(notifyTime==='12:00' && currentHour===12) shouldNotify = true;
-      else if(notifyTime==='21:00' && currentHour===21) shouldNotify = true;
-      else if(notifyTime==='random'){
-        // 랜덤: 매 시간 10% 확률로
-        shouldNotify = Math.random() < 0.1;
-      }
-      
-      // 테스트용: ?testCapsule=1 파라미터면 무조건 표시
-      if(window.location.search.indexOf('testCapsule')!==-1) shouldNotify = true;
-      
-      if(shouldNotify && lastNotify!==todayStr){
-        // 타임캡슐 있는지 확인
-        if(typeof getPastDateByInterval==='function' && typeof getAllDiaries==='function'){
-          var diaries = getAllDiaries();
-          var hasCapsule = false;
-          var intervals = settings.intervals || ['1m','3m','6m','1y'];
-          for(var i=0;i<intervals.length;i++){
-            var pd = getPastDateByInterval(todayStr, intervals[i]);
-            if(diaries.some(d=>d.date===pd && (d.text||d.photo))){ hasCapsule=true; break; }
-          }
-          if(hasCapsule || window.location.search.indexOf('testCapsule')!==-1){
-            // 배너가 이미 있으면 강조 애니메이션
-            setTimeout(function(){
-              var banner = document.querySelector('.time-capsule-banner');
-              if(banner){
-                banner.style.animation = 'pulse 1s ease-in-out 3';
-                // 상단으로 스크롤
-                try{ banner.scrollIntoView({behavior:'smooth', block:'center'}); }catch(e){}
-              }
-            }, 1000);
-            localStorage.setItem('lastCapsuleNotifyDate', todayStr);
-            console.log('[V78] 타임캡슐 알림 표시:', todayStr);
-          }
-        }
-      }
-    }catch(e){ console.log('notify check err', e); }
-  }
-  
-  // 1분마다 체크 (8시 정각 감지)
-  setInterval(checkTimeCapsuleNotify, 60000);
-  window.addEventListener('load', function(){ setTimeout(checkTimeCapsuleNotify, 2000); });
-  
-  // 수동 테스트 함수
-  window.testTimeCapsuleNotify = function(){
-    localStorage.removeItem('lastCapsuleNotifyDate');
-    // 오늘 날짜 섹션으로 이동
-    try{
-      var todayStr = (typeof getTodayStr==='function') ? getTodayStr() : new Date().toISOString().slice(0,10);
-      if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday();
-      setTimeout(function(){
-        var banner = document.querySelector('.time-capsule-banner');
-        if(banner){
-          banner.style.animation = 'pulse 1.5s ease-in-out infinite';
-          banner.scrollIntoView({behavior:'smooth', block:'center'});
-          alert('🎉 타임캡슐 알림!\n8시에 이렇게 보여요!\n\n'+banner.textContent.slice(0,50));
-        } else {
-          // 배너 없으면 타임캡슐 섹션으로
-          var pastSection = document.querySelector('[style*="타임캡슐"]');
-          if(pastSection){
-            pastSection.scrollIntoView({behavior:'smooth'});
-            alert('📖 타임캡슐 섹션으로 이동!\n과거 기록이 여기에 표시됩니다!');
-          } else {
-            alert('⏳ 아직 타임캡슐 데이터가 없어요!\nD-카운트다운이 표시됩니다!\n\n30일 쓰면 1개월 전 추억 생겨요!');
-          }
-        }
-      }, 500);
-    }catch(e){ alert('테스트 오류: '+e.message); }
-  };
-  
-  console.log('[V78] Fortune fix + Time capsule notify loaded');
-})();
-</script>
-<style id="V78_FIX_CSS">
+
+<style id="V78_FIX_CSS_OLD">
 @keyframes pulse { 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.05); box-shadow:0 6px 20px rgba(124,108,255,0.5); } }
 .fortune-teaser { pointer-events:auto !important; cursor:pointer !important; z-index:10 !important; position:relative; }
 #fortune-teaser { pointer-events:auto !important; }
@@ -15987,85 +15982,7 @@ window.addEventListener("load", function() {
 </style>
 
 
-<script id="V79_SWING2APP">
-// V79: 스윙2앱 + 깃허브 최적화
-(function(){
-  // Swing2App 웹뷰 감지
-  var isSwing2App = /Swing2App|wv/.test(navigator.userAgent) || window.s2app !== undefined;
-  console.log('[V79] Swing2App mode:', isSwing2App, navigator.userAgent);
-  
-  // 8시 알림: 스윙2App에서도 앱 열면 체크
-  function checkCapsuleForSwing(){
-    try{
-      var now = new Date();
-      var todayStr = now.toISOString().slice(0,10);
-      var settings = (typeof getPastSettings==='function') ? getPastSettings() : {enabled:true, intervals:['1m','3m','6m','1y'], notifyTime:'08:00'};
-      if(!settings.enabled) return;
-      
-      var hour = now.getHours();
-      var notifyHour = parseInt((settings.notifyTime||'08:00').split(':')[0]);
-      
-      // 8시~10시 사이에 앱 열면 타임캡슐 강조
-      if(hour >= notifyHour && hour <= notifyHour+2){
-        setTimeout(function(){
-          var banner = document.querySelector('.time-capsule-banner');
-          if(banner){
-            banner.style.animation = 'pulse 1s ease-in-out 3';
-            // 스윙2앱에서는 진동도!
-            try{ if(navigator.vibrate) navigator.vibrate([200,100,200]); }catch(e){}
-          }
-          // 오늘 날짜 자동 스크롤
-          try{
-            var todayStr = (typeof getTodayStr==='function') ? getTodayStr() : new Date().toISOString().slice(0,10);
-            var el = document.querySelector('[data-date="'+todayStr+'"]');
-            if(el) el.scrollIntoView({behavior:'smooth', block:'center'});
-          }catch(e){}
-        }, 1500);
-      }
-      
-      // Swing2App 푸시: 로컬 알림 스케줄 (스윙2앱 API 있으면)
-      if(isSwing2App && window.s2app && window.s2app.setPushAlarm){
-        try{
-          // 매일 8시 푸시 예약 (스윙2앱 API)
-          window.s2app.setPushAlarm({
-            hour: notifyHour,
-            minute: 0,
-            message: '📬 타임캡슐 도착! 과거의 오늘이 당신을 기다려요!',
-            repeat: 'daily'
-          });
-        }catch(e){ console.log('s2app push err', e); }
-      }
-    }catch(e){ console.log('swing check err', e); }
-  }
-  
-  window.addEventListener('load', function(){ setTimeout(checkCapsuleForSwing, 2000); });
-  
-  // 깃허브 Pages용: base href 처리
-  if(window.location.hostname.indexOf('github.io')!==-1){
-    console.log('[V79] GitHub Pages mode detected');
-  }
-  
-  // 스윙2앱에서 뒤로가기 처리 개선
-  if(isSwing2App){
-    document.addEventListener('backbutton', function(e){
-      e.preventDefault();
-      try{
-        // 모달 열려있으면 닫기
-        var modals = document.querySelectorAll('.modal-overlay.active, .photo-lightbox-overlay.active');
-        if(modals.length>0){
-          modals.forEach(function(m){ m.classList.remove('active'); m.style.display='none'; });
-          try{ document.body.style.overflow=''; }catch(err){}
-          return;
-        }
-      }catch(err){}
-      // 아니면 앱 종료 확인
-      if(confirm('앱을 종료할까요?')){ try{ navigator.app.exitApp(); }catch(err){ window.history.back(); } }
-    }, false);
-  }
-  
-  console.log('[V79] Swing2App + GitHub optimized loaded');
-})();
-</script>
+
 
 </body>
 </html>
