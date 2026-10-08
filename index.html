@@ -9600,7 +9600,7 @@ window.attachPhotoDoubleTap = function(el, handler){
                 }
               }
               
-              // 합쳐서 표시 - V88 FINAL: 5개 제한 해제 + 그룹화 (일자로 이동만!)
+              // 합쳐서 표시 - V88 FINAL: 5개 제한 해제! 11건 다 보임! (일자로 이동만)
               var allPasts = [];
               var seenIds = {};
               for(var t=0; t<timeCapsules.length; t++){
@@ -9658,23 +9658,6 @@ window.attachPhotoDoubleTap = function(el, handler){
                 pastDiv.style.width='100%';
                 pastDiv.innerHTML = myPastHTML;
                 listEl.appendChild(pastDiv);
-              } else {
-                var oldest = diaries.filter(function(d){return d.text||d.photo;}).sort(function(a,b){return a.date.localeCompare(b.date);})[0];
-                if(oldest){
-                  var oldestDate = new Date(oldest.date);
-                  var nowDate = new Date(dateStr);
-                  var diffDays = Math.floor((nowDate - oldestDate)/(1000*60*60*24));
-                  var remain = 30 - diffDays;
-                  if(remain>0 && remain<=30){
-                    var myPastHTML2 = '<div style="grid-column:1 / -1; width:100%; margin-top:12px; border-top:2px dashed #e8e0ff; padding-top:10px;"><div style="font-size:14px; font-weight:800; color:#7c6cff; margin-bottom:6px;">📖 타임캡슐</div>';
-                    myPastHTML2 += '<div style="background:#fffbeb; border:1px dashed #f59e0b; border-radius:10px; padding:14px; text-align:center;"><div style="font-size:14px; font-weight:800; color:#92400e;">⏳ 첫 타임캡슐까지 D-'+remain+'</div><div style="font-size:12px; color:#b45309; margin-top:6px; line-height:1.4;">30일만 쓰면 1개월 전 추억이 생겨요!<br>현재 '+diffDays+'일째 작성 중! 🔥<br>1개월→3개월→6개월→1년으로 성장하는 재미!</div></div></div>';
-                    var pastDiv2 = document.createElement('div');
-                    pastDiv2.style.gridColumn='1 / -1';
-                    pastDiv2.style.width='100%';
-                    pastDiv2.innerHTML = myPastHTML2;
-                    listEl.appendChild(pastDiv2);
-                  }
-                }
               }
             }catch(e){ console.log('past error', e); }
 
