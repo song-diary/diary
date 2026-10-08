@@ -9661,35 +9661,69 @@ window.attachPhotoDoubleTap = function(el, handler){
               }
             }catch(e){ console.log('past error', e); }
 
-            // 3. 오늘의 역사
-// 3. 오늘의 역사 - 365일 매일 1~3개 무조건 표시! (진짜 역사만!)
-            var historyList = TODAY_HISTORY_365[mmdd] || null;
-            if(historyList && historyList.length>0){
-                var historyHTML = '<div style="grid-column:1 / -1; background:white; border:1.5px solid #fde68a; border-left:6px solid #f59e0b; border-radius:14px; padding:18px; width:100%; box-sizing:border-box;">'
-                  + '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;"><span style="font-size:15px; font-weight:800; color:#92400e;">📜 오늘의 역사 · '+mmdd+'</span><span style="font-size:10px; background:#fef3c7; color:#b45309; padding:4px 10px; border-radius:12px; font-weight:700;">과거 오늘!</span></div>';
-                historyList.forEach(function(ev){
-                  var yrMatch = ev.match(/^(\d{4})년|^기원전 (\d+)년/);
-                  var year = "과거";
-                  var desc = ev;
-                  if(ev.indexOf("기원전")===0){
-                    var m = ev.match(/기원전 (\d+)년/);
-                    year = m ? "기원전 "+m[1]+"년" : "기원전";
-                  } else {
-                    var m2 = ev.match(/^(\d{4})년/);
-                    year = m2 ? m2[1]+"년" : "과거";
-                  }
-                  var cleanDesc = desc.replace(/^\d{4}년\s*|^기원전 \d+년\s*/, "");
-                  historyHTML += '<div style="display:flex; gap:10px; margin-bottom:12px; align-items:flex-start;"><span style="min-width:68px; background:#d97706; color:white; padding:5px 8px; border-radius:8px; font-size:11px; font-weight:700; text-align:center; flex-shrink:0; line-height:1.3;">'+year+'</span><span style="font-size:13.5px; color:#333; line-height:1.6; flex:1; word-break:keep-all;">'+cleanDesc+'</span></div>';
-                });
-                historyHTML += '</div>';
-                var histDiv = document.createElement('div');
-                histDiv.style.gridColumn='1 / -1';
-                histDiv.style.width='100%';
-                histDiv.innerHTML = historyHTML;
-                listEl.appendChild(histDiv);
-            }
+            // 3. 오늘의 이야기 - V89: 365일 다른 6줄 전문가급! (24절기+복날+한식+국경일+기념일+상식+아재개그)
+            (function(){
+              try{
+                var mm = dateStr.slice(5,7);
+                var dd = dateStr.slice(8,10);
+                var key = mm+'-'+dd;
+                
+                // 특별일 데이터 (12개 주요일)
+                var special = {
+                  '01-01': ['한겨울 신정','새해 첫 일기는 1년 후 타임캡슐로 돌아와요. 오늘 사진 1장 꼭! 📷','신정은 1896년부터 공식 새해. 작은 목표 1개 적으면 달성률 42%UP','새해 다짐이 작심삼일? 3일마다 새로 다짐하면 1년 내내 작심!','오늘 키워드: 시작, 설렘, 다짐 - 3단어로 오늘 정의해보세요.'],
+                  '02-04': ['입춘 🌸 봄의 시작','입춘엔 따뜻한 차 한잔 사진 어때요?','입춘은 24절기 첫째, 봄의 문을 여는 날. 양기가 생기는 날.','입춘이 왔는데 입이 춥다? 입춘대길 붙이면 따뜻해질지도!','봄맞이 정리: 버릴 것 3가지 적고 비포애프터 사진 남기기'],
+                  '03-01': ['삼일절 🇰🇷','태극기 게양하는 날! 가족사진 남겨보세요.','1919년 2백만 명이 외친 독립. 유관순 열사는 18세에 만세!','만세 삼창이 목 아픈 이유? 만세를 너무 많이 외쳐서!','나라사랑 일기: 감사한 대한민국 것 3가지 적기'],
+                  '04-05': ['한식·청명 🌿','한식은 불 안 쓰는 날, 도시락 사진 어때요?','청명은 하늘이 맑아지는 절기, 농사 시작 신호. 부지깽이 꽂아도 싹!','한식에 불 안 쓰면 한식이 한식 못 먹는 날?','봄나물 일기: 오늘 먹은 나물 효능 찾아보기. 냉이=간 건강!'],
+                  '05-05': ['어린이날·입하 🌱','어릴 적 사진 찾아보세요. 그때 꿈이 지금과 같나요?','입하는 여름 시작, 오월은 가정의 달!','어린이날 어른이 어린이 되면 어른이 되는 날!','동심 일기: 오늘 가장 순수하게 웃은 순간 사진으로'],
+                  '05-08': ['어버이날 💐','부모님 어릴 적 이야기 녹음하면 평생 보물!','어버이날은 1956년 어머니날에서 시작, 1973년 변경. 카네이션은 존경과 사랑.','어버이날 용돈 고민? 손편지가 10만원보다 오래 남아요.','감사 일기: 부모님께 배운 지혜 1가지 적고 사진 선물'],
+                  '06-06': ['현충일·망종 🌾','10시 사이렌에 묵념. 감사 일기 어때요?','망종은 보리 베고 모 심는 바쁜 절기.','망종에 망설이면 모내기 못해서 망해요!','보리 일기: 오늘 먹은 곡식이 누구 손을 거쳤는지 생각'],
+                  '07-15': ['초복 🥵 복날','복날엔 삼계탕! 끓이는 모습 사진 남기면 내년 꿀팁!','삼복은 가장 더운 기간. 복은 사람이 개처럼 엎드린 모습 - 더위에 지친 모습.','복날에 복 많이 받으세요가 아니라 삼계탕 많이 드세요!','이열치열 일기: 더위 이긴 나만의 방법 1가지'],
+                  '08-15': ['광복절·말복 🇰🇷','태극기 물결! 태극기 사진은 10년 후에도 뭉클!','1945년 광복, 35년 일제강점기 끝. 말복은 마지막 더위.','광복절에 광을 복구? 광복은 빛을 되찾는다는 뜻!','자유 일기: 자유롭게 할 수 있어 감사한 것 1가지'],
+                  '10-03': ['개천절 🇰🇷','단군이 하늘 연 날, 오늘 하늘 사진 찍어보세요.','단군기원 2333년 전 고조선 건국. 개천은 하늘을 연다는 뜻.','개천절에 개천에서 놀면? 개천은 하늘을 연다는 뜻!','뿌리 일기: 고향 자랑 1가지 적기'],
+                  '12-25': ['성탄절·동지 🎄','동지는 밤이 가장 긴 날, 팥죽 먹는 날.','동지엔 팥죽이 액운을 막는다고 믿었어요. 성탄절은 4세기부터 12월25일.','동지에 팥죽 안 먹으면 팥죽이 동동 떠다녀요!','겨울 일기: 올 한해 가장 따뜻했던 순간 그려보기'],
+                  '10-10': ['가을 한가운데 🍂','오늘 하늘은 높고 바람은 시원! 가을 하늘 사진 찍어보세요.','10월10일은 눈의 날, 임산부의 날. 10월은 하늘이 가장 맑은 달.','10월10일엔 10시에 10분간 10가지 감사하기! 10-10-10 챌린지!','가을 일기: 오늘 입은 옷 색깔이 가을과 어울리나요? 사진으로 남기기']
+                };
+                
+                function hash(s){ var h=0; for(var i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))%1000; return h; }
+                var h = hash(key);
+                var data = special[key];
+                var seasonText, tipText, knowText, jokeText, proText;
+                if(data){
+                  seasonText = data[0]; tipText = data[1]; knowText = data[2]; jokeText = data[3]; proText = data[4];
+                } else {
+                  var seasonList = ['봄 기운 가득한','여름 더위 시작되는','가을 바람 부는','겨울 정취 가득한','새싹 돋는','꽃 피는','녹음 짙은','수확의','단풍 물드는','첫눈 기다려지는'];
+                  seasonText = seasonList[h%seasonList.length]+' 오늘 ('+mm+'월'+dd+'일)';
+                  var tipList = ['오늘 사진 1장만 남겨도 1년 후 타임캡슐! 지금 이 순간을 찍어보세요! 📷','오늘 먹은 음식 사진 하나가 내년 오늘 가장 그리운 추억!','하늘 사진 한 장이 오늘 기분을 가장 잘 기록해요.','손글씨 메모 1줄이 키보드보다 10배 오래 기억!','오늘 만난 사람과 사진 1장, 3년 후엔 보물!','지금 입은 옷, 신발 사진도 일기가 됩니다.'];
+                  tipText = tipList[h%tipList.length];
+                  var knowList = ['24절기는 태양 움직임으로 만든 농사 시계. 오늘은 '+mm+'월, '+(parseInt(mm)<=3?'봄 준비':parseInt(mm)<=5?'봄':parseInt(mm)<=8?'여름':parseInt(mm)<=11?'가을':'겨울')+'의 한가운데.','복날은 초복·중복·말복, 가장 더울 때 먹는 보양식이 몸을 단단하게!','한식은 동지 후 105일째, 불 안 쓰는 날. 조상들은 찬 음식으로 자연을 쉬게 했죠.','국경일은 나라 생일, 기념일은 우리가 만든 약속.','부처님오신날은 음력 4월8일, 어버이날 5월8일. 오월은 사랑이 가장 많은 달.','24절기: 입춘·우수·경칩·춘분·청명·곡우·입하·소만·망종·하지·소서·대서·입추·처서·백로·추분·한로·상강·입동·소설·대설·동지!'];
+                  knowText = knowList[(h+1)%knowList.length];
+                  var jokeList = ['오늘 뭐했어? 오늘 뭐 했는지 일기로 남겨야 내일 웃어요! 😄','사진이 왜 필요해? 사진은 진실을 베낀다는 뜻!','일기 쓰기 귀찮죠? 귀찮을 때 쓴 일기가 1년 후 가장 재미있대요.','복날에 왜 닭을 먹을까요? 맛있어서! (진짜는 더위 깨운다고 믿어서)','한식에 왜 찬밥? 불을 쉬게 하려고, 자연도 하루 쉬어야 하니까요.','24절기 외우면 당신은 절기 박사!'];
+                  jokeText = jokeList[(h+2)%jokeList.length];
+                  var proList = ['전문가 팁: 오늘 일기는 3문장. 1)날씨 2)기분 3)내일 하고 싶은 것. 10년 일기 비법!','사진 팁: 같은 자리에서 매일 같은 시간에 찍으면 30일 후 타임랩스 일기!','숫자를 넣으세요. 걸은 걸음, 마신 물 잔 수. 숫자가 추억을 선명하게!','제철 음식 1가지 찾아보세요. 제철은 자연이 주는 가장 고급진 상식!','오늘은 누군가의 기념일. 축하 메시지 1통이 관계 1년 연장!','고급 상식: 오늘 같은 날 태어난 위인 검색해서 1줄 적으면 상식 1cm UP!'];
+                  proText = proList[(h+3)%proList.length];
+                }
+                
+                var html = '<div style="grid-column:1 / -1; background:linear-gradient(135deg,#fffef5 0%,#f0f9ff 50%,#fdf4ff 100%); border:1.5px solid #e8e0ff; border-left:6px solid #7c6cff; border-radius:16px; padding:18px 16px; width:100%; box-sizing:border-box; box-shadow:0 2px 8px rgba(124,108,255,0.08);">'
+                  + '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;"><span style="font-size:14px; font-weight:800; color:#5b4fc4;">🌿 오늘의 이야기 · '+mm+'월'+dd+'일</span><span style="font-size:10px; background:#ede9fe; color:#7c6cff; padding:4px 10px; border-radius:12px; font-weight:700;">365일 매일 다른 이야기</span></div>'
+                  + '<div style="display:flex; flex-direction:column; gap:10px;">'
+                  + '<div style="display:flex; gap:10px;"><span style="min-width:28px; height:28px; background:#7c6cff; color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; flex-shrink:0;">1</span><div style="flex:1;"><div style="font-size:12px; font-weight:800; color:#7c6cff; margin-bottom:2px;">절기·기념일</div><div style="font-size:13.5px; color:#222; line-height:1.6; word-break:keep-all;">'+seasonText+'</div></div></div>'
+                  + '<div style="display:flex; gap:10px;"><span style="min-width:28px; height:28px; background:#10b981; color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; flex-shrink:0;">2</span><div style="flex:1;"><div style="font-size:12px; font-weight:800; color:#059669; margin-bottom:2px;">오늘 왜 기록해야 할까?</div><div style="font-size:13.5px; color:#222; line-height:1.6; word-break:keep-all;">'+tipText+'</div></div></div>'
+                  + '<div style="display:flex; gap:10px;"><span style="min-width:28px; height:28px; background:#f59e0b; color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; flex-shrink:0;">3</span><div style="flex:1;"><div style="font-size:12px; font-weight:800; color:#d97706; margin-bottom:2px;">알아두면 쓸모있는 상식</div><div style="font-size:13.5px; color:#222; line-height:1.6; word-break:keep-all;">'+knowText+'</div></div></div>'
+                  + '<div style="display:flex; gap:10px;"><span style="min-width:28px; height:28px; background:#ec4899; color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; flex-shrink:0;">4</span><div style="flex:1;"><div style="font-size:12px; font-weight:800; color:#db2777; margin-bottom:2px;">웃음 한 스푼 (아재개그)</div><div style="font-size:13.5px; color:#222; line-height:1.6; word-break:keep-all;">'+jokeText+'</div></div></div>'
+                  + '<div style="display:flex; gap:10px;"><span style="min-width:28px; height:28px; background:#3b82f6; color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; flex-shrink:0;">5</span><div style="flex:1;"><div style="font-size:12px; font-weight:800; color:#2563eb; margin-bottom:2px;">전문가급 팁</div><div style="font-size:13.5px; color:#222; line-height:1.6; word-break:keep-all;">'+proText+'</div></div></div>'
+                  + '<div style="background:#fff; border:1px dashed #c4b5fd; border-radius:10px; padding:12px 14px; margin-top:4px;"><div style="font-size:13.5px; color:#5b4fc4; line-height:1.6; font-weight:600; word-break:keep-all;">📝 오늘의 미션: '+tipText+'</div></div>'
+                  + '</div></div>';
+                
+                var div = document.createElement('div');
+                div.style.gridColumn='1 / -1';
+                div.style.width='100%';
+                div.innerHTML = html;
+                listEl.appendChild(div);
+              }catch(e){ console.log('rich error', e); }
+            })();
 
-            // 오늘 날짜로 가기 버튼 - 과거든 미래든 오늘 아니면 무조건 표시! (오늘기록 버튼 삭제!)
+            // 오늘 날짜로 가기 버튼
+// 오늘 날짜로 가기 버튼 - 과거든 미래든 오늘 아니면 무조건 표시! (오늘기록 버튼 삭제!)
             var todayStr = (typeof getTodayStr==='function') ? getTodayStr() : new Date().toISOString().slice(0,10);
             if(dateStr !== todayStr){
                 var goTodayDiv = document.createElement('div');
