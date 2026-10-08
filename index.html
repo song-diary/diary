@@ -3109,6 +3109,7 @@ body:not(.modal-open) { overflow:auto !important; }
 .countdown-badge { background:#fef3c7; color:#92400e; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:700; }
 </style>
 
+<link rel="manifest" href="manifest.json">
 </head>
 <body>
 
@@ -15786,7 +15787,7 @@ window.addEventListener("load", function() {
           }).join('')}
         </div>
         <div style="font-size:11px; color:#9a8cc0; margin-top:8px; line-height:1.4;">
-          💡 <b>1개월부터 시작하면 30일만 써도 추억 생김!</b> 1년은 365일 기다려야 해서 재미없어요. 1개월→3개월→6개월→1년 순서로 성장하는 재미!
+          💡 <b>1개월부터 시작하면 30일만 써도 추억 생김!</b> 1년은 365일 기다려야 해서 재미없어요. 1개월→3개월→6개월→1년 순서로 성장하는 재미!<br><button onclick="testTimeCapsuleNotify()" style="margin-top:8px; width:100%; padding:8px; background:#7c6cff; color:white; border:none; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">🔔 타임캡슐 알림 테스트 (지금 보기)</button><div style="font-size:10px; color:#666; margin-top:4px;">※ 8시 알림은 앱을 열었을 때 상단에 배너로 표시돼요! 푸시 알림은 다음 버전에서!</div>
         </div>
         
         <div style="font-size:12px; color:#666; margin:12px 0 8px 0; font-weight:700;">🎨 알림 카드 스타일</div>
@@ -15859,6 +15860,210 @@ window.addEventListener("load", function() {
   });
   
   console.log('[V77] Past notify settings loaded');
+})();
+</script>
+
+
+<script id="V78_FORTUNE_FIX">
+// V78 Fix: 오늘의 운세 버튼 클릭 안됨 수정
+(function(){
+  function ensureFortuneClick(){
+    var teaser = document.getElementById('fortune-teaser');
+    if(teaser){
+      // 기존 onclick 유지하고 addEventListener 추가
+      teaser.style.cursor='pointer';
+      teaser.style.pointerEvents='auto';
+      teaser.addEventListener('click', function(e){
+        e.stopPropagation();
+        try{ if(typeof openFortunePopup==='function') openFortunePopup(); }catch(err){ console.log('fortune err', err); }
+      }, {capture:false});
+      // 터치도
+      teaser.addEventListener('touchend', function(e){
+        e.preventDefault();
+        try{ if(typeof openFortunePopup==='function') openFortunePopup(); }catch(err){}
+      }, {passive:false});
+    }
+  }
+  // 여러 시점에 시도
+  window.addEventListener('load', function(){ setTimeout(ensureFortuneClick, 300); setTimeout(ensureFortuneClick, 1000); });
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(ensureFortuneClick, 500); });
+  // openSettingsModal 오버라이드 시 fortune 깨지지 않게 보존
+  setTimeout(ensureFortuneClick, 800);
+  
+  // V78: 8시 알림 테스트 및 자동 알림
+  function checkTimeCapsuleNotify(){
+    try{
+      var settings = (typeof getPastSettings==='function') ? getPastSettings() : null;
+      if(!settings || !settings.enabled) return;
+      
+      var now = new Date();
+      var currentHour = now.getHours();
+      var currentMin = now.getMinutes();
+      var notifyTime = settings.notifyTime || '08:00';
+      
+      // 테스트 모드: localStorage에 lastNotifyDate 저장해서 하루 1번만
+      var todayStr = now.toISOString().slice(0,10);
+      var lastNotify = localStorage.getItem('lastCapsuleNotifyDate');
+      
+      var shouldNotify = false;
+      if(notifyTime==='08:00' && currentHour===8) shouldNotify = true;
+      else if(notifyTime==='12:00' && currentHour===12) shouldNotify = true;
+      else if(notifyTime==='21:00' && currentHour===21) shouldNotify = true;
+      else if(notifyTime==='random'){
+        // 랜덤: 매 시간 10% 확률로
+        shouldNotify = Math.random() < 0.1;
+      }
+      
+      // 테스트용: ?testCapsule=1 파라미터면 무조건 표시
+      if(window.location.search.indexOf('testCapsule')!==-1) shouldNotify = true;
+      
+      if(shouldNotify && lastNotify!==todayStr){
+        // 타임캡슐 있는지 확인
+        if(typeof getPastDateByInterval==='function' && typeof getAllDiaries==='function'){
+          var diaries = getAllDiaries();
+          var hasCapsule = false;
+          var intervals = settings.intervals || ['1m','3m','6m','1y'];
+          for(var i=0;i<intervals.length;i++){
+            var pd = getPastDateByInterval(todayStr, intervals[i]);
+            if(diaries.some(d=>d.date===pd && (d.text||d.photo))){ hasCapsule=true; break; }
+          }
+          if(hasCapsule || window.location.search.indexOf('testCapsule')!==-1){
+            // 배너가 이미 있으면 강조 애니메이션
+            setTimeout(function(){
+              var banner = document.querySelector('.time-capsule-banner');
+              if(banner){
+                banner.style.animation = 'pulse 1s ease-in-out 3';
+                // 상단으로 스크롤
+                try{ banner.scrollIntoView({behavior:'smooth', block:'center'}); }catch(e){}
+              }
+            }, 1000);
+            localStorage.setItem('lastCapsuleNotifyDate', todayStr);
+            console.log('[V78] 타임캡슐 알림 표시:', todayStr);
+          }
+        }
+      }
+    }catch(e){ console.log('notify check err', e); }
+  }
+  
+  // 1분마다 체크 (8시 정각 감지)
+  setInterval(checkTimeCapsuleNotify, 60000);
+  window.addEventListener('load', function(){ setTimeout(checkTimeCapsuleNotify, 2000); });
+  
+  // 수동 테스트 함수
+  window.testTimeCapsuleNotify = function(){
+    localStorage.removeItem('lastCapsuleNotifyDate');
+    // 오늘 날짜 섹션으로 이동
+    try{
+      var todayStr = (typeof getTodayStr==='function') ? getTodayStr() : new Date().toISOString().slice(0,10);
+      if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday();
+      setTimeout(function(){
+        var banner = document.querySelector('.time-capsule-banner');
+        if(banner){
+          banner.style.animation = 'pulse 1.5s ease-in-out infinite';
+          banner.scrollIntoView({behavior:'smooth', block:'center'});
+          alert('🎉 타임캡슐 알림!\n8시에 이렇게 보여요!\n\n'+banner.textContent.slice(0,50));
+        } else {
+          // 배너 없으면 타임캡슐 섹션으로
+          var pastSection = document.querySelector('[style*="타임캡슐"]');
+          if(pastSection){
+            pastSection.scrollIntoView({behavior:'smooth'});
+            alert('📖 타임캡슐 섹션으로 이동!\n과거 기록이 여기에 표시됩니다!');
+          } else {
+            alert('⏳ 아직 타임캡슐 데이터가 없어요!\nD-카운트다운이 표시됩니다!\n\n30일 쓰면 1개월 전 추억 생겨요!');
+          }
+        }
+      }, 500);
+    }catch(e){ alert('테스트 오류: '+e.message); }
+  };
+  
+  console.log('[V78] Fortune fix + Time capsule notify loaded');
+})();
+</script>
+<style id="V78_FIX_CSS">
+@keyframes pulse { 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.05); box-shadow:0 6px 20px rgba(124,108,255,0.5); } }
+.fortune-teaser { pointer-events:auto !important; cursor:pointer !important; z-index:10 !important; position:relative; }
+#fortune-teaser { pointer-events:auto !important; }
+.time-capsule-banner { animation: none; }
+</style>
+
+
+<script id="V79_SWING2APP">
+// V79: 스윙2앱 + 깃허브 최적화
+(function(){
+  // Swing2App 웹뷰 감지
+  var isSwing2App = /Swing2App|wv/.test(navigator.userAgent) || window.s2app !== undefined;
+  console.log('[V79] Swing2App mode:', isSwing2App, navigator.userAgent);
+  
+  // 8시 알림: 스윙2App에서도 앱 열면 체크
+  function checkCapsuleForSwing(){
+    try{
+      var now = new Date();
+      var todayStr = now.toISOString().slice(0,10);
+      var settings = (typeof getPastSettings==='function') ? getPastSettings() : {enabled:true, intervals:['1m','3m','6m','1y'], notifyTime:'08:00'};
+      if(!settings.enabled) return;
+      
+      var hour = now.getHours();
+      var notifyHour = parseInt((settings.notifyTime||'08:00').split(':')[0]);
+      
+      // 8시~10시 사이에 앱 열면 타임캡슐 강조
+      if(hour >= notifyHour && hour <= notifyHour+2){
+        setTimeout(function(){
+          var banner = document.querySelector('.time-capsule-banner');
+          if(banner){
+            banner.style.animation = 'pulse 1s ease-in-out 3';
+            // 스윙2앱에서는 진동도!
+            try{ if(navigator.vibrate) navigator.vibrate([200,100,200]); }catch(e){}
+          }
+          // 오늘 날짜 자동 스크롤
+          try{
+            var todayStr = (typeof getTodayStr==='function') ? getTodayStr() : new Date().toISOString().slice(0,10);
+            var el = document.querySelector('[data-date="'+todayStr+'"]');
+            if(el) el.scrollIntoView({behavior:'smooth', block:'center'});
+          }catch(e){}
+        }, 1500);
+      }
+      
+      // Swing2App 푸시: 로컬 알림 스케줄 (스윙2앱 API 있으면)
+      if(isSwing2App && window.s2app && window.s2app.setPushAlarm){
+        try{
+          // 매일 8시 푸시 예약 (스윙2앱 API)
+          window.s2app.setPushAlarm({
+            hour: notifyHour,
+            minute: 0,
+            message: '📬 타임캡슐 도착! 과거의 오늘이 당신을 기다려요!',
+            repeat: 'daily'
+          });
+        }catch(e){ console.log('s2app push err', e); }
+      }
+    }catch(e){ console.log('swing check err', e); }
+  }
+  
+  window.addEventListener('load', function(){ setTimeout(checkCapsuleForSwing, 2000); });
+  
+  // 깃허브 Pages용: base href 처리
+  if(window.location.hostname.indexOf('github.io')!==-1){
+    console.log('[V79] GitHub Pages mode detected');
+  }
+  
+  // 스윙2앱에서 뒤로가기 처리 개선
+  if(isSwing2App){
+    document.addEventListener('backbutton', function(e){
+      e.preventDefault();
+      try{
+        // 모달 열려있으면 닫기
+        var modals = document.querySelectorAll('.modal-overlay.active, .photo-lightbox-overlay.active');
+        if(modals.length>0){
+          modals.forEach(function(m){ m.classList.remove('active'); m.style.display='none'; });
+          try{ document.body.style.overflow=''; }catch(err){}
+          return;
+        }
+      }catch(err){}
+      // 아니면 앱 종료 확인
+      if(confirm('앱을 종료할까요?')){ try{ navigator.app.exitApp(); }catch(err){ window.history.back(); } }
+    }, false);
+  }
+  
+  console.log('[V79] Swing2App + GitHub optimized loaded');
 })();
 </script>
 
