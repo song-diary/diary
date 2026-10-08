@@ -3110,71 +3110,82 @@ body:not(.modal-open) { overflow:auto !important; }
 </style>
 
 <link rel="manifest" href="manifest.json">
-<script id="V86_DIRECT_FIX">
+<script id="V87_DIRECT_AUTO">
 (function(){
 
+window._pendingAutoOpenId = null;
 window.openPastDiaryDirect = async function(id, dateStr){
   try{
-    console.log('[V86] open direct', id, dateStr);
+    console.log('[V87] open direct', id, dateStr);
     var diaries = (typeof getAllDiaries==='function') ? getAllDiaries() : [];
     var item = null;
     for(var i=0;i<diaries.length;i++){ if(diaries[i].id===id){ item=diaries[i]; break; } }
     if(!item){
-      console.log('not found, go to date');
       if(window.goToPastDiary) window.goToPastDiary(dateStr);
       return;
     }
-    // 사진이면 라이트박스 - 캐시/IDB에서 소스 확보
-    if(item.photo){
-      var src = '';
-      try{ src = (typeof getPhotoSrc==='function') ? getPhotoSrc(item.photo) : ''; }catch(e){}
-      if(!src && item.photo.indexOf('data:')===0) src = item.photo;
-      // 캐시에 없으면 IDB에서 직접 로드 시도
-      if(!src){
-        try{
-          if(typeof openPhotoDB==='function' && typeof PHOTO_STORE_NAME!=='undefined'){
-            var db = await openPhotoDB();
-            var rec = await new Promise(function(res, rej){
-              var tx = db.transaction(PHOTO_STORE_NAME, 'readonly');
-              var st = tx.objectStore(PHOTO_STORE_NAME);
-              var r = st.get(item.photo);
-              r.onsuccess = function(){ res(r.result); };
-              r.onerror = function(){ rej(r.error); };
-            });
-            if(rec && rec.data){ src = rec.data; try{ photoCache[item.photo]=rec.data; }catch(e){} try{ window.photoCache[item.photo]=rec.data; }catch(e){} }
+    // 1. 먼저 날짜로 이동
+    if(window.goToPastDiary) window.goToPastDiary(dateStr);
+    window._pendingAutoOpenId = id;
+    
+    // 2. 0.8초 후 해당 아이템 찾아서 라이트박스 열기
+    setTimeout(async function(){
+      try{
+        var targetId = window._pendingAutoOpenId;
+        if(!targetId) return;
+        var all = (typeof getAllDiaries==='function') ? getAllDiaries() : [];
+        var target = null;
+        for(var j=0;j<all.length;j++){ if(all[j].id===targetId){ target=all[j]; break; } }
+        if(!target || !target.photo){
+          window._pendingAutoOpenId = null;
+          return;
+        }
+        // 사진 소스 확보
+        var src = '';
+        try{ src = (typeof getPhotoSrc==='function') ? getPhotoSrc(target.photo) : ''; }catch(e){}
+        if(!src && target.photo.indexOf('data:')===0) src = target.photo;
+        if(!src){
+          try{
+            if(typeof openPhotoDB==='function'){
+              var db = await openPhotoDB();
+              var rec = await new Promise(function(res, rej){
+                var tx = db.transaction(PHOTO_STORE_NAME, 'readonly');
+                var st = tx.objectStore(PHOTO_STORE_NAME);
+                var r = st.get(target.photo);
+                r.onsuccess = function(){ res(r.result); };
+                r.onerror = function(){ rej(r.error); };
+              });
+              if(rec && rec.data) src = rec.data;
+            }
+          }catch(e){ console.log('IDB fail', e); }
+        }
+        if(src){
+          if(typeof openPhotoLightbox==='function'){
+            openPhotoLightbox(target.photo, target);
+          } else {
+            var overlay = document.getElementById('photo-lightbox-overlay');
+            var imgEl = document.getElementById('photo-lightbox-img');
+            var memoEl = document.getElementById('photo-lightbox-memo');
+            var dateEl = document.getElementById('photo-lightbox-date');
+            if(overlay && imgEl){
+              imgEl.src = src;
+              imgEl.style.display='block';
+              if(memoEl){ memoEl.textContent = target.text||''; memoEl.style.display='block'; }
+              if(dateEl) dateEl.textContent = target.date;
+              overlay.classList.add('active');
+              overlay.style.display='flex';
+              document.body.classList.add('modal-open');
+            }
           }
-        }catch(e){ console.log('IDB load fail', e); }
-      }
-      if(!src){
-        console.log('src still empty, fallback to date');
-        if(window.goToPastDiary) window.goToPastDiary(dateStr);
-        return;
-      }
-      // 강제로 라이트박스 직접 열기 (openPhotoLightbox가 src 비었을 때 숨기므로 직접 제어)
-      var overlay = document.getElementById('photo-lightbox-overlay');
-      var imgEl = document.getElementById('photo-lightbox-img');
-      var memoEl = document.getElementById('photo-lightbox-memo');
-      var dateEl = document.getElementById('photo-lightbox-date');
-      var actionEl = document.getElementById('photo-lightbox-actions');
-      if(overlay && imgEl){
-        imgEl.src = src;
-        imgEl.style.display='block';
-        imgEl.style.transform='';
-        if(memoEl){ memoEl.textContent = (item.text||'').slice(0,500); memoEl.style.display = memoEl.textContent ? 'block' : 'none'; memoEl.classList.remove('no-photo-mode'); }
-        if(dateEl) dateEl.textContent = item.date + (item.time ? ' ' + item.time : '');
-        if(actionEl){ actionEl.style.display='flex'; }
-        window.currentLightboxItemId = item.id;
-        overlay.classList.add('active');
-        overlay.style.display='flex';
-        document.body.classList.add('modal-open');
-        document.body.style.overflow='hidden';
-        try{ if(typeof resetPhotoZoom==='function') resetPhotoZoom(); }catch(e){}
-        console.log('[V86] lightbox opened', src.slice(0,30));
-      }
-    } else {
-      if(window.goToPastDiary) window.goToPastDiary(dateStr);
-    }
-  }catch(e){ console.log('direct error', e); if(window.goToPastDiary) window.goToPastDiary(dateStr); }
+        } else {
+          // 소스 못 찾으면 해당 아이템으로 스크롤
+          var el = document.querySelector('[data-item-id="'+targetId+'"]');
+          if(el){ el.scrollIntoView({behavior:'smooth', block:'center'}); el.style.outline='3px solid #7c6cff'; setTimeout(function(){ el.style.outline=''; }, 2000); }
+        }
+        window._pendingAutoOpenId = null;
+      }catch(e){ console.log('auto open fail', e); window._pendingAutoOpenId=null; }
+    }, 800);
+  }catch(e){ console.log(e); if(window.goToPastDiary) window.goToPastDiary(dateStr); }
 };
 document.removeEventListener('click', window._pastDirectHandler, true);
 window._pastDirectHandler = function(e){
@@ -3188,6 +3199,7 @@ window._pastDirectHandler = function(e){
   }
 };
 document.addEventListener('click', window._pastDirectHandler, true);
+console.log('[V87] direct view - go to date then auto open');
 
 })();
 </script>
