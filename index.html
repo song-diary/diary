@@ -3219,6 +3219,167 @@ setTimeout(function(){
 })();
 </script>
 
+
+<script id="V81_FIX">
+// V81 Fix: 1년전 테스트 + 종료 버튼
+(function(){
+  // 1. 종료 버튼 fix: 한 번만 누르면 종료
+  var lastBackPress = 0;
+  var backHandlerFixed = false;
+  
+  function setupBackButton(){
+    if(backHandlerFixed) return;
+    try{
+      document.removeEventListener('backbutton', window._oldBackHandler);
+    }catch(e){}
+    
+    window._backHandlerV81 = function(e){
+      try{ e.preventDefault(); }catch(err){}
+      
+      // 모달 열려있으면 닫기 (한 번에)
+      var modals = document.querySelectorAll('.modal-overlay.active, .photo-lightbox-overlay.active, #fortune-popup-overlay.active, #saju-detail-modal-overlay.active');
+      var hasModal = false;
+      modals.forEach(function(m){
+        if(m.classList.contains('active') || m.style.display==='flex'){
+          hasModal = true;
+          m.classList.remove('active');
+          m.style.display='none';
+        }
+      });
+      if(hasModal){
+        try{ document.body.style.overflow=''; document.body.classList.remove('modal-open'); }catch(err){}
+        return;
+      }
+      
+      // 모달 없으면 종료: 2초 안에 두 번 누르면 종료, 한 번 누르면 토스트
+      var now = Date.now();
+      if(now - lastBackPress < 2000){
+        try{ 
+          if(navigator.app && navigator.app.exitApp) navigator.app.exitApp();
+          else if(window.s2app && window.s2app.exitApp) window.s2app.exitApp();
+          else window.history.back();
+        }catch(err){ window.history.back(); }
+      } else {
+        lastBackPress = now;
+        // 토스트
+        var toast = document.getElementById('v81-exit-toast');
+        if(!toast){
+          toast = document.createElement('div');
+          toast.id='v81-exit-toast';
+          toast.style.cssText='position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.8); color:white; padding:10px 20px; border-radius:20px; font-size:13px; z-index:10000;';
+          document.body.appendChild(toast);
+        }
+        toast.textContent='한 번 더 누르면 종료됩니다';
+        toast.style.display='block';
+        setTimeout(function(){ toast.style.display='none'; }, 2000);
+      }
+    };
+    
+    document.addEventListener('backbutton', window._backHandlerV81, false);
+    backHandlerFixed = true;
+    console.log('[V81] Backbutton fixed');
+  }
+  
+  window.addEventListener('load', function(){ setTimeout(setupBackButton, 1000); });
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(setupBackButton, 1500); });
+  
+  // 2. 1년전 테스트 데이터 만들기
+  window.createTestCapsuleData = function(){
+    try{
+      var today = new Date();
+      function addDays(date, days){
+        var d = new Date(date);
+        d.setDate(d.getDate()+days);
+        return d;
+      }
+      function formatDate(d){
+        var y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0');
+        return y+'-'+m+'-'+dd;
+      }
+      
+      var testDates = [
+        {offset:-30, label:'1개월 전 테스트', text:'1개월 전 오늘! 이게 타임캡슐로 뜸! 🎉'},
+        {offset:-90, label:'3개월 전 테스트', text:'3개월 전 추억! 벌써 3개월이나 지났네! ⏰'},
+        {offset:-180, label:'6개월 전 테스트', text:'6개월 전! 반년 전 오늘은 뭐했지? 📖'},
+        {offset:-365, label:'1년 전 테스트', text:'1년 전 오늘! 1년 전 나는 뭐하고 있었을까? 🥹 소중한 추억!'}
+      ];
+      
+      var listStr = localStorage.getItem('smartDiaryList');
+      var list = listStr ? JSON.parse(listStr) : [];
+      
+      var created = 0;
+      testDates.forEach(function(td){
+        var d = addDays(today, td.offset);
+        var dateStr = formatDate(d);
+        // 이미 있는지 체크
+        var exists = list.some(function(it){ return it.date===dateStr && it.text.indexOf('테스트')!==-1; });
+        if(!exists){
+          list.push({
+            id: 'test_'+Date.now()+'_'+Math.random().toString(36).slice(2),
+            date: dateStr,
+            time: '12:00',
+            text: td.text,
+            photo: '',
+            anniversary: td.label,
+            money: null
+          });
+          created++;
+        }
+      });
+      
+      localStorage.setItem('smartDiaryList', JSON.stringify(list));
+      alert('✅ 테스트 데이터 '+created+'개 생성!
+
+1개월전, 3개월전, 6개월전, 1년전 일기가 만들어졌어요!
+
+이제 오늘 날짜로 가면 타임캡슐에 뜰 거예요!
+
+오늘 날짜 클릭 → 맨 아래 "타임캡슐" 확인!');
+      
+      // 새로고침
+      if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday();
+      if(typeof renderCalendar==='function') renderCalendar();
+      
+    }catch(e){ alert('오류: '+e.message); }
+  };
+  
+  window.deleteTestCapsuleData = function(){
+    if(!confirm('테스트 데이터를 삭제할까요?')) return;
+    try{
+      var listStr = localStorage.getItem('smartDiaryList');
+      var list = listStr ? JSON.parse(listStr) : [];
+      var before = list.length;
+      list = list.filter(function(it){ return it.text.indexOf('테스트')===-1 || it.text.indexOf('타임캡슐')===-1; });
+      // 더 정확히: test_로 시작하는 id
+      list = list.filter(function(it){ return !(it.id && it.id.startsWith('test_')); });
+      localStorage.setItem('smartDiaryList', JSON.stringify(list));
+      alert('🗑️ 테스트 데이터 '+(before-list.length)+'개 삭제됨!');
+      if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday();
+    }catch(e){ alert('오류: '+e.message); }
+  };
+  
+  // 3. 타임캡슐 테스트 설명 추가
+  window.showCapsuleHelp = function(){
+    alert(
+      '📖 타임캡슐 테스트 방법\n\n'+
+      '1️⃣ 1년 전 일기가 있어야 1년 전이 뜸!\n'+
+      '   → 오늘 2026-05-13이면 2025-05-13에 쓴 일기가 있어야 함!\n\n'+
+      '2️⃣ 테스트 데이터 만들기 버튼으로 가짜 과거 만들기!\n\n'+
+      '3️⃣ 오늘 날짜 클릭 → 맨 아래 타임캡슐 확인!\n\n'+
+      '4️⃣ 데이터 없으면 D-카운트다운 뜸!\n'+
+      '   "첫 타임캡슐까지 D-15" 이런거!'
+    );
+  };
+  
+  console.log('[V81] Test capsule + exit fix loaded');
+})();
+</script>
+<style id="V81_STYLE">
+.v81-test-box{ background:#f0ebff; border:1.5px dashed #7c6cff; border-radius:12px; padding:12px; margin:10px 0; }
+.v81-test-btn{ width:100%; padding:10px; background:#7c6cff; color:white; border:none; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer; margin:4px 0; }
+.v81-test-btn.sub{ background:white; color:#7c6cff; border:1.5px solid #7c6cff; }
+</style>
+
 </head>
 <body>
 
@@ -15896,7 +16057,7 @@ window.addEventListener("load", function() {
           }).join('')}
         </div>
         <div style="font-size:11px; color:#9a8cc0; margin-top:8px; line-height:1.4;">
-          💡 <b>1개월부터 시작하면 30일만 써도 추억 생김!</b> 1년은 365일 기다려야 해서 재미없어요. 1개월→3개월→6개월→1년 순서로 성장하는 재미!<br><button onclick="testTimeCapsuleNotify()" style="margin-top:8px; width:100%; padding:8px; background:#7c6cff; color:white; border:none; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">🔔 타임캡슐 알림 테스트 (지금 보기)</button><div style="font-size:10px; color:#666; margin-top:4px;">※ 8시 알림은 앱을 열었을 때 상단에 배너로 표시돼요! 푸시 알림은 다음 버전에서!</div>
+          <div class="v81-test-box"><div style="font-size:12px; font-weight:800; color:#7c6cff; margin-bottom:6px;">🧪 타임캡슐 테스트 (1년전 안뜰때)</div><button class="v81-test-btn" onclick="createTestCapsuleData()">📅 1개월/3개월/6개월/1년 전 테스트 데이터 만들기</button><button class="v81-test-btn sub" onclick="deleteTestCapsuleData()">🗑️ 테스트 데이터 삭제</button><button class="v81-test-btn sub" onclick="showCapsuleHelp()">❓ 왜 안뜨는지 설명보기</button><div style="font-size:10px; color:#666; margin-top:4px;">테스트 데이터 만들면 오늘 날짜에 타임캡슐 뜸!</div></div>💡 <b>1개월부터 시작하면 30일만 써도 추억 생김!</b> 1년은 365일 기다려야 해서 재미없어요. 1개월→3개월→6개월→1년 순서로 성장하는 재미!<br><button onclick="testTimeCapsuleNotify()" style="margin-top:8px; width:100%; padding:8px; background:#7c6cff; color:white; border:none; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">🔔 타임캡슐 알림 테스트 (지금 보기)</button><div style="font-size:10px; color:#666; margin-top:4px;">※ 8시 알림은 앱을 열었을 때 상단에 배너로 표시돼요! 푸시 알림은 다음 버전에서!</div>
         </div>
         
         <div style="font-size:12px; color:#666; margin:12px 0 8px 0; font-weight:700;">🎨 알림 카드 스타일</div>
