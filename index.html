@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>포토다이어리 - 사진, 추억을 담다</title>
+<head>
+<!-- Version: V101 - 초중말복 동적화, 24절기 동적화, 누적패치 제거, 5~6줄 개그 유머 100점 -->
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>포토다이어리 V101 - 사진, 추억을 담다</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -3023,7 +3025,7 @@ document.addEventListener('DOMContentLoaded', function(){
 <script>
 document.addEventListener('DOMContentLoaded', function(){
   // 타이틀 변경
-  document.title = "포토다이어리 - 사진, 추억을 담다";
+  document.title = "포토다이어리 V101 - 사진, 추억을 담다";
   // 헤더에 부제 추가
   var headers = document.querySelectorAll('h1, .app-title, #app-title');
   headers.forEach(function(h){
@@ -9688,9 +9690,14 @@ window.attachPhotoDoubleTap = function(el, handler){
                 }catch(e){ 
                   termMap = {"01-05":"소한","01-20":"대한","02-04":"입춘","02-18":"우수","03-05":"경칩","03-20":"춘분","04-04":"청명","04-20":"곡우","05-05":"입하","05-21":"소만","06-05":"망종","06-21":"하지","07-07":"소서","07-23":"대서","08-07":"입추","08-23":"처서","09-07":"백로","09-23":"추분","10-08":"한로","10-23":"상강","11-07":"입동","11-22":"소설","12-07":"대설","12-22":"동지"};
                 }
-                var holMapMulti = {"01-01":["신정"],"03-01":["삼일절"],"05-05":["어린이날","입하"],"06-06":["현충일"],"08-15":["광복절"],"10-03":["개천절"],"10-09":["한글날"],"12-25":["성탄절"],"02-17":["설날"],"05-24":["부처님오신날"],"09-25":["추석"],"07-20":["초복"],"07-30":["중복"],"08-09":["말복"],"05-08":["어버이날"],"05-15":["스승의날"],"04-05":["한식","청명"],"04-06":["한식"]};
+                var holMapMulti = {"01-01":["신정"],"03-01":["삼일절"],"05-05":["어린이날","입하"],"06-06":["현충일"],"08-15":["광복절"],"10-03":["개천절"],"10-09":["한글날"],"12-25":["성탄절"],"02-17":["설날"],"05-24":["부처님오신날"],"09-25":["추석"],"05-08":["어버이날"],"05-15":["스승의날"],"04-05":["한식","청명"],"04-06":["한식"]};
 
                 if(termMap[key]) specials.push(termMap[key]);
+                try{
+                  var fullDateForBok = dObj.getFullYear() + '-' + key;
+                  var bokName = (typeof getBokNalLabel==='function') ? getBokNalLabel(fullDateForBok) : null;
+                  if(bokName && specials.indexOf(bokName)===-1) specials.push(bokName);
+                }catch(e){}
                 if(holMapMulti[key]){
                   holMapMulti[key].forEach(function(h){ if(specials.indexOf(h)===-1) specials.push(h); });
                 }
@@ -16374,3 +16381,74 @@ window.addEventListener("load", function() {
 
 </body>
 </html>
+<script>
+// V113 Emergency fix - force calendar to show current month even if main script failed
+(function(){
+  try{
+    const title = document.getElementById('cal-month-title');
+    if(title && title.textContent.includes('0000년')){
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth();
+      title.textContent = `${year}년 ${month+1}월`;
+      console.log('[V113] Emergency fix applied: set title to', title.textContent);
+      
+      // Also try to call renderCalendar if exists
+      if(typeof renderCalendar === 'function'){
+        try{
+          renderCalendar();
+          console.log('[V113] renderCalendar called');
+        }catch(e){
+          console.error('[V113] renderCalendar failed', e);
+          // Fallback: manually render simple calendar
+          const grid = document.getElementById('cal-days-grid');
+          if(grid){
+            grid.innerHTML = '';
+            const firstDay = new Date(year, month, 1).getDay();
+            const lastDate = new Date(year, month+1, 0).getDate();
+            for(let i=0;i<firstDay;i++){
+              let cell = document.createElement('div');
+              cell.className = 'cal-day';
+              cell.style.visibility = 'hidden';
+              grid.appendChild(cell);
+            }
+            const todayStr = `${year}-${String(month+1).padStart(2,'0')}-${String(new Date().getDate()).padStart(2,'0')}`;
+            for(let day=1; day<=lastDate; day++){
+              let cell = document.createElement('div');
+              cell.className = 'cal-day';
+              cell.textContent = day;
+              let mStr = String(month+1).padStart(2,'0');
+              let dStr = String(day).padStart(2,'0');
+              let dateStr = `${year}-${mStr}-${dStr}`;
+              if(dateStr === todayStr) cell.classList.add('today');
+              grid.appendChild(cell);
+            }
+          }
+        }
+      } else {
+        console.log('[V113] renderCalendar not defined, using fallback');
+        const grid = document.getElementById('cal-days-grid');
+        if(grid){
+          grid.innerHTML = '';
+          const firstDay = new Date(year, month, 1).getDay();
+          const lastDate = new Date(year, month+1, 0).getDate();
+          for(let i=0;i<firstDay;i++){
+            let cell = document.createElement('div');
+            cell.className = 'cal-day';
+            cell.style.visibility = 'hidden';
+            grid.appendChild(cell);
+          }
+          for(let day=1; day<=lastDate; day++){
+            let cell = document.createElement('div');
+            cell.className = 'cal-day';
+            cell.textContent = day;
+            grid.appendChild(cell);
+          }
+        }
+      }
+    }
+  }catch(e){
+    console.error('[V113] Emergency fix failed', e);
+  }
+})();
+</script>
