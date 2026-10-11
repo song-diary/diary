@@ -3,7 +3,7 @@
 <html lang="ko">
 <head>
 <!-- Version: V101 - 초중말복 동적화, 24절기 동적화, 누적패치 제거, 5~6줄 개그 유머 100점 -->
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>PhotoDiary V101 FINAL CLEAN</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>PhotoDiary V92 FINAL CLEAN</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -3179,10 +3179,9 @@ body.money-mode #reservation-box{display:none !important;}
 
 <script id="APP_VERSION_SYSTEM">
 // ===== 📦 버전 카운팅 시스템 V85 =====
-window.APP_VERSION = 'V101';
+window.APP_VERSION = 'V92';
 window.APP_BUILD_DATE = '2026-05-13';
 window.APP_VERSION_HISTORY = [
-  {v:'V93', date:'2026-05-13', changes:['사진 로딩중 무한 표시 버그 수정','IDB 비동기 로드로 placeholder 교체','원본 UI/기능 100% 유지']},
   {v:'V92', date:'2026-05-13', changes:['원본 복구 + 로또 함수만 정밀 삭제','UI/기능 100% 동일 유지 - 달력 완전 보존','설명 카드 초기 로드 버그 수정']},
   {v:'V86', date:'2026-05-13', changes:['설명 카드 초기 로드 안뜨는 버그 수정','토글 동기화 추가']},
   {v:'V85', date:'2026-05-13', changes:['타임캡슐 헤더 삭제','알람 중복 뿅뿅 수정','운세 한줄 아이디어 표시','포춘 클릭 100% 보장']},
@@ -10841,78 +10840,24 @@ const DAILY_6LINE_V2 = {
 async function getPhotoSrcAsyncSafe(key){
   if(!key) return '';
   if(key.startsWith('data:image') || key.startsWith('data:video')) return key;
-  // IDB: prefix handling
-  let actualKey = key;
-  if(key.startsWith('IDB:')) actualKey = key.slice(4);
-  try{ if(typeof photoCache!=='undefined' && photoCache[actualKey]) return photoCache[actualKey]; }catch(e){}
   try{ if(typeof photoCache!=='undefined' && photoCache[key]) return photoCache[key]; }catch(e){}
-  try{ if(window.photoCache && window.photoCache[actualKey]) return window.photoCache[actualKey]; }catch(e){}
   try{ if(window.photoCache && window.photoCache[key]) return window.photoCache[key]; }catch(e){}
-  
-  // Try SmartDiaryPhotoDB first (PHOTO_DB_NAME)
+  // IDB 직접
   try{
     const db = await openPhotoDB();
     const rec = await new Promise((res, rej)=>{
       const tx = db.transaction(PHOTO_STORE_NAME, 'readonly');
       const st = tx.objectStore(PHOTO_STORE_NAME);
-      const r = st.get(actualKey);
+      const r = st.get(key);
       r.onsuccess = ()=>res(r.result);
       r.onerror = ()=>rej(r.error);
     });
-    if(rec){
-      const data = rec.data || rec.dataUrl || rec;
-      if(data && typeof data === 'string' && data.startsWith('data:')){
-        try{ photoCache[actualKey]=data; }catch(e){}
-        try{ photoCache[key]=data; }catch(e){}
-        try{ window.photoCache[actualKey]=data; }catch(e){}
-        return data;
-      }
-      if(rec.data){
-        try{ photoCache[actualKey]=rec.data; }catch(e){}
-        try{ photoCache[key]=rec.data; }catch(e){}
-        return rec.data;
-      }
+    if(rec && rec.data){ 
+      try{ photoCache[key]=rec.data; }catch(e){}
+      try{ window.photoCache[key]=rec.data; }catch(e){}
+      return rec.data; 
     }
-  }catch(e){ console.log('SmartDiaryPhotoDB fail', e); }
-  
-  // Try PhotoDiary_V123 DB (V123)
-  try{
-    if(typeof openDB === 'function'){
-      const db2 = await openDB();
-      const rec2 = await new Promise((res, rej)=>{
-        try{
-          const tx = db2.transaction('photos', 'readonly');
-          const st = tx.objectStore('photos');
-          const r = st.get(actualKey);
-          r.onsuccess = ()=>res(r.result);
-          r.onerror = ()=>rej(r.error);
-        }catch(err){ res(null); }
-      });
-      if(rec2){
-        const data2 = typeof rec2 === 'string' ? rec2 : (rec2.data || rec2.dataUrl || rec2);
-        if(data2 && typeof data2 === 'string' && data2.startsWith('data:')){
-          try{ photoCache[actualKey]=data2; }catch(e){}
-          try{ photoCache[key]=data2; }catch(e){}
-          return data2;
-        }
-      }
-    }
-  }catch(e){ console.log('V123 DB fail', e); }
-  
-  // Try V123_loadPhoto wrapper
-  try{
-    if(typeof window.V123_loadPhoto === 'function'){
-      const v123data = await window.V123_loadPhoto(actualKey);
-      if(v123data){
-        const d = typeof v123data === 'string' ? v123data : (v123data.data || v123data.dataUrl);
-        if(d && d.startsWith('data:')){
-          try{ photoCache[actualKey]=d; }catch(e){}
-          return d;
-        }
-      }
-    }
-  }catch(e){ console.log('V123_loadPhoto fail', e); }
-  
+  }catch(e){ console.log('IDB fail', e); }
   return '';
 }
 async function showPhotosForDate(dateStr){
@@ -11006,93 +10951,10 @@ async function showPhotosForDate(dateStr){
     // 렌더링에서 사용: item.photo(키 문자열)를 실제 이미지 데이터(base64)로 변환
     function getPhotoSrc(photoKeyOrData) {
         if (!photoKeyOrData) return '';
-        if (photoKeyOrData.indexOf('data:image')===0 || photoKeyOrData.indexOf('data:video')===0 || photoKeyOrData.indexOf('blob:')===0) return photoKeyOrData;
-        let k = photoKeyOrData.startsWith('IDB:') ? photoKeyOrData.slice(4) : photoKeyOrData;
-        try{
-            if(typeof photoCache!=='undefined' && photoCache[k]) return photoCache[k];
-            if(typeof photoCache!=='undefined' && photoCache[photoKeyOrData]) return photoCache[photoKeyOrData];
-            if(typeof window.photoCache!=='undefined' && window.photoCache[k]) return window.photoCache[k];
-            if(typeof window.photoCache!=='undefined' && window.photoCache[photoKeyOrData]) return window.photoCache[photoKeyOrData];
-        }catch(e){}
-        return '';
+        // 혹시 아직 마이그레이션되지 않은 옛날 데이터(원본 base64가 그대로 남아있는 경우) 호환 처리
+        if (photoKeyOrData.indexOf('data:image')===0 || photoKeyOrData.indexOf('data:video')===0) return photoKeyOrData;
+        return photoCache[photoKeyOrData] || '';
     }
-
-
-    // V92 FIX: 사진 로딩중 무한 표시 버그 수정 - IDB에서 비동기로 로드해서 교체
-    async function refreshAllPhotoPlaceholders() {
-        const wraps = document.querySelectorAll('.diary-photo-wrap[data-photo-key]');
-        for (const wrap of wraps) {
-            const key = wrap.getAttribute('data-photo-key');
-            if (!key) continue;
-            const imgEl = wrap.querySelector('.diary-photo');
-            if (!imgEl) continue;
-            // 이미 img 태그이고 src가 있으면 스킵
-            if (imgEl.tagName === 'IMG' && imgEl.src && imgEl.src.length > 10 && !imgEl.src.includes('로딩중')) continue;
-            // 로딩중 div인 경우
-            if (imgEl.textContent && imgEl.textContent.includes('로딩중')) {
-                try {
-                    let src = '';
-                    try { src = getPhotoSrc(key); } catch(e){}
-                    if (!src) {
-                        try { src = await getPhotoSrcAsyncSafe(key); } catch(e){}
-                    }
-                    // IDB: prefix fallback
-                    if (!src && key.startsWith('IDB:')) {
-                        try { src = await getPhotoSrcAsyncSafe(key.slice(4)); } catch(e){}
-                    }
-                    if (src) {
-                        const newImg = document.createElement('img');
-                        newImg.src = src;
-                        newImg.className = 'diary-photo';
-                        newImg.alt = '첨부사진';
-                        newImg.loading = 'lazy';
-                        newImg.style.width = '100%';
-                        newImg.style.borderRadius = '10px';
-                        wrap.innerHTML = '';
-                        wrap.appendChild(newImg);
-                    }
-                } catch(e) {
-                    console.error('photo refresh fail', key, e);
-                }
-            }
-        }
-    }
-
-    // 기존 renderDiaryAroundToday를 래핑해서 사진 로드 후 placeholder 교체
-    (function(){
-        const origRenderDiary = window.renderDiaryAroundToday;
-        if (origRenderDiary && !origRenderDiary._photoFixed) {
-            window.renderDiaryAroundToday = function() {
-                const res = origRenderDiary.apply(this, arguments);
-                // 사진 비동기 로드 시도
-                setTimeout(async () => {
-                    try { await refreshAllPhotoPlaceholders(); } catch(e){}
-                }, 100);
-                setTimeout(async () => {
-                    try { await refreshAllPhotoPlaceholders(); } catch(e){}
-                }, 800);
-                setTimeout(async () => {
-                    try { await refreshAllPhotoPlaceholders(); } catch(e){}
-                }, 2000);
-                return res;
-            };
-            window.renderDiaryAroundToday._photoFixed = true;
-        }
-    })();
-
-    // migrateAndLoadPhotosFromDB 후에도 사진 갱신
-    (function(){
-        const origMigrate = window.migrateAndLoadPhotosFromDB;
-        if (origMigrate && !origMigrate._photoFixed) {
-            window.migrateAndLoadPhotosFromDB = async function() {
-                const res = await origMigrate.apply(this, arguments);
-                try { await refreshAllPhotoPlaceholders(); } catch(e){}
-                setTimeout(async () => { try { await refreshAllPhotoPlaceholders(); } catch(e){} }, 500);
-                return res;
-            };
-            window.migrateAndLoadPhotosFromDB._photoFixed = true;
-        }
-    })();
 
     // ❤️ 건강 기록(혈압/혈당/복약) 배지 - 판정/색상 없이 입력한 수치만 그대로 표시
     function renderHealthBadgeHTML(item) {
@@ -11119,7 +10981,7 @@ async function showPhotosForDate(dateStr){
         try { _src=getPhotoSrc(item.photo) || ''; } catch(e){ _src=''; }
         if(_src && _src.indexOf('data:video')===0){ return `<div class="diary-photo-wrap" data-photo-key="${item.photo}"><video src="${_src}" controls style="width:100%; border-radius:10px;"></video></div>`; }
         // Node.js fix: src 없어도 wrap에 키 보관, 클릭시 async로 로드
-        const imgTag = _src ? `<img src="${_src}" class="diary-photo" alt="첨부사진" oncontextmenu="return false;" ondragstart="return false;" loading="lazy">` : `<div class="diary-photo" style="width:100%;height:120px;background:#f0e6e6;display:flex;align-items:center;justify-content:center;border-radius:10px;">📷 사진 불러오는 중...</div>`;
+        const imgTag = _src ? `<img src="${_src}" class="diary-photo" alt="첨부사진" oncontextmenu="return false;" ondragstart="return false;" loading="lazy">` : `<div class="diary-photo" style="width:100%;height:120px;background:#f0e6e6;display:flex;align-items:center;justify-content:center;border-radius:10px;">📷 사진 로딩중...</div>`;
         return `<div class="diary-photo-wrap" data-photo-key="${item.photo}" data-item-id="${item.id}">
             ${imgTag}
         </div>`;
@@ -11327,106 +11189,40 @@ async function showPhotosForDate(dateStr){
 
     // 앱 시작 시 1회 실행: 과거 방식(사진 원본이 diary.photo에 직접 저장된 경우) → IndexedDB로 이전,
     // 그리고 IndexedDB에 있는 모든 사진을 photoCache로 미리 로드
-        async function migrateAndLoadPhotosFromDB() {
+    async function migrateAndLoadPhotosFromDB() {
         try {
-            // 1. 기존 base64가 localStorage에 남아있는 경우 IDB로 이전
-            try{
-                let diaries = getAllDiaries();
-                let migrated = false;
-                const dbCheck = await openPhotoDB();
-                for (const item of diaries) {
-                    if (item.photo && typeof item.photo === 'string' && item.photo.indexOf('data:image') === 0) {
-                        const key = generatePhotoKey(item.id);
-                        await savePhotoToDB(key, item.photo);
-                        photoCache[key] = item.photo;
-                        try{ window.photoCache[key]=item.photo; }catch(e){}
-                        item.photo = key;
-                        migrated = true;
-                    }
-                }
-                if (migrated) {
-                    localStorage.setItem('smartDiaryList', JSON.stringify(diaries));
-                }
-            }catch(e){ console.log('migration check fail', e); }
+            const db = await openPhotoDB();
+            let diaries = getAllDiaries();
+            let migrated = false;
 
-            // 2. SmartDiaryPhotoDB에서 로드
-            try{
-                const db = await openPhotoDB();
-                await new Promise((resolve, reject) => {
-                    const tx = db.transaction(PHOTO_STORE_NAME, 'readonly');
-                    const req = tx.objectStore(PHOTO_STORE_NAME).getAll();
-                    req.onsuccess = () => {
-                        (req.result || []).forEach(rec => { 
-                            if(rec && rec.id && rec.data){
-                                photoCache[rec.id] = rec.data; 
-                                try{ window.photoCache[rec.id]=rec.data; }catch(e){}
-                            }
-                        });
-                        resolve();
-                    };
-                    req.onerror = () => resolve();
-                });
-            }catch(e){ console.log('SmartDiaryPhotoDB load fail', e); }
-
-            // 3. PhotoDiary_V123 DB에서도 로드 (두 DB 모두 지원)
-            try{
-                if(typeof openDB === 'function'){
-                    const db2 = await openDB();
-                    const allPhotos = await new Promise((res)=>{
-                        try{
-                            const tx = db2.transaction('photos', 'readonly');
-                            const store = tx.objectStore('photos');
-                            const reqKeys = store.getAllKeys();
-                            const reqVals = store.getAll();
-                            let keys, vals;
-                            reqKeys.onsuccess = ()=>{ keys=reqKeys.result; if(vals!==undefined) finish(); };
-                            reqVals.onsuccess = ()=>{ vals=reqVals.result; if(keys!==undefined) finish(); };
-                            function finish(){
-                                const map={};
-                                if(keys && vals){
-                                    keys.forEach((k,i)=>{ 
-                                        const v=vals[i];
-                                        const data = typeof v==='string'?v:(v && (v.data||v.dataUrl))||'';
-                                        if(data) map[k]=data;
-                                    });
-                                }
-                                res(map);
-                            }
-                            reqKeys.onerror=()=>res({});
-                            reqVals.onerror=()=>res({});
-                        }catch(err){ res({}); }
-                    });
-                    for(const k in allPhotos){
-                        if(allPhotos[k]){
-                            photoCache[k]=allPhotos[k];
-                            try{ window.photoCache[k]=allPhotos[k]; }catch(e){}
-                        }
-                    }
+            for (const item of diaries) {
+                if (item.photo && typeof item.photo === 'string' && item.photo.indexOf('data:image') === 0) {
+                    const key = generatePhotoKey(item.id);
+                    await savePhotoToDB(key, item.photo);
+                    photoCache[key] = item.photo;
+                    item.photo = key;
+                    migrated = true;
                 }
-            }catch(e){ console.log('V123 DB load fail', e); }
+            }
+            if (migrated) {
+                localStorage.setItem('smartDiaryList', JSON.stringify(diaries));
+            }
 
-            // 4. V123_loadAllPhotos wrapper로도 시도
-            try{
-                if(typeof window.V123_loadAllPhotos === 'function'){
-                    const v123All = await window.V123_loadAllPhotos();
-                    for(const k in v123All){
-                        const v = v123All[k];
-                        const data = typeof v==='string'?v:(v && (v.data||v.dataUrl))||'';
-                        if(data){
-                            photoCache[k]=data;
-                            try{ window.photoCache[k]=data; }catch(e){}
-                        }
-                    }
-                }
-            }catch(e){ console.log('V123_loadAllPhotos fail', e); }
-
-            console.log('[Photo] Loaded cache count:', Object.keys(photoCache).length);
+            await new Promise((resolve, reject) => {
+                const tx = db.transaction(PHOTO_STORE_NAME, 'readonly');
+                const req = tx.objectStore(PHOTO_STORE_NAME).getAll();
+                req.onsuccess = () => {
+                    (req.result || []).forEach(rec => { photoCache[rec.id] = rec.data; });
+                    resolve();
+                };
+                req.onerror = () => reject(req.error);
+            });
         } catch (e) {
             console.error('사진 DB 초기화/마이그레이션 실패:', e);
         } finally {
+            // v65 - 사진 캐시 로드 후 달력 다시 그리기
             try { if(typeof renderCalendar === 'function') renderCalendar(); } catch(e){}
             try { if(typeof renderDiaryAroundToday === 'function') renderDiaryAroundToday(); } catch(e){}
-            try { if(typeof refreshAllPhotoPlaceholders === 'function') refreshAllPhotoPlaceholders(); } catch(e){}
         }
     }
 
@@ -11920,8 +11716,6 @@ async function showPhotosForDate(dateStr){
 
     window.onload = async () => {
         await migrateAndLoadPhotosFromDB();
-        try{ await refreshAllPhotoPlaceholders(); }catch(e){}
-        setTimeout(async ()=>{ try{ await refreshAllPhotoPlaceholders(); }catch(e){} }, 1000);
 
         setMoneySummaryVisibility(isMoneySummaryVisible);
         setCategoryStatsVisibility(isCategoryStatsVisible);
