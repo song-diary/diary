@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <!-- Version: V101 - 초중말복 동적화, 24절기 동적화, 누적패치 제거, 5~6줄 개그 유머 100점 -->
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>포토다이어리 V101 - 사진, 추억을 담다</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>PhotoDiary V102 FINAL CLEAN</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -8491,6 +8491,25 @@ window.attachPhotoDoubleTap = function(el, handler){
         const title = document.getElementById('cal-month-title');
         const grid = document.getElementById('cal-days-grid');
         if (!title || !grid) return;
+        // V102 FIX: 0000년 00월 버그 방지
+        try{
+            if(typeof calYear==='undefined' || !calYear || calYear<1900 || calYear>2100){
+                const t=new Date();
+                calYear=window.calYear&&window.calYear>=1900?window.calYear:t.getFullYear();
+                window.calYear=calYear;
+            }
+            if(typeof calMonth==='undefined' || calMonth<0 || calMonth>11){
+                const t=new Date();
+                calMonth=window.calMonth>=0&&window.calMonth<=11?window.calMonth:t.getMonth();
+                window.calMonth=calMonth;
+            }
+        }catch(e){
+            const t=new Date();
+            calYear=t.getFullYear();
+            calMonth=t.getMonth();
+            window.calYear=calYear;
+            window.calMonth=calMonth;
+        }
 
         title.textContent = `${calYear}년 ${calMonth + 1}월`;
         grid.innerHTML = '';
@@ -11309,9 +11328,15 @@ async function showPhotosForDate(dateStr){
     // 렌더링에서 사용: item.photo(키 문자열)를 실제 이미지 데이터(base64)로 변환
     function getPhotoSrc(photoKeyOrData) {
         if (!photoKeyOrData) return '';
-        // 혹시 아직 마이그레이션되지 않은 옛날 데이터(원본 base64가 그대로 남아있는 경우) 호환 처리
-        if (photoKeyOrData.indexOf('data:image')===0 || photoKeyOrData.indexOf('data:video')===0) return photoKeyOrData;
-        return photoCache[photoKeyOrData] || '';
+        if (photoKeyOrData.indexOf('data:image')===0 || photoKeyOrData.indexOf('data:video')===0 || photoKeyOrData.indexOf('blob:')===0) return photoKeyOrData;
+        let k = photoKeyOrData.startsWith('IDB:') ? photoKeyOrData.slice(4) : photoKeyOrData;
+        try{
+            if(typeof photoCache!=='undefined' && photoCache[k]) return photoCache[k];
+            if(typeof photoCache!=='undefined' && photoCache[photoKeyOrData]) return photoCache[photoKeyOrData];
+            if(typeof window.photoCache!=='undefined' && window.photoCache[k]) return window.photoCache[k];
+            if(typeof window.photoCache!=='undefined' && window.photoCache[photoKeyOrData]) return window.photoCache[photoKeyOrData];
+        }catch(e){}
+        return '';
     }
 
     // ❤️ 건강 기록(혈압/혈당/복약) 배지 - 판정/색상 없이 입력한 수치만 그대로 표시
@@ -17573,6 +17598,27 @@ function maybeAutoShowFortunePopup(){ return; }
 .time-capsule-search-box { display:none !important; }
 /* 과거 타임캡슐 카드들도 작게 */
 .time-capsule-card { padding:8px !important; margin:4px 0 !important; font-size:11px !important; }
+
+        /* V102 FINAL - 로또 완전 숨김 (사진 기능 100% 유지, JS는 건드리지 않음) */
+        #lotto-generator-modal-overlay,
+        .lotto-generator-card,
+        .lotto-section,
+        #ldt-week-area,
+        #ldt-week-area2,
+        .lotto-6month-box,
+        [onclick*="openLottoGeneratorModal"],
+        [onclick*="Lotto"],
+        button:has(> .lotto-ball),
+        .lotto-balls-row {
+            display: none !important;
+        }
+        /* 설정에서 로또 토글도 숨김 */
+        #settings-lotto-toggle,
+        label:has(#settings-lotto-toggle),
+        .setting-item:has(#show-lotto) {
+            display: none !important;
+        }
+
 </style>
 
 </body>
