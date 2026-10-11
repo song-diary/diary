@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <!-- Version: V101 - 초중말복 동적화, 24절기 동적화, 누적패치 제거, 5~6줄 개그 유머 100점 -->
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>PhotoDiary V102 FINAL CLEAN</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>포토다이어리 V101 - 사진, 추억을 담다</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -835,27 +835,22 @@
         .cal-special-title-badge.cal-special-bok { background: #FBF1DE; color: #C2820A; }
 
         /* ===================== 🔮 오늘의 운세 (사주 기반) ===================== */
-        /* 🔮 오늘의 운세 - 얇은 띠 (음력 바로 밑, 원래폼 유지) */
         .fortune-teaser {
-            display:flex !important;
-            align-items:center !important;
-            gap:6px !important;
-            padding:5px 10px !important;
-            border-radius:8px !important;
-            margin:4px 0 0 0 !important;
-            background:#F5F3FF !important;
-            border:1px solid #E9E4FF !important;
-            color:#6B5B9A !important;
-            box-shadow:none !important;
-            min-height:26px !important;
-            height:auto !important;
-            cursor:pointer !important;
-            font-size:11px !important;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 13px 16px;
+            border-radius: 14px;
+            margin-bottom: 2px; /* V37-1: 운세와 달력 사이폭 2px로 더 줄임 - 12px→4px */
+            background: linear-gradient(120deg, #2C2F5B, #4A3B77 55%, #2C2F5B);
+            color: #F4F0FF;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(44,47,91,0.28);
         }
-        .fortune-teaser .ft-icon { font-size:11px !important; line-height:1 !important; }
-        .fortune-teaser .ft-text { font-size:11px !important; font-weight:700 !important; color:#6B5B9A !important; line-height:1 !important; }
-        .fortune-teaser .ft-sub { font-size:10px !important; color:#9A8BC2 !important; margin:0 !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; }
-        .fortune-teaser .ft-arrow { font-size:10px !important; opacity:0.4 !important; margin-left:auto !important; }
+        .fortune-teaser .ft-icon { font-size: 22px; }
+        .fortune-teaser .ft-text { flex: 1; font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+        .fortune-teaser .ft-sub { font-size: 13px; color: rgba(244,240,255,0.6); margin-top: 1px; }
+        .fortune-teaser .ft-arrow { font-size: 17px; opacity: 0.7; }
 
         #fortune-popup-overlay, #saju-detail-modal-overlay { z-index: 1100; }
 
@@ -2903,6 +2898,28 @@ body.modal-open { overflow:hidden; position:fixed; width:100%; }
 <style id="V37_FORTUNE_CALENDAR_GAP">.app-container{gap:2px!important}#fortune-teaser{margin-bottom:0!important}#calendar-card{margin-top:0!important;margin-bottom:2px!important}</style>
 
 
+<style id="V17_2_MONEY_ONLY_FIX">
+/* V17.2 FIX: 가계부 모드일 때 다이어리 입력폼 완전 숨김 - 메인 버그 픽스 */
+body.money-mode #diary-content-section,
+#memo-form-card.money-mode-form #diary-content-section,
+.money-mode-form #diary-content-section { display:none !important; }
+body.money-mode #anniv-input-row,
+#memo-form-card.money-mode-form #anniv-input-row { display:none !important; }
+body.money-mode #form-date-row { display:none !important; }
+body.money-mode #reservation-box { display:none !important; }
+body.money-mode #record-btn,
+body.money-mode #photo-attach-label,
+body.money-mode #camera-btn,
+body.money-mode #gallery-btn,
+body.money-mode #photo-preview-wrap { display:none !important; }
+
+/* 다이어리 모드일 때 가계부 숨김 */
+body:not(.money-mode) #money-input-section { display:none !important; }
+body:not(.money-mode) #form-date-row-money { display:none !important; }
+#memo-form-card:not(.money-mode-form) #money-input-section { display:none !important; }
+</style>
+
+
 <style id="V19_CLEAN_PIN">
 /* V19 누적 금지 - 최종 핀 색상: 노랑=진노랑, 연두=사진, 빨강=기념일 */
 .cal-cell .cal-photo-corner .pin-emoji.yellow-pin{
@@ -3089,7 +3106,7 @@ body:not(.modal-open) { overflow:auto !important; }
 .past-notify-check { display:flex; align-items:center; gap:6px; background:white; padding:8px 10px; border-radius:10px; border:1px solid #eee; cursor:pointer; font-size:13px; }
 .past-notify-check input { width:16px; height:16px; }
 .past-notify-check.active { border-color:#7c6cff; background:#f0ebff; }
-.time-capsule-banner { background:linear-gradient(135deg, #a78bfa 0%, #f472b6 100%) !important; color:white !important; border-radius:8px !important; padding:5px 10px !important; margin:4px 0 4px 0 !important; display:flex !important; align-items:center !important; gap:6px !important; box-shadow:none !important; min-height:26px !important; font-size:11px !important; line-height:1 !important; }
+.time-capsule-banner { background:linear-gradient(135deg, #a78bfa 0%, #f472b6 100%); color:white; border-radius:14px; padding:14px; margin:10px 0; display:flex; justify-content:space-between; align-items:center; box-shadow:0 4px 12px rgba(124,108,255,0.3); }
 .time-capsule-card { background:white; border:1.5px solid #e8e0ff; border-left:5px solid #7c6cff; border-radius:12px; padding:12px; margin:8px 0; }
 .countdown-badge { background:#fef3c7; color:#92400e; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:700; }
 </style>
@@ -3097,6 +3114,63 @@ body:not(.modal-open) { overflow:auto !important; }
 
 
 <link rel="manifest" href="./manifest.json">
+<script>
+// V80 ULTIMATE Fortune Fix - Swing2App용
+window.openFortunePopupFixed = function(){
+  try{
+    console.log('Fortune click!');
+    var overlay = document.getElementById('fortune-popup-overlay');
+    var bodyEl = document.getElementById('fortune-popup-body');
+    
+    if(overlay){
+      overlay.classList.add('active');
+      overlay.style.display='flex';
+      document.body.style.overflow='hidden';
+    }
+    
+    // 기존 함수가 있으면 호출, 없으면 직접 렌더
+    if(typeof openFortunePopup === 'function' && openFortunePopup.toString().indexOf('Fixed')===-1){
+      try{ openFortunePopup(); return; }catch(e){ console.log('orig fortune err', e); }
+    }
+    
+    // Fallback 직접 렌더
+    if(bodyEl){
+      var hasSaju = (typeof sajuBirthInfo !== 'undefined' && sajuBirthInfo && sajuBirthInfo.date);
+      if(!hasSaju){
+        bodyEl.innerHTML = '<div class="fp-hero"><div class="fp-eyebrow">🔮 오늘 하루 브리핑</div><div class="fp-setup-title">아직 준비 전이에요</div></div><div class="fp-setup-msg">생년월일을 한 번만 입력해두면<br>매일 다른, 나만의 오늘의 운세를 볼 수 있어요.</div><button class="fp-cta" onclick="closeFortunePopup(); openSettingsModal();">생년월일 입력하러 가기</button>';
+      } else {
+        if(typeof renderFortunePopup === 'function'){ renderFortunePopup(); }
+        else { bodyEl.innerHTML = '<div style="padding:20px; text-align:center; color:white;">오늘의 운세 로딩중...<br>생년월일을 설정해주세요!</div>'; }
+      }
+    }
+  }catch(err){ alert('운세 오류: '+err.message); console.log(err); }
+};
+
+// 전역 덮어쓰기
+setTimeout(function(){ 
+  try{ window.openFortunePopup = window.openFortunePopupFixed; }catch(e){}
+}, 500);
+
+function closeFortunePopupFixed(){
+  var overlay = document.getElementById('fortune-popup-overlay');
+  if(overlay){ overlay.classList.remove('active'); overlay.style.display='none'; }
+  try{ document.body.style.overflow=''; }catch(e){}
+}
+
+setTimeout(function(){
+  try{ window.closeFortunePopup = closeFortunePopupFixed; }catch(e){}
+}, 500);
+</script>
+
+<style id="V80_FIX">
+.fortune-teaser{ pointer-events:auto !important; cursor:pointer !important; z-index:999 !important; position:relative !important; touch-action: manipulation !important; -webkit-tap-highlight-color: rgba(124,108,255,0.3) !important; }
+#fortune-teaser{ pointer-events:auto !important; }
+#fortune-teaser *{ pointer-events:none !important; }
+#fortune-popup-overlay{ z-index:9999 !important; }
+#fortune-popup-overlay.active{ display:flex !important; }
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
+</style>
+
 <script id="V80_SWING">
 // V80 Swing2App + 8시 알림
 (function(){
@@ -3108,7 +3182,7 @@ body:not(.modal-open) { overflow:auto !important; }
     teaser.setAttribute('onclick','openFortunePopupFixed()');
     // 모든 자식 pointer-events none
     var childs = teaser.querySelectorAll('*');
-    childs.forEach(function(c){ c.style.pointerEvents='auto'; });
+    childs.forEach(function(c){ c.style.pointerEvents='none'; });
     
     // 클릭 이벤트 강제
     teaser.addEventListener('click', function(e){
@@ -3220,13 +3294,6 @@ body:not(.modal-open) { overflow:auto !important; }
 #selected-date-title > div > div:first-child { font-size:14px !important; }
 </style>
 
-<style id="V17_2_MONEY_ONLY_FIX">
-body.money-mode #diary-content-section,#memo-form-card.money-mode-form #diary-content-section,.money-mode-form #diary-content-section{display:none !important;}
-body.money-mode #anniv-input-row,#memo-form-card.money-mode-form #anniv-input-row{display:none !important;}
-body.money-mode #form-date-row{display:none !important;}
-body.money-mode #reservation-box{display:none !important;}
-</style>
-
 </head>
 <body>
 
@@ -3265,6 +3332,15 @@ body.money-mode #reservation-box{display:none !important;}
                 </div>
             </div>
 
+            <!-- 🔮 오늘의 운세 - 얇은 띠 (1안) -->
+            <div class="fortune-teaser" id="fortune-teaser" onclick="openFortunePopupFixed()" style="margin: 6px 0 8px 0;">
+                <span class="ft-icon">🔮</span>
+                <div style="flex:1; display:flex; align-items:center; gap:6px; min-width:0;">
+                    <span class="ft-text" id="fortune-teaser-text">오늘의 운세</span>
+                    <span class="ft-sub" id="fortune-teaser-sub" style="flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">행운을 확인해보세요</span>
+                </div>
+                <span class="ft-arrow">›</span>
+            </div>
             <div id="diary-around-today-list"></div>
         </div>
 
@@ -3451,12 +3527,14 @@ body.money-mode #reservation-box{display:none !important;}
         <div class="settings-scroll-content" style="flex:1; overflow-y:auto; padding:16px 20px; display:block; min-height:0;">
             
             <div class="toggle-grid-title">⚡ 기능 켜기/끄기</div>
-                                    <div class="toggle-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px;">
+            <div class="toggle-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px;">
                 <div class="toggle-card"><span class="toggle-card-label">💵 가계부 현황</span><label class="toggle-switch"><input type="checkbox" id="toggle-money-summary" onchange="setMoneySummaryVisibility(this.checked)"><span class="toggle-slider"></span></label></div>
                 <div class="toggle-card"><span class="toggle-card-label">📊 카테고리 통계</span><label class="toggle-switch"><input type="checkbox" id="toggle-category-stats" onchange="setCategoryStatsVisibility(this.checked)"><span class="toggle-slider"></span></label></div>
+                <div class="toggle-card"><span class="toggle-card-label">🔍 검색/기간필터</span><label class="toggle-switch"><input type="checkbox" id="toggle-search-filter" onchange="setSearchFilterVisibility(this.checked)"><span class="toggle-slider"></span></label></div>
                 <div class="toggle-card"><span class="toggle-card-label">🔮 오늘의 운세</span><label class="toggle-switch"><input type="checkbox" id="settings-show-fortune" onchange="onShowFortuneToggle()"><span class="toggle-slider"></span></label></div>
                 <div class="toggle-card" id="fortune-auto-toggle-card"><span class="toggle-card-label">⏰ 운세 자동팝업</span><label class="toggle-switch"><input type="checkbox" id="settings-fortune-auto" onchange="onFortuneAutoToggle()"><span class="toggle-slider"></span></label></div>
-                <div class="toggle-card"><span class="toggle-card-label">🔍 검색/기간필터</span><label class="toggle-switch"><input type="checkbox" id="toggle-search-filter" onchange="setSearchFilterVisibility(this.checked)"><span class="toggle-slider"></span></label></div>
+                <!-- lotto toggle removed -->
+
                 <div class="toggle-card" id="photo-pin-toggle-card"><span class="toggle-card-label">📷 사진 고정핀 표시</span><label class="toggle-switch"><input type="checkbox" id="settings-show-photo-pin" checked onchange="onShowPhotoPinToggle()"><span class="toggle-slider"></span></label></div>
                 <div class="toggle-card" id="daily-story-toggle-card"><span class="toggle-card-label">📖 설명(사자성어 외) 카드</span><label class="toggle-switch"><input type="checkbox" id="toggle-daily-story" checked onchange="setDailyStoryVisibility(this.checked)"><span class="toggle-slider"></span></label></div>
             </div>
@@ -7089,31 +7167,35 @@ window.attachPhotoDoubleTap = function(el, handler){
         const subEl = document.getElementById('fortune-teaser-sub');
         if (!textEl) return;
         if (teaserEl) teaserEl.style.display = getShowFortune() ? '' : 'none';
-        textEl.textContent = '오늘의 운세';
         try{
-          if(typeof sajuBirthInfo!=='undefined' && sajuBirthInfo && sajuBirthInfo.date && typeof sajuGetEnhancedFortune==='function'){
-            const enh = sajuGetEnhancedFortune();
-            if(enh && enh.tenGodGan){
-              const oneLiners = {
-                '비견': '내 고집대로 가도 괜찮은 날이에요',
-                '겁재': '경쟁보단 내 페이스대로 가요',
-                '식신': '아이디어가 맛있게 떠오르는 날이에요',
-                '상관': '하고 싶은 말이 많아지는 날이에요',
-                '편재': '작은 기회가 톡톡 들어오는 날이에요',
-                '정재': '차곡차곡 실속 챙기는 날이에요',
-                '편관': '해내면 레벨업하는 날이에요',
-                '정관': '믿을만한 사람으로 보이는 날이에요',
-                '편인': '번뜩이는 영감이 오는 날이에요',
-                '정인': '누가 나를 챙겨주는 날이에요'
-              };
-              subEl.textContent = oneLiners[enh.tenGodGan] || '오늘 하루, 좋은 기운이 가득해요';
-              return;
+            if (sajuBirthInfo && sajuBirthInfo.date && typeof sajuGetEnhancedFortune==='function') {
+                const enh = sajuGetEnhancedFortune();
+                if(enh){
+                    const tenGod = enh.tenGodGan;
+                    const oneLiners = {
+                        '비견': '내 고집대로 가도 괜찮은 날, 근데 옆도 한번 봐줘요',
+                        '겁재': '경쟁심이 올라와요, 비교 말고 내 페이스대로',
+                        '식신': '아이디어가 맛있게 떠오르는 날이에요',
+                        '상관': '하고 싶은 말이 많아지는 날이에요',
+                        '편재': '작은 기회가 톡톡 들어오는 날이에요',
+                        '정재': '차곡차곡, 실속 챙기는 날이에요',
+                        '편관': '조금 부담돼도 해내면 레벨업하는 날',
+                        '정관': '믿을 만한 사람으로 보이는 날이에요',
+                        '편인': '번뜩이는 영감이 오는 날, 메모해둬요',
+                        '정인': '누가 나를 챙겨주고, 나도 배우는 날이에요'
+                    };
+                    textEl.textContent = '오늘의 운세';
+                    subEl.textContent = oneLiners[tenGod] || (enh.base ? enh.base.total.split('.')[0] : '오늘 하루, 나에게 맞는 기운 확인하기');
+                    return;
+                }
             }
-          }
-          // 생년월일 없으면 기본 아이디어 문구
-          subEl.textContent = '아이디어가 맛있게 떠오르는 날이에요';
-        }catch(e){
-          subEl.textContent = '오늘 하루, 좋은 기운이 가득해요';
+        }catch(e){}
+        if (sajuBirthInfo && sajuBirthInfo.date) {
+            textEl.textContent = '오늘의 운세';
+            subEl.textContent = '아이디어가 맛있게 떠오르는 날이에요';
+        } else {
+            textEl.textContent = '오늘의 운세 시작하기';
+            subEl.textContent = '생년월일 입력하고 매일 아침 운세 받아보기';
         }
     }
 
@@ -7121,53 +7203,16 @@ window.attachPhotoDoubleTap = function(el, handler){
     function getShowFortune() {
         return localStorage.getItem('smartDiaryShowFortune') === 'true';
     }
-        function onShowFortuneToggle() {
-        const chk = document.getElementById('settings-show-fortune');
-        const checked = chk ? chk.checked : false;
+    function onShowFortuneToggle() {
+        const checked = document.getElementById('settings-show-fortune').checked;
         localStorage.setItem('smartDiaryShowFortune', checked ? 'true' : 'false');
+        // 운세 off면 자동팝업도 off, on이면 자동팝업도 on (연동)
         const autoChk = document.getElementById('settings-fortune-auto');
         if(autoChk){
             autoChk.checked = checked;
             localStorage.setItem('smartDiaryFortuneAuto', checked ? '1' : '0');
         }
-        // 즉시 반영 - 이동 없이
-        const teaser = document.getElementById('fortune-teaser');
-        if(!checked){
-            if(teaser) teaser.remove();
-        } else {
-            if(!teaser){
-                const titleEl = document.getElementById('selected-date-title');
-                if(titleEl){
-                    const t = document.createElement('div');
-                    t.className='fortune-teaser'; t.id='fortune-teaser';
-                    t.setAttribute('onclick','openFortunePopupFixed()');
-                    t.style.cssText='margin-top:4px !important; padding:5px 10px !important; min-height:26px !important; display:flex; align-items:center; gap:6px; border-radius:8px; background:#F5F3FF; border:1px solid #E9E4FF; color:#6B5B9A; cursor:pointer;';
-                    let ideaText='아이디어가 맛있게 떠오르는 날이에요';
-                    try{
-                      if(typeof sajuBirthInfo!=='undefined' && sajuBirthInfo && sajuBirthInfo.date && typeof sajuGetEnhancedFortune==='function'){
-                        const enh=sajuGetEnhancedFortune();
-                        if(enh && enh.tenGodGan){
-                          const map={'비견':'내 고집대로 가도 괜찮은 날이에요','겁재':'경쟁보단 내 페이스대로 가요','식신':'아이디어가 맛있게 떠오르는 날이에요','상관':'하고 싶은 말이 많아지는 날이에요','편재':'작은 기회가 톡톡 들어오는 날이에요','정재':'차곡차곡 실속 챙기는 날이에요','편관':'해내면 레벨업하는 날이에요','정관':'믿을만한 사람으로 보이는 날이에요','편인':'번뜩이는 영감이 오는 날이에요','정인':'누가 나를 챙겨주는 날이에요'};
-                          ideaText=map[enh.tenGodGan]||ideaText;
-                        }
-                      }
-                    }catch(e){}
-                    t.innerHTML='<span class="ft-icon" style="font-size:11px;">🔮</span><span class="ft-text" style="font-size:11px; font-weight:700;" id="fortune-teaser-text">오늘의 운세</span><span class="ft-sub" style="font-size:10px; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" id="fortune-teaser-sub">'+ideaText+'</span><span class="ft-arrow" style="margin-left:auto; font-size:10px;">›</span>';
-                    (titleEl.firstElementChild||titleEl).appendChild(t);
-                }
-            } else {
-                teaser.style.display='';
-            }
-        }
-        // 동기화 (백그라운드)
-        setTimeout(function(){
-            try{
-                if(typeof selectedViewDate!=='undefined' && typeof renderDiaryAroundTodayList==='function'){
-                    const d = (typeof getTodayStr==='function') ? (selectedViewDate||getTodayStr()) : selectedViewDate;
-                    renderDiaryAroundTodayList(d);
-                }
-            }catch(e){}
-        }, 100);
+        updateFortuneTeaser();
         const autoCard = document.getElementById('fortune-auto-toggle-card');
         if(autoCard) autoCard.style.opacity = checked ? '1' : '0.4';
     }
@@ -8491,25 +8536,6 @@ window.attachPhotoDoubleTap = function(el, handler){
         const title = document.getElementById('cal-month-title');
         const grid = document.getElementById('cal-days-grid');
         if (!title || !grid) return;
-        // V102 FIX: 0000년 00월 버그 방지
-        try{
-            if(typeof calYear==='undefined' || !calYear || calYear<1900 || calYear>2100){
-                const t=new Date();
-                calYear=window.calYear&&window.calYear>=1900?window.calYear:t.getFullYear();
-                window.calYear=calYear;
-            }
-            if(typeof calMonth==='undefined' || calMonth<0 || calMonth>11){
-                const t=new Date();
-                calMonth=window.calMonth>=0&&window.calMonth<=11?window.calMonth:t.getMonth();
-                window.calMonth=calMonth;
-            }
-        }catch(e){
-            const t=new Date();
-            calYear=t.getFullYear();
-            calMonth=t.getMonth();
-            window.calYear=calYear;
-            window.calMonth=calMonth;
-        }
 
         title.textContent = `${calYear}년 ${calMonth + 1}월`;
         grid.innerHTML = '';
@@ -9484,32 +9510,7 @@ window.attachPhotoDoubleTap = function(el, handler){
                 const lunarHTML = lunarLabel ? `<div style="font-size:10px !important; font-weight:normal; color:var(--text-sub); margin-top:2px; text-align:left;" class="lunar-label">${lunarLabel}</div>` : '';
                 const specialInfo = getSpecialDayLabel(dateStr);
                 const specialHTML = specialInfo ? `<span style="font-size:11px; margin-left:6px; color:#d35400;" class="cal-special-title-badge cal-special-${specialInfo.type}">${specialInfo.label}</span>` : '';
-                const showFort = (typeof getShowFortune==='function') ? getShowFortune() : false;
-                let fortuneSubText = '아이디어가 맛있게 떠오르는 날이에요';
-                try{
-                  if(typeof sajuBirthInfo!=='undefined' && sajuBirthInfo && sajuBirthInfo.date && typeof sajuGetEnhancedFortune==='function'){
-                    const enh = sajuGetEnhancedFortune();
-                    if(enh && enh.tenGodGan){
-                      const oneLiners = {
-                        '비견': '내 고집대로 가도 괜찮은 날이에요',
-                        '겁재': '경쟁보단 내 페이스대로 가요',
-                        '식신': '아이디어가 맛있게 떠오르는 날이에요',
-                        '상관': '하고 싶은 말이 많아지는 날이에요',
-                        '편재': '작은 기회가 톡톡 들어오는 날이에요',
-                        '정재': '차곡차곡 실속 챙기는 날이에요',
-                        '편관': '해내면 레벨업하는 날이에요',
-                        '정관': '믿을만한 사람으로 보이는 날이에요',
-                        '편인': '번뜩이는 영감이 오는 날이에요',
-                        '정인': '누가 나를 챙겨주는 날이에요'
-                      };
-                      fortuneSubText = oneLiners[enh.tenGodGan] || '오늘 하루, 나에게 맞는 기운 확인';
-                    }
-                  } else if(typeof sajuBirthInfo==='undefined' || !sajuBirthInfo || !sajuBirthInfo.date){
-                    fortuneSubText = '아이디어가 맛있게 떠오르는 날이에요';
-                  }
-                }catch(e){ fortuneSubText = '오늘 하루, 좋은 기운이 가득해요'; }
-                const fortuneHTML = showFort ? `<div class="fortune-teaser" id="fortune-teaser" onclick="openFortunePopupFixed()" style="margin-top:4px !important; padding:5px 10px !important; min-height:26px !important; display:flex; align-items:center; gap:6px; border-radius:8px; background:#F5F3FF; border:1px solid #E9E4FF; color:#6B5B9A; cursor:pointer; max-width:100%; overflow:hidden;"><span class="ft-icon" style="font-size:11px; flex-shrink:0;">🔮</span><span class="ft-text" style="font-size:11px; font-weight:700; flex-shrink:0;" id="fortune-teaser-text">오늘의 운세</span><span class="ft-sub" style="font-size:10px; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0;" id="fortune-teaser-sub">${fortuneSubText}</span><span class="ft-arrow" style="margin-left:4px; font-size:10px; flex-shrink:0;">›</span></div>` : '';
-                titleEl.innerHTML = `<div style="text-align:left;"><div style="font-size:14px; text-align:left;">${badge}${dateLabel}${specialHTML}</div>${lunarHTML}${fortuneHTML}</div>`;
+                titleEl.innerHTML = `<div style="text-align:left;"><div style="font-size:14px; text-align:left;">${badge}${dateLabel}${specialHTML}</div>${lunarHTML}</div>`;
             }
 
             const diaries = getAllDiaries();
@@ -9598,10 +9599,13 @@ window.attachPhotoDoubleTap = function(el, handler){
                   if(!grouped[key]) grouped[key]=[];
                   grouped[key].push(it);
                 }
-                var myPastHTML = '<div style="grid-column:1 / -1; width:100%; margin-top:4px; border-top:1px dashed #e8e0ff; padding-top:4px;">';
+                var myPastHTML = '<div style="grid-column:1 / -1; width:100%; margin-top:12px; border-top:2px dashed #e8e0ff; padding-top:10px;"><div style="font-size:14px; font-weight:800; color:#7c6cff; margin-bottom:8px;">📖 타임캡슐 - 나의 과거 ('+allPasts.length+'건)</div>';
                 var todayStrTmp = (typeof getTodayStr==='function') ? getTodayStr() : new Date().toISOString().slice(0,10);
-                if(dateStr===todayStrTmp && settings.enabled && timeCapsules.length>0){
-                  myPastHTML += '<div class="time-capsule-banner" onclick="if(typeof openTimeCapsuleList!==\'undefined\') openTimeCapsuleList();" style="cursor:pointer; display:flex; align-items:center; gap:6px; padding:5px 10px !important; min-height:26px !important;"><span style="font-size:11px;">🎉</span><span style="font-size:11px; font-weight:700;">타임캡슐 도착!</span><span style="font-size:10px; opacity:0.9;">'+timeCapsules.length+'개의 과거가 기다려요</span><span style="margin-left:auto; font-size:12px;">📬</span></div>';
+                // V103 FIX: 스윙2앱 호환 - slice(0,10) 비교 + enabled 기본 true
+                var isTodayForBanner = dateStr.slice(0,10)===todayStrTmp.slice(0,10);
+                var isEnabledForBanner = (typeof settings.enabled==='undefined') ? true : settings.enabled;
+                if(isTodayForBanner && isEnabledForBanner && timeCapsules.length>0){
+                  myPastHTML += '<div class="time-capsule-banner"><div><div style="font-size:13px; font-weight:800;">🎉 타임캡슐 도착!</div><div style="font-size:11px; opacity:0.9;">'+timeCapsules.length+'개의 과거가 당신을 기다려요</div></div><div style="font-size:20px;">📬</div></div>';
                 }
                 var order = ['1개월 전','3개월 전','6개월 전','1년 전','2년 전','3년 전'];
                 var sortedKeys = Object.keys(grouped).sort(function(a,b){
@@ -9630,6 +9634,19 @@ window.attachPhotoDoubleTap = function(el, handler){
                 pastDiv.innerHTML = myPastHTML;
                 listEl.appendChild(pastDiv);
               }
+              // V104 FIX: 오늘 날짜로 가기 - 타임캡슐 밑, 오늘의 이야기 위!
+              try{
+                var todayStr2 = (typeof getTodayStr==='function') ? getTodayStr() : new Date().toISOString().slice(0,10);
+                var isNotToday2 = dateStr.slice(0,10) !== todayStr2.slice(0,10);
+                if(isNotToday2){
+                  var goTodayMidDiv = document.createElement('div');
+                  goTodayMidDiv.style.gridColumn='1 / -1';
+                  goTodayMidDiv.style.width='100%';
+                  goTodayMidDiv.style.margin='12px 0';
+                  goTodayMidDiv.innerHTML = '<div style="display:flex; gap:8px;"><span onclick="window.goToToday ? window.goToToday() : (selectedViewDate=getTodayStr(), renderDiaryAroundToday(), renderCalendar())" style="flex:1; text-align:center; font-size:14px; background:#ff7e7e; color:#fff; padding:14px; border-radius:12px; cursor:pointer; font-weight:700; box-shadow:0 2px 8px rgba(255,126,126,0.3);">🏠 오늘 날짜로 가기</span></div>';
+                  listEl.appendChild(goTodayMidDiv);
+                }
+              }catch(e){ console.log('mid btn error', e); }
             }catch(e){ console.log('past error', e); }
 
                         // 3. 오늘의 이야기 - V122 FINAL: JEOLGI+FINAL 둘 다 완전 삭제, 24절기/한식/초중말복 전부 새 6줄로 절차적 대치, 추분/초복 확실히 고침
@@ -10746,15 +10763,10 @@ const DAILY_6LINE_V2 = {
             const SPECIAL_TITLES = {"한로": "한로(寒露)", "상강": "상강(霜降)", "입동": "입동(立冬)", "소설": "소설(小雪)", "대설": "대설(大雪)", "동지": "동지(冬至)"};
 
             
-            // 오늘 날짜로 가기 - 내용설명 앞에 위치!
+            // 오늘 날짜로 가기 - V103: 맨 밑으로 이동 위해 플래그만 저장 (위에는 안 붙임)
             var todayStr = (typeof getTodayStr==='function') ? getTodayStr() : new Date().toISOString().slice(0,10);
-            if(dateStr !== todayStr){
-                var goTodayDiv = document.createElement('div');
-                goTodayDiv.style.gridColumn='1 / -1';
-                goTodayDiv.style.width='100%';
-                goTodayDiv.innerHTML = '<div style="display:flex; gap:8px; margin-bottom:14px;"><span onclick="window.goToToday ? window.goToToday() : (selectedViewDate=getTodayStr(), renderDiaryAroundToday(), renderCalendar())" style="flex:1; text-align:center; font-size:14px; background:#ff7e7e; color:#fff; padding:14px; border-radius:12px; cursor:pointer; font-weight:700;">🏠 오늘 날짜로 가기</span></div>';
-                listEl.appendChild(goTodayDiv);
-            }
+            var isNotTodayForBtn = dateStr.slice(0,10) !== todayStr.slice(0,10);
+            // 위쪽 버튼 제거 - 밑에서 한 번만 표시
 
             (function(){
               try{
@@ -11116,7 +11128,7 @@ const DAILY_6LINE_V2 = {
               var btnOnly = document.createElement('div');
               btnOnly.id='V43-btn-row';
               btnOnly.style.cssText='width:100%; grid-column:1 / -1; display:flex; gap:8px; margin-top:14px; box-sizing:border-box;';
-              btnOnly.innerHTML='<span onclick="window.goToToday()" style="flex:1; text-align:center; font-size: var(--memo-font-size); background:#ff7e7e; color:#fff; padding:14px; border-radius:12px; cursor:pointer; font-weight:700;">🏠 오늘로 돌아가기</span>';
+              btnOnly.innerHTML='<span onclick="window.goToToday()" style="flex:1; text-align:center; font-size: var(--memo-font-size); background:#ff7e7e; color:#fff; padding:14px; border-radius:12px; cursor:pointer; font-weight:700;">🏠 오늘 날짜로 가기</span>';
               listEl.appendChild(btnOnly);
             }
             return;
@@ -11188,7 +11200,7 @@ const DAILY_6LINE_V2 = {
             var btnRow = document.createElement('div');
             btnRow.id='V43-btn-row';
             btnRow.style.cssText='width:100%; grid-column:1 / -1; display:flex; gap:8px; margin-top:14px; box-sizing:border-box;';
-            btnRow.innerHTML='<span onclick="window.goToToday()" style="flex:1; text-align:center; font-size: var(--memo-font-size); background:#ff7e7e; color:#fff; padding:14px; border-radius:12px; cursor:pointer; font-weight:700;">🏠 오늘로 돌아가기</span>';
+            btnRow.innerHTML='<span onclick="window.goToToday()" style="flex:1; text-align:center; font-size: var(--memo-font-size); background:#ff7e7e; color:#fff; padding:14px; border-radius:12px; cursor:pointer; font-weight:700;">🏠 오늘 날짜로 가기</span>';
             listEl.appendChild(btnRow);
           }
           
@@ -11196,7 +11208,8 @@ const DAILY_6LINE_V2 = {
         
 
         // 💰 데이터 있을 때도 추가 버튼 표시 (버그 수정)
-        const addMoneyBtn = document.createElement('div');
+        
+const addMoneyBtn = document.createElement('div');
         addMoneyBtn.innerHTML = `<div onclick="openDiaryForm('${dateStr}', null, 'money')" style="text-align:center; padding:12px; margin-top:8px; border:2px dashed #3498db; border-radius:10px; color:#3498db; font-weight:700; cursor:pointer; grid-column:1 / -1;">➕ 가계부 추가 ( ${dateLabel} )</div>`;
         listEl.appendChild(addMoneyBtn);
 
@@ -11328,15 +11341,9 @@ async function showPhotosForDate(dateStr){
     // 렌더링에서 사용: item.photo(키 문자열)를 실제 이미지 데이터(base64)로 변환
     function getPhotoSrc(photoKeyOrData) {
         if (!photoKeyOrData) return '';
-        if (photoKeyOrData.indexOf('data:image')===0 || photoKeyOrData.indexOf('data:video')===0 || photoKeyOrData.indexOf('blob:')===0) return photoKeyOrData;
-        let k = photoKeyOrData.startsWith('IDB:') ? photoKeyOrData.slice(4) : photoKeyOrData;
-        try{
-            if(typeof photoCache!=='undefined' && photoCache[k]) return photoCache[k];
-            if(typeof photoCache!=='undefined' && photoCache[photoKeyOrData]) return photoCache[photoKeyOrData];
-            if(typeof window.photoCache!=='undefined' && window.photoCache[k]) return window.photoCache[k];
-            if(typeof window.photoCache!=='undefined' && window.photoCache[photoKeyOrData]) return window.photoCache[photoKeyOrData];
-        }catch(e){}
-        return '';
+        // 혹시 아직 마이그레이션되지 않은 옛날 데이터(원본 base64가 그대로 남아있는 경우) 호환 처리
+        if (photoKeyOrData.indexOf('data:image')===0 || photoKeyOrData.indexOf('data:video')===0) return photoKeyOrData;
+        return photoCache[photoKeyOrData] || '';
     }
 
     // ❤️ 건강 기록(혈압/혈당/복약) 배지 - 판정/색상 없이 입력한 수치만 그대로 표시
@@ -16603,6 +16610,54 @@ window.updateTitleIconColor=function(){};
 })();
 </script>
 
+<script id="FINAL_FORTUNE_FIX">
+console.log('[FINAL FIX] 운세 자동팝업 차단 + 빈 버튼바 제거');
+window.maybeAutoShowFortunePopup = function(){ console.log('[FINAL] 자동팝업 차단 - 수동만 허용'); return; };
+function maybeAutoShowFortunePopup(){ return; }
+</script>
+
+
+<script id="V33_4_FINAL_MONEY_NO_ALARM_OVERRIDE">
+(function(){
+  console.log('[V33-4] 가계부 알림란 최종 강제 숨김 - V4.13 패치 무력화');
+  // V4.13의 enableReservation을 다시 패치 - 가계부에서는 무조건 숨김
+  const origEnable = window.enableReservation;
+  // openDiaryForm을 한 번 더 패치 - 가장 마지막에 실행되도록
+  function finalPatch(){
+    if(typeof window.openDiaryForm !== 'function'){ setTimeout(finalPatch, 200); return; }
+    const orig = window.openDiaryForm;
+    window.openDiaryForm = function(){
+      var result = orig.apply(this, arguments);
+      setTimeout(function(){
+        try{
+          var mode = window.currentFormMode;
+          var isMoney = mode === 'money' || document.body.classList.contains('money-mode') || document.getElementById('memo-form-card')?.classList.contains('money-mode-form');
+          if(isMoney){
+            var box = document.getElementById('reservation-box');
+            if(box){ 
+              /* V17 FIX: invalid removed */ 
+              box.style.setProperty('display','none','important');
+            }
+          }
+        }catch(e){ console.log('final patch err', e); }
+      }, 150);
+      return result;
+    };
+  }
+  finalPatch();
+  
+  // CSS로도 강제 숨김 - 가계부 모드일 때
+  const style = document.createElement('style');
+  style.id = 'final-money-no-alarm';
+  style.textContent = `
+    #memo-form-card.money-mode-form #reservation-box { display:none !important; }
+    body.money-mode #reservation-box { display:none !important; }
+    .money-mode-form #reservation-box { display:none !important; }
+  `;
+  document.head.appendChild(style);
+})();
+</script>
+
 <style id="V45_PHOTO_CONTAIN_FINAL">
 /* V45: 사진 원본 전체 다 나오도록 축소 (contain) - 최종 */
 #diary-around-today-list .sub-memo-item .diary-photo-wrap,
@@ -17475,151 +17530,24 @@ window.addEventListener("load", function() {
 })();
 </script>
 
-
-<script id="CLEAN_FORTUNE_BLOCKER">
-console.log('[CLEAN] 운세 자동팝업 차단 - 수동 클릭만 허용');
-window.maybeAutoShowFortunePopup = function(){ console.log('auto blocked'); return; };
-function maybeAutoShowFortunePopup(){ return; }
-</script>
-
-
-
-
-
-
-
-
-<script id="FORTUNE_CLICK_FIX_V2">
-(function(){
-  console.log('[ULTIMATE FIX] 클릭 시 직접 팝업 열기 - 100% 작동');
-  
-  window.openFortunePopupFixed = function(){
-    console.log('>>> openFortunePopupFixed ULTIMATE called');
-    try{
-      const overlay = document.getElementById('fortune-popup-overlay');
-      const bodyEl = document.getElementById('fortune-popup-body');
-      if(!overlay){ alert('오버레이 없음'); return; }
-      
-      // 강제로 열기
-      overlay.style.display='flex';
-      overlay.classList.add('active');
-      overlay.style.opacity='1';
-      overlay.style.visibility='visible';
-      overlay.style.zIndex='99999';
-      
-      document.body.style.overflow='hidden';
-      document.body.classList.add('modal-open');
-      
-      // 내용이 없으면 기본 내용 채우기
-      if(bodyEl){
-        // 기존 openFortunePopup이 있으면 그걸로 내용 채우기 시도
-        if(typeof sajuBirthInfo !== 'undefined' && sajuBirthInfo && sajuBirthInfo.date){
-          try{ if(typeof openFortunePopup==='function'){ openFortunePopup(); return; } }catch(e){}
-        }
-        // 생년월일 없으면 설정 유도
-        if(!bodyEl.innerHTML || bodyEl.innerHTML.trim().length < 50){
-          bodyEl.innerHTML = `
-            <div class="fp-hero">
-              <div class="fp-eyebrow">🔮 오늘 하루 브리핑</div>
-              <div class="fp-setup-title">아직 준비 전이에요</div>
-            </div>
-            <div class="fp-setup-msg">생년월일을 한 번만 입력해두면<br>매일 다른, 나만의 오늘의 운세를 볼 수 있어요.</div>
-            <button class="fp-cta" onclick="closeFortunePopup(); if(typeof openSettingsModal==='function') openSettingsModal();" style="width:100%; padding:14px; background:#FFD88A; border:none; border-radius:12px; font-weight:800; font-size:15px; color:#2A2340; cursor:pointer;">생년월일 입력하러 가기</button>
-            <div class="fp-exit-sticky" style="margin-top:12px;"><button onclick="closeFortunePopup()" style="width:100%;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:14px;border-radius:14px;font-weight:800;font-size:15px;">종료</button></div>
-          `;
-        }
-      }
-      console.log('overlay opened');
-    }catch(e){ console.error(e); alert('운세 열기 오류: '+e.message); }
-  };
-  
-  window.closeFortunePopup = window.closeFortunePopup || function(){
-    const overlay = document.getElementById('fortune-popup-overlay');
-    if(overlay){ overlay.classList.remove('active'); overlay.style.display='none'; }
-    document.body.style.overflow='';
-    document.body.classList.remove('modal-open');
-  };
-
-  // 모든 클릭 잡기
-  document.addEventListener('click', function(e){
-    const teaser = e.target.closest ? e.target.closest('#fortune-teaser') : null;
-    if(teaser){
-      console.log('teaser clicked - ULTIMATE');
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
-      window.openFortunePopupFixed();
-      return false;
-    }
-  }, true);
-
-  // 터치도
-  document.addEventListener('touchstart', function(e){
-    const teaser = e.target.closest ? e.target.closest('#fortune-teaser') : null;
-    if(teaser){
-      e.preventDefault();
-      window.openFortunePopupFixed();
-    }
-  }, {passive:false});
-
-  // 0.5초마다 onclick 강제 재설정 (동적 생성 대응)
-  setInterval(function(){
-    const teaser = document.getElementById('fortune-teaser');
-    if(teaser){
-      teaser.style.pointerEvents='auto';
-      teaser.style.cursor='pointer';
-      teaser.style.zIndex='10';
-      teaser.style.position='relative';
-      // 자식들도 클릭 가능
-      const childs = teaser.querySelectorAll('*');
-      childs.forEach(function(ch){ ch.style.pointerEvents='none'; });
-      teaser.onclick = function(ev){
-        if(ev){ ev.preventDefault(); ev.stopPropagation(); }
-        window.openFortunePopupFixed();
-        return false;
-      };
-    }
-  }, 500);
-  
-  console.log('ULTIMATE FIX installed');
-})();
-</script>
-
-
-
-
-<style id="TIMECAPSULE_COMPACT">
-.time-capsule-banner { max-width:100% !important; }
-.time-capsule-banner div { min-width:0 !important; }
-/* 빈 입력 박스 숨김 - 타임캡슐 옆 빈 네모 */
-#diary-around-today-list input[type="text"]:empty, 
-#diary-around-today-list .empty-box,
-#time-capsule-search,
-.time-capsule-search-box { display:none !important; }
-/* 과거 타임캡슐 카드들도 작게 */
-.time-capsule-card { padding:8px !important; margin:4px 0 !important; font-size:11px !important; }
-
-        /* V102 FINAL - 로또 완전 숨김 (사진 기능 100% 유지, JS는 건드리지 않음) */
-        #lotto-generator-modal-overlay,
-        .lotto-generator-card,
-        .lotto-section,
-        #ldt-week-area,
-        #ldt-week-area2,
-        .lotto-6month-box,
-        [onclick*="openLottoGeneratorModal"],
-        [onclick*="Lotto"],
-        button:has(> .lotto-ball),
-        .lotto-balls-row {
-            display: none !important;
-        }
-        /* 설정에서 로또 토글도 숨김 */
-        #settings-lotto-toggle,
-        label:has(#settings-lotto-toggle),
-        .setting-item:has(#show-lotto) {
-            display: none !important;
-        }
-
-</style>
-
 </body>
 </html>
+
+<script>
+(function(){
+  function forceCalendar(){
+    try{
+      var title = document.getElementById('cal-month-title');
+      if(!title) return;
+      if(title.textContent.includes('0000년') || title.textContent.includes('00월')){
+        var now = new Date();
+        title.textContent = now.getFullYear() + '년 ' + (now.getMonth()+1) + '월';
+      }
+    }catch(e){}
+  }
+  forceCalendar();
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(forceCalendar, 50); });
+  setTimeout(forceCalendar, 100);
+  setTimeout(forceCalendar, 500);
+})();
+</script>
