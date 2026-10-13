@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<!-- Version: V158 - 초중말복 동적화, 24절기 동적화, 누적패치 제거, 5~6줄 개그 유머 100점 -->
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>포토다이어리 V158 - 사진, 추억을 담다</title>
+<!-- Version: V166 - 초중말복 동적화, 24절기 동적화, 누적패치 제거, 5~6줄 개그 유머 100점 -->
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>포토다이어리 V166 - 사진, 추억을 담다</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -31,19 +31,9 @@
             font-family: 'Malgun Gothic', sans-serif;
         }
 
-        html {
-            overscroll-behavior-y: contain;
-        }
+        html { overscroll-behavior-y: auto; }
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            padding: 15px;
-            max-width: 600px;
-            margin: 0 auto;
-            touch-action: pan-x pan-y;
-            font-size: var(--base-font-size);
-            overscroll-behavior-y: contain;
+        body { background-color: var(--bg-color); color: var(--text-main);
         }
 
         .app-container {
@@ -2985,6 +2975,16 @@ window.goToPastDiary = function(targetDateStr){
 };
 window.goToToday = function(){
   try{
+    // 스크롤 잠금 완전 해제 - 달력 중간 멈춤 수정
+    try{
+      document.body.style.overflow='';
+      document.body.style.position='';
+      document.body.style.top='';
+      document.body.style.width='';
+      document.body.classList.remove('modal-open');
+      document.documentElement.style.overflow='';
+      document.documentElement.style.position='';
+    }catch(e){}
     var today = (typeof getTodayStr==='function') ? getTodayStr() : new Date().toISOString().slice(0,10);
     var d = new Date(today);
     window.calYear = d.getFullYear(); window.calMonth = d.getMonth();
@@ -2993,12 +2993,18 @@ window.goToToday = function(){
     window.selectedViewDate = today;
     if(typeof selectedViewDate !== 'undefined') selectedViewDate = today;
     localStorage.setItem('smartDiarySelectedDate', today);
-    if(typeof renderCalendar === 'function') renderCalendar();
-    setTimeout(function(){ 
-      if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday(); 
-      window.scrollTo({top:0, behavior:'smooth'}); 
-    }, 150);
-  }catch(e){ console.error(e); }
+    if(typeof renderCalendar==='function') renderCalendar();
+    if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday();
+    // 위로 스크롤 - 2중 보장
+    setTimeout(function(){
+      window.scrollTo({top:0, behavior:'smooth'});
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }, 50);
+    setTimeout(function(){
+      window.scrollTo({top:0, behavior:'auto'});
+    }, 350);
+  }catch(e){ console.error(e); alert('이동 실패: '+e.message); }
 };
 </script>
 
@@ -3118,22 +3124,35 @@ body:not(.modal-open) { overflow:auto !important; }
 // V80 ULTIMATE Fortune Fix - Swing2App용
 window.openFortunePopupFixed = function(){
   try{
-    console.log('Fortune click!');
     var overlay = document.getElementById('fortune-popup-overlay');
     var bodyEl = document.getElementById('fortune-popup-body');
-    
     if(overlay){
       overlay.classList.add('active');
       overlay.style.display='flex';
+      overlay.style.visibility='visible';
+      overlay.style.opacity='1';
+      // V166: position:fixed 안 쓰고 overflow만 hidden - 중간 스크롤 멈춤 근본 해결
+      window._v123_scrollY = window.scrollY;
       document.body.style.overflow='hidden';
+      document.documentElement.style.overflow='hidden';
+      document.body.style.touchAction='none';
     }
-    
-    // 기존 함수가 있으면 호출, 없으면 직접 렌더
     if(typeof openFortunePopup === 'function' && openFortunePopup.toString().indexOf('Fixed')===-1){
-      try{ openFortunePopup(); return; }catch(e){ console.log('orig fortune err', e); }
+      try{ openFortunePopup(); 
+        // openFortunePopup이 lockBodyScroll 호출했을 수 있으니 다시 단순 overflow로 덮어쓰기
+        setTimeout(function(){
+          document.body.style.position='';
+          document.body.style.top='';
+          document.body.style.left='';
+          document.body.style.right='';
+          document.body.style.width='';
+          document.body.style.overflow='hidden';
+          document.documentElement.style.overflow='hidden';
+          document.body.classList.remove('modal-open');
+        }, 10);
+        return;
+      }catch(e){ console.log('orig fortune err', e); }
     }
-    
-    // Fallback 직접 렌더
     if(bodyEl){
       var hasSaju = (typeof sajuBirthInfo !== 'undefined' && sajuBirthInfo && sajuBirthInfo.date);
       if(!hasSaju){
@@ -3152,74 +3171,87 @@ setTimeout(function(){
 }, 500);
 
 function closeFortunePopupFixed(){
-  var overlay = document.getElementById('fortune-popup-overlay');
-  if(overlay){ overlay.classList.remove('active'); overlay.style.display='none'; }
-  try{ document.body.style.overflow=''; }catch(e){}
+  try{
+    var overlay = document.getElementById('fortune-popup-overlay');
+    if(overlay){
+      overlay.classList.remove('active');
+      overlay.style.display='none';
+      overlay.style.visibility='hidden';
+      overlay.style.opacity='0';
+    }
+    var savedY = window._v123_scrollY || 0;
+    window.modalLockCount = 0;
+    // 모든 잠금 해제 - position:fixed 안 썼으므로 간단
+    document.body.classList.remove('modal-open');
+    document.body.style.position='';
+    document.body.style.top='';
+    document.body.style.left='';
+    document.body.style.right='';
+    document.body.style.width='';
+    document.body.style.height='';
+    document.body.style.overflow='';
+    document.body.style.overflowY='';
+    document.body.style.touchAction='pan-y';
+    document.documentElement.style.position='';
+    document.documentElement.style.overflow='';
+    document.documentElement.style.overflowY='';
+    document.documentElement.style.height='';
+    document.documentElement.style.touchAction='pan-y';
+    // 스크롤 위치 그대로 유지 (position:fixed 안 썼으므로)
+    window.scrollTo(0, savedY);
+    // 100ms 후 완전 보장
+    setTimeout(function(){
+      document.body.style.position='relative';
+      document.body.style.overflow='auto';
+      document.body.style.overflowY='auto';
+      document.body.style.height='auto';
+      document.body.style.touchAction='pan-y';
+      document.documentElement.style.overflow='auto';
+      document.documentElement.style.overflowY='auto';
+      document.documentElement.style.height='auto';
+      document.documentElement.style.position='relative';
+      var calCard = document.getElementById('calendar-card');
+      if(calCard){
+        calCard.style.display='block';
+        calCard.style.visibility='visible';
+        calCard.style.opacity='1';
+        calCard.style.position='relative';
+        calCard.style.transform='none';
+        calCard.style.height='auto';
+        calCard.style.overflow='visible';
+      }
+      var appContainer = document.querySelector('.app-container');
+      if(appContainer){ appContainer.style.overflow='visible'; appContainer.style.height='auto'; }
+      if(typeof renderCalendar==='function'){ renderCalendar(); }
+    }, 50);
+  }catch(e){ console.log('closeFortune err', e); }
 }
+
+function closeFortunePopup(){
+  try{ closeFortunePopupFixed(); }catch(e){
+    try{
+      var overlay = document.getElementById('fortune-popup-overlay');
+      if(overlay){ overlay.classList.remove('active'); overlay.style.display='none'; }
+      document.body.style.overflow='';
+      document.documentElement.style.overflow='';
+    }catch(e2){}
+  }
+  try{ localStorage.setItem('smartDiarySajuLastShown', (typeof getTodayStr==='function'?getTodayStr():new Date().toISOString().slice(0,10))); }catch(e){}
+}
+window.closeFortunePopup = closeFortunePopup;
+window.closeFortunePopupFixed = closeFortunePopupFixed;
+
+
+
 
 setTimeout(function(){
   try{ window.closeFortunePopup = closeFortunePopupFixed; }catch(e){}
 }, 500);
 </script>
 
-<style id="V80_FIX">
-.fortune-teaser{ pointer-events:auto !important; cursor:pointer !important; z-index:999 !important; position:relative !important; touch-action: manipulation !important; -webkit-tap-highlight-color: rgba(124,108,255,0.3) !important; }
-#fortune-teaser{ pointer-events:auto !important; }
-#fortune-teaser *{ pointer-events:none !important; }
-#fortune-popup-overlay{ z-index:9999 !important; }
-#fortune-popup-overlay.active{ display:flex !important; }
-@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
-</style>
 
-<script id="V80_SWING">
-// V80 Swing2App + 8시 알림
-(function(){
-  function fixTeaser(){
-    var teaser = document.getElementById('fortune-teaser');
-    if(!teaser) return;
-    teaser.style.pointerEvents='auto';
-    teaser.style.cursor='pointer';
-    teaser.setAttribute('onclick','openFortunePopupFixed()');
-    // 모든 자식 pointer-events none
-    var childs = teaser.querySelectorAll('*');
-    childs.forEach(function(c){ c.style.pointerEvents='none'; });
-    
-    // 클릭 이벤트 강제
-    teaser.addEventListener('click', function(e){
-      e.preventDefault(); e.stopPropagation();
-      openFortunePopupFixed();
-    }, true);
-    teaser.addEventListener('touchend', function(e){
-      e.preventDefault(); e.stopPropagation();
-      openFortunePopupFixed();
-    }, {passive:false});
-  }
-  
-  window.addEventListener('load', function(){ setTimeout(fixTeaser, 500); setTimeout(fixTeaser, 1500); });
-  document.addEventListener('DOMContentLoaded', function(){ setTimeout(fixTeaser, 800); });
-  
-  // 8시 알림 (앱 열면)
-  function check8(){
-    try{
-      var h = new Date().getHours();
-      if(h>=8 && h<=10){
-        setTimeout(function(){
-          var b = document.querySelector('.time-capsule-banner');
-          if(b){ b.style.animation='pulse 1s ease-in-out 3'; try{if(navigator.vibrate) navigator.vibrate([200,100,200]);}catch(e){} }
-        },2000);
-      }
-    }catch(e){}
-  }
-  window.addEventListener('load', function(){ setTimeout(check8, 2500); });
-  
-  window.testTimeCapsuleNotify = function(){
-    localStorage.removeItem('lastCapsuleNotifyDate');
-    var b = document.querySelector('.time-capsule-banner');
-    if(b){ b.style.animation='pulse 1s ease-in-out infinite'; b.scrollIntoView({behavior:'smooth'}); alert('🎉 8시 알림 미리보기! 이런식으로 뜸!'); }
-    else{ alert('⏳ 타임캡슐 데이터 없음 - 30일 쓰면 생김!'); }
-  };
-})();
-</script>
+
+
 
 
 <script id="V81_FIX">
@@ -3307,22 +3339,38 @@ setTimeout(function(){
 
 
 
-<style id='V158_FIXED'>
-#diary-around-today-card .feature-title{display:flex !important; flex-wrap:nowrap !important; align-items:center !important; justify-content:space-between !important; width:100% !important; gap:6px !important;}
-#diary-around-today-card #selected-date-title{flex:1 1 auto !important; min-width:0 !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important;}
-#diary-view-toggle{display:flex !important; flex-wrap:nowrap !important; gap:3px !important; margin-left:auto !important; flex-shrink:0 !important; align-items:center !important; justify-content:flex-end !important; width:auto !important;}
-#diary-view-toggle button{width:44px !important; min-width:44px !important; max-width:44px !important; height:22px !important; min-height:22px !important; flex-shrink:0 !important; display:flex !important; align-items:center !important; justify-content:center !important; font-size:10px !important; line-height:1 !important; padding:0 !important; border-radius:5px !important; box-sizing:border-box !important; white-space:nowrap !important;}
-/* V158: 오늘의 운세 = 타임캡슐과 동일 폰트 11px 고정, 설명 왼쪽으로 더 이동, 다른거 고정 */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<style id='V166_SCROLL'>
+html{overscroll-behavior-y:auto !important; overflow:auto !important; overflow-y:auto !important; height:auto !important; position:relative !important; touch-action:pan-y !important;}
+body{background-color:var(--bg-color) !important; padding:15px !important; max-width:600px !important; margin:0 auto !important; overscroll-behavior-y:auto !important; overflow:auto !important; overflow-y:auto !important; touch-action:pan-y !important; font-size:16px !important; position:relative !important; height:auto !important; min-height:100vh !important;}
+body.modal-open{overflow:hidden !important;}
+body:not(.modal-open){position:relative !important; overflow:auto !important; overflow-y:auto !important; height:auto !important; touch-action:pan-y !important;}
+.app-container{gap:2px !important; overflow:visible !important; position:relative !important; height:auto !important;}
+#calendar-card{position:relative !important; top:auto !important; transform:none !important; overflow:visible !important; display:block !important; visibility:visible !important; opacity:1 !important; height:auto !important;}
+.calendar-sticky-wrap{position:static !important; top:auto !important;}
+#fortune-popup-overlay{overscroll-behavior:contain !important; touch-action:pan-y !important; overflow-y:auto !important; position:fixed !important; top:0 !important; left:0 !important; width:100% !important; height:100% !important;}
+.fortune-popup-card{overscroll-behavior:contain !important; touch-action:pan-y !important; -webkit-overflow-scrolling:touch !important; max-height:90vh !important; overflow-y:auto !important;}
+#diary-around-today-card .feature-title{display:flex !important; flex-wrap:nowrap !important; align-items:center !important; justify-content:space-between !important; width:100% !important; gap:6px !important; flex-direction:row !important;}
+#diary-around-today-card #selected-date-title{flex:1 1 auto !important; min-width:0 !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; font-size:13px !important;}
+#diary-view-toggle{display:flex !important; flex-wrap:nowrap !important; flex-direction:row !important; gap:3px !important; margin-left:auto !important; flex-shrink:0 !important; align-items:center !important; justify-content:flex-end !important; width:auto !important;}
+#diary-view-toggle button{width:44px !important; min-width:44px !important; max-width:44px !important; height:22px !important; min-height:22px !important; flex-shrink:0 !important; display:flex !important; align-items:center !important; justify-content:center !important; font-size:10px !important; line-height:1 !important; padding:0 !important; border-radius:5px !important; box-sizing:border-box !important; white-space:nowrap !important; flex-grow:0 !important;}
 .fortune-teaser{margin:4px 0 6px 0 !important; padding:6px 10px !important; min-height:24px !important; height:24px !important; display:flex !important; align-items:center !important; justify-content:space-between !important; border-radius:5px !important; background:linear-gradient(120deg, #2C2F5B, #4A3B77 55%, #2C2F5B) !important; color:#F4F0FF !important; font-size:11px !important; font-weight:700 !important; line-height:1 !important; white-space:nowrap !important; overflow:hidden !important;}
-.fortune-teaser > div:first-child{display:flex !important; align-items:center !important; gap:4px !important; flex:1 !important; min-width:0 !important; margin-right:2px !important;}
-.fortune-teaser .ft-icon{font-size:11px !important; flex-shrink:0 !important;}
-.fortune-teaser .ft-text{font-size:11px !important; font-weight:700 !important; white-space:nowrap !important; flex-shrink:0 !important;}
-.fortune-teaser .ft-sub{font-size:11px !important; font-weight:500 !important; opacity:0.9 !important; margin-left:6px !important; white-space:nowrap !important; overflow:visible !important; text-overflow:clip !important; text-align:left !important; flex:1 !important;}
-.fortune-teaser .ft-arrow{font-size:14px !important; flex-shrink:0 !important; margin-left:6px !important;}
-/* 타임캡슐 동일 */
-.time-capsule-banner{margin:4px 0 8px 0 !important; padding:6px 10px !important; min-height:24px !important; height:24px !important; display:flex !important; align-items:center !important; justify-content:space-between !important; border-radius:5px !important; background:linear-gradient(90deg, #7c6cff 0%, #a78bfa 50%, #f472b6 100%) !important; color:white !important; font-size:11px !important; font-weight:700 !important; line-height:1 !important; white-space:nowrap !important; overflow:hidden !important;}
-.calendar-sticky-wrap{position:relative !important; top:auto !important;}
-html,body{overscroll-behavior-y:auto !important;}
+.fortune-teaser .ft-sub{margin-left:6px !important; text-align:left !important; flex:1 !important; overflow:visible !important; text-overflow:clip !important;}
+.time-capsule-banner{margin:4px 0 8px 0 !important; padding:6px 10px !important; min-height:24px !important; height:24px !important; border-radius:5px !important; font-size:11px !important; font-weight:700 !important; line-height:1 !important; white-space:nowrap !important; background:linear-gradient(90deg, #7c6cff 0%, #a78bfa 50%, #f472b6 100%) !important; color:white !important; display:flex !important; align-items:center !important; justify-content:space-between !important;}
 </style>
 
 </head>
@@ -3368,7 +3416,7 @@ html,body{overscroll-behavior-y:auto !important;}
                 <div style="display:flex; align-items:center; gap:4px; flex:1; min-width:0; margin-right:2px;">
                     <span class="ft-icon" style="font-size:11px; flex-shrink:0;">🔮</span>
                     <span class="ft-text" id="fortune-teaser-text" style="font-size:11px; font-weight:700; white-space:nowrap; flex-shrink:0;">오늘의 운세</span>
-                    <span class="ft-sub" id="fortune-teaser-sub" style="font-size:11px; font-weight:500; opacity:0.9; margin-left:8px; white-space:nowrap; overflow:visible; text-overflow:clip; text-align:left; flex:1;">행운을 확인해보세요</span>
+                    <span class="ft-sub" id="fortune-teaser-sub" style="font-size:11px; font-weight:500; opacity:0.9; margin-left:6px; white-space:nowrap; overflow:visible; text-overflow:clip; text-align:left; flex:1;">행운을 확인해보세요</span>
                 </div>
                 <span class="ft-arrow" style="font-size:14px; flex-shrink:0; margin-left:6px;">›</span>
             </div>
@@ -8035,8 +8083,8 @@ window.attachPhotoDoubleTap = function(el, handler){
     }
 
     function closeFortunePopup() {
-        if (fortunePopupOverlay) fortunePopupOverlay.classList.remove('active');
-        unlockBodyScroll();
+        if (fortunePopupOverlay) { fortunePopupOverlay.classList.remove('active'); fortunePopupOverlay.style.display='none'; }
+        try{ closeFortunePopupFixed(); }catch(e){ try{ unlockBodyScroll(); }catch(e2){} }
         try{ localStorage.setItem('smartDiarySajuLastShown', getTodayStr()); }catch(e){}
     }
 
@@ -10913,7 +10961,7 @@ const DAILY_6LINE_V2 = {
         const btnGallery = document.getElementById('btn-view-gallery');
         if(btnList && btnGallery){
             if(mode==='gallery'){
-                btnList.style.background='#fff'; btnList.style.color='#333'; btnList.style.borderColor='#ddd';
+                btnList.style.background='#fff'; btnList.style.color='#333'; btnList.style.borderColor='#ddd'; btnList.style.width='44px'; btnList.style.minWidth='44px';
                 btnGallery.style.background='#8e6b6b'; btnGallery.style.color='#fff'; btnGallery.style.borderColor='#8e6b6b';
             } else {
                 btnGallery.style.background='#fff'; btnGallery.style.color='#333'; btnGallery.style.borderColor='#ddd';
@@ -17406,18 +17454,23 @@ window.addEventListener("load", function() {
   window.lockBodyScroll = function(){
     if(document.body.classList.contains('modal-open')) return;
     window._v123_scrollY = window.scrollY;
-    document.body.style.position='fixed';
-    document.body.style.top = `-${window._v123_scrollY}px`;
-    document.body.style.width='100%';
+    document.body.style.overflow='hidden';
+    document.documentElement.style.overflow='hidden';
     document.body.classList.add('modal-open');
   };
   window.unlockBodyScroll = function(){
-    if(!document.body.classList.contains('modal-open')) return;
+    if(!document.body.classList.contains('modal-open')) {
+      document.body.style.overflow='';
+      document.documentElement.style.overflow='';
+      return;
+    }
     document.body.classList.remove('modal-open');
     document.body.style.position='';
     document.body.style.top='';
     document.body.style.width='';
-    window.scrollTo(0, window._v123_scrollY);
+    document.body.style.overflow='';
+    document.documentElement.style.overflow='';
+    window.scrollTo(0, window._v123_scrollY||0);
   };
 
   // 3. IndexedDB 사진 저장소 (localStorage 용량 폭탄 해결)
@@ -17552,8 +17605,23 @@ window.addEventListener("load", function() {
 
 
 
-
-<script id='DOUBLE_CLICK_FIX_V158'>(function(){function s(){var f=document.getElementById('fortune-teaser');if(!f)return;f.setAttribute('ondblclick','openFortunePopupFixed()');f.setAttribute('onclick','return false;');f.onclick=function(e){e.preventDefault();e.stopPropagation();return false;};f.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();return false;},true);}document.addEventListener('DOMContentLoaded',s);setTimeout(s,300);})();</script>
+<script id='DOUBLE_CLICK_FIX_V161'>
+(function(){
+  function setup(){
+    var ft=document.getElementById('fortune-teaser');
+    if(!ft) return;
+    ft.setAttribute('ondblclick','openFortunePopupFixed()');
+    ft.setAttribute('onclick','return false;');
+    ft.onclick=function(e){ if(e){ e.preventDefault(); e.stopPropagation(); } return false; };
+    ft.ondblclick=function(e){ if(e){ e.preventDefault(); e.stopPropagation(); } openFortunePopupFixed(); };
+    ft.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); return false; }, true);
+  }
+  document.addEventListener('DOMContentLoaded', setup);
+  setTimeout(setup, 100);
+  setTimeout(setup, 500);
+  setTimeout(setup, 1000);
+})();
+</script>
 </body>
 </html>
 
