@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<!-- Version: V184 - 초중말복 동적화, 24절기 동적화, 누적패치 제거, 5~6줄 개그 유머 100점 -->
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>포토다이어리 V184 - 사진, 추억을 담다</title>
+<!-- Version: V187 - 초중말복 동적화, 24절기 동적화, 누적패치 제거, 5~6줄 개그 유머 100점 -->
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>포토다이어리 V187 - 사진, 추억을 담다</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -1752,7 +1752,7 @@ body { touch-action: pan-x pan-y pinch-zoom !important; }
   box-sizing:border-box !important;
   border:1px solid #eee !important;
   display:flex !important; flex-direction:column !important;
-  justify-content:center !important; align-items:center !important;
+  justify-content:flex-start !important; align-items:center !important;
 }
 .cal-cell.adjacent-month { background:#fafafa !important; opacity:0.5 !important; }
 .cal-cell-inner { padding:1px !important; gap:0 !important; }
@@ -3449,35 +3449,71 @@ body:not(.modal-open){position:relative !important; overflow:auto !important; ov
 
 
 
-<style id='V184_TITLE_FONT'>
-.daily-explain-header{
-  height:28px !important; min-height:28px !important;
-  padding:6px 10px !important;
-  border-radius:5px 5px 0 0 !important;
-  font-size:10px !important;
-  line-height:1 !important;
+
+
+
+
+
+
+
+
+
+<style id='V187_FIX'>
+/* 1) 오늘 날짜로 가기 오른쪽 끝 > 표시 */
+.go-today-btn{
+  justify-content:space-between !important;
+  padding:6px 12px !important;
 }
+
+/* 2) 설명서 타이틀 폰트 조금 작게 - 다른것에 비해 큼 */
 .daily-explain-header span{
   font-size:10px !important;
-  line-height:1 !important;
+  font-weight:600 !important;
 }
-.daily-explain-header span[style*="font-size:20px"]{
-  font-size:12px !important;
+.daily-explain-header{
+  font-size:10px !important;
+  height:28px !important;
+  min-height:28px !important;
+  padding:6px 12px !important;
+  border-radius:5px 5px 0 0 !important;
 }
-/* 오늘 날짜로 가기 와 설명서 사이 2px 확실히 */
-.go-today-btn{
+
+/* 3) 명언 배지와 타임캡슐 오른쪽 아이콘 원래대로 오른쪽 끝으로 */
+.daily-explain-header{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+}
+.time-capsule-banner{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  padding:6px 12px !important;
+  height:28px !important;
+  min-height:28px !important;
+  border-radius:5px !important;
   margin:0 0 2px 0 !important;
 }
-#diary-around-today-list{
-  gap:2px !important;
+.time-capsule-banner > div:first-child{
+  display:flex !important;
+  align-items:center !important;
+  gap:6px !important;
+  justify-content:flex-start !important;
 }
-.fortune-teaser, .time-capsule-banner, .go-today-btn{
+.time-capsule-banner > div:last-child,
+.time-capsule-banner span:last-child{
+  margin-left:auto !important;
+}
+
+/* fortune, time capsule, go today, explain - 28px R5px gap2px 유지 */
+.fortune-teaser{
   height:28px !important; min-height:28px !important;
   padding:6px 12px !important;
   border-radius:5px !important;
-  font-size:11px !important;
   margin:0 0 2px 0 !important;
+  justify-content:space-between !important;
 }
+#diary-around-today-list{ gap:2px !important; }
 </style>
 
 </head>
@@ -10993,7 +11029,7 @@ const DAILY_6LINE_V2 = {
                 var goTodayDiv = document.createElement('div');
                 goTodayDiv.style.gridColumn='1 / -1';
                 goTodayDiv.style.width='100%';
-                goTodayDiv.innerHTML = '<div style="display:flex; gap:6px; margin:0 0 2px 0; width:100%; box-sizing:border-box;"><span class="go-today-btn" onclick="window.goToToday ? window.goToToday() : (selectedViewDate=getTodayStr(), renderDiaryAroundToday(), renderCalendar())" style="flex:1; text-align:center; font-size:14px; background:#ff7e7e; color:#fff; padding:6px 12px; height:28px; min-height:28px; border-radius:5px; cursor:pointer; font-weight:700; font-size:11px; display:flex; align-items:center; justify-content:center; box-sizing:border-box; line-height:1;">🏠 오늘 날짜로 가기</span></div>';
+                goTodayDiv.innerHTML = '<div style="display:flex; gap:6px; margin:0 0 2px 0; width:100%; box-sizing:border-box;"><span class="go-today-btn" onclick="window.goToToday ? window.goToToday() : (selectedViewDate=getTodayStr(), renderDiaryAroundToday(), renderCalendar())" style="flex:1; background:#ff7e7e; color:#fff; padding:6px 12px; height:28px; min-height:28px; border-radius:5px; cursor:pointer; font-weight:700; font-size:11px; display:flex; align-items:center; justify-content:space-between; box-sizing:border-box; line-height:1;"><span style=\'display:flex; align-items:center; gap:6px;\'>🏠 오늘 날짜로 가기</span><span style=\'font-size:14px; opacity:0.9;\'>&gt;</span></span></div>';
                 listEl.appendChild(goTodayDiv);
             }
 
@@ -11092,10 +11128,10 @@ const DAILY_6LINE_V2 = {
                     + '<span style="font-size:16px; font-weight:900; color:#fff; letter-spacing:-0.3px;">'+item.title+'</span></div>'
                     + '<span style="font-size:11px; font-weight:700; color:rgba(255,255,255,0.9); background:rgba(0,0,0,0.18); padding:3px 8px; border-radius:5px; line-height:1; box-sizing:border-box;">'+catLabel+'</span>'
                     + '</div>';
-                  html += '<div style="padding:10px 12px 12px 12px;">';
+                  html += '<div style="padding:12px 14px 14px 14px;">';
                   paras.forEach(function(p, pi){
                     var isFirst = pi===0;
-                    html += '<p style="margin:0 0 '+(pi===paras.length-1?'0':'8px')+' 0; line-height:1.65; font-size:'+(isFirst?'12px':'11px')+'; color:'+(isFirst?'#2d3436':'#5a5a5a')+'; word-break:keep-all; font-weight:'+(isFirst?'600':'400')+'; letter-spacing:-0.2px;">'+p+'</p>';
+                    html += '<p style="margin:0 0 '+(pi===paras.length-1?'0':'8px')+' 0; line-height:1.70; font-size:'+(isFirst?'13px':'12px')+'; color:'+(isFirst?'#2d3436':'#5a5a5a')+'; word-break:keep-all; font-weight:'+(isFirst?'600':'400')+'; letter-spacing:-0.2px;">'+p+'</p>';
                   });
                   html += '</div>';
                 });
