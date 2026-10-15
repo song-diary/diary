@@ -3516,6 +3516,312 @@ body:not(.modal-open){position:relative !important; overflow:auto !important; ov
 #diary-around-today-list{ gap:2px !important; }
 </style>
 
+
+<style id="V187_FINAL_FIX">
+.fortune-teaser{
+  background:linear-gradient(120deg, #ff9a9e 0%, #fecfef 70%, #fff0f5 100%) !important;
+  color:#1a365d !important;
+  border:1px solid rgba(255,255,255,0.8) !important;
+}
+.fortune-teaser .ft-text, .fortune-teaser .ft-icon{color:#1a365d !important; font-weight:800 !important;}
+.fortune-teaser .ft-sub{color:#2d3748 !important; opacity:1 !important; font-weight:600 !important;}
+</style>
+
+
+<style id="V187_FORTUNE_CLOSE_V2">
+/* 타임캡슐처럼 제목과 내용 바짝 붙이기 - 강제 */
+#fortune-teaser.fortune-teaser{
+  display:flex !important;
+  flex-direction:row !important;
+  justify-content:space-between !important; /* 왼쪽 그룹 + 오른쪽 화살표 */
+  align-items:center !important;
+  gap:0 !important;
+  padding:6px 12px !important;
+  height:28px !important;
+  min-height:28px !important;
+  text-align:left !important;
+  background:linear-gradient(120deg, #ff9a9e 0%, #fecfef 70%, #fff0f5 100%) !important;
+  color:#1a365d !important;
+  border:1px solid rgba(255,255,255,0.8) !important;
+  box-sizing:border-box !important;
+}
+
+/* 왼쪽 그룹: 아이콘+제목+내용을 한 덩어리로 왼쪽에 몰기 */
+#fortune-teaser > div:first-child{
+  display:flex !important;
+  flex-direction:row !important;
+  justify-content:flex-start !important;
+  align-items:center !important;
+  flex:0 1 auto !important; /* 중요: flex:1이 아니라 auto로 해야 내용이 멀어지지 않음 */
+  gap:0 !important;
+  min-width:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+}
+
+#fortune-teaser .ft-icon{
+  display:inline-flex !important;
+  margin:0 4px 0 0 !important;
+  padding:0 !important;
+  flex:0 0 auto !important;
+  color:#1a365d !important;
+  font-weight:800 !important;
+  font-size:11px !important;
+}
+
+#fortune-teaser .ft-text{
+  display:inline-flex !important;
+  margin:0 6px 0 0 !important; /* 제목과 내용 사이 6px만 */
+  padding:0 !important;
+  flex:0 0 auto !important;
+  white-space:nowrap !important;
+  color:#1a365d !important;
+  font-weight:800 !important;
+  font-size:11px !important;
+}
+
+#fortune-teaser .ft-sub{
+  display:inline-flex !important;
+  margin:0 !important; /* 타임캡슐처럼 제목 바로 옆에 붙이기 */
+  padding:0 !important;
+  flex:0 1 auto !important; /* flex:1 제거! auto로 해야 멀어지지 않음 */
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  text-align:left !important;
+  justify-content:flex-start !important;
+  color:#2d3748 !important;
+  font-weight:600 !important;
+  font-size:11px !important;
+  max-width:65% !important; /* 길어도 오른쪽 화살표 전까지만 */
+}
+
+#fortune-teaser .ft-arrow{
+  flex:0 0 auto !important;
+  margin-left:8px !important;
+  color:#4a5568 !important;
+}
+
+/* 타임캡슐, 오늘 날짜로 가기, 명언 카드와 동일한 왼쪽 정렬 방식으로 강제 */
+#diary-around-today-list #fortune-teaser{
+  width:100% !important;
+  grid-column:1 / -1 !important;
+}
+</style>
+
+
+<style id="V187_FORTUNE_DISTINGUISH">
+/* 오늘의 운세 타이틀과 내용 구별 확실하게 */
+#fortune-teaser .ft-text{
+  font-size:11px !important;
+  font-weight:800 !important;
+  color:#1a365d !important; /* 진한 남색 - 타이틀 강조 */
+  letter-spacing:-0.2px !important;
+}
+
+#fortune-teaser .ft-sub{
+  font-size:10px !important; /* 11px -> 10px로 작게 */
+  font-weight:500 !important; /* 600 -> 500으로 연하게 */
+  color:#4a5568 !important; /* #2d3748 진한 회색 -> #4a5568 중간 회색으로 연하게 */
+  opacity:0.95 !important;
+}
+
+/* 아이콘도 타이틀과 동일하게 진하게 */
+#fortune-teaser .ft-icon{
+  font-size:11px !important;
+  color:#1a365d !important;
+}
+</style>
+
+<style id="V187_FORTUNE_DISTINGUISH_OPTION">
+/* 옵션: 더 확실하게 구별하고 싶으면 아래 주석 해제
+#fortune-teaser .ft-text{
+  background:rgba(255,255,255,0.6) !important;
+  padding:1px 5px !important;
+  border-radius:3px !important;
+}
+#fortune-teaser .ft-sub{
+  font-size:10.5px !important;
+  color:#5a6c7d !important;
+}
+*/
+</style>
+
+
+<style id="V187_FORTUNE_FULLTEXT">
+/* 글 줄이지 말고 전체 다 보이게 */
+#fortune-teaser.fortune-teaser{
+  height:auto !important;
+  min-height:28px !important;
+  white-space:normal !important;
+  overflow:visible !important;
+  padding:8px 12px !important;
+}
+
+#fortune-teaser > div:first-child{
+  flex:1 1 auto !important;
+  white-space:normal !important;
+  overflow:visible !important;
+  min-width:0 !important;
+  align-items:flex-start !important;
+}
+
+#fortune-teaser .ft-sub{
+  white-space:normal !important; /* 줄바꿈 허용 */
+  overflow:visible !important; /* 잘림 해제 */
+  text-overflow:clip !important; /* ... 제거 */
+  max-width:100% !important; /* 65% 제한 해제 */
+  flex:1 1 auto !important;
+  word-break:keep-all !important; /* 한글 단어 단위 줄바꿈 */
+  line-height:1.5 !important;
+  display:inline !important;
+  /* 한 줄이 넘어가면 자동 줄바꿈해서 전체 다 보임 */
+}
+
+/* 2줄 이상이면 카드 높이 자동 증가 */
+#fortune-teaser{
+  align-items:flex-start !important;
+}
+
+#fortune-teaser .ft-icon,
+#fortune-teaser .ft-text,
+#fortune-teaser .ft-arrow{
+  flex-shrink:0 !important;
+  margin-top:1px !important;
+}
+</style>
+
+
+<style id="GAP_1PX_FINAL">
+/* 네모박스 상하폭 1px로 줄이기 - 빨간 박스 부분 */
+
+/* 1. 전체 리스트 간격 1px */
+#diary-around-today-list{
+  gap:1px !important;
+  row-gap:1px !important;
+  display:flex !important;
+  flex-direction:column !important;
+}
+
+/* 2. 다이어리 카드(111, 222) - 1px 간격 */
+#diary-around-today-list > div.sub-memo-item{
+  margin:1px 0 !important;
+  padding-bottom:4px !important;
+}
+
+/* 3. 타임캡슐 도착 배너 - 상하 1px */
+.time-capsule-banner{
+  margin:1px 0 !important;
+  padding:6px 12px !important;
+  height:28px !important;
+  min-height:28px !important;
+}
+
+/* 4. 타임캡슐 상세 카드(444 카드) - 1px */
+#diary-around-today-list > div[style*="grid-column"],
+#diary-around-today-list > div[style*="margin-top"]{
+  margin-top:1px !important;
+  margin-bottom:1px !important;
+  padding-top:1px !important;
+}
+
+/* 5. 오늘 날짜로 가기 버튼 - 상하 1px */
+.go-today-btn,
+span.go-today-btn,
+div:has(> .go-today-btn){
+  margin:1px 0 !important;
+}
+
+/* 6. 명언/절기 카드 (마하트마 간디) - 상하 1px */
+.daily-explain-header{
+  margin-top:1px !important;
+  margin-bottom:1px !important;
+}
+
+/* 7. 타임캡슐 래퍼의 margin-top:6px를 1px로 */
+div[style*="margin-top:6px"]{
+  margin-top:1px !important;
+  padding-top:1px !important;
+}
+
+/* 8. 모든 카드 공통 - 상하 1px로 강제 */
+#diary-around-today-list > div,
+#diary-around-today-list + div,
+.time-capsule-banner + div{
+  margin-top:1px !important;
+  margin-bottom:1px !important;
+}
+
+/* 9. 444 카드 내부 간격도 줄이기 */
+.sub-memo-item .item-top-row,
+.sub-memo-item .diary-text{
+  margin-top:1px !important;
+  margin-bottom:1px !important;
+}
+
+/* 10. 타임라인 아이템 */
+.timeline-item,
+.time-capsule-detail-card,
+div:has(> .timeline-badge){
+  margin:1px 0 !important;
+}
+</style>
+
+<style id="GAP_1PX_EXTRA_STRONG">
+/* 인라인 스타일 덮어쓰기 - !important로 1px 강제 */
+div[style*="margin:0 0 2px 0"]{
+  margin:1px 0 !important;
+}
+div[style*="margin-top:6px"]{
+  margin-top:1px !important;
+}
+div[style*="padding-top:4px"]{
+  padding-top:1px !important;
+}
+</style>
+
+
+<style id="GAP_0_5PX">
+/* 1px의 반인 0.5px로 줄이기 */
+#diary-around-today-list{
+  gap:0.5px !important;
+  row-gap:0.5px !important;
+}
+
+#diary-around-today-list > div.sub-memo-item,
+#diary-around-today-list > div,
+.time-capsule-banner,
+.go-today-btn,
+.daily-explain-header,
+.timeline-item,
+.time-capsule-detail-card,
+div[style*="margin-top"],
+div[style*="margin:0 0 2px"]{
+  margin-top:0.5px !important;
+  margin-bottom:0.5px !important;
+}
+
+div[style*="margin:0 0 2px 0"]{
+  margin:0.5px 0 !important;
+}
+
+div[style*="margin-top:6px"]{
+  margin-top:0.5px !important;
+  padding-top:0.5px !important;
+}
+
+div[style*="padding-top:4px"]{
+  padding-top:0.5px !important;
+}
+
+/* 다이어리 카드 내부 간격도 0.5px */
+.sub-memo-item .item-top-row,
+.sub-memo-item .diary-text{
+  margin-top:0.5px !important;
+  margin-bottom:0.5px !important;
+}
+</style>
+
 </head>
 <body>
 
@@ -10198,7 +10504,7 @@ window.attachPhotoDoubleTap = function(el, handler){
   "10-11": "명언",
   "10-12": "한식",
   "10-13": "한식",
-  "10-14": "절기",
+  "10-14": "사자성어",
   "10-15": "한식",
   "10-16": "세계음식",
   "10-17": "명언",
@@ -10228,7 +10534,7 @@ window.attachPhotoDoubleTap = function(el, handler){
   "11-10": "기념일",
   "11-11": "한식",
   "11-12": "한식",
-  "11-13": "절기",
+  "11-13": "한식",
   "11-14": "세계음식",
   "11-15": "세계음식",
   "11-16": "명언",
@@ -10243,11 +10549,11 @@ window.attachPhotoDoubleTap = function(el, handler){
   "11-25": "절기",
   "11-26": "한식",
   "11-27": "한식",
-  "11-28": "절기",
+  "11-28": "한식",
   "11-29": "한식",
   "11-30": "한식",
   "12-01": "한식",
-  "12-02": "절기",
+  "12-02": "한식",
   "12-03": "세계음식",
   "12-04": "속담",
   "12-05": "세계음식",
@@ -10276,7 +10582,7 @@ window.attachPhotoDoubleTap = function(el, handler){
   "12-28": "기념일",
   "12-29": "기념일",
   "12-30": "기념일",
-  "12-31": "사자성어",
+  "12-31": "사자성어"
 };
 
 
