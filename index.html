@@ -3822,6 +3822,64 @@ div[style*="padding-top:4px"]{
 }
 </style>
 
+
+<style id="GAP_0PX_STUCK">
+/* 확실하게 0px로 붙이기 */
+#diary-around-today-list{
+  gap:0px !important;
+  row-gap:0px !important;
+}
+
+#diary-around-today-list > div,
+#diary-around-today-list > div.sub-memo-item,
+.time-capsule-banner,
+.go-today-btn,
+.daily-explain-header,
+.timeline-item,
+.time-capsule-detail-card,
+div[style*="margin-top"],
+div[style*="margin:0 0 2px"],
+div[style*="grid-column"],
+.sub-memo-item{
+  margin-top:0px !important;
+  margin-bottom:0px !important;
+  padding-top:0px !important;
+  padding-bottom:0px !important;
+}
+
+div[style*="margin:0 0 2px 0"],
+div[style*="margin-top:6px"],
+div[style*="padding-top:4px"]{
+  margin:0px !important;
+  padding:0px !important;
+}
+
+/* 카드 내부 여백은 유지하되, 카드 사이의 간격만 0px */
+#diary-around-today-list > div{
+  border-radius:0 !important;
+}
+#diary-around-today-list > div:first-child{
+  border-radius:5px 5px 0 0 !important;
+}
+#diary-around-today-list > div:last-child{
+  border-radius:0 0 5px 5px !important;
+}
+
+/* 타임캡슐과 444 사이, 444와 오늘 날짜로 가기 사이 완전 밀착 */
+.time-capsule-banner{
+  margin:0px !important;
+  border-radius:5px 5px 0 0 !important;
+}
+.time-capsule-banner + div{
+  margin-top:0px !important;
+  border-radius:0 0 5px 5px !important;
+}
+.go-today-btn{
+  margin:0px !important;
+  border-radius:5px !important;
+}
+</style>
+
 </head>
 <body>
 
@@ -3869,6 +3927,25 @@ div[style*="padding-top:4px"]{
                 </div>
                 <span class="ft-arrow" style="font-size:14px; flex-shrink:0; margin-left:6px;">›</span>
             </div>
+                        <!-- 📊 메인화면 바이오리듬 (오늘의 운세 밑) -->
+            <div id="main-biorhythm-teaser" style="margin:6px 0 8px 0; background:#fff; border-radius:12px; border:1px solid #e8e8e8; padding:10px 12px; box-shadow:0 2px 8px rgba(0,0,0,0.06); cursor:pointer; display:block;" onclick="openFortunePopup()">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <div style="font-size:12px; font-weight:800; color:#333; display:flex; align-items:center; gap:4px;">◇ 바이오리듬 <span style="font-size:10px; font-weight:400; color:#999;" id="main-bio-birth">생년월일 필요</span></div>
+                    <div style="font-size:10px; color:#999;">상세보기 ›</div>
+                </div>
+                <div style="background:#fafafa; border-radius:8px; padding:6px 4px 2px 4px;">
+                    <canvas id="main-biorhythm-canvas" width="600" height="120" style="width:100%; height:70px; display:block;"></canvas>
+                    <div style="display:flex; justify-content:space-between; padding:0 6px; margin-top:2px; font-size:10px; color:#666; font-weight:600;">
+                        <span id="main-bio-d1">-20</span><span id="main-bio-d2">-10</span><span id="main-bio-d3" style="color:#E53935; font-weight:800;">오늘</span><span id="main-bio-d4">+10</span><span id="main-bio-d5">+20</span>
+                    </div>
+                </div>
+                <div style="display:flex; gap:6px; margin-top:8px; justify-content:center;">
+                    <div style="display:flex; align-items:center; gap:3px; background:#E8F5E9; padding:3px 8px; border-radius:999px; border:1px solid #C8E6C9;"><span style="background:#4CAF50; color:#fff; padding:1px 4px; border-radius:3px; font-size:9px; font-weight:800;">신체</span><span style="font-size:11px; font-weight:700; color:#2E7D32;" id="main-bio-physical">--%</span></div>
+                    <div style="display:flex; align-items:center; gap:3px; background:#FBE9E7; padding:3px 8px; border-radius:999px; border:1px solid #FFCCBC;"><span style="background:#FF7043; color:#fff; padding:1px 4px; border-radius:3px; font-size:9px; font-weight:800;">감성</span><span style="font-size:11px; font-weight:700; color:#BF360C;" id="main-bio-emotional">--%</span></div>
+                    <div style="display:flex; align-items:center; gap:3px; background:#E1F5FE; padding:3px 8px; border-radius:999px; border:1px solid #B3E5FC;"><span style="background:#29B6F6; color:#fff; padding:1px 4px; border-radius:3px; font-size:9px; font-weight:800;">지성</span><span style="font-size:11px; font-weight:700; color:#0277BD;" id="main-bio-intellectual">--%</span></div>
+                </div>
+            </div>
+
             <div id="diary-around-today-list"></div>
         </div>
 
@@ -18124,6 +18201,966 @@ window.addEventListener("load", function() {
   setTimeout(setup, 1000);
 })();
 </script>
+
+<script id="FIXED_ALL_BIORHYTHM_SAJU">
+// Main biorhythm render
+function calcBiorhythmPercent(daysAlive, period){ return Math.sin(2 * Math.PI * daysAlive / period) * 100; }
+
+function renderMainBiorhythm(){
+  try{
+    let birthDateObj = null;
+    try{
+      if(window.sajuBirthInfo && window.sajuBirthInfo.date) birthDateObj = new Date(window.sajuBirthInfo.date);
+      else {
+        const stored = JSON.parse(localStorage.getItem('smartDiarySajuBirth')||'null');
+        if(stored && stored.date) birthDateObj = new Date(stored.date);
+      }
+    }catch(e){}
+    const teaser = document.getElementById('main-biorhythm-teaser');
+    if(!birthDateObj){
+      if(teaser) teaser.style.display='block';
+      const birthEl = document.getElementById('main-bio-birth');
+      if(birthEl) birthEl.textContent = '생년월일 설정 필요 - 설정에서 입력';
+      return;
+    }
+    const today = new Date();
+    const birthEl = document.getElementById('main-bio-birth');
+    if(birthEl) birthEl.textContent = birthDateObj.getFullYear()+'.'+String(birthDateObj.getMonth()+1).padStart(2,'0')+'.'+String(birthDateObj.getDate()).padStart(2,'0');
+    const daysAlive = Math.floor((today - birthDateObj)/86400000);
+    const physical = calcBiorhythmPercent(daysAlive,23);
+    const emotional = calcBiorhythmPercent(daysAlive,28);
+    const intellectual = calcBiorhythmPercent(daysAlive,33);
+    const phEl = document.getElementById('main-bio-physical');
+    const emEl = document.getElementById('main-bio-emotional');
+    const inEl = document.getElementById('main-bio-intellectual');
+    if(phEl) phEl.textContent = physical.toFixed(1)+'%';
+    if(emEl) emEl.textContent = emotional.toFixed(1)+'%';
+    if(inEl) inEl.textContent = intellectual.toFixed(1)+'%';
+    for(let i=0;i<5;i++){
+      const offset = (i-2)*10;
+      const d = new Date(today); d.setDate(today.getDate()+offset);
+      const el = document.getElementById('main-bio-d'+(i+1));
+      if(el) el.textContent = (d.getMonth()+1)+'.'+d.getDate();
+    }
+    const canvas = document.getElementById('main-biorhythm-canvas');
+    if(canvas){
+      const ctx = canvas.getContext('2d');
+      const W=canvas.width,H=canvas.height;
+      const padding={left:10,right:10,top:6,bottom:10};
+      const chartW=W-padding.left-padding.right, chartH=H-padding.top-padding.bottom;
+      ctx.clearRect(0,0,W,H);
+      ctx.strokeStyle='#E0E0E0'; ctx.lineWidth=0.5; ctx.setLineDash([2,3]);
+      const zeroY=padding.top+chartH/2;
+      ctx.beginPath(); ctx.moveTo(padding.left,zeroY); ctx.lineTo(W-padding.right,zeroY); ctx.stroke();
+      ctx.setLineDash([]);
+      const range=40;
+      const startDate=new Date(today); startDate.setDate(today.getDate()-20);
+      function getPts(period){
+        const pts=[];
+        for(let i=0;i<=range;i++){
+          const d=new Date(startDate); d.setDate(startDate.getDate()+i);
+          const days=Math.floor((d-birthDateObj)/86400000);
+          const val=Math.sin(2*Math.PI*days/period)*100;
+          const x=padding.left+chartW*i/range;
+          const y=zeroY-(val/100)*(chartH/2*0.85);
+          pts.push({x,y});
+        }
+        return pts;
+      }
+      const phPts=getPts(23), emPts=getPts(28), inPts=getPts(33);
+      function drawLine(pts,color,w){
+        ctx.strokeStyle=color; ctx.lineWidth=w; ctx.beginPath();
+        pts.forEach((p,i)=>{ if(i===0) ctx.moveTo(p.x,p.y); else ctx.lineTo(p.x,p.y); });
+        ctx.stroke();
+      }
+      drawLine(phPts,'#4CAF50',1.5); drawLine(emPts,'#FF7043',1.5); drawLine(inPts,'#29B6F6',1.5);
+      const todayX=padding.left+chartW*0.5;
+      ctx.strokeStyle='#E53935'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(todayX,padding.top); ctx.lineTo(todayX,padding.top+chartH); ctx.stroke();
+    }
+    if(teaser) teaser.style.display='block';
+  }catch(e){ console.log('main bio err',e); }
+}
+setTimeout(renderMainBiorhythm,1200);
+window.addEventListener('load', function(){ setTimeout(renderMainBiorhythm,2000); });
+
+// Hook recompute
+(function(){
+  const origRecompute = window.sajuRecomputeFromBirthInfo;
+  if(origRecompute){
+    window.sajuRecomputeFromBirthInfo = function(){
+      const r=origRecompute.apply(this,arguments);
+      setTimeout(renderMainBiorhythm,500);
+      return r;
+    };
+  }
+})();
+
+// FIX: ensure birth loaded before fortune popup
+window._origOpenFortunePopup = window.openFortunePopup;
+window.openFortunePopup = function(){
+  try{
+    if((!window.sajuBirthInfo || !window.sajuBirthInfo.date)){
+      const stored = JSON.parse(localStorage.getItem('smartDiarySajuBirth')||'null');
+      if(stored && stored.date){
+        window.sajuBirthInfo = stored;
+        if(typeof sajuRecomputeFromBirthInfo==='function') sajuRecomputeFromBirthInfo();
+      }
+    } else if(!window.sajuDayMasterElem || !window.sajuPillars){
+      if(typeof sajuRecomputeFromBirthInfo==='function') sajuRecomputeFromBirthInfo();
+    }
+  }catch(e){ console.log(e); }
+  if(window._origOpenFortunePopup) return window._origOpenFortunePopup.apply(this,arguments);
+  // Fallback to fixed version if orig not exist
+  if(typeof window.openFortunePopupFixed==='function') return window.openFortunePopupFixed();
+};
+
+// FIX: Saju Detail Modal - ensure recompute before open
+window._origOpenSajuDetail = window.openSajuDetailModal;
+window.openSajuDetailModal = function(){
+  try{
+    console.log('[SAJU] openSajuDetailModal called');
+    if((!window.sajuBirthInfo || !window.sajuBirthInfo.date)){
+      const stored = JSON.parse(localStorage.getItem('smartDiarySajuBirth')||'null');
+      if(stored && stored.date){
+        window.sajuBirthInfo = stored;
+        console.log('[SAJU] Loaded birth from storage');
+        if(typeof sajuRecomputeFromBirthInfo==='function') sajuRecomputeFromBirthInfo();
+      }
+    }
+    if(!window.sajuPillars || !window.sajuDayMasterElem){
+      if(typeof sajuRecomputeFromBirthInfo==='function'){
+        sajuRecomputeFromBirthInfo();
+        console.log('[SAJU] Recomputed pillars');
+      }
+    }
+    console.log('[SAJU] sajuPillars:', window.sajuPillars, 'dayMaster:', window.sajuDayMasterElem);
+  }catch(e){ console.log('[SAJU] err',e); }
+  if(window._origOpenSajuDetail) return window._origOpenSajuDetail.apply(this,arguments);
+};
+
+// Restore autopopup
+window.maybeAutoShowFortunePopup = function(){
+  try{
+    const autoV = localStorage.getItem('smartDiaryFortuneAuto');
+    if(autoV==='0') return;
+    if(typeof getShowFortune==='function' && !getShowFortune()) return;
+    let hasBirth=false;
+    try{
+      const bi = (window.sajuBirthInfo && window.sajuBirthInfo.date) ? window.sajuBirthInfo : JSON.parse(localStorage.getItem('smartDiarySajuBirth')||'null');
+      hasBirth = !!(bi && bi.date);
+    }catch(e){}
+    if(!hasBirth) return;
+    const today = new Date().toISOString().slice(0,10);
+    const lastShown = localStorage.getItem('smartDiarySajuLastShown');
+    const sess = sessionStorage.getItem('fortuneAutoShownSession');
+    if(lastShown===today || sess===today) return;
+    if(typeof openFortunePopup==='function'){
+      setTimeout(function(){ 
+        openFortunePopup(); 
+        try{ localStorage.setItem('smartDiarySajuLastShown', today); sessionStorage.setItem('fortuneAutoShownSession', today); }catch(e){}
+      }, 1000);
+    }
+  }catch(e){}
+};
+
+// Popup biorhythm override (fixed template - no ${} bug, using string concat)
+window._currentFortune = null;
+window._currentBiorhythm = null;
+
+window.writeDiaryWithBiorhythm = function(){
+  try{
+    const cf = window._currentFortune;
+    const br = window._currentBiorhythm;
+    if(!cf || !br) return;
+    const diaryText = '🔮 오늘의 운세 ('+cf.dateLabel+' '+cf.score+'점 - '+cf.friendlyName+'의 날)\n"'+cf.oneLine+'"\n\n📊 바이오리듬 - 신체 '+br.physical+'% | 감성 '+br.emotional+'% | 지성 '+br.intellectual+'%\n'+br.interpret+'\n\n오늘 이 리듬으로 살아보니...\n';
+    if(typeof closeFortunePopup==='function') closeFortunePopup();
+    setTimeout(function(){
+      const today = (typeof getTodayStr==='function') ? getTodayStr() : new Date().toISOString().slice(0,10);
+      if(typeof openDiaryForm==='function'){
+        openDiaryForm(today, null);
+        setTimeout(function(){
+          const ta = document.getElementById('diary-text-input') || document.getElementById('memo-text-input') || document.getElementById('textOutput') || document.querySelector('textarea');
+          if(ta){ ta.value = diaryText; ta.focus(); if(ta.setSelectionRange){ ta.setSelectionRange(ta.value.length, ta.value.length); } ta.dispatchEvent(new Event('input',{bubbles:true})); }
+        }, 400);
+      }
+    }, 350);
+  }catch(e){ console.log(e); }
+};
+
+function drawBiorhythmChartPopup(canvasId, birthDate, today){
+  try{
+    const canvas = document.getElementById(canvasId);
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const W=canvas.width,H=canvas.height;
+    const padding={left:12,right:12,top:12,bottom:22};
+    const chartW=W-padding.left-padding.right, chartH=H-padding.top-padding.bottom;
+    ctx.clearRect(0,0,W,H);
+    ctx.strokeStyle='#E0E0E0'; ctx.lineWidth=0.5; ctx.setLineDash([2,4]);
+    for(let i=0;i<=4;i++){ const y=padding.top+chartH*i/4; ctx.beginPath(); ctx.moveTo(padding.left,y); ctx.lineTo(W-padding.right,y); ctx.stroke(); }
+    const zeroY=padding.top+chartH/2;
+    ctx.strokeStyle='#9E9E9E'; ctx.lineWidth=1; ctx.setLineDash([4,4]); ctx.beginPath(); ctx.moveTo(padding.left,zeroY); ctx.lineTo(W-padding.right,zeroY); ctx.stroke(); ctx.setLineDash([]);
+    const range=40; const startDate=new Date(today); startDate.setDate(today.getDate()-20);
+    function getPts(period){
+      const pts=[];
+      for(let i=0;i<=range;i++){
+        const d=new Date(startDate); d.setDate(startDate.getDate()+i);
+        const days=Math.floor((d-birthDate)/86400000);
+        const val=calcBiorhythmPercent(days,period);
+        const x=padding.left+chartW*i/range; const y=zeroY-(val/100)*(chartH/2*0.85);
+        pts.push({x,y,val});
+      }
+      return pts;
+    }
+    const phPts=getPts(23), emPts=getPts(28), inPts=getPts(33);
+    const avgPts=phPts.map((p,i)=>({x:p.x, y:zeroY-((p.val+emPts[i].val+inPts[i].val)/3/100)*(chartH/2*0.85)}));
+    function drawLine(pts,color,w){ ctx.strokeStyle=color; ctx.lineWidth=w; ctx.beginPath(); pts.forEach((p,i)=>{ if(i===0) ctx.moveTo(p.x,p.y); else ctx.lineTo(p.x,p.y); }); ctx.stroke(); }
+    drawLine(avgPts,'#BDBDBD',1.2); drawLine(phPts,'#4CAF50',2); drawLine(emPts,'#FF7043',2); drawLine(inPts,'#29B6F6',2);
+    const todayIdx=20; const todayX=padding.left+chartW*todayIdx/range;
+    ctx.strokeStyle='#E53935'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(todayX,padding.top); ctx.lineTo(todayX,padding.top+chartH); ctx.stroke();
+    ctx.fillStyle='#E53935'; ctx.beginPath(); ctx.arc(todayX,padding.top+chartH+6,4,0,Math.PI*2); ctx.fill();
+    [phPts[todayIdx],emPts[todayIdx],inPts[todayIdx]].forEach((pt,i)=>{
+      const colors=['#4CAF50','#FF7043','#29B6F6'];
+      ctx.fillStyle=colors[i]; ctx.beginPath(); ctx.arc(pt.x,pt.y,3.5,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(pt.x,pt.y,1.5,0,Math.PI*2); ctx.fill();
+    });
+  }catch(e){ console.log('popup bio err',e); }
+}
+
+// Override popup with biorhythm (clean version)
+window.openFortunePopupFixed = function() {
+        const bodyEl = document.getElementById('fortune-popup-body');
+        if (!bodyEl) return;
+        if (!sajuBirthInfo || !sajuBirthInfo.date || !sajuDayMasterElem) {
+            bodyEl.innerHTML = '<div class="fp-hero"><div class="fp-eyebrow">🔮 오늘 하루 브리핑</div><div class="fp-setup-title">아직 준비 전이에요</div></div><div class="fp-setup-msg">생년월일을 한 번만 입력해두면<br>매일 다른, 나만의 오늘의 운세와 바이오리듬을 볼 수 있어요.</div><button class="fp-cta" onclick="closeFortunePopup(); openSettingsModal();">생년월일 입력하러 가기</button><div class="fp-exit-sticky" style="margin-top:12px; background:transparent; border-top:none;"><button onclick="closeFortunePopup()" style="width:100%;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:14px;border-radius:14px;font-weight:800;font-size:15px;">종료</button></div>';
+            const overlay = document.getElementById('fortune-popup-overlay');
+            if(overlay){ overlay.classList.add('active'); overlay.style.display='flex'; }
+            if(typeof lockBodyScroll==='function') lockBodyScroll();
+            return;
+        }
+        const enhanced = (typeof sajuGetEnhancedFortune==='function') ? sajuGetEnhancedFortune() : null;
+        const f = enhanced ? enhanced.base : SAJU_FORTUNE['비겁'];
+        const score = enhanced ? enhanced.score : f.score;
+        const weekday = ['일','월','화','수','목','금','토'][enhanced.dateObj.getDay()];
+        const dateLabel = (enhanced.dateObj.getMonth()+1)+'월 '+enhanced.dateObj.getDate()+'일 ('+weekday+')';
+        const tenGod = enhanced ? enhanced.tenGodGan : '비견';
+        const friendly = (typeof FRIENDLY_TEN_GOD!=='undefined' && FRIENDLY_TEN_GOD[tenGod]) ? FRIENDLY_TEN_GOD[tenGod] : {name:tenGod, desc:'', emoji:'🔮'};
+        const seedStr = (enhanced ? enhanced.dateObj.toISOString().slice(0,10) : '') + (sajuPillars?.day?.gan||'');
+        const seed = (typeof getDailySeed==='function') ? getDailySeed(seedStr) : 0;
+        const color = (typeof pickBySeed==='function' && typeof FRIENDLY_COLORS!=='undefined') ? pickBySeed(FRIENDLY_COLORS, seed, 0) : '미스트 그린';
+        const action = (typeof pickBySeed==='function' && typeof FRIENDLY_ACTIONS!=='undefined') ? pickBySeed(FRIENDLY_ACTIONS, seed, 1) : '오전 10분 산책하기';
+        const avoid = (typeof pickBySeed==='function' && typeof FRIENDLY_AVOIDS!=='undefined') ? pickBySeed(FRIENDLY_AVOIDS, seed, 2) : '오후 늦게 중요한 결정';
+        const num1 = (seed % 9) + 1; const num2 = ((seed+3) % 9) + 1;
+        const goodTime = (typeof pickBySeed==='function') ? pickBySeed(['09:00~11:00','11:00~13:00','14:00~16:00','19:00~21:00','07:00~09:00'], seed, 3) : '11:00~13:00';
+        const oneLiners = {'비견':'내 고집대로 가도 괜찮은 날, 근데 옆도 한번 봐줘요','겁재':'경쟁심이 올라와요, 비교 말고 내 페이스대로','식신':'아이디어가 맛있게 떠오르는 날이에요','상관':'하고 싶은 말이 많아지는 날, 말하기 전에 한 번만 더','편재':'작은 기회가 톡톡 들어와요, 가볍게 잡아봐요','정재':'차곡차곡, 오늘은 실속 챙기는 날','편관':'조금 부담돼도 해내면 레벨업하는 날','정관':'믿을 만한 사람으로 보이는 날이에요','편인':'번뜩이는 영감이 오는 날, 메모해둬요','정인':'누가 나를 챙겨주고, 나도 배우는 날'};
+        const oneLine = oneLiners[tenGod] || f.total.split('.')[0];
+        let detailTotal=f.total, detailMoney=f.money, detailLove=f.love;
+        if(enhanced && typeof SAJU_FORTUNE_DETAIL!=='undefined' && SAJU_FORTUNE_DETAIL[tenGod]){
+            const dm=sajuPillars.day.gan; const strength=enhanced.strength;
+            try{ detailTotal=SAJU_FORTUNE_DETAIL[tenGod].total(dm,strength); detailMoney=SAJU_FORTUNE_DETAIL[tenGod].money(dm); detailLove=SAJU_FORTUNE_DETAIL[tenGod].love(dm); }catch(e){}
+        }
+        const friendlyTotal = detailTotal.replace(/비견|겁재|식신|상관|편재|정재|편관|정관|편인|정인/g, '').replace(/일간|일주/g,'나');
+        
+        let birthDateObj=null, birthLabel='정보없음';
+        try{
+          const bd=sajuBirthInfo.date;
+          if(bd){ birthDateObj=new Date(bd); birthLabel=birthDateObj.getFullYear()+'년'+(birthDateObj.getMonth()+1)+'월'+birthDateObj.getDate()+'일생'; }
+        }catch(e){}
+        const todayDate=enhanced?enhanced.dateObj:new Date();
+        const daysAlive=birthDateObj?Math.floor((todayDate-birthDateObj)/86400000):0;
+        const physical=birthDateObj?calcBiorhythmPercent(daysAlive,23):0;
+        const emotional=birthDateObj?calcBiorhythmPercent(daysAlive,28):0;
+        const intellectual=birthDateObj?calcBiorhythmPercent(daysAlive,33):0;
+        const physicalPercent=physical.toFixed(1), emotionalPercent=emotional.toFixed(1), intellectualPercent=intellectual.toFixed(1);
+        const dateLabels=[];
+        for(let offset of [-20,-10,0,10,20]){ const d=new Date(todayDate); d.setDate(todayDate.getDate()+offset); dateLabels.push((d.getMonth()+1)+'.'+d.getDate()); }
+        let interpret='';
+        if(physical>80) interpret+='신체 에너지가 최고조! 운동, 활동하기 딱 좋은 날. ';
+        else if(physical<-80) interpret+='신체 리듬이 바닥, 무리하지 말고 휴식이 필요해요. ';
+        else interpret+='신체는 무난한 흐름이에요. ';
+        if(emotional>70) interpret+='감성은 긍정적이고 사교적, 사람 만나는 게 좋아요. ';
+        else if(emotional<-70) interpret+='감성이 예민해질 수 있어요, 혼자만의 시간도 필요해요. ';
+        if(intellectual>70) interpret+='지성은 맑고 집중력 최고, 공부나 중요한 결정에 좋아요.';
+        else if(intellectual<-70) interpret+='지성은 조금 흐릿, 중요한 결정은 내일로 미뤄보세요.';
+        else interpret+='지성은 안정적이에요.';
+
+        window._currentFortune={oneLine:oneLine,dateLabel:dateLabel,score:score,friendlyName:friendly.name,friendlyEmoji:friendly.emoji,tenGod:tenGod,action:action,avoid:avoid,color:color,goodTime:goodTime,num1:num1,num2:num2,total:friendlyTotal,money:detailMoney,love:detailLove};
+        window._currentBiorhythm={physical:physicalPercent,emotional:emotionalPercent,intellectual:intellectualPercent,interpret:interpret,birthLabel:birthLabel};
+
+        let html='';
+        html+='<div class="fp-hero"><div class="fp-eyebrow" style="background:linear-gradient(120deg,#FFD98E,#FF9AC2);color:#2A2340;">'+friendly.emoji+' 오늘은 '+friendly.name+'의 날</div><div style="margin-top:10px;font-size:20px;font-weight:800;line-height:1.3;color:#fff;">'+oneLine+'</div></div>';
+        html+='<div style="margin-top:16px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:18px;padding:16px;"><div style="display:flex;align-items:center;gap:16px;"><div style="position:relative;width:88px;height:88px;flex-shrink:0;"><svg width="88" height="88" viewBox="0 0 88 88" style="transform:rotate(-90deg);"><circle cx="44" cy="44" r="36" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="7"/><circle cx="44" cy="44" r="36" fill="none" stroke="url(#gradScore)" stroke-width="7" stroke-linecap="round" stroke-dasharray="'+(2*Math.PI*36)+'" stroke-dashoffset="'+(2*Math.PI*36*(1-score/100))+'" style="transition: stroke-dashoffset 0.8s ease;"/><defs><linearGradient id="gradScore" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FFD98E"/><stop offset="100%" stop-color="#FF9AC2"/></linearGradient></defs></svg><div style="position:absolute;left:0;top:0;width:88px;height:88px;display:flex;flex-direction:column;align-items:center;justify-content:center;"><div style="font-size:26px;font-weight:900;color:#FFD98E;line-height:1;">'+score+'</div><div style="font-size:11px;color:rgba(255,255,255,0.6);margin-top:2px;">/100</div></div></div><div style="flex:1;"><div style="font-size:15px;font-weight:800;color:#fff;line-height:1.3;">'+(score>=90?'최고의 날이에요! 하고 싶은 거 다 해요':score>=75?'좋은 흐름이에요, 가볍게 밀어봐요':score>=55?'무난한 날, 기본에 충실해요':'쉬어가도 괜찮아요, 내일을 위해 충전해요')+'</div><div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;"><span style="background:rgba(255,217,142,0.15);border:1px solid rgba(255,217,142,0.25);padding:3px 8px;border-radius:999px;font-size:11px;color:#FFE9C2;">🎨 '+color.split(' ')[0]+'</span><span style="background:rgba(255,255,255,0.08);padding:3px 8px;border-radius:999px;font-size:11px;color:rgba(255,255,255,0.8);">⏰ '+goodTime+'</span></div></div></div><div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.08);display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;"><div><span style="color:rgba(255,255,255,0.45);">행운숫자</span> <span style="color:#fff;font-weight:700;margin-left:4px;">🔢 '+num1+', '+num2+'</span></div><div><span style="color:rgba(255,255,255,0.45);">하면 좋은 것</span> <span style="color:#7CFF9B;font-weight:700;margin-left:4px;">✅ '+action+'</span></div><div><span style="color:rgba(255,255,255,0.45);">행운색</span> <span style="color:#FFE9C2;font-weight:600;margin-left:4px;">'+color+'</span></div><div><span style="color:rgba(255,255,255,0.45);">조심할 것</span> <span style="color:#FF9AA2;font-weight:600;margin-left:4px;">⚠️ '+avoid+'</span></div></div></div>';
+        html+='<div style="margin-top:14px;display:grid;gap:10px;"><div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:12px;"><div style="font-size:12px;color:#FFD98E;font-weight:700;margin-bottom:4px;">🌟 총운</div><div style="font-size:13.5px;line-height:1.5;color:rgba(255,255,255,0.85);">'+friendlyTotal+'</div></div><div style="display:grid;gap:10px;"><div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:12px;"><div style="font-size:12px;color:#7CFF9B;font-weight:700;margin-bottom:4px;">💰 재물운</div><div style="font-size:13.5px;line-height:1.5;color:rgba(255,255,255,0.85);">'+detailMoney+'</div></div><div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:12px;"><div style="font-size:12px;color:#FF9AC2;font-weight:700;margin-bottom:4px;">💗 애정운</div><div style="font-size:13.5px;line-height:1.5;color:rgba(255,255,255,0.85);">'+detailLove+'</div></div></div></div>';
+        html+='<div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:14px;"><div class="fp-my-saju-link-big" onclick="openSajuDetailModal()" style="margin:0; text-align:center; padding:10px; font-size:13px; background:rgba(255,255,255,0.08); border-radius:10px; color:#E8D5FF; cursor:pointer;">📜 나의 사주풀이</div><div class="fp-my-saju-link-big" onclick="openBucketListModal()" style="margin:0; text-align:center; padding:10px; font-size:13px; background:linear-gradient(120deg, #A8EDEA, #FED6E3); color:#2A2340; border-radius:10px; cursor:pointer;">🎯 나의 버킷 리스트</div></div>';
+        html+='<div class="fp-biorhythm-card" id="fp-biorhythm-card" style="margin-top:16px; padding:14px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.08); border-radius:16px;">';
+        html+='<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;"><div style="font-size:13px; font-weight:800; color:#fff;">◇ 바이오리듬</div><div style="font-size:11px; color:rgba(255,255,255,0.5); display:flex; align-items:center; gap:6px;"><span>생년월일 '+birthLabel+'</span><button onclick="closeFortunePopup(); openSettingsModal();" style="background:rgba(255,255,255,0.15); border:none; color:#fff; padding:4px 10px; border-radius:999px; font-size:11px; font-weight:700; cursor:pointer;">변경</button></div></div>';
+        html+='<div style="background:#fff; border-radius:12px; padding:10px 8px 6px 8px;"><canvas id="biorhythm-canvas" width="600" height="200" style="width:100%; height:140px; display:block;"></canvas><div style="display:flex; justify-content:space-between; padding:0 8px; margin-top:4px; font-size:12px; color:#333; font-weight:600;"><span>'+dateLabels[0]+'</span><span>'+dateLabels[1]+'</span><span style="color:#E53935; font-weight:800;">'+dateLabels[2]+'</span><span>'+dateLabels[3]+'</span><span>'+dateLabels[4]+'</span></div></div>';
+        html+='<div style="display:flex; gap:8px; margin-top:10px; justify-content:center; flex-wrap:wrap;"><div style="display:flex; align-items:center; gap:4px; background:#fff; padding:5px 10px; border-radius:8px; border:1px solid #eee;"><span style="background:#4CAF50; color:#fff; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:800;">신체</span><span style="font-size:13px; font-weight:700; color:#333;">'+physicalPercent+'%</span></div><div style="display:flex; align-items:center; gap:4px; background:#fff; padding:5px 10px; border-radius:8px; border:1px solid #eee;"><span style="background:#FF7043; color:#fff; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:800;">감성</span><span style="font-size:13px; font-weight:700; color:#333;">'+emotionalPercent+'%</span></div><div style="display:flex; align-items:center; gap:4px; background:#fff; padding:5px 10px; border-radius:8px; border:1px solid #eee;"><span style="background:#29B6F6; color:#fff; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:800;">지성</span><span style="font-size:13px; font-weight:700; color:#333;">'+intellectualPercent+'%</span></div></div>';
+        html+='<div style="margin-top:10px; background:rgba(255,255,255,0.05); border-radius:10px; padding:10px; font-size:11.5px; line-height:1.5; color:rgba(255,255,255,0.7);"><div style="font-weight:700; color:#FFD98E; margin-bottom:4px;">💡 오늘의 바이오리듬 해석</div><div>'+interpret+'</div></div>';
+        html+='<button style="width:100%; margin-top:10px; padding:12px; border-radius:12px; border:none; font-weight:800; font-size:13px; cursor:pointer; background:linear-gradient(120deg,#FFD98E 0%,#FF9AC2 100%); color:#2A2340;" onclick="writeDiaryWithBiorhythm()">📝 바이오리듬으로 오늘 일기 쓰기</button>';
+        html+='</div>';
+        html+='<div class="fp-exit-sticky" style="margin-top:12px;"><button onclick="closeFortunePopup()" style="width:100%;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:14px;border-radius:14px;font-weight:800;font-size:15px;">종료</button></div>';
+
+        bodyEl.innerHTML = html;
+        const overlay = document.getElementById('fortune-popup-overlay');
+        if(overlay){ overlay.classList.add('active'); overlay.style.display='flex'; }
+        if(typeof lockBodyScroll==='function') lockBodyScroll();
+        setTimeout(function(){ if(birthDateObj) drawBiorhythmChartPopup('biorhythm-canvas', birthDateObj, todayDate); }, 100);
+};
+window.openFortunePopup = window.openFortunePopupFixed;
+</script>
+
+
+<script id="FINAL_SAJU_FIX">
+console.log('[FINAL FIX] Saju modal final fix');
+
+window.openSajuDetailModal = function(){
+  console.log('[SAJU FINAL] called');
+  try{
+    // Load birth if missing
+    if(!window.sajuBirthInfo || !window.sajuBirthInfo.date){
+      try{
+        const stored = JSON.parse(localStorage.getItem('smartDiarySajuBirth')||'null');
+        if(stored && stored.date){
+          window.sajuBirthInfo = stored;
+          console.log('[SAJU FINAL] loaded birth', stored);
+        }
+      }catch(e){ console.log('[SAJU FINAL] load err', e); }
+    }
+    
+    // Recompute if needed
+    if(window.sajuBirthInfo && window.sajuBirthInfo.date){
+      if(!window.sajuPillars || !window.sajuDayMasterElem){
+        if(typeof sajuRecomputeFromBirthInfo==='function'){
+          console.log('[SAJU FINAL] calling recompute');
+          sajuRecomputeFromBirthInfo();
+        }
+      }
+    }
+    
+    console.log('[SAJU FINAL] sajuBirthInfo:', window.sajuBirthInfo);
+    console.log('[SAJU FINAL] sajuPillars:', window.sajuPillars);
+    console.log('[SAJU FINAL] sajuDayMasterElem:', window.sajuDayMasterElem);
+    
+    if(!window.sajuBirthInfo || !window.sajuBirthInfo.date || !window.sajuPillars){
+      console.log('[SAJU FINAL] No birth info, opening fortune popup for setup');
+      if(typeof window.openFortunePopupFixed==='function'){
+        window.openFortunePopupFixed();
+      } else if(typeof window.openFortunePopup==='function'){
+        // Prevent recursion
+        const overlay = document.getElementById('fortune-popup-overlay');
+        const bodyEl = document.getElementById('fortune-popup-body');
+        if(bodyEl){
+          bodyEl.innerHTML = '<div class="fp-hero"><div class="fp-eyebrow">🔮 오늘 하루 브리핑</div><div class="fp-setup-title">아직 준비 전이에요</div></div><div class="fp-setup-msg">생년월일을 한 번만 입력해두면<br>매일 다른, 나만의 오늘의 운세와 바이오리듬을 볼 수 있어요.</div><button class="fp-cta" onclick="closeFortunePopup(); openSettingsModal();">생년월일 입력하러 가기</button><div class="fp-exit-sticky" style="margin-top:12px; background:transparent; border-top:none;"><button onclick="closeFortunePopup()" style="width:100%;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:14px;border-radius:14px;font-weight:800;font-size:15px;">종료</button></div>';
+          if(overlay){ overlay.classList.add('active'); overlay.style.display='flex'; }
+          if(typeof lockBodyScroll==='function') lockBodyScroll();
+        }
+      }
+      return;
+    }
+
+    // Now render saju detail (copy from original)
+    const yearZhi = window.sajuPillars.year ? window.sajuPillars.year.zhi : null;
+    const zodiac = yearZhi && typeof SAJU_ZODIAC_ANIMAL!=='undefined' ? SAJU_ZODIAC_ANIMAL[yearZhi] : null;
+    const zodiacBadgeEl = document.getElementById('sd-zodiac-badge');
+    if(zodiacBadgeEl) zodiacBadgeEl.innerHTML = zodiac ? '<div class="sd-zodiac-badge">'+zodiac.emoji+' '+zodiac.name+'띠</div>' : '';
+
+    const pillarsGrid = document.getElementById('sd-pillars');
+    if(pillarsGrid){
+      pillarsGrid.innerHTML = '';
+      const order = [ { key:'year', label:'년주' }, { key:'month', label:'월주' }, { key:'day', label:'일주' }, { key:'hour', label:'시주' } ];
+      order.forEach(o => {
+        const p = window.sajuPillars[o.key];
+        const div = document.createElement('div');
+        if(!p){
+          div.className = 'sd-pillar na';
+          div.innerHTML = '<div class="sdp-label">'+o.label+'</div><div class="sdp-char">-</div><div class="sdp-char">-</div>';
+        } else {
+          const ge = typeof sajuElementOfGan==='function' ? sajuElementOfGan(p.gan) : '';
+          const ze = typeof sajuElementOfZhi==='function' ? sajuElementOfZhi(p.zhi) : '';
+          const colorGe = typeof SAJU_ELEM_COLOR!=='undefined' ? SAJU_ELEM_COLOR[ge] : '#999';
+          const colorZe = typeof SAJU_ELEM_COLOR!=='undefined' ? SAJU_ELEM_COLOR[ze] : '#999';
+          div.className = 'sd-pillar';
+          div.innerHTML = '<div class="sdp-label">'+o.label+'</div><div class="sdp-char" style="background:'+colorGe+'22; color:'+colorGe+'">'+p.gan+'</div><div class="sdp-char" style="background:'+colorZe+'22; color:'+colorZe+'">'+p.zhi+'</div>';
+        }
+        pillarsGrid.appendChild(div);
+      });
+      if(!window.sajuPillars.hour){
+        const note = document.createElement('div');
+        note.style.cssText = 'grid-column:1/-1; font-size:12.5px; color:#B0A692; text-align:center; margin-top:-4px;';
+        note.textContent = '시주는 태어난 시각을 몰라 표시하지 않았어요';
+        pillarsGrid.appendChild(note);
+      }
+    }
+
+    const dmGan = window.sajuPillars.day.gan;
+    const dmInfo = typeof SAJU_GAN_INFO!=='undefined' ? SAJU_GAN_INFO[dmGan] : {name:dmGan, symbol:''};
+    const strength = typeof sajuJudgeStrength==='function' ? sajuJudgeStrength(window.sajuPillars, window.sajuDayMasterElem) : '보통';
+    const dmCharEl = document.getElementById('sd-dm-char');
+    const dmDescEl = document.getElementById('sd-dm-desc');
+    if(dmCharEl){
+      dmCharEl.textContent = dmGan;
+      if(typeof SAJU_ELEM_COLOR!=='undefined' && window.sajuDayMasterElem){
+        dmCharEl.style.background = SAJU_ELEM_COLOR[window.sajuDayMasterElem] + '33';
+        dmCharEl.style.color = SAJU_ELEM_COLOR[window.sajuDayMasterElem];
+      }
+    }
+    if(dmDescEl){
+      const symbol = dmInfo.symbol || '';
+      const descMap = typeof SAJU_DM_DESC_GAN!=='undefined' ? SAJU_DM_DESC_GAN : {};
+      const strengthMap = typeof SAJU_STRENGTH_BLURB!=='undefined' ? SAJU_STRENGTH_BLURB : {};
+      dmDescEl.innerHTML = '당신의 타고난 기본 성격은 <b>'+ (dmInfo.name||dmGan) +'('+dmGan+')</b> — <b>'+symbol+'</b>의 기운이에요. (사주에서는 이를 \'일간\'이라 불러요) '+(descMap[dmGan]||'')+'<br><br>💪 <b>'+strength+'</b> 사주예요. '+(strengthMap[strength]||'');
+    }
+
+    // Show modal
+    const sajuOverlay = document.getElementById('saju-detail-modal-overlay');
+    if(sajuOverlay){
+      sajuOverlay.classList.add('active');
+      sajuOverlay.style.display='flex';
+      console.log('[SAJU FINAL] Modal shown');
+      if(typeof lockBodyScroll==='function') lockBodyScroll();
+    } else {
+      console.log('[SAJU FINAL] Overlay not found!');
+      alert('사주 모달을 찾을 수 없어요. 페이지를 새로고침 해주세요.');
+    }
+    
+  }catch(err){
+    console.error('[SAJU FINAL] Error:', err);
+    alert('사주풀이 오류: '+err.message+'\n콘솔을 확인해주세요.');
+  }
+};
+
+window.closeSajuDetailModal = function(){
+  const overlay = document.getElementById('saju-detail-modal-overlay');
+  if(overlay){ overlay.classList.remove('active'); overlay.style.display='none'; }
+  if(typeof unlockBodyScroll==='function') unlockBodyScroll();
+};
+
+// Also fix fortune popup close
+window.closeFortunePopup = function(){
+  const fo = document.getElementById('fortune-popup-overlay');
+  if(fo){ fo.classList.remove('active'); fo.style.display='none'; }
+  document.body.classList.remove('modal-open');
+  if(typeof unlockBodyScroll==='function') try{ unlockBodyScroll(); }catch(e){}
+};
+
+console.log('[FINAL FIX] Saju modal override complete');
+</script>
+
+
+<script id="CLICK_FIX">
+window.openSajuDetailModal = function(){
+  console.log('[CLICK FIX] Saju clicked');
+  try{
+    // Ensure birth loaded
+    if(!window.sajuBirthInfo || !window.sajuBirthInfo.date){
+      const stored = JSON.parse(localStorage.getItem('smartDiarySajuBirth')||'null');
+      if(stored && stored.date) window.sajuBirthInfo = stored;
+    }
+    if(window.sajuBirthInfo && window.sajuBirthInfo.date && (!window.sajuPillars || !window.sajuDayMasterElem)){
+      if(typeof sajuRecomputeFromBirthInfo==='function') sajuRecomputeFromBirthInfo();
+    }
+    
+    if(!window.sajuPillars){
+      alert('생년월일 정보가 없습니다. 설정에서 생년월일을 먼저 입력해주세요!');
+      if(typeof openSettingsModal==='function'){ closeFortunePopup(); setTimeout(openSettingsModal, 300); }
+      return;
+    }
+
+    // Close fortune popup first
+    const fortuneOverlay = document.getElementById('fortune-popup-overlay');
+    if(fortuneOverlay){ fortuneOverlay.classList.remove('active'); fortuneOverlay.style.display='none'; }
+    
+    // Render pillars
+    const yearZhi = window.sajuPillars.year ? window.sajuPillars.year.zhi : null;
+    const zodiac = yearZhi && typeof SAJU_ZODIAC_ANIMAL!=='undefined' ? SAJU_ZODIAC_ANIMAL[yearZhi] : null;
+    const zodiacBadgeEl = document.getElementById('sd-zodiac-badge');
+    if(zodiacBadgeEl) zodiacBadgeEl.innerHTML = zodiac ? '<div class="sd-zodiac-badge">'+zodiac.emoji+' '+zodiac.name+'띠</div>' : '';
+
+    const pillarsGrid = document.getElementById('sd-pillars');
+    if(pillarsGrid){
+      pillarsGrid.innerHTML = '';
+      const order = [ { key:'year', label:'년주' }, { key:'month', label:'월주' }, { key:'day', label:'일주' }, { key:'hour', label:'시주' } ];
+      order.forEach(o => {
+        const p = window.sajuPillars[o.key];
+        const div = document.createElement('div');
+        if(!p){
+          div.className = 'sd-pillar na';
+          div.innerHTML = '<div class="sdp-label">'+o.label+'</div><div class="sdp-char">-</div><div class="sdp-char">-</div>';
+        } else {
+          const ge = typeof sajuElementOfGan==='function' ? sajuElementOfGan(p.gan) : '';
+          const ze = typeof sajuElementOfZhi==='function' ? sajuElementOfZhi(p.zhi) : '';
+          const colorGe = typeof SAJU_ELEM_COLOR!=='undefined' ? SAJU_ELEM_COLOR[ge] : '#999';
+          const colorZe = typeof SAJU_ELEM_COLOR!=='undefined' ? SAJU_ELEM_COLOR[ze] : '#999';
+          div.className = 'sd-pillar';
+          div.innerHTML = '<div class="sdp-label">'+o.label+'</div><div class="sdp-char" style="background:'+colorGe+'22; color:'+colorGe+'">'+p.gan+'</div><div class="sdp-char" style="background:'+colorZe+'22; color:'+colorZe+'">'+p.zhi+'</div>';
+        }
+        pillarsGrid.appendChild(div);
+      });
+    }
+
+    const dmGan = window.sajuPillars.day.gan;
+    const dmInfo = typeof SAJU_GAN_INFO!=='undefined' ? SAJU_GAN_INFO[dmGan] : {name:dmGan, symbol:''};
+    const strength = typeof sajuJudgeStrength==='function' ? sajuJudgeStrength(window.sajuPillars, window.sajuDayMasterElem) : '보통';
+    const dmCharEl = document.getElementById('sd-dm-char');
+    const dmDescEl = document.getElementById('sd-dm-desc');
+    if(dmCharEl){
+      dmCharEl.textContent = dmGan;
+      if(typeof SAJU_ELEM_COLOR!=='undefined' && window.sajuDayMasterElem){
+        dmCharEl.style.background = SAJU_ELEM_COLOR[window.sajuDayMasterElem] + '33';
+        dmCharEl.style.color = SAJU_ELEM_COLOR[window.sajuDayMasterElem];
+      }
+    }
+    if(dmDescEl){
+      const descMap = typeof SAJU_DM_DESC_GAN!=='undefined' ? SAJU_DM_DESC_GAN : {};
+      const strengthMap = typeof SAJU_STRENGTH_BLURB!=='undefined' ? SAJU_STRENGTH_BLURB : {};
+      dmDescEl.innerHTML = '당신의 일간은 <b>'+ (dmInfo.name||dmGan) +'('+dmGan+')</b> — <b>'+(dmInfo.symbol||'')+'</b> 기운이에요. '+(descMap[dmGan]||'')+'<br><br>💪 <b>'+strength+'</b> 사주예요. '+(strengthMap[strength]||'');
+    }
+
+    // Show modal with high z-index
+    setTimeout(function(){
+      const sajuOverlay = document.getElementById('saju-detail-modal-overlay');
+      if(sajuOverlay){
+        sajuOverlay.style.zIndex='1200';
+        sajuOverlay.classList.add('active');
+        sajuOverlay.style.display='flex';
+        if(typeof lockBodyScroll==='function') lockBodyScroll();
+        console.log('[CLICK FIX] Saju modal opened');
+      }
+    }, 100);
+    
+  }catch(err){
+    console.error(err);
+    alert('사주풀이 오류: '+err.message);
+  }
+};
+
+window.openBucketListModal = function(){
+  try{
+    const fortuneOverlay = document.getElementById('fortune-popup-overlay');
+    if(fortuneOverlay){ fortuneOverlay.classList.remove('active'); fortuneOverlay.style.display='none'; }
+    setTimeout(function(){
+      const bucketOverlay = document.getElementById('bucket-list-modal-overlay');
+      if(bucketOverlay){
+        bucketOverlay.style.zIndex='1200';
+        bucketOverlay.classList.add('active');
+        bucketOverlay.style.display='flex';
+        if(typeof lockBodyScroll==='function') lockBodyScroll();
+      } else if(typeof window._origOpenBucketListModal==='function'){
+        window._origOpenBucketListModal();
+      }
+    }, 100);
+  }catch(e){ console.log(e); }
+};
+
+// Save original bucket
+if(!window._origOpenBucketListModal && window.openBucketListModal){
+  // already overridden, skip
+}
+
+console.log('[CLICK FIX] Done');
+</script>
+
+
+<script id="ROBUST_SAJU">
+window.sajuComputePillarsRobust = function(info){
+  try{
+    if(!info || !info.date) throw new Error('no date');
+    let y,m,d;
+    if(info.date.includes('-')){
+      const parts = info.date.split('-').map(Number);
+      y=parts[0]; m=parts[1]; d=parts[2];
+    } else if(info.date.includes('/')){
+      const parts = info.date.split('/').map(Number);
+      y=parts[0]; m=parts[1]; d=parts[2];
+    } else {
+      const dt = new Date(info.date);
+      if(isNaN(dt)) throw new Error('invalid date '+info.date);
+      y=dt.getFullYear(); m=dt.getMonth()+1; d=dt.getDate();
+    }
+    const lib = (window.solarLunar && (window.solarLunar.default || window.solarLunar)) || (window.sajuGetLib ? window.sajuGetLib() : null);
+    if(!lib) throw new Error('solarLunar library not loaded');
+    if(typeof lib.solar2lunar!=='function') throw new Error('solar2lunar not found');
+    const lunar = lib.solar2lunar(y,m,d);
+    if(!lunar || !lunar.gzYear) throw new Error('lunar conversion failed for '+y+'-'+m+'-'+d);
+    const yearGz = lunar.gzYear, monthGz = lunar.gzMonth, dayGz = lunar.gzDay;
+    let hourGz=null;
+    if(info.time){
+      const hour = parseInt(info.time.split(':')[0],10);
+      if(lib.gan && lib.getShiChen){
+        const dayGanIndex = lib.gan.indexOf(dayGz[0]);
+        hourGz = lib.getShiChen(hour, dayGanIndex);
+      }
+    }
+    return { year:{gan:yearGz[0],zhi:yearGz[1]}, month:{gan:monthGz[0],zhi:monthGz[1]}, day:{gan:dayGz[0],zhi:dayGz[1]}, hour: hourGz?{gan:hourGz[0],zhi:hourGz[1]}:null };
+  }catch(e){
+    console.error('[ROBUST] compute fail', e);
+    throw e;
+  }
+};
+
+window.sajuRecomputeRobust = function(){
+  try{
+    if(!window.sajuBirthInfo || !window.sajuBirthInfo.date){
+      const stored = JSON.parse(localStorage.getItem('smartDiarySajuBirth')||'null');
+      if(stored && stored.date) window.sajuBirthInfo = stored;
+    }
+    if(!window.sajuBirthInfo || !window.sajuBirthInfo.date) return false;
+    const pillars = window.sajuComputePillarsRobust(window.sajuBirthInfo);
+    window.sajuPillars = pillars;
+    if(window.sajuPillars && window.sajuPillars.day){
+      if(typeof sajuElementOfGan==='function'){
+        window.sajuDayMasterElem = sajuElementOfGan(window.sajuPillars.day.gan);
+      }
+    }
+    console.log('[ROBUST] pillars computed', window.sajuPillars);
+    return true;
+  }catch(e){
+    console.error('[ROBUST] recompute fail', e);
+    return false;
+  }
+};
+
+window.openSajuDetailModal = function(){
+  console.log('[ROBUST] openSajuDetailModal');
+  // Try robust recompute
+  window.sajuRecomputeRobust();
+  
+  if(!window.sajuPillars){
+    // Still no pillars, try once more after 500ms if library loads late
+    if(window.solarLunar){
+      console.log('[ROBUST] retry after lib check');
+      window.sajuRecomputeRobust();
+    }
+  }
+  
+  if(!window.sajuPillars){
+    console.log('[ROBUST] No pillars after robust recompute');
+    alert('사주 계산에 실패했어요.\n생년월일: '+(window.sajuBirthInfo?window.sajuBirthInfo.date:'없음')+'\n\n설정에서 생년월일을 YYYY-MM-DD 형식(예: 1967-02-21)으로 다시 저장해주세요!\n\n(현재 저장된 값: '+JSON.stringify(window.sajuBirthInfo)+')');
+    return;
+  }
+  
+  // Close fortune
+  const fo = document.getElementById('fortune-popup-overlay');
+  if(fo){ fo.classList.remove('active'); fo.style.display='none'; }
+  
+  // Render
+  try{
+    const yearZhi = window.sajuPillars.year ? window.sajuPillars.year.zhi : null;
+    const zodiac = yearZhi && typeof SAJU_ZODIAC_ANIMAL!=='undefined' ? SAJU_ZODIAC_ANIMAL[yearZhi] : null;
+    const badgeEl = document.getElementById('sd-zodiac-badge');
+    if(badgeEl) badgeEl.innerHTML = zodiac ? '<div class="sd-zodiac-badge">'+zodiac.emoji+' '+zodiac.name+'띠</div>' : '';
+    
+    const grid = document.getElementById('sd-pillars');
+    if(grid){
+      grid.innerHTML='';
+      [{key:'year',label:'년주'},{key:'month',label:'월주'},{key:'day',label:'일주'},{key:'hour',label:'시주'}].forEach(o=>{
+        const p=window.sajuPillars[o.key];
+        const div=document.createElement('div');
+        if(!p){ div.className='sd-pillar na'; div.innerHTML='<div class="sdp-label">'+o.label+'</div><div class="sdp-char">-</div><div class="sdp-char">-</div>'; }
+        else {
+          const ge=typeof sajuElementOfGan==='function'?sajuElementOfGan(p.gan):''; 
+          const ze=typeof sajuElementOfZhi==='function'?sajuElementOfZhi(p.zhi):'';
+          const c1=typeof SAJU_ELEM_COLOR!=='undefined'?SAJU_ELEM_COLOR[ge]:'#999';
+          const c2=typeof SAJU_ELEM_COLOR!=='undefined'?SAJU_ELEM_COLOR[ze]:'#999';
+          div.className='sd-pillar';
+          div.innerHTML='<div class="sdp-label">'+o.label+'</div><div class="sdp-char" style="background:'+c1+'22;color:'+c1+'">'+p.gan+'</div><div class="sdp-char" style="background:'+c2+'22;color:'+c2+'">'+p.zhi+'</div>';
+        }
+        grid.appendChild(div);
+      });
+    }
+    
+    const dmGan=window.sajuPillars.day.gan;
+    const dmInfo=typeof SAJU_GAN_INFO!=='undefined'?SAJU_GAN_INFO[dmGan]:{name:dmGan};
+    const strength=typeof sajuJudgeStrength==='function'?sajuJudgeStrength(window.sajuPillars,window.sajuDayMasterElem):'보통';
+    const dmCharEl=document.getElementById('sd-dm-char');
+    const dmDescEl=document.getElementById('sd-dm-desc');
+    if(dmCharEl){
+      dmCharEl.textContent=dmGan;
+      if(typeof SAJU_ELEM_COLOR!=='undefined'&&window.sajuDayMasterElem){
+        dmCharEl.style.background=SAJU_ELEM_COLOR[window.sajuDayMasterElem]+'33';
+        dmCharEl.style.color=SAJU_ELEM_COLOR[window.sajuDayMasterElem];
+      }
+    }
+    if(dmDescEl){
+      const descMap=typeof SAJU_DM_DESC_GAN!=='undefined'?SAJU_DM_DESC_GAN:{};
+      const strMap=typeof SAJU_STRENGTH_BLURB!=='undefined'?SAJU_STRENGTH_BLURB:{};
+      dmDescEl.innerHTML='일간: <b>'+(dmInfo.name||dmGan)+'('+dmGan+')</b> '+(descMap[dmGan]||'')+'<br><br>💪 <b>'+strength+'</b> '+(strMap[strength]||'');
+    }
+    
+    setTimeout(function(){
+      const overlay=document.getElementById('saju-detail-modal-overlay');
+      if(overlay){
+        overlay.style.zIndex='1300';
+        overlay.classList.add('active');
+        overlay.style.display='flex';
+        if(typeof lockBodyScroll==='function') lockBodyScroll();
+      }
+    }, 100);
+  }catch(e){
+    console.error(e);
+    alert('사주풀이 렌더 오류: '+e.message);
+  }
+};
+
+console.log('[ROBUST] Saju robust fix loaded');
+</script>
+
+
+<script id="EASY_SAJU_EXPLANATION">
+
+window.SAJU_EASY_GAN = {
+  '甲': {name:'소나무', easy:'뭐든 시작하는 걸 좋아해요. 곧고 정직해서 사람들이 믿어줘요. 새로운 걸 척척 만들어내는 스타일!'},
+  '乙': {name:'들꽃', easy:'부드럽고 센스가 좋아요. 주변 사람들 기분 잘 챙기고, 분위기 메이커예요'},
+  '丙': {name:'태양', easy:'밝고 활기차요! 옆에만 있어도 기분이 좋아지는 사람. 앞장서서 끌고 가는 걸 잘해요'},
+  '丁': {name:'작은 촛불', easy:'따뜻하고 세심해요. 작은 것도 놓치지 않고 챙기는 다정한 사람이에요'},
+  '戊': {name:'큰 산', easy:'듬직하고 믿음직해요. 중심 잘 잡고 있어서 사람들이 기대고 싶어해요'},
+  '己': {name:'포근한 밭', easy:'차곡차곡 실속 있게 잘해요. 편안하고 현실적인 매력이 있어요'},
+  '庚': {name:'시원한 바위', easy:'시원시원하고 결단력 있어요. 고민되면 질러! 하는 스타일'},
+  '辛': {name:'반짝 보석', easy:'깔끔하고 감각적이에요. 예쁜 거, 좋은 거 잘 알아보는 센스쟁이'},
+  '壬': {name:'넓은 바다', easy:'마음이 넓고 시원해요. 자유로운 걸 좋아하고 생각이 깊어요'},
+  '癸': {name:'조용한 빗물', easy:'조용조용한데 아이디어가 많아요. 은근히 똑똑하고 매력 있어요'}
+};
+
+
+window.SAJU_EASY_ZHI = {
+  '子': '쥐띠 - 머리가 좋고 기회가 오면 재빨리 잡아요',
+  '丑': '소띠 - 끈기 있고 묵묵히 자기 일을 해요',
+  '寅': '호랑이띠 - 용기 있고 도전하는 걸 좋아해요',
+  '卯': '토끼띠 - 부드럽고 센스가 좋아요',
+  '辰': '용띠 - 꿈이 크고 추진력이 좋아요',
+  '巳': '뱀띠 - 지혜롭고 속이 깊어요',
+  '午': '말띠 - 밝고 활동적이에요',
+  '未': '양띠 - 따뜻하고 사람을 잘 챙겨요',
+  '申': '원숭이띠 - 재주가 많고 재치 있어요',
+  '酉': '닭띠 - 깔끔하고 정리 잘해요',
+  '戌': '개띠 - 의리 있고 믿음직해요',
+  '亥': '돼지띠 - 복이 많고 마음이 넓어요'
+};
+
+
+window.SAJU_EASY_STRENGTH = {
+  '신강': '에너지가 넘치는 편이에요. 내가 하고 싶은 대로 밀고 나가면 잘 풀려요. 가끔은 한 템포 쉬어가도 좋아요 😊',
+  '신약': '주변 사람들과 함께할 때 더 힘이 나요. 내 속도대로 천천히 가도 충분히 잘하고 있어요',
+  '중화': '균형이 참 좋아요. 어디서든 잘 어울리고 적응 잘하는 타입이에요',
+  '보통': '균형이 잘 잡혀있어요. 편안하게 흘러가는 스타일'
+};
+
+
+// Override again with easy explanation
+window.openSajuDetailModal = function(){
+  console.log('[EASY] openSajuDetailModal');
+  window.sajuRecomputeRobust && window.sajuRecomputeRobust();
+  
+  if(!window.sajuPillars){
+    alert('사주 계산 실패. 설정에서 생년월일 다시 저장해주세요!');
+    return;
+  }
+  
+  const fo = document.getElementById('fortune-popup-overlay');
+  if(fo){ fo.classList.remove('active'); fo.style.display='none'; }
+  
+  try{
+    const yearZhi = window.sajuPillars.year ? window.sajuPillars.year.zhi : null;
+    const zodiac = yearZhi ? SAJU_ZODIAC_ANIMAL[yearZhi] : null;
+    const badgeEl = document.getElementById('sd-zodiac-badge');
+    if(badgeEl) badgeEl.innerHTML = zodiac ? '<div class="sd-zodiac-badge" style="font-size:14px; background:linear-gradient(120deg,#FFD98E,#FF9AC2); color:#2A2340; padding:6px 12px; border-radius:999px; display:inline-block;">'+zodiac.emoji+' '+zodiac.name+'띠</div>' : '';
+
+    const grid = document.getElementById('sd-pillars');
+    if(grid){
+      grid.innerHTML='';
+      [{key:'year',label:'년주',desc:'어릴 때, 부모님, 큰 흐름'},{key:'month',label:'월주',desc:'청년 때, 직장, 사회생활'},{key:'day',label:'일주',desc:'나 자신, 배우자, 지금의 나'},{key:'hour',label:'시주',desc:'말년, 자녀, 숨은 나'}].forEach(o=>{
+        const p=window.sajuPillars[o.key];
+        const div=document.createElement('div');
+        div.style.cssText='background:#fff; border-radius:12px; padding:10px; text-align:center; border:1px solid #eee;';
+        if(!p){
+          div.innerHTML='<div style="font-size:11px; color:#999; font-weight:700;">'+o.label+'</div><div style="font-size:11px; color:#aaa; margin-top:4px;">'+o.desc+'</div><div style="margin-top:6px; color:#ccc;">-</div>';
+        } else {
+          const easyZhi = window.SAJU_EASY_ZHI[p.zhi] || p.zhi;
+          div.innerHTML='<div style="font-size:11px; color:#888; font-weight:700;">'+o.label+'</div><div style="font-size:10px; color:#aaa; margin-top:2px;">'+o.desc+'</div><div style="margin-top:8px; display:flex; justify-content:center; gap:6px;"><span style="font-size:22px; font-weight:800; background:#f5f0ff; width:36px; height:36px; display:flex; align-items:center; justify-content:center; border-radius:8px;">'+p.gan+'</span><span style="font-size:22px; font-weight:800; background:#fff8e1; width:36px; height:36px; display:flex; align-items:center; justify-content:center; border-radius:8px;">'+p.zhi+'</span></div><div style="font-size:10px; color:#666; margin-top:6px; line-height:1.3;">'+easyZhi+'</div>';
+        }
+        grid.appendChild(div);
+      });
+      grid.style.cssText='display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px;';
+    }
+    
+    const dmGan=window.sajuPillars.day.gan;
+    const dmEasy = window.SAJU_EASY_GAN[dmGan] || {name:dmGan, easy:'개성이 강한 사람'};
+    const strength=typeof sajuJudgeStrength==='function'?sajuJudgeStrength(window.sajuPillars,window.sajuDayMasterElem):'중화';
+    const strengthEasy = window.SAJU_EASY_STRENGTH[strength] || window.SAJU_EASY_STRENGTH['보통'];
+    if(!strengthEasy) console.log('strength', strength);
+    
+    const dmCharEl=document.getElementById('sd-dm-char');
+    const dmDescEl=document.getElementById('sd-dm-desc');
+    if(dmCharEl){
+      dmCharEl.textContent=dmGan;
+      dmCharEl.style.cssText='width:60px; height:60px; display:flex; align-items:center; justify-content:center; font-size:28px; font-weight:900; border-radius:14px; background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; margin:0 auto;';
+    }
+    if(dmDescEl){
+      const birthStr = window.sajuBirthInfo ? window.sajuBirthInfo.date : '';
+      dmDescEl.innerHTML = ''
+        +'<div style="text-align:center; margin-bottom:14px;"><div style="font-size:13px; color:#999;">'+birthStr+' 태어난 당신</div><div style="font-size:20px; font-weight:900; margin-top:4px; color:#333;">'+dmEasy.name+' 같은 사람이에요</div></div>'
+        +'<div style="background:linear-gradient(120deg,#f6f0ff,#fff5f5); border-radius:12px; padding:14px; margin-bottom:10px;">'
+        +'<div style="font-size:13px; font-weight:800; color:#6a4fb0; margin-bottom:6px;">🌿 나는 어떤 사람?</div>'
+        +'<div style="font-size:14px; line-height:1.6; color:#333;">'+dmEasy.easy+'<br><br>중심에 <b>'+dmEasy.name+'</b> 기운이 있어요 그래서 '+dmEasy.name+'처럼 느껴질 때가 많을 거예요.</div>'
+        +'</div>'
+        +'<div style="background:#f0f9ff; border-radius:12px; padding:14px; margin-bottom:10px;">'
+        +'<div style="font-size:13px; font-weight:800; color:#0277bd; margin-bottom:6px;">💪 요즘 나의 기운은?</div>'
+        +'<div style="font-size:13px; line-height:1.6; color:#333;"><b>'+strength+'</b> - '+(window.SAJU_EASY_STRENGTH[strength]||strengthEasy)+'</div>'
+        +'</div>'
+
+    }
+    
+    setTimeout(function(){
+      const overlay=document.getElementById('saju-detail-modal-overlay');
+      if(overlay){
+        overlay.style.zIndex='1300';
+        overlay.classList.add('active');
+        overlay.style.display='flex';
+        if(typeof lockBodyScroll==='function') lockBodyScroll();
+      }
+    }, 100);
+  }catch(e){
+    console.error(e);
+    alert('오류: '+e.message);
+  }
+};
+
+console.log('[EASY] Saju easy explanation loaded');
+</script>
+
+
+<script id="TIME_FIX">
+window.sajuRecomputeRobust = function(){
+  try{
+    if(!window.sajuBirthInfo || !window.sajuBirthInfo.date){
+      const stored = JSON.parse(localStorage.getItem('smartDiarySajuBirth')||'null');
+      if(stored && stored.date) window.sajuBirthInfo = stored;
+    }
+    if(!window.sajuBirthInfo || !window.sajuBirthInfo.date) return false;
+    console.log('[TIME FIX] birthInfo', window.sajuBirthInfo);
+    const pillars = window.sajuComputePillarsRobust(window.sajuBirthInfo);
+    window.sajuPillars = pillars;
+    if(window.sajuPillars && window.sajuPillars.day){
+      if(typeof sajuElementOfGan==='function'){
+        window.sajuDayMasterElem = sajuElementOfGan(window.sajuPillars.day.gan);
+      }
+    }
+    console.log('[TIME FIX] pillars', window.sajuPillars);
+    return true;
+  }catch(e){
+    console.error('[TIME FIX] fail', e);
+    return false;
+  }
+};
+
+// Ensure time is considered - if time is unknown, hour is null, else compute
+window.openSajuDetailModal = function(){
+  console.log('[TIME FIX] openSajuDetailModal called, birthInfo:', window.sajuBirthInfo);
+  window.sajuRecomputeRobust();
+  
+  if(!window.sajuPillars){
+    alert('사주 계산 실패. 설정에서 생년월일/시간을 다시 저장해주세요!\n현재: '+JSON.stringify(window.sajuBirthInfo));
+    return;
+  }
+  
+  const fo = document.getElementById('fortune-popup-overlay');
+  if(fo){ fo.classList.remove('active'); fo.style.display='none'; }
+  
+  try{
+    // Birth label with time
+    let birthLabel = '';
+    if(window.sajuBirthInfo){
+      const d = window.sajuBirthInfo.date || '';
+      const t = window.sajuBirthInfo.time || '';
+      birthLabel = d + (t ? ' '+t : ' (시간모름)');
+      // Also try to show in modal header
+      const birthInfoHeader = document.getElementById('sd-birth-info');
+      if(birthInfoHeader) birthInfoHeader.textContent = birthLabel;
+    }
+    
+    const yearZhi = window.sajuPillars.year ? window.sajuPillars.year.zhi : null;
+    const zodiac = yearZhi && typeof SAJU_ZODIAC_ANIMAL!=='undefined' ? SAJU_ZODIAC_ANIMAL[yearZhi] : null;
+    const badgeEl = document.getElementById('sd-zodiac-badge');
+    if(badgeEl) badgeEl.innerHTML = zodiac ? '<div style="font-size:14px; background:linear-gradient(120deg,#FFD98E,#FF9AC2); color:#2A2340; padding:6px 12px; border-radius:999px; display:inline-block;">'+zodiac.emoji+' '+zodiac.name+'띠</div>' : '';
+
+    const grid = document.getElementById('sd-pillars');
+    if(grid){
+      grid.innerHTML='';
+      const items = [
+        {key:'year', label:'어릴 때', sub:'년주'},
+        {key:'month', label:'청년 때', sub:'월주'},
+        {key:'day', label:'지금의 나', sub:'일주'},
+        {key:'hour', label: window.sajuBirthInfo && window.sajuBirthInfo.time ? '말년·숨은나' : '시간모름', sub:'시주'}
+      ];
+      items.forEach(o=>{
+        const p=window.sajuPillars[o.key];
+        const div=document.createElement('div');
+        div.style.cssText='background:#fff; border-radius:12px; padding:10px; text-align:center; border:1px solid #eee;';
+        if(!p){
+          if(o.key==='hour'){
+            div.style.opacity='0.6';
+            div.innerHTML='<div style="font-size:11px; color:#999; font-weight:700;">'+o.label+'<br><span style="font-size:10px; color:#bbb;">'+o.sub+'</span></div><div style="margin-top:8px; font-size:12px; color:#aaa;">시간을<br>몰라요</div><div style="margin-top:6px; font-size:10px; color:#bbb;">설정에서<br>시간 입력하면<br>보여요</div>';
+          } else {
+            div.innerHTML='<div style="font-size:11px; color:#999; font-weight:700;">'+o.label+'</div><div style="margin-top:6px; color:#ccc;">-</div>';
+          }
+        } else {
+          const easyZhi = window.SAJU_EASY_ZHI ? (window.SAJU_EASY_ZHI[p.zhi]||p.zhi) : p.zhi;
+          div.innerHTML='<div style="font-size:11px; color:#888; font-weight:700;">'+o.label+'<br><span style="font-size:9px; color:#bbb;">'+o.sub+'</span></div><div style="margin-top:8px; display:flex; justify-content:center; gap:6px;"><span style="font-size:20px; font-weight:800; background:#f5f0ff; width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:8px;">'+p.gan+'</span><span style="font-size:20px; font-weight:800; background:#fff8e1; width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:8px;">'+p.zhi+'</span></div><div style="font-size:10px; color:#666; margin-top:6px; line-height:1.3;">'+easyZhi+'</div>';
+        }
+        grid.appendChild(div);
+      });
+      grid.style.cssText='display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px;';
+    }
+    
+    const dmGan=window.sajuPillars.day.gan;
+    const dmEasy = window.SAJU_EASY_GAN ? window.SAJU_EASY_GAN[dmGan] : {name:dmGan, easy:'개성이 강한 사람'};
+    const strength=typeof sajuJudgeStrength==='function'?sajuJudgeStrength(window.sajuPillars,window.sajuDayMasterElem):'중화';
+    const strengthEasy = window.SAJU_EASY_STRENGTH ? (window.SAJU_EASY_STRENGTH[strength]||strength) : strength;
+    
+    const dmCharEl=document.getElementById('sd-dm-char');
+    const dmDescEl=document.getElementById('sd-dm-desc');
+    if(dmCharEl){
+      dmCharEl.textContent=dmGan;
+      dmCharEl.style.cssText='width:56px; height:56px; display:flex; align-items:center; justify-content:center; font-size:26px; font-weight:900; border-radius:14px; background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; margin:0 auto;';
+    }
+    if(dmDescEl){
+      const birthStr = window.sajuBirthInfo ? (window.sajuBirthInfo.date + (window.sajuBirthInfo.time ? ' '+window.sajuBirthInfo.time : '')) : '';
+      const timeMsg = window.sajuBirthInfo && window.sajuBirthInfo.time ? '태어난 시간 '+window.sajuBirthInfo.time+'까지 입력해주셔서 시주(숨은 재능)까지 볼 수 있어요!' : '시간을 입력하면 시주(숨은 재능)까지 더 자세히 볼 수 있어요.';
+      dmDescEl.innerHTML = ''
+        +'<div style="text-align:center; margin-bottom:14px;">'
+        +'<div style="font-size:12px; color:#999;" id="sd-birth-info">'+birthStr+'</div>'
+        +'<div style="font-size:19px; font-weight:900; margin-top:4px; color:#333;">'+dmEasy.name+' 같은 사람</div>'
+        +'<div style="font-size:12px; color:#888; margin-top:4px;">'+timeMsg+'</div>'
+        +'</div>'
+        +'<div style="background:linear-gradient(120deg,#f6f0ff,#fff5f5); border-radius:12px; padding:14px; margin-bottom:10px;">'
+        +'<div style="font-size:13px; font-weight:800; color:#6a4fb0; margin-bottom:6px;">🌿 나는 어떤 사람?</div>'
+        +'<div style="font-size:14px; line-height:1.7; color:#333;">'+dmEasy.easy+'</div>'
+        +'</div>'
+        +'<div style="background:#f0f9ff; border-radius:12px; padding:14px;">'
+        +'<div style="font-size:13px; font-weight:800; color:#0277bd; margin-bottom:6px;">💪 요즘 기운은?</div>'
+        +'<div style="font-size:13px; line-height:1.7; color:#333;">'+strengthEasy+'</div>'
+        +'</div>';
+    }
+    
+    setTimeout(function(){
+      const overlay=document.getElementById('saju-detail-modal-overlay');
+      if(overlay){
+        overlay.style.zIndex='1300';
+        overlay.classList.add('active');
+        overlay.style.display='flex';
+        if(typeof lockBodyScroll==='function') lockBodyScroll();
+      }
+    }, 100);
+  }catch(e){
+    console.error(e);
+    alert('오류: '+e.message);
+  }
+};
+
+console.log('[TIME FIX] loaded');
+</script>
+
 </body>
 </html>
 
