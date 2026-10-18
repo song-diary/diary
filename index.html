@@ -981,14 +981,14 @@
         .bl-empty { text-align: center; color: #A99D89; font-size: 13.5px; padding: 24px 0; }
         .bl-item {
             display: flex; align-items: center; gap: 8px;
-            background: rgba(0,0,0,0.03); border-radius: 12px; padding: 10px 10px; margin-bottom: 8px;
+            background: #ffffff; border:1px solid #f9e6e6; border-radius: 12px; padding: 12px 10px; margin-bottom: 8px; box-shadow:0 2px 6px rgba(142,107,107,0.06);
         }
         .bl-rank {
             flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
-            background: linear-gradient(135deg, #E3B24A, #E0685C); color: #fff;
+            background: linear-gradient(135deg, #ff9a9e, #ff6b9d); color: #fff;
             display: flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 800;
         }
-        .bl-text { flex: 1; font-size: 14.5px; color: #2A241C; line-height: 1.4; word-break: break-word; cursor: pointer; }
+        .bl-text { flex: 1; font-size: 14.5px; color: #5a3e36; line-height: 1.5; word-break: break-word; cursor: pointer; }
         .bl-edit-hint { font-size: 11px; opacity: 0.4; }
         .bl-edit-input {
             flex: 1; font-size: 14.5px; color: #2A241C; padding: 6px 8px;
@@ -2958,54 +2958,6 @@ div:has(> span:V20), .v20-recovery { display:none !important; }
 [data-daily-id]{ display:none !important; }
 </style>
 <script>
-window.goToPastDiary = function(targetDateStr){
-  try{
-    var d = new Date(targetDateStr);
-    if(isNaN(d.getTime())){ alert('날짜 오류: '+targetDateStr); return; }
-    window.calYear = d.getFullYear();
-    window.calMonth = d.getMonth();
-    if(typeof calYear !== 'undefined') calYear = window.calYear;
-    if(typeof calMonth !== 'undefined') calMonth = window.calMonth;
-    window.selectedViewDate = targetDateStr;
-    if(typeof selectedViewDate !== 'undefined') selectedViewDate = targetDateStr;
-    localStorage.setItem('smartDiarySelectedDate', targetDateStr);
-    if(typeof renderCalendar === 'function') renderCalendar();
-    setTimeout(function(){ if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday(); window.scrollTo({top:0, behavior:'smooth'}); }, 150);
-  }catch(e){ console.error(e); alert('이동 실패: '+e.message); }
-};
-window.goToToday = function(){
-  try{
-    // 스크롤 잠금 완전 해제 - 달력 중간 멈춤 수정
-    try{
-      document.body.style.overflow='';
-      document.body.style.position='';
-      document.body.style.top='';
-      document.body.style.width='';
-      document.body.classList.remove('modal-open');
-      document.documentElement.style.overflow='';
-      document.documentElement.style.position='';
-    }catch(e){}
-    var today = (typeof getTodayStr==='function') ? getTodayStr() : new Date().toISOString().slice(0,10);
-    var d = new Date(today);
-    window.calYear = d.getFullYear(); window.calMonth = d.getMonth();
-    if(typeof calYear !== 'undefined') calYear = window.calYear;
-    if(typeof calMonth !== 'undefined') calMonth = window.calMonth;
-    window.selectedViewDate = today;
-    if(typeof selectedViewDate !== 'undefined') selectedViewDate = today;
-    localStorage.setItem('smartDiarySelectedDate', today);
-    if(typeof renderCalendar==='function') renderCalendar();
-    if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday();
-    // 위로 스크롤 - 2중 보장
-    setTimeout(function(){
-      window.scrollTo({top:0, behavior:'smooth'});
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-    }, 50);
-    setTimeout(function(){
-      window.scrollTo({top:0, behavior:'auto'});
-    }, 350);
-  }catch(e){ console.error(e); alert('이동 실패: '+e.message); }
-};
 </script>
 
 
@@ -4142,24 +4094,9 @@ div[style*="padding-top:4px"]{
 
                 <div class="toggle-card" id="photo-pin-toggle-card"><span class="toggle-card-label">📷 사진 고정핀 표시</span><label class="toggle-switch"><input type="checkbox" id="settings-show-photo-pin" checked onchange="onShowPhotoPinToggle()"><span class="toggle-slider"></span></label></div>
                 <div class="toggle-card" id="daily-story-toggle-card"><span class="toggle-card-label">📖 설명(사자성어 외) 카드</span><label class="toggle-switch"><input type="checkbox" id="toggle-daily-story" checked onchange="setDailyStoryVisibility(this.checked)"><span class="toggle-slider"></span></label></div>
+                <div class="toggle-card" id="biorhythm-toggle-card"><span class="toggle-card-label">📊 바이오리듬</span><label class="toggle-switch"><input type="checkbox" id="toggle-biorhythm" checked onchange="setBiorhythmVisibility(this.checked)"><span class="toggle-slider"></span></label></div>
             </div>
 
-            <div class="settings-section">
-                <label>🏷️ 지출 계정 과목 관리</label>
-                <div style="display: flex; gap: 6px; margin-bottom: 6px;">
-                    <input type="text" id="new-expense-cat" placeholder="예: 식비" style="flex:1; padding:6px; border:1px solid var(--border-color); border-radius:6px; font-size:13px;">
-                    <button class="action-btn" style="padding:6px 10px; font-size:13px;" onclick="addCategory('expense')">추가</button>
-                </div>
-                <div id="expense-cat-list" style="display: flex; flex-wrap: wrap; gap: 4px; font-size: 12px;"></div>
-            </div>
-            <div class="settings-section">
-                <label>🏷️ 수입 계정 과목 관리</label>
-                <div style="display: flex; gap: 6px; margin-bottom: 6px;">
-                    <input type="text" id="new-income-cat" placeholder="예: 월급" style="flex:1; padding:6px; border:1px solid var(--border-color); border-radius:6px; font-size:13px;">
-                    <button class="action-btn" style="padding:6px 10px; font-size:13px;" onclick="addCategory('income')">추가</button>
-                </div>
-                <div id="income-cat-list" style="display: flex; flex-wrap: wrap; gap: 4px; font-size: 12px;"></div>
-            </div>
             <div class="settings-section">
                 <label>🔮 오늘의 운세 (사주팔자 설정)</label>
                 <div style="font-size:12px; color: var(--text-sub); margin-bottom:6px;">📅 생년월일은 <b>양력</b> 기준으로 입력해주세요</div>
@@ -4203,7 +4140,35 @@ div[style*="padding-top:4px"]{
                 <div style="font-size:11px; color:#666; margin-top:6px;" id="font-size-info">현재: 16px</div>
             </div>
 
-            <div id="reset-bottom-area" style="padding:24px 0 10px; margin-top:20px; border-top:2px solid #e74c3c;">
+                        
+            <!-- 📖 타임캡슐 - 아래로 이동 (가계부보다 아래는 아니고, 설정 하단부로) -->
+            <div id="past-notify-settings-container" style="margin:8px 0;"></div>
+
+<!-- 📒 계정과목 관리 - 데이터 초기화 바로 위로 이동 (가계부 중요도 낮음) -->
+            <div style="margin:8px 0 0; padding:12px; background:#f9f6f2; border:1.5px dashed #d8cec0; border-radius:12px;">
+                <div style="font-size:12px; font-weight:800; color:#7a6a5a; margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+                    <span>📒 계정과목 관리</span>
+                    <span style="font-size:10px; font-weight:400; color:#9a8a7a; background:#fff; padding:2px 7px; border-radius:999px; border:1px solid #e8ddd0;">가계부 - 필요시만</span>
+                </div>
+                <div style="margin-bottom:10px; background:#fff; border-radius:10px; padding:12px; border:1px solid #efe6d8;">
+                    <label style="font-size:13px; font-weight:700; display:block; margin-bottom:6px;">🏷️ 지출 계정 과목 관리</label>
+                    <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+                        <input type="text" id="new-expense-cat" placeholder="예: 식비" style="flex:1; padding:7px; border:1px solid #ddd; border-radius:6px; font-size:13px;">
+                        <button class="action-btn" style="padding:7px 12px; font-size:13px; background:#e06d6d; color:#fff; border:none; border-radius:6px;" onclick="addCategory('expense')">추가</button>
+                    </div>
+                    <div id="expense-cat-list" style="display: flex; flex-wrap: wrap; gap: 5px; font-size: 12px;"></div>
+                </div>
+                <div style="margin-bottom:0; background:#fff; border-radius:10px; padding:12px; border:1px solid #efe6d8;">
+                    <label style="font-size:13px; font-weight:700; display:block; margin-bottom:6px;">🏷️ 수입 계정 과목 관리</label>
+                    <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+                        <input type="text" id="new-income-cat" placeholder="예: 월급" style="flex:1; padding:7px; border:1px solid #ddd; border-radius:6px; font-size:13px;">
+                        <button class="action-btn" style="padding:7px 12px; font-size:13px; background:#27ae60; color:#fff; border:none; border-radius:6px;" onclick="addCategory('income')">추가</button>
+                    </div>
+                    <div id="income-cat-list" style="display: flex; flex-wrap: wrap; gap: 5px; font-size: 12px;"></div>
+                </div>
+            </div>
+
+            <div id="reset-bottom-area"  style="padding:24px 0 10px; margin-top:20px; border-top:2px solid #e74c3c;">
                 <button class="action-btn" style="background-color: #e74c3c; width:100%; font-size:15px; padding:14px; border-radius:12px; font-weight:800; color:#fff; border:none;" onclick="resetAllData()">⚠️ 데이터 초기화 (새로 시작)</button>
                 <div style="font-size:11px; color:#999; text-align:center; margin-top:8px;">⚠️ 모든 데이터가 삭제됩니다</div>
             </div>
@@ -8637,7 +8602,7 @@ window.attachPhotoDoubleTap = function(el, handler){
 
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:10px;">
                 <div class="fp-my-saju-link-big" onclick="openSajuDetailModal()" style="margin:0; text-align:center; padding:10px; font-size:13px;">📜 나의 사주풀이</div>
-                <div class="fp-my-saju-link-big" onclick="openBucketListModal()" style="margin:0; text-align:center; padding:10px; font-size:13px; background:linear-gradient(120deg, #A8EDEA, #FED6E3); color:#2A2340;">🎯 나의 버킷 리스트</div>
+                <div class="fp-my-saju-link-big" onclick="openBucketListModal()" style="margin:0; text-align:center; padding:10px; font-size:13px; background:linear-gradient(120deg, #fff0f0, #ffdde1); color:#8e6b6b; border:1px solid #f3d5d5;">🎯 나의 버킷 리스트</div>
             </div>
 
                         <div class="fp-share-section" id="fp-share-section" style="margin-top:14px; padding:12px; background:rgba(255,255,255,0.06); border-radius:12px; border:1px solid rgba(255,255,255,0.1);">
@@ -8782,12 +8747,151 @@ window.attachPhotoDoubleTap = function(el, handler){
     // ===================== 🎯 버킷리스트 =====================
     let bucketListItems = [];
 
+    // === 🛡️ 버킷리스트 영구 저장 (3중 백업) ===
     function getBucketList() {
+        // 1순위: localStorage
+        try {
+            const ls = localStorage.getItem('smartDiaryBucketList');
+            if(ls && ls !== '[]'){
+                const parsed = JSON.parse(ls);
+                if(parsed && parsed.length > 0) return parsed;
+            }
+        } catch(e){}
+        
+        // 2순위: IndexedDB에서 복구 시도 (동기 반환 불가하므로, 비동기로 나중에 복구)
+        // 일단 빈 배열 반환, 나중에 indexedDB에서 복구
+        
+        // 3순위: localStorage 백업 키에서 복구
+        try {
+            const backup = localStorage.getItem('smartDiaryBucketList_backup');
+            if(backup){
+                const parsed = JSON.parse(backup);
+                if(parsed && parsed.length > 0){
+                    // 원본 복구
+                    localStorage.setItem('smartDiaryBucketList', backup);
+                    return parsed;
+                }
+            }
+        } catch(e){}
+        
         try { return JSON.parse(localStorage.getItem('smartDiaryBucketList') || '[]'); } catch (e) { return []; }
     }
+    
     function saveBucketList() {
-        localStorage.setItem('smartDiaryBucketList', JSON.stringify(bucketListItems));
+        const jsonStr = JSON.stringify(bucketListItems);
+        try {
+            // 1. localStorage 저장
+            localStorage.setItem('smartDiaryBucketList', jsonStr);
+            // 2. 백업 키에도 저장 (2중 안전)
+            localStorage.setItem('smartDiaryBucketList_backup', jsonStr);
+            localStorage.setItem('smartDiaryBucketList_backup_time', new Date().toISOString());
+            
+            // 3. IndexedDB에 저장 (영구 저장)
+            saveToIndexedDB(jsonStr);
+            
+            // 4. 안드로이드 네이티브 저장소 (APK 업데이트에도 유지)
+            if(window.Android && typeof window.Android.saveBucketList === 'function'){
+                try{ window.Android.saveBucketList(jsonStr); }catch(e){}
+            }
+            if(window.AndroidBridge && typeof window.AndroidBridge.saveData === 'function'){
+                try{ window.AndroidBridge.saveData('bucketList', jsonStr); }catch(e){}
+            }
+            
+            // 5. 자동 파일 백업 (다운로드 폴더) - 선택
+            // console.log('Bucket saved:', bucketListItems.length);
+        } catch(e){
+            console.error('Bucket save fail:', e);
+        }
     }
+    
+    // IndexedDB 저장/복구
+    function saveToIndexedDB(jsonStr){
+        try{
+            const req = indexedDB.open('PhotoDiaryDB', 2);
+            req.onupgradeneeded = function(e){
+                const db = e.target.result;
+                if(!db.objectStoreNames.contains('bucketList')){
+                    db.createObjectStore('bucketList', {keyPath: 'id'});
+                }
+            };
+            req.onsuccess = function(e){
+                const db = e.target.result;
+                try{
+                    const tx = db.transaction('bucketList', 'readwrite');
+                    const store = tx.objectStore('bucketList');
+                    store.put({id: 'current', data: jsonStr, time: Date.now()});
+                }catch(err){}
+            };
+        }catch(e){}
+    }
+    
+    function restoreFromIndexedDB(){
+        try{
+            const req = indexedDB.open('PhotoDiaryDB', 2);
+            req.onupgradeneeded = function(e){
+                const db = e.target.result;
+                if(!db.objectStoreNames.contains('bucketList')){
+                    db.createObjectStore('bucketList', {keyPath: 'id'});
+                }
+            };
+            req.onsuccess = function(e){
+                const db = e.target.result;
+                try{
+                    const tx = db.transaction('bucketList', 'readonly');
+                    const store = tx.objectStore('bucketList');
+                    const getReq = store.get('current');
+                    getReq.onsuccess = function(){
+                        if(getReq.result && getReq.result.data){
+                            const saved = getReq.result.data;
+                            try{
+                                const parsed = JSON.parse(saved);
+                                if(parsed && parsed.length > 0){
+                                    const current = getBucketList();
+                                    if(current.length === 0 || current.length < parsed.length){
+                                        console.log('[BUCKET] Restored from IndexedDB:', parsed.length);
+                                        bucketListItems = parsed;
+                                        localStorage.setItem('smartDiaryBucketList', saved);
+                                        if(typeof renderBucketList === 'function'){
+                                            try{ renderBucketList(); }catch(err){}
+                                        }
+                                    }
+                                }
+                            }catch(err){}
+                        }
+                    };
+                }catch(err){}
+            };
+        }catch(e){}
+    }
+    
+    // 안드로이드 네이티브에서 복구
+    function restoreFromAndroid(){
+        try{
+            if(window.Android && typeof window.Android.loadBucketList === 'function'){
+                const saved = window.Android.loadBucketList();
+                if(saved && saved !== '[]' && saved.length > 5){
+                    const parsed = JSON.parse(saved);
+                    if(parsed && parsed.length > 0){
+                        const current = getBucketList();
+                        if(current.length === 0){
+                            bucketListItems = parsed;
+                            localStorage.setItem('smartDiaryBucketList', saved);
+                            console.log('[BUCKET] Restored from Android:', parsed.length);
+                        }
+                    }
+                }
+            }
+        }catch(e){}
+    }
+    
+    // 페이지 로드 시 자동 복구 시도
+    setTimeout(()=>{
+        restoreFromIndexedDB();
+        restoreFromAndroid();
+    }, 500);
+    setTimeout(()=>{
+        restoreFromIndexedDB();
+    }, 2000);
 
     // 💪 강력한 스크롤 잠금
     let scrollY = 0;
@@ -10274,8 +10378,21 @@ window.attachPhotoDoubleTap = function(el, handler){
                 }
                 var myPastHTML = '<div style="grid-column:1 / -1; width:100%; margin-top:6px; padding-top:4px;">';
                 // V154: 헤더 삭제, 배너만 한줄로 모든 날짜 표시
+                // 배너도 스타일에 따라 다르게!
                 if(allPasts.length>0){
-                  myPastHTML += '<div class="time-capsule-banner" style="margin:0 0 2px 0; padding:6px 10px; min-height:24px; height:24px; display:flex; align-items:center; justify-content:space-between; border-radius:5px; background:linear-gradient(90deg, #7c6cff 0%, #a78bfa 50%, #f472b6 100%); color:white; font-size:11px; font-weight:700;"><div style="display:flex; align-items:center; gap:6px;"><span>🎉</span><span>타임캡슐 도착!</span><span style="opacity:0.9; font-weight:500; margin-left:4px;">'+allPasts.length+'개의 타임캡슐이 도착했어요</span></div><div style="font-size:14px;">📬</div></div>';
+                  var bannerStyle = '';
+                  var bannerIcon = '🎉';
+                  if(cardStyle==='instagram'){
+                    bannerStyle = 'background:linear-gradient(90deg, #7c6cff 0%, #a78bfa 50%, #f472b6 100%); color:white;';
+                    bannerIcon = '📸';
+                  } else if(cardStyle==='letter'){
+                    bannerStyle = 'background:linear-gradient(90deg, #d4a574 0%, #e8c99a 100%); color:#5a3e20; border:1px dashed #c9a86a;';
+                    bannerIcon = '💌';
+                  } else {
+                    bannerStyle = 'background:#f5f5f5; color:#666; border:1px solid #ddd;';
+                    bannerIcon = '📅';
+                  }
+                  myPastHTML += '<div class="time-capsule-banner" style="margin:0 0 8px 0; padding:8px 12px; min-height:28px; display:flex; align-items:center; justify-content:space-between; border-radius:8px; '+bannerStyle+' font-size:11px; font-weight:700;"><div style="display:flex; align-items:center; gap:6px;"><span>'+bannerIcon+'</span><span>타임캡슐 도착!</span><span style="opacity:0.9; font-weight:500; margin-left:4px;">'+allPasts.length+'개 도착</span></div><div style="font-size:14px;">'+(cardStyle==='instagram'?'📬':cardStyle==='letter'?'✉️':'→')+'</div></div>';
                 }
                 
                 var order = ['1개월 전','3개월 전','6개월 전','1년 전','2년 전','3년 전'];
@@ -10286,6 +10403,10 @@ window.attachPhotoDoubleTap = function(el, handler){
                   if(ib===-1) return -1;
                   return ia-ib;
                 });
+                // 🎨 카드 스타일별 렌더링 - 설정에서 선택한 스타일로!
+                var pastSettings = (typeof getPastSettings === 'function') ? getPastSettings() : {cardStyle:'instagram'};
+                var cardStyle = pastSettings.cardStyle || 'instagram';
+                
                 for(var k=0; k<sortedKeys.length; k++){
                   var label = sortedKeys[k];
                   var items = grouped[label];
@@ -10295,7 +10416,70 @@ window.attachPhotoDoubleTap = function(el, handler){
                   for(var i=0;i<items.length;i++){
                     var p=items[i];
                     var badgeColor = p._interval==='1m' ? '#10b981' : p._interval==='3m' ? '#3b82f6' : p._interval==='6m' ? '#8b5cf6' : p._interval==='1y' ? '#f59e0b' : p._interval==='same' ? '#ef4444' : '#7c6cff';
-                    myPastHTML+='<div onclick="window.goToPastDiary(\''+p.date+'\')" style="background:#fff; border:1px solid #e8e0ff; border-left:4px solid '+badgeColor+'; border-radius:10px; padding:10px 12px; margin-bottom:8px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;"><div style="flex:1;"><div style="display:flex; align-items:center; gap:6px; margin-bottom:2px;"><span style="background:'+badgeColor+'; color:white; padding:2px 6px; border-radius:6px; font-size:10px; font-weight:700;">'+label+'</span><span style="font-size:12px; color:#9a8cc0; font-weight:700;">'+p.date+' '+(p.photo?'📷':'')+'</span></div><div style="font-size:13px; color:#222; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">'+(p.text||'사진').slice(0,30)+'</div></div><div style="font-size:13px; color:#7c6cff; font-weight:700; flex-shrink:0; margin-left:8px;">보기 →</div></div>';
+                    var photoHTML = '';
+                    if(p.photo){
+                      var photoSrc = '';
+                      try{
+                        if(typeof getPhotoSrc === 'function'){
+                          photoSrc = getPhotoSrc(p.photo) || '';
+                        }
+                        if(!photoSrc && typeof p.photo === 'string' && p.photo.indexOf('data:')===0){
+                          photoSrc = p.photo;
+                        }
+                      }catch(e){ photoSrc = ''; }
+                      
+                      // If no sync src, create placeholder that will be filled async
+                      if(!photoSrc && p.photo){
+                        // Async load later
+                        if(cardStyle==='instagram'){
+                          photoHTML = '<div class="tc-photo-async" data-photo-key="'+p.photo+'" style="width:100%; height:160px; background:#f0e6ff; border-radius:10px 10px 0 0; margin-bottom:8px; display:flex; align-items:center; justify-content:center; color:#9a8cc0; font-size:24px;">📷 로딩중...</div>';
+                        } else if(cardStyle==='letter'){
+                          photoHTML = '<div class="tc-photo-async" data-photo-key="'+p.photo+'" style="margin:8px 0; text-align:center; background:#fef9e7; padding:20px; border-radius:8px; color:#8b7355;">📷 사진 로딩중...</div>';
+                        } else {
+                          photoHTML = '<div class="tc-photo-async" data-photo-key="'+p.photo+'" style="width:50px; height:50px; background:#eee; border-radius:6px; flex-shrink:0; margin-right:8px; display:flex; align-items:center; justify-content:center;">📷</div>';
+                        }
+                      } else if(photoSrc){
+                        if(cardStyle==='instagram'){
+                          photoHTML = '<div style="width:100%; height:200px; background:#f8f5f0;"><img src="'+photoSrc+'" style="width:100%; height:200px; object-fit:contain; border-radius:10px 10px 0 0; display:block; background:#f8f5f0;" onclick="event.stopPropagation(); window.openPhotoLightbox(\''+p.photo+'\', {text: \''+(p.text||'').replace(/'/g,'\\\'')+'\', date: \''+p.date+'\'})"></div>';
+                        } else if(cardStyle==='letter'){
+                          photoHTML = '<div style="margin:8px 0; text-align:center;"><img src="'+photoSrc+'" style="max-width:140px; max-height:140px; border-radius:8px; border:4px solid #fff; box-shadow:0 3px 10px rgba(0,0,0,0.2); transform:rotate(-2deg); display:inline-block; background:#fff;" onclick="event.stopPropagation(); window.openPhotoLightbox(\''+p.photo+'\', {text: \''+(p.text||'').replace(/'/g,'\\\'')+'\', date: \''+p.date+'\'})"></div>';
+                        } else {
+                          photoHTML = '<img src="'+photoSrc+'" style="width:50px; height:50px; object-fit:cover; border-radius:6px; flex-shrink:0; margin-right:8px; background:#f5f0f0;" onclick="event.stopPropagation(); window.openPhotoLightbox(\''+p.photo+'\', {text: \''+(p.text||'').replace(/'/g,'\\\'')+'\', date: \''+p.date+'\'})">';
+                        }
+                      }
+                    }
+                    
+                    if(cardStyle==='instagram'){
+                      // 인스타 감성: 사진 크게, 그라데이션 느낌
+                      myPastHTML+='<div onclick="window.goToPastDiary(\''+p.date+'\')" style="background:#fff; border-radius:14px; overflow:hidden; margin-bottom:12px; cursor:pointer; box-shadow:0 4px 16px rgba(124,108,255,0.15); border:1px solid #f0e0ff;">'+photoHTML+'<div style="padding:12px; display:flex; justify-content:space-between; align-items:center;"><div style="flex:1;"><div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;"><span style="background:linear-gradient(90deg, #7c6cff, #f472b6); color:white; padding:3px 8px; border-radius:12px; font-size:10px; font-weight:800;">'+label+'</span><span style="font-size:11px; color:#9a8cc0;">'+p.date+'</span></div><div style="font-size:13px; color:#222; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">'+(p.text||'📷 사진 추억').slice(0,40)+'</div></div><div style="font-size:20px; margin-left:8px;">📸</div></div></div>';
+                    } else if(cardStyle==='letter'){
+                      // 편지 감성: 편지봉투 느낌, 베이지 배경
+                      myPastHTML+='<div onclick="window.goToPastDiary(\''+p.date+'\')" style="background:linear-gradient(135deg, #fef9e7 0%, #fff8e1 100%); border:1.5px solid #f0d9a8; border-radius:4px 4px 12px 12px; padding:14px; margin-bottom:12px; cursor:pointer; box-shadow:0 3px 10px rgba(180,140,80,0.15); position:relative;">'+
+                        '<div style="position:absolute; top:-8px; left:20px; width:0; height:0; border-left:10px solid transparent; border-right:10px solid transparent; border-bottom:10px solid #f0d9a8;"></div>'+
+                        '<div style="display:flex; align-items:center; gap:6px; margin-bottom:6px; border-bottom:1px dashed #e0c080; padding-bottom:6px;"><span style="font-size:14px;">💌</span><span style="background:#8b7355; color:#fff8e1; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:700;">'+label+'</span><span style="font-size:11px; color:#8b7355;">'+p.date+'</span></div>'+
+                        photoHTML+
+                        '<div style="font-size:13px; color:#5a4a30; line-height:1.6; font-family:serif; font-style:italic;">'+(p.text||'사진 추억이 담겨있어요').slice(0,60)+'</div>'+
+                        '<div style="text-align:right; margin-top:8px; font-size:11px; color:#8b7355;">일자로 이동 →</div></div>';
+                    } else {
+                      // 심플: 최소 디자인, 글자 위주
+                      // 반반 분할 V2: data 속성으로 사진 안전 연결
+                      (function(){
+                        var safeText = (p.text||'').replace(/"/g, '&quot;').slice(0,40);
+                        var safeKey = p.photo || '';
+                        myPastHTML+='<div style="background:#fafafa; border:1px solid #eee; border-left:3px solid '+badgeColor+'; border-radius:8px; margin-bottom:8px; display:flex; overflow:hidden; height:72px;">' +
+                          // 왼쪽 50% - 사진 확대 (data 속성으로 키 전달)
+                          '<div data-photo-key="'+safeKey+'" data-photo-text="'+safeText+'" data-photo-date="'+p.date+'" onclick="window.handleTimeCapsulePhotoClick(this)" style="width:50%; flex:0 0 50%; background:#f9f9f9; display:flex; align-items:center; padding:8px; cursor:pointer; " title="사진 확대 - 클릭하면 크게 보기">' +
+                          photoHTML +
+                          '<div style="flex:1; margin-left:6px; overflow:hidden;"><div style="font-size:9px; color:#999; margin-bottom:2px;">'+label+'</div><div style="font-size:11px; color:#666; font-weight:600;">📷 사진 보기</div></div>' +
+                        '</div>' +
+                        // 오른쪽 50% - 일자로 이동
+                        '<div data-photo-key="'+(p.photo||'')+'" data-photo-date="'+p.date+'" onclick="window.handleTimeCapsuleDateClick(\''+p.date+'\', this.getAttribute(\'data-photo-key\'))" style="width:50%; flex:0 0 50%; background:#f9f9f9; display:flex; align-items:center; justify-content:space-between; padding:8px 10px; cursor:pointer;" title="일자로 이동 - 앨범으로 포커스">' +
+                          '<div style="flex:1; overflow:hidden;"><div style="font-size:10px; color:#7c6cff; font-weight:700;">'+p.date+'</div><div style="font-size:11px; color:#333; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">'+(p.text||'추억').slice(0,18)+'</div></div>' +
+                          '<div style="font-size:11px; color:#7c6cff; font-weight:800; background:#f0eaff; border:1px solid #e8e0ff; padding:4px 8px; border-radius:20px; white-space:nowrap; margin-left:4px;">일자로 이동 →</div>' +
+                        '</div>' +
+                      '</div>';
+                      })();
+                    }
                   }
                 }
                 myPastHTML+='</div>';
@@ -10304,6 +10488,39 @@ window.attachPhotoDoubleTap = function(el, handler){
                 pastDiv.style.width='100%';
                 pastDiv.innerHTML = myPastHTML;
                 listEl.appendChild(pastDiv);
+
+              // Async photo loader for time capsule
+              setTimeout(function(){
+                var asyncPhotos = pastDiv.querySelectorAll('.tc-photo-async');
+                asyncPhotos.forEach(function(el){
+                  var key = el.getAttribute('data-photo-key');
+                  if(!key) return;
+                  try{
+                    if(typeof getPhotoSrcAsyncSafe === 'function'){
+                      getPhotoSrcAsyncSafe(key).then(function(src){
+                        if(src){
+                          var style = pastSettings.cardStyle || 'instagram';
+                          if(style==='instagram'){
+                            el.outerHTML = '<div style="width:100%; height:200px; background:#f8f5f0;"><img src="'+src+'" style="width:100%; height:200px; object-fit:contain; border-radius:10px 10px 0 0; display:block; background:#f8f5f0;" onclick="event.stopPropagation(); window.openPhotoLightbox(\''+key+'\', {date: el.closest(\'[onclick]\')?.getAttribute(\'onclick\')||\'\'})"></div>';
+                          } else if(style==='letter'){
+                            el.outerHTML = '<div style="margin:8px 0; text-align:center;"><img src="'+src+'" style="max-width:140px; max-height:140px; border-radius:8px; border:4px solid #fff; box-shadow:0 3px 10px rgba(0,0,0,0.2); transform:rotate(-2deg);"></div>';
+                          } else {
+                            el.outerHTML = '<img src="'+src+'" style="width:50px; height:50px; object-fit:cover; border-radius:6px; flex-shrink:0; margin-right:8px;">';
+                          }
+                        } else {
+                          el.innerHTML = '📷 사진 없음';
+                        }
+                      }).catch(function(){ el.innerHTML='📷'; });
+                    } else if(typeof getPhotoSrc === 'function'){
+                      var src = getPhotoSrc(key);
+                      if(src){
+                        el.outerHTML = '<img src="'+src+'" style="width:100%; height:160px; object-fit:contain; border-radius:10px;">';
+                      }
+                    }
+                  }catch(e){ console.log('tc photo err', e); }
+                });
+              }, 300);
+
               }
             }catch(e){ console.log('past error', e); }
 
@@ -11852,7 +12069,7 @@ const DAILY_6LINE_V2 = {
               var html='<div style="font-size: var(--base-font-size); font-weight:800; color:#7c6cff; margin-bottom:8px;">📖 나의 과거의 오늘 ('+pasts2.length+'건)</div>';
               for(var i=0;i<pasts2.length;i++){
                 var p=pasts2[i];
-                html+='<div onclick="window.goToPastDiary(\''+p.date+'\')" style="background:#f8f6ff; border:1px solid #e8e0ff; border-radius:10px; padding:10px 12px; margin-bottom:6px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;"><div><div style="font-size:13px; color:#9a8cc0; font-weight:700;">'+p.date+' '+(p.photo?'📷':'')+'</div><div style="font-size: var(--memo-font-size); color:#222;">'+(p.text||'사진').slice(0,32)+'</div></div><div style="font-size: var(--memo-font-size); color:#7c6cff; font-weight:700;">보기 →</div></div>';
+                html+='<div onclick="window.goToPastDiary(\''+p.date+'\')" style="background:#f8f6ff; border:1px solid #e8e0ff; border-radius:10px; padding:10px 12px; margin-bottom:6px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;"><div><div style="font-size:13px; color:#9a8cc0; font-weight:700;">'+p.date+' '+(p.photo?'📷':'')+'</div><div style="font-size: var(--memo-font-size); color:#222;">'+(p.text||'사진').slice(0,32)+'</div></div><div style="font-size: var(--memo-font-size); color:#7c6cff; font-weight:700;">일자로 이동 →</div></div>';
               }
               pastBox.innerHTML=html;
               listEl.appendChild(pastBox);
@@ -13231,13 +13448,13 @@ async function showPhotosForDate(dateStr){
 
 <!-- 🎯 버킷리스트 모달 - V271 무조건 작동 버전 -->
 <div id="bucket-list-modal-overlay" onclick="if(event.target===this) closeBucketListModal()" style="display:none; position:fixed; touch-action:none; overscroll-behavior:none; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:99999; align-items:center; justify-content:center; padding:15px; box-sizing:border-box;">
-    <div id="bucket-list-card" onclick="event.stopPropagation()" style="width:100%; max-width:460px; max-height:85vh; overflow-y:auto; background:linear-gradient(165deg, #23264A 0%, #171933 60%, #14152B 100%); border-radius:22px; padding:20px; position:relative; border:1px solid rgba(255,255,255,0.12);">
-        <button onclick="closeBucketListModal()" style="position:absolute; top:14px; right:14px; background:rgba(255,255,255,0.1); border:none; color:#fff; width:30px; height:30px; border-radius:50%; cursor:pointer;">✖</button>
-        <div style="font-size:18px; font-weight:900; color:#FFD98E; margin-bottom:4px;">🎯 나의 버킷 리스트</div>
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;"><div style="font-size:12px; color:rgba(255,255,255,0.5);">이루고 싶은 목표를 적어보세요!</div><button onclick="openBucketPwModal(true)" style="font-size:11px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:rgba(255,255,255,0.7); padding:4px 8px; border-radius:6px;">🔒 비밀번호 설정</button></div>
+    <div id="bucket-list-card" onclick="event.stopPropagation()" style="width:100%; max-width:460px; max-height:85vh; overflow-y:auto; background:linear-gradient(165deg, #f8f5ff 0%, #f5f0ff 50%, #fef6ff 100%); border-radius:20px; padding:22px; position:relative; border:1.5px solid #e8e0ff; box-shadow:0 8px 32px rgba(124,108,255,0.15);">
+        <button onclick="closeBucketListModal()" style="position:absolute; top:16px; right:16px; background:#FFFFFF; border:1px solid #e8e0ff; color:#9a8cc0; width:32px; height:32px; border-radius:50%; cursor:pointer; font-weight:600; box-shadow:0 2px 6px rgba(124,108,255,0.08);">✖</button>
+        <div style="font-size:18px; font-weight:800; color:#7c6cff; margin-bottom:6px; letter-spacing:-0.3px;">🎯 나의 버킷 리스트</div>
+        <div style="text-align:center; margin-bottom:12px;"><div style="font-size:12px; color:#a88;">이루고 싶은 소중한 꿈들을 적어보세요 ✨</div></div>
         
         <div style="display:flex; gap:6px; margin-bottom:12px;">
-            <button id="bl-add-toggle-btn" onclick="toggleBucketAddBox()" style="flex:1; background:linear-gradient(120deg, #A8EDEA, #FED6E3); border:none; padding:12px; border-radius:10px; font-weight:800; font-size:13px; color:#2A2340; cursor:pointer;">
+            <button id="bl-add-toggle-btn" onclick="toggleBucketAddBox()" style="flex:1; background:linear-gradient(135deg, #a78bfa 0%, #f472b6 100%); border:none; padding:13px; border-radius:12px; font-weight:800; font-size:13.5px; color:#FFFFFF; cursor:pointer; box-shadow:0 4px 14px rgba(124,108,255,0.28); letter-spacing:-0.2px;">
                 <span id="bl-add-toggle-icon">➕</span> 목표 추가하기
             </button>
         </div>
@@ -13247,34 +13464,14 @@ async function showPhotosForDate(dateStr){
             <button onclick="addBucketListItem()" style="background:#FF9AC2; color:#fff; border:none; padding:12px 18px; border-radius:10px; font-weight:700; cursor:pointer;">추가</button>
         </div>
         
-        <div id="bl-list-area" style="min-height:100px; background:#ffffff; border-radius:10px; padding:8px;" style="min-height:100px; background:#ffffff; border-radius:10px; padding:8px;"></div>
+        <div id="bl-list-area" style="min-height:120px; background:#FFFFFF; border-radius:14px; padding:10px; border:1px solid #e8e0ff; box-shadow:0 2px 8px rgba(124,108,255,0.06);"></div>
         
-        <div style="margin-top:18px;"><button onclick="closeBucketListModal()" style="width:100%;background:linear-gradient(120deg,#FFDAB9,#E8A87C);color:#4A3728;border:none;box-shadow:0 4px 14px rgba(232,168,124,0.35);padding:14px;border-radius:14px;font-weight:800;font-size:15px;">닫기</button></div>
+        <div style="margin-top:20px;"><button onclick="closeBucketListModal()" style="width:100%;background:#FFFFFF; color:#7c6cff; border:1px solid #e8e0ff; padding:13px; border-radius:12px; font-weight:700; font-size:14px; box-shadow:0 2px 8px rgba(124,108,255,0.06);">닫기</button></div>
     </div>
 </div>
 
 <!-- 🔒 버킷리스트 비밀번호 모달 -->
-<div id="bucket-pw-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:1000000; align-items:center; justify-content:center; padding:15px; box-sizing:border-box;">
-    <div style="width:100%; max-width:340px; background:#fff; border-radius:20px; padding:24px; text-align:center; box-shadow:0 20px 50px rgba(0,0,0,0.3);">
-        <div style="font-size:32px; margin-bottom:8px;">🔒</div>
-        <div style="font-size:17px; font-weight:800; color:#222; margin-bottom:4px;">버킷리스트 잠금</div>
-        <div style="font-size:12px; color:#888; margin-bottom:16px;" id="bucket-pw-msg">비밀번호를 입력하세요</div>
-        <input type="password" id="bucket-pw-input" placeholder="비밀번호 입력" style="width:100%; padding:14px; border:2px solid #FFD98E; border-radius:12px; font-size:16px; text-align:center; box-sizing:border-box; outline:none;" onkeydown="if(event.key==='Enter') checkBucketPassword()">
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px;">
-            <button onclick="closeBucketPwModal()" style="padding:12px; background:#f5f5f5; border:1px solid #ddd; border-radius:12px; font-weight:700; color:#666;">취소</button>
-            <button onclick="checkBucketPassword()" style="padding:12px; background:linear-gradient(120deg, #FFD98E, #FF9AC2); border:none; border-radius:12px; font-weight:800; color:#2A2340;">확인</button>
-        </div>
-        <div style="margin-top:12px; font-size:11px; color:#aaa;">
-            <span onclick="resetBucketPassword()" style="text-decoration:underline; cursor:pointer;">비밀번호 잊었나요? 초기화</span>
-        </div>
-        <div id="bucket-pw-setup-area" style="display:none; margin-top:14px; padding-top:14px; border-top:1px solid #eee;">
-            <div style="font-size:12px; color:#666; margin-bottom:8px;">새 비밀번호 설정</div>
-            <input type="password" id="bucket-pw-new" placeholder="새 비밀번호" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-bottom:6px; box-sizing:border-box;">
-            <input type="password" id="bucket-pw-confirm" placeholder="비밀번호 확인" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box;">
-            <button onclick="saveBucketPassword()" style="width:100%; margin-top:8px; padding:10px; background:#4CAF50; color:#fff; border:none; border-radius:8px; font-weight:700;">비밀번호 설정</button>
-        </div>
-    </div>
-</div>
+
 
 <script>
 // V301-AK 오늘운세자동+맨밑고정종료 Core - Swing2App(1차) + Node.js APK(2차) 통합 안정화 - 뒤로가기 제외
@@ -17906,18 +18103,7 @@ window.addEventListener("load", function() {
           
         </div>
         
-        <div style="font-size:12px; color:#666; margin:12px 0 8px 0; font-weight:700;">🎨 알림 카드 스타일</div>
-        <div style="display:flex; gap:8px;">
-          <label style="flex:1; text-align:center; padding:8px; border:1.5px solid ${settings.cardStyle==='instagram'?'#7c6cff':'#ddd'}; border-radius:10px; cursor:pointer; background:${settings.cardStyle==='instagram'?'#f0ebff':'white'};">
-            <input type="radio" name="cardStyle" value="instagram" ${settings.cardStyle==='instagram'?'checked':''} style="display:none;" onchange="saveCardStyle('instagram')"> 📸<br><span style="font-size:11px;">인스타 감성</span>
-          </label>
-          <label style="flex:1; text-align:center; padding:8px; border:1.5px solid ${settings.cardStyle==='letter'?'#7c6cff':'#ddd'}; border-radius:10px; cursor:pointer; background:${settings.cardStyle==='letter'?'#f0ebff':'white'};">
-            <input type="radio" name="cardStyle" value="letter" ${settings.cardStyle==='letter'?'checked':''} style="display:none;" onchange="saveCardStyle('letter')"> 💌<br><span style="font-size:11px;">편지 감성</span>
-          </label>
-          <label style="flex:1; text-align:center; padding:8px; border:1.5px solid ${settings.cardStyle==='simple'?'#7c6cff':'#ddd'}; border-radius:10px; cursor:pointer; background:${settings.cardStyle==='simple'?'#f0ebff':'white'};">
-            <input type="radio" name="cardStyle" value="simple" ${settings.cardStyle==='simple'?'checked':''} style="display:none;" onchange="saveCardStyle('simple')"> ✨<br><span style="font-size:11px;">심플</span>
-          </label>
-        </div>
+        
       </div>
     `;
     container.innerHTML = html;
@@ -18506,7 +18692,7 @@ window.openFortunePopupFixed = function() {
         html+='<div class="fp-hero"><div class="fp-eyebrow" style="background:linear-gradient(120deg,#FFD98E,#FF9AC2);color:#2A2340;">'+friendly.emoji+' 오늘은 '+friendly.name+'의 날</div><div style="margin-top:10px;font-size:20px;font-weight:800;line-height:1.3;color:#fff;">'+oneLine+'</div></div>';
         html+='<div style="margin-top:16px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:18px;padding:16px;"><div style="display:flex;align-items:center;gap:16px;"><div style="position:relative;width:88px;height:88px;flex-shrink:0;"><svg width="88" height="88" viewBox="0 0 88 88" style="transform:rotate(-90deg);"><circle cx="44" cy="44" r="36" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="7"/><circle cx="44" cy="44" r="36" fill="none" stroke="url(#gradScore)" stroke-width="7" stroke-linecap="round" stroke-dasharray="'+(2*Math.PI*36)+'" stroke-dashoffset="'+(2*Math.PI*36*(1-score/100))+'" style="transition: stroke-dashoffset 0.8s ease;"/><defs><linearGradient id="gradScore" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FFD98E"/><stop offset="100%" stop-color="#FF9AC2"/></linearGradient></defs></svg><div style="position:absolute;left:0;top:0;width:88px;height:88px;display:flex;flex-direction:column;align-items:center;justify-content:center;"><div style="font-size:26px;font-weight:900;color:#FFD98E;line-height:1;">'+score+'</div><div style="font-size:11px;color:rgba(255,255,255,0.6);margin-top:2px;">/100</div></div></div><div style="flex:1;"><div style="font-size:15px;font-weight:800;color:#fff;line-height:1.3;">'+(score>=90?'최고의 날이에요! 하고 싶은 거 다 해요':score>=75?'좋은 흐름이에요, 가볍게 밀어봐요':score>=55?'무난한 날, 기본에 충실해요':'쉬어가도 괜찮아요, 내일을 위해 충전해요')+'</div><div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;"><span style="background:rgba(255,217,142,0.15);border:1px solid rgba(255,217,142,0.25);padding:3px 8px;border-radius:999px;font-size:11px;color:#FFE9C2;">🎨 '+color.split(' ')[0]+'</span><span style="background:rgba(255,255,255,0.08);padding:3px 8px;border-radius:999px;font-size:11px;color:rgba(255,255,255,0.8);">⏰ '+goodTime+'</span></div></div></div><div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.08);display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;"><div><span style="color:rgba(255,255,255,0.45);">행운숫자</span> <span style="color:#fff;font-weight:700;margin-left:4px;">🔢 '+num1+', '+num2+'</span></div><div><span style="color:rgba(255,255,255,0.45);">하면 좋은 것</span> <span style="color:#7CFF9B;font-weight:700;margin-left:4px;">✅ '+action+'</span></div><div><span style="color:rgba(255,255,255,0.45);">행운색</span> <span style="color:#FFE9C2;font-weight:600;margin-left:4px;">'+color+'</span></div><div><span style="color:rgba(255,255,255,0.45);">조심할 것</span> <span style="color:#FF9AA2;font-weight:600;margin-left:4px;">⚠️ '+avoid+'</span></div></div></div>';
         html+='<div style="margin-top:14px;display:grid;gap:10px;"><div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:12px;"><div style="font-size:12px;color:#FFD98E;font-weight:700;margin-bottom:4px;">🌟 총운</div><div style="font-size:13.5px;line-height:1.5;color:rgba(255,255,255,0.85);">'+friendlyTotal+'</div></div><div style="display:grid;gap:10px;"><div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:12px;"><div style="font-size:12px;color:#7CFF9B;font-weight:700;margin-bottom:4px;">💰 재물운</div><div style="font-size:13.5px;line-height:1.5;color:rgba(255,255,255,0.85);">'+detailMoney+'</div></div><div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:12px;"><div style="font-size:12px;color:#FF9AC2;font-weight:700;margin-bottom:4px;">💗 애정운</div><div style="font-size:13.5px;line-height:1.5;color:rgba(255,255,255,0.85);">'+detailLove+'</div></div></div></div>';
-        html+='<div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:14px;"><div class="fp-my-saju-link-big" onclick="openSajuDetailModal()" style="margin:0; text-align:center; padding:10px; font-size:13px; background:rgba(255,255,255,0.08); border-radius:10px; color:#E8D5FF; cursor:pointer;">📜 나의 사주풀이</div><div class="fp-my-saju-link-big" onclick="openBucketListModal()" style="margin:0; text-align:center; padding:10px; font-size:13px; background:linear-gradient(120deg, #A8EDEA, #FED6E3); color:#2A2340; border-radius:10px; cursor:pointer;">🎯 나의 버킷 리스트</div></div>';
+        html+='<div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:14px;"><div class="fp-my-saju-link-big" onclick="openSajuDetailModal()" style="margin:0; text-align:center; padding:10px; font-size:13px; background:rgba(255,255,255,0.08); border-radius:10px; color:#E8D5FF; cursor:pointer;">📜 나의 사주풀이</div><div class="fp-my-saju-link-big" onclick="openBucketListModal()" style="margin:0; text-align:center; padding:10px; font-size:13px; background:linear-gradient(120deg, #fff0f0, #ffdde1); color:#8e6b6b; border:1px solid #f3d5d5; border-radius:10px; cursor:pointer;">🎯 나의 버킷 리스트</div></div>';
         html+='<div class="fp-biorhythm-card" id="fp-biorhythm-card" style="margin-top:16px; padding:14px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.08); border-radius:16px;">';
         html+='<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;"><div style="font-size:13px; font-weight:800; color:#fff;">◇ 바이오리듬</div><div style="font-size:11px; color:rgba(255,255,255,0.5); display:flex; align-items:center; gap:6px;"><span>생년월일 '+birthLabel+'</span></div></div>';
         html+='<div style="background:#fff; border-radius:12px; padding:10px 8px 6px 8px;"><canvas id="biorhythm-canvas" width="600" height="200" style="width:100%; height:140px; display:block;"></canvas><div style="display:flex; justify-content:space-between; padding:0 8px; margin-top:4px; font-size:12px; color:#333; font-weight:600;"><span>'+dateLabels[0]+'</span><span>'+dateLabels[1]+'</span><span style="color:#E53935; font-weight:800;">'+dateLabels[2]+'</span><span>'+dateLabels[3]+'</span><span>'+dateLabels[4]+'</span></div></div>';
@@ -19141,12 +19327,9 @@ window.openSajuDetailModal = function(){
     }
     if(dmDescEl){
       const birthStr = window.sajuBirthInfo ? (window.sajuBirthInfo.date + (window.sajuBirthInfo.time ? ' '+window.sajuBirthInfo.time : '')) : '';
-      const timeMsg = window.sajuBirthInfo && window.sajuBirthInfo.time ? '태어난 시간 '+window.sajuBirthInfo.time+'까지 입력해주셔서 시주(숨은 재능)까지 볼 수 있어요!' : '시간을 입력하면 시주(숨은 재능)까지 더 자세히 볼 수 있어요.';
       dmDescEl.innerHTML = ''
-        +'<div style="text-align:center; margin-bottom:14px;">'
-        +'<div style="font-size:12px; color:#999;" id="sd-birth-info">'+birthStr+'</div>'
-        +'<div style="font-size:19px; font-weight:900; margin-top:4px; color:#333;">'+dmEasy.name+' 같은 사람</div>'
-        +'<div style="font-size:12px; color:#888; margin-top:4px;">'+timeMsg+'</div>'
+        +'<div style="text-align:center; margin-bottom:6px;">'
+        +'<div style="font-size:11px; color:#B0A692;" id="sd-birth-info">'+birthStr+'</div>'
         +'</div>'
         +'<div style="background:linear-gradient(120deg,#f6f0ff,#fff5f5); border-radius:12px; padding:14px; margin-bottom:10px;">'
         +'<div style="font-size:13px; font-weight:800; color:#6a4fb0; margin-bottom:6px;">🌿 나는 어떤 사람?</div>'
@@ -20090,6 +20273,755 @@ button[onclick*="writeDiaryWithBiorhythm"] {
   gap:5px !important;
 }
 </style>
+
+
+<style id="REMOVE_RED_BOX">
+/* 빨간 박스 안 의미없는 안내문구 숨김 */
+#sd-birth-info + div + div {
+  display:none !important;
+}
+</style>
+<script id="REMOVE_RED_BOX_JS">
+(function(){
+  function removeRedBox(){
+    // Remove the time message div
+    document.querySelectorAll('#sd-birth-info').forEach(birthInfo=>{
+      const parent = birthInfo.parentElement;
+      if(parent){
+        Array.from(parent.children).forEach(child=>{
+          if(child.textContent.includes('태어난 시간') && child.textContent.includes('시주') && child.textContent.includes('볼 수 있어요')){
+            child.style.display='none';
+            child.remove();
+          }
+          if(child.textContent.includes('시간을 입력하면 시주')){
+            child.style.display='none';
+            child.remove();
+          }
+        });
+      }
+    });
+    
+    // Also check dmDescEl
+    const dmDescEl = document.getElementById('sd-dm-desc');
+    if(dmDescEl){
+      dmDescEl.querySelectorAll('div').forEach(div=>{
+        if(div.textContent.includes('태어난 시간') && div.textContent.includes('시주')){
+          div.style.display='none';
+          div.remove();
+        }
+      });
+    }
+  }
+  
+  setInterval(removeRedBox, 500);
+  setTimeout(removeRedBox, 100);
+})();
+</script>
+
+
+<style id="REMOVE_DUP_TITLE">
+/* 중복 태양 같은 사람 제거 - 두번째 것만 숨김 */
+#sd-dm-desc div[style*="font-size:19px"][style*="font-weight:900"] {
+  display:none !important;
+}
+#sd-dm-desc div[style*="font-size:12px"][style*="color:#888"] {
+  display:none !important;
+}
+</style>
+<script id="REMOVE_DUP_JS">
+(function(){
+  function removeDup(){
+    const dmDescEl = document.getElementById('sd-dm-desc');
+    if(dmDescEl){
+      dmDescEl.querySelectorAll('div').forEach(div=>{
+        const text = div.textContent.trim();
+        // Remove duplicate "태양 같은 사람", "같은 사람" that appears twice
+        if(text === '태양 같은 사람' || text.endsWith('같은 사람') && div.style.fontSize === '19px' || text.includes('같은 사람') && div.parentElement && div.parentElement.id !== 'sd-dm-title'){
+          // But keep the top one with id sd-dm-title
+          if(div.id !== 'sd-dm-title' && !div.closest('.sd-dm-box')?.querySelector('#sd-dm-title')){
+            // Check if it's inside sd-dm-desc (the duplicate location)
+            if(dmDescEl.contains(div) && text.length < 20){
+              div.style.display='none';
+              div.remove();
+            }
+          }
+        }
+      });
+      // If dm-desc only has birth info left, make it compact
+      if(dmDescEl.textContent.trim().length < 30){
+        dmDescEl.style.marginBottom='8px';
+      }
+    }
+  }
+  setInterval(removeDup, 500);
+  setTimeout(removeDup, 100);
+})();
+</script>
+
+
+<style id="BUCKET_BACKUP_UI">
+.bucket-backup-row {
+  display:flex;
+  gap:6px;
+  margin-top:12px;
+  padding-top:12px;
+  border-top:1px dashed #FFDAB9;
+}
+.bucket-backup-btn {
+  flex:1;
+  padding:8px 10px;
+  border-radius:8px;
+  border:1px solid #FFDAB9;
+  background:#FFFBF5;
+  font-size:11px;
+  font-weight:700;
+  color:#8A6B4A;
+  cursor:pointer;
+}
+.bucket-backup-btn:hover {
+  background:#FFF3E6;
+}
+</style>
+<script id="BUCKET_BACKUP_LOGIC">
+(function(){
+  window.exportBucketList = function(){
+    try{
+      const data = localStorage.getItem('smartDiaryBucketList') || '[]';
+      const blob = new Blob([data], {type: 'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'bucketlist_backup_' + new Date().toISOString().slice(0,10) + '.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      alert('버킷리스트 백업 파일을 다운로드했어요! 업데이트 전에 보관해두세요.');
+    }catch(e){
+      alert('백업 실패: ' + e.message);
+    }
+  };
+  
+  window.importBucketList = function(){
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = function(e){
+      const file = e.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = function(ev){
+        try{
+          const json = ev.target.result;
+          const parsed = JSON.parse(json);
+          if(Array.isArray(parsed)){
+            if(confirm(parsed.length + '개의 버킷리스트를 복구할까요? 현재 데이터는 백업에 추가됩니다.')){
+              localStorage.setItem('smartDiaryBucketList', json);
+              localStorage.setItem('smartDiaryBucketList_backup', json);
+              if(typeof bucketListItems !== 'undefined'){
+                bucketListItems = parsed;
+              }
+              if(typeof renderBucketList === 'function') renderBucketList();
+              alert('복구 완료!');
+            }
+          }
+        }catch(err){
+          alert('파일 읽기 실패: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  };
+  
+  // Add backup buttons to bucket modal when opened
+  function addBackupButtons(){
+    const card = document.getElementById('bucket-list-card');
+    if(!card) return;
+    if(card.querySelector('.bucket-backup-row')) return;
+    
+    const backupRow = document.createElement('div');
+    backupRow.className = 'bucket-backup-row';
+    backupRow.innerHTML = '<button class="bucket-backup-btn" onclick="exportBucketList()">📤 백업 내보내기</button><button class="bucket-backup-btn" onclick="importBucketList()">📥 백업 가져오기</button>';
+    
+    // Insert before close button
+    const closeBtn = card.querySelector('button[onclick*="closeBucketListModal"]');
+    if(closeBtn && closeBtn.parentElement){
+      closeBtn.parentElement.parentElement.insertBefore(backupRow, closeBtn.parentElement);
+    } else {
+      card.appendChild(backupRow);
+    }
+  }
+  
+  const origOpenBucket = window.actuallyOpenBucketList;
+  if(origOpenBucket){
+    window.actuallyOpenBucketList = function(){
+      const res = origOpenBucket.apply(this, arguments);
+      setTimeout(addBackupButtons, 100);
+      setTimeout(addBackupButtons, 500);
+      return res;
+    };
+  }
+  
+  console.log('[BUCKET BACKUP] Backup UI ready');
+})();
+</script>
+
+
+<script id="FINAL_ORDER_FIX">
+(function(){
+  function enforceFinalOrder(){
+    const scrollContent = document.querySelector('.settings-scroll-content');
+    const pastContainer = document.getElementById('past-notify-settings-container');
+    const accountBlock = document.querySelector('div[style*="계정과목 관리"]')?.closest('div[style*="margin:8px 0 0"]') || document.querySelector('div[style*="📒 계정과목 관리"]').parentElement;
+    const resetArea = document.getElementById('reset-bottom-area');
+    
+    if(!scrollContent || !resetArea) return;
+    
+    // Find account block more reliably - it's the div with background #f9f6f2
+    let accountDiv = null;
+    scrollContent.querySelectorAll('div').forEach(div=>{
+      if(div.textContent.includes('계정과목 관리') && div.style.background === 'rgb(249, 246, 242)' || div.style.background === '#f9f6f2'){
+        // Check if it's the wrapper
+        if(div.querySelector('#expense-cat-list')){
+          accountDiv = div;
+        }
+      }
+    });
+    // Fallback: find by expense list
+    if(!accountDiv){
+      const expenseList = document.getElementById('expense-cat-list');
+      if(expenseList){
+        let parent = expenseList.parentElement;
+        while(parent && parent !== scrollContent){
+          if(parent.style && parent.style.background && parent.style.background.includes('249')){
+            accountDiv = parent;
+            break;
+          }
+          parent = parent.parentElement;
+        }
+        if(!accountDiv && expenseList){
+          // Go 2 levels up
+          accountDiv = expenseList.closest('div[style*="f9f6f2"]');
+        }
+      }
+    }
+    
+    // Enforce order: past -> account -> reset at bottom
+    if(pastContainer && accountDiv && resetArea){
+      try{
+        // Move past container just before account
+        if(pastContainer.nextElementSibling !== accountDiv){
+          scrollContent.insertBefore(pastContainer, accountDiv);
+        }
+        // Move account just before reset
+        if(accountDiv.nextElementSibling !== resetArea){
+          scrollContent.insertBefore(accountDiv, resetArea);
+        }
+        // Reset always last
+        scrollContent.appendChild(resetArea);
+      }catch(e){}
+    } else if(accountDiv && resetArea){
+      // At least ensure account is just before reset
+      try{
+        scrollContent.insertBefore(accountDiv, resetArea);
+        scrollContent.appendChild(resetArea);
+      }catch(e){}
+    }
+  }
+  
+  // Run multiple times
+  setTimeout(enforceFinalOrder, 100);
+  setTimeout(enforceFinalOrder, 500);
+  setTimeout(enforceFinalOrder, 1500);
+  setTimeout(enforceFinalOrder, 3000);
+  
+  // Also on settings open
+  const origOpenSettings = window.openSettingsModal;
+  if(origOpenSettings){
+    window.openSettingsModal = function(){
+      const res = origOpenSettings.apply(this, arguments);
+      setTimeout(enforceFinalOrder, 100);
+      setTimeout(enforceFinalOrder, 500);
+      return res;
+    };
+  }
+  
+  // Observer
+  const settingsCard = document.getElementById('settings-card');
+  if(settingsCard){
+    const observer = new MutationObserver(()=>{
+      enforceFinalOrder();
+    });
+    observer.observe(settingsCard, {childList:true, subtree:true});
+  }
+})();
+</script>
+
+
+<style id="V205_BUCKET_WARM">
+#bucket-list-card {
+  background: linear-gradient(165deg, #f8f5ff 0%, #f5f0ff 50%, #fef6ff 100%) !important;
+  border: 1.5px solid #e8e0ff !important;
+}
+#bucket-list-card #bl-new-input {
+  background: #FFFFFF !important;
+  border: 1.5px solid #e8e0ff !important;
+  border-radius: 10px !important;
+  color: #4a3a6b !important;
+}
+#bucket-list-card #bl-new-input::placeholder {
+  color: #b0a0c8 !important;
+}
+#bucket-list-card #bl-new-input:focus {
+  border-color: #a78bfa !important;
+  box-shadow: 0 0 0 3px rgba(167,139,250,0.15) !important;
+  outline: none !important;
+}
+.bl-item {
+  background: #FFFFFF !important;
+  border: 1px solid #e8e0ff !important;
+  border-left: 4px solid #a78bfa !important;
+  border-radius: 12px !important;
+}
+.bl-item:hover {
+  border-color: #d8d0ff !important;
+  border-left-color: #7c6cff !important;
+  box-shadow: 0 4px 14px rgba(124,108,255,0.12) !important;
+  transform: translateY(-1px);
+  transition: all 0.2s ease;
+}
+#bucket-list-modal-overlay {
+  background: rgba(60, 50, 90, 0.38) !important;
+  backdrop-filter: blur(4px);
+}
+.bl-rank {
+  background: linear-gradient(135deg, #a78bfa, #7c6cff) !important;
+  color: #FFFFFF !important;
+}
+.bl-text {
+  color: #4a3a6b !important;
+}
+#bl-add-box button {
+  background: linear-gradient(135deg, #a78bfa, #f472b6) !important;
+  color: #FFFFFF !important;
+}
+.bl-empty {
+  color: #9a8cc0 !important;
+}
+</style>
+
+
+<style id="V206_NO_PW">
+#bucket-pw-modal { display:none !important; }
+#bucket-list-card button[onclick*="BucketPw"] { display:none !important; }
+</style>
+
+
+<style id="V207_SOFT_WARM_FINAL">
+#bucket-list-card {
+  font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif !important;
+}
+#bucket-list-card * {
+  -webkit-tap-highlight-color: transparent;
+}
+.bl-empty {
+  color: #B0A090 !important;
+}
+</style>
+
+
+<script id="V209_BIORHYTHM_TOGGLE">
+(function(){
+  const BIO_KEY = 'smartDiaryShowBiorhythm';
+  
+  function getBiorhythmVisibility(){
+    try{
+      const v = localStorage.getItem(BIO_KEY);
+      if(v===null) return true; // default on
+      return v==='true';
+    }catch(e){ return true; }
+  }
+  
+  function setBiorhythmVisibility(show){
+    try{ localStorage.setItem(BIO_KEY, show ? 'true' : 'false'); }catch(e){}
+    const teaser = document.getElementById('main-biorhythm-teaser');
+    if(teaser){
+      teaser.style.display = show ? 'block' : 'none';
+    }
+    // also update checkbox
+    const chk = document.getElementById('toggle-biorhythm');
+    if(chk && chk.checked !== show) chk.checked = show;
+    console.log('[BIORHYTHM] Visibility set to', show);
+  }
+  
+  window.getBiorhythmVisibility = getBiorhythmVisibility;
+  window.setBiorhythmVisibility = setBiorhythmVisibility;
+  
+  // Hook into renderMainBiorhythm - wrap it to respect setting
+  const origRender = window.renderMainBiorhythm;
+  if(origRender){
+    window.renderMainBiorhythm = function(){
+      const res = origRender.apply(this, arguments);
+      const show = getBiorhythmVisibility();
+      const teaser = document.getElementById('main-biorhythm-teaser');
+      if(teaser){
+        if(!show){
+          teaser.style.display='none';
+        } else {
+          // if show is true, keep whatever orig did, but ensure display block if birth exists
+          // orig already sets display, so only hide if setting is off
+        }
+      }
+      return res;
+    };
+  }
+  
+  // Also override directly on page load
+  function applyOnLoad(){
+    const show = getBiorhythmVisibility();
+    const chk = document.getElementById('toggle-biorhythm');
+    if(chk) chk.checked = show;
+    const teaser = document.getElementById('main-biorhythm-teaser');
+    if(teaser && !show){
+      teaser.style.display='none';
+    }
+  }
+  
+  // Run on load and when settings modal opens
+  window.addEventListener('load', function(){ setTimeout(applyOnLoad, 1500); });
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(applyOnLoad, 1000); });
+  
+  // Hook settings modal open
+  const origOpenSettings = window.openSettingsModal;
+  if(origOpenSettings){
+    window.openSettingsModal = function(){
+      const r = origOpenSettings.apply(this, arguments);
+      setTimeout(applyOnLoad, 100);
+      return r;
+    };
+  }
+  
+  console.log('[BIORHYTHM TOGGLE] Initialized');
+})();
+</script>
+
+
+<style id="V212_ONLY_BOX">
+/* 네모박스(타임캡슐) 일자로 이동 버튼만 강조 - 수정 버튼은 원래대로 */
+div[onclick*="goToPastDiary"] div[style*="일자로 이동"] {
+  background: #f0eaff !important;
+  border: 1px solid #e8e0ff !important;
+  padding: 4px 10px !important;
+  border-radius: 20px !important;
+  font-size: 12px !important;
+  color: #7c6cff !important;
+  font-weight: 800 !important;
+}
+</style>
+
+
+
+
+
+
+<script id="V220_FOCUS_ENHANCED">
+window.goToPastDiary = function(targetDateStr, photoKeyOrFocus){
+  try{
+    var d = new Date(targetDateStr);
+    if(isNaN(d.getTime())){ alert('날짜 오류: '+targetDateStr); return; }
+    window.calYear = d.getFullYear();
+    window.calMonth = d.getMonth();
+    if(typeof calYear !== 'undefined') calYear = window.calYear;
+    if(typeof calMonth !== 'undefined') calMonth = window.calMonth;
+    window.selectedViewDate = targetDateStr;
+    if(typeof selectedViewDate !== 'undefined') selectedViewDate = targetDateStr;
+    localStorage.setItem('smartDiarySelectedDate', targetDateStr);
+    // 포커스 정보 저장
+    window._focusPhotoKey = photoKeyOrFocus || null;
+    window._focusMode = photoKeyOrFocus ? 'photo' : 'album';
+    
+    if(typeof renderCalendar === 'function') renderCalendar();
+    setTimeout(function(){ 
+      if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday(); 
+      
+      // 포커스 처리
+      setTimeout(function(){
+        try{
+          // 1. 해당 날짜의 다이어리 컨테이너 찾기
+          var targetDate = targetDateStr;
+          var diaryContainer = document.querySelector('[data-date="'+targetDate+'"]') || document.getElementById('diary-around-today');
+          
+          if(window._focusPhotoKey){
+            // 사진 포커스: 해당 사진 키를 가진 이미지 찾기
+            var photoKey = window._focusPhotoKey;
+            var allImgs = document.querySelectorAll('img');
+            var found = false;
+            for(var i=0; i<allImgs.length; i++){
+              var img = allImgs[i];
+              // 사진 키로 찾기 (onclick에 키가 포함된 경우)
+              var onclick = img.getAttribute('onclick') || '';
+              if(onclick.indexOf(photoKey) !== -1 || (img.src && img.src.indexOf(photoKey) !== -1)){
+                img.scrollIntoView({behavior:'smooth', block:'center'});
+                img.style.outline = '3px solid #7c6cff';
+                img.style.outlineOffset = '2px';
+                img.style.borderRadius = '8px';
+                setTimeout(function(){ img.style.outline = ''; }, 2000);
+                found = true;
+                break;
+              }
+            }
+            // 못 찾으면 해당 날짜 영역으로 스크롤
+            if(!found && diaryContainer){
+              diaryContainer.scrollIntoView({behavior:'smooth', block:'start'});
+            }
+          } else {
+            // 앨범 포커스: 일자로 이동시 해당 날짜의 앨범/사진 영역으로 포커스
+            if(diaryContainer){
+              // 해당 날짜의 사진들 찾기
+              var photosInDate = diaryContainer.querySelectorAll('img');
+              if(photosInDate.length > 0){
+                photosInDate[0].scrollIntoView({behavior:'smooth', block:'center'});
+                // 앨범 전체에 하이라이트
+                diaryContainer.style.transition = 'all 0.3s';
+                diaryContainer.style.boxShadow = '0 0 0 3px rgba(124,108,255,0.3)';
+                setTimeout(function(){ diaryContainer.style.boxShadow = ''; }, 2000);
+              } else {
+                diaryContainer.scrollIntoView({behavior:'smooth', block:'start'});
+              }
+            } else {
+              window.scrollTo({top:0, behavior:'smooth'});
+            }
+          }
+        }catch(e){ console.log('focus err', e); window.scrollTo({top:0, behavior:'smooth'}); }
+      }, 300);
+      
+    }, 150);
+  }catch(e){ console.error(e); alert('이동 실패: '+e.message); }
+};
+
+// 사진 보기: 사진에 포커스 맞춰서 라이트박스 열기
+window.handleTimeCapsulePhotoClick = function(el){
+  try{
+    if(window.event) window.event.stopPropagation();
+    var photoKey = el.getAttribute('data-photo-key');
+    var photoText = el.getAttribute('data-photo-text') || '';
+    var photoDate = el.getAttribute('data-photo-date') || '';
+    
+    if(!photoKey || photoKey === 'undefined' || photoKey === 'null'){
+      var asyncEl = el.querySelector('.tc-photo-async');
+      if(asyncEl) photoKey = asyncEl.getAttribute('data-photo-key');
+    }
+    if(!photoKey || photoKey === 'undefined'){
+      var img = el.querySelector('img');
+      if(img){
+        var onclickAttr = img.getAttribute('onclick');
+        if(onclickAttr){
+          var m = onclickAttr.match(/openPhotoLightbox\('([^']+)'/);
+          if(m) photoKey = m[1];
+        }
+        if(!photoKey && img.src) photoKey = img.src;
+      }
+    }
+    
+    console.log('[PHOTO FOCUS] key:', photoKey);
+    
+    if(photoKey && typeof window.openPhotoLightbox === 'function'){
+      // 사진에 포커스 맞춰서 라이트박스
+      window.openPhotoLightbox(photoKey, {text: photoText, date: photoDate});
+      // 라이트박스 이미지에 포커스 효과
+      setTimeout(function(){
+        var lightboxImg = document.getElementById('photo-lightbox-img');
+        if(lightboxImg){
+          lightboxImg.style.transform = 'scale(1.02)';
+          lightboxImg.style.transition = 'transform 0.3s';
+          setTimeout(function(){ lightboxImg.style.transform = 'scale(1)'; }, 300);
+        }
+      }, 100);
+    }
+  }catch(e){ console.log('photo click err', e); }
+};
+
+// 일자로 이동: 앨범으로 포커스
+window.handleTimeCapsuleDateClick = function(dateStr, photoKey){
+  try{
+    if(window.event) window.event.stopPropagation();
+    // 해당 일자로 이동 + 앨범 포커스
+    window.goToPastDiary(dateStr, photoKey);
+  }catch(e){ console.log('date click err', e); }
+};
+
+console.log('[FOCUS] Photo & Album focus ready');
+
+window.goToToday = function(){
+  try{
+    try{
+      document.body.style.overflow='';
+      document.body.style.position='';
+      document.body.style.top='';
+      document.body.style.width='';
+      document.body.classList.remove('modal-open');
+      document.documentElement.style.overflow='';
+      document.documentElement.style.position='';
+    }catch(e){}
+    var today = (typeof getTodayStr==='function') ? getTodayStr() : new Date().toISOString().slice(0,10);
+    var d = new Date(today);
+    window.calYear = d.getFullYear(); window.calMonth = d.getMonth();
+    if(typeof calYear !== 'undefined') calYear = window.calYear;
+    if(typeof calMonth !== 'undefined') calMonth = window.calMonth;
+    window.selectedViewDate = today;
+    if(typeof selectedViewDate !== 'undefined') selectedViewDate = today;
+    localStorage.setItem('smartDiarySelectedDate', today);
+    if(typeof renderCalendar==='function') renderCalendar();
+    if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday();
+    setTimeout(function(){
+      window.scrollTo({top:0, behavior:'smooth'});
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }, 50);
+    setTimeout(function(){
+      window.scrollTo({top:0, behavior:'auto'});
+    }, 350);
+  }catch(e){ console.error(e); alert('이동 실패: '+e.message); }
+};
+
+</script>
+
+
+
+
+<style id="FORCE_HIDE_CARD_STYLE_CSS">
+/* CSS로 강제 숨김 */
+label:has(input[name="cardStyle"]) { display:none !important; }
+input[name="cardStyle"] { display:none !important; }
+div:has(> label:has(input[name="cardStyle"])) { display:none !important; }
+</style>
+<script id="V223_AGGRESSIVE_HIDE">
+// 완전 삭제 - MutationObserver로 감시
+(function(){
+  function forceHide(){
+    try{
+      // 1. 모든 라디오 버튼의 부모 label 숨김
+      document.querySelectorAll('input[name="cardStyle"]').forEach(function(radio){
+        var label = radio.closest('label');
+        if(label) {
+          label.style.display = 'none';
+          label.style.visibility = 'hidden';
+          label.style.height = '0';
+          label.style.overflow = 'hidden';
+        }
+        // 부모 div도 숨김
+        var parentDiv = radio.closest('div[style*="display:flex"]');
+        if(parentDiv && parentDiv.textContent.includes('인스타 감성')){
+          parentDiv.style.display = 'none';
+        }
+      });
+      
+      // 2. "알림 카드 스타일" 텍스트를 포함한 div 찾기
+      var allDivs = document.querySelectorAll('div');
+      allDivs.forEach(function(div){
+        if(div.textContent && div.textContent.trim() === '🎨 알림 카드 스타일' || 
+           (div.textContent && div.textContent.includes('알림 카드 스타일') && div.children.length === 0)){
+          div.style.display = 'none';
+          // 다음 형제 (버튼 컨테이너)도 숨김
+          var next = div.nextElementSibling;
+          if(next) {
+            // 버튼 3개가 있는지 확인
+            if(next.querySelector('input[name="cardStyle"]') || next.textContent.includes('인스타 감성')){
+              next.style.display = 'none';
+            }
+          }
+        }
+      });
+      
+      // 3. 더 넓게: 텍스트 포함으로 찾기
+      document.querySelectorAll('div').forEach(function(div){
+        if(div.textContent && div.textContent.includes('알림 카드 스타일')){
+          // 자식이 없고 텍스트만 있으면 숨김
+          if(div.children.length === 0 || (div.children.length === 1 && div.textContent.trim().length < 20)){
+            div.style.display = 'none';
+          }
+        }
+      });
+      
+      // 4. 라벨 텍스트로 찾기
+      var labels = document.querySelectorAll('label');
+      labels.forEach(function(label){
+        if(label.textContent.includes('인스타 감성') || label.textContent.includes('편지 감성')){
+          if(label.querySelector('input[name="cardStyle"]')){
+            label.style.display = 'none';
+          }
+        }
+      });
+      
+    }catch(e){ console.log('hide err', e); }
+  }
+  
+  // 즉시 실행
+  forceHide();
+  
+  // MutationObserver로 계속 감시
+  var observer = new MutationObserver(function(mutations){
+    forceHide();
+  });
+  
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['style']
+  });
+  
+  // 주기적으로도 실행 (설정 모달 열릴 때 대비)
+  setInterval(forceHide, 500);
+  
+  // 원래 render 함수도 감싸기
+  var checkRender = setInterval(function(){
+    if(window.renderPastNotifySettingsUI){
+      var orig = window.renderPastNotifySettingsUI;
+      if(!orig._wrapped){
+        window.renderPastNotifySettingsUI = function(){
+          var r = orig.apply(this, arguments);
+          setTimeout(forceHide, 50);
+          setTimeout(forceHide, 200);
+          setTimeout(forceHide, 500);
+          return r;
+        };
+        window.renderPastNotifySettingsUI._wrapped = true;
+      }
+      clearInterval(checkRender);
+    }
+  }, 100);
+  
+  // localStorage 강제 simple
+  try{
+    var s = localStorage.getItem('pastNotifySettings');
+    if(s){
+      var obj = JSON.parse(s);
+      if(obj.cardStyle !== 'simple'){
+        obj.cardStyle = 'simple';
+        localStorage.setItem('pastNotifySettings', JSON.stringify(obj));
+      }
+    }
+  }catch(e){}
+  
+  // getPastSettings 강제
+  var checkGet = setInterval(function(){
+    if(window.getPastSettings){
+      var origGet = window.getPastSettings;
+      if(!origGet._wrapped){
+        window.getPastSettings = function(){
+          var s = origGet();
+          if(s) s.cardStyle = 'simple';
+          return s;
+        };
+        window.getPastSettings._wrapped = true;
+      }
+      clearInterval(checkGet);
+    }
+  }, 100);
+  
+  console.log('[AGGRESSIVE HIDE] Card style UI will be forcibly hidden');
+})();
+</script>
 
 </body>
 </html>
