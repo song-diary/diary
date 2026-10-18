@@ -8747,61 +8747,84 @@ window.attachPhotoDoubleTap = function(el, handler){
     // ===================== 🎯 버킷리스트 =====================
     let bucketListItems = [];
 
-    // === 🛡️ 버킷리스트 영구 저장 (3중 백업) ===
+    // === 🛡️ 버킷리스트 영구 저장 (3중 백업) - V226 FIX ===
     function getBucketList() {
-        // 1순위: localStorage
-        try {
-            const ls = localStorage.getItem('smartDiaryBucketList');
-            if(ls && ls !== '[]'){
-                const parsed = JSON.parse(ls);
-                if(parsed && parsed.length > 0) return parsed;
-            }
-        } catch(e){}
-        
-        // 2순위: IndexedDB에서 복구 시도 (동기 반환 불가하므로, 비동기로 나중에 복구)
-        // 일단 빈 배열 반환, 나중에 indexedDB에서 복구
-        
-        // 3순위: localStorage 백업 키에서 복구
-        try {
-            const backup = localStorage.getItem('smartDiaryBucketList_backup');
-            if(backup){
-                const parsed = JSON.parse(backup);
-                if(parsed && parsed.length > 0){
-                    // 원본 복구
-                    localStorage.setItem('smartDiaryBucketList', backup);
-                    return parsed;
+        // V226 FIX: 모든 백업 키를 순차적으로 확인 (사주처럼 단순하게)
+        const keysToTry = [
+            'smartDiaryBucketList',
+            'smartDiaryBucketList_v2',
+            'smartDiaryBucketList_backup',
+            'smartDiaryBucketList_final_backup'
+        ];
+        for(let key of keysToTry){
+            try {
+                const val = localStorage.getItem(key);
+                if(val && val !== '[]' && val !== 'null'){
+                    const parsed = JSON.parse(val);
+                    if(parsed && Array.isArray(parsed) && parsed.length > 0){
+                        // 원본 키로 복구
+                        if(key !== 'smartDiaryBucketList'){
+                            try{ localStorage.setItem('smartDiaryBucketList', val); }catch(e){}
+                        }
+                        console.log('[BUCKET LOAD] Loaded from', key, parsed.length);
+                        return parsed;
+                    }
                 }
-            }
-        } catch(e){}
-        
+            } catch(e){}
+        }
+        // 마지막 시도
         try { return JSON.parse(localStorage.getItem('smartDiaryBucketList') || '[]'); } catch (e) { return []; }
     }
     
     function saveBucketList() {
+        // V227 FIX: 업그레이드 시 빈 배열로 덮어쓰기 방지!
+        if(bucketListItems.length === 0){
+            try{
+                const backupKeys = ['smartDiaryBucketList', 'smartDiaryBucketList_backup', 'smartDiaryBucketList_v2', 'smartDiaryBucketList_final_backup'];
+                for(let k of backupKeys){
+                    const b = localStorage.getItem(k);
+                    if(b){
+                        const p = JSON.parse(b);
+                        if(p && p.length > 0){
+                            console.log('[BUCKET SAVE] Blocked! Prevented overwrite of', p.length, 'items with empty array');
+                            return; // 빈 배열로 기존 데이터 덮어쓰기 방지
+                        }
+                    }
+                }
+            }catch(e){}
+        }
+        
         const jsonStr = JSON.stringify(bucketListItems);
+        console.log('[BUCKET SAVE] Trying to save', bucketListItems.length, 'items');
+        // 2. 백업 키
         try {
-            // 1. localStorage 저장
-            localStorage.setItem('smartDiaryBucketList', jsonStr);
-            // 2. 백업 키에도 저장 (2중 안전)
             localStorage.setItem('smartDiaryBucketList_backup', jsonStr);
             localStorage.setItem('smartDiaryBucketList_backup_time', new Date().toISOString());
-            
-            // 3. IndexedDB에 저장 (영구 저장)
-            saveToIndexedDB(jsonStr);
-            
-            // 4. 안드로이드 네이티브 저장소 (APK 업데이트에도 유지)
+            // 3중 백업 - v2 키도 추가 (사주처럼 단순하게)
+            localStorage.setItem('smartDiaryBucketList_v2', jsonStr);
+        } catch(e){}
+        
+        // 3. IndexedDB
+        try{ saveToIndexedDB(jsonStr); }catch(e){}
+        
+        // 4. 안드로이드 네이티브
+        try{
             if(window.Android && typeof window.Android.saveBucketList === 'function'){
-                try{ window.Android.saveBucketList(jsonStr); }catch(e){}
+                window.Android.saveBucketList(jsonStr);
             }
+        }catch(e){}
+        try{
             if(window.AndroidBridge && typeof window.AndroidBridge.saveData === 'function'){
-                try{ window.AndroidBridge.saveData('bucketList', jsonStr); }catch(e){}
+                window.AndroidBridge.saveData('bucketList', jsonStr);
             }
-            
-            // 5. 자동 파일 백업 (다운로드 폴더) - 선택
-            // console.log('Bucket saved:', bucketListItems.length);
-        } catch(e){
-            console.error('Bucket save fail:', e);
-        }
+        }catch(e){}
+        
+        // 5. 사주처럼 diaryList에도 백업 (가장 안전한 방법)
+        try{
+            localStorage.setItem('smartDiaryBucketList_final_backup', jsonStr);
+        }catch(e){}
+        
+        console.log('[BUCKET SAVE] Done');
     }
     
     // IndexedDB 저장/복구
@@ -21020,6 +21043,142 @@ div:has(> label:has(input[name="cardStyle"])) { display:none !important; }
   }, 100);
   
   console.log('[AGGRESSIVE HIDE] Card style UI will be forcibly hidden');
+})();
+</script>
+
+
+<script id="V226_BUCKET_INIT">
+(function(){
+  // 페이지 로드시 버킷리스트 즉시 로드 (모달 열기 전에도)
+  try{
+    if(typeof getBucketList === 'function'){
+      var loaded = getBucketList();
+      if(loaded && loaded.length > 0){
+        // 전역 변수에 할당
+        if(typeof bucketListItems !== 'undefined'){
+          bucketListItems = loaded;
+        } else {
+          window.bucketListItems = loaded;
+        }
+        console.log('[BUCKET INIT] Loaded', loaded.length, 'items on page load');
+      }
+    }
+  }catch(e){ console.log('bucket init err', e); }
+  
+  // 사주처럼 저장되는지 테스트용 로그
+  console.log('[BUCKET] localStorage keys:', Object.keys(localStorage).filter(k=>k.toLowerCase().includes('bucket')));
+})();
+</script>
+
+
+<script id="V227_RESTORE_ON_UPGRADE">
+(function(){
+  console.log('[BUCKET UPGRADE FIX] Checking for existing data before init');
+  
+  // 1. 안드로이드 네이티브에서 먼저 복구 시도 (APK 업그레이드에도 유지되는 저장소)
+  function tryAndroidRestore(){
+    let restored = null;
+    // 방법 1: Android.loadBucketList
+    try{
+      if(window.Android && typeof window.Android.loadBucketList === 'function'){
+        const data = window.Android.loadBucketList();
+        if(data && data !== '[]' && data.length > 5){
+          console.log('[BUCKET] Found Android native data');
+          restored = data;
+        }
+      }
+    }catch(e){}
+    
+    // 방법 2: AndroidBridge.loadData
+    try{
+      if(window.AndroidBridge && typeof window.AndroidBridge.loadData === 'function'){
+        const data = window.AndroidBridge.loadData('bucketList');
+        if(data && data !== '[]' && data.length > 5){
+          console.log('[BUCKET] Found AndroidBridge data');
+          restored = data;
+        }
+      }
+    }catch(e){}
+    
+    // 방법 3: localStorage에 안드로이드가 저장한 키가 있을 수도 있음
+    try{
+      const keys = ['android_bucketList', 'Android_bucketList', 'bucketList_native'];
+      for(let k of keys){
+        const d = localStorage.getItem(k);
+        if(d && d.length > 5) restored = d;
+      }
+    }catch(e){}
+    
+    if(restored){
+      try{
+        const parsed = JSON.parse(restored);
+        if(parsed && parsed.length > 0){
+          // 모든 백업 키에 저장
+          localStorage.setItem('smartDiaryBucketList', restored);
+          localStorage.setItem('smartDiaryBucketList_backup', restored);
+          localStorage.setItem('smartDiaryBucketList_v2', restored);
+          localStorage.setItem('smartDiaryBucketList_final_backup', restored);
+          console.log('[BUCKET UPGRADE FIX] Restored', parsed.length, 'items from Android');
+          return parsed;
+        }
+      }catch(e){}
+    }
+    return null;
+  }
+  
+  // 2. 페이지 로드시 즉시 복구 (localStorage가 비어있어도 백업에서 복구)
+  function immediateRestore(){
+    const keys = [
+      'smartDiaryBucketList_final_backup',
+      'smartDiaryBucketList_v2',
+      'smartDiaryBucketList_backup',
+      'smartDiaryBucketList'
+    ];
+    for(let k of keys){
+      try{
+        const val = localStorage.getItem(k);
+        if(val && val !== '[]'){
+          const parsed = JSON.parse(val);
+          if(parsed && parsed.length > 0){
+            // 메인 키가 비어있으면 복구
+            const main = localStorage.getItem('smartDiaryBucketList');
+            if(!main || main === '[]' || JSON.parse(main).length === 0){
+              localStorage.setItem('smartDiaryBucketList', val);
+              console.log('[BUCKET UPGRADE FIX] Restored main from', k);
+            }
+            return parsed;
+          }
+        }
+      }catch(e){}
+    }
+    return null;
+  }
+  
+  // 실행
+  setTimeout(function(){
+    const androidData = tryAndroidRestore();
+    const backupData = immediateRestore();
+    if((androidData || backupData) && typeof bucketListItems !== 'undefined'){
+      const data = androidData || backupData;
+      // 전역 bucketListItems가 비어있으면 복구된 데이터로 채움
+      if(bucketListItems.length === 0 && data.length > 0){
+        bucketListItems = data;
+        console.log('[BUCKET UPGRADE FIX] bucketListItems restored to', data.length);
+        if(typeof renderBucketList === 'function'){
+          try{ renderBucketList(); }catch(e){}
+        }
+      }
+    }
+  }, 100);
+  
+  // 사주풀이는 왜 유지되는지 확인 - 사주도 같은 방식으로 백업
+  console.log('[BUCKET] Saju key exists:', !!localStorage.getItem('smartDiarySajuBirth'));
+  console.log('[BUCKET] Bucket keys:', {
+    main: localStorage.getItem('smartDiaryBucketList')?.length,
+    backup: localStorage.getItem('smartDiaryBucketList_backup')?.length,
+    v2: localStorage.getItem('smartDiaryBucketList_v2')?.length,
+    final: localStorage.getItem('smartDiaryBucketList_final_backup')?.length
+  });
 })();
 </script>
 
