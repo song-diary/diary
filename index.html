@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <!-- Version: V187 - 초중말복 동적화, 24절기 동적화, 누적패치 제거, 5~6줄 개그 유머 100점 -->
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>포토다이어리 V187 - 사진, 추억을 담다</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>포토다이어리 V235 PERSONALIZED FORTUNE - 사진, 추억을 담다</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -20917,276 +20917,19 @@ label:has(input[name="cardStyle"]) { display:none !important; }
 input[name="cardStyle"] { display:none !important; }
 div:has(> label:has(input[name="cardStyle"])) { display:none !important; }
 </style>
-<script id="V223_AGGRESSIVE_HIDE">
-// 완전 삭제 - MutationObserver로 감시
+
+
+
+
+
+
+
+
+
+<script id="V228_CLEAN_FIXES">
+// V228: 누적패치 정리 - 기능/ UI 동일 유지
 (function(){
-  function forceHide(){
-    try{
-      // 1. 모든 라디오 버튼의 부모 label 숨김
-      document.querySelectorAll('input[name="cardStyle"]').forEach(function(radio){
-        var label = radio.closest('label');
-        if(label) {
-          label.style.display = 'none';
-          label.style.visibility = 'hidden';
-          label.style.height = '0';
-          label.style.overflow = 'hidden';
-        }
-        // 부모 div도 숨김
-        var parentDiv = radio.closest('div[style*="display:flex"]');
-        if(parentDiv && parentDiv.textContent.includes('인스타 감성')){
-          parentDiv.style.display = 'none';
-        }
-      });
-      
-      // 2. "알림 카드 스타일" 텍스트를 포함한 div 찾기
-      var allDivs = document.querySelectorAll('div');
-      allDivs.forEach(function(div){
-        if(div.textContent && div.textContent.trim() === '🎨 알림 카드 스타일' || 
-           (div.textContent && div.textContent.includes('알림 카드 스타일') && div.children.length === 0)){
-          div.style.display = 'none';
-          // 다음 형제 (버튼 컨테이너)도 숨김
-          var next = div.nextElementSibling;
-          if(next) {
-            // 버튼 3개가 있는지 확인
-            if(next.querySelector('input[name="cardStyle"]') || next.textContent.includes('인스타 감성')){
-              next.style.display = 'none';
-            }
-          }
-        }
-      });
-      
-      // 3. 더 넓게: 텍스트 포함으로 찾기
-      document.querySelectorAll('div').forEach(function(div){
-        if(div.textContent && div.textContent.includes('알림 카드 스타일')){
-          // 자식이 없고 텍스트만 있으면 숨김
-          if(div.children.length === 0 || (div.children.length === 1 && div.textContent.trim().length < 20)){
-            div.style.display = 'none';
-          }
-        }
-      });
-      
-      // 4. 라벨 텍스트로 찾기
-      var labels = document.querySelectorAll('label');
-      labels.forEach(function(label){
-        if(label.textContent.includes('인스타 감성') || label.textContent.includes('편지 감성')){
-          if(label.querySelector('input[name="cardStyle"]')){
-            label.style.display = 'none';
-          }
-        }
-      });
-      
-    }catch(e){ console.log('hide err', e); }
-  }
-  
-  // 즉시 실행
-  forceHide();
-  
-  // MutationObserver로 계속 감시
-  var observer = new MutationObserver(function(mutations){
-    forceHide();
-  });
-  
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-    attributes: true,
-    attributeFilter: ['style']
-  });
-  
-  // 주기적으로도 실행 (설정 모달 열릴 때 대비)
-  setInterval(forceHide, 500);
-  
-  // 원래 render 함수도 감싸기
-  var checkRender = setInterval(function(){
-    if(window.renderPastNotifySettingsUI){
-      var orig = window.renderPastNotifySettingsUI;
-      if(!orig._wrapped){
-        window.renderPastNotifySettingsUI = function(){
-          var r = orig.apply(this, arguments);
-          setTimeout(forceHide, 50);
-          setTimeout(forceHide, 200);
-          setTimeout(forceHide, 500);
-          return r;
-        };
-        window.renderPastNotifySettingsUI._wrapped = true;
-      }
-      clearInterval(checkRender);
-    }
-  }, 100);
-  
-  // localStorage 강제 simple
-  try{
-    var s = localStorage.getItem('pastNotifySettings');
-    if(s){
-      var obj = JSON.parse(s);
-      if(obj.cardStyle !== 'simple'){
-        obj.cardStyle = 'simple';
-        localStorage.setItem('pastNotifySettings', JSON.stringify(obj));
-      }
-    }
-  }catch(e){}
-  
-  // getPastSettings 강제
-  var checkGet = setInterval(function(){
-    if(window.getPastSettings){
-      var origGet = window.getPastSettings;
-      if(!origGet._wrapped){
-        window.getPastSettings = function(){
-          var s = origGet();
-          if(s) s.cardStyle = 'simple';
-          return s;
-        };
-        window.getPastSettings._wrapped = true;
-      }
-      clearInterval(checkGet);
-    }
-  }, 100);
-  
-  console.log('[AGGRESSIVE HIDE] Card style UI will be forcibly hidden');
-})();
-</script>
-
-
-<script id="V226_BUCKET_INIT">
-(function(){
-  // 페이지 로드시 버킷리스트 즉시 로드 (모달 열기 전에도)
-  try{
-    if(typeof getBucketList === 'function'){
-      var loaded = getBucketList();
-      if(loaded && loaded.length > 0){
-        // 전역 변수에 할당
-        if(typeof bucketListItems !== 'undefined'){
-          bucketListItems = loaded;
-        } else {
-          window.bucketListItems = loaded;
-        }
-        console.log('[BUCKET INIT] Loaded', loaded.length, 'items on page load');
-      }
-    }
-  }catch(e){ console.log('bucket init err', e); }
-  
-  // 사주처럼 저장되는지 테스트용 로그
-  console.log('[BUCKET] localStorage keys:', Object.keys(localStorage).filter(k=>k.toLowerCase().includes('bucket')));
-})();
-</script>
-
-
-<script id="V227_RESTORE_ON_UPGRADE">
-(function(){
-  console.log('[BUCKET UPGRADE FIX] Checking for existing data before init');
-  
-  // 1. 안드로이드 네이티브에서 먼저 복구 시도 (APK 업그레이드에도 유지되는 저장소)
-  function tryAndroidRestore(){
-    let restored = null;
-    // 방법 1: Android.loadBucketList
-    try{
-      if(window.Android && typeof window.Android.loadBucketList === 'function'){
-        const data = window.Android.loadBucketList();
-        if(data && data !== '[]' && data.length > 5){
-          console.log('[BUCKET] Found Android native data');
-          restored = data;
-        }
-      }
-    }catch(e){}
-    
-    // 방법 2: AndroidBridge.loadData
-    try{
-      if(window.AndroidBridge && typeof window.AndroidBridge.loadData === 'function'){
-        const data = window.AndroidBridge.loadData('bucketList');
-        if(data && data !== '[]' && data.length > 5){
-          console.log('[BUCKET] Found AndroidBridge data');
-          restored = data;
-        }
-      }
-    }catch(e){}
-    
-    // 방법 3: localStorage에 안드로이드가 저장한 키가 있을 수도 있음
-    try{
-      const keys = ['android_bucketList', 'Android_bucketList', 'bucketList_native'];
-      for(let k of keys){
-        const d = localStorage.getItem(k);
-        if(d && d.length > 5) restored = d;
-      }
-    }catch(e){}
-    
-    if(restored){
-      try{
-        const parsed = JSON.parse(restored);
-        if(parsed && parsed.length > 0){
-          // 모든 백업 키에 저장
-          localStorage.setItem('smartDiaryBucketList', restored);
-          localStorage.setItem('smartDiaryBucketList_backup', restored);
-          localStorage.setItem('smartDiaryBucketList_v2', restored);
-          localStorage.setItem('smartDiaryBucketList_final_backup', restored);
-          console.log('[BUCKET UPGRADE FIX] Restored', parsed.length, 'items from Android');
-          return parsed;
-        }
-      }catch(e){}
-    }
-    return null;
-  }
-  
-  // 2. 페이지 로드시 즉시 복구 (localStorage가 비어있어도 백업에서 복구)
-  function immediateRestore(){
-    const keys = [
-      'smartDiaryBucketList_final_backup',
-      'smartDiaryBucketList_v2',
-      'smartDiaryBucketList_backup',
-      'smartDiaryBucketList'
-    ];
-    for(let k of keys){
-      try{
-        const val = localStorage.getItem(k);
-        if(val && val !== '[]'){
-          const parsed = JSON.parse(val);
-          if(parsed && parsed.length > 0){
-            // 메인 키가 비어있으면 복구
-            const main = localStorage.getItem('smartDiaryBucketList');
-            if(!main || main === '[]' || JSON.parse(main).length === 0){
-              localStorage.setItem('smartDiaryBucketList', val);
-              console.log('[BUCKET UPGRADE FIX] Restored main from', k);
-            }
-            return parsed;
-          }
-        }
-      }catch(e){}
-    }
-    return null;
-  }
-  
-  // 실행
-  setTimeout(function(){
-    const androidData = tryAndroidRestore();
-    const backupData = immediateRestore();
-    if((androidData || backupData) && typeof bucketListItems !== 'undefined'){
-      const data = androidData || backupData;
-      // 전역 bucketListItems가 비어있으면 복구된 데이터로 채움
-      if(bucketListItems.length === 0 && data.length > 0){
-        bucketListItems = data;
-        console.log('[BUCKET UPGRADE FIX] bucketListItems restored to', data.length);
-        if(typeof renderBucketList === 'function'){
-          try{ renderBucketList(); }catch(e){}
-        }
-      }
-    }
-  }, 100);
-  
-  // 사주풀이는 왜 유지되는지 확인 - 사주도 같은 방식으로 백업
-  console.log('[BUCKET] Saju key exists:', !!localStorage.getItem('smartDiarySajuBirth'));
-  console.log('[BUCKET] Bucket keys:', {
-    main: localStorage.getItem('smartDiaryBucketList')?.length,
-    backup: localStorage.getItem('smartDiaryBucketList_backup')?.length,
-    v2: localStorage.getItem('smartDiaryBucketList_v2')?.length,
-    final: localStorage.getItem('smartDiaryBucketList_final_backup')?.length
-  });
-})();
-</script>
-
-</body>
-</html>
-
-<script>
-(function(){
+  // 1. 달력 0000년 강제 수정 - 기존 trailing script를 내부로 이동, 디바운스 적용
   function forceCalendar(){
     try{
       var title = document.getElementById('cal-month-title');
@@ -21197,9 +20940,295 @@ div:has(> label:has(input[name="cardStyle"])) { display:none !important; }
       }
     }catch(e){}
   }
-  forceCalendar();
-  document.addEventListener('DOMContentLoaded', function(){ setTimeout(forceCalendar, 50); });
-  setTimeout(forceCalendar, 100);
-  setTimeout(forceCalendar, 500);
+  // 기존 3번 timeout -> 1번으로 축소
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', forceCalendar);
+  } else {
+    forceCalendar();
+  }
+  setTimeout(forceCalendar, 300);
+
+  // 2. 과거 알림 카드 스타일 UI 숨김 - interval 폴링 제거, CSS로 처리
+  var style = document.createElement('style');
+  style.id = 'v228-hide-card-style';
+  style.textContent = '#pastNotifyCardStyleUI, .card-style-selector { display:none !important; }';
+  document.head.appendChild(style);
+  try{
+    var s = localStorage.getItem('pastNotifySettings');
+    if(s){
+      var obj = JSON.parse(s);
+      if(obj.cardStyle !== 'simple'){
+        obj.cardStyle = 'simple';
+        localStorage.setItem('pastNotifySettings', JSON.stringify(obj));
+      }
+    }
+  }catch(e){}
 })();
 </script>
+<script id="V228_BUCKET_RESTORE">
+(function(){
+  console.log('[V228] bucket restore single path');
+  function tryAndroidRestore(){
+    let restored=null;
+    try{
+      if(window.Android && typeof window.Android.loadBucketList === 'function'){
+        const d = window.Android.loadBucketList();
+        if(d && d !== '[]' && d.length>5) restored=d;
+      }
+    }catch(e){}
+    try{
+      if(window.AndroidBridge && typeof window.AndroidBridge.loadData === 'function'){
+        const d = window.AndroidBridge.loadData('bucketList');
+        if(d && d !== '[]' && d.length>5) restored=d;
+      }
+    }catch(e){}
+    return restored;
+  }
+  function immediateRestore(){
+    const keys=['smartDiaryBucketList_final_backup','smartDiaryBucketList_v2','smartDiaryBucketList_backup','smartDiaryBucketList'];
+    for(let k of keys){
+      try{
+        const val=localStorage.getItem(k);
+        if(val && val !== '[]'){
+          const p=JSON.parse(val);
+          if(p && p.length>0) return val;
+        }
+      }catch(e){}
+    }
+    return null;
+  }
+  function doRestore(){
+    const androidData = tryAndroidRestore();
+    const backupData = immediateRestore();
+    const dataStr = androidData || backupData;
+    if(!dataStr) return;
+    try{
+      const parsed = JSON.parse(dataStr);
+      if(!parsed || parsed.length===0) return;
+      // 메인 키 복구
+      const main = localStorage.getItem('smartDiaryBucketList');
+      if(!main || main==='[]'){
+        try{ const m=JSON.parse(main||'[]'); if(!m || m.length===0) throw 1; }catch(e){
+          localStorage.setItem('smartDiaryBucketList', dataStr);
+        }
+      }
+      // 전역 변수 동기화 - interval 없이 1회
+      if(typeof bucketListItems !== 'undefined' && bucketListItems.length===0){
+        bucketListItems = parsed;
+        if(typeof renderBucketList==='function'){
+          try{ renderBucketList(); }catch(e){}
+        }
+      }
+      if(window.bucketListItems && window.bucketListItems.length===0){
+        window.bucketListItems = parsed;
+      }
+    }catch(e){}
+  }
+  // 페이지 로드 시 1회만 실행
+  setTimeout(doRestore, 150);
+})();
+</script>
+
+
+<script id="V234_ULTRA_MINIMAL">
+// 원본 UI 100% 유지 - 빈 공간 원인인 중복 패널만 제거
+(function(){
+  function clean(){
+    try{
+      // 중복 패널 제거 - 이게 PC에서 뻥 뚫리던 원인
+      var dp=document.querySelectorAll('#diary-panel');
+      if(dp.length>1){
+        for(var i=1;i<dp.length;i++) dp[i].remove();
+      }
+      var mp=document.querySelectorAll('#money-panel');
+      if(mp.length>1){
+        for(var i=1;i<mp.length;i++) mp[i].remove();
+      }
+      // 달력 0000년이면 현재로
+      var title=document.getElementById('cal-month-title');
+      if(title && title.textContent.indexOf('0000')!==-1){
+        var now=new Date();
+        title.textContent=now.getFullYear()+'년 '+(now.getMonth()+1)+'월';
+      }
+      // 달력이 비어있으면 원래 함수로 렌더
+      var grid=document.getElementById('cal-days-grid');
+      if(grid && grid.children.length===0){
+        if(typeof renderCalendar==='function'){
+          try{ renderCalendar(); }catch(e){}
+        }
+      }
+    }catch(e){}
+  }
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded', function(){ setTimeout(clean, 100); });
+  } else {
+    setTimeout(clean, 100);
+  }
+  setTimeout(clean, 800);
+})();
+</script>
+
+
+<script id="V235_PERSONALIZED_FORTUNE">
+// V235: 진짜 개인화된 사주/운세 - 5개에서 1만개 이상으로 확장
+(function(){
+  console.log('[V235] 개인화 운세 로드');
+
+  // 기존 5개는 유지하고, 세부 변주를 추가
+  const EXTRA_MOODS = [
+    '직진 모드 🚀','텐션 업 ✨','대박 예감 💰','숨 고르기 🧘','차분함 🌿',
+    '반짝이는 날 💫','도약 준비 🦘','마음 정리 📝','인연의 날 🤝','결실의 날 🌾',
+    '새로운 시작 🌱','집중 모드 🎯','힐링 타임 🍵','행운 접근 🍀','빛나는 날 ☀️'
+  ];
+  const EXTRA_TOTALS = {
+    '비겁': [
+      '오늘은 내 목소리에 힘이 실려요. {gan}일간인 당신은 원래 {symbol}처럼 곧게 가는 힘이 있어요. 오늘 그 힘을 쓰되, 주변 의견 하나만 더 들어보면 금상첨화!',
+      '내가 주인공인 날! {zodiac}띠 기운과 {gan} 기운이 만나서 추진력이 폭발해요. 하고 싶은 거 있으면 오늘 질러요.',
+      '고집이 아니라 소신! {elem} 기운이 강한 당신은 오늘 결단하면 뒤돌아보지 않아도 돼요. 단, 점심 약속은 꼭 지키기!'
+    ],
+    '식상': [
+      '아이디어가 샘솟는 날! {gan}일간 {symbol}의 창의력이 {zodiac}띠의 {zodiac_name} 기운을 만나서 빛나요. 메모장에 다 적어두세요, 나중에 돈이 될 수도!',
+      '말 한마디가 천냥 빚 갚는 날. {elem} 오행의 당신은 오늘 표현하면 통하는 날이에요.',
+      '오늘은 만드는 날이에요. {gan}{zhi} 일주인 당신은 원래 손재주/말재주가 있어요. 뭐라도 만들어보세요!'
+    ],
+    '재성': [
+      '재물운이 춤추는 날! {useful} 기운이 당신에게 필요한 날, {color}색이 행운을 불러요. 지갑 열어볼까?',
+      '{gan}일간에게 {zodiac} 기운이 재물을 붙잡아요. 오늘은 계산기 두드리는 재미가 있는 날!',
+      '결과가 보이는 날! {elem}인 당신, 오늘 마무리하면 보상이 따라와요. 미뤄둔 정산 오늘 하세요!'
+    ],
+    '관성': [
+      '잠깐 숨 고르기! {gan}일간은 책임감이 강해서 오늘 좀 무거울 수 있어요. 그래도 {zodiac}띠가 옆에서 지켜주고 있어요.',
+      '규칙을 지키면 길이 열리는 날. {elem} 기운이 강한 당신은 오늘 루틴대로 가면 탈 없이 지나가요.',
+      '압박감은 성장통! {useful} 기운으로 균형 잡으면 오히려 인정받는 날이 돼요.'
+    ],
+    '인성': [
+      '배우면 이득인 날! {gan}일간 {symbol}인 당신은 오늘 공부하면 3배로 들어와요. 유튜브 강의 하나라도 들어보세요.',
+      '따뜻하게 안기는 날. {zodiac}띠의 포근함이 {elem}인 당신을 감싸요. 오랜 친구에게 연락하면 힘이 돼요.',
+      '{useful} 기운이 부족한 당신에게 오늘은 충전이 필요한 날. 책, 산책, 명상이 보약!'
+    ]
+  };
+
+  function hashCode(str){
+    let h=0;
+    for(let i=0;i<str.length;i++){ h=Math.imul(31,h)+str.charCodeAt(i)|0; }
+    return Math.abs(h);
+  }
+
+  function getPersonalizedFortune(){
+    try{
+      if(!window.sajuPillars || !window.sajuBirthInfo || !window.sajuBirthInfo.date){
+        return null;
+      }
+      const pillars = window.sajuPillars;
+      const birth = window.sajuBirthInfo;
+      const todayStr = (typeof getTodayStr==='function'?getTodayStr():new Date().toISOString().slice(0,10));
+      
+      // 시드: 생년월일시 + 오늘날짜 + 일간 + 시주 등으로 완전 개인화
+      const seedStr = birth.date + '|' + (birth.time||'no-time') + '|' + todayStr + '|' + pillars.day.gan + pillars.day.zhi + (pillars.hour?pillars.hour.gan+pillars.hour.zhi:'');
+      const h = hashCode(seedStr);
+      
+      // 기존 관계 계산
+      let tenGod = '비겁';
+      if(typeof sajuGetTenGod==='function' && window.sajuGetLib){
+        try{
+          const lib = sajuGetLib();
+          const t = todayStr.split('-').map(Number);
+          const lunarToday = lib.solar2lunar(t[0],t[1],t[2]);
+          const todayGan = lunarToday.gzDay[0];
+          tenGod = sajuGetTenGod(pillars.day.gan, todayGan);
+        }catch(e){}
+      }
+      const base = window.SAJU_FORTUNE[tenGod] || window.SAJU_FORTUNE['비겁'];
+      
+      // 개인 정보로 치환
+      const ganInfo = (window.SAJU_GAN_INFO && window.SAJU_GAN_INFO[pillars.day.gan]) ? window.SAJU_GAN_INFO[pillars.day.gan] : {name:pillars.day.gan, symbol:'나무', elem:'목'};
+      const zodiac = (pillars.year && window.SAJU_ZODIAC_ANIMAL && window.SAJU_ZODIAC_ANIMAL[pillars.year.zhi]) ? window.SAJU_ZODIAC_ANIMAL[pillars.year.zhi] : {name:'', emoji:''};
+      const elem = ganInfo.elem || '목';
+      const strength = (typeof sajuJudgeStrength==='function'?sajuJudgeStrength(pillars, window.sajuDayMasterElem):'신강');
+      const useful = (typeof sajuGetUsefulGod==='function'?sajuGetUsefulGod(pillars, window.sajuDayMasterElem, strength):{god:'수', color:'수'});
+      
+      // 점수는 40~98 사이에서 개인별로 매일 다르게
+      const score = 42 + (h % 57); // 42~98
+      const moodIdx = h % EXTRA_MOODS.length;
+      
+      // 문구도 해시로 매일 다르게 선택 + 치환
+      const totals = EXTRA_TOTALS[tenGod] || EXTRA_TOTALS['비겁'];
+      const pick = totals[h % totals.length];
+      let personalizedTotal = pick
+        .replace('{gan}', pillars.day.gan)
+        .replace('{zhi}', pillars.day.zhi)
+        .replace('{symbol}', ganInfo.symbol||ganInfo.name||'')
+        .replace('{elem}', elem)
+        .replace('{zodiac}', zodiac.emoji||'')
+        .replace('{zodiac_name}', zodiac.name||'')
+        .replace('{useful}', useful.god||useful.color||'')
+        .replace('{color}', useful.color||'');
+
+      // 재물/애정/건강도 점수 기반으로 살짝 변주
+      const moneyAdd = (h%3===0?' 오늘은 '+useful.color+'색 소지품이 재물운을 올려줘요.':'') + (score>85?' 큰 돈보다 작은 돈이 먼저 들어와요.':'');
+      const loveAdd = (h%2===0?' '+zodiac.emoji+' 기운이 인연을 붙잡아요.':'');
+      
+      return {
+        tenGod: tenGod,
+        mood: EXTRA_MOODS[moodIdx] + ' ['+pillars.day.gan+pillars.day.zhi+' 일주]',
+        score: score,
+        total: personalizedTotal + ' (오늘은 '+strength+' 사주에 '+useful.god+' 기운이 필요한 날이에요.)',
+        money: base.money + moneyAdd,
+        love: base.love + loveAdd,
+        health: base.health + ' 일간이 '+pillars.day.gan+'('+elem+')인 당신은 오늘 '+useful.color+'색 음식이 도움이 돼요.',
+        mantra: base.mantra,
+        personalized: true,
+        seed: seedStr,
+        pillars: pillars.day.gan+pillars.day.zhi
+      };
+    }catch(e){
+      console.log('personalized err', e);
+      return null;
+    }
+  }
+
+  // 기존 sajuGetEnhancedFortune 덮어쓰기 - 개인화된 거 먼저 반환
+  const origEnhanced = window.sajuGetEnhancedFortune;
+  window.sajuGetEnhancedFortune = function(){
+    const personalized = getPersonalizedFortune();
+    if(personalized){
+      // 기존 구조에 맞춰서 반환 (base, score 등)
+      const today = new Date();
+      return {
+        base: personalized,
+        dateObj: today,
+        score: personalized.score,
+        tenGod: personalized.tenGod,
+        strength: (typeof sajuJudgeStrength==='function'?sajuJudgeStrength(window.sajuPillars, window.sajuDayMasterElem):''),
+        useful: (typeof sajuGetUsefulGod==='function'?sajuGetUsefulGod(window.sajuPillars, window.sajuDayMasterElem, ''):null),
+        personalized: true
+      };
+    }
+    // fallback은 기존
+    if(origEnhanced) return origEnhanced.apply(this, arguments);
+    return null;
+  };
+
+  // 티저도 개인화 점수 표시
+  const origUpdateTeaser = window.updateFortuneTeaser;
+  window.updateFortuneTeaser = function(){
+    try{
+      const pf = getPersonalizedFortune();
+      const subEl = document.getElementById('fortune-teaser-sub');
+      const textEl = document.getElementById('fortune-teaser-text');
+      if(pf && subEl && textEl){
+        textEl.textContent = '오늘의 운세 '+pf.score+'점';
+        subEl.textContent = pf.pillars + ' 일주 · ' + pf.tenGod + ' · ' + pf.mood.split(' ')[0];
+        return;
+      }
+    }catch(e){}
+    if(origUpdateTeaser) return origUpdateTeaser.apply(this, arguments);
+  };
+
+  console.log('[V235] 개인화 운세 패치 완료');
+})();
+</script>
+
+</body>
+
+</html>
