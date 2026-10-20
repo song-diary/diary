@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <!-- Version: V187 - 초중말복 동적화, 24절기 동적화, 누적패치 제거, 5~6줄 개그 유머 100점 -->
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>포토다이어리 V236 REORDERED - 사진, 추억을 담다</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>포토다이어리 V238 MEMO FIX - 사진, 추억을 담다</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -21262,6 +21262,402 @@ div:has(> label:has(input[name="cardStyle"])) { display:none !important; }
       return res;
     };
   }
+})();
+</script>
+
+
+<script id="V237_TIMECAPSULE_UNIFY">
+// V237: 타임캡슐 통일 + 메모만일때 클릭 fix
+(function(){
+  console.log('[V237] 타임캡슐 통일 패치');
+
+  // 1) 강제로 simple 스타일로 통일 (저장소 상관없이)
+  var origGetPastSettings = window.getPastSettings;
+  window.getPastSettings = function(){
+    var s = { enabled:true, intervals:['1m','3m','6m','1y','2y','3y'], cardStyle:'simple', bannerStyle:'simple' };
+    try{
+      if(origGetPastSettings){
+        var orig = origGetPastSettings();
+        if(orig){
+          s.enabled = orig.enabled!==false;
+          if(orig.intervals && orig.intervals.length) s.intervals = orig.intervals;
+        }
+      }
+      // localStorage에서 cardStyle 읽어도 무시하고 simple로 고정
+      var saved = localStorage.getItem('pastNotifySettings');
+      if(saved){
+        try{
+          var p = JSON.parse(saved);
+          if(p && p.intervals) s.intervals = p.intervals;
+          if(p) s.enabled = p.enabled!==false;
+        }catch(e){}
+      }
+    }catch(e){}
+    s.cardStyle = 'simple'; // 강제!
+    return s;
+  };
+
+  // 2) 메모만일때도 클릭 되게 - 핸들러 개선
+  window.handleTimeCapsulePhotoClick = function(el){
+    try{
+      if(window.event) window.event.stopPropagation();
+      var photoKey = el.getAttribute('data-photo-key');
+      var photoDate = el.getAttribute('data-photo-date') || '';
+      var photoText = el.getAttribute('data-photo-text') || '';
+      
+      // 사진 있으면 사진 확대
+      if(photoKey && photoKey!=='null' && photoKey!=='undefined' && photoKey!==''){
+        var img = el.querySelector('img');
+        var src = '';
+        if(img) src = img.src || '';
+        if(!src && typeof getPhotoSrc==='function'){
+          try{ src = getPhotoSrc(photoKey)||''; }catch(e){}
+        }
+        if(src){
+          if(typeof window.openPhotoLightbox==='function'){
+            window.openPhotoLightbox(photoKey, {text: photoText, date: photoDate});
+            return;
+          }
+        }
+      }
+      // 사진 없거나 실패하면 일자로 이동 (메모만일때)
+      if(photoDate){
+        window.goToPastDiary(photoDate, photoKey);
+      } else {
+        var dateAttr = el.getAttribute('data-photo-date');
+        if(dateAttr) window.goToPastDiary(dateAttr, photoKey);
+      }
+    }catch(e){ console.log('photo click err', e); 
+      // fallback: 일자로 이동
+      try{
+        var d = el.getAttribute('data-photo-date');
+        if(d) window.goToPastDiary(d);
+      }catch(e2){}
+    }
+  };
+
+  window.handleTimeCapsuleDateClick = function(dateStr, photoKey){
+    try{
+      if(window.event) window.event.stopPropagation();
+      window.goToPastDiary(dateStr, photoKey);
+    }catch(e){ console.log('date click err', e); }
+  };
+
+  // 3) CSS 강제 - 50%+50% 가 WebView에서도 유지되게
+  var style = document.createElement('style');
+  style.id='V237_TC_FIX';
+  style.textContent=`
+    /* 타임캡슐 카드 - 무조건 가로 50:50 */
+    #diary-around-today-list div[style*="display:flex"][style*="height:72px"]{
+      display:flex !important;
+      flex-direction:row !important;
+      width:100% !important;
+      height:72px !important;
+      min-height:72px !important;
+      overflow:hidden !important;
+      box-sizing:border-box !important;
+    }
+    #diary-around-today-list div[style*="display:flex"][style*="height:72px"] > div[data-photo-key]{
+      width:50% !important;
+      flex:0 0 50% !important;
+      min-width:0 !important;
+      max-width:50% !important;
+      box-sizing:border-box !important;
+      cursor:pointer !important;
+    }
+    /* 메모만일때 왼쪽도 클릭 가능하게 */
+    #diary-around-today-list div[data-photo-key]{
+      pointer-events:auto !important;
+      user-select:none !important;
+      -webkit-tap-highlight-color: rgba(124,108,255,0.2) !important;
+    }
+    #diary-around-today-list div[data-photo-key]:active{
+      background:#f0eaff !important;
+    }
+  `;
+  document.head.appendChild(style);
+
+  // 4) 렌더 후 메모만인 카드의 왼쪽 텍스트를 "메모 보기"로 바꾸기
+  var origRender = window.renderDiaryAroundToday;
+  if(typeof origRender==='function'){
+    window.renderDiaryAroundToday = function(){
+      var res = origRender.apply(this, arguments);
+      setTimeout(function(){
+        try{
+          var listEl = document.getElementById('diary-around-today-list');
+          if(!listEl) return;
+          // 메모만인 경우 왼쪽에 사진 아이콘이지만 텍스트가 "사진 보기"로 되어있으면 "메모 보기"로 변경
+          listEl.querySelectorAll('div[data-photo-key]').forEach(function(div){
+            var key = div.getAttribute('data-photo-key');
+            var isMemoOnly = !key || key==='' || key==='null' || key==='undefined';
+            if(isMemoOnly){
+              var labelDiv = div.querySelector('div[style*="font-size:11px"]');
+              if(labelDiv && labelDiv.textContent.indexOf('사진')!==-1){
+                labelDiv.innerHTML = '📝 메모 보기';
+              }
+              // 이미지도 없으니 아이콘 영역 정리
+              var img = div.querySelector('img');
+              if(!img){
+                var firstDiv = div.querySelector('div');
+                if(firstDiv){
+                  // 메모 아이콘으로
+                  firstDiv.innerHTML = '<div style="width:50px; height:50px; background:#fff3e0; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; margin-right:8px;">📝</div>';
+                }
+              }
+            }
+          });
+        }catch(e){ console.log('V237 post-process err', e); }
+      }, 100);
+      return res;
+    };
+  }
+
+  console.log('[V237] 타임캡슐 통일 완료');
+})();
+</script>
+
+
+<script id="V238_TIMECAPSULE_MEMO_FIX">
+// V238: 타임캡슐 메모만 있을때 왼쪽=사진아이콘, 오른쪽=메모, 왼쪽 클릭시 메모 전체 보기
+(function(){
+  console.log('[V238] 타임캡슐 메모 fix');
+
+  // 메모 전체 보기 모달
+  window.showTimeCapsuleMemoFull = function(dateStr, text){
+    try{
+      // 기존 라이트박스 재활용 or 간단 알림
+      var existing = document.getElementById('tc-memo-modal');
+      if(existing) existing.remove();
+      var modal = document.createElement('div');
+      modal.id='tc-memo-modal';
+      modal.style.cssText='position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:99999; display:flex; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;';
+      modal.onclick=function(e){ if(e.target===modal) modal.remove(); };
+      var safeText = (text||'메모 없음').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+      modal.innerHTML='<div style="background:#fff; border-radius:16px; padding:20px; max-width:360px; width:100%; max-height:80vh; overflow-y:auto; box-shadow:0 10px 40px rgba(0,0,0,0.3); position:relative;">'+
+        '<button onclick="this.closest(\'#tc-memo-modal\').remove()" style="position:absolute; top:10px; right:10px; background:#f5f5f5; border:none; width:30px; height:30px; border-radius:50%; font-size:16px; cursor:pointer;">✖</button>'+
+        '<div style="font-size:12px; color:#7c6cff; font-weight:800; margin-bottom:8px;">📝 '+dateStr+' 메모</div>'+
+        '<div style="font-size:14px; line-height:1.6; color:#333; white-space:pre-wrap; word-break:break-all;">'+safeText+'</div>'+
+        '<div style="margin-top:16px; display:flex; gap:8px;">'+
+          '<button onclick="window.goToPastDiary(\''+dateStr+'\'); this.closest(\'#tc-memo-modal\').remove();" style="flex:1; padding:10px; background:#7c6cff; color:#fff; border:none; border-radius:10px; font-weight:700; cursor:pointer;">일자로 이동 →</button>'+
+          '<button onclick="this.closest(\'#tc-memo-modal\').remove()" style="flex:1; padding:10px; background:#f0eaff; color:#7c6cff; border:1px solid #e8e0ff; border-radius:10px; font-weight:700; cursor:pointer;">닫기</button>'+
+        '</div></div>';
+      document.body.appendChild(modal);
+    }catch(e){ alert(text); }
+  };
+
+  // 왼쪽 클릭 핸들러 개선 - 사진 없으면 메모 전체 보기
+  window.handleTimeCapsulePhotoClick = function(el){
+    try{
+      if(window.event) window.event.stopPropagation();
+      var photoKey = el.getAttribute('data-photo-key');
+      var photoDate = el.getAttribute('data-photo-date') || '';
+      var photoText = el.getAttribute('data-photo-text') || '';
+      var fullText = el.getAttribute('data-full-text') || photoText;
+
+      // 사진 키가 있고 유효하면 사진 확대
+      if(photoKey && photoKey!=='null' && photoKey!=='' && photoKey!=='undefined'){
+        var img = el.querySelector('img');
+        if(img && img.src){
+          if(typeof window.openPhotoLightbox==='function'){
+            window.openPhotoLightbox(photoKey, {text: fullText, date: photoDate});
+            return;
+          }
+        } else {
+          // src 없는 경우라도 getPhotoSrc 시도
+          if(typeof getPhotoSrc==='function'){
+            try{
+              var src = getPhotoSrc(photoKey);
+              if(src && typeof window.openPhotoLightbox==='function'){
+                window.openPhotoLightbox(photoKey, {text: fullText, date: photoDate});
+                return;
+              }
+            }catch(e){}
+          }
+        }
+      }
+      // 사진 없으면 메모 전체 보기
+      window.showTimeCapsuleMemoFull(photoDate, fullText);
+    }catch(e){
+      console.log('photo click err', e);
+      try{
+        var d = el.getAttribute('data-photo-date');
+        var t = el.getAttribute('data-full-text') || el.getAttribute('data-photo-text') || '';
+        window.showTimeCapsuleMemoFull(d, t);
+      }catch(e2){}
+    }
+  };
+
+  // 렌더 후처리 - 메모만인 경우 UI 정확히 사진처럼 만들기
+  var origRender = window.renderDiaryAroundToday;
+  if(typeof origRender==='function' && !window._v238_patched){
+    window._v238_patched = true;
+    window.renderDiaryAroundToday = function(){
+      var res = origRender.apply(this, arguments);
+      setTimeout(function(){
+        try{
+          var listEl = document.getElementById('diary-around-today-list');
+          if(!listEl) return;
+          
+          // 네모박스처럼 만들기 - 모든 타임캡슐 카드 찾기
+          listEl.querySelectorAll('div[style*="height:72px"]').forEach(function(card){
+            // 이미 처리된건 스킵? 다시 처리
+            var leftDiv = card.querySelector('div[data-photo-key]:first-child');
+            var rightDiv = card.querySelector('div[data-photo-key]:last-child');
+            if(!leftDiv || !rightDiv) return;
+
+            var photoKey = leftDiv.getAttribute('data-photo-key');
+            var isMemoOnly = !photoKey || photoKey==='' || photoKey==='null' || photoKey==='undefined';
+            
+            // 오른쪽 div의 텍스트 가져와서 full text로 저장
+            var rightText = '';
+            try{
+              var textEl = rightDiv.querySelector('div[style*="text-overflow:ellipsis"]');
+              if(textEl) rightText = textEl.textContent || '';
+            }catch(e){}
+            
+            var fullText = leftDiv.getAttribute('data-photo-text') || rightText || '';
+            // data-full-text 속성으로 전체 메모 저장 (원본 찾기)
+            // 원본 diaries에서 찾아보기
+            try{
+              var dateStr = leftDiv.getAttribute('data-photo-date');
+              if(window.diaries || window.getDiaryList){
+                var allDiaries = (typeof getDiaryList==='function')?getDiaryList():(window.diaries||[]);
+                var found = allDiaries.find(function(d){ return (d.date||'').split('T')[0]===dateStr; });
+                if(found && found.text) fullText = found.text;
+              }
+            }catch(e){}
+
+            leftDiv.setAttribute('data-full-text', fullText);
+            
+            if(isMemoOnly){
+              // 왼쪽: 사진 로고만 (사진 없을때)
+              leftDiv.innerHTML = '<div style="display:flex; align-items:center; width:100%;"><div style="width:50px; height:50px; background:#f5f5f5; border:1px solid #eee; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; margin-right:8px;">📷</div><div style="flex:1; min-width:0;"><div style="font-size:9px; color:#999; margin-bottom:2px;">'+leftDiv.getAttribute('data-photo-date').slice(2)+' 전</div><div style="font-size:11px; color:#666; font-weight:600;">📷 사진 보기</div></div></div>';
+              // 왼쪽 클릭시 메모 전체 보기로 - 이미 handleTimeCapsulePhotoClick이 메모 전체 보기 호출함
+              leftDiv.title = '클릭하면 메모 전체 보기';
+            }
+          });
+
+        }catch(e){ console.log('V238 post err', e); }
+      }, 150);
+      return res;
+    };
+  }
+
+  // CSS - 네모박스처럼 50:50 정확히
+  var style = document.createElement('style');
+  style.textContent=`
+    #diary-around-today-list div[style*="height:72px"]{
+      display:flex !important;
+      flex-direction:row !important;
+      width:100% !important;
+      border:1px solid #e0e0e0 !important;
+      border-radius:10px !important;
+      overflow:hidden !important;
+      background:#fff !important;
+      margin-bottom:8px !important;
+    }
+    #diary-around-today-list div[style*="height:72px"] > div[data-photo-key]:first-child{
+      border-right:1px solid #f0f0f0 !important;
+      background:#fafafa !important;
+    }
+    #diary-around-today-list div[style*="height:72px"] > div[data-photo-key]:last-child{
+      background:#fff !important;
+    }
+  `;
+  document.head.appendChild(style);
+
+  console.log('[V238] 메모 클릭 fix 완료');
+})();
+</script>
+
+
+
+
+
+<script id="V259_CLEAN">
+// V259 CLEAN: 아이콘 절대 안 건드림, 버튼 텍스트만 변경 + 오른쪽 일자+메모
+(function(){
+  console.log('[V259] CLEAN FIX');
+
+  function fix(){
+    try{
+      var listEl=document.getElementById('diary-around-today-list');
+      if(!listEl) return;
+      
+      var cards = listEl.querySelectorAll('div[style*="border-left"]');
+      cards.forEach(function(card){
+        var sides = card.querySelectorAll('div[style*="width:50%"]');
+        if(sides.length!==2) return;
+        
+        var left = sides[0];
+        var right = sides[1];
+        
+        var photoKey = left.getAttribute('data-photo-key') || right.getAttribute('data-photo-key') || '';
+        var hasPhoto = photoKey && photoKey.trim()!=='' && photoKey!=='null' && photoKey!=='undefined';
+        
+        if(hasPhoto) return; // 사진은 건들지 않음!
+        
+        // 메모만: 왼쪽 버튼 텍스트만 변경 (아이콘 건들지 않음)
+        if(left.innerHTML.indexOf('사진 보기')!==-1){
+          left.innerHTML = left.innerHTML.replace(/사진 보기/g, '메모 보기').replace(/\[사진 보기\]/g, '[메모 보기]');
+        }
+        
+        // 메모만: 오른쪽 아이콘 제거하고 일자+메모
+        var photoDate = right.getAttribute('data-photo-date') || left.getAttribute('data-photo-date') || '';
+        var photoText = left.getAttribute('data-photo-text') || '';
+        var realText = photoText;
+        try{ realText = decodeURIComponent(realText).replace(/&quot;/g,'"'); }catch(e){}
+        if(!realText || realText.length<2){
+          try{
+            var all = (typeof getAllDiaries==='function'? getAllDiaries() : []);
+            var found = all.find(function(d){ return (d.date||'').split('T')[0]===photoDate; });
+            if(found && found.text) realText = found.text;
+          }catch(e){}
+        }
+        realText = (realText||'메모').slice(0,20);
+        
+        // 오른쪽이 이미 수정됐는지 체크 (일자로 이동 버튼이 있으면 이미 수정된 것)
+        // 하지만 아이콘이 있으면 다시 수정
+        var hasIcon = right.querySelector('img') || right.innerHTML.indexOf('📷')!==-1 || right.innerHTML.indexOf('🗒️')!==-1 || right.querySelector('div[style*="background:#f5f"]');
+        if(right.innerHTML.indexOf('일자로 이동')===-1 || hasIcon || right.textContent.trim()==='일자로 이동 →' || right.textContent.length<25){
+          right.innerHTML = '<div style="flex:1; overflow:hidden; text-align:left;">' +
+            '<div style="font-size:10px; color:#7c6cff; font-weight:700; margin-bottom:2px;">'+photoDate+'</div>' +
+            '<div style="font-size:11px; color:#333; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">'+realText.replace(/</g,'&lt;')+'</div></div>' +
+            '<div style="font-size:11px; color:#7c6cff; font-weight:800; background:#f0eaff; border:1px solid #e8e0ff; padding:4px 8px; border-radius:20px; white-space:nowrap; margin-left:6px;">일자로 이동 →</div>';
+          right.style.display='flex';
+          right.style.alignItems='center';
+          right.style.justifyContent='space-between';
+          right.style.padding='8px 10px';
+        }
+      });
+      
+      // 중복 설명 제거
+      var headers=listEl.querySelectorAll('.daily-explain-header');
+      if(headers.length>1){
+        for(var i=headers.length-1;i>=1;i--){
+          var h=headers[i];
+          var block=h;
+          while(block.parentElement && block.parentElement!==listEl) block=block.parentElement;
+          try{ block.remove(); }catch(e){}
+        }
+      }
+    }catch(e){ console.log('V259 err', e); }
+  }
+
+  var orig=window.renderDiaryAroundToday;
+  if(typeof orig==='function' && !window._v259_patched){
+    window._origV259=orig;
+    window.renderDiaryAroundToday=function(){
+      var r=window._origV259.apply(this, arguments);
+      setTimeout(fix, 10);
+      setTimeout(fix, 150);
+      setTimeout(fix, 400);
+      return r;
+    };
+    window._v259_patched=true;
+  }
+  setTimeout(fix, 50);
+  setTimeout(fix, 300);
 })();
 </script>
 
