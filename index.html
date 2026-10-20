@@ -2220,8 +2220,6 @@ body { touch-action: pan-x pan-y pinch-zoom !important; }
     text-align:left !important; align-items:flex-start !important;
 }
 #selected-date-title > div { text-align:left !important; align-items:flex-start !important; }
-#diary-view-toggle { display:flex !important; flex-shrink:0 !important; gap:4px !important; margin-left:auto !important; align-self:flex-start !important; }
-
 #calendar-card { overflow:visible !important; }
 #calendar-card .calendar-sticky-wrap {
     position:sticky !important; top:0 !important; z-index:300 !important;
@@ -2256,15 +2254,6 @@ body { touch-action: pan-x pan-y pinch-zoom !important; }
     gap:8px !important;
 }
 #selected-date-title { flex:1 1 auto !important; text-align:left !important; min-width:0 !important; }
-#diary-view-toggle {
-    display:grid !important;
-    grid-template-columns:1fr 1fr !important;
-    gap:4px !important;
-    width:112px !important;
-    flex-shrink:0 !important;
-    margin-left:auto !important;
-    align-self:flex-start !important;
-}
 #diary-view-toggle #btn-view-list,
 #diary-view-toggle #btn-view-gallery { width:100% !important; }
 #diary-view-toggle button[onclick*="openDiaryForm"] {
@@ -3324,7 +3313,6 @@ setTimeout(function(){
 
 #diary-around-today-card .feature-title{display:flex !important; flex-wrap:nowrap !important; align-items:center !important; justify-content:space-between !important; width:100% !important; gap:6px !important; flex-direction:row !important;}
 #diary-around-today-card #selected-date-title{flex:1 1 auto !important; min-width:0 !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; font-size:13px !important;}
-#diary-view-toggle{display:flex !important; flex-wrap:nowrap !important; flex-direction:row !important; gap:3px !important; margin-left:auto !important; flex-shrink:0 !important; align-items:center !important; justify-content:flex-end !important; width:auto !important;}
 #diary-view-toggle button{width:44px !important; min-width:44px !important; max-width:44px !important; height:22px !important; min-height:22px !important; flex-shrink:0 !important; display:flex !important; align-items:center !important; justify-content:center !important; font-size:10px !important; line-height:1 !important; padding:0 !important; border-radius:5px !important; box-sizing:border-box !important; white-space:nowrap !important; flex-grow:0 !important;}
 html{overscroll-behavior-y:auto !important; overflow:auto !important; overflow-y:auto !important; height:auto !important; position:relative !important; touch-action:pan-y !important;}
 body{background-color:var(--bg-color) !important; padding:15px !important; max-width:600px !important; margin:0 auto !important; overscroll-behavior-y:auto !important; overflow:auto !important; overflow-y:auto !important; touch-action:pan-y !important; font-size:16px !important; position:relative !important; height:auto !important; min-height:100vh !important;}
@@ -3864,9 +3852,19 @@ div[style*="padding-top:4px"]{
             <div class="feature-title" style="display:flex; align-items:center; justify-content:space-between; width:100%; gap:6px; flex-wrap:nowrap;">
                 <span id="selected-date-title" style="flex:1 1 auto; min-width:0; font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">다이어리</span>
                 <div id="diary-view-toggle" style="display:flex; gap:3px; margin-left:auto; flex-shrink:0; align-items:center; justify-content:flex-end; flex-wrap:nowrap; width:auto;">
-                    <button onclick="openDiaryForm(selectedViewDate || getTodayStr())" style="display:flex; align-items:center; justify-content:center; padding:0; min-height:22px; height:22px; font-size:10px; border-radius:5px; border:1px solid #e06d6d; background:linear-gradient(135deg, #ff6b6b, #e06d6d); color:#fff; font-weight:700; cursor:pointer; white-space:nowrap; flex-shrink:0; width:66px; min-width:66px; max-width:66px; text-align:center; line-height:1; box-sizing:border-box;">✏️ 입력</button>
-                    <button id="btn-view-list" onclick="setDiaryViewMode('list')" style="display:flex; align-items:center; justify-content:center; padding:0; min-height:22px; height:22px; font-size:10px; border-radius:5px; border:1px solid #8e6b6b; background:#8e6b6b; color:#fff; white-space:nowrap; flex-shrink:0; width:44px; min-width:44px; max-width:44px; text-align:center; line-height:1; box-sizing:border-box;">앨범1</button>
-                    <button id="btn-view-gallery" onclick="setDiaryViewMode('gallery')" style="display:flex; align-items:center; justify-content:center; padding:0; min-height:22px; height:22px; font-size:10px; border-radius:5px; border:1px solid #ddd; background:#fff; color:#333; white-space:nowrap; flex-shrink:0; width:44px; min-width:44px; max-width:44px; text-align:center; line-height:1; box-sizing:border-box;">앨범2</button>
+                    <style>
+                    @keyframes inputPulse {
+                      0%,100% { box-shadow:0 4px 16px rgba(255,71,87,0.5), 0 0 0 0 rgba(255,71,87,0.4); transform:scale(1); }
+                      50% { box-shadow:0 6px 24px rgba(255,71,87,0.7), 0 0 0 8px rgba(255,71,87,0); transform:scale(1.02); }
+                    }
+                    </style>
+                    <div style="display:flex; align-items:stretch; gap:8px;">
+                    <button onclick="openDiaryForm(selectedViewDate || getTodayStr())" style="display:flex; align-items:center; justify-content:center; gap:8px; padding:12px 20px; min-height:60px; height:60px; font-size:18px; border-radius:14px; border:3px solid #ff2200; background:linear-gradient(135deg, #ff6b6b 0%, #ff2222 50%, #cc0000 100%); color:#fff; font-weight:900; cursor:pointer; white-space:nowrap; flex-shrink:0; width:160px; min-width:160px; max-width:160px; text-align:center; line-height:1; box-sizing:border-box; box-shadow:0 6px 20px rgba(204,0,0,0.5); animation:inputPulse 1.5s infinite; letter-spacing:0.8px;">입력</button>
+                    <div style="display:flex; flex-direction:column; gap:2px; justify-content:center; height:56px;">
+                    <button id="btn-view-list" onclick="setDiaryViewMode('list')" style="display:flex; align-items:center; justify-content:center; padding:0; min-height:25px; height:25px; font-size:11px; border-radius:6px; border:1px solid #8e6b6b; background:#8e6b6b; color:#fff; white-space:nowrap; flex-shrink:0; width:60px; min-width:60px; max-width:60px; text-align:center; line-height:1; box-sizing:border-box; font-weight:600;">앨범1</button>
+                    <button id="btn-view-gallery" onclick="setDiaryViewMode('gallery')" style="display:flex; align-items:center; justify-content:center; padding:0; min-height:25px; height:25px; font-size:11px; border-radius:6px; border:1px solid #ddd; background:#fff; color:#333; white-space:nowrap; flex-shrink:0; width:60px; min-width:60px; max-width:60px; text-align:center; line-height:1; box-sizing:border-box; font-weight:600;">앨범2</button>
+                    </div>
+                    </div>
                 </div>
             </div>
 
@@ -3880,11 +3878,12 @@ div[style*="padding-top:4px"]{
                 <span class="ft-arrow" style="font-size:14px; flex-shrink:0; margin-left:6px;">›</span>
             </div>
                         <!-- 📊 메인화면 바이오리듬 (오늘의 운세 밑) -->
-            <div id="main-biorhythm-teaser" style="margin:6px 0 8px 0; background:#fff; border-radius:12px; border:1px solid #e8e8e8; padding:10px 12px; box-shadow:0 2px 8px rgba(0,0,0,0.06); cursor:pointer; display:block;" onclick="return false;" style="cursor:default;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                    <div style="font-size:12px; font-weight:800; color:#333; display:flex; align-items:center; gap:4px;">◇ 바이오리듬 <span style="font-size:10px; font-weight:400; color:#999;" id="main-bio-birth">생년월일 필요</span></div>
-                    
+            <div id="main-biorhythm-teaser" style="margin:6px 0 8px 0; background:#fff; border-radius:12px; border:1px solid #e8e8e8; padding:10px 12px; box-shadow:0 2px 8px rgba(0,0,0,0.06); display:block;">
+                <div class="biorhythm-header" style="background:#fff; height:28px; min-height:28px; padding:6px 10px; display:flex; align-items:center; justify-content:space-between; gap:6px; border-radius:5px 5px 0 0; box-sizing:border-box; border-bottom:1px solid #f0f0f0; margin:-10px -12px 0 -12px;">
+                    <div style="display:flex; align-items:center; gap:6px;"><span style="font-size:14px;">📊</span><span style="font-size:13px; font-weight:800; color:#333; letter-spacing:-0.2px;">바이오리듬</span><span style="font-size:11px; font-weight:600; color:#666; background:#f3f3f3; padding:2px 7px; border-radius:4px; line-height:1; box-sizing:border-box;" id="main-bio-birth">생년월일 필요</span></div>
+                    <button type="button" id="biorhythm-toggle-btn" onclick="(function(btn){ var c=document.getElementById('main-biorhythm-content'); if(!c){ alert('내용 없음'); return; } var hidden=(c.style.display==='none'); c.style.display=hidden?'block':'none'; btn.textContent=hidden?'▼':'▶'; localStorage.setItem('biorhythmCollapsed', hidden?'false':'true'); })(this); return false;" style="background:#f0f0f0; border:1px solid #ddd; color:#666; border-radius:4px; padding:2px 6px; font-size:10px; font-weight:700; cursor:pointer; line-height:1; box-sizing:border-box;">▼</button>
                 </div>
+                <div id="main-biorhythm-content" style="display:block;">
                 <div style="background:#fafafa; border-radius:8px; padding:6px 4px 2px 4px;">
                     <canvas id="main-biorhythm-canvas" width="600" height="120" style="width:100%; height:70px; display:block;"></canvas>
                     <div style="display:flex; justify-content:space-between; padding:0 6px; margin-top:2px; font-size:10px; color:#666; font-weight:600;">
@@ -3895,6 +3894,8 @@ div[style*="padding-top:4px"]{
                     <div style="display:flex; align-items:center; gap:3px; background:#E8F5E9; padding:3px 8px; border-radius:999px; border:1px solid #C8E6C9;"><span style="background:#4CAF50; color:#fff; padding:1px 4px; border-radius:3px; font-size:9px; font-weight:800;">신체</span><span style="font-size:11px; font-weight:700; color:#2E7D32;" id="main-bio-physical">--%</span></div>
                     <div style="display:flex; align-items:center; gap:3px; background:#FBE9E7; padding:3px 8px; border-radius:999px; border:1px solid #FFCCBC;"><span style="background:#FF7043; color:#fff; padding:1px 4px; border-radius:3px; font-size:9px; font-weight:800;">감성</span><span style="font-size:11px; font-weight:700; color:#BF360C;" id="main-bio-emotional">--%</span></div>
                     <div style="display:flex; align-items:center; gap:3px; background:#E1F5FE; padding:3px 8px; border-radius:999px; border:1px solid #B3E5FC;"><span style="background:#29B6F6; color:#fff; padding:1px 4px; border-radius:3px; font-size:9px; font-weight:800;">지성</span><span style="font-size:11px; font-weight:700; color:#0277BD;" id="main-bio-intellectual">--%</span></div>
+                </div>
+                </div>
                 </div>
             </div>
 
@@ -4099,18 +4100,28 @@ div[style*="padding-top:4px"]{
 
             <div class="settings-section">
                 <label>🔮 오늘의 운세 (사주팔자 설정)</label>
-                <div style="font-size:12px; color: var(--text-sub); margin-bottom:6px;">📅 생년월일은 <b>양력</b> 기준으로 입력해주세요</div>
+                <div id="saju-calendar-hint" style="font-size:12px; color: var(--text-sub); margin-bottom:6px;">📅 생년월일은 <b>양력</b> 기준으로 입력해주세요</div>
+                <div style="display:flex; gap:6px; margin-bottom:8px; align-items:center;">
+                    <button type="button" id="btn-calendar-solar" onclick="setSajuCalendarType('solar')" style="flex:1; padding:8px; border:2px solid #ff6b9d; border-radius:8px; background:#fff0f3; font-size:13px; font-weight:bold; color:#ff6b9d;">☀️ 양력</button>
+                    <button type="button" id="btn-calendar-lunar" onclick="setSajuCalendarType('lunar')" style="flex:1; padding:8px; border:1px solid #ddd; border-radius:8px; background:#f8f8f8; font-size:13px; color:#666;">🌙 음력</button>
+                </div>
+                <div id="lunar-leap-box" style="display:none; gap:6px; margin-bottom:8px; align-items:center; background:#f8f5ff; border:1px dashed #c5b0ff; border-radius:8px; padding:8px 10px;">
+                    <input type="checkbox" id="saju-is-leap" onchange="toggleLeapMonth()" style="width:15px; height:15px;">
+                    <label for="saju-is-leap" style="font-size:13px; font-weight:normal; color:#6b4eff;">윤달입니다 (윤○월)</label>
+                </div>
+                <div id="lunar-preview" style="display:none; font-size:12px; color:#7c6cff; background:#f0eaff; border:1px solid #e0d4ff; border-radius:8px; padding:8px 10px; margin-bottom:8px;"></div>
+
                 <div style="display:flex; gap:6px; margin-bottom:8px; align-items:center;">
                     <button type="button" id="btn-ymd-mode" onclick="setSajuInputMode('ymd')" style="flex:1; padding:8px; border:2px solid #ff6b9d; border-radius:8px; background:#fff0f3; font-size:13px; font-weight:bold; color:#ff6b9d;">⌨️ 숫자 직접입력</button>
                     <button type="button" id="btn-calendar-mode" onclick="setSajuInputMode('calendar')" style="flex:1; padding:8px; border:1px solid #ddd; border-radius:8px; background:#f8f8f8; font-size:13px; color:#666;">📅 달력으로 선택</button>
                 </div>
                 <div id="saju-ymd-box" style="display:flex; gap:6px; margin-bottom:6px; align-items:center; flex-wrap:wrap;">
                     <div style="display:flex; gap:4px; align-items:center; flex:2; background:#fff; border:1px solid var(--border-color); border-radius:8px; padding:6px 8px;">
-                        <input type="number" inputmode="numeric" id="saju-birth-year" placeholder="1965" min="1900" max="2100" style="width:70px; border:none; font-size:16px; text-align:center; outline:none;" oninput="syncSajuDateFromYMD()">
+                        <input type="number" inputmode="numeric" id="saju-birth-year" placeholder="1965" min="1900" max="2100" style="width:70px; border:none; font-size:16px; text-align:center; outline:none;" oninput="syncSajuDateFromYMD(); if(window.updateLunarPreview) updateLunarPreview();">
                         <span style="font-size:14px;">년</span>
-                        <input type="number" inputmode="numeric" id="saju-birth-month" placeholder="5" min="1" max="12" style="width:45px; border:none; font-size:16px; text-align:center; outline:none;" oninput="syncSajuDateFromYMD()">
+                        <input type="number" inputmode="numeric" id="saju-birth-month" placeholder="5" min="1" max="12" style="width:45px; border:none; font-size:16px; text-align:center; outline:none;" oninput="syncSajuDateFromYMD(); if(window.updateLunarPreview) updateLunarPreview();">
                         <span style="font-size:14px;">월</span>
-                        <input type="number" inputmode="numeric" id="saju-birth-day" placeholder="12" min="1" max="31" style="width:45px; border:none; font-size:16px; text-align:center; outline:none;" oninput="syncSajuDateFromYMD()">
+                        <input type="number" inputmode="numeric" id="saju-birth-day" placeholder="12" min="1" max="31" style="width:45px; border:none; font-size:16px; text-align:center; outline:none;" oninput="syncSajuDateFromYMD(); if(window.updateLunarPreview) updateLunarPreview();">
                         <span style="font-size:14px;">일</span>
                     </div>
                     <input type="hidden" id="saju-birth-date">
@@ -7611,9 +7622,31 @@ window.attachPhotoDoubleTap = function(el, handler){
         const savedInfoEl = document.getElementById('saju-saved-info');
         if (!dateInput) return;
 
+        // calendar type 복원
+        try{
+            var savedType = (sajuBirthInfo && sajuBirthInfo.calendarType) || localStorage.getItem('sajuCalendarType') || 'solar';
+            window.sajuCalendarType = savedType;
+            window.sajuIsLeapMonth = (sajuBirthInfo && sajuBirthInfo.originalLunar && sajuBirthInfo.originalLunar.isLeap) || (localStorage.getItem('sajuIsLeapMonth')==='true');
+            var leapChk = document.getElementById('saju-is-leap');
+            if(leapChk) leapChk.checked = window.sajuIsLeapMonth;
+            if(typeof setSajuCalendarType==='function') setTimeout(function(){ setSajuCalendarType(savedType); }, 100);
+        }catch(e){}
+
         if (sajuBirthInfo && sajuBirthInfo.date) {
             dateInput.value = sajuBirthInfo.date;
-            try{populateYMDFromDateStr(sajuBirthInfo.date);}catch(e){}
+            try{
+                // 음력으로 저장된 경우 원래 음력 날짜를 보여줄지 양력을 보여줄지: 저장된 양력 표시
+                if(sajuBirthInfo.originalLunar){
+                    const yEl=document.getElementById('saju-birth-year');
+                    const mEl=document.getElementById('saju-birth-month');
+                    const dEl=document.getElementById('saju-birth-day');
+                    if(yEl) yEl.value=sajuBirthInfo.originalLunar.year;
+                    if(mEl) mEl.value=sajuBirthInfo.originalLunar.month;
+                    if(dEl) dEl.value=sajuBirthInfo.originalLunar.day;
+                } else {
+                    populateYMDFromDateStr(sajuBirthInfo.date);
+                }
+            }catch(e){}
             if (sajuBirthInfo.time) {
                 unknownChk.checked = false;
                 timeInput.disabled = false;
@@ -7623,7 +7656,11 @@ window.attachPhotoDoubleTap = function(el, handler){
                 timeInput.disabled = true;
                 timeInput.value = '';
             }
-            savedInfoEl.textContent = `저장됨: ${sajuBirthInfo.date}${sajuBirthInfo.time ? ' ' + sajuBirthInfo.time : ' (시간 모름)'}`;
+            if(sajuBirthInfo.originalLunar){
+                savedInfoEl.innerHTML = `저장됨: 음력 ${sajuBirthInfo.originalLunar.year}-${sajuBirthInfo.originalLunar.month}-${sajuBirthInfo.originalLunar.day}${sajuBirthInfo.originalLunar.isLeap?' (윤달)':''} → 양력 ${sajuBirthInfo.date}${sajuBirthInfo.time ? ' ' + sajuBirthInfo.time : ' (시간 모름)'}`;
+            } else {
+                savedInfoEl.textContent = `저장됨: ${sajuBirthInfo.date}${sajuBirthInfo.time ? ' ' + sajuBirthInfo.time : ' (시간 모름)'} (양력)`;
+            }
         } else {
             savedInfoEl.textContent = '아직 설정되지 않았어요. 입력하면 매일 오늘의 운세를 볼 수 있어요.';
         }
@@ -7675,7 +7712,7 @@ window.attachPhotoDoubleTap = function(el, handler){
         }
         try{localStorage.setItem('sajuInputMode',mode);}catch(e){}
     }
-    function syncSajuDateFromYMD(){
+    function _origSyncSajuDateFromYMD(){
         const y=document.getElementById('saju-birth-year')?.value;
         const m=document.getElementById('saju-birth-month')?.value;
         const d=document.getElementById('saju-birth-day')?.value;
@@ -7720,13 +7757,33 @@ window.attachPhotoDoubleTap = function(el, handler){
     }
 
     function saveSajuBirthInfo() {
-        const dateVal = document.getElementById('saju-birth-date').value;
+        let dateVal = document.getElementById('saju-birth-date').value;
         if (!dateVal) { alert('태어난 날짜를 입력해주세요.'); return; }
+        
+        // 음력이면 양력으로 변환
+        let originalLunar = null;
+        if(window.sajuCalendarType==='lunar'){
+            const y = document.getElementById('saju-birth-year')?.value;
+            const m = document.getElementById('saju-birth-month')?.value;
+            const d = document.getElementById('saju-birth-day')?.value;
+            const isLeap = window.sajuIsLeapMonth || false;
+            if(y && m && d){
+                const solar = window.lunar2solar(parseInt(y), parseInt(m), parseInt(d), isLeap);
+                if(!solar){
+                    alert('음력 날짜를 양력으로 변환할 수 없습니다. 윤달 여부를 확인해주세요.');
+                    return;
+                }
+                originalLunar = { year: y, month: m, day: d, isLeap: isLeap };
+                dateVal = solar.dateStr;
+            }
+        }
+        
         const timeUnknown = document.getElementById('saju-time-unknown').checked;
         const timeVal = timeUnknown ? null : (document.getElementById('saju-birth-time').value || null);
 
-        sajuBirthInfo = { date: dateVal, time: timeVal };
+        sajuBirthInfo = { date: dateVal, time: timeVal, calendarType: window.sajuCalendarType, originalLunar: originalLunar };
         localStorage.setItem('smartDiarySajuBirth', JSON.stringify(sajuBirthInfo));
+        localStorage.setItem('sajuCalendarType', window.sajuCalendarType);
         sajuRecomputeFromBirthInfo();
         populateSajuSettingsFields();
         updateFortuneTeaser();
@@ -8586,6 +8643,7 @@ window.attachPhotoDoubleTap = function(el, handler){
                         <div style="font-size:12px;color:#FF9AC2;font-weight:700;margin-bottom:4px;">💗 애정운</div>
                         <div style="font-size:13.5px;line-height:1.5;color:rgba(255,255,255,0.85);">${detailLove}</div>
                     </div>
+                </div>
                 </div>
             </div>
 
@@ -11764,9 +11822,10 @@ const DAILY_6LINE_V2 = {
                   html += '<div class="daily-explain-header" style="background:'+bgGrad+'; height:28px; min-height:28px; padding:6px 10px; display:flex; align-items:center; justify-content:space-between; gap:6px; border-radius:5px 5px 0 0; box-sizing:border-box;">'
                     + '<div style="display:flex; align-items:center; gap:8px;"><span style="font-size:20px;">'+icon+'</span>'
                     + '<span style="font-size:16px; font-weight:900; color:#fff; letter-spacing:-0.3px;">'+item.title+'</span></div>'
-                    + '<span style="font-size:11px; font-weight:700; color:rgba(255,255,255,0.9); background:rgba(0,0,0,0.18); padding:3px 8px; border-radius:5px; line-height:1; box-sizing:border-box;">'+catLabel+'</span>'
+                    + '<div style="display:flex; align-items:center; gap:6px;"><span style="font-size:11px; font-weight:700; color:rgba(255,255,255,0.9); background:rgba(0,0,0,0.18); padding:3px 8px; border-radius:5px; line-height:1; box-sizing:border-box;">'+catLabel+'</span>'
+                    + '<button type="button" onclick="var c=this.closest(\'.daily-explain-header\').nextElementSibling; if(c){ c.style.display=(c.style.display===\'none\'?\'block\':\'none\'); this.textContent=(c.style.display===\'none\'?\'▶\':\'▼\'); localStorage.setItem(\'explainCollapsed\', c.style.display===\'none\'?\'true\':\'false\'); } return false;" style="background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.4); color:white; border-radius:4px; padding:2px 6px; font-size:10px; font-weight:700; cursor:pointer;">▼</button></div>'
                     + '</div>';
-                  html += '<div style="padding:12px 14px 14px 14px;">';
+                  html += '<div class="daily-explain-content" style="padding:12px 14px 14px 14px; display:block;">';
                   paras.forEach(function(p, pi){
                     var isFirst = pi===0;
                     html += '<p style="margin:0 0 '+(pi===paras.length-1?'0':'8px')+' 0; line-height:1.70; font-size:'+(isFirst?'13px':'12px')+'; color:'+(isFirst?'#2d3436':'#5a5a5a')+'; word-break:keep-all; font-weight:'+(isFirst?'600':'400')+'; letter-spacing:-0.2px;">'+p+'</p>';
@@ -19764,60 +19823,7 @@ button[onclick*="writeDiaryWithBiorhythm"] {
 }
 </style>
 <script id="MAIN_BIO_TEXT_ONLY_JS">
-(function(){
-  function fixMainBio(){
-    const el = document.getElementById('main-biorhythm-teaser');
-    if(!el) return;
-    
-    // Remove 상세보기 text if any remains
-    el.querySelectorAll('div').forEach(div=>{
-      if(div.textContent.includes('상세보기')){
-        div.style.display='none';
-        div.textContent='';
-      }
-    });
-    
-    // Disable click - make it do nothing
-    el.onclick = function(e){
-      if(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-      }
-      return false;
-    };
-    el.removeAttribute('onclick');
-    el.setAttribute('data-click-disabled','true');
-    
-    // Ensure biorhythm canvas is still visible
-    const canvas = document.getElementById('main-biorhythm-canvas');
-    if(canvas){
-      canvas.style.display='block';
-      canvas.style.pointerEvents='none'; // canvas itself not clickable
-    }
-  }
-  
-  // Run immediately
-  fixMainBio();
-  setInterval(fixMainBio, 1000);
-  
-  // Block any click on main bio teaser at capture phase
-  document.addEventListener('click', function(e){
-    const bioEl = document.getElementById('main-biorhythm-teaser');
-    if(bioEl && (e.target === bioEl || bioEl.contains(e.target))){
-      // Check if click is on the teaser itself (not elsewhere)
-      // Only block if it's the teaser
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
-      console.log('[MAIN BIO] Click blocked - no action');
-      return false;
-    }
-  }, true);
-  
-  console.log('[MAIN BIO] 상세보기 text removed, click disabled, chart visible');
-})();
-</script>
+
 
 
 <style id="SAJU_FIXED_CLOSE_CSS">
@@ -20292,9 +20298,6 @@ button[onclick*="writeDiaryWithBiorhythm"] {
 }
 */
 
-#diary-view-toggle {
-  gap:5px !important;
-}
 </style>
 
 
@@ -21574,35 +21577,131 @@ div:has(> label:has(input[name="cardStyle"])) { display:none !important; }
 
 
 
-<script id="V259_CLEAN">
-// V259 CLEAN: 아이콘 절대 안 건드림, 버튼 텍스트만 변경 + 오른쪽 일자+메모
-(function(){
-  console.log('[V259] CLEAN FIX');
 
+
+
+<script id="LUNAR_CONVERTER">
+// 음력 → 양력 변환 라이브러리 (1900-2099)
+(function(){
+  window.lunarInfo = [
+    0x04bd8,0x04ae0,0x0a570,0x054d5,0x0d260,0x0d950,0x16554,0x056a0,0x09ad0,0x055d2,
+    0x04ae0,0x0a5b6,0x0a4d0,0x0d250,0x1d255,0x0b540,0x0d6a0,0x0ada2,0x095b0,0x14977,
+    0x04970,0x0a4b0,0x0b4b5,0x06a50,0x06d40,0x1ab54,0x02b60,0x09570,0x052f2,0x04970,
+    0x06566,0x0d4a0,0x0ea50,0x06e95,0x05ad0,0x02b60,0x186e3,0x092e0,0x1c8d7,0x0c950,
+    0x0d4a0,0x1d8a6,0x0b550,0x056a0,0x1a5b4,0x025d0,0x092d0,0x0d2b2,0x0a950,0x0b557,
+    0x06ca0,0x0b550,0x15355,0x04da0,0x0a5d0,0x14573,0x052d0,0x0a9a8,0x0e950,0x06aa0,
+    0x0aea6,0x0ab50,0x04b60,0x0aae4,0x0a570,0x05260,0x0f263,0x0d950,0x05b30,0x056a0,
+    0x096d0,0x04dd5,0x04ad0,0x0a4d0,0x0d4d4,0x0d250,0x0d558,0x0b540,0x0b6a0,0x195a6,
+    0x095b0,0x049b0,0x0a974,0x0a4b0,0x0b27a,0x06a50,0x06d40,0x0af46,0x0ab60,0x09570,
+    0x04af5,0x04970,0x064b0,0x074a3,0x0ea50,0x06b58,0x055c0,0x0ab60,0x096d5,0x092e0,
+    0x0c960,0x0d954,0x0d4a0,0x0da50,0x07552,0x056a0,0x0abb7,0x025d0,0x092d0,0x0cab5,
+    0x0a950,0x0b4a0,0x0baa4,0x0ad50,0x055d9,0x04ba0,0x0a5b0,0x15176,0x052b0,0x0a930,
+    0x07954,0x06aa0,0x0ad50,0x05b52,0x04b60,0x0a6e6,0x0a4e0,0x0d260,0x0ea65,0x0d530,
+    0x05aa0,0x076a3,0x096d0,0x04bd7,0x04ad0,0x0a4d0,0x1d0b6,0x0d250,0x0d520,0x0dd45,
+    0x0b5a0,0x056d0,0x055b2,0x049b0,0x0a4b0,0x0aa50,0x1b255,0x06d20,0x0ada0,0x14b63
+  ];
+  window.lYearDays = function(y){
+    var i,sum=348;
+    for(i=0x8000;i>0x8;i>>=1){ sum+=(window.lunarInfo[y-1900] & i)?1:0; }
+    return sum+window.leapDays(y);
+  };
+  window.leapMonth = function(y){ return window.lunarInfo[y-1900] & 0xf; };
+  window.leapDays = function(y){
+    if(window.leapMonth(y)){ return (window.lunarInfo[y-1900] & 0x10000)?30:29; }
+    return 0;
+  };
+  window.monthDays = function(y,m){ return (window.lunarInfo[y-1900] & (0x10000>>m))?30:29; };
+  window.lunar2solar = function(lYear,lMonth,lDay,isLeap){
+    if(lYear<1900 || lYear>2099) return null;
+    var offset=0;
+    for(var i=1900;i<lYear;i++){ offset+=window.lYearDays(i); }
+    var leap = window.leapMonth(lYear);
+    for(var j=1;j<lMonth;j++){
+      if(leap && j===leap+1){ offset+=window.leapDays(lYear); }
+      offset+=window.monthDays(lYear,j);
+    }
+    if(isLeap){
+      if(leap!==lMonth) return null;
+      offset+=window.monthDays(lYear,lMonth);
+    } else {
+      if(leap && lMonth>leap){ offset+=window.leapDays(lYear); }
+    }
+    offset+=lDay-1;
+    var base = new Date(1900,0,31);
+    base.setDate(base.getDate()+offset);
+    return { cYear: base.getFullYear(), cMonth: base.getMonth()+1, cDay: base.getDate(), dateStr: base.getFullYear()+'-'+String(base.getMonth()+1).padStart(2,'0')+'-'+String(base.getDate()).padStart(2,'0') };
+  };
+  window.sajuCalendarType = localStorage.getItem('sajuCalendarType') || 'solar';
+  window.sajuIsLeapMonth = localStorage.getItem('sajuIsLeapMonth')==='true';
+  window.setSajuCalendarType = function(type){
+    window.sajuCalendarType = type;
+    localStorage.setItem('sajuCalendarType', type);
+    var solarBtn = document.getElementById('btn-calendar-solar');
+    var lunarBtn = document.getElementById('btn-calendar-lunar');
+    var leapBox = document.getElementById('lunar-leap-box');
+    var hint = document.getElementById('saju-calendar-hint');
+    if(type==='solar'){
+      if(solarBtn){ solarBtn.style.border='2px solid #ff6b9d'; solarBtn.style.background='#fff0f3'; solarBtn.style.color='#ff6b9d'; solarBtn.style.fontWeight='bold'; }
+      if(lunarBtn){ lunarBtn.style.border='1px solid #ddd'; lunarBtn.style.background='#f8f8f8'; lunarBtn.style.color='#666'; lunarBtn.style.fontWeight='normal'; }
+      if(leapBox) leapBox.style.display='none';
+      if(hint) hint.innerHTML='📅 생년월일은 <b>양력</b> 기준으로 입력해주세요';
+    } else {
+      if(lunarBtn){ lunarBtn.style.border='2px solid #7c6cff'; lunarBtn.style.background='#f0eaff'; lunarBtn.style.color='#7c6cff'; lunarBtn.style.fontWeight='bold'; }
+      if(solarBtn){ solarBtn.style.border='1px solid #ddd'; solarBtn.style.background='#f8f8f8'; solarBtn.style.color='#666'; solarBtn.style.fontWeight='normal'; }
+      if(leapBox) leapBox.style.display='flex';
+      if(hint) hint.innerHTML='🌙 생년월일은 <b>음력</b> 기준으로 입력하면 자동으로 양력으로 변환됩니다';
+    }
+    updateLunarPreview();
+  };
+  window.toggleLeapMonth = function(){
+    var chk = document.getElementById('saju-is-leap');
+    window.sajuIsLeapMonth = chk ? chk.checked : false;
+    localStorage.setItem('sajuIsLeapMonth', window.sajuIsLeapMonth);
+    updateLunarPreview();
+  };
+  window.updateLunarPreview = function(){
+    var y = document.getElementById('saju-birth-year')?.value;
+    var m = document.getElementById('saju-birth-month')?.value;
+    var d = document.getElementById('saju-birth-day')?.value;
+    var previewEl = document.getElementById('lunar-preview');
+    if(!previewEl) return;
+    if(!y || !m || !d){ previewEl.style.display='none'; return; }
+    if(window.sajuCalendarType==='lunar'){
+      var solar = window.lunar2solar(parseInt(y), parseInt(m), parseInt(d), window.sajuIsLeapMonth);
+      if(solar){
+        previewEl.style.display='block';
+        previewEl.innerHTML = '🌙 음력 '+y+'년 '+m+'월 '+d+'일 '+(window.sajuIsLeapMonth?'(윤달) ':'')+'→ 양력 <b>'+solar.dateStr+'</b> 로 변환 저장';
+      } else {
+        previewEl.style.display='block';
+        previewEl.innerHTML = '⚠️ 변환 불가 (윤달 여부 확인)';
+      }
+    } else {
+      previewEl.style.display='none';
+    }
+  };
+})();
+</script>
+
+
+<script id="V259_CLEAN">
+// V259 CLEAN: 메모만 오른쪽 일자+메모
+(function(){
   function fix(){
     try{
       var listEl=document.getElementById('diary-around-today-list');
       if(!listEl) return;
-      
       var cards = listEl.querySelectorAll('div[style*="border-left"]');
       cards.forEach(function(card){
         var sides = card.querySelectorAll('div[style*="width:50%"]');
         if(sides.length!==2) return;
-        
         var left = sides[0];
         var right = sides[1];
-        
         var photoKey = left.getAttribute('data-photo-key') || right.getAttribute('data-photo-key') || '';
         var hasPhoto = photoKey && photoKey.trim()!=='' && photoKey!=='null' && photoKey!=='undefined';
-        
-        if(hasPhoto) return; // 사진은 건들지 않음!
-        
-        // 메모만: 왼쪽 버튼 텍스트만 변경 (아이콘 건들지 않음)
+        if(hasPhoto) return;
         if(left.innerHTML.indexOf('사진 보기')!==-1){
           left.innerHTML = left.innerHTML.replace(/사진 보기/g, '메모 보기').replace(/\[사진 보기\]/g, '[메모 보기]');
         }
-        
-        // 메모만: 오른쪽 아이콘 제거하고 일자+메모
         var photoDate = right.getAttribute('data-photo-date') || left.getAttribute('data-photo-date') || '';
         var photoText = left.getAttribute('data-photo-text') || '';
         var realText = photoText;
@@ -21615,23 +21714,11 @@ div:has(> label:has(input[name="cardStyle"])) { display:none !important; }
           }catch(e){}
         }
         realText = (realText||'메모').slice(0,20);
-        
-        // 오른쪽이 이미 수정됐는지 체크 (일자로 이동 버튼이 있으면 이미 수정된 것)
-        // 하지만 아이콘이 있으면 다시 수정
-        var hasIcon = right.querySelector('img') || right.innerHTML.indexOf('📷')!==-1 || right.innerHTML.indexOf('🗒️')!==-1 || right.querySelector('div[style*="background:#f5f"]');
-        if(right.innerHTML.indexOf('일자로 이동')===-1 || hasIcon || right.textContent.trim()==='일자로 이동 →' || right.textContent.length<25){
-          right.innerHTML = '<div style="flex:1; overflow:hidden; text-align:left;">' +
-            '<div style="font-size:10px; color:#7c6cff; font-weight:700; margin-bottom:2px;">'+photoDate+'</div>' +
-            '<div style="font-size:11px; color:#333; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">'+realText.replace(/</g,'&lt;')+'</div></div>' +
-            '<div style="font-size:11px; color:#7c6cff; font-weight:800; background:#f0eaff; border:1px solid #e8e0ff; padding:4px 8px; border-radius:20px; white-space:nowrap; margin-left:6px;">일자로 이동 →</div>';
-          right.style.display='flex';
-          right.style.alignItems='center';
-          right.style.justifyContent='space-between';
-          right.style.padding='8px 10px';
+        if(right.innerHTML.indexOf('일자로 이동')===-1 || right.querySelector('img') || right.textContent.length<25){
+          right.innerHTML = '<div style="flex:1; overflow:hidden; text-align:left;"><div style="font-size:10px; color:#7c6cff; font-weight:700; margin-bottom:2px;">'+photoDate+'</div><div style="font-size:11px; color:#333; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">'+realText.replace(/</g,'&lt;')+'</div></div><div style="font-size:11px; color:#7c6cff; font-weight:800; background:#f0eaff; border:1px solid #e8e0ff; padding:4px 8px; border-radius:20px; white-space:nowrap; margin-left:6px;">일자로 이동 →</div>';
+          right.style.display='flex'; right.style.alignItems='center'; right.style.justifyContent='space-between'; right.style.padding='8px 10px';
         }
       });
-      
-      // 중복 설명 제거
       var headers=listEl.querySelectorAll('.daily-explain-header');
       if(headers.length>1){
         for(var i=headers.length-1;i>=1;i--){
@@ -21641,25 +21728,421 @@ div:has(> label:has(input[name="cardStyle"])) { display:none !important; }
           try{ block.remove(); }catch(e){}
         }
       }
-    }catch(e){ console.log('V259 err', e); }
+    }catch(e){}
   }
-
   var orig=window.renderDiaryAroundToday;
   if(typeof orig==='function' && !window._v259_patched){
     window._origV259=orig;
     window.renderDiaryAroundToday=function(){
       var r=window._origV259.apply(this, arguments);
-      setTimeout(fix, 10);
-      setTimeout(fix, 150);
-      setTimeout(fix, 400);
+      setTimeout(fix, 10); setTimeout(fix, 150); setTimeout(fix, 400);
       return r;
     };
     window._v259_patched=true;
   }
-  setTimeout(fix, 50);
-  setTimeout(fix, 300);
+  setTimeout(fix, 50); setTimeout(fix, 300);
 })();
 </script>
+
+
+
+
+
+<script id="V274_FINAL_FIX">
+// V274: 최종 - 인라인 onclick + 이벤트 리스너 둘 다
+(function(){
+  function toggleBio(btn){
+    var content = document.getElementById('main-biorhythm-content');
+    if(!content){
+      alert('바이오리듬 내용을 찾을 수 없어요!');
+      return;
+    }
+    var isHidden = content.style.display==='none';
+    // getComputedStyle도 체크
+    if(!isHidden && window.getComputedStyle(content).display==='none') isHidden=true;
+    
+    if(isHidden){
+      content.style.display='block';
+      if(btn) btn.textContent='▼';
+      localStorage.setItem('biorhythmCollapsed','false');
+      console.log('바이오리듬 펼침');
+    } else {
+      content.style.display='none';
+      if(btn) btn.textContent='▶';
+      localStorage.setItem('biorhythmCollapsed','true');
+      console.log('바이오리듬 접음');
+    }
+  }
+
+  window.toggleBio = toggleBio;
+
+  document.addEventListener('DOMContentLoaded', function(){
+    var btn = document.getElementById('biorhythm-toggle-btn');
+    if(btn){
+      btn.addEventListener('click', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        toggleBio(this);
+      });
+    }
+    // 복원
+    var collapsed = localStorage.getItem('biorhythmCollapsed')==='true';
+    var content = document.getElementById('main-biorhythm-content');
+    var b = document.getElementById('biorhythm-toggle-btn');
+    if(content && collapsed){
+      content.style.display='none';
+      if(b) b.textContent='▶';
+    }
+  });
+
+  // 즉시 복원도
+  setTimeout(function(){
+    var collapsed = localStorage.getItem('biorhythmCollapsed')==='true';
+    var content = document.getElementById('main-biorhythm-content');
+    var b = document.getElementById('biorhythm-toggle-btn');
+    if(content && collapsed){
+      content.style.display='none';
+      if(b) b.textContent='▶';
+    }
+    var btn = document.getElementById('biorhythm-toggle-btn');
+    if(btn && !btn._attached){
+      btn.addEventListener('click', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        toggleBio(this);
+      });
+      btn._attached=true;
+    }
+  }, 1000);
+})();
+</script>
+
+
+
+<script id="V284_COLLAPSE_FIX">
+// V284: 날짜 이동 시 설명/바이오리듬 닫힘 유지 - 실제 키 사용
+(function(){
+  function applyCollapse(){
+    try{
+      var bioCollapsed = localStorage.getItem('biorhythmCollapsed')==='true';
+      var expCollapsed = localStorage.getItem('explainCollapsed')==='true' || localStorage.getItem('dailyExplainCollapsed')==='true';
+      
+      var bioContent = document.getElementById('main-biorhythm-content');
+      var bioBtn = document.getElementById('biorhythm-toggle-btn');
+      if(bioContent && bioCollapsed){
+        bioContent.style.display='none';
+        if(bioBtn) bioBtn.textContent='▶';
+      }
+      
+      // 설명은 id가 두 가지일 수 있음
+      var expContent = document.getElementById('daily-explain-content') || document.querySelector('.daily-explain-content');
+      var expBtn = document.getElementById('daily-explain-toggle-btn') || document.querySelector('[onclick*="toggleDailyExplain"]') || document.querySelector('.daily-explain-header button');
+      if(expContent && expCollapsed){
+        expContent.style.display='none';
+        // 모든 설명 토글 버튼 찾기
+        var allExpBtns = document.querySelectorAll('#daily-explain-toggle-btn, .daily-explain-header button, [onclick*="explain"]');
+        allExpBtns.forEach(function(b){ if(b.textContent.includes('▼')||b.textContent.includes('▶')) b.textContent='▶'; });
+        if(expBtn) expBtn.textContent='▶';
+      }
+    }catch(e){ console.log('collapse apply error', e); }
+  }
+  
+  // 1초마다 체크 (날짜 이동 후 재렌더링 대응)
+  setInterval(applyCollapse, 500);
+  
+  document.addEventListener('DOMContentLoaded', function(){
+    applyCollapse();
+    setTimeout(applyCollapse, 300);
+    setTimeout(applyCollapse, 1000);
+  });
+  
+  // 달력 클릭 시
+  document.addEventListener('click', function(e){
+    if(e.target.closest('.cal-cell')){
+      setTimeout(applyCollapse, 100);
+      setTimeout(applyCollapse, 400);
+      setTimeout(applyCollapse, 900);
+    }
+  });
+  
+  // 기존 함수들 래핑
+  var originalFunctions = ['renderDiaryAroundToday', 'showDiaryAroundToday', 'renderCalendar'];
+  originalFunctions.forEach(function(fnName){
+    if(window[fnName]){
+      var orig = window[fnName];
+      window[fnName] = function(){
+        var result = orig.apply(this, arguments);
+        setTimeout(applyCollapse, 100);
+        setTimeout(applyCollapse, 500);
+        return result;
+      };
+    }
+  });
+})();
+</script>
+
+
+<style id="V283_INPUT_OVERRIDE">
+#diary-around-today-card .feature-title { flex-wrap:nowrap !important; }
+</style>
+
+
+<style id="V284_FINAL_OVERRIDE">
+/* 입력 버튼 영역 - 모든 제한 해제 */
+#diary-around-today-card .feature-title { display:flex !important; flex-wrap:nowrap !important; justify-content:space-between !important; align-items:center !important; }
+#diary-view-toggle { display:flex !important; flex-direction:row !important; align-items:stretch !important; gap:8px !important; width:auto !important; min-width:280px !important; max-width:none !important; flex-shrink:0 !important; }
+#diary-view-toggle > div { display:flex !important; gap:8px !important; align-items:stretch !important; }
+#diary-view-toggle button[onclick*="openDiaryForm"] { width:160px !important; min-width:160px !important; max-width:160px !important; height:56px !important; min-height:56px !important; font-size:16px !important; font-weight:900 !important; border-radius:12px !important; flex-shrink:0 !important; }
+#diary-view-toggle #btn-view-list, #diary-view-toggle #btn-view-gallery { width:60px !important; min-width:60px !important; height:27px !important; min-height:27px !important; margin:0 !important; }
+</style>
+
+
+<style id="V287_TC_TOGGLE_STYLE">
+.time-capsule-banner { cursor:pointer; user-select:none; }
+.time-capsule-banner:hover { opacity:0.9; }
+.tc-toggle-btn:hover { background:rgba(255,255,255,0.5) !important; }
+</style>
+
+
+<script id="V287_TIMECAPSULE_TOGGLE">
+// V287: 타임캡슐 숨김/보여줌 기능
+(function(){
+  function initTimeCapsuleToggle(){
+    var banners = document.querySelectorAll('.time-capsule-banner');
+    banners.forEach(function(banner, idx){
+      if(banner.querySelector('.tc-toggle-btn')) return; // already added
+      
+      // Toggle button
+      var btn = document.createElement('button');
+      btn.className = 'tc-toggle-btn';
+      btn.type = 'button';
+      btn.textContent = '▼';
+      btn.style.cssText = 'background:rgba(255,255,255,0.3); border:1px solid rgba(255,255,255,0.5); color:white; border-radius:4px; padding:2px 6px; font-size:10px; font-weight:700; cursor:pointer; margin-left:8px; flex-shrink:0;';
+      btn.onclick = function(e){
+        e.stopPropagation();
+        var content = document.getElementById('time-capsule-content');
+        // Also try other possible content containers
+        if(!content){
+          // Find all elements after banner until next section
+          var parent = banner.parentElement;
+          var allCards = parent.querySelectorAll('div[style*="height:72px"], .time-capsule-card, div[style*="display:flex"][style*="height:72px"]');
+          // Toggle all
+          var isHidden = false;
+          allCards.forEach(function(card){
+            if(card.style.display==='none') isHidden = true;
+          });
+          allCards.forEach(function(card){
+            card.style.display = isHidden ? '' : 'none';
+          });
+          btn.textContent = isHidden ? '▼' : '▶';
+          localStorage.setItem('timeCapsuleCollapsed', isHidden ? 'false' : 'true');
+          return;
+        }
+        var hidden = content.style.display==='none';
+        content.style.display = hidden ? 'block' : 'none';
+        btn.textContent = hidden ? '▼' : '▶';
+        localStorage.setItem('timeCapsuleCollapsed', hidden ? 'false' : 'true');
+      };
+      
+      // Add button to banner's right side
+      var rightDiv = banner.querySelector('div:last-child');
+      if(rightDiv){
+        rightDiv.style.display='flex';
+        rightDiv.style.alignItems='center';
+        rightDiv.style.gap='4px';
+        rightDiv.appendChild(btn);
+      } else {
+        banner.appendChild(btn);
+      }
+      
+      // Apply saved state
+      var collapsed = localStorage.getItem('timeCapsuleCollapsed')==='true';
+      if(collapsed){
+        setTimeout(function(){
+          var content = document.getElementById('time-capsule-content');
+          if(content){
+            content.style.display='none';
+            btn.textContent='▶';
+          }
+        }, 200);
+      }
+    });
+  }
+  
+  // Make banner itself clickable
+  document.addEventListener('click', function(e){
+    var banner = e.target.closest('.time-capsule-banner');
+    if(banner && !e.target.closest('.tc-toggle-btn')){
+      var btn = banner.querySelector('.tc-toggle-btn');
+      if(btn) btn.click();
+    }
+  });
+  
+  // Init and re-init on render
+  setInterval(initTimeCapsuleToggle, 1000);
+  document.addEventListener('DOMContentLoaded', function(){
+    initTimeCapsuleToggle();
+    setTimeout(initTimeCapsuleToggle, 500);
+    setTimeout(initTimeCapsuleToggle, 1500);
+  });
+  
+  // Hook into render functions
+  var origRender = window.renderDiaryAroundToday || window.showDiaryAroundToday;
+  // Also observe DOM changes
+  var observer = new MutationObserver(function(){
+    setTimeout(initTimeCapsuleToggle, 100);
+  });
+  document.addEventListener('DOMContentLoaded', function(){
+    var listEl = document.getElementById('diary-around-today-list');
+    if(listEl) observer.observe(listEl, {childList:true, subtree:true});
+  });
+})();
+</script>
+
+
+<script id="V288_VIBRATE_APX">
+// V288: APX에서도 스윙2앱처럼 터치 시 진동 울리게!
+(function(){
+  // 진동 함수 - APX와 모든 브라우저 호환
+  window.vibrateTouch = function(pattern){
+    try{
+      if('vibrate' in navigator){
+        navigator.vibrate(pattern || 30); // 30ms 짧은 진동
+      }
+      // APX 네이티브 브릿지가 있으면 그것도 호출
+      if(window.APX && window.APX.vibrate){
+        window.APX.vibrate(pattern || 30);
+      }
+      if(window.Android && window.Android.vibrate){
+        window.Android.vibrate(pattern || 30);
+      }
+    }catch(e){ console.log('vibrate error', e); }
+  };
+  
+  // 모든 버튼에 진동 이벤트 추가
+  function addVibrateToButtons(){
+    var buttons = document.querySelectorAll('button, .cal-cell, .time-capsule-banner, .fortune-teaser, .daily-explain-header, .biorhythm-header');
+    buttons.forEach(function(btn){
+      if(btn.dataset.vibrateAdded) return;
+      btn.dataset.vibrateAdded = 'true';
+      
+      // 터치 시작 시 진동 (가장 빠름)
+      btn.addEventListener('touchstart', function(){
+        vibrateTouch(25);
+      }, {passive:true});
+      
+      // 클릭 시에도 진동 (PC 대응)
+      btn.addEventListener('click', function(){
+        vibrateTouch(20);
+      }, {passive:true});
+    });
+  }
+  
+  // 특정 버튼은 더 강한 진동
+  function addStrongVibrate(){
+    var importantBtns = document.querySelectorAll('#diary-view-toggle button, #btn-view-list, #btn-view-gallery, button[onclick*="openDiaryForm"]');
+    importantBtns.forEach(function(btn){
+      btn.addEventListener('touchstart', function(){
+        vibrateTouch([30, 20, 30]); // 두 번 울림
+      }, {passive:true});
+    });
+  }
+  
+  setInterval(addVibrateToButtons, 1500);
+  setInterval(addStrongVibrate, 2000);
+  
+  document.addEventListener('DOMContentLoaded', function(){
+    addVibrateToButtons();
+    setTimeout(addVibrateToButtons, 500);
+    setTimeout(addStrongVibrate, 800);
+  });
+  
+  console.log('[V288] APX 진동 기능 추가됨 - 스윙2앱처럼 울림!');
+})();
+</script>
+<style id="V288_VIBRATE_STYLE">
+/* 터치 피드백 시각적으로도 - 눌렀을 때 살짝 작아짐 (스윙2앱처럼) */
+button:active, .cal-cell:active, .time-capsule-banner:active {
+  transform:scale(0.97) !important;
+  transition:transform 0.1s !important;
+}
+</style>
+
+
+<script id="V289_DATE_VIBRATE">
+// V289: 일자 터치할 때 진동 강화!
+(function(){
+  function addDateVibrate(){
+    var cells = document.querySelectorAll('.cal-cell, [onclick*="selectDate"], [onclick*="selectedViewDate"], .calendar-day, td, .cal-cell-inner');
+    cells.forEach(function(cell){
+      if(cell.dataset.dateVibrate) return;
+      cell.dataset.dateVibrate = 'true';
+      
+      var handler = function(e){
+        try{
+          // 일자 터치 시 강한 진동
+          if('vibrate' in navigator){
+            navigator.vibrate(40); // 일자니까 좀 더 길게 40ms
+          }
+          // APX용 추가
+          if(window.APX && window.APX.vibrate) window.APX.vibrate(40);
+        }catch(err){}
+      };
+      
+      cell.addEventListener('touchstart', handler, {passive:true});
+      cell.addEventListener('touchend', handler, {passive:true});
+    });
+  }
+  
+  // 달력 일자 클릭 함수 래핑 - 원래 함수에 진동 추가
+  function wrapDateFunctions(){
+    var fnNames = ['selectDate', 'onDateClick', 'handleDateClick', 'changeDate', 'setSelectedDate'];
+    fnNames.forEach(function(name){
+      if(window[name] && !window[name]._vibrated){
+        var orig = window[name];
+        window[name] = function(){
+          try{ if('vibrate' in navigator) navigator.vibrate(35); }catch(e){}
+          return orig.apply(this, arguments);
+        };
+        window[name]._vibrated = true;
+      }
+    });
+    
+    // 전역 달력 클릭 이벤트
+    document.addEventListener('click', function(e){
+      var cell = e.target.closest('.cal-cell, [data-date], .calendar-cell');
+      if(cell){
+        try{ if('vibrate' in navigator) navigator.vibrate(35); }catch(err){}
+      }
+    });
+  }
+  
+  setInterval(function(){
+    addDateVibrate();
+    wrapDateFunctions();
+  }, 800);
+  
+  document.addEventListener('DOMContentLoaded', function(){
+    addDateVibrate();
+    wrapDateFunctions();
+    setTimeout(addDateVibrate, 300);
+    setTimeout(wrapDateFunctions, 500);
+  });
+  
+  console.log('[V289] 일자 터치 진동 강화!');
+})();
+</script>
+<style id="V289_DATE_STYLE">
+/* 일자 터치 시 시각적 피드백 강화 */
+.cal-cell:active, .cal-cell-inner:active {
+  transform:scale(0.92) !important;
+  background:rgba(124,108,255,0.15) !important;
+  transition:all 0.08s !important;
+}
+.cal-cell {
+  -webkit-tap-highlight-color: rgba(124,108,255,0.2) !important;
+}
+</style>
 
 </body>
 
