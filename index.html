@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <!-- Version: V187 - 초중말복 동적화, 24절기 동적화, 누적패치 제거, 5~6줄 개그 유머 100점 -->
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>포토다이어리 V235 PERSONALIZED FORTUNE - 사진, 추억을 담다</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>포토다이어리 V236 REORDERED - 사진, 추억을 담다</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -21226,6 +21226,42 @@ div:has(> label:has(input[name="cardStyle"])) { display:none !important; }
   };
 
   console.log('[V235] 개인화 운세 패치 완료');
+})();
+</script>
+
+
+<script id="V236_REORDER">
+// V236: 오늘 사진/메모를 운세 앞으로 이동
+(function(){
+  function reorder(){
+    try{
+      var card=document.getElementById('diary-around-today-card');
+      var list=document.getElementById('diary-around-today-list');
+      var fortune=document.getElementById('fortune-teaser');
+      var bio=document.getElementById('main-biorhythm-teaser');
+      if(!card || !list || !fortune) return;
+      // 현재: title -> fortune -> bio -> list
+      // 원하는: title -> list -> fortune -> bio
+      // list를 fortune 앞으로 이동
+      card.insertBefore(list, fortune);
+      console.log('[V236] 순서 변경 완료: list -> fortune -> bio');
+    }catch(e){ console.log('reorder err', e); }
+  }
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded', function(){ setTimeout(reorder, 100); setTimeout(reorder, 600); });
+  } else {
+    setTimeout(reorder, 100);
+    setTimeout(reorder, 600);
+  }
+  // 다이어리 렌더 후에도 유지되도록 render 후에도 다시 정렬
+  var origRender=window.renderDiaryAroundToday;
+  if(typeof origRender==='function'){
+    window.renderDiaryAroundToday=function(){
+      var res=origRender.apply(this, arguments);
+      setTimeout(reorder, 50);
+      return res;
+    };
+  }
 })();
 </script>
 
