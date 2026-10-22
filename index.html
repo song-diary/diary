@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+<!-- Version: V290 - 기능·UI 유지, 진동중복/setInterval폭주/transform충돌 정리 --> 
 <!-- Version: V187 - 초중말복 동적화, 24절기 동적화, 누적패치 제거, 5~6줄 개그 유머 100점 -->
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>포토다이어리 V238 MEMO FIX - 사진, 추억을 담다</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>포토다이어리 V292 - 입력 가로축소 + 높이동기화 - 사진, 추억을 담다</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -21882,265 +21883,426 @@ div:has(> label:has(input[name="cardStyle"])) { display:none !important; }
 </script>
 
 
-<style id="V283_INPUT_OVERRIDE">
-#diary-around-today-card .feature-title { flex-wrap:nowrap !important; }
-</style>
 
 
-<style id="V284_FINAL_OVERRIDE">
-/* 입력 버튼 영역 - 모든 제한 해제 */
-#diary-around-today-card .feature-title { display:flex !important; flex-wrap:nowrap !important; justify-content:space-between !important; align-items:center !important; }
-#diary-view-toggle { display:flex !important; flex-direction:row !important; align-items:stretch !important; gap:8px !important; width:auto !important; min-width:280px !important; max-width:none !important; flex-shrink:0 !important; }
-#diary-view-toggle > div { display:flex !important; gap:8px !important; align-items:stretch !important; }
-#diary-view-toggle button[onclick*="openDiaryForm"] { width:160px !important; min-width:160px !important; max-width:160px !important; height:56px !important; min-height:56px !important; font-size:16px !important; font-weight:900 !important; border-radius:12px !important; flex-shrink:0 !important; }
-#diary-view-toggle #btn-view-list, #diary-view-toggle #btn-view-gallery { width:60px !important; min-width:60px !important; height:27px !important; min-height:27px !important; margin:0 !important; }
-</style>
-
-
-<style id="V287_TC_TOGGLE_STYLE">
-.time-capsule-banner { cursor:pointer; user-select:none; }
-.time-capsule-banner:hover { opacity:0.9; }
-.tc-toggle-btn:hover { background:rgba(255,255,255,0.5) !important; }
-</style>
-
-
-<script id="V287_TIMECAPSULE_TOGGLE">
-// V287: 타임캡슐 숨김/보여줌 기능
+<script id="V296_YOIL_UP">
+// V296: 요일 위로 + 달력 정상 + 타임캡슐
 (function(){
-  function initTimeCapsuleToggle(){
-    var banners = document.querySelectorAll('.time-capsule-banner');
-    banners.forEach(function(banner, idx){
-      if(banner.querySelector('.tc-toggle-btn')) return; // already added
-      
-      // Toggle button
-      var btn = document.createElement('button');
-      btn.className = 'tc-toggle-btn';
-      btn.type = 'button';
-      btn.textContent = '▼';
-      btn.style.cssText = 'background:rgba(255,255,255,0.3); border:1px solid rgba(255,255,255,0.5); color:white; border-radius:4px; padding:2px 6px; font-size:10px; font-weight:700; cursor:pointer; margin-left:8px; flex-shrink:0;';
-      btn.onclick = function(e){
-        e.stopPropagation();
-        var content = document.getElementById('time-capsule-content');
-        // Also try other possible content containers
-        if(!content){
-          // Find all elements after banner until next section
-          var parent = banner.parentElement;
-          var allCards = parent.querySelectorAll('div[style*="height:72px"], .time-capsule-card, div[style*="display:flex"][style*="height:72px"]');
-          // Toggle all
-          var isHidden = false;
-          allCards.forEach(function(card){
-            if(card.style.display==='none') isHidden = true;
-          });
-          allCards.forEach(function(card){
-            card.style.display = isHidden ? '' : 'none';
-          });
-          btn.textContent = isHidden ? '▼' : '▶';
-          localStorage.setItem('timeCapsuleCollapsed', isHidden ? 'false' : 'true');
-          return;
-        }
-        var hidden = content.style.display==='none';
-        content.style.display = hidden ? 'block' : 'none';
-        btn.textContent = hidden ? '▼' : '▶';
-        localStorage.setItem('timeCapsuleCollapsed', hidden ? 'false' : 'true');
-      };
-      
-      // Add button to banner's right side
-      var rightDiv = banner.querySelector('div:last-child');
-      if(rightDiv){
-        rightDiv.style.display='flex';
-        rightDiv.style.alignItems='center';
-        rightDiv.style.gap='4px';
-        rightDiv.appendChild(btn);
-      } else {
-        banner.appendChild(btn);
-      }
-      
-      // Apply saved state
-      var collapsed = localStorage.getItem('timeCapsuleCollapsed')==='true';
-      if(collapsed){
-        setTimeout(function(){
-          var content = document.getElementById('time-capsule-content');
-          if(content){
-            content.style.display='none';
-            btn.textContent='▶';
-          }
-        }, 200);
-      }
-    });
-  }
-  
-  // Make banner itself clickable
-  document.addEventListener('click', function(e){
-    var banner = e.target.closest('.time-capsule-banner');
-    if(banner && !e.target.closest('.tc-toggle-btn')){
-      var btn = banner.querySelector('.tc-toggle-btn');
-      if(btn) btn.click();
+  function ensureWrapper(banner){
+    var existing=document.getElementById('time-capsule-content');
+    if(existing) return existing;
+    if(!banner) return null;
+    var wrapper=document.createElement('div');
+    wrapper.id='time-capsule-content';
+    wrapper.className='tc-content-wrap';
+    wrapper.style.cssText='overflow:hidden; transition:max-height 0.25s ease, opacity 0.2s ease; margin:0 0 2px 0;';
+    var next=banner.nextElementSibling;
+    var toMove=[];
+    while(next){
+      if(next.classList&&(next.classList.contains('go-today-btn')||next.classList.contains('fortune-teaser')||next.classList.contains('daily-explain-header')||next.id==='main-biorhythm-teaser'||next.classList.contains('time-capsule-banner'))) break;
+      var cur=next; next=next.nextElementSibling; toMove.push(cur);
     }
-  });
-  
-  // Init and re-init on render
-  setInterval(initTimeCapsuleToggle, 1000);
-  document.addEventListener('DOMContentLoaded', function(){
-    initTimeCapsuleToggle();
-    setTimeout(initTimeCapsuleToggle, 500);
-    setTimeout(initTimeCapsuleToggle, 1500);
-  });
-  
-  // Hook into render functions
-  var origRender = window.renderDiaryAroundToday || window.showDiaryAroundToday;
-  // Also observe DOM changes
-  var observer = new MutationObserver(function(){
-    setTimeout(initTimeCapsuleToggle, 100);
-  });
-  document.addEventListener('DOMContentLoaded', function(){
-    var listEl = document.getElementById('diary-around-today-list');
-    if(listEl) observer.observe(listEl, {childList:true, subtree:true});
-  });
-})();
-</script>
-
-
-<script id="V288_VIBRATE_APX">
-// V288: APX에서도 스윙2앱처럼 터치 시 진동 울리게!
-(function(){
-  // 진동 함수 - APX와 모든 브라우저 호환
-  window.vibrateTouch = function(pattern){
-    try{
-      if('vibrate' in navigator){
-        navigator.vibrate(pattern || 30); // 30ms 짧은 진동
+    if(toMove.length===0){ var cards=banner.parentElement.querySelectorAll('div[style*="height:72px"]'); toMove=Array.from(cards); }
+    toMove.forEach(function(el){ wrapper.appendChild(el); });
+    banner.parentNode.insertBefore(wrapper,banner.nextSibling);
+    return wrapper;
+  }
+  function setCollapsed(wrapper,btn,collapsed){
+    if(!wrapper) return;
+    if(collapsed){ wrapper.style.maxHeight='0px'; wrapper.style.opacity='0'; wrapper.style.pointerEvents='none'; wrapper.style.overflow='hidden'; if(btn) btn.textContent='▶'; }
+    else { wrapper.style.maxHeight=wrapper.scrollHeight+1200+'px'; wrapper.style.opacity='1'; wrapper.style.pointerEvents='auto'; wrapper.style.overflow='hidden'; if(btn) btn.textContent='▼'; setTimeout(function(){ if(wrapper.style.maxHeight!=='0px'){ wrapper.style.maxHeight='none'; wrapper.style.overflow='visible'; } },320); }
+    localStorage.setItem('timeCapsuleCollapsed',collapsed?'true':'false');
+  }
+  function initToggle(){
+    var banners=document.querySelectorAll('.time-capsule-banner');
+    var collapsed=localStorage.getItem('timeCapsuleCollapsed')==='true';
+    banners.forEach(function(banner){
+      var wrapper=ensureWrapper(banner);
+      var btn=banner.querySelector('.tc-toggle-btn');
+      if(!btn){
+        btn=document.createElement('button'); btn.className='tc-toggle-btn'; btn.type='button'; btn.textContent=collapsed?'▶':'▼';
+        btn.style.cssText='background:rgba(255,255,255,0.35); border:1px solid rgba(255,255,255,0.6); color:white; border-radius:4px; padding:2px 8px; font-size:11px; font-weight:800; cursor:pointer; margin-left:8px; flex-shrink:0;';
+        var rightDiv=banner.querySelector('div:last-child'); if(rightDiv){ rightDiv.style.display='flex'; rightDiv.style.alignItems='center'; rightDiv.style.gap='4px'; rightDiv.appendChild(btn); } else banner.appendChild(btn);
+        btn.addEventListener('click',function(ev){ ev.stopPropagation(); var w=document.getElementById('time-capsule-content')||ensureWrapper(banner); var comp=window.getComputedStyle(w); var currentlyCollapsed=comp.maxHeight==='0px'||comp.opacity==='0'||w.style.maxHeight==='0px'; setCollapsed(w,btn,!currentlyCollapsed); });
       }
-      // APX 네이티브 브릿지가 있으면 그것도 호출
-      if(window.APX && window.APX.vibrate){
-        window.APX.vibrate(pattern || 30);
-      }
-      if(window.Android && window.Android.vibrate){
-        window.Android.vibrate(pattern || 30);
-      }
-    }catch(e){ console.log('vibrate error', e); }
-  };
-  
-  // 모든 버튼에 진동 이벤트 추가
-  function addVibrateToButtons(){
-    var buttons = document.querySelectorAll('button, .cal-cell, .time-capsule-banner, .fortune-teaser, .daily-explain-header, .biorhythm-header');
-    buttons.forEach(function(btn){
-      if(btn.dataset.vibrateAdded) return;
-      btn.dataset.vibrateAdded = 'true';
-      
-      // 터치 시작 시 진동 (가장 빠름)
-      btn.addEventListener('touchstart', function(){
-        vibrateTouch(25);
-      }, {passive:true});
-      
-      // 클릭 시에도 진동 (PC 대응)
-      btn.addEventListener('click', function(){
-        vibrateTouch(20);
-      }, {passive:true});
+      if(wrapper){ wrapper.style.transition='none'; setCollapsed(wrapper,btn,collapsed); requestAnimationFrame(function(){ wrapper.style.transition='max-height 0.25s ease, opacity 0.2s ease'; }); }
     });
   }
-  
-  // 특정 버튼은 더 강한 진동
-  function addStrongVibrate(){
-    var importantBtns = document.querySelectorAll('#diary-view-toggle button, #btn-view-list, #btn-view-gallery, button[onclick*="openDiaryForm"]');
-    importantBtns.forEach(function(btn){
-      btn.addEventListener('touchstart', function(){
-        vibrateTouch([30, 20, 30]); // 두 번 울림
-      }, {passive:true});
-    });
-  }
-  
-  setInterval(addVibrateToButtons, 1500);
-  setInterval(addStrongVibrate, 2000);
-  
-  document.addEventListener('DOMContentLoaded', function(){
-    addVibrateToButtons();
-    setTimeout(addVibrateToButtons, 500);
-    setTimeout(addStrongVibrate, 800);
-  });
-  
-  console.log('[V288] APX 진동 기능 추가됨 - 스윙2앱처럼 울림!');
+  document.addEventListener('click',function(e){ var banner=e.target.closest('.time-capsule-banner'); if(banner&&!e.target.closest('.tc-toggle-btn')){ var b=banner.querySelector('.tc-toggle-btn'); if(b) b.click(); } });
+  var obs; function setupObs(){ var listEl=document.getElementById('diary-around-today-list'); if(!listEl) return; if(obs) obs.disconnect(); obs=new MutationObserver(function(){ clearTimeout(obs._t); obs._t=setTimeout(initToggle,50); }); obs.observe(listEl,{childList:true,subtree:true}); }
+  function wrapRender(){ if(window.renderDiaryAroundToday&&!window.renderDiaryAroundToday._wrapped296){ var orig=window.renderDiaryAroundToday; window.renderDiaryAroundToday=function(){ var r=orig.apply(this,arguments); initToggle(); return r; }; window.renderDiaryAroundToday._wrapped296=true; } }
+  document.addEventListener('DOMContentLoaded',function(){ wrapRender(); initToggle(); setupObs(); });
+  wrapRender(); initToggle(); setTimeout(function(){ wrapRender(); initToggle(); setupObs(); },800);
 })();
 </script>
-<style id="V288_VIBRATE_STYLE">
-/* 터치 피드백 시각적으로도 - 눌렀을 때 살짝 작아짐 (스윙2앱처럼) */
-button:active, .cal-cell:active, .time-capsule-banner:active {
-  transform:scale(0.97) !important;
-  transition:transform 0.1s !important;
+<style id="V296_YOIL_UP_FIX">
+/* V296: 요일 위로 올려서 헤더에 안가리게 + 달력 완전 복구 */
+
+/* 1. 달력 카드 - 원본 패딩/마진 정리, 오버플로우 허용 */
+#calendar-card {
+  overflow: visible !important;
+  padding: 12px 12px 12px 12px !important;
+  margin: 0 0 8px 0 !important;
+  background: var(--card-bg, #fff) !important;
+  border: 1px solid var(--border-color, #e6d8d8) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.04) !important;
+  position: relative !important;
 }
-</style>
 
+/* 2. 달력 헤더 - 그림자 제거, 요일 가리지 않게 */
+.calendar-header,
+#calendar-card .calendar-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
+  margin: 0 0 8px 0 !important;
+  padding: 0 0 8px 0 !important;
+  border-bottom: 1px solid #f0e0e0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  position: relative !important;
+  top: auto !important;
+  z-index: 1 !important;
+  overflow: visible !important;
+}
 
-<script id="V289_DATE_VIBRATE">
-// V289: 일자 터치할 때 진동 강화!
-(function(){
-  function addDateVibrate(){
-    var cells = document.querySelectorAll('.cal-cell, [onclick*="selectDate"], [onclick*="selectedViewDate"], .calendar-day, td, .cal-cell-inner');
-    cells.forEach(function(cell){
-      if(cell.dataset.dateVibrate) return;
-      cell.dataset.dateVibrate = 'true';
-      
-      var handler = function(e){
-        try{
-          // 일자 터치 시 강한 진동
-          if('vibrate' in navigator){
-            navigator.vibrate(40); // 일자니까 좀 더 길게 40ms
-          }
-          // APX용 추가
-          if(window.APX && window.APX.vibrate) window.APX.vibrate(40);
-        }catch(err){}
-      };
-      
-      cell.addEventListener('touchstart', handler, {passive:true});
-      cell.addEventListener('touchend', handler, {passive:true});
-    });
-  }
-  
-  // 달력 일자 클릭 함수 래핑 - 원래 함수에 진동 추가
-  function wrapDateFunctions(){
-    var fnNames = ['selectDate', 'onDateClick', 'handleDateClick', 'changeDate', 'setSelectedDate'];
-    fnNames.forEach(function(name){
-      if(window[name] && !window[name]._vibrated){
-        var orig = window[name];
-        window[name] = function(){
-          try{ if('vibrate' in navigator) navigator.vibrate(35); }catch(e){}
-          return orig.apply(this, arguments);
-        };
-        window[name]._vibrated = true;
-      }
-    });
-    
-    // 전역 달력 클릭 이벤트
-    document.addEventListener('click', function(e){
-      var cell = e.target.closest('.cal-cell, [data-date], .calendar-cell');
-      if(cell){
-        try{ if('vibrate' in navigator) navigator.vibrate(35); }catch(err){}
-      }
-    });
-  }
-  
-  setInterval(function(){
-    addDateVibrate();
-    wrapDateFunctions();
-  }, 800);
-  
-  document.addEventListener('DOMContentLoaded', function(){
-    addDateVibrate();
-    wrapDateFunctions();
-    setTimeout(addDateVibrate, 300);
-    setTimeout(wrapDateFunctions, 500);
-  });
-  
-  console.log('[V289] 일자 터치 진동 강화!');
-})();
-</script>
-<style id="V289_DATE_STYLE">
-/* 일자 터치 시 시각적 피드백 강화 */
-.cal-cell:active, .cal-cell-inner:active {
-  transform:scale(0.92) !important;
-  background:rgba(124,108,255,0.15) !important;
-  transition:all 0.08s !important;
+/* 3. 요일 행 - 위로 올리고 헤더 아래 제자리에, 잘림 방지 */
+#cal-days-name-grid {
+  display: grid !important;
+  grid-template-columns: repeat(7, 1fr) !important;
+  gap: 4px !important;
+  width: 100% !important;
+  background: #f9f3f0 !important;
+  border-radius: 8px !important;
+  padding: 6px 0 !important;
+  margin: 0 0 8px 0 !important;
+  overflow: visible !important;
+  position: relative !important;
+  top: 0 !important;
+  z-index: 2 !important;
+  transform: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+.cal-day-name {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  text-align: center !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  padding: 4px 0 !important;
+  line-height: 1.2 !important;
+  color: var(--weekday-color) !important;
+  transform: none !important;
+  position: relative !important;
+}
+.cal-day-name.sunday { color: #d93838 !important; }
+.cal-day-name.saturday { color: #1b6ca8 !important; }
+
+/* 4. 날짜 그리드 - 7열 정상 */
+#cal-days-grid {
+  display: grid !important;
+  grid-template-columns: repeat(7, 1fr) !important;
+  gap: 5px !important;
+  width: 100% !important;
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: visible !important;
+  position: relative !important;
 }
 .cal-cell {
-  -webkit-tap-highlight-color: rgba(124,108,255,0.2) !important;
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+  background: #fff !important;
+  border: 1px solid #e8dfdf !important;
+  border-radius: 10px !important;
+  min-height: 56px !important;
+  padding: 6px 0 !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  top: auto !important; left: auto !important; right: auto !important; bottom: auto !important;
+  transform: none !important;
+  overflow: visible !important;
+}
+.cal-special-label {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  font-size: 7px !important;
+  line-height: 1.15 !important;
+  font-weight: 700 !important;
+  text-align: center !important;
+  margin-top: 2px !important;
+}
+.cal-special-label.cal-special-holiday { color: #e74c3c !important; }
+
+/* 5. 타임캡슐 접기 */
+#time-capsule-content.tc-content-wrap {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+  margin: 0 0 2px 0 !important;
+}
+.time-capsule-banner {
+  margin: 0 0 2px 0 !important;
+  cursor: pointer !important;
+}
+
+/* 6. 입력 85% */
+#memo-form-card {
+  width: 85% !important;
+  max-width: 460px !important;
+  left: 7.5% !important;
+  right: 7.5% !important;
+  margin: auto !important;
+}
+.money-input-box,
+#reservation-box,
+.reservation-box,
+#form-date-row-money,
+.form-date-row {
+  width: 85% !important;
+  max-width: 85% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+#reservation-box,
+.reservation-box,
+.form-date-row {
+  display: flex !important;
+  visibility: visible !important;
+  flex-wrap: wrap !important;
+  background: #fff5f5 !important;
+  border: 1px solid #ffe0e0 !important;
+  border-radius: 8px !important;
+  padding: 8px 10px !important;
+  gap: 6px !important;
+}
+#reservation-box input,
+.reservation-box input,
+.form-date-row input {
+  display: block !important;
+  visibility: visible !important;
+  flex: 1 !important;
+  min-width: 100px !important;
+  padding: 6px 8px !important;
+  border: 1px solid #ddd !important;
+  border-radius: 6px !important;
+  background: #fff !important;
+}
+
+/* 7. 2PX 통일 */
+#diary-around-today-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+}
+#diary-around-today-list > div,
+.go-today-btn, .daily-explain-header, .fortune-teaser, #main-biorhythm-teaser {
+  margin-bottom: 2px !important;
+}
+
+/* 기존 sticky-wrap이 남아있으면 무력화 */
+.calendar-sticky-wrap {
+  position: relative !important;
+  top: auto !important;
+  z-index: 1 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+</style>
+
+
+<!-- Version: V291 - [입력] 세로 크기 = [앨범1]+[앨범2] -->
+<style id="V291_INPUT_EQ_ALBUMS">
+/* V291: [입력] 세로 = [앨범1]+[앨범2] - 메인 절대 안깨지게 높이만 동기화 */
+#diary-view-toggle {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: stretch !important;
+  gap: 8px !important;
+}
+#diary-view-toggle > div {
+  display: flex !important;
+  gap: 8px !important;
+  align-items: stretch !important;
+}
+/* 입력 버튼 - 왼쪽, 높이 60px */
+#diary-view-toggle button[onclick*="openDiaryForm"] {
+  height: 60px !important;
+  min-height: 60px !important;
+  max-height: 60px !important;
+  width: 160px !important;
+  min-width: 160px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  box-sizing: border-box !important;
+}
+/* 앨범 버튼 컨테이너 - 오른쪽 세로 2개, 전체 높이 60px */
+#diary-view-toggle div[style*="flex-direction:column"],
+#diary-view-toggle > div > div:last-child,
+#diary-view-toggle div:has(> #btn-view-list) {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  height: 60px !important;
+  min-height: 60px !important;
+  max-height: 60px !important;
+  justify-content: space-between !important;
+  box-sizing: border-box !important;
+}
+/* 앨범1, 앨범2 각각 28px = (60-4)/2 - 합이 입력과 같음 */
+#diary-view-toggle #btn-view-list,
+#diary-view-toggle #btn-view-gallery {
+  width: 62px !important;
+  min-width: 62px !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  max-height: 28px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  font-size: 11px !important;
+  border-radius: 7px !important;
+}
+</style>
+
+
+<!-- Version: V292 - [입력] 가로폭 축소, 핸드폰 가림 방지 + 높이 동기화 유지 -->
+<style id="V292_INPUT_WIDTH_FIX">
+/* V292: 핸드폰 가림 방지 - [입력] 가로폭만 축소, 메인 절대 안깨지게 */
+/* 핵심: feature-title이 flex로 왼쪽 날짜와 오른쪽 버튼이 공간 공유 */
+
+/* 1. feature-title - 왼쪽 날짜와 오른쪽 버튼 분리, 줄바꿈 허용하되 겹침 방지 */
+#diary-around-today-card .feature-title,
+#diary-around-today-card > div:first-child,
+.feature-title {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+}
+
+/* 왼쪽 날짜 텍스트 - flex:1로 공간 확보, 줄어들지 않게 */
+#diary-around-today-card .feature-title > div:first-child,
+#diary-around-today-card .feature-title > span,
+#diary-around-today-card .feature-title > div:not(#diary-view-toggle) {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  overflow: visible !important;
+  white-space: normal !important;
+  word-break: keep-all !important;
+  font-size: 13px !important;
+}
+
+/* 2. 입력 버튼 영역 - 오른쪽에 고정, 최소 공간만 사용 */
+#diary-view-toggle {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: stretch !important;
+  gap: 6px !important;
+  flex: 0 0 auto !important;
+  flex-shrink: 0 !important;
+  min-width: 0 !important;
+  width: auto !important;
+  max-width: none !important;
+}
+#diary-view-toggle > div {
+  display: flex !important;
+  gap: 6px !important;
+  align-items: stretch !important;
+  flex-shrink: 0 !important;
+}
+
+/* 3. [입력] 버튼 - 가로폭 160px → 110px로 축소 (핸드폰 가림 해결) */
+#diary-view-toggle button[onclick*="openDiaryForm"] {
+  width: 110px !important;
+  min-width: 110px !important;
+  max-width: 110px !important;
+  height: 60px !important;
+  min-height: 60px !important;
+  max-height: 60px !important;
+  font-size: 15px !important;
+  font-weight: 900 !important;
+  border-radius: 10px !important;
+  flex-shrink: 0 !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+}
+
+/* 4. 앨범 컨테이너 - 높이 60px 유지 */
+#diary-view-toggle div[style*="flex-direction:column"],
+#diary-view-toggle > div > div:last-child,
+#diary-view-toggle div:has(> #btn-view-list) {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  height: 60px !important;
+  min-height: 60px !important;
+  max-height: 60px !important;
+  justify-content: space-between !important;
+  flex-shrink: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* 5. 앨범1, 앨범2 - 가로폭도 살짝 축소 (전체 균형) */
+#diary-view-toggle #btn-view-list,
+#diary-view-toggle #btn-view-gallery {
+  width: 54px !important;
+  min-width: 54px !important;
+  max-width: 54px !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  max-height: 28px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  font-size: 10.5px !important;
+  border-radius: 7px !important;
+  flex-shrink: 0 !important;
+}
+
+/* 6. 핸드폰 대응 - 360px 이하에서는 입력 버튼 더 작게 */
+@media (max-width: 380px) {
+  #diary-view-toggle button[onclick*="openDiaryForm"] {
+    width: 90px !important;
+    min-width: 90px !important;
+    max-width: 90px !important;
+    font-size: 14px !important;
+  }
+  #diary-view-toggle #btn-view-list,
+  #diary-view-toggle #btn-view-gallery {
+    width: 50px !important;
+    min-width: 50px !important;
+    max-width: 50px !important;
+    font-size: 10px !important;
+  }
 }
 </style>
 
