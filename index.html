@@ -3,7 +3,7 @@
 <head>
 <!-- Version: V290 - 기능·UI 유지, 진동중복/setInterval폭주/transform충돌 정리 --> 
 <!-- Version: V187 - 초중말복 동적화, 24절기 동적화, 누적패치 제거, 5~6줄 개그 유머 100점 -->
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>포토다이어리 V292 - 입력 가로축소 + 높이동기화 - 사진, 추억을 담다</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>포토다이어리 V290 UNIFIED FIX - 사진, 추억을 담다</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -10541,7 +10541,7 @@ window.attachPhotoDoubleTap = function(el, handler){
                         '<div style="display:flex; align-items:center; gap:6px; margin-bottom:6px; border-bottom:1px dashed #e0c080; padding-bottom:6px;"><span style="font-size:14px;">💌</span><span style="background:#8b7355; color:#fff8e1; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:700;">'+label+'</span><span style="font-size:11px; color:#8b7355;">'+p.date+'</span></div>'+
                         photoHTML+
                         '<div style="font-size:13px; color:#5a4a30; line-height:1.6; font-family:serif; font-style:italic;">'+(p.text||'사진 추억이 담겨있어요').slice(0,60)+'</div>'+
-                        '<div style="text-align:right; margin-top:8px; font-size:11px; color:#8b7355;">일자로 이동 →</div></div>';
+                        '<div style="text-align:right; margin-top:8px; font-size:11px; color:#8b7355;">이동 →</div></div>';
                     } else {
                       // 심플: 최소 디자인, 글자 위주
                       // 반반 분할 V2: data 속성으로 사진 안전 연결
@@ -10557,7 +10557,7 @@ window.attachPhotoDoubleTap = function(el, handler){
                         // 오른쪽 50% - 일자로 이동
                         '<div data-photo-key="'+(p.photo||'')+'" data-photo-date="'+p.date+'" onclick="window.handleTimeCapsuleDateClick(\''+p.date+'\', this.getAttribute(\'data-photo-key\'))" style="width:50%; flex:0 0 50%; background:#f9f9f9; display:flex; align-items:center; justify-content:space-between; padding:8px 10px; cursor:pointer;" title="일자로 이동 - 앨범으로 포커스">' +
                           '<div style="flex:1; overflow:hidden;"><div style="font-size:10px; color:#7c6cff; font-weight:700;">'+p.date+'</div><div style="font-size:11px; color:#333; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">'+(p.text||'추억').slice(0,18)+'</div></div>' +
-                          '<div style="font-size:11px; color:#7c6cff; font-weight:800; background:#f0eaff; border:1px solid #e8e0ff; padding:4px 8px; border-radius:20px; white-space:nowrap; margin-left:4px;">일자로 이동 →</div>' +
+                          '<div style="font-size:11px; color:#7c6cff; font-weight:800; background:#f0eaff; border:1px solid #e8e0ff; padding:4px 8px; border-radius:20px; white-space:nowrap; margin-left:4px;">이동 →</div>' +
                         '</div>' +
                       '</div>';
                       })();
@@ -12152,7 +12152,7 @@ const DAILY_6LINE_V2 = {
               var html='<div style="font-size: var(--base-font-size); font-weight:800; color:#7c6cff; margin-bottom:8px;">📖 나의 과거의 오늘 ('+pasts2.length+'건)</div>';
               for(var i=0;i<pasts2.length;i++){
                 var p=pasts2[i];
-                html+='<div onclick="window.goToPastDiary(\''+p.date+'\')" style="background:#f8f6ff; border:1px solid #e8e0ff; border-radius:10px; padding:10px 12px; margin-bottom:6px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;"><div><div style="font-size:13px; color:#9a8cc0; font-weight:700;">'+p.date+' '+(p.photo?'📷':'')+'</div><div style="font-size: var(--memo-font-size); color:#222;">'+(p.text||'사진').slice(0,32)+'</div></div><div style="font-size: var(--memo-font-size); color:#7c6cff; font-weight:700;">일자로 이동 →</div></div>';
+                html+='<div onclick="window.goToPastDiary(\''+p.date+'\')" style="background:#f8f6ff; border:1px solid #e8e0ff; border-radius:10px; padding:10px 12px; margin-bottom:6px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;"><div><div style="font-size:13px; color:#9a8cc0; font-weight:700;">'+p.date+' '+(p.photo?'📷':'')+'</div><div style="font-size: var(--memo-font-size); color:#222;">'+(p.text||'사진').slice(0,32)+'</div></div><div style="font-size: var(--memo-font-size); color:#7c6cff; font-weight:700;">이동 →</div></div>';
               }
               pastBox.innerHTML=html;
               listEl.appendChild(pastBox);
@@ -21442,7 +21442,7 @@ div:has(> label:has(input[name="cardStyle"])) { display:none !important; }
         '<div style="font-size:12px; color:#7c6cff; font-weight:800; margin-bottom:8px;">📝 '+dateStr+' 메모</div>'+
         '<div style="font-size:14px; line-height:1.6; color:#333; white-space:pre-wrap; word-break:break-all;">'+safeText+'</div>'+
         '<div style="margin-top:16px; display:flex; gap:8px;">'+
-          '<button onclick="window.goToPastDiary(\''+dateStr+'\'); this.closest(\'#tc-memo-modal\').remove();" style="flex:1; padding:10px; background:#7c6cff; color:#fff; border:none; border-radius:10px; font-weight:700; cursor:pointer;">일자로 이동 →</button>'+
+          '<button onclick="window.goToPastDiary(\''+dateStr+'\'); this.closest(\'#tc-memo-modal\').remove();" style="flex:1; padding:10px; background:#7c6cff; color:#fff; border:none; border-radius:10px; font-weight:700; cursor:pointer;">이동 →</button>'+
           '<button onclick="this.closest(\'#tc-memo-modal\').remove()" style="flex:1; padding:10px; background:#f0eaff; color:#7c6cff; border:1px solid #e8e0ff; border-radius:10px; font-weight:700; cursor:pointer;">닫기</button>'+
         '</div></div>';
       document.body.appendChild(modal);
@@ -21716,7 +21716,7 @@ div:has(> label:has(input[name="cardStyle"])) { display:none !important; }
         }
         realText = (realText||'메모').slice(0,20);
         if(right.innerHTML.indexOf('일자로 이동')===-1 || right.querySelector('img') || right.textContent.length<25){
-          right.innerHTML = '<div style="flex:1; overflow:hidden; text-align:left;"><div style="font-size:10px; color:#7c6cff; font-weight:700; margin-bottom:2px;">'+photoDate+'</div><div style="font-size:11px; color:#333; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">'+realText.replace(/</g,'&lt;')+'</div></div><div style="font-size:11px; color:#7c6cff; font-weight:800; background:#f0eaff; border:1px solid #e8e0ff; padding:4px 8px; border-radius:20px; white-space:nowrap; margin-left:6px;">일자로 이동 →</div>';
+          right.innerHTML = '<div style="flex:1; overflow:hidden; text-align:left;"><div style="font-size:10px; color:#7c6cff; font-weight:700; margin-bottom:2px;">'+photoDate+'</div><div style="font-size:11px; color:#333; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">'+realText.replace(/</g,'&lt;')+'</div></div><div style="font-size:11px; color:#7c6cff; font-weight:800; background:#f0eaff; border:1px solid #e8e0ff; padding:4px 8px; border-radius:20px; white-space:nowrap; margin-left:6px;">이동 →</div>';
           right.style.display='flex'; right.style.alignItems='center'; right.style.justifyContent='space-between'; right.style.padding='8px 10px';
         }
       });
@@ -22123,187 +22123,263 @@ div:has(> label:has(input[name="cardStyle"])) { display:none !important; }
 </style>
 
 
-<!-- Version: V291 - [입력] 세로 크기 = [앨범1]+[앨범2] -->
-<style id="V291_INPUT_EQ_ALBUMS">
-/* V291: [입력] 세로 = [앨범1]+[앨범2] - 메인 절대 안깨지게 높이만 동기화 */
-#diary-view-toggle {
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: stretch !important;
-  gap: 8px !important;
+<!-- V310 - 명언 배너 터짐 복구 + 삼각형 32x28 완전 동일 -->
+<style id="V310_FIX">
+#diary-view-toggle button[onclick*="openDiaryForm"]{width:110px!important;min-width:110px!important;max-width:110px!important;height:60px!important;min-height:60px!important;max-height:60px!important;box-sizing:border-box!important;flex-shrink:0!important}
+#diary-view-toggle div[style*="flex-direction:column"]{height:60px!important;display:flex!important;flex-direction:column!important;gap:4px!important;justify-content:space-between!important}
+#diary-view-toggle #btn-view-list,#diary-view-toggle #btn-view-gallery{width:54px!important;min-width:54px!important;max-width:54px!important;height:28px!important;min-height:28px!important;max-height:28px!important}
+
+/* 타임캡슐 */
+.time-capsule-banner .tc-toggle-btn{width:32px!important;min-width:32px!important;max-width:32px!important;height:28px!important;min-height:28px!important;max-height:28px!important;padding:0!important;margin:0!important;font-size:12px!important;line-height:28px!important;border-radius:5px!important;display:flex!important;align-items:center!important;justify-content:center!important;flex-shrink:0!important;box-sizing:border-box!important;background:rgba(255,255,255,0.35)!important;border:1px solid rgba(255,255,255,0.6)!important;color:white!important}
+.time-capsule-banner > div:last-child > div:not(.tc-toggle-btn){display:none!important}
+.time-capsule-banner{display:flex!important;justify-content:space-between!important;align-items:center!important;padding:0 0 0 12px!important;box-sizing:border-box!important;min-height:32px!important;height:32px!important;margin:0 0 2px 0!important;border-radius:5px!important;overflow:visible!important}
+.time-capsule-banner > div:last-child{width:40px!important;min-width:40px!important;flex-shrink:0!important;display:flex!important;justify-content:center!important;align-items:center!important}
+
+/* 오늘로 가기, 운세 - 32px */
+.go-today-btn,#fortune-teaser{
+display:flex!important;
+justify-content:space-between!important;
+align-items:center!important;
+gap:6px!important;
+min-height:32px!important;
+height:32px!important;
+max-height:32px!important;
+padding:0 0 0 12px!important;
+margin:0 0 2px 0!important;
+border-radius:5px!important;
+box-sizing:border-box!important;
+overflow:hidden!important;
+white-space:nowrap!important;
 }
-#diary-view-toggle > div {
-  display: flex !important;
-  gap: 8px !important;
-  align-items: stretch !important;
+
+/* 명언 배너 - 특별 처리: 터짐 방지 */
+.daily-explain-header{
+display:flex!important;
+justify-content:space-between!important;
+align-items:center!important;
+gap:6px!important;
+min-height:32px!important;
+height:32px!important;
+max-height:32px!important;
+padding:0 0 0 12px!important;
+padding-right:0!important;
+margin:0 0 2px 0!important;
+border-radius:5px!important;
+box-sizing:border-box!important;
+overflow:hidden!important;
+white-space:nowrap!important;
+position:relative!important;
 }
-/* 입력 버튼 - 왼쪽, 높이 60px */
-#diary-view-toggle button[onclick*="openDiaryForm"] {
-  height: 60px !important;
-  min-height: 60px !important;
-  max-height: 60px !important;
-  width: 160px !important;
-  min-width: 160px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  flex-shrink: 0 !important;
-  box-sizing: border-box !important;
+.daily-explain-header > div:first-child,
+.daily-explain-header > span:first-child{
+flex:1 1 auto!important;
+min-width:0!important;
+overflow:hidden!important;
+text-overflow:ellipsis!important;
+white-space:nowrap!important;
+display:flex!important;
+align-items:center!important;
+gap:6px!important;
 }
-/* 앨범 버튼 컨테이너 - 오른쪽 세로 2개, 전체 높이 60px */
-#diary-view-toggle div[style*="flex-direction:column"],
-#diary-view-toggle > div > div:last-child,
-#diary-view-toggle div:has(> #btn-view-list) {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 4px !important;
-  height: 60px !important;
-  min-height: 60px !important;
-  max-height: 60px !important;
-  justify-content: space-between !important;
-  box-sizing: border-box !important;
+.daily-explain-header > div:last-child{
+flex:0 0 80px!important;
+width:80px!important;
+min-width:80px!important;
+max-width:80px!important;
+display:flex!important;
+align-items:center!important;
+justify-content:flex-end!important;
+gap:4px!important;
+flex-shrink:0!important;
+height:32px!important;
+padding-right:4px!important;
+box-sizing:border-box!important;
 }
-/* 앨범1, 앨범2 각각 28px = (60-4)/2 - 합이 입력과 같음 */
-#diary-view-toggle #btn-view-list,
-#diary-view-toggle #btn-view-gallery {
-  width: 62px !important;
-  min-width: 62px !important;
-  height: 28px !important;
-  min-height: 28px !important;
-  max-height: 28px !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  box-sizing: border-box !important;
-  font-size: 11px !important;
-  border-radius: 7px !important;
+
+/* 바이오리듬 헤더 */
+.biorhythm-header{
+display:flex!important;
+justify-content:space-between!important;
+align-items:center!important;
+gap:6px!important;
+height:32px!important;
+min-height:32px!important;
+max-height:32px!important;
+padding:0 0 0 10px!important;
+box-sizing:border-box!important;
+border-radius:5px 5px 0 0!important;
+overflow:hidden!important;
+white-space:nowrap!important;
+cursor:pointer!important;
 }
+#main-biorhythm-teaser{display:block!important;height:auto!important;max-height:none!important;overflow:visible!important;padding:0!important;margin:6px 0 2px 0!important;border-radius:12px!important;box-sizing:border-box!important}
+#main-biorhythm-teaser .biorhythm-header{margin:0!important}
+#main-biorhythm-content{padding:10px 12px!important}
+#biorhythm-toggle-btn{cursor:pointer!important;pointer-events:auto!important;user-select:none!important}
+
+/* 삼각형 사각 바탕 완전 동일 32x28 */
+.go-today-btn > span:last-child,
+#fortune-teaser .ft-arrow,
+#biorhythm-toggle-btn{
+width:32px!important;
+min-width:32px!important;
+max-width:32px!important;
+height:28px!important;
+min-height:28px!important;
+max-height:28px!important;
+padding:0!important;
+margin:0!important;
+font-size:11px!important;
+line-height:28px!important;
+border-radius:5px!important;
+display:flex!important;
+align-items:center!important;
+justify-content:center!important;
+flex-shrink:0!important;
+box-sizing:border-box!important;
+text-align:center!important;
+}
+
+/* 명언 배너의 명언 + 삼각형 두 개 */
+.daily-explain-header .ft-label,
+.daily-explain-header span:nth-child(2){
+font-size:10px!important;
+padding:2px 6px!important;
+border-radius:4px!important;
+height:20px!important;
+min-height:20px!important;
+display:inline-flex!important;
+align-items:center!important;
+justify-content:center!important;
+flex-shrink:0!important;
+box-sizing:border-box!important;
+white-space:nowrap!important;
+}
+.daily-explain-header .ft-arrow{
+width:32px!important;
+min-width:32px!important;
+max-width:32px!important;
+height:28px!important;
+min-height:28px!important;
+max-height:28px!important;
+padding:0!important;
+margin:0!important;
+font-size:11px!important;
+line-height:28px!important;
+border-radius:5px!important;
+display:flex!important;
+align-items:center!important;
+justify-content:center!important;
+flex-shrink:0!important;
+box-sizing:border-box!important;
+}
+
+div[style*="이동 →"]{font-size:10px!important;padding:3px 8px!important;min-width:46px!important;max-width:56px!important;white-space:nowrap!important}
+#diary-around-today-list{display:flex!important;flex-direction:column!important;gap:2px!important}
+#main-biorhythm-content{overflow:hidden;transition:max-height 0.35s ease, opacity 0.25s ease;max-height:1000px;opacity:1}
+#main-biorhythm-teaser.bio-collapsed #main-biorhythm-content{max-height:0;opacity:0;pointer-events:none;margin:0;padding:0;overflow:hidden}
 </style>
-
-
-<!-- Version: V292 - [입력] 가로폭 축소, 핸드폰 가림 방지 + 높이 동기화 유지 -->
-<style id="V292_INPUT_WIDTH_FIX">
-/* V292: 핸드폰 가림 방지 - [입력] 가로폭만 축소, 메인 절대 안깨지게 */
-/* 핵심: feature-title이 flex로 왼쪽 날짜와 오른쪽 버튼이 공간 공유 */
-
-/* 1. feature-title - 왼쪽 날짜와 오른쪽 버튼 분리, 줄바꿈 허용하되 겹침 방지 */
-#diary-around-today-card .feature-title,
-#diary-around-today-card > div:first-child,
-.feature-title {
-  display: flex !important;
-  flex-direction: row !important;
-  flex-wrap: nowrap !important;
-  justify-content: space-between !important;
-  align-items: center !important;
-  gap: 8px !important;
-  width: 100% !important;
-  box-sizing: border-box !important;
-  overflow: visible !important;
+<script id="V310_JS">
+(function(){
+function fixTC(){
+document.querySelectorAll('.time-capsule-banner').forEach(function(banner){
+var rightDiv=banner.querySelector('div:last-child'); if(!rightDiv) return;
+Array.from(rightDiv.childNodes).forEach(function(node){
+if(node.nodeType===1){ if(node.classList&&node.classList.contains('tc-toggle-btn')) return; var t=(node.textContent||'').trim(); if(t==='→'||t==='>'||t==='›'||t==='📬'||t==='✉️'||(t.length<=2&&/[→>›📬✉️]/.test(t))){ try{node.remove();}catch(e){node.style.display='none';} } }
+else if(node.nodeType===3){ var txt=node.textContent.trim(); if(txt==='→'||txt==='>'||txt==='›'||txt==='📬'||txt==='✉️'||(txt.length<=2&&/[→>›]/.test(txt))){ node.textContent=''; } }
+});
+rightDiv.style.width='40px'; rightDiv.style.minWidth='40px'; rightDiv.style.justifyContent='center';
+});
+document.querySelectorAll('.time-capsule-banner .tc-toggle-btn, .go-today-btn > span:last-child, #fortune-teaser .ft-arrow, #biorhythm-toggle-btn, .daily-explain-header .ft-arrow').forEach(function(el){
+el.style.width='32px'; el.style.minWidth='32px'; el.style.maxWidth='32px'; el.style.height='28px'; el.style.minHeight='28px'; el.style.maxHeight='28px'; el.style.padding='0'; el.style.margin='0'; el.style.borderRadius='5px'; el.style.display='flex'; el.style.alignItems='center'; el.style.justifyContent='center'; el.style.boxSizing='border-box'; el.style.lineHeight='28px';
+});
 }
+function fixBio(){
+var teaser=document.getElementById('main-biorhythm-teaser');
+var content=document.getElementById('main-biorhythm-content');
+var btn=document.getElementById('biorhythm-toggle-btn');
+if(!teaser||!content||!btn) return;
+btn.removeAttribute('onclick'); btn.onclick=null;
+content.style.display='';
+function apply(collapsed){
+if(collapsed){ teaser.classList.add('bio-collapsed'); btn.textContent='▶'; } else { teaser.classList.remove('bio-collapsed'); btn.textContent='▼'; }
+try{ localStorage.setItem('biorhythmCollapsed',''+collapsed); }catch(e){}
+}
+var saved=false; try{ saved=localStorage.getItem('biorhythmCollapsed')==='true'; }catch(e){}
+apply(saved);
+var newBtn=btn.cloneNode(true); newBtn.removeAttribute('onclick'); btn.parentNode.replaceChild(newBtn, btn); btn=newBtn;
+btn.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); var isCollapsed=teaser.classList.contains('bio-collapsed'); apply(!isCollapsed); }, true);
+var header=document.querySelector('.biorhythm-header');
+if(header){ header.addEventListener('click', function(e){ if(e.target.closest('#biorhythm-toggle-btn')) return; btn.click(); }); }
+}
+document.addEventListener('DOMContentLoaded', function(){ fixTC(); fixBio(); setTimeout(fixBio,400); });
+fixTC(); fixBio();
+setTimeout(fixTC,300); setTimeout(fixBio,300);
+setTimeout(fixBio,1200);
+if(window.renderDiaryAroundToday && !window.renderDiaryAroundToday._v310){
+var orig=window.renderDiaryAroundToday;
+window.renderDiaryAroundToday=function(){ var r=orig.apply(this,arguments); setTimeout(fixTC,80); setTimeout(fixBio,150); return r; };
+window.renderDiaryAroundToday._v310=true;
+}
+var obs; function setupObs(){ var el=document.getElementById('diary-around-today-list'); if(!el) return; if(obs) obs.disconnect(); obs=new MutationObserver(function(){ clearTimeout(obs._t); obs._t=setTimeout(function(){ fixTC(); fixBio(); },80); }); obs.observe(el,{childList:true, subtree:true}); }
+document.addEventListener('DOMContentLoaded', setupObs); setTimeout(setupObs,900);
+})();
+</script>
+<style id="V310_TC_STYLE">
+.time-capsule-banner{cursor:pointer!important;user-select:none!important}
+#time-capsule-content.tc-content-wrap{display:flex!important;flex-direction:column!important;gap:2px!important;margin:0 0 2px 0!important;overflow:hidden!important;transition:max-height 0.3s ease,opacity 0.2s ease!important}
+</style>
+<script id="V310_TC_JS">
+(function(){
+function ensureWrapper(banner){
+var existing=document.getElementById('time-capsule-content'); if(existing) return existing; if(!banner) return null;
+var wrapper=document.createElement('div'); wrapper.id='time-capsule-content'; wrapper.className='tc-content-wrap';
+wrapper.style.cssText='overflow:hidden; transition:max-height 0.3s ease; margin:0 0 2px 0;';
+var next=banner.nextElementSibling; var toMove=[];
+while(next){ if(next.classList && (next.classList.contains('go-today-btn') || next.classList.contains('fortune-teaser') || next.classList.contains('daily-explain-header') || next.id==='main-biorhythm-teaser' || next.classList.contains('time-capsule-banner'))) break; var cur=next; next=next.nextElementSibling; toMove.push(cur); }
+toMove.forEach(function(el){ wrapper.appendChild(el); }); banner.parentNode.insertBefore(wrapper,banner.nextSibling); return wrapper;
+}
+function setCollapsed(wrapper,btn,collapsed){
+if(!wrapper) return;
+if(collapsed){ wrapper.style.maxHeight='0px'; wrapper.style.opacity='0'; wrapper.style.pointerEvents='none'; if(btn) btn.textContent='▶'; }
+else { wrapper.style.maxHeight=wrapper.scrollHeight+1000+'px'; wrapper.style.opacity='1'; wrapper.style.pointerEvents='auto'; if(btn) btn.textContent='▼'; setTimeout(function(){ wrapper.style.maxHeight='none'; },350); }
+try{ localStorage.setItem('timeCapsuleCollapsed',collapsed?'true':'false'); }catch(e){}
+}
+function initTC(){
+var banners=document.querySelectorAll('.time-capsule-banner'); if(banners.length===0) return;
+var collapsed=false; try{ collapsed=localStorage.getItem('timeCapsuleCollapsed')==='true'; }catch(e){}
+banners.forEach(function(banner){
+var wrapper=ensureWrapper(banner); var rightDiv=banner.querySelector('div:last-child'); var btn=banner.querySelector('.tc-toggle-btn');
+if(!btn){ btn=document.createElement('button'); btn.className='tc-toggle-btn'; btn.type='button'; btn.textContent=collapsed?'▶':'▼'; if(rightDiv){ rightDiv.style.display='flex'; rightDiv.style.alignItems='center'; rightDiv.style.gap='0'; rightDiv.style.width='40px'; rightDiv.style.justifyContent='center'; rightDiv.appendChild(btn); } else banner.appendChild(btn); btn.addEventListener('click',function(ev){ ev.stopPropagation(); var w=document.getElementById('time-capsule-content')||ensureWrapper(banner); if(!w) return; var comp=window.getComputedStyle(w); var isCollapsed=comp.maxHeight==='0px' || comp.opacity==='0' || w.style.maxHeight==='0px'; setCollapsed(w,btn,!isCollapsed); }); }
+if(wrapper) setCollapsed(wrapper,btn,collapsed);
+});
+}
+document.addEventListener('click',function(e){ var banner=e.target.closest('.time-capsule-banner'); if(banner && !e.target.closest('.tc-toggle-btn')){ var btn=banner.querySelector('.tc-toggle-btn'); if(btn) btn.click(); } });
+document.addEventListener('DOMContentLoaded',function(){ initTC(); setTimeout(initTC,300); setTimeout(initTC,1000); });
+initTC(); setTimeout(initTC,500); setTimeout(initTC,1500);
+function wrapRender(){ if(window.renderDiaryAroundToday && !window.renderDiaryAroundToday._wrappedTC310){ var orig=window.renderDiaryAroundToday; window.renderDiaryAroundToday=function(){ var r=orig.apply(this,arguments); setTimeout(initTC,100); setTimeout(initTC,400); return r; }; window.renderDiaryAroundToday._wrappedTC310=true; } }
+wrapRender(); setTimeout(wrapRender,800);
+})();
+</script>
 
-/* 왼쪽 날짜 텍스트 - flex:1로 공간 확보, 줄어들지 않게 */
-#diary-around-today-card .feature-title > div:first-child,
-#diary-around-today-card .feature-title > span,
-#diary-around-today-card .feature-title > div:not(#diary-view-toggle) {
-  flex: 1 1 auto !important;
-  min-width: 0 !important;
-  overflow: visible !important;
-  white-space: normal !important;
-  word-break: keep-all !important;
-  font-size: 13px !important;
-}
 
-/* 2. 입력 버튼 영역 - 오른쪽에 고정, 최소 공간만 사용 */
-#diary-view-toggle {
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: stretch !important;
-  gap: 6px !important;
-  flex: 0 0 auto !important;
-  flex-shrink: 0 !important;
-  min-width: 0 !important;
-  width: auto !important;
-  max-width: none !important;
+<!-- V313 - 메인 복구 -->
+<style id="V313_FIX2">
+/* 메인 깨짐 방지 - 기존 레이아웃 유지, 삼각형만 동일 28x22 */
+.time-capsule-banner{height:28px!important;min-height:28px!important;max-height:28px!important;}
+.go-today-btn,.daily-explain-header,#fortune-teaser{height:28px!important;min-height:28px!important;max-height:28px!important;}
+.biorhythm-header{height:28px!important;min-height:28px!important;max-height:28px!important;}
+.time-capsule-banner .tc-toggle-btn,
+.go-today-btn > span:last-child,
+#fortune-teaser .ft-arrow,
+.daily-explain-header .ft-arrow,
+#biorhythm-toggle-btn{
+width:28px!important;min-width:28px!important;max-width:28px!important;
+height:22px!important;min-height:22px!important;max-height:22px!important;
+font-size:10px!important;line-height:22px!important;border-radius:4px!important;
 }
-#diary-view-toggle > div {
-  display: flex !important;
-  gap: 6px !important;
-  align-items: stretch !important;
-  flex-shrink: 0 !important;
-}
-
-/* 3. [입력] 버튼 - 가로폭 160px → 110px로 축소 (핸드폰 가림 해결) */
-#diary-view-toggle button[onclick*="openDiaryForm"] {
-  width: 110px !important;
-  min-width: 110px !important;
-  max-width: 110px !important;
-  height: 60px !important;
-  min-height: 60px !important;
-  max-height: 60px !important;
-  font-size: 15px !important;
-  font-weight: 900 !important;
-  border-radius: 10px !important;
-  flex-shrink: 0 !important;
-  box-sizing: border-box !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  padding: 0 !important;
-}
-
-/* 4. 앨범 컨테이너 - 높이 60px 유지 */
-#diary-view-toggle div[style*="flex-direction:column"],
-#diary-view-toggle > div > div:last-child,
-#diary-view-toggle div:has(> #btn-view-list) {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 4px !important;
-  height: 60px !important;
-  min-height: 60px !important;
-  max-height: 60px !important;
-  justify-content: space-between !important;
-  flex-shrink: 0 !important;
-  box-sizing: border-box !important;
-}
-
-/* 5. 앨범1, 앨범2 - 가로폭도 살짝 축소 (전체 균형) */
-#diary-view-toggle #btn-view-list,
-#diary-view-toggle #btn-view-gallery {
-  width: 54px !important;
-  min-width: 54px !important;
-  max-width: 54px !important;
-  height: 28px !important;
-  min-height: 28px !important;
-  max-height: 28px !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  box-sizing: border-box !important;
-  font-size: 10.5px !important;
-  border-radius: 7px !important;
-  flex-shrink: 0 !important;
-}
-
-/* 6. 핸드폰 대응 - 360px 이하에서는 입력 버튼 더 작게 */
-@media (max-width: 380px) {
-  #diary-view-toggle button[onclick*="openDiaryForm"] {
-    width: 90px !important;
-    min-width: 90px !important;
-    max-width: 90px !important;
-    font-size: 14px !important;
-  }
-  #diary-view-toggle #btn-view-list,
-  #diary-view-toggle #btn-view-gallery {
-    width: 50px !important;
-    min-width: 50px !important;
-    max-width: 50px !important;
-    font-size: 10px !important;
-  }
-}
+#main-biorhythm-content{max-height:1000px;opacity:1;transition:max-height 0.35s ease,opacity 0.25s ease;overflow:hidden}
+#main-biorhythm-teaser.bio-collapsed #main-biorhythm-content{max-height:0!important;opacity:0!important;pointer-events:none!important;padding:0!important;margin:0!important}
 </style>
 
 </body>
