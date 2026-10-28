@@ -1,9 +1,14 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+<!-- Version: V534 - 원본에서 최소 수정, 스크롤만 -->
+<!-- Version: V519 - 타임캡슐 아래 여백을 다른 타이틀 간격(8px)과 동일하게 -->
+<!-- Version: V518 - 타임캡슐 아래 빈 박스/선 제거 -->
+<!-- Version: V517 - 타임캡슐 배너>내용 순서 고정, 내용 없을 때 배너 숨김, 깨진 스크립트 제거 -->
+<!-- Version: V500 - 리스트>타임캡슐>바이오리듬>운세>설명 순서 확정 -->
 <!-- Version: V290 - 기능·UI 유지, 진동중복/setInterval폭주/transform충돌 정리 --> 
 <!-- Version: V187 - 초중말복 동적화, 24절기 동적화, 누적패치 제거, 5~6줄 개그 유머 100점 -->
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>포토다이어리 V290 UNIFIED FIX - 사진, 추억을 담다</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>포토다이어리 V520 - 사진, 추억을 담다</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -3196,71 +3201,6 @@ setTimeout(function(){
 
 
 
-<script id="V81_FIX">
-// V81 Fix: 1년전 테스트 + 종료 버튼
-(function(){
-  // 1. 종료 버튼 fix: 한 번만 누르면 종료
-  var lastBackPress = 0;
-  var backHandlerFixed = false;
-  
-  function setupBackButton(){
-    if(backHandlerFixed) return;
-    try{
-      document.removeEventListener('backbutton', window._oldBackHandler);
-    }catch(e){}
-    
-    window._backHandlerV81 = function(e){
-      try{ e.preventDefault(); }catch(err){}
-      
-      // 모달 열려있으면 닫기 (한 번에)
-      var modals = document.querySelectorAll('.modal-overlay.active, .photo-lightbox-overlay.active, #fortune-popup-overlay.active, #saju-detail-modal-overlay.active');
-      var hasModal = false;
-      modals.forEach(function(m){
-        if(m.classList.contains('active') || m.style.display==='flex'){
-          hasModal = true;
-          m.classList.remove('active');
-          m.style.display='none';
-        }
-      });
-      if(hasModal){
-        try{ document.body.style.overflow=''; document.body.classList.remove('modal-open'); }catch(err){}
-        return;
-      }
-      
-      // 모달 없으면 종료: 2초 안에 두 번 누르면 종료, 한 번 누르면 토스트
-      var now = Date.now();
-      if(now - lastBackPress < 2000){
-        try{ 
-          if(navigator.app && navigator.app.exitApp) navigator.app.exitApp();
-          else if(window.s2app && window.s2app.exitApp) window.s2app.exitApp();
-          else window.history.back();
-        }catch(err){ window.history.back(); }
-      } else {
-        lastBackPress = now;
-        // 토스트
-        var toast = document.getElementById('v81-exit-toast');
-        if(!toast){
-          toast = document.createElement('div');
-          toast.id='v81-exit-toast';
-          toast.style.cssText='position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.8); color:white; padding:10px 20px; border-radius:20px; font-size:13px; z-index:10000;';
-          document.body.appendChild(toast);
-        }
-        toast.textContent='한 번 더 누르면 종료됩니다';
-        toast.style.display='block';
-        setTimeout(function(){ toast.style.display='none'; }, 2000);
-      }
-    };
-    
-    document.addEventListener('backbutton', window._backHandlerV81, false);
-    backHandlerFixed = true;
-    console.log('[V81] Backbutton fixed');
-  }
-  
-  window.addEventListener('load', function(){ setTimeout(setupBackButton, 1000); });
-  document.addEventListener('DOMContentLoaded', function(){ setTimeout(setupBackButton, 1500); });
-  
-  // 2. 1년전 테스트 데이터 만들기
-  </script>
 
 
 <style id="LUNAR_FIX">
@@ -3398,6 +3338,26 @@ body:not(.modal-open){position:relative !important; overflow:auto !important; ov
 
 
 
+
+
+<style id="V500_ORDER">
+/* V500 순서 고정 */
+#diary-around-today-card{
+  display:flex !important;
+  flex-direction:column !important;
+}
+#diary-around-today-list{
+  order:1 !important;
+}
+#v340-banner-container{
+  display:flex !important;
+  flex-direction:column !important;
+  gap:6px !important;
+  order:2 !important;
+  width:100% !important;
+  margin-top:8px !important;
+}
+</style>
 
 <style id='V187_FIX'>
 /* 1) 오늘 날짜로 가기 오른쪽 끝 > 표시 */
@@ -4133,7 +4093,6 @@ div[style*="padding-top:4px"]{
                     <input type="date" id="saju-birth-date-calendar" style="flex:2; padding:8px; border:1px solid var(--border-color); border-radius:8px; font-size:16px;" onchange="syncSajuDateFromCalendar()">
                     <input type="time" id="saju-birth-time-calendar" style="flex:1; padding:8px; border:1px solid var(--border-color); border-radius:8px; font-size:15px;">
                 </div>
-                <!-- V310: 만60/50/40 버튼 삭제됨 -->
                 <div style="display: flex; align-items:center; gap:6px; margin-bottom:8px;">
                     <input type="checkbox" id="saju-time-unknown" checked onchange="onSajuTimeUnknownToggle()" style="width:15px; height:15px;">
                     <label for="saju-time-unknown" style="font-size:14px; font-weight:normal; color: var(--text-sub);">태어난 시각을 몰라요</label>
@@ -10566,6 +10525,7 @@ window.attachPhotoDoubleTap = function(el, handler){
                 }
                 myPastHTML+='</div>';
                 var pastDiv = document.createElement('div');
+                pastDiv.className='tc-group';
                 pastDiv.style.gridColumn='1 / -1';
                 pastDiv.style.width='100%';
                 pastDiv.innerHTML = myPastHTML;
@@ -17180,11 +17140,6 @@ console.log('[DailyAlarm] 스크립트 로드 완료 - testDailyAlarm()으로 �
     border: none !important;
 }
 </style>
-<script>
-// [V4.27] 설정 연두 배경 제거됨 - V4.29에서 삭제
-window.updateTitleIconColor=function(){};
-})();
-</script>
 
 <!-- V4.28 duplicate removed -->
 <script>
@@ -17784,92 +17739,6 @@ window.addEventListener("load", function() {
 </script>
 
 
-<script id="V20_ALL_FIXES_JS">
-// V20 최종 - 누적 금지, 4가지 수정 한 번에
-(function(){
-  // 1) 사진 고정핀 깜빡임 방지 - forcePin 단일화
-  function isPhotoEnabled(){
-    try{ return localStorage.getItem('smartDiaryShowPhotoPin')!=='false'; }catch(e){return true;}
-  }
-  function removePins(){
-    document.querySelectorAll('.cal-cell .cal-photo-corner').forEach(function(c){ c.remove(); });
-    document.querySelectorAll('.cal-cell.has-photo').forEach(function(c){ c.classList.remove('has-photo'); });
-  }
-  // 기존 forcePin 덮어쓰기
-  var _origForcePin = window.forcePin;
-  window.forcePin = function(){
-    try{
-      if(!isPhotoEnabled()){ removePins(); return; }
-      var all=[]; try{ all=JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); }catch(e){}
-      var photoDates=new Set(all.filter(function(d){return !!d.photo;}).map(function(d){ return (d.date||'').slice(0,10); }));
-      document.querySelectorAll('.cal-cell:not(.adjacent-month)').forEach(function(cell){
-        var dayEl=cell.querySelector('.cal-cell-inner span'); if(!dayEl) return;
-        var day=parseInt(dayEl.textContent.trim()); if(isNaN(day)) return;
-        var y=typeof calYear!=='undefined'?calYear:new Date().getFullYear();
-        var m=typeof calMonth!=='undefined'?calMonth:new Date().getMonth();
-        var ds=y+'-'+String(m+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
-        var hasPhoto=photoDates.has(ds);
-        var corner=cell.querySelector('.cal-photo-corner');
-        if(hasPhoto && !corner){
-          corner=document.createElement('div');
-          corner.className='cal-photo-corner has-pin-icon';
-          corner.setAttribute('data-date', ds);
-          corner.innerHTML='<span class="pin-emoji green-pin"></span>';
-          cell.appendChild(corner);
-          cell.classList.add('has-photo');
-        } else if(!hasPhoto && corner){
-          // 노랑/빨강 핀이 있으면 유지, 사진 핀만 제거? 여기선 사진 없는 날만 제거
-          // 하지만 사진 핀인지 확인 - green-pin만 제거
-          var pin=corner.querySelector('.pin-emoji');
-          if(pin && pin.classList.contains('green-pin')){
-            corner.remove();
-            cell.classList.remove('has-photo');
-          }
-        }
-      });
-    }catch(e){}
-  };
-  window.getShowPhotoPin = function(){ return isPhotoEnabled(); };
-  window.onShowPhotoPinToggle = function(){
-    var chk=document.getElementById('settings-show-photo-pin');
-    if(!chk) return;
-    localStorage.setItem('smartDiaryShowPhotoPin', chk.checked?'true':'false');
-    if(!chk.checked) removePins();
-    if(typeof window.renderCalendar==='function') window.renderCalendar();
-    if(!chk.checked) setTimeout(removePins, 50);
-  };
-  window.syncPhotoPinToggle = function(){
-    var chk=document.getElementById('settings-show-photo-pin');
-    if(chk) chk.checked=isPhotoEnabled();
-  };
-
-  // 2) 운세 숫자 입력 삭제, 달력만
-  window.setSajuInputMode = function(mode){
-    var cal=document.getElementById('saju-calendar-box');
-    if(cal) cal.style.display='flex';
-    var ymd=document.getElementById('saju-ymd-box');
-    if(ymd) ymd.style.display='none';
-  };
-  // 초기 달력 모드 강제
-  setTimeout(function(){
-    var cal=document.getElementById('saju-calendar-box');
-    if(cal) cal.style.display='flex';
-    var ymd=document.getElementById('saju-ymd-box');
-    if(ymd) ymd.style.display='none';
-  }, 500);
-
-  // 3) 글자크기조정 기능 무력화 (삭제는 CSS로 숨김)
-  window.adjustFontSize = function(){};
-  window.resetFontSize = function(){};
-
-  // 4) 매일 알림 텍스트 제거 (JS로)
-  setTimeout(function(){
-    document.body.innerHTML = document.body.innerHTML.replace(/매일 알림/g, '').replace(/V20에서.*?복구.*?
-/g, '');
-  }, 1000);
-
-})();
-</script>
 
 
 <script id="V20_FORTUNE_SAVE_FIX">
@@ -19823,183 +19692,6 @@ button[onclick*="writeDiaryWithBiorhythm"] {
   display:none !important;
 }
 </style>
-<script id="MAIN_BIO_TEXT_ONLY_JS">
-
-
-
-<style id="SAJU_FIXED_CLOSE_CSS">
-/* 사주풀이 - 오늘의 운세처럼 하단 고정 닫기 버튼 */
-.saju-detail-card {
-  display:flex !important;
-  flex-direction:column !important;
-  max-height:90vh !important;
-  overflow:hidden !important;
-  padding-bottom:0 !important;
-  background:linear-gradient(180deg,#FFFBF5 0%,#FFF3E6 100%) !important;
-}
-
-#saju-detail-card .close-form-btn {
-  position:absolute !important;
-  top:14px !important;
-  right:14px !important;
-  z-index:30 !important;
-}
-
-/* Scrollable content wrapper */
-.saju-detail-card .sd-scroll-wrapper {
-  flex:1 !important;
-  overflow-y:auto !important;
-  -webkit-overflow-scrolling:touch !important;
-  padding:0 0 10px 0 !important;
-  display:block !important;
-}
-
-.saju-detail-card #sd-pillars,
-.saju-detail-card .sd-dm-box,
-.saju-detail-card #sd-life-stages,
-.saju-detail-card .sd-title-row {
-  flex-shrink:0 !important;
-}
-
-/* Fixed bottom close button - always visible at bottom */
-.sd-exit-sticky {
-  position:sticky !important;
-  bottom:0 !important;
-  left:0 !important;
-  right:0 !important;
-  background:linear-gradient(180deg, rgba(255,251,245,0) 0%, #FFFBF5 50%, #FFFBF5 100%) !important;
-  padding:14px 20px 18px !important;
-  margin:0 !important;
-  border-top:none !important;
-  z-index:20 !important;
-  flex-shrink:0 !important;
-  display:block !important;
-  width:100% !important;
-  box-sizing:border-box !important;
-}
-
-.sd-exit-sticky button {
-  width:100% !important;
-  background:linear-gradient(120deg,#FFDAB9,#E8A87C) !important;
-  color:#4A3728 !important;
-  border:none !important;
-  box-shadow:0 4px 14px rgba(232,168,124,0.35) !important;
-  padding:14px !important;
-  border-radius:14px !important;
-  font-weight:800 !important;
-  font-size:15px !important;
-  cursor:pointer !important;
-}
-
-/* Life cards - ensure visible, no left bar */
-.sd-life-card {
-  border-left:none !important;
-  background:#FFFFFF !important;
-  border:1px solid #FFF0E0 !important;
-}
-</style>
-<script id="SAJU_FIXED_CLOSE_JS">
-(function(){
-  function makeSajuFixedClose(){
-    const card = document.getElementById('saju-detail-card');
-    if(!card) return;
-    
-    // Check if already restructured
-    let wrapper = card.querySelector('.sd-scroll-wrapper');
-    const exitSticky = card.querySelector('.sd-exit-sticky');
-    
-    if(!wrapper){
-      // Create wrapper for scrollable content
-      wrapper = document.createElement('div');
-      wrapper.className = 'sd-scroll-wrapper';
-      
-      // Move all content except close X button and exit sticky into wrapper
-      const closeXBtn = card.querySelector('.close-form-btn');
-      const nodesToMove = [];
-      
-      Array.from(card.childNodes).forEach(node=>{
-        if(node === closeXBtn) return;
-        if(node === exitSticky) return;
-        if(node.nodeType === 1 || (node.nodeType === 3 && node.textContent.trim())){
-          // Skip if it's the exit sticky or close X
-          if(node.classList && (node.classList.contains('sd-exit-sticky') || node.classList.contains('close-form-btn'))){
-            return;
-          }
-          nodesToMove.push(node);
-        }
-      });
-      
-      nodesToMove.forEach(node=> wrapper.appendChild(node));
-      
-      // Insert wrapper at beginning (after close X)
-      if(closeXBtn && closeXBtn.nextSibling){
-        card.insertBefore(wrapper, closeXBtn.nextSibling);
-      } else {
-        card.insertBefore(wrapper, exitSticky);
-      }
-      
-      // Ensure exit sticky is at the end (fixed bottom)
-      if(exitSticky){
-        card.appendChild(exitSticky);
-      }
-      
-      console.log('[SAJU FIXED] Restructured with scroll wrapper and fixed close');
-    }
-    
-    // Ensure exit sticky is visible and fixed
-    if(exitSticky){
-      exitSticky.style.display='block';
-      exitSticky.style.position='sticky';
-      exitSticky.style.bottom='0';
-    }
-    
-    // Ensure life stages visible
-    const lifeEl = document.getElementById('sd-life-stages');
-    if(lifeEl) lifeEl.style.display='block';
-  }
-  
-  function scrollSajuToTop(){
-    const card = document.getElementById('saju-detail-card');
-    const wrapper = card ? card.querySelector('.sd-scroll-wrapper') : null;
-    if(wrapper) wrapper.scrollTop = 0;
-    if(card) card.scrollTop = 0;
-  }
-  
-  // Hook openSajuDetailModal
-  if(window.openSajuDetailModal){
-    const orig = window.openSajuDetailModal;
-    window.openSajuDetailModal = function(){
-      const res = orig.apply(this, arguments);
-      setTimeout(()=>{
-        makeSajuFixedClose();
-        scrollSajuToTop();
-      }, 50);
-      setTimeout(()=>{
-        makeSajuFixedClose();
-        scrollSajuToTop();
-      }, 300);
-      setTimeout(makeSajuFixedClose, 800);
-      return res;
-    };
-  }
-  
-  // Observe overlay
-  const overlay = document.getElementById('saju-detail-modal-overlay');
-  if(overlay){
-    new MutationObserver(()=>{
-      if(overlay.classList.contains('active')){
-        setTimeout(makeSajuFixedClose, 50);
-      }
-    }).observe(overlay, {attributes:true, attributeFilter:['class']});
-  }
-  
-  // Initial
-  setTimeout(makeSajuFixedClose, 500);
-  setInterval(makeSajuFixedClose, 2000);
-  
-  console.log('[SAJU FIXED CLOSE] Fixed bottom close button applied');
-})();
-</script>
 
 
 <style id="BOTH_FIXED_CLOSE_CSS">
@@ -20493,95 +20185,6 @@ button[onclick*="writeDiaryWithBiorhythm"] {
 </script>
 
 
-<script id="FINAL_ORDER_FIX">
-(function(){
-  function enforceFinalOrder(){
-    const scrollContent = document.querySelector('.settings-scroll-content');
-    const pastContainer = document.getElementById('past-notify-settings-container');
-    const accountBlock = document.querySelector('div[style*="계정과목 관리"]')?.closest('div[style*="margin:8px 0 0"]') || document.querySelector('div[style*="📒 계정과목 관리"]').parentElement;
-    const resetArea = document.getElementById('reset-bottom-area');
-    
-    if(!scrollContent || !resetArea) return;
-    
-    // Find account block more reliably - it's the div with background #f9f6f2
-    let accountDiv = null;
-    scrollContent.querySelectorAll('div').forEach(div=>{
-      if(div.textContent.includes('계정과목 관리') && div.style.background === 'rgb(249, 246, 242)' || div.style.background === '#f9f6f2'){
-        // Check if it's the wrapper
-        if(div.querySelector('#expense-cat-list')){
-          accountDiv = div;
-        }
-      }
-    });
-    // Fallback: find by expense list
-    if(!accountDiv){
-      const expenseList = document.getElementById('expense-cat-list');
-      if(expenseList){
-        let parent = expenseList.parentElement;
-        while(parent && parent !== scrollContent){
-          if(parent.style && parent.style.background && parent.style.background.includes('249')){
-            accountDiv = parent;
-            break;
-          }
-          parent = parent.parentElement;
-        }
-        if(!accountDiv && expenseList){
-          // Go 2 levels up
-          accountDiv = expenseList.closest('div[style*="f9f6f2"]');
-        }
-      }
-    }
-    
-    // Enforce order: past -> account -> reset at bottom
-    if(pastContainer && accountDiv && resetArea){
-      try{
-        // Move past container just before account
-        if(pastContainer.nextElementSibling !== accountDiv){
-          scrollContent.insertBefore(pastContainer, accountDiv);
-        }
-        // Move account just before reset
-        if(accountDiv.nextElementSibling !== resetArea){
-          scrollContent.insertBefore(accountDiv, resetArea);
-        }
-        // Reset always last
-        scrollContent.appendChild(resetArea);
-      }catch(e){}
-    } else if(accountDiv && resetArea){
-      // At least ensure account is just before reset
-      try{
-        scrollContent.insertBefore(accountDiv, resetArea);
-        scrollContent.appendChild(resetArea);
-      }catch(e){}
-    }
-  }
-  
-  // Run multiple times
-  setTimeout(enforceFinalOrder, 100);
-  setTimeout(enforceFinalOrder, 500);
-  setTimeout(enforceFinalOrder, 1500);
-  setTimeout(enforceFinalOrder, 3000);
-  
-  // Also on settings open
-  const origOpenSettings = window.openSettingsModal;
-  if(origOpenSettings){
-    window.openSettingsModal = function(){
-      const res = origOpenSettings.apply(this, arguments);
-      setTimeout(enforceFinalOrder, 100);
-      setTimeout(enforceFinalOrder, 500);
-      return res;
-    };
-  }
-  
-  // Observer
-  const settingsCard = document.getElementById('settings-card');
-  if(settingsCard){
-    const observer = new MutationObserver(()=>{
-      enforceFinalOrder();
-    });
-    observer.observe(settingsCard, {childList:true, subtree:true});
-  }
-})();
-</script>
 
 
 <style id="V205_BUCKET_WARM">
@@ -21234,353 +20837,6 @@ div:has(> label:has(input[name="cardStyle"])) { display:none !important; }
 </script>
 
 
-<script id="V236_REORDER">
-// V236: 오늘 사진/메모를 운세 앞으로 이동
-(function(){
-  function reorder(){
-    try{
-      var card=document.getElementById('diary-around-today-card');
-      var list=document.getElementById('diary-around-today-list');
-      var fortune=document.getElementById('fortune-teaser');
-      var bio=document.getElementById('main-biorhythm-teaser');
-      if(!card || !list || !fortune) return;
-      // 현재: title -> fortune -> bio -> list
-      // 원하는: title -> list -> fortune -> bio
-      // list를 fortune 앞으로 이동
-      card.insertBefore(list, fortune);
-      console.log('[V236] 순서 변경 완료: list -> fortune -> bio');
-    }catch(e){ console.log('reorder err', e); }
-  }
-  if(document.readyState==='loading'){
-    document.addEventListener('DOMContentLoaded', function(){ setTimeout(reorder, 100); setTimeout(reorder, 600); });
-  } else {
-    setTimeout(reorder, 100);
-    setTimeout(reorder, 600);
-  }
-  // 다이어리 렌더 후에도 유지되도록 render 후에도 다시 정렬
-  var origRender=window.renderDiaryAroundToday;
-  if(typeof origRender==='function'){
-    window.renderDiaryAroundToday=function(){
-      var res=origRender.apply(this, arguments);
-      setTimeout(reorder, 50);
-      return res;
-    };
-  }
-})();
-</script>
-
-
-<script id="V237_TIMECAPSULE_UNIFY">
-// V237: 타임캡슐 통일 + 메모만일때 클릭 fix
-(function(){
-  console.log('[V237] 타임캡슐 통일 패치');
-
-  // 1) 강제로 simple 스타일로 통일 (저장소 상관없이)
-  var origGetPastSettings = window.getPastSettings;
-  window.getPastSettings = function(){
-    var s = { enabled:true, intervals:['1m','3m','6m','1y','2y','3y'], cardStyle:'simple', bannerStyle:'simple' };
-    try{
-      if(origGetPastSettings){
-        var orig = origGetPastSettings();
-        if(orig){
-          s.enabled = orig.enabled!==false;
-          if(orig.intervals && orig.intervals.length) s.intervals = orig.intervals;
-        }
-      }
-      // localStorage에서 cardStyle 읽어도 무시하고 simple로 고정
-      var saved = localStorage.getItem('pastNotifySettings');
-      if(saved){
-        try{
-          var p = JSON.parse(saved);
-          if(p && p.intervals) s.intervals = p.intervals;
-          if(p) s.enabled = p.enabled!==false;
-        }catch(e){}
-      }
-    }catch(e){}
-    s.cardStyle = 'simple'; // 강제!
-    return s;
-  };
-
-  // 2) 메모만일때도 클릭 되게 - 핸들러 개선
-  window.handleTimeCapsulePhotoClick = function(el){
-    try{
-      if(window.event) window.event.stopPropagation();
-      var photoKey = el.getAttribute('data-photo-key');
-      var photoDate = el.getAttribute('data-photo-date') || '';
-      var photoText = el.getAttribute('data-photo-text') || '';
-      
-      // 사진 있으면 사진 확대
-      if(photoKey && photoKey!=='null' && photoKey!=='undefined' && photoKey!==''){
-        var img = el.querySelector('img');
-        var src = '';
-        if(img) src = img.src || '';
-        if(!src && typeof getPhotoSrc==='function'){
-          try{ src = getPhotoSrc(photoKey)||''; }catch(e){}
-        }
-        if(src){
-          if(typeof window.openPhotoLightbox==='function'){
-            window.openPhotoLightbox(photoKey, {text: photoText, date: photoDate});
-            return;
-          }
-        }
-      }
-      // 사진 없거나 실패하면 일자로 이동 (메모만일때)
-      if(photoDate){
-        window.goToPastDiary(photoDate, photoKey);
-      } else {
-        var dateAttr = el.getAttribute('data-photo-date');
-        if(dateAttr) window.goToPastDiary(dateAttr, photoKey);
-      }
-    }catch(e){ console.log('photo click err', e); 
-      // fallback: 일자로 이동
-      try{
-        var d = el.getAttribute('data-photo-date');
-        if(d) window.goToPastDiary(d);
-      }catch(e2){}
-    }
-  };
-
-  window.handleTimeCapsuleDateClick = function(dateStr, photoKey){
-    try{
-      if(window.event) window.event.stopPropagation();
-      window.goToPastDiary(dateStr, photoKey);
-    }catch(e){ console.log('date click err', e); }
-  };
-
-  // 3) CSS 강제 - 50%+50% 가 WebView에서도 유지되게
-  var style = document.createElement('style');
-  style.id='V237_TC_FIX';
-  style.textContent=`
-    /* 타임캡슐 카드 - 무조건 가로 50:50 */
-    #diary-around-today-list div[style*="display:flex"][style*="height:72px"]{
-      display:flex !important;
-      flex-direction:row !important;
-      width:100% !important;
-      height:72px !important;
-      min-height:72px !important;
-      overflow:hidden !important;
-      box-sizing:border-box !important;
-    }
-    #diary-around-today-list div[style*="display:flex"][style*="height:72px"] > div[data-photo-key]{
-      width:50% !important;
-      flex:0 0 50% !important;
-      min-width:0 !important;
-      max-width:50% !important;
-      box-sizing:border-box !important;
-      cursor:pointer !important;
-    }
-    /* 메모만일때 왼쪽도 클릭 가능하게 */
-    #diary-around-today-list div[data-photo-key]{
-      pointer-events:auto !important;
-      user-select:none !important;
-      -webkit-tap-highlight-color: rgba(124,108,255,0.2) !important;
-    }
-    #diary-around-today-list div[data-photo-key]:active{
-      background:#f0eaff !important;
-    }
-  `;
-  document.head.appendChild(style);
-
-  // 4) 렌더 후 메모만인 카드의 왼쪽 텍스트를 "메모 보기"로 바꾸기
-  var origRender = window.renderDiaryAroundToday;
-  if(typeof origRender==='function'){
-    window.renderDiaryAroundToday = function(){
-      var res = origRender.apply(this, arguments);
-      setTimeout(function(){
-        try{
-          var listEl = document.getElementById('diary-around-today-list');
-          if(!listEl) return;
-          // 메모만인 경우 왼쪽에 사진 아이콘이지만 텍스트가 "사진 보기"로 되어있으면 "메모 보기"로 변경
-          listEl.querySelectorAll('div[data-photo-key]').forEach(function(div){
-            var key = div.getAttribute('data-photo-key');
-            var isMemoOnly = !key || key==='' || key==='null' || key==='undefined';
-            if(isMemoOnly){
-              var labelDiv = div.querySelector('div[style*="font-size:11px"]');
-              if(labelDiv && labelDiv.textContent.indexOf('사진')!==-1){
-                labelDiv.innerHTML = '📝 메모 보기';
-              }
-              // 이미지도 없으니 아이콘 영역 정리
-              var img = div.querySelector('img');
-              if(!img){
-                var firstDiv = div.querySelector('div');
-                if(firstDiv){
-                  // 메모 아이콘으로
-                  firstDiv.innerHTML = '<div style="width:50px; height:50px; background:#fff3e0; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; margin-right:8px;">📝</div>';
-                }
-              }
-            }
-          });
-        }catch(e){ console.log('V237 post-process err', e); }
-      }, 100);
-      return res;
-    };
-  }
-
-  console.log('[V237] 타임캡슐 통일 완료');
-})();
-</script>
-
-
-<script id="V238_TIMECAPSULE_MEMO_FIX">
-// V238: 타임캡슐 메모만 있을때 왼쪽=사진아이콘, 오른쪽=메모, 왼쪽 클릭시 메모 전체 보기
-(function(){
-  console.log('[V238] 타임캡슐 메모 fix');
-
-  // 메모 전체 보기 모달
-  window.showTimeCapsuleMemoFull = function(dateStr, text){
-    try{
-      // 기존 라이트박스 재활용 or 간단 알림
-      var existing = document.getElementById('tc-memo-modal');
-      if(existing) existing.remove();
-      var modal = document.createElement('div');
-      modal.id='tc-memo-modal';
-      modal.style.cssText='position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:99999; display:flex; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;';
-      modal.onclick=function(e){ if(e.target===modal) modal.remove(); };
-      var safeText = (text||'메모 없음').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
-      modal.innerHTML='<div style="background:#fff; border-radius:16px; padding:20px; max-width:360px; width:100%; max-height:80vh; overflow-y:auto; box-shadow:0 10px 40px rgba(0,0,0,0.3); position:relative;">'+
-        '<button onclick="this.closest(\'#tc-memo-modal\').remove()" style="position:absolute; top:10px; right:10px; background:#f5f5f5; border:none; width:30px; height:30px; border-radius:50%; font-size:16px; cursor:pointer;">✖</button>'+
-        '<div style="font-size:12px; color:#7c6cff; font-weight:800; margin-bottom:8px;">📝 '+dateStr+' 메모</div>'+
-        '<div style="font-size:14px; line-height:1.6; color:#333; white-space:pre-wrap; word-break:break-all;">'+safeText+'</div>'+
-        '<div style="margin-top:16px; display:flex; gap:8px;">'+
-          '<button onclick="window.goToPastDiary(\''+dateStr+'\'); this.closest(\'#tc-memo-modal\').remove();" style="flex:1; padding:10px; background:#7c6cff; color:#fff; border:none; border-radius:10px; font-weight:700; cursor:pointer;">이동 →</button>'+
-          '<button onclick="this.closest(\'#tc-memo-modal\').remove()" style="flex:1; padding:10px; background:#f0eaff; color:#7c6cff; border:1px solid #e8e0ff; border-radius:10px; font-weight:700; cursor:pointer;">닫기</button>'+
-        '</div></div>';
-      document.body.appendChild(modal);
-    }catch(e){ alert(text); }
-  };
-
-  // 왼쪽 클릭 핸들러 개선 - 사진 없으면 메모 전체 보기
-  window.handleTimeCapsulePhotoClick = function(el){
-    try{
-      if(window.event) window.event.stopPropagation();
-      var photoKey = el.getAttribute('data-photo-key');
-      var photoDate = el.getAttribute('data-photo-date') || '';
-      var photoText = el.getAttribute('data-photo-text') || '';
-      var fullText = el.getAttribute('data-full-text') || photoText;
-
-      // 사진 키가 있고 유효하면 사진 확대
-      if(photoKey && photoKey!=='null' && photoKey!=='' && photoKey!=='undefined'){
-        var img = el.querySelector('img');
-        if(img && img.src){
-          if(typeof window.openPhotoLightbox==='function'){
-            window.openPhotoLightbox(photoKey, {text: fullText, date: photoDate});
-            return;
-          }
-        } else {
-          // src 없는 경우라도 getPhotoSrc 시도
-          if(typeof getPhotoSrc==='function'){
-            try{
-              var src = getPhotoSrc(photoKey);
-              if(src && typeof window.openPhotoLightbox==='function'){
-                window.openPhotoLightbox(photoKey, {text: fullText, date: photoDate});
-                return;
-              }
-            }catch(e){}
-          }
-        }
-      }
-      // 사진 없으면 메모 전체 보기
-      window.showTimeCapsuleMemoFull(photoDate, fullText);
-    }catch(e){
-      console.log('photo click err', e);
-      try{
-        var d = el.getAttribute('data-photo-date');
-        var t = el.getAttribute('data-full-text') || el.getAttribute('data-photo-text') || '';
-        window.showTimeCapsuleMemoFull(d, t);
-      }catch(e2){}
-    }
-  };
-
-  // 렌더 후처리 - 메모만인 경우 UI 정확히 사진처럼 만들기
-  var origRender = window.renderDiaryAroundToday;
-  if(typeof origRender==='function' && !window._v238_patched){
-    window._v238_patched = true;
-    window.renderDiaryAroundToday = function(){
-      var res = origRender.apply(this, arguments);
-      setTimeout(function(){
-        try{
-          var listEl = document.getElementById('diary-around-today-list');
-          if(!listEl) return;
-          
-          // 네모박스처럼 만들기 - 모든 타임캡슐 카드 찾기
-          listEl.querySelectorAll('div[style*="height:72px"]').forEach(function(card){
-            // 이미 처리된건 스킵? 다시 처리
-            var leftDiv = card.querySelector('div[data-photo-key]:first-child');
-            var rightDiv = card.querySelector('div[data-photo-key]:last-child');
-            if(!leftDiv || !rightDiv) return;
-
-            var photoKey = leftDiv.getAttribute('data-photo-key');
-            var isMemoOnly = !photoKey || photoKey==='' || photoKey==='null' || photoKey==='undefined';
-            
-            // 오른쪽 div의 텍스트 가져와서 full text로 저장
-            var rightText = '';
-            try{
-              var textEl = rightDiv.querySelector('div[style*="text-overflow:ellipsis"]');
-              if(textEl) rightText = textEl.textContent || '';
-            }catch(e){}
-            
-            var fullText = leftDiv.getAttribute('data-photo-text') || rightText || '';
-            // data-full-text 속성으로 전체 메모 저장 (원본 찾기)
-            // 원본 diaries에서 찾아보기
-            try{
-              var dateStr = leftDiv.getAttribute('data-photo-date');
-              if(window.diaries || window.getDiaryList){
-                var allDiaries = (typeof getDiaryList==='function')?getDiaryList():(window.diaries||[]);
-                var found = allDiaries.find(function(d){ return (d.date||'').split('T')[0]===dateStr; });
-                if(found && found.text) fullText = found.text;
-              }
-            }catch(e){}
-
-            leftDiv.setAttribute('data-full-text', fullText);
-            
-            if(isMemoOnly){
-              // 왼쪽: 사진 로고만 (사진 없을때)
-              leftDiv.innerHTML = '<div style="display:flex; align-items:center; width:100%;"><div style="width:50px; height:50px; background:#f5f5f5; border:1px solid #eee; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; margin-right:8px;">📷</div><div style="flex:1; min-width:0;"><div style="font-size:9px; color:#999; margin-bottom:2px;">'+leftDiv.getAttribute('data-photo-date').slice(2)+' 전</div><div style="font-size:11px; color:#666; font-weight:600;">📷 사진 보기</div></div></div>';
-              // 왼쪽 클릭시 메모 전체 보기로 - 이미 handleTimeCapsulePhotoClick이 메모 전체 보기 호출함
-              leftDiv.title = '클릭하면 메모 전체 보기';
-            }
-          });
-
-        }catch(e){ console.log('V238 post err', e); }
-      }, 150);
-      return res;
-    };
-  }
-
-  // CSS - 네모박스처럼 50:50 정확히
-  var style = document.createElement('style');
-  style.textContent=`
-    #diary-around-today-list div[style*="height:72px"]{
-      display:flex !important;
-      flex-direction:row !important;
-      width:100% !important;
-      border:1px solid #e0e0e0 !important;
-      border-radius:10px !important;
-      overflow:hidden !important;
-      background:#fff !important;
-      margin-bottom:8px !important;
-    }
-    #diary-around-today-list div[style*="height:72px"] > div[data-photo-key]:first-child{
-      border-right:1px solid #f0f0f0 !important;
-      background:#fafafa !important;
-    }
-    #diary-around-today-list div[style*="height:72px"] > div[data-photo-key]:last-child{
-      background:#fff !important;
-    }
-  `;
-  document.head.appendChild(style);
-
-  console.log('[V238] 메모 클릭 fix 완료');
-})();
-</script>
-
-
-
-
-
-
-
-
 <script id="LUNAR_CONVERTER">
 // 음력 → 양력 변환 라이브러리 (1900-2099)
 (function(){
@@ -22123,265 +21379,1747 @@ div:has(> label:has(input[name="cardStyle"])) { display:none !important; }
 </style>
 
 
-<!-- V310 - 명언 배너 터짐 복구 + 삼각형 32x28 완전 동일 -->
-<style id="V310_FIX">
-#diary-view-toggle button[onclick*="openDiaryForm"]{width:110px!important;min-width:110px!important;max-width:110px!important;height:60px!important;min-height:60px!important;max-height:60px!important;box-sizing:border-box!important;flex-shrink:0!important}
-#diary-view-toggle div[style*="flex-direction:column"]{height:60px!important;display:flex!important;flex-direction:column!important;gap:4px!important;justify-content:space-between!important}
-#diary-view-toggle #btn-view-list,#diary-view-toggle #btn-view-gallery{width:54px!important;min-width:54px!important;max-width:54px!important;height:28px!important;min-height:28px!important;max-height:28px!important}
 
-/* 타임캡슐 */
-.time-capsule-banner .tc-toggle-btn{width:32px!important;min-width:32px!important;max-width:32px!important;height:28px!important;min-height:28px!important;max-height:28px!important;padding:0!important;margin:0!important;font-size:12px!important;line-height:28px!important;border-radius:5px!important;display:flex!important;align-items:center!important;justify-content:center!important;flex-shrink:0!important;box-sizing:border-box!important;background:rgba(255,255,255,0.35)!important;border:1px solid rgba(255,255,255,0.6)!important;color:white!important}
-.time-capsule-banner > div:last-child > div:not(.tc-toggle-btn){display:none!important}
-.time-capsule-banner{display:flex!important;justify-content:space-between!important;align-items:center!important;padding:0 0 0 12px!important;box-sizing:border-box!important;min-height:32px!important;height:32px!important;margin:0 0 2px 0!important;border-radius:5px!important;overflow:visible!important}
-.time-capsule-banner > div:last-child{width:40px!important;min-width:40px!important;flex-shrink:0!important;display:flex!important;justify-content:center!important;align-items:center!important}
 
-/* 오늘로 가기, 운세 - 32px */
-.go-today-btn,#fortune-teaser{
-display:flex!important;
-justify-content:space-between!important;
-align-items:center!important;
-gap:6px!important;
-min-height:32px!important;
-height:32px!important;
-max-height:32px!important;
-padding:0 0 0 12px!important;
-margin:0 0 2px 0!important;
-border-radius:5px!important;
-box-sizing:border-box!important;
-overflow:hidden!important;
-white-space:nowrap!important;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- V500 - 긴급 복구: 사진/일기/타임캡슐 연결 복구 + 입력 폼 중앙 정렬 + 거슬리는 줄만 정밀 삭제 -->
+<style id="V500_FIX">
+/* === 다이어리 리스트 - 원래대로 복구, 거슬리는 줄만 정밀 삭제 === */
+#diary-around-today-card{
+  background:#fff!important;
+  border:1px solid var(--border-color, #e6d8d8)!important;
+  border-radius:12px!important;
+  padding:15px!important;
+  box-shadow:0 3px 8px rgba(0,0,0,0.04)!important;
+  display:block!important;
+}
+#diary-around-today-card .feature-title{
+  background:transparent!important;
+  border:none!important;
+  border-radius:0!important;
+  padding:0!important;
+  margin-bottom:8px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
 }
 
-/* 명언 배너 - 특별 처리: 터짐 방지 */
-.daily-explain-header{
-display:flex!important;
-justify-content:space-between!important;
-align-items:center!important;
-gap:6px!important;
-min-height:32px!important;
-height:32px!important;
-max-height:32px!important;
-padding:0 0 0 12px!important;
-padding-right:0!important;
-margin:0 0 2px 0!important;
-border-radius:5px!important;
-box-sizing:border-box!important;
-overflow:hidden!important;
-white-space:nowrap!important;
-position:relative!important;
+#diary-around-today-list{
+  display:grid!important;
+  grid-template-columns:1fr 1fr!important;
+  gap:8px!important;
+  align-items:stretch!important;
+  border:none!important;
+  background:transparent!important;
+  margin:0!important;
+  padding:0!important;
+  min-height:0!important;
+  box-shadow:none!important;
 }
-.daily-explain-header > div:first-child,
-.daily-explain-header > span:first-child{
-flex:1 1 auto!important;
-min-width:0!important;
-overflow:hidden!important;
-text-overflow:ellipsis!important;
-white-space:nowrap!important;
-display:flex!important;
-align-items:center!important;
-gap:6px!important;
-}
-.daily-explain-header > div:last-child{
-flex:0 0 80px!important;
-width:80px!important;
-min-width:80px!important;
-max-width:80px!important;
-display:flex!important;
-align-items:center!important;
-justify-content:flex-end!important;
-gap:4px!important;
-flex-shrink:0!important;
-height:32px!important;
-padding-right:4px!important;
-box-sizing:border-box!important;
+#diary-around-today-list:empty{
+  display:none!important;
 }
 
-/* 바이오리듬 헤더 */
-.biorhythm-header{
-display:flex!important;
-justify-content:space-between!important;
-align-items:center!important;
-gap:6px!important;
-height:32px!important;
-min-height:32px!important;
-max-height:32px!important;
-padding:0 0 0 10px!important;
-box-sizing:border-box!important;
-border-radius:5px 5px 0 0!important;
-overflow:hidden!important;
-white-space:nowrap!important;
-cursor:pointer!important;
+/* 거슬리는 줄 - 정밀 타겟만 삭제 (카드 내부의 hr, divider, 빈 1px div만) */
+#diary-around-today-card > hr,
+#diary-around-today-card > .divider,
+#diary-around-today-card > .separator,
+#diary-around-today-card > div[style*="height: 1px"]:not(#diary-around-today-list):not(#fortune-teaser):not(#main-biorhythm-teaser),
+#diary-around-today-card > div[style*="height:1px"]:not(#diary-around-today-list){
+  display:none!important;
+  height:0!important;
+  border:none!important;
+  margin:0!important;
+  padding:0!important;
 }
-#main-biorhythm-teaser{display:block!important;height:auto!important;max-height:none!important;overflow:visible!important;padding:0!important;margin:6px 0 2px 0!important;border-radius:12px!important;box-sizing:border-box!important}
-#main-biorhythm-teaser .biorhythm-header{margin:0!important}
-#main-biorhythm-content{padding:10px 12px!important}
-#biorhythm-toggle-btn{cursor:pointer!important;pointer-events:auto!important;user-select:none!important}
 
-/* 삼각형 사각 바탕 완전 동일 32x28 */
-.go-today-btn > span:last-child,
-#fortune-teaser .ft-arrow,
+/* 입력 카드 - 원래 100x52 유지, 다른 화면 영향 없이 */
+#diary-around-today-card button[onclick*="openDiaryForm"]{
+  width:100px!important; min-width:100px!important; max-width:100px!important;
+  height:52px!important; min-height:52px!important; max-height:52px!important;
+  font-size:16px!important; border-radius:14px!important;
+}
+#diary-around-today-card #btn-view-list,
+#diary-around-today-card #btn-view-gallery{
+  width:60px!important; min-width:60px!important; max-width:60px!important;
+  height:25px!important; min-height:25px!important; max-height:25px!important;
+}
+
+/* 타임캡슐, 운세, 바이오리듬 - 연결 복구, 클릭 가능하게 */
+.time-capsule-banner, .go-today-btn, #fortune-teaser, .biorhythm-header, .daily-explain-header{
+  display:flex!important;
+  pointer-events:auto!important;
+  cursor:pointer!important;
+}
+.time-capsule-banner{
+  height:auto!important;
+  min-height:28px!important;
+  margin:0 0 2px 0!important;
+  padding:6px 12px!important;
+  border-radius:5px!important;
+  width:100%!important;
+}
+#fortune-teaser{
+  display:flex!important;
+  height:28px!important;
+  min-height:28px!important;
+  margin:4px 0 6px 0!important;
+  padding:6px 10px!important;
+  cursor:pointer!important;
+  pointer-events:auto!important;
+}
+#main-biorhythm-teaser{
+  display:block!important;
+  cursor:auto!important;
+  pointer-events:auto!important;
+}
 #biorhythm-toggle-btn{
-width:32px!important;
-min-width:32px!important;
-max-width:32px!important;
-height:28px!important;
-min-height:28px!important;
-max-height:28px!important;
-padding:0!important;
-margin:0!important;
-font-size:11px!important;
-line-height:28px!important;
-border-radius:5px!important;
-display:flex!important;
-align-items:center!important;
-justify-content:center!important;
-flex-shrink:0!important;
-box-sizing:border-box!important;
-text-align:center!important;
+  pointer-events:auto!important;
+  cursor:pointer!important;
 }
 
-/* 명언 배너의 명언 + 삼각형 두 개 */
-.daily-explain-header .ft-label,
-.daily-explain-header span:nth-child(2){
-font-size:10px!important;
-padding:2px 6px!important;
-border-radius:4px!important;
-height:20px!important;
-min-height:20px!important;
-display:inline-flex!important;
-align-items:center!important;
-justify-content:center!important;
-flex-shrink:0!important;
-box-sizing:border-box!important;
-white-space:nowrap!important;
-}
-.daily-explain-header .ft-arrow{
-width:32px!important;
-min-width:32px!important;
-max-width:32px!important;
-height:28px!important;
-min-height:28px!important;
-max-height:28px!important;
-padding:0!important;
-margin:0!important;
-font-size:11px!important;
-line-height:28px!important;
-border-radius:5px!important;
-display:flex!important;
-align-items:center!important;
-justify-content:center!important;
-flex-shrink:0!important;
-box-sizing:border-box!important;
+/* v340 banner container */
+#v340-banner-container{
+  display:flex!important;
+  flex-direction:column!important;
+  gap:2px!important;
+  width:100%!important;
+  margin-top:8px!important;
+  border:none!important;
+  background:transparent!important;
 }
 
-div[style*="이동 →"]{font-size:10px!important;padding:3px 8px!important;min-width:46px!important;max-width:56px!important;white-space:nowrap!important}
-#diary-around-today-list{display:flex!important;flex-direction:column!important;gap:2px!important}
-#main-biorhythm-content{overflow:hidden;transition:max-height 0.35s ease, opacity 0.25s ease;max-height:1000px;opacity:1}
-#main-biorhythm-teaser.bio-collapsed #main-biorhythm-content{max-height:0;opacity:0;pointer-events:none;margin:0;padding:0;overflow:hidden}
+/* === 입력 폼 - 왼쪽 치우침 해결, 중앙 정렬 복구 + B안 유지 === */
+#memo-form-card{
+  width:100%!important;
+  max-width:600px!important;
+  box-sizing:border-box!important;
+  padding:12px!important;
+  padding-bottom:8px!important;
+  margin:0 auto!important;
+  left:auto!important;
+  right:auto!important;
+  transform:none!important;
+  position:relative!important;
+  border:1px solid #e8e8e8!important;
+  border-radius:16px!important;
+  background:#fff!important;
+  display:block!important;
+}
+@media (max-width: 768px){
+  #memo-form-card{
+    width:96%!important;
+    max-width:96%!important;
+    min-width:0!important;
+    margin:0 auto!important;
+    left:auto!important;
+    transform:none!important;
+    position:relative!important;
+    padding:12px!important;
+    padding-bottom:8px!important;
+  }
+}
+
+/* 입력 폼 내부 정렬 - B안 유지 */
+#form-date-row, #anniv-input-row{
+  background:#fff!important;
+  border:1px solid #e0e0e0!important;
+  border-radius:12px!important;
+  padding:0 14px!important;
+  margin-bottom:8px!important;
+  box-sizing:border-box!important;
+  height:48px!important;
+  min-height:48px!important;
+  display:flex!important;
+  align-items:center!important;
+  width:100%!important;
+}
+#form-date-row .box-label, #anniv-input-row .box-label{
+  flex:0 0 120px!important;
+  width:120px!important;
+  font-weight:bold!important;
+  font-size:14px!important;
+  color:#2c3e50!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:6px!important;
+  border-right:1px solid #f0f0f0!important;
+  padding-right:12px!important;
+  margin-right:12px!important;
+}
+#form-date-input, #anniv-input{
+  flex:1!important;
+  border:none!important;
+  background:transparent!important;
+  outline:none!important;
+  font-size:14px!important;
+}
+#diary-content-section{
+  background:#fff!important;
+  border:1px solid #e0e0e0!important;
+  border-radius:12px!important;
+  padding:12px!important;
+  margin-bottom:8px!important;
+  width:100%!important;
+}
+#textOutput{
+  min-height:80px!important;
+  border:1px solid #e8e8e8!important;
+  border-radius:10px!important;
+  padding:10px!important;
+  background:#fafafa!important;
+}
+#reservation-box{
+  background:#fff!important;
+  border:1px solid #e0e0e0!important;
+  border-radius:12px!important;
+  padding:0!important;
+  margin-bottom:8px!important;
+  width:100%!important;
+  overflow:hidden!important;
+}
+#reservation-box .alarm-header{
+  height:40px!important;
+  background:#FFF8E8!important;
+  border-bottom:1px solid #f0e0d0!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-weight:bold!important;
+  gap:6px!important;
+}
+#reservation-box .alarm-body{
+  padding:12px!important;
+  display:flex!important;
+  flex-direction:column!important;
+  gap:10px!important;
+}
+
+.sub-memo-item{display:flex!important;flex-direction:column!important;width:100%!important;box-sizing:border-box!important;overflow:hidden!important;}
+.sub-memo-item .memo-action-btns{display:flex!important;flex-direction:row!important;justify-content:space-between!important;gap:8px!important;padding:6px!important;}
 </style>
-<script id="V310_JS">
+<script id="V500_FIX_JS">
 (function(){
-function fixTC(){
-document.querySelectorAll('.time-capsule-banner').forEach(function(banner){
-var rightDiv=banner.querySelector('div:last-child'); if(!rightDiv) return;
-Array.from(rightDiv.childNodes).forEach(function(node){
-if(node.nodeType===1){ if(node.classList&&node.classList.contains('tc-toggle-btn')) return; var t=(node.textContent||'').trim(); if(t==='→'||t==='>'||t==='›'||t==='📬'||t==='✉️'||(t.length<=2&&/[→>›📬✉️]/.test(t))){ try{node.remove();}catch(e){node.style.display='none';} } }
-else if(node.nodeType===3){ var txt=node.textContent.trim(); if(txt==='→'||txt==='>'||txt==='›'||txt==='📬'||txt==='✉️'||(txt.length<=2&&/[→>›]/.test(txt))){ node.textContent=''; } }
-});
-rightDiv.style.width='40px'; rightDiv.style.minWidth='40px'; rightDiv.style.justifyContent='center';
-});
-document.querySelectorAll('.time-capsule-banner .tc-toggle-btn, .go-today-btn > span:last-child, #fortune-teaser .ft-arrow, #biorhythm-toggle-btn, .daily-explain-header .ft-arrow').forEach(function(el){
-el.style.width='32px'; el.style.minWidth='32px'; el.style.maxWidth='32px'; el.style.height='28px'; el.style.minHeight='28px'; el.style.maxHeight='28px'; el.style.padding='0'; el.style.margin='0'; el.style.borderRadius='5px'; el.style.display='flex'; el.style.alignItems='center'; el.style.justifyContent='center'; el.style.boxSizing='border-box'; el.style.lineHeight='28px';
-});
-}
-function fixBio(){
-var teaser=document.getElementById('main-biorhythm-teaser');
-var content=document.getElementById('main-biorhythm-content');
-var btn=document.getElementById('biorhythm-toggle-btn');
-if(!teaser||!content||!btn) return;
-btn.removeAttribute('onclick'); btn.onclick=null;
-content.style.display='';
-function apply(collapsed){
-if(collapsed){ teaser.classList.add('bio-collapsed'); btn.textContent='▶'; } else { teaser.classList.remove('bio-collapsed'); btn.textContent='▼'; }
-try{ localStorage.setItem('biorhythmCollapsed',''+collapsed); }catch(e){}
-}
-var saved=false; try{ saved=localStorage.getItem('biorhythmCollapsed')==='true'; }catch(e){}
-apply(saved);
-var newBtn=btn.cloneNode(true); newBtn.removeAttribute('onclick'); btn.parentNode.replaceChild(newBtn, btn); btn=newBtn;
-btn.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); var isCollapsed=teaser.classList.contains('bio-collapsed'); apply(!isCollapsed); }, true);
-var header=document.querySelector('.biorhythm-header');
-if(header){ header.addEventListener('click', function(e){ if(e.target.closest('#biorhythm-toggle-btn')) return; btn.click(); }); }
-}
-document.addEventListener('DOMContentLoaded', function(){ fixTC(); fixBio(); setTimeout(fixBio,400); });
-fixTC(); fixBio();
-setTimeout(fixTC,300); setTimeout(fixBio,300);
-setTimeout(fixBio,1200);
-if(window.renderDiaryAroundToday && !window.renderDiaryAroundToday._v310){
-var orig=window.renderDiaryAroundToday;
-window.renderDiaryAroundToday=function(){ var r=orig.apply(this,arguments); setTimeout(fixTC,80); setTimeout(fixBio,150); return r; };
-window.renderDiaryAroundToday._v310=true;
-}
-var obs; function setupObs(){ var el=document.getElementById('diary-around-today-list'); if(!el) return; if(obs) obs.disconnect(); obs=new MutationObserver(function(){ clearTimeout(obs._t); obs._t=setTimeout(function(){ fixTC(); fixBio(); },80); }); obs.observe(el,{childList:true, subtree:true}); }
-document.addEventListener('DOMContentLoaded', setupObs); setTimeout(setupObs,900);
+  function ensureContainer(){
+    try{
+      var card=document.getElementById('diary-around-today-card');
+      var list=document.getElementById('diary-around-today-list');
+      if(!card || !list) return null;
+      for(var v=322; v<=339; v++){
+        var old=document.getElementById('v'+v+'-banner-container');
+        if(old) old.remove();
+      }
+      var container=document.getElementById('v340-banner-container');
+      if(!container){
+        container=document.createElement('div');
+        container.id='v340-banner-container';
+        // list 바로 다음에 배치
+        if(list.nextSibling){
+          list.parentNode.insertBefore(container, list.nextSibling);
+        } else {
+          list.parentNode.appendChild(container);
+        }
+      }
+      return container;
+    }catch(e){ return null; }
+  }
+
+  function fixInputCardAndConnection(){
+    try{
+      var dateCard=document.getElementById('diary-around-today-card');
+      if(!dateCard) return;
+
+      // 카드 복구
+      dateCard.style.display='block';
+      dateCard.style.background='#fff';
+      dateCard.style.border='1px solid #e6d8d8';
+      dateCard.style.borderRadius='12px';
+      dateCard.style.padding='15px';
+      dateCard.style.boxShadow='0 3px 8px rgba(0,0,0,0.04)';
+      dateCard.style.pointerEvents='auto';
+
+      // 거슬리는 줄만 정밀 삭제 - hr, 빈 1px div만
+      Array.from(dateCard.children).forEach(function(child){
+        if(child.id==='diary-around-today-list') return;
+        if(child.id==='v340-banner-container') return;
+        if(child.classList.contains('feature-title')) return;
+        if(child.id==='fortune-teaser') return;
+        if(child.id==='main-biorhythm-teaser') return;
+        if(child.classList.contains('time-capsule-banner')) return;
+        if(child.classList.contains('go-today-btn')) return;
+        if(child.classList.contains('daily-explain-header')) return;
+        if(child.classList.contains('daily-explain-content')) return;
+        // hr만 삭제
+        if(child.tagName==='HR'){
+          child.style.display='none';
+        }
+        // 높이가 1-2px이고 내용이 없는 구분선만 삭제
+        if(child.offsetHeight>0 && child.offsetHeight<=2 && child.textContent.trim()==='' && !child.id){
+          // 단, diary-around-today-list는 제외
+          if(child.id!=='diary-around-today-list'){
+            child.style.display='none';
+          }
+        }
+      });
+
+      // 입력 버튼 복구 - 클릭 가능하게
+      var inputBtn=dateCard.querySelector('button[onclick*="openDiaryForm"]');
+      if(!inputBtn){
+        var btns=dateCard.querySelectorAll('button');
+        for(var i=0;i<btns.length;i++){ if(btns[i].textContent.trim()==='입력'){ inputBtn=btns[i]; break; } }
+      }
+      if(inputBtn){
+        inputBtn.style.display='flex';
+        inputBtn.style.pointerEvents='auto';
+        inputBtn.style.cursor='pointer';
+        inputBtn.style.width='100px';
+        inputBtn.style.height='52px';
+        inputBtn.style.minHeight='52px';
+        inputBtn.style.maxHeight='52px';
+        inputBtn.disabled=false;
+        // onclick 복구 확인
+        if(!inputBtn.getAttribute('onclick') || inputBtn.getAttribute('onclick').indexOf('openDiaryForm')===-1){
+          inputBtn.setAttribute('onclick', 'openDiaryForm(selectedViewDate || getTodayStr())');
+        }
+      }
+
+      var album1=dateCard.querySelector('#btn-view-list');
+      var album2=dateCard.querySelector('#btn-view-gallery');
+      if(album1){
+        album1.style.display='flex';
+        album1.style.pointerEvents='auto';
+        album1.style.cursor='pointer';
+        album1.style.width='60px';
+        album1.style.height='25px';
+      }
+      if(album2){
+        album2.style.display='flex';
+        album2.style.pointerEvents='auto';
+        album2.style.cursor='pointer';
+        album2.style.width='60px';
+        album2.style.height='25px';
+      }
+
+      // 타임캡슐 연결 복구
+      var tcBanner=dateCard.querySelector('.time-capsule-banner');
+      if(tcBanner){
+        tcBanner.style.display='flex';
+        tcBanner.style.pointerEvents='auto';
+        tcBanner.style.cursor='pointer';
+      }
+      var fortune=document.getElementById('fortune-teaser');
+      if(fortune){
+        fortune.style.display='flex';
+        fortune.style.pointerEvents='auto';
+        fortune.style.cursor='pointer';
+      }
+
+      // 리스트 복구 - 비어있어도 그리드로 유지하되, 비어있을 때는 숨기지 않고 border 없애기
+      var list=document.getElementById('diary-around-today-list');
+      if(list){
+        list.style.display='grid';
+        list.style.gridTemplateColumns='1fr 1fr';
+        list.style.gap='8px';
+        list.style.border='none';
+        list.style.background='transparent';
+        list.style.boxShadow='none';
+        list.style.margin='0';
+        list.style.padding='0';
+        list.style.pointerEvents='auto';
+        // 비어있으면 높이 0이지만 display는 유지 (JS가 채울 수 있게)
+        if(list.children.length===0){
+          list.style.minHeight='0';
+        } else {
+          list.style.minHeight='auto';
+        }
+      }
+
+    }catch(e){ console.log('fixInputCard error', e); }
+  }
+
+  function fixFormBoxes(){
+    try{
+      var formCard=document.getElementById('memo-form-card');
+      if(!formCard) return;
+      // 왼쪽 치우침 해결 - 중앙 정렬 복구
+      formCard.style.position='relative';
+      formCard.style.left='auto';
+      formCard.style.right='auto';
+      formCard.style.transform='none';
+      formCard.style.margin='0 auto';
+      formCard.style.display='block';
+      formCard.style.pointerEvents='auto';
+
+      // 폼 내부 요소들 포인터 이벤트 복구
+      var allInputs=formCard.querySelectorAll('input, select, textarea, button, div[contenteditable]');
+      allInputs.forEach(function(el){
+        el.style.pointerEvents='auto';
+      });
+
+      var dateRow=document.getElementById('form-date-row');
+      var annivRow=document.getElementById('anniv-input-row');
+      var diarySection=document.getElementById('diary-content-section');
+      var reservBox=document.getElementById('reservation-box');
+      if(!dateRow || !annivRow || !diarySection || !reservBox) return;
+      if(formCard._v340) return;
+      formCard._v340=true;
+
+      var dateInput=document.getElementById('form-date-input');
+      var annivInput=document.getElementById('anniv-input');
+      var repeatSelect=document.getElementById('anniv-repeat-select');
+      var solarRadio=document.getElementById('anniv-cal-solar');
+      var lunarRadio=document.getElementById('anniv-cal-lunar');
+      var solarLabel=solarRadio ? solarRadio.closest('label') : null;
+      var lunarLabel=lunarRadio ? lunarRadio.closest('label') : null;
+      var timeInput=document.getElementById('reservation-time-input');
+      var dailyRepeatChk=document.getElementById('daily-repeat-checkbox');
+      var onceAlarmChk=document.getElementById('once-alarm-checkbox');
+      var dailyAlarmChk=document.getElementById('daily-alarm-enabled');
+
+      // 일자
+      dateRow.innerHTML='';
+      dateRow.style.cssText='background:#fff; border:1px solid #e0e0e0; border-radius:12px; padding:0 14px; margin-bottom:8px; box-sizing:border-box; height:48px; min-height:48px; display:flex; align-items:center; gap:0; width:100%;';
+      var dl=document.createElement('div'); dl.className='box-label'; dl.innerHTML='<span>📅</span><span>일자</span>';
+      dateRow.appendChild(dl);
+      if(dateInput){ dateInput.style.cssText='flex:1; height:100%; border:none; font-size:14px; background:transparent; outline:none;'; dateRow.appendChild(dateInput); }
+
+      // 제목
+      annivRow.innerHTML='';
+      annivRow.style.cssText='background:#fff; border:1px solid #e0e0e0; border-radius:12px; padding:0 14px; margin-bottom:8px; box-sizing:border-box; height:48px; min-height:48px; display:flex; align-items:center; gap:0; width:100%;';
+      var al=document.createElement('div'); al.className='box-label'; al.innerHTML='<span>🎉</span><span>제목&기념일</span>';
+      annivRow.appendChild(al);
+      if(annivInput){ annivInput.style.cssText='flex:1; height:100%; border:none; font-size:14px; background:transparent; outline:none;'; annivInput.placeholder='예: 생일'; annivRow.appendChild(annivInput); }
+
+      // 상세내용
+      diarySection.style.cssText='background:#fff; border:1px solid #e0e0e0; border-radius:12px; padding:12px; margin-bottom:8px; box-sizing:border-box; width:100%;';
+      var dt=diarySection.querySelector('div'); if(dt){ dt.style.cssText='font-size:14px; font-weight:bold; color:#2c3e50; margin-bottom:8px; display:flex; align-items:center; gap:6px;'; }
+
+      // 알림
+      reservBox.innerHTML='';
+      reservBox.style.cssText='background:#fff; border:1px solid #e0e0e0; border-radius:12px; padding:0; margin-bottom:8px; box-sizing:border-box; overflow:hidden; width:100%;';
+      var alarmHeader=document.createElement('div'); alarmHeader.className='alarm-header';
+      alarmHeader.innerHTML='<span>⏰</span><span>알림</span>';
+      reservBox.appendChild(alarmHeader);
+      var alarmBody=document.createElement('div'); alarmBody.className='alarm-body';
+      var line1=document.createElement('div'); line1.style.cssText='display:flex; flex-wrap:nowrap; align-items:center; gap:12px;';
+      if(repeatSelect){ repeatSelect.style.cssText='flex:0 0 120px; height:36px; border-radius:8px; border:1px solid #e0d0c0; font-size:13px; padding:0 8px; background:#fff;'; line1.appendChild(repeatSelect); }
+      var radios=document.createElement('div'); radios.style.cssText='display:flex; align-items:center; gap:16px; flex:1;';
+      if(solarLabel){ solarLabel.style.cssText='font-size:13px; display:flex; align-items:center; gap:6px; cursor:pointer;'; radios.appendChild(solarLabel); }
+      if(lunarLabel){ lunarLabel.style.cssText='font-size:13px; display:flex; align-items:center; gap:6px; cursor:pointer;'; radios.appendChild(lunarLabel); }
+      line1.appendChild(radios);
+      alarmBody.appendChild(line1);
+      var line2=document.createElement('div'); line2.style.cssText='display:flex; align-items:center; gap:8px; background:#fafafa; border-radius:8px; padding:8px 10px; border:1px solid #f0f0f0;';
+      var timeIcon=document.createElement('span'); timeIcon.textContent='🕐';
+      line2.appendChild(timeIcon);
+      if(timeInput){ timeInput.style.cssText='width:140px; height:36px; border:1px solid #e0d0c0; border-radius:8px; font-size:13px; padding:0 8px; background:#fff;'; line2.appendChild(timeInput); }
+      alarmBody.appendChild(line2);
+      var line3=document.createElement('div'); line3.style.cssText='display:flex; flex-wrap:wrap; gap:16px; padding:4px 2px; align-items:center;';
+      if(dailyRepeatChk){ var lbl=dailyRepeatChk.closest('label'); if(lbl){ lbl.style.cssText='display:flex; align-items:center; gap:6px; font-size:13px; color:#8a7a7a; cursor:pointer;'; line3.appendChild(lbl); } }
+      if(onceAlarmChk){ var lbl2=onceAlarmChk.closest('label'); if(lbl2){ lbl2.style.cssText='display:flex; align-items:center; gap:6px; font-size:13px; color:#8a7a7a; cursor:pointer;'; line3.appendChild(lbl2); } }
+      if(dailyAlarmChk){ var lbl3=dailyAlarmChk.closest('label'); if(lbl3){ lbl3.style.cssText='display:flex; align-items:center; gap:6px; font-size:13px; color:#27ae60; font-weight:700; cursor:pointer;'; line3.appendChild(lbl3); } }
+      alarmBody.appendChild(line3);
+      reservBox.appendChild(alarmBody);
+
+      if(annivRow.nextSibling!==diarySection){
+        annivRow.parentNode.insertBefore(diarySection, reservBox);
+      }
+      if(diarySection.nextSibling!==reservBox){
+        diarySection.parentNode.insertBefore(reservBox, diarySection.nextSibling);
+      }
+
+    }catch(e){ console.log('fixFormBoxes error', e); }
+  }
+
+  function dedupAndMove(){
+    try{
+      var list=document.getElementById('diary-around-today-list');
+      var container=ensureContainer();
+      if(!list||!container) return;
+      
+      // 기존 중복 제거
+      var listHeaders=list.querySelectorAll('.daily-explain-header');
+      var listContents=list.querySelectorAll('.daily-explain-content');
+      var latestHeader=null; var latestContent=null;
+      if(listHeaders.length>0){
+        latestHeader=listHeaders[listHeaders.length-1];
+        var next=latestHeader.nextElementSibling;
+        if(next && next.classList.contains('daily-explain-content')) latestContent=next;
+      }
+      listHeaders.forEach(function(h){ if(h.parentElement===list) h.remove(); });
+      listContents.forEach(function(c){ if(c.parentElement===list) c.remove(); });
+      
+      var containerHeaders=container.querySelectorAll('.daily-explain-header');
+      var containerContents=container.querySelectorAll('.daily-explain-content');
+      if(!latestHeader && containerHeaders.length>0) latestHeader=containerHeaders[containerHeaders.length-1];
+      if(!latestContent && containerContents.length>0) latestContent=containerContents[containerContents.length-1];
+      containerHeaders.forEach(function(h){ h.remove(); });
+      containerContents.forEach(function(c){ c.remove(); });
+      
+      // 타임캡슐 배너는 리스트(pastDiv) 안에 그대로 둔다. 리스트 밖에 남은 잔재만 제거
+      document.querySelectorAll('.time-capsule-banner, #time-capsule-content').forEach(function(tc){
+        if(!list.contains(tc)) tc.remove();
+      });
+      
+      // go-today-btn 중복 제거
+      var goTodayBtns = document.querySelectorAll('.go-today-btn');
+      var latestGoToday = null;
+      if(goTodayBtns.length>0){
+        latestGoToday = goTodayBtns[goTodayBtns.length-1];
+        goTodayBtns.forEach(function(b, idx){
+          if(idx !== goTodayBtns.length-1) b.remove();
+        });
+      }
+      
+      var fortune=document.getElementById('fortune-teaser');
+      if(fortune){
+        var dup=list.querySelectorAll('#fortune-teaser');
+        dup.forEach(function(f){ if(f!==fortune) f.remove(); });
+        fortune.style.display='flex';
+        fortune.style.pointerEvents='auto';
+      }
+      var bio=document.getElementById('main-biorhythm-teaser');
+      if(bio){
+        var dupB=list.querySelectorAll('#main-biorhythm-teaser');
+        dupB.forEach(function(b){ if(b!==bio) b.remove(); });
+        bio.style.display='block';
+      }
+      
+      // 컨테이너 비우기
+      container.innerHTML='';
+      
+      // === 요청 순서대로 재배치 ===
+      // 1) 다이어리 리스트는 이미 컨테이너 밖에 있음 (그대로 유지)
+      
+      // 2) 타임캡슐은 리스트 안(pastDiv)에서 배너 > 내용 순서로 그려진다
+      if(latestGoToday){
+        container.appendChild(latestGoToday);
+      }
+      
+      // 3) 바이오리듬
+      if(bio){
+        container.appendChild(bio);
+      }
+      
+      // 4) 오늘의 운세
+      if(fortune){
+        container.appendChild(fortune);
+      }
+      
+      // 5) 설명(명언)
+      if(latestHeader){
+        container.appendChild(latestHeader);
+        if(latestContent) container.appendChild(latestContent);
+      }
+      
+      // 위 요소들을 컨테이너로 옮기고 남은 빈 껍데기(빈 줄/테두리 선)는 제거 - 타임캡슐 아래 빈 공간·선의 원인
+      Array.from(list.children).forEach(function(ch){
+        if(ch.classList.contains('sub-memo-item')) return;
+        if(ch.textContent.trim()==='' && !ch.querySelector('img,button,input,textarea,select,canvas,svg,video,[onclick]')){
+          ch.remove();
+        }
+      });
+      
+      container.classList.toggle('after-tc', !!list.querySelector('.tc-group'));
+      
+      console.log('V500-REORDER: 리스트 > 타임캡슐 > 바이오리듬 > 운세 > 설명 순서 적용');
+    }catch(e){ console.log('dedupAndMove error', e); }
+  }
+
+  function fixBio(){
+    try{
+      var teaser=document.getElementById('main-biorhythm-teaser');
+      var btn=document.getElementById('biorhythm-toggle-btn');
+      if(!teaser||!btn) return;
+      if(btn._v340) return;
+      btn._v340=true;
+      function apply(collapsed){
+        if(collapsed){ teaser.classList.add('bio-collapsed'); btn.textContent='▶'; } else { teaser.classList.remove('bio-collapsed'); btn.textContent='▼'; }
+        try{ localStorage.setItem('biorhythmCollapsed',''+collapsed); }catch(e){}
+      }
+      var saved=false; try{ saved=localStorage.getItem('biorhythmCollapsed')==='true'; }catch(e){}
+      apply(saved);
+      btn.addEventListener('click', function(e){
+        e.preventDefault(); e.stopPropagation();
+        var isCollapsed=teaser.classList.contains('bio-collapsed');
+        apply(!isCollapsed);
+      });
+    }catch(e){}
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    ensureContainer(); dedupAndMove(); fixBio(); fixInputCardAndConnection(); fixFormBoxes();
+    setTimeout(function(){ dedupAndMove(); fixInputCardAndConnection(); fixFormBoxes(); }, 200);
+    setTimeout(function(){ dedupAndMove(); fixInputCardAndConnection(); fixFormBoxes(); }, 800);
+  });
+  ensureContainer();
+  setTimeout(dedupAndMove, 50);
+  setTimeout(fixInputCardAndConnection, 80);
+  setTimeout(fixFormBoxes, 120);
+  setTimeout(fixBio, 150);
+
+  var origOpen=window.openDiaryForm;
+  if(origOpen && !origOpen._v340){
+    window.openDiaryForm=function(){
+      var res=origOpen.apply(this, arguments);
+      setTimeout(function(){ fixFormBoxes(); }, 100);
+      return res;
+    };
+    window.openDiaryForm._v340=true;
+  }
+  var origOpenPanel=window.openDiaryFormPanel;
+  if(origOpenPanel && !origOpenPanel._v340){
+    window.openDiaryFormPanel=function(){
+      var res=origOpenPanel.apply(this, arguments);
+      setTimeout(function(){ fixFormBoxes(); }, 100);
+      return res;
+    };
+    window.openDiaryFormPanel._v340=true;
+  }
+
+  var origRender=window.renderDiaryAroundToday;
+  if(origRender && !origRender._v340){
+    window.renderDiaryAroundToday=function(){
+      var res=origRender.apply(this, arguments);
+      setTimeout(function(){ ensureContainer(); dedupAndMove(); fixInputCardAndConnection(); }, 50);
+      return res;
+    };
+    window.renderDiaryAroundToday._v340=true;
+  }
+
+  var obs=null;
+  function setupObs(){
+    var list=document.getElementById('diary-around-today-list');
+    if(!list) return;
+    if(obs) obs.disconnect();
+    obs=new MutationObserver(function(){
+      clearTimeout(obs._t);
+      obs._t=setTimeout(function(){ ensureContainer(); dedupAndMove(); fixInputCardAndConnection(); fixFormBoxes(); }, 100);
+    });
+    obs.observe(list, {childList:true, subtree:false});
+  }
+  setTimeout(setupObs, 500);
 })();
 </script>
-<style id="V310_TC_STYLE">
-.time-capsule-banner{cursor:pointer!important;user-select:none!important}
-#time-capsule-content.tc-content-wrap{display:flex!important;flex-direction:column!important;gap:2px!important;margin:0 0 2px 0!important;overflow:hidden!important;transition:max-height 0.3s ease,opacity 0.2s ease!important}
+
+
+<!-- V501 FIX - 타임캡슐 펼치기 버튼 밑으로 펼치기 -->
+<style id="V510_CLEAN">
+/* V510 CLEAN - V509 기반 전체 코드 분석 후 재작성 - 패치 누적 제거 */
+
+/* 전체 폼 카드 */
+#memo-form-card{
+  display:flex !important;
+  flex-direction:column !important;
+  gap:12px !important;
+  padding:14px !important;
+  background:#fff !important;
+  border-radius:16px !important;
+  box-sizing:border-box !important;
+  width:100% !important;
+  max-width:100% !important;
+  overflow:visible !important;
+}
+
+/* 헤더 */
+#memo-form-card .form-header-info{
+  display:flex !important;
+  justify-content:space-between !important;
+  align-items:center !important;
+  width:100% !important;
+  order:0 !important;
+  padding-bottom:10px !important;
+  border-bottom:1px solid #f0e0e0 !important;
+}
+#memo-form-card .close-form-btn{
+  margin-left:auto !important;
+  width:36px !important;
+  height:36px !important;
+  flex:0 0 36px !important;
+}
+
+/* 일자 */
+#memo-form-card #form-date-row{
+  order:1 !important;
+  width:100% !important;
+  height:48px !important;
+  min-height:48px !important;
+  display:flex !important;
+  align-items:center !important;
+  gap:0 !important;
+  background:#fff !important;
+  border:1px solid #e0e0e0 !important;
+  border-radius:12px !important;
+  padding:0 14px !important;
+  margin:0 !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
+}
+#memo-form-card #form-date-row .form-date-label{
+  flex:0 0 auto !important;
+  font-weight:700 !important;
+  margin-right:12px !important;
+}
+#memo-form-card #form-date-row input{
+  flex:1 !important;
+  border:none !important;
+  outline:none !important;
+  font-size:14px !important;
+  background:transparent !important;
+  width:100% !important;
+}
+
+/* 제목&기념일 - V500 구조: 라벨 + 입력만 */
+#memo-form-card #anniv-input-row{
+  order:2 !important;
+  width:100% !important;
+  height:48px !important;
+  min-height:48px !important;
+  display:flex !important;
+  align-items:center !important;
+  gap:0 !important;
+  background:#fff !important;
+  border:1px solid #e0e0e0 !important;
+  border-radius:12px !important;
+  padding:0 14px !important;
+  margin:0 !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
+  position:relative !important;
+  z-index:2 !important;
+}
+#memo-form-card #anniv-input-row .form-date-label,
+#memo-form-card #anniv-input-row > div:first-child{
+  flex:0 0 auto !important;
+  display:flex !important;
+  align-items:center !important;
+  gap:6px !important;
+  font-size:14px !important;
+  font-weight:700 !important;
+  color:#2c3e50 !important;
+  margin-right:10px !important;
+  white-space:nowrap !important;
+}
+#memo-form-card #anniv-input{
+  flex:1 !important;
+  width:100% !important;
+  height:100% !important;
+  border:none !important;
+  outline:none !important;
+  font-size:14px !important;
+  background:transparent !important;
+  padding:0 !important;
+  box-sizing:border-box !important;
+}
+
+/* 상세내용 - 제목 바로 아래 */
+#memo-form-card #diary-content-section{
+  order:3 !important;
+  width:100% !important;
+  display:flex !important;
+  flex-direction:column !important;
+  gap:8px !important;
+  background:#fff !important;
+  border:1px solid #e0e0e0 !important;
+  border-radius:12px !important;
+  padding:12px !important;
+  margin:0 !important;
+  box-sizing:border-box !important;
+  position:relative !important;
+  z-index:1 !important;
+}
+#memo-form-card #diary-content-section > div:first-child{
+  font-size:14px !important;
+  font-weight:700 !important;
+  color:#2c3e50 !important;
+  margin-bottom:4px !important;
+}
+#memo-form-card #textOutput{
+  width:100% !important;
+  min-height:120px !important;
+  border:1px solid #eee !important;
+  border-radius:10px !important;
+  padding:12px !important;
+  background:#fafafa !important;
+  box-sizing:border-box !important;
+}
+
+/* 알림 - 상세 아래, 반복/양력/음력 포함 */
+#memo-form-card #reservation-box{
+  order:4 !important;
+  width:100% !important;
+  display:flex !important;
+  flex-direction:column !important;
+  gap:0 !important;
+  background:#fff !important;
+  border:1.5px solid #ffe0e0 !important;
+  border-radius:12px !important;
+  padding:0 !important;
+  margin:0 !important;
+  overflow:hidden !important;
+  box-sizing:border-box !important;
+}
+#memo-form-card #reservation-box .alarm-header{
+  background:#FFF5F5 !important;
+  padding:10px 14px !important;
+  font-size:13px !important;
+  font-weight:700 !important;
+  text-align:center !important;
+  border-bottom:1px solid #ffe0e0 !important;
+}
+#memo-form-card #reservation-box .alarm-body{
+  display:flex !important;
+  flex-direction:column !important;
+  gap:10px !important;
+  padding:12px !important;
+}
+
+/* 알림 1줄: 반복 + 양력 + 음력 - 모바일에서 안 밀리게 */
+#memo-form-card #reservation-box .alarm-line1{
+  display:flex !important;
+  flex-direction:row !important;
+  flex-wrap:nowrap !important;
+  align-items:center !important;
+  gap:6px !important;
+  width:100% !important;
+  box-sizing:border-box !important;
+}
+#memo-form-card #reservation-box .alarm-line1 select{
+  flex:0 0 85px !important;
+  width:85px !important;
+  min-width:70px !important;
+  height:36px !important;
+  font-size:12px !important;
+  border:1px solid #e0c8a8 !important;
+  border-radius:8px !important;
+  background:#fff !important;
+  padding:0 6px !important;
+  box-sizing:border-box !important;
+}
+#memo-form-card #reservation-box .alarm-line1 .radios{
+  flex:1 !important;
+  display:flex !important;
+  flex-direction:row !important;
+  align-items:center !important;
+  justify-content:space-around !important;
+  gap:4px !important;
+  min-width:0 !important;
+}
+#memo-form-card #reservation-box .alarm-line1 .radios label{
+  flex:1 1 0 !important;
+  min-width:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:4px !important;
+  font-size:12px !important;
+  white-space:nowrap !important;
+  padding:6px 4px !important;
+  background:#fafafa !important;
+  border:1px solid #eee !important;
+  border-radius:6px !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
+}
+#memo-form-card #reservation-box .alarm-line1 .radios label input{
+  width:14px !important;
+  height:14px !important;
+  flex-shrink:0 !important;
+}
+
+/* 알림 2줄: 시간 */
+#memo-form-card #reservation-box .alarm-line2{
+  display:flex !important;
+  align-items:center !important;
+  gap:8px !important;
+  width:100% !important;
+  background:#f9f9ff !important;
+  border:1px solid #f0e0e0 !important;
+  border-radius:10px !important;
+  padding:8px 12px !important;
+  box-sizing:border-box !important;
+}
+#memo-form-card #reservation-box .alarm-line2 input{
+  flex:1 !important;
+  width:100% !important;
+  height:36px !important;
+  border:1px solid #e0d0d0 !important;
+  border-radius:8px !important;
+  padding:0 10px !important;
+  background:#fff !important;
+  font-size:14px !important;
+}
+
+/* 알림 3줄: 체크박스 3개 한줄 */
+#memo-form-card #reservation-box .alarm-line3{
+  display:grid !important;
+  grid-template-columns: 1fr 1fr 1fr !important;
+  gap:6px !important;
+  width:100% !important;
+  box-sizing:border-box !important;
+}
+#memo-form-card #reservation-box .alarm-line3 label{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:4px !important;
+  font-size:11px !important;
+  padding:8px 4px !important;
+  background:#fafafa !important;
+  border:1px solid #eee !important;
+  border-radius:8px !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  box-sizing:border-box !important;
+}
+#memo-form-card #reservation-box .alarm-line3 label:last-child{
+  background:#e8f5e9 !important;
+  border-color:#c8e6c9 !important;
+  color:#2e7d32 !important;
+  font-weight:700 !important;
+}
+#memo-form-card #reservation-box .alarm-line3 input{
+  width:14px !important;
+  height:14px !important;
+  flex-shrink:0 !important;
+}
+
+/* 버튼: 카메라 갤러리 저장 + 종료 */
+#memo-form-card .form-btn-row{
+  order:10 !important;
+  width:100% !important;
+  display:grid !important;
+  grid-template-columns: 1fr 1fr 1fr !important;
+  gap:8px !important;
+  margin-top:8px !important;
+}
+#memo-form-card .form-exit-row{
+  order:11 !important;
+  width:100% !important;
+  display:grid !important;
+  grid-template-columns: 1fr !important;
+  gap:8px !important;
+  margin-top:6px !important;
+}
+#memo-form-card .form-btn-row button,
+#memo-form-card .form-exit-row button{
+  height:46px !important;
+  border-radius:10px !important;
+  font-size:13px !important;
+  font-weight:600 !important;
+  width:100% !important;
+}
+
+/* 모바일 360 이하 */
+@media (max-width:360px){
+  #memo-form-card #reservation-box .alarm-line1 select{
+    flex:0 0 70px !important;
+    width:70px !important;
+    font-size:11px !important;
+  }
+  #memo-form-card #reservation-box .alarm-line1 .radios label{
+    font-size:11px !important;
+    padding:4px 2px !important;
+  }
+  #memo-form-card #reservation-box .alarm-line3 label{
+    font-size:10px !important;
+    padding:6px 2px !important;
+  }
+}
 </style>
-<script id="V310_TC_JS">
+<script id="V510_CLEAN_JS">
+// V510 CLEAN - V500 구조 분석 후 근본 수정 - 패치 누적 제거
 (function(){
-function ensureWrapper(banner){
-var existing=document.getElementById('time-capsule-content'); if(existing) return existing; if(!banner) return null;
-var wrapper=document.createElement('div'); wrapper.id='time-capsule-content'; wrapper.className='tc-content-wrap';
-wrapper.style.cssText='overflow:hidden; transition:max-height 0.3s ease; margin:0 0 2px 0;';
-var next=banner.nextElementSibling; var toMove=[];
-while(next){ if(next.classList && (next.classList.contains('go-today-btn') || next.classList.contains('fortune-teaser') || next.classList.contains('daily-explain-header') || next.id==='main-biorhythm-teaser' || next.classList.contains('time-capsule-banner'))) break; var cur=next; next=next.nextElementSibling; toMove.push(cur); }
-toMove.forEach(function(el){ wrapper.appendChild(el); }); banner.parentNode.insertBefore(wrapper,banner.nextSibling); return wrapper;
+  function rebuildForm(){
+    try{
+      var form = document.getElementById('memo-form-card');
+      if(!form) return;
+      
+      var dateRow = document.getElementById('form-date-row');
+      var annivRow = document.getElementById('anniv-input-row');
+      var diarySec = document.getElementById('diary-content-section');
+      var reservBox = document.getElementById('reservation-box');
+      var annivInput = document.getElementById('anniv-input');
+      var repeatSelect = document.getElementById('anniv-repeat-select');
+      var solar = document.getElementById('anniv-cal-solar');
+      var lunar = document.getElementById('anniv-cal-lunar');
+      var timeInput = document.getElementById('reservation-time-input');
+      var dailyRepeat = document.getElementById('daily-repeat-checkbox');
+      var onceAlarm = document.getElementById('once-alarm-checkbox');
+      var dailyCheck = document.getElementById('daily-alarm-enabled');
+      
+      if(!annivRow || !diarySec || !reservBox) return;
+      
+      // 1. 제목&기념일 박스 재구성 - V500 원본 구조 유지 (라벨 + 입력만)
+      // 이미 V500_FIX_JS가 innerHTML=''로 비우고 라벨+입력만 넣었으므로, 그것을 유지
+      // 라벨이 없으면 생성
+      if(!annivRow.querySelector('.form-date-label') && annivRow.children.length < 2){
+        var label = document.createElement('label');
+        label.className='form-date-label';
+        label.innerHTML='🎉 제목&기념일';
+        label.style.cssText='flex:0 0 auto; margin-right:10px; font-weight:700; white-space:nowrap;';
+        annivRow.insertBefore(label, annivRow.firstChild);
+      }
+      
+      // 2. 상세내용이 제목 바로 아래 오도록 순서 강제
+      // 원하는 순서: dateRow(1) -> annivRow(2) -> diarySec(3) -> reservBox(4)
+      var children = Array.from(form.children);
+      var dateIdx = children.indexOf(dateRow);
+      var annivIdx = children.indexOf(annivRow);
+      var diaryIdx = children.indexOf(diarySec);
+      var reservIdx = children.indexOf(reservBox);
+      
+      if(annivIdx > diaryIdx){
+        form.insertBefore(annivRow, diarySec);
+        console.log('V510: 제목을 상세 위로 이동');
+      }
+      // diary가 reserv보다 뒤에 있으면 앞으로
+      children = Array.from(form.children);
+      diaryIdx = children.indexOf(diarySec);
+      reservIdx = children.indexOf(reservBox);
+      if(diaryIdx > reservIdx){
+        form.insertBefore(diarySec, reservBox);
+        console.log('V510: 상세를 알림 위로 이동');
+      }
+      
+      // 3. 알림 박스 내부 구조 정리 - 반복/양력/음력이 밖으로 밀리지 않게
+      var alarmBody = reservBox.querySelector('.alarm-body');
+      if(!alarmBody){
+        // V500에서 만든 alarmBody 찾기
+        alarmBody = reservBox.querySelector('div:last-child');
+      }
+      if(alarmBody){
+        alarmBody.className='alarm-body';
+        // line1 찾기
+        var line1 = alarmBody.querySelector('.alarm-line1');
+        if(!line1){
+          line1 = alarmBody.children[0];
+          if(line1) line1.className='alarm-line1';
+        }
+        if(line1){
+          // radios div 찾기
+          var radios = line1.querySelector('.radios');
+          if(!radios){
+            radios = document.createElement('div');
+            radios.className='radios';
+            // 기존 라디오 라벨들 이동
+            var labels = line1.querySelectorAll('label');
+            labels.forEach(function(lbl){ radios.appendChild(lbl); });
+            line1.appendChild(radios);
+          }
+          // repeatSelect가 line1에 있는지 확인
+          if(repeatSelect && !line1.contains(repeatSelect)){
+            line1.insertBefore(repeatSelect, radios);
+          }
+        }
+        
+        // line2, line3 클래스 부여
+        if(alarmBody.children[1]) alarmBody.children[1].className='alarm-line2';
+        if(alarmBody.children[2]) alarmBody.children[2].className='alarm-line3';
+      }
+      
+      // 4. 버튼 영역 - 카메라 갤러리 저장 + 종료 아래로
+      var btnRows = form.querySelectorAll('div[style*="grid-template-columns"]');
+      var cameraRow = null;
+      var exitRow = null;
+      btnRows.forEach(function(row){
+        if(row.textContent.includes('카메라') && row.textContent.includes('갤러리')){
+          cameraRow = row;
+          cameraRow.className='form-btn-row';
+        }
+        if(row.textContent.includes('종료') && !row.textContent.includes('카메라')){
+          exitRow = row;
+          exitRow.className='form-exit-row';
+        }
+      });
+      
+      if(cameraRow) form.appendChild(cameraRow);
+      if(exitRow) form.appendChild(exitRow);
+      
+      // 5. 예: 생일 입력칸이 작게 보이는 문제 - width 100% 강제
+      if(annivInput){
+        annivInput.style.width='100%';
+        annivInput.style.flex='1';
+        annivInput.style.display='block';
+        annivInput.style.visibility='visible';
+        annivInput.style.opacity='1';
+      }
+      
+      // 6. 메인화면 위 텍스트 제거 (이미 V509에서 했지만 한번 더)
+      var bodyTexts = document.body.childNodes;
+      for(var i=0;i<bodyTexts.length;i++){
+        if(bodyTexts[i].nodeType===3){
+          var t = bodyTexts[i].nodeValue.trim();
+          if(t.includes('리스트>타임캡슐') || t.includes('바이오리듬>운세')){
+            bodyTexts[i].nodeValue='';
+          }
+        }
+      }
+      
+    }catch(e){ console.log('V510 error', e); }
+  }
+  
+  document.addEventListener('DOMContentLoaded', function(){
+    rebuildForm();
+    setTimeout(rebuildForm, 300);
+    setTimeout(rebuildForm, 800);
+  });
+  
+  var orig = window.openDiaryForm;
+  if(orig && !orig._v510){
+    window.openDiaryForm = function(){
+      var r = orig.apply(this, arguments);
+      setTimeout(rebuildForm, 50);
+      setTimeout(rebuildForm, 400);
+      return r;
+    };
+    window.openDiaryForm._v510=true;
+  }
+  
+  var orig2 = window.openDiaryFormPanel;
+  if(orig2 && !orig2._v510){
+    window.openDiaryFormPanel = function(){
+      var r = orig2.apply(this, arguments);
+      setTimeout(rebuildForm, 50);
+      return r;
+    };
+    window.openDiaryFormPanel._v510=true;
+  }
+  
+  console.log('V510 CLEAN loaded - V509 기반 근본 수정');
+})();
+</script>
+
+<style id="V511_WIDTH_FIX">
+/* V511 - 노트북 좌우폭 안맞는 문제 수정 */
+
+/* 전체 폼 - 좌우 폭 통일 */
+#memo-form-card{
+  width:100% !important;
+  max-width:680px !important;
+  margin:0 auto !important;
+  padding:16px !important;
+  gap:14px !important;
+  box-sizing:border-box !important;
 }
-function setCollapsed(wrapper,btn,collapsed){
-if(!wrapper) return;
-if(collapsed){ wrapper.style.maxHeight='0px'; wrapper.style.opacity='0'; wrapper.style.pointerEvents='none'; if(btn) btn.textContent='▶'; }
-else { wrapper.style.maxHeight=wrapper.scrollHeight+1000+'px'; wrapper.style.opacity='1'; wrapper.style.pointerEvents='auto'; if(btn) btn.textContent='▼'; setTimeout(function(){ wrapper.style.maxHeight='none'; },350); }
-try{ localStorage.setItem('timeCapsuleCollapsed',collapsed?'true':'false'); }catch(e){}
+
+/* 모든 박스 동일한 좌우폭 */
+#memo-form-card #form-date-row,
+#memo-form-card #anniv-input-row,
+#memo-form-card #diary-content-section,
+#memo-form-card #reservation-box,
+#memo-form-card .form-btn-row,
+#memo-form-card .form-exit-row{
+  width:100% !important;
+  max-width:100% !important;
+  margin-left:0 !important;
+  margin-right:0 !important;
+  box-sizing:border-box !important;
 }
-function initTC(){
-var banners=document.querySelectorAll('.time-capsule-banner'); if(banners.length===0) return;
-var collapsed=false; try{ collapsed=localStorage.getItem('timeCapsuleCollapsed')==='true'; }catch(e){}
-banners.forEach(function(banner){
-var wrapper=ensureWrapper(banner); var rightDiv=banner.querySelector('div:last-child'); var btn=banner.querySelector('.tc-toggle-btn');
-if(!btn){ btn=document.createElement('button'); btn.className='tc-toggle-btn'; btn.type='button'; btn.textContent=collapsed?'▶':'▼'; if(rightDiv){ rightDiv.style.display='flex'; rightDiv.style.alignItems='center'; rightDiv.style.gap='0'; rightDiv.style.width='40px'; rightDiv.style.justifyContent='center'; rightDiv.appendChild(btn); } else banner.appendChild(btn); btn.addEventListener('click',function(ev){ ev.stopPropagation(); var w=document.getElementById('time-capsule-content')||ensureWrapper(banner); if(!w) return; var comp=window.getComputedStyle(w); var isCollapsed=comp.maxHeight==='0px' || comp.opacity==='0' || w.style.maxHeight==='0px'; setCollapsed(w,btn,!isCollapsed); }); }
-if(wrapper) setCollapsed(wrapper,btn,collapsed);
-});
+
+/* 제목&기념일 - 예: 생일 입력칸 넓게 */
+#memo-form-card #anniv-input-row{
+  display:flex !important;
+  flex-direction:row !important;
+  align-items:center !important;
+  gap:12px !important;
+  height:52px !important;
+  padding:0 16px !important;
 }
-document.addEventListener('click',function(e){ var banner=e.target.closest('.time-capsule-banner'); if(banner && !e.target.closest('.tc-toggle-btn')){ var btn=banner.querySelector('.tc-toggle-btn'); if(btn) btn.click(); } });
-document.addEventListener('DOMContentLoaded',function(){ initTC(); setTimeout(initTC,300); setTimeout(initTC,1000); });
-initTC(); setTimeout(initTC,500); setTimeout(initTC,1500);
-function wrapRender(){ if(window.renderDiaryAroundToday && !window.renderDiaryAroundToday._wrappedTC310){ var orig=window.renderDiaryAroundToday; window.renderDiaryAroundToday=function(){ var r=orig.apply(this,arguments); setTimeout(initTC,100); setTimeout(initTC,400); return r; }; window.renderDiaryAroundToday._wrappedTC310=true; } }
-wrapRender(); setTimeout(wrapRender,800);
+#memo-form-card #anniv-input-row > div:first-child,
+#memo-form-card #anniv-input-row .form-date-label{
+  flex:0 0 110px !important;
+  min-width:110px !important;
+  display:flex !important;
+  align-items:center !important;
+  gap:6px !important;
+  font-weight:800 !important;
+  white-space:nowrap !important;
+}
+#memo-form-card #anniv-input{
+  flex:1 !important;
+  width:100% !important;
+  height:100% !important;
+  border:none !important;
+  outline:none !important;
+  font-size:14px !important;
+  background:transparent !important;
+  padding:0 !important;
+}
+
+/* 상세내용 */
+#memo-form-card #diary-content-section #textOutput{
+  width:100% !important;
+  min-height:140px !important;
+}
+
+/* 알림 - 좌우폭 문제 핵심 수정 */
+#memo-form-card #reservation-box{
+  padding:0 !important;
+}
+#memo-form-card #reservation-box .alarm-header{
+  width:100% !important;
+  box-sizing:border-box !important;
+}
+#memo-form-card #reservation-box .alarm-body{
+  width:100% !important;
+  padding:14px 16px !important;
+  box-sizing:border-box !important;
+  display:flex !important;
+  flex-direction:column !important;
+  gap:12px !important;
+}
+
+/* 알림 1줄 - 반복 + 양력 + 음력 - 전체 폭 사용 */
+#memo-form-card #reservation-box .alarm-line1{
+  width:100% !important;
+  display:flex !important;
+  flex-direction:row !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:10px !important;
+  box-sizing:border-box !important;
+}
+#memo-form-card #reservation-box .alarm-line1 select{
+  flex:0 0 110px !important;
+  width:110px !important;
+  height:40px !important;
+  font-size:13px !important;
+}
+#memo-form-card #reservation-box .alarm-line1 .radios{
+  flex:1 !important;
+  display:flex !important;
+  gap:8px !important;
+  justify-content:flex-end !important;
+}
+#memo-form-card #reservation-box .alarm-line1 .radios label{
+  flex:0 0 90px !important;
+  width:90px !important;
+  height:40px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:6px !important;
+  font-size:13px !important;
+  border-radius:10px !important;
+}
+
+/* 알림 2줄 - 시간 - 전체 폭 */
+#memo-form-card #reservation-box .alarm-line2{
+  width:100% !important;
+  display:flex !important;
+  align-items:center !important;
+  gap:10px !important;
+  padding:10px 14px !important;
+  box-sizing:border-box !important;
+}
+#memo-form-card #reservation-box .alarm-line2 input{
+  flex:1 !important;
+  width:100% !important;
+  height:42px !important;
+  font-size:14px !important;
+}
+
+/* 알림 3줄 - 체크박스 3개 - 전체 폭 3등분 */
+#memo-form-card #reservation-box .alarm-line3{
+  width:100% !important;
+  display:grid !important;
+  grid-template-columns: 1fr 1fr 1fr !important;
+  gap:8px !important;
+  box-sizing:border-box !important;
+}
+#memo-form-card #reservation-box .alarm-line3 label{
+  width:100% !important;
+  height:42px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:6px !important;
+  font-size:12px !important;
+  border-radius:10px !important;
+  box-sizing:border-box !important;
+}
+
+/* 하단 버튼 - 좌우폭 통일 */
+#memo-form-card .form-btn-row{
+  display:grid !important;
+  grid-template-columns: 1fr 1fr 1.2fr !important;
+  gap:10px !important;
+  width:100% !important;
+  margin-top:10px !important;
+}
+#memo-form-card .form-exit-row{
+  width:100% !important;
+  margin-top:0 !important;
+}
+#memo-form-card .form-btn-row button,
+#memo-form-card .form-exit-row button{
+  width:100% !important;
+  height:48px !important;
+  font-size:14px !important;
+  border-radius:12px !important;
+}
+</style>
+<script id="V511_JS">
+(function(){
+  function fixWidth(){
+    try{
+      var form = document.getElementById('memo-form-card');
+      if(!form) return;
+      
+      // 모든 박스 width 100% 강제
+      var boxes = [document.getElementById('form-date-row'), document.getElementById('anniv-input-row'), document.getElementById('diary-content-section'), document.getElementById('reservation-box')];
+      boxes.forEach(function(box){
+        if(box){
+          box.style.width='100%';
+          box.style.maxWidth='100%';
+          box.style.marginLeft='0';
+          box.style.marginRight='0';
+          box.style.boxSizing='border-box';
+        }
+      });
+      
+      // 알림 박스 내부 폭 강제
+      var alarmBody = form.querySelector('.alarm-body');
+      if(alarmBody){
+        alarmBody.style.width='100%';
+        alarmBody.style.boxSizing='border-box';
+      }
+      
+      // 예: 생일 입력칸 넓게
+      var annivInput = document.getElementById('anniv-input');
+      if(annivInput){
+        annivInput.style.flex='1';
+        annivInput.style.width='100%';
+      }
+      
+    }catch(e){}
+  }
+  
+  document.addEventListener('DOMContentLoaded', function(){
+    fixWidth();
+    setTimeout(fixWidth, 300);
+  });
+  
+  var orig = window.openDiaryForm;
+  if(orig && !orig._v511){
+    window.openDiaryForm = function(){
+      var r = orig.apply(this, arguments);
+      setTimeout(fixWidth, 50);
+      setTimeout(fixWidth, 400);
+      return r;
+    };
+    window.openDiaryForm._v511=true;
+  }
+  
+  console.log('V511 width fix loaded');
+})();
+</script>
+
+<style id="V512_RIGHT_OVERFLOW">
+/* V512 - 오른쪽 밖으로 밀려있는 문제 수정 - 양력/음력, 매일 체크 */
+
+/* 알림 박스 - 오른쪽 밀림 방지 핵심 */
+#memo-form-card #reservation-box{
+  width:100% !important;
+  max-width:100% !important;
+  overflow:hidden !important;
+  box-sizing:border-box !important;
+  padding:0 !important;
+}
+#memo-form-card #reservation-box *{
+  box-sizing:border-box !important;
+  max-width:100% !important;
+}
+
+/* 1줄: 반복 + 양력 + 음력 - 오른쪽 밀림 방지 */
+#memo-form-card #reservation-box .alarm-line1{
+  width:100% !important;
+  max-width:100% !important;
+  display:flex !important;
+  flex-direction:row !important;
+  flex-wrap:nowrap !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  gap:8px !important;
+  padding:0 !important;
+  overflow:hidden !important;
+}
+#memo-form-card #reservation-box .alarm-line1 select{
+  flex:0 0 80px !important;
+  width:80px !important;
+  min-width:70px !important;
+  max-width:80px !important;
+  height:36px !important;
+  font-size:12px !important;
+  padding:0 4px !important;
+  border-radius:8px !important;
+  overflow:hidden !important;
+}
+#memo-form-card #reservation-box .alarm-line1 .radios{
+  flex:1 !important;
+  display:flex !important;
+  flex-direction:row !important;
+  flex-wrap:nowrap !important;
+  gap:6px !important;
+  min-width:0 !important;
+  max-width:calc(100% - 88px) !important;
+  justify-content:flex-end !important;
+  overflow:hidden !important;
+}
+#memo-form-card #reservation-box .alarm-line1 .radios label{
+  flex:1 1 0 !important;
+  min-width:0 !important;
+  max-width:70px !important;
+  height:36px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:3px !important;
+  font-size:11px !important;
+  padding:0 4px !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  border-radius:8px !important;
+  background:#fafafa !important;
+  border:1px solid #eee !important;
+}
+#memo-form-card #reservation-box .alarm-line1 .radios label input[type="radio"]{
+  width:12px !important;
+  height:12px !important;
+  min-width:12px !important;
+  flex-shrink:0 !important;
+}
+
+/* 3줄: 매일 반복 / 하루만 울림 / 매일 체크 - 오른쪽 밀림 방지 */
+#memo-form-card #reservation-box .alarm-line3{
+  width:100% !important;
+  max-width:100% !important;
+  display:grid !important;
+  grid-template-columns: 1fr 1fr 1fr !important;
+  gap:6px !important;
+  padding:0 !important;
+  overflow:hidden !important;
+  box-sizing:border-box !important;
+}
+#memo-form-card #reservation-box .alarm-line3 label{
+  width:100% !important;
+  max-width:100% !important;
+  min-width:0 !important;
+  height:38px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:4px !important;
+  font-size:11px !important;
+  padding:0 4px !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  border-radius:8px !important;
+  box-sizing:border-box !important;
+}
+#memo-form-card #reservation-box .alarm-line3 label input[type="checkbox"]{
+  width:12px !important;
+  height:12px !important;
+  min-width:12px !important;
+  flex-shrink:0 !important;
+}
+#memo-form-card #reservation-box .alarm-line3 label:last-child{
+  background:#e8f5e9 !important;
+  border-color:#c8e6c9 !important;
+  color:#2e7d32 !important;
+  font-weight:700 !important;
+}
+
+/* 전체 폼이 화면 밖으로 나가지 않게 */
+#memo-form-card{
+  overflow-x:hidden !important;
+  max-width:100vw !important;
+  padding:12px !important;
+}
+#memo-form-card .alarm-body{
+  width:100% !important;
+  max-width:100% !important;
+  overflow:hidden !important;
+  padding:12px !important;
+}
+
+/* 모바일 360px 이하에서 더 작게 */
+@media (max-width:380px){
+  #memo-form-card #reservation-box .alarm-line1 select{
+    flex:0 0 70px !important;
+    width:70px !important;
+    font-size:11px !important;
+  }
+  #memo-form-card #reservation-box .alarm-line1 .radios{
+    max-width:calc(100% - 76px) !important;
+  }
+  #memo-form-card #reservation-box .alarm-line1 .radios label{
+    max-width:60px !important;
+    font-size:10px !important;
+  }
+  #memo-form-card #reservation-box .alarm-line3 label{
+    font-size:10px !important;
+  }
+}
+</style>
+<script id="V512_JS">
+(function(){
+  function fixRightOverflow(){
+    try{
+      var form = document.getElementById('memo-form-card');
+      if(!form) return;
+      
+      var reservBox = document.getElementById('reservation-box');
+      if(!reservBox) return;
+      
+      // 모든 요소 box-sizing 강제
+      var all = reservBox.querySelectorAll('*');
+      all.forEach(function(el){
+        el.style.boxSizing='border-box';
+        el.style.maxWidth='100%';
+      });
+      
+      // 양력/음력 라벨 - 오른쪽 밀림 방지
+      var radios = reservBox.querySelectorAll('.radios label, .alarm-line1 label');
+      radios.forEach(function(label){
+        if(label.textContent.includes('양력') || label.textContent.includes('음력')){
+          label.style.flex='1 1 0';
+          label.style.minWidth='0';
+          label.style.maxWidth='70px';
+          label.style.overflow='hidden';
+          label.style.textOverflow='ellipsis';
+          label.style.whiteSpace='nowrap';
+        }
+      });
+      
+      // 매일 체크 - 오른쪽 밀림 방지
+      var checks = reservBox.querySelectorAll('.alarm-line3 label');
+      checks.forEach(function(label){
+        label.style.width='100%';
+        label.style.maxWidth='100%';
+        label.style.minWidth='0';
+        label.style.overflow='hidden';
+      });
+      
+      console.log('V512: 오른쪽 밀림 수정');
+      
+    }catch(e){ console.log('V512 error', e); }
+  }
+  
+  document.addEventListener('DOMContentLoaded', function(){
+    fixRightOverflow();
+    setTimeout(fixRightOverflow, 300);
+  });
+  
+  var orig = window.openDiaryForm;
+  if(orig && !orig._v512){
+    window.openDiaryForm = function(){
+      var r = orig.apply(this, arguments);
+      setTimeout(fixRightOverflow, 50);
+      setTimeout(fixRightOverflow, 400);
+      return r;
+    };
+    window.openDiaryForm._v512=true;
+  }
+  
+  console.log('V512 right overflow fix loaded');
+})();
+</script>
+
+<style id="V513_CENTERED">
+/* V513 - 노트북에서 전체폭이 부담스러우면 가운데 정렬 버전 */
+
+#memo-form-card{
+  max-width:700px !important;
+  width:100% !important;
+  margin:0 auto !important;
+  padding:16px !important;
+  box-sizing:border-box !important;
+}
+
+/* 노트북에서 700px 이상일 때는 가운데, 모바일에서는 100% */
+@media (min-width:768px){
+  #memo-form-card{
+    max-width:700px !important;
+    margin:20px auto !important;
+    box-shadow:0 4px 20px rgba(0,0,0,0.08) !important;
+    border-radius:20px !important;
+  }
+}
+
+@media (max-width:767px){
+  #memo-form-card{
+    max-width:100% !important;
+    margin:0 !important;
+    border-radius:0 !important;
+    box-shadow:none !important;
+  }
+}
+</style>
+
+
+<style id="V519_SPACING">
+/* 타임캡슐 아래 여백을 다른 타이틀 사이 간격(8px)과 동일하게 */
+#diary-around-today-list .time-capsule-banner{ margin-bottom:0 !important; }
+#diary-around-today-list #time-capsule-content{ margin:2px 0 0 0 !important; }
+#diary-around-today-list #time-capsule-content[style*="max-height: 0px"]{ margin-top:0 !important; }
+#diary-around-today-list #time-capsule-content > :last-child{ margin-bottom:0 !important; }
+#v340-banner-container.after-tc{ margin-top:-9px !important; }
+#v340-banner-container.after-tc > :first-child{ margin-top:1px !important; }
+#v340-banner-container > .go-today-btn + #main-biorhythm-teaser{ margin-top:5px !important; }
+</style>
+
+<style id="V521_ORIGINAL_DESC_AND_R">
+/* V534 - 원본에서 최소 수정, 스크롤만만, 메인폼/입력폼 건드리지 않음 */
+
+/* R 버튼만 작게 */
+#biorhythm-toggle-btn,
+#main-biorhythm-teaser button,
+.daily-explain-header button,
+.time-capsule-banner button,
+.go-today-btn button,
+#fortune-teaser button{
+  font-size: 10px !important;
+  padding: 2px 6px !important;
+  min-width: 20px !important;
+  height: 20px !important;
+  line-height: 1 !important;
+  border-radius: 4px !important;
+}
+
+/* 설명 박스 외곽 */
+.daily-explain-wrapper{
+  border: 1px solid #e0e0e0 !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important;
+  background: #fff !important;
+  margin-top: 8px !important;
+}
+</style>
+<script id="V521_ORIGINAL_JS">
+(function(){
+  function v521fix(){
+    document.querySelectorAll('button').forEach(function(btn){
+      var t = btn.textContent.trim();
+      if(t === '▼' || t === '▶'){
+        btn.style.fontSize = '10px';
+        btn.style.padding = '2px 6px';
+        btn.style.minWidth = '20px';
+        btn.style.height = '20px';
+      }
+    });
+    document.querySelectorAll('.daily-explain-header').forEach(function(h){
+      if(h.parentElement && h.parentElement.classList.contains('daily-explain-wrapper')) return;
+      var c = h.nextElementSibling;
+      if(c && c.classList.contains('daily-explain-content')){
+        var w = document.createElement('div');
+        w.className = 'daily-explain-wrapper';
+        w.style.cssText = 'border:1px solid #e0e0e0; border-radius:12px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,0.06); background:#fff; margin-top:8px;';
+        h.parentNode.insertBefore(w, h);
+        w.appendChild(h);
+        w.appendChild(c);
+      }
+    });
+  }
+  var orig = window.renderDiaryAroundToday;
+  if(orig && !orig._v521){
+    window.renderDiaryAroundToday = function(){
+      var r = orig.apply(this, arguments);
+      setTimeout(v521fix, 50);
+      setTimeout(v521fix, 400);
+      return r;
+    };
+    orig._v521 = true;
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    setTimeout(v521fix, 300);
+    setTimeout(v521fix, 800);
+  });
+  setTimeout(v521fix, 100);
 })();
 </script>
 
 
-<!-- V313 - 메인 복구 -->
-<style id="V313_FIX2">
-/* 메인 깨짐 방지 - 기존 레이아웃 유지, 삼각형만 동일 28x22 */
-.time-capsule-banner{height:28px!important;min-height:28px!important;max-height:28px!important;}
-.go-today-btn,.daily-explain-header,#fortune-teaser{height:28px!important;min-height:28px!important;max-height:28px!important;}
-.biorhythm-header{height:28px!important;min-height:28px!important;max-height:28px!important;}
-.time-capsule-banner .tc-toggle-btn,
-.go-today-btn > span:last-child,
-#fortune-teaser .ft-arrow,
-.daily-explain-header .ft-arrow,
-#biorhythm-toggle-btn{
-width:28px!important;min-width:28px!important;max-width:28px!important;
-height:22px!important;min-height:22px!important;max-height:22px!important;
-font-size:10px!important;line-height:22px!important;border-radius:4px!important;
+<style id="V534_SCROLL_FIX_MINIMAL">
+/* V534 - 원본에서 최소 수정: 스크롤만, 알림/메인 절대 안 건드림 */
+/* 분석: 입력 폼 바깥(오버레이)이 스크롤 담당, 카드가 overscroll-behavior:contain + overflow-x:hidden 으로 터치 가로챔 */
+#memo-modal-overlay{
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior: auto !important;
 }
-#main-biorhythm-content{max-height:1000px;opacity:1;transition:max-height 0.35s ease,opacity 0.25s ease;overflow:hidden}
-#main-biorhythm-teaser.bio-collapsed #main-biorhythm-content{max-height:0!important;opacity:0!important;pointer-events:none!important;padding:0!important;margin:0!important}
+#memo-modal-overlay.active{
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+#memo-form-card{
+  /* 카드가 스크롤 영역이 되지 않도록 */
+  overflow: visible !important;
+  overflow-x: clip !important;
+  overscroll-behavior: auto !important;
+  -webkit-overflow-scrolling: auto !important;
+  touch-action: auto !important;
+  height: auto !important;
+  max-height: none !important;
+  padding-bottom: 24px !important;
+}
+
+@media(max-width:768px){
+  #memo-modal-overlay.active{
+    align-items: flex-end !important;
+    padding: 0 !important;
+    overflow-y: auto !important;
+  }
+  #memo-form-card{
+    border-radius: 18px 18px 0 0 !important;
+    margin: 0 !important;
+    margin-top: auto !important;
+    max-height: 92vh !important;
+    overflow: visible !important;
+  }
+}
 </style>
+<script id="V534_MINIMAL_JS">
+(function(){
+  console.log('V534 - 원본에서 최소 수정, 스크롤만');
+  // 과거 날짜도 알림 보이게 - isFutureDate만 패치, 나머지는 건드리지 않음
+  if(window.isFutureDate && !window.isFutureDate._v534){
+    var orig=window.isFutureDate;
+    window.isFutureDate=function(d){
+      var card=document.getElementById('memo-form-card');
+      if(card && !card.classList.contains('money-mode-form')) return true;
+      return orig(d);
+    };
+    window.isFutureDate._v534=true;
+  }
+  // V500이 reservation-box를 비우지 않도록 살짝 지연 차단 - 단, 알림 내용은 건드리지 않음
+  document.addEventListener('DOMContentLoaded',function(){
+    var form=document.getElementById('memo-form-card');
+    if(form) form._v340=true; // V500 두번 실행 방지 정도만
+  });
+})();
+</script>
 
 </body>
-
 </html>
