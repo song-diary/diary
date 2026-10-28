@@ -1,14 +1,15 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<!-- Version: V534 - 원본에서 최소 수정, 스크롤만 -->
+<!-- Version: V522 - 입력폼 상하 스크롤 수정(카드가 터치 스크롤을 가로채던 문제), 오늘 날짜로 가기 버튼 잔재 제거 -->
+<!-- Version: V521 원본 - 설명 박스 + R 작게 -->
 <!-- Version: V519 - 타임캡슐 아래 여백을 다른 타이틀 간격(8px)과 동일하게 -->
 <!-- Version: V518 - 타임캡슐 아래 빈 박스/선 제거 -->
 <!-- Version: V517 - 타임캡슐 배너>내용 순서 고정, 내용 없을 때 배너 숨김, 깨진 스크립트 제거 -->
 <!-- Version: V500 - 리스트>타임캡슐>바이오리듬>운세>설명 순서 확정 -->
 <!-- Version: V290 - 기능·UI 유지, 진동중복/setInterval폭주/transform충돌 정리 --> 
 <!-- Version: V187 - 초중말복 동적화, 24절기 동적화, 누적패치 제거, 5~6줄 개그 유머 100점 -->
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>포토다이어리 V520 - 사진, 추억을 담다</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>포토다이어리 V522 - 사진, 추억을 담다</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -1107,8 +1108,9 @@
             padding-top: 4px;
         }
 
+        /* 입력폼은 바깥(overlay)이 스크롤되므로 카드는 스크롤을 가로채지 않게 한다 */
         #memo-form-card {
-            overscroll-behavior: contain;
+            overscroll-behavior: auto;
         }
 
         .form-header-info span {
@@ -10314,6 +10316,7 @@ window.attachPhotoDoubleTap = function(el, handler){
             const titleEl = document.getElementById('selected-date-title');
             if (!listEl) return;
             listEl.innerHTML = '';
+            try{ var _tcC=document.getElementById('v340-banner-container'); if(_tcC) _tcC.classList.remove('after-tc'); }catch(e){}
 
             if (!selectedViewDate) selectedViewDate = getTodayStr();
             const dateStr = normalizeDateStr(selectedViewDate);
@@ -10530,6 +10533,7 @@ window.attachPhotoDoubleTap = function(el, handler){
                 pastDiv.style.width='100%';
                 pastDiv.innerHTML = myPastHTML;
                 listEl.appendChild(pastDiv);
+                try{ var _tcC2=document.getElementById('v340-banner-container'); if(_tcC2) _tcC2.classList.add('after-tc'); }catch(e){}
 
               // Async photo loader for time capsule
               setTimeout(function(){
@@ -21887,6 +21891,15 @@ div:has(> label:has(input[name="cardStyle"])) { display:none !important; }
         });
       }
       
+      // 오늘 날짜를 보고 있을 때는 '오늘 날짜로 가기' 버튼이 없어야 한다 (다른 날짜에서 남은 버튼 제거)
+      try{
+        var _todayStr=(typeof getTodayStr==='function')?getTodayStr():null;
+        if(_todayStr && typeof selectedViewDate!=='undefined' && selectedViewDate===_todayStr){
+          document.querySelectorAll('.go-today-btn').forEach(function(b){ b.remove(); });
+          latestGoToday=null;
+        }
+      }catch(e){}
+
       var fortune=document.getElementById('fortune-teaser');
       if(fortune){
         var dup=list.querySelectorAll('#fortune-teaser');
@@ -22851,7 +22864,8 @@ div:has(> label:has(input[name="cardStyle"])) { display:none !important; }
 
 /* 전체 폼이 화면 밖으로 나가지 않게 */
 #memo-form-card{
-  overflow-x:hidden !important;
+  overflow-x:clip !important;
+  overflow-y:visible !important;
   max-width:100vw !important;
   padding:12px !important;
 }
@@ -22989,7 +23003,7 @@ div:has(> label:has(input[name="cardStyle"])) { display:none !important; }
 </style>
 
 <style id="V521_ORIGINAL_DESC_AND_R">
-/* V534 - 원본에서 최소 수정, 스크롤만만, 메인폼/입력폼 건드리지 않음 */
+/* V521 원본 - 설명 박스 + R 작게만, 메인폼/입력폼 건드리지 않음 */
 
 /* R 버튼만 작게 */
 #biorhythm-toggle-btn,
@@ -23056,68 +23070,6 @@ div:has(> label:has(input[name="cardStyle"])) { display:none !important; }
     setTimeout(v521fix, 800);
   });
   setTimeout(v521fix, 100);
-})();
-</script>
-
-
-<style id="V534_SCROLL_FIX_MINIMAL">
-/* V534 - 원본에서 최소 수정: 스크롤만, 알림/메인 절대 안 건드림 */
-/* 분석: 입력 폼 바깥(오버레이)이 스크롤 담당, 카드가 overscroll-behavior:contain + overflow-x:hidden 으로 터치 가로챔 */
-#memo-modal-overlay{
-  overflow-y: auto !important;
-  -webkit-overflow-scrolling: touch !important;
-  overscroll-behavior: auto !important;
-}
-#memo-modal-overlay.active{
-  overflow-y: auto !important;
-  -webkit-overflow-scrolling: touch !important;
-}
-
-#memo-form-card{
-  /* 카드가 스크롤 영역이 되지 않도록 */
-  overflow: visible !important;
-  overflow-x: clip !important;
-  overscroll-behavior: auto !important;
-  -webkit-overflow-scrolling: auto !important;
-  touch-action: auto !important;
-  height: auto !important;
-  max-height: none !important;
-  padding-bottom: 24px !important;
-}
-
-@media(max-width:768px){
-  #memo-modal-overlay.active{
-    align-items: flex-end !important;
-    padding: 0 !important;
-    overflow-y: auto !important;
-  }
-  #memo-form-card{
-    border-radius: 18px 18px 0 0 !important;
-    margin: 0 !important;
-    margin-top: auto !important;
-    max-height: 92vh !important;
-    overflow: visible !important;
-  }
-}
-</style>
-<script id="V534_MINIMAL_JS">
-(function(){
-  console.log('V534 - 원본에서 최소 수정, 스크롤만');
-  // 과거 날짜도 알림 보이게 - isFutureDate만 패치, 나머지는 건드리지 않음
-  if(window.isFutureDate && !window.isFutureDate._v534){
-    var orig=window.isFutureDate;
-    window.isFutureDate=function(d){
-      var card=document.getElementById('memo-form-card');
-      if(card && !card.classList.contains('money-mode-form')) return true;
-      return orig(d);
-    };
-    window.isFutureDate._v534=true;
-  }
-  // V500이 reservation-box를 비우지 않도록 살짝 지연 차단 - 단, 알림 내용은 건드리지 않음
-  document.addEventListener('DOMContentLoaded',function(){
-    var form=document.getElementById('memo-form-card');
-    if(form) form._v340=true; // V500 두번 실행 방지 정도만
-  });
 })();
 </script>
 
