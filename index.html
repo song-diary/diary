@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<!-- Version: V524 - 알림 박스 반복 선택칸 폭 균형 -->
+<!-- Version: V542 - 타임캡슐 사진 원본 복구 (클린) / V540 / V539 - 빨간박스 위아래 정확히 동일 2px / V538 / V537 / V536 - 메모 한번클릭 + 입력버튼 간격 2px 복구 / V535 - 제목+내용 다 보여주기 (예전처럼) / V534 / V532 - 앨범1 위=입력 위, 앨범2 아래=입력 아래 (깔끔 복구) / V530 - 단순 스크롤 복구 (엉킴 제거) / V528 - 방법2: 오늘의 운세 더블클릭 힌트 토스트 / V527 - 오늘의 운세 폼 닫기 버튼 아래 고정 / V526 - 위쪽 좁은 네모칸 폭으로 아래 빈공간까지 맞춤 / V525 - 네모 박스 가운데 가장 작은 폭으로 나머지 간격 통일 (다른 것 유지) / V524 - 알림 박스 반복 선택칸 폭 균형 -->
 <!-- Version: V523 - 로또·건강기록·마이크(음성) 기능 코드 전부 제거 -->
 <!-- Version: V522 - 입력폼 상하 스크롤 수정(카드가 터치 스크롤을 가로채던 문제), 오늘 날짜로 가기 버튼 잔재 제거 -->
 <!-- Version: V521 원본 - 설명 박스 + R 작게 -->
@@ -21917,5 +21917,639 @@ div:has(> label:has(input[name="cardStyle"])) { display:none !important; }
 #memo-form-card #reservation-box .alarm-line1 > div:empty{ display:none !important; }
 #memo-form-card #reservation-box .alarm-line1 select#anniv-repeat-select{ flex:1 1 0 !important; width:auto !important; min-width:0 !important; max-width:none !important; }
 </style>
+
+<style id="V525_GAP_MIN_EQUAL">
+/* V542 - 타임캡슐 사진 원본 복구 (클린) / V540 / V539 - 빨간박스 위아래 정확히 동일 2px / V538 / V537 / V536 - 메모 한번클릭 + 입력버튼 간격 2px 복구 / V535 - 제목+내용 다 보여주기 (예전처럼) / V534 / V532 - 앨범1 위=입력 위, 앨범2 아래=입력 아래 (깔끔 복구) / V530 - 단순 스크롤 복구 (엉킴 제거) / V528 - 방법2: 오늘의 운세 더블클릭 힌트 토스트 / V527 - 오늘의 운세 폼 닫기 버튼 아래 고정 / V526 - 위쪽 좁은 네모칸 폭으로 아래 빈공간까지 맞춤 / V525 - 네모 박스 가운데 가장 작은 폭으로 나머지 맞추기 : 다른 것 건드리지 않고 간격만 최소폭으로 통일 */
+.tab-panel.active{
+  gap: 2px !important;
+}
+#diary-around-today-list,
+#money-around-today-list,
+#search-result-list,
+#diary-search-result-list{
+  gap: 2px !important;
+}
+/* V519에서 흩어진 마진들도 최소폭으로 통일 */
+#diary-around-today-list .time-capsule-banner{ margin-bottom:2px !important; }
+#diary-around-today-list #time-capsule-content{ margin:2px 0 0 0 !important; }
+#v340-banner-container.after-tc{ margin-top:2px !important; }
+#v340-banner-container.after-tc > :first-child{ margin-top:2px !important; }
+#v340-banner-container > .go-today-btn + #main-biorhythm-teaser{ margin-top:2px !important; }
+.daily-explain-wrapper{ margin-top:2px !important; }
+</style>
+
+
+<style id="V526_NARROW_GAP">
+/* V542 - 타임캡슐 사진 원본 복구 (클린) / V540 / V539 - 빨간박스 위아래 정확히 동일 2px / V538 / V537 / V536 - 메모 한번클릭 + 입력버튼 간격 2px 복구 / V535 - 제목+내용 다 보여주기 (예전처럼) / V534 / V532 - 앨범1 위=입력 위, 앨범2 아래=입력 아래 (깔끔 복구) / V530 - 단순 스크롤 복구 (엉킴 제거) / V528 - 방법2: 오늘의 운세 더블클릭 힌트 토스트 / V527 - 오늘의 운세 폼 닫기 버튼 아래 고정 / V526 - 위쪽 좁은 네모칸(달력-카드 사이) 폭으로 아래 빈공간까지 맞춤 */
+#calendar-card{
+  margin-bottom: 2px !important;
+  padding-bottom: 4px !important;
+}
+#diary-around-today-card{
+  padding-top: 8px !important;
+  padding-bottom: 2px !important; /* 아래 빈 공간 최소화 - 위쪽 틈과 동일폭 */
+  margin-bottom: 2px !important;
+}
+#diary-around-today-card .feature-title{
+  margin-bottom: 2px !important;
+  padding-bottom: 0 !important;
+}
+#diary-around-today-list{
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+  min-height: 0 !important;
+}
+#diary-around-today-list:empty{
+  display: none !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+/* 달력과 카드 사이 간격도 위쪽 얇은 박스 폭으로 통일 */
+.tab-panel#diary-panel{
+  gap: 2px !important;
+}
+</style>
+
+
+<style id="V527_FORTUNE_CLOSE_FIXED">
+/* V542 - 타임캡슐 사진 원본 복구 (클린) / V540 / V539 - 빨간박스 위아래 정확히 동일 2px / V538 / V537 / V536 - 메모 한번클릭 + 입력버튼 간격 2px 복구 / V535 - 제목+내용 다 보여주기 (예전처럼) / V534 / V532 - 앨범1 위=입력 위, 앨범2 아래=입력 아래 (깔끔 복구) / V530 - 단순 스크롤 복구 (엉킴 제거) / V528 - 방법2: 오늘의 운세 더블클릭 힌트 토스트 / V527 - 오늘의 운세 폼 닫기 버튼 아래 고정 - 현재 상태 그대로, 고정만 추가 */
+#fortune-popup-overlay{
+  align-items: center !important;
+  padding: 12px !important;
+}
+.fortune-popup-card{
+  display: flex !important;
+  flex-direction: column !important;
+  max-height: 88vh !important;
+  height: auto !important;
+  overflow: hidden !important;
+  padding-bottom: 0 !important;
+}
+.fortune-popup-card #fortune-popup-body,
+.fortune-popup-card .fp-scroll-wrapper{
+  flex: 1 1 auto !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  max-height: calc(88vh - 70px) !important;
+  padding-bottom: 12px !important;
+}
+/* 하단 고정 닫기 영역 - 항상 보이게 */
+.fortune-popup-card .fp-exit-sticky,
+.fortune-popup-card .v527-fixed-footer{
+  position: sticky !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  flex-shrink: 0 !important;
+  background: linear-gradient(180deg, rgba(255,251,245,0) 0%, #FFFBF5 20%, #FFFBF5 100%) !important;
+  padding: 10px 18px 18px !important;
+  margin: 0 !important;
+  z-index: 50 !important;
+  border-top: 1px solid rgba(0,0,0,0.06) !important;
+  display: block !important;
+}
+.fortune-popup-card .v527-fixed-footer button,
+.fortune-popup-card .fp-exit-sticky button{
+  width: 100% !important;
+  padding: 14px !important;
+  border-radius: 14px !important;
+  font-weight: 800 !important;
+  font-size: 15px !important;
+  border: none !important;
+  background: linear-gradient(120deg,#FFDAB9,#E8A87C) !important;
+  color: #4A3728 !important;
+  box-shadow: 0 4px 14px rgba(232,168,124,0.35) !important;
+  cursor: pointer !important;
+}
+</style>
+<script id="V527_FORTUNE_CLOSE_FIXED_JS">
+(function(){
+  function ensureFixedClose(){
+    const card = document.getElementById('fortune-popup-card');
+    const body = document.getElementById('fortune-popup-body');
+    if(!card || !body) return;
+
+    // 기존에 V527 푸터가 있으면 재사용
+    let footer = card.querySelector('.v527-fixed-footer');
+    if(!footer){
+      footer = document.createElement('div');
+      footer.className = 'v527-fixed-footer';
+      footer.innerHTML = '<button onclick="closeFortunePopup()">닫기</button>';
+      card.appendChild(footer);
+    }
+
+    // body 안에 있는 모든 "닫기" 버튼(중복) 숨기기 - 고정 푸터만 남김
+    // 단, 고정 푸터 안의 버튼은 제외
+    const allCloseBtns = card.querySelectorAll('button');
+    allCloseBtns.forEach(btn=>{
+      if(btn.closest('.v527-fixed-footer') || btn.closest('.fp-exit-sticky')) return;
+      const txt = (btn.textContent||'').trim();
+      if(txt === '닫기'){
+        btn.style.display = 'none';
+        btn.classList.add('v527-hidden-old-close');
+      }
+    });
+    
+    // fp-exit-sticky가 별도로 있으면 그것도 V527 푸터로 통합 - 기존 것은 숨김
+    card.querySelectorAll('.fp-exit-sticky').forEach(el=>{
+      if(el.classList.contains('v527-fixed-footer')) return;
+      el.style.display = 'none';
+    });
+
+    // 스크롤은 body/wrapper에서만
+    const wrapper = card.querySelector('.fp-scroll-wrapper');
+    if(wrapper){
+      wrapper.style.overflowY = 'auto';
+    }
+  }
+
+  // 팝업 열릴 때마다 실행
+  const origOpen = window.openFortunePopup;
+  const origFixed = window.openFortunePopupFixed;
+  
+  function wrapOpen(orig){
+    if(!orig) return null;
+    return function(){
+      const r = orig.apply(this, arguments);
+      setTimeout(ensureFixedClose, 30);
+      setTimeout(ensureFixedClose, 200);
+      setTimeout(ensureFixedClose, 500);
+      return r;
+    };
+  }
+
+  if(origFixed){
+    window.openFortunePopupFixed = wrapOpen(origFixed);
+    window.openFortunePopup = window.openFortunePopupFixed;
+  } else if(origOpen){
+    window.openFortunePopup = wrapOpen(origOpen);
+  }
+
+  // MutationObserver로 팝업 활성화 감지
+  const overlay = document.getElementById('fortune-popup-overlay');
+  if(overlay){
+    new MutationObserver(()=>{
+      if(overlay.classList.contains('active')){
+        setTimeout(ensureFixedClose, 50);
+      }
+    }).observe(overlay, {attributes:true, attributeFilter:['class']});
+  }
+
+  // 페이지 로드 후에도 한 번
+  setTimeout(ensureFixedClose, 800);
+
+  console.log('[V527] fortune close fixed loaded');
+})();
+</script>
+
+
+<style id="V528_TOAST_HINT">
+/* V542 - 타임캡슐 사진 원본 복구 (클린) / V540 / V539 - 빨간박스 위아래 정확히 동일 2px / V538 / V537 / V536 - 메모 한번클릭 + 입력버튼 간격 2px 복구 / V535 - 제목+내용 다 보여주기 (예전처럼) / V534 / V532 - 앨범1 위=입력 위, 앨범2 아래=입력 아래 (깔끔 복구) / V530 - 단순 스크롤 복구 (엉킴 제거) / V528 - 방법2: 한번 클릭 시 안내 토스트 */
+#v528-toast{
+  position: fixed;
+  left: 50%;
+  bottom: 90px;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(74,55,40,0.92);
+  color: #FFF8EE;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+  z-index: 9999;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+#v528-toast.show{
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+#fortune-teaser{
+  cursor: pointer !important;
+}
+#fortune-teaser:active{
+  transform: scale(0.99);
+}
+</style>
+<div id="v528-toast">두 번 빠르게 누르면 열려요! 🔮</div>
+<script id="V528_DOUBLE_CLICK_HINT_JS">
+(function(){
+  function showToast(msg){
+    const toast = document.getElementById('v528-toast');
+    if(!toast) return;
+    toast.textContent = msg || '두 번 빠르게 누르면 열려요! 🔮';
+    toast.classList.add('show');
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(()=> toast.classList.remove('show'), 1800);
+  }
+
+  function setupFortuneHint(){
+    let ft = document.getElementById('fortune-teaser');
+    if(!ft) return false;
+
+    // 기존의 방해되는 핸들러 제거 위해 클론 교체
+    const clone = ft.cloneNode(true);
+    ft.parentNode.replaceChild(clone, ft);
+    ft = clone;
+
+    ft.removeAttribute('ondblclick');
+    ft.removeAttribute('onclick');
+    ft.removeAttribute('title');
+    ft.title = '두 번 빠르게 누르면 오늘의 운세가 열려요';
+    ft.style.pointerEvents = 'auto';
+    ft.style.cursor = 'pointer';
+
+    let lastTap = 0;
+    let singleTapTimer = null;
+
+    function handleTap(e){
+      if(e) { e.preventDefault(); e.stopPropagation(); }
+      const now = Date.now();
+      const diff = now - lastTap;
+
+      if(diff > 0 && diff < 400){
+        // 더블탭 - 열기
+        clearTimeout(singleTapTimer);
+        lastTap = 0;
+        if(typeof openFortunePopupFixed === 'function'){
+          openFortunePopupFixed();
+        } else if(typeof openFortunePopup === 'function'){
+          openFortunePopup();
+        }
+      } else {
+        // 첫 탭 - 안내
+        lastTap = now;
+        clearTimeout(singleTapTimer);
+        singleTapTimer = setTimeout(()=>{
+          showToast('두 번 빠르게 누르면 열려요! 🔮');
+        }, 220);
+        // 500ms 후 lastTap 리셋
+        setTimeout(()=>{ if(Date.now()-lastTap >= 500) lastTap = 0; }, 600);
+      }
+    }
+
+    ft.addEventListener('click', handleTap, {passive:false});
+    ft.addEventListener('touchend', function(e){
+      // touchend에서도 같은 로직 - click 중복 방지
+      if(e.cancelable) e.preventDefault();
+      handleTap(e);
+    }, {passive:false});
+
+    // 더블클릭 이벤트도 안전망으로 유지
+    ft.addEventListener('dblclick', function(e){
+      e.preventDefault();
+      clearTimeout(singleTapTimer);
+      lastTap = 0;
+      if(typeof openFortunePopupFixed === 'function'){
+        openFortunePopupFixed();
+      } else if(typeof openFortunePopup === 'function'){
+        openFortunePopup();
+      }
+    });
+
+    console.log('[V528] fortune double-click hint attached');
+    return true;
+  }
+
+  // 여러 시점에 시도
+  setTimeout(setupFortuneHint, 300);
+  setTimeout(setupFortuneHint, 1000);
+  setTimeout(setupFortuneHint, 2000);
+
+  // 혹시 렌더링이 다시 되는 경우 대비 MutationObserver
+  const diaryCard = document.getElementById('diary-around-today-card');
+  if(diaryCard){
+    new MutationObserver(()=>{
+      const ft = document.getElementById('fortune-teaser');
+      if(ft && !ft._v528){
+        ft._v528 = true;
+        setTimeout(setupFortuneHint, 100);
+      }
+    }).observe(diaryCard, {childList:true, subtree:true});
+  }
+
+  // 전역으로 노출 (디버그용)
+  window.v528_showFortuneHint = showToast;
+})();
+</script>
+
+
+<style id="V530_SIMPLE_SCROLL_FIX">
+/* V530 - 단순하게: 스크롤 무조건 되게, 엉킴 제거 */
+#fortune-popup-overlay{
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 16px !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+.fortune-popup-card{
+  display: block !important;
+  max-height: 88vh !important;
+  max-height: 88dvh !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  padding-bottom: 0 !important;
+  margin: auto !important;
+  position: relative !important;
+  top: auto !important;
+  transform: none !important;
+}
+.fortune-popup-card #fortune-popup-body,
+.fortune-popup-card .fp-scroll-wrapper{
+  display: block !important;
+  flex: none !important;
+  overflow: visible !important;
+  max-height: none !important;
+  min-height: auto !important;
+  padding-bottom: 10px !important;
+}
+.fortune-popup-card .v527-fixed-footer{
+  position: sticky !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  background: #FFFBF5 !important;
+  padding: 12px 18px 18px !important;
+  z-index: 50 !important;
+  margin: 0 -20px 0 -20px !important;
+  width: auto !important;
+  border-top: 1px solid rgba(0,0,0,0.06) !important;
+}
+#fortune-popup-card .close-form-btn{
+  position: absolute !important;
+  top: 12px !important;
+  right: 12px !important;
+}
+</style>
+<script id="V530_SCROLL_RESET_JS">
+(function(){
+  // V529에서 망가진 스타일 id 제거
+  const bad = document.getElementById('V529_MOBILE_SCROLL_FIX');
+  if(bad) bad.remove();
+  function toTop(){
+    const card = document.getElementById('fortune-popup-card');
+    if(card) card.scrollTop = 0;
+  }
+  const orig = window.openFortunePopupFixed || window.openFortunePopup;
+  if(orig){
+    const wrap = function(){
+      const r = orig.apply(this, arguments);
+      setTimeout(toTop, 30);
+      setTimeout(toTop, 200);
+      return r;
+    };
+    window.openFortunePopupFixed = wrap;
+    window.openFortunePopup = wrap;
+  }
+  console.log('[V530] simple scroll restored');
+})();
+</script>
+
+
+<style id="V532_ALBUM_ALIGN_CLEAN">
+/* V532 - 깔끔하게: 앨범1 위 = 입력 위, 앨범2 아래 = 입력 아래, 엉킴 없이 */
+
+/* 1. 바깥 줄 - 입력 + 앨범 컬럼을 한 줄로 */
+#diary-view-toggle > div[style*="display:flex"][style*="align-items"]{
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: stretch !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
+  width: auto !important;
+}
+
+/* 2. 입력 버튼 - 52px 높이로 고정, 100px 너비 */
+#diary-view-toggle > div[style*="display:flex"][style*="align-items"] > button{
+  width: 100px !important;
+  min-width: 100px !important;
+  max-width: 100px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  align-self: stretch !important;
+  font-size: 16px !important;
+  box-sizing: border-box !important;
+}
+
+/* 3. 앨범 컬럼 - 52px 높이에 space-between로 위아래 딱 맞춤 */
+#diary-view-toggle > div[style*="display:flex"][style*="align-items"] > div{
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  gap: 2px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
+  width: 60px !important;
+  min-width: 60px !important;
+  align-self: stretch !important;
+  margin: 0 !important;
+}
+
+/* 4. 앨범1,2 각각 25px = 25+2+25=52px = 입력 버튼과 동일 */
+#btn-view-list,
+#btn-view-gallery{
+  height: 25px !important;
+  min-height: 25px !important;
+  max-height: 25px !important;
+  width: 60px !important;
+  min-width: 60px !important;
+  max-width: 60px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  box-sizing: border-box !important;
+}
+</style>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<style id="V539_GAP_EQUAL_EXACT">
+/* V539 - 빨간 박스 위아래 간격 정확히 동일하게 - padding까지 동일 */
+.app-container{
+  gap: 2px !important;
+}
+#calendar-card{
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding-bottom: 2px !important;
+}
+#diary-around-today-card{
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding-top: 2px !important;
+  padding-bottom: 2px !important;
+}
+#diary-around-today-card .feature-title{
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding-top: 2px !important;
+  padding-bottom: 2px !important;
+}
+#fortune-teaser{
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+#biorhythm-card, .biorhythm-card{
+  margin-top: 0 !important;
+  padding-top: 2px !important;
+}
+/* 리스트 영역도 */
+#diary-around-today-list{
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+</style>
+
+
+
+
+
+<style id="V542_CLEAN_GAP">
+/* V542 - 간격 2px 유지 (V539 내용 유지) */
+.app-container{ gap: 2px !important; }
+#calendar-card{ margin:0 !important; padding-bottom:2px !important; }
+#diary-around-today-card{ margin:0 !important; padding-top:2px !important; padding-bottom:2px !important; }
+#diary-around-today-card .feature-title{ margin:0 !important; padding-top:2px !important; padding-bottom:2px !important; }
+</style>
+<script id="V542_CLEAN_FIX">
+(function(){
+  console.log('[V542] clean fix start');
+  function isNullKey(k){
+    if(k===null||k===undefined) return true;
+    const s=String(k).trim().toUpperCase();
+    return s==='NULL'||s==='UNDEFINED'||s==='' ;
+  }
+
+  // 원래 함수 백업 (가장 원본)
+  const origOpen = window.openPhotoLightbox;
+  const origOpenSafe = window.openPhotoLightboxSafe;
+  const origClose = window.closePhotoLightbox;
+
+  function restoreImg(){
+    const img=document.getElementById('photo-lightbox-img');
+    const memo=document.getElementById('photo-lightbox-memo');
+    if(img){ img.style.display='block'; img.style.maxWidth=''; img.style.maxHeight=''; }
+    if(memo){ memo.style.display=''; memo.style.background=''; memo.style.padding=''; memo.style.borderRadius=''; memo.style.maxHeight=''; memo.style.overflowY=''; memo.style.minWidth=''; memo.style.maxWidth=''; }
+  }
+
+  // 텍스트 라이트박스 (사진 없을 때)
+  window.openDiaryTextLightbox = function(item){
+    if(!item) return;
+    const overlay=document.getElementById('photo-lightbox-overlay');
+    const img=document.getElementById('photo-lightbox-img');
+    const memoEl=document.getElementById('photo-lightbox-memo');
+    const dateEl=document.getElementById('photo-lightbox-date');
+    if(!overlay||!memoEl) return;
+    if(img){ img.style.display='none'; }
+    let title=item.anniversary||item.title||'';
+    let text=item.text||item.memo||'';
+    let esc=(s)=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    let html='';
+    if(title) html+='<div style="font-size:15px;font-weight:800;color:#6A4C9A;margin-bottom:10px;padding:8px 10px;background:#f5f0ff;border-radius:8px;">'+esc(title)+'</div>';
+    if(text) html+='<div style="font-size:16px;line-height:1.7;color:#333;white-space:pre-wrap;word-break:break-word;">'+esc(text).replace(/\n/g,'<br>')+'</div>';
+    else if(!title) html+='<div style="color:#999;">(내용 없음)</div>';
+    memoEl.innerHTML=html;
+    memoEl.style.display='block';
+    memoEl.style.padding='20px';
+    memoEl.style.background='#fff';
+    memoEl.style.borderRadius='12px';
+    memoEl.style.maxHeight='70vh';
+    memoEl.style.overflowY='auto';
+    if(dateEl){ dateEl.textContent=(item.date||'')+(item.time?' '+item.time:''); dateEl.style.display='block'; }
+    overlay.classList.add('active');
+    overlay.style.display='flex';
+    document.body.classList.add('modal-open');
+  };
+
+  // openPhotoLightbox 단일 래퍼 - 사진이면 사진, 없으면 텍스트
+  window.openPhotoLightbox = function(src, item){
+    const key = item && item.photo ? item.photo : src;
+    if((!src || isNullKey(key)) && item && (item.text||item.memo)){
+      console.log('[V542] 사진 없음 -> 텍스트 표시');
+      window.openDiaryTextLightbox(item);
+      return;
+    }
+    restoreImg();
+    if(origOpen){
+      return origOpen.apply(this, arguments);
+    }
+  };
+
+  window.openPhotoLightboxSafe = function(src, item){
+    const key = item && item.photo ? item.photo : src;
+    if((!src || isNullKey(key)) && item && (item.text||item.memo)){
+      window.openDiaryTextLightbox(item);
+      return;
+    }
+    restoreImg();
+    if(origOpenSafe) return origOpenSafe.apply(this, arguments);
+    if(origOpen) return origOpen.apply(this, arguments);
+  };
+
+  // alert 필터 - null 경고만 차단
+  const origAlert=window.alert;
+  window.alert=function(msg){
+    if(typeof msg==='string' && msg.includes('사진 데이터를 찾을 수 없습니다') && msg.toLowerCase().includes('null')){
+      console.log('[V542] null alert 차단');
+      return;
+    }
+    return origAlert.apply(this, arguments);
+  };
+
+  // 타임캡슐 클릭은 원본 그대로 쓰기 - 건드리지 않음 (V541 제거)
+  // 단, 타임캡슐 컨텐츠가 접혀있으면 펴기
+  function ensureOpen(){
+    const content=document.getElementById('time-capsule-content');
+    if(content && content.style.maxHeight==='0px'){
+      content.style.maxHeight='none';
+      content.style.opacity='1';
+      content.style.pointerEvents='auto';
+      content.style.overflow='visible';
+    }
+  }
+  setTimeout(ensureOpen, 800);
+
+  console.log('[V542] clean fix done - 타임캡슐 원본 로직 유지');
+})();
+</script>
+
 </body>
 </html>
