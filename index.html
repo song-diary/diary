@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<!-- Version: V548 - 같은일자 id+전체텍스트로 정확히 구분 / V547 / V546 / V545 - 메모만 한번 클릭으로 보기 / V544 - 달력 아래 공간 확보 (겹침 방지) / V543 - 타임캡슐 메모 보기 한번 클릭 복구 / V542 - 타임캡슐 사진 원본 복구 (클린) / V540 / V539 - 빨간박스 위아래 정확히 동일 2px / V538 / V537 / V536 - 메모 한번클릭 + 입력버튼 간격 2px 복구 / V535 - 제목+내용 다 보여주기 (예전처럼) / V534 / V532 - 앨범1 위=입력 위, 앨범2 아래=입력 아래 (깔끔 복구) / V530 - 단순 스크롤 복구 (엉킴 제거) / V528 - 방법2: 오늘의 운세 더블클릭 힌트 토스트 / V527 - 오늘의 운세 폼 닫기 버튼 아래 고정 / V526 - 위쪽 좁은 네모칸 폭으로 아래 빈공간까지 맞춤 / V525 - 네모 박스 가운데 가장 작은 폭으로 나머지 간격 통일 (다른 것 유지) / V524 - 알림 박스 반복 선택칸 폭 균형 -->
+<!-- Version: V552 - 타임캡슐 같은 날짜 메모 여러 개: 눌린 항목 각자 내용 표시 (겹친 V543/V545 클릭 패치 제거) -->
+<!-- Version: V551 - 타임캡슐 여러개 각자 내용 표시 + PC 월이동 버튼 (휠 제거) / V550, 버튼+키보드만 (옵션3) / V548 / V547 / V546 / V545 - 메모만 한번 클릭으로 보기 / V544 - 달력 아래 공간 확보 (겹침 방지) / V543 - 타임캡슐 메모 보기 한번 클릭 복구 / V542 - 타임캡슐 사진 원본 복구 (클린) / V540 / V539 - 빨간박스 위아래 정확히 동일 2px / V538 / V537 / V536 - 메모 한번클릭 + 입력버튼 간격 2px 복구 / V535 - 제목+내용 다 보여주기 (예전처럼) / V534 / V532 - 앨범1 위=입력 위, 앨범2 아래=입력 아래 (깔끔 복구) / V530 - 단순 스크롤 복구 (엉킴 제거) / V528 - 방법2: 오늘의 운세 더블클릭 힌트 토스트 / V527 - 오늘의 운세 폼 닫기 버튼 아래 고정 / V526 - 위쪽 좁은 네모칸 폭으로 아래 빈공간까지 맞춤 / V525 - 네모 박스 가운데 가장 작은 폭으로 나머지 간격 통일 (다른 것 유지) / V524 - 알림 박스 반복 선택칸 폭 균형 -->
 <!-- Version: V523 - 로또·건강기록·마이크(음성) 기능 코드 전부 제거 -->
 <!-- Version: V522 - 입력폼 상하 스크롤 수정(카드가 터치 스크롤을 가로채던 문제), 오늘 날짜로 가기 버튼 잔재 제거 -->
 <!-- Version: V521 원본 - 설명 박스 + R 작게 -->
@@ -11,7 +12,7 @@
 <!-- Version: V500 - 리스트>타임캡슐>바이오리듬>운세>설명 순서 확정 -->
 <!-- Version: V290 - 기능·UI 유지, 진동중복/setInterval폭주/transform충돌 정리 --> 
 <!-- Version: V187 - 초중말복 동적화, 24절기 동적화, 누적패치 제거, 5~6줄 개그 유머 100점 -->
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>포토다이어리 V524 - 사진, 추억을 담다</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>포토다이어리 V552 - 사진, 추억을 담다</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -9626,7 +9627,7 @@ window.attachPhotoDoubleTap = function(el, handler){
                           // 왼쪽 50% - 사진 확대 (data 속성으로 키 전달)
                           '<div data-photo-key="'+safeKey+'" data-diary-id="'+safeId+'" data-full-text="'+safeFullText+'" data-photo-text="'+safeText+'" data-photo-date="'+p.date+'" onclick="window.handleTimeCapsulePhotoClick(this)" style="width:50%; flex:0 0 50%; background:#f9f9f9; display:flex; align-items:center; padding:8px; cursor:pointer; " title="사진 확대 - 클릭하면 크게 보기">' +
                           photoHTML +
-                          '<div style="flex:1; margin-left:6px; overflow:hidden;"><div style="font-size:9px; color:#999; margin-bottom:2px;">'+label+'</div><div style="font-size:11px; color:#666; font-weight:600;">📷 사진 보기</div></div>' +
+                          '<div style="flex:1; margin-left:6px; overflow:hidden;"><div style="font-size:9px; color:#999; margin-bottom:2px;">'+label+'</div><div style="font-size:11px; color:#666; font-weight:600;">'+(safeKey ? '📷 사진 보기' : '📷 메모 보기')+'</div></div>' +
                         '</div>' +
                         // 오른쪽 50% - 일자로 이동
                         '<div data-photo-key="'+(p.photo||'')+'" data-diary-id="'+safeId+'" data-photo-date="'+p.date+'" onclick="window.handleTimeCapsuleDateClick(\''+p.date+'\', this.getAttribute(\'data-photo-key\'))" style="width:50%; flex:0 0 50%; background:#f9f9f9; display:flex; align-items:center; justify-content:space-between; padding:8px 10px; cursor:pointer;" title="일자로 이동 - 앨범으로 포커스">' +
@@ -19811,7 +19812,8 @@ div:has(> label:has(input[name="cardStyle"])) { display:none !important; }
         if(!realText || realText.length<2){
           try{
             var all = (typeof getAllDiaries==='function'? getAllDiaries() : []);
-            var found = all.find(function(d){ return (d.date||'').split('T')[0]===photoDate; });
+            var _did = left.getAttribute('data-diary-id') || '';
+            var found = (_did && all.find(function(d){ return String(d.id)===String(_did); })) || all.find(function(d){ return (d.date||'').split('T')[0]===photoDate; });
             if(found && found.text) realText = found.text;
           }catch(e){}
         }
@@ -21921,7 +21923,7 @@ div:has(> label:has(input[name="cardStyle"])) { display:none !important; }
 </style>
 
 <style id="V525_GAP_MIN_EQUAL">
-/* V548 - 같은일자 id+전체텍스트로 정확히 구분 / V547 / V546 / V545 - 메모만 한번 클릭으로 보기 / V544 - 달력 아래 공간 확보 (겹침 방지) / V543 - 타임캡슐 메모 보기 한번 클릭 복구 / V542 - 타임캡슐 사진 원본 복구 (클린) / V540 / V539 - 빨간박스 위아래 정확히 동일 2px / V538 / V537 / V536 - 메모 한번클릭 + 입력버튼 간격 2px 복구 / V535 - 제목+내용 다 보여주기 (예전처럼) / V534 / V532 - 앨범1 위=입력 위, 앨범2 아래=입력 아래 (깔끔 복구) / V530 - 단순 스크롤 복구 (엉킴 제거) / V528 - 방법2: 오늘의 운세 더블클릭 힌트 토스트 / V527 - 오늘의 운세 폼 닫기 버튼 아래 고정 / V526 - 위쪽 좁은 네모칸 폭으로 아래 빈공간까지 맞춤 / V525 - 네모 박스 가운데 가장 작은 폭으로 나머지 맞추기 : 다른 것 건드리지 않고 간격만 최소폭으로 통일 */
+/* V551 - 타임캡슐 여러개 각자 내용 표시 + PC 월이동 버튼 (휠 제거) / V550, 버튼+키보드만 (옵션3) / V548 / V547 / V546 / V545 - 메모만 한번 클릭으로 보기 / V544 - 달력 아래 공간 확보 (겹침 방지) / V543 - 타임캡슐 메모 보기 한번 클릭 복구 / V542 - 타임캡슐 사진 원본 복구 (클린) / V540 / V539 - 빨간박스 위아래 정확히 동일 2px / V538 / V537 / V536 - 메모 한번클릭 + 입력버튼 간격 2px 복구 / V535 - 제목+내용 다 보여주기 (예전처럼) / V534 / V532 - 앨범1 위=입력 위, 앨범2 아래=입력 아래 (깔끔 복구) / V530 - 단순 스크롤 복구 (엉킴 제거) / V528 - 방법2: 오늘의 운세 더블클릭 힌트 토스트 / V527 - 오늘의 운세 폼 닫기 버튼 아래 고정 / V526 - 위쪽 좁은 네모칸 폭으로 아래 빈공간까지 맞춤 / V525 - 네모 박스 가운데 가장 작은 폭으로 나머지 맞추기 : 다른 것 건드리지 않고 간격만 최소폭으로 통일 */
 .tab-panel.active{
   gap: 2px !important;
 }
@@ -21942,7 +21944,7 @@ div:has(> label:has(input[name="cardStyle"])) { display:none !important; }
 
 
 <style id="V526_NARROW_GAP">
-/* V548 - 같은일자 id+전체텍스트로 정확히 구분 / V547 / V546 / V545 - 메모만 한번 클릭으로 보기 / V544 - 달력 아래 공간 확보 (겹침 방지) / V543 - 타임캡슐 메모 보기 한번 클릭 복구 / V542 - 타임캡슐 사진 원본 복구 (클린) / V540 / V539 - 빨간박스 위아래 정확히 동일 2px / V538 / V537 / V536 - 메모 한번클릭 + 입력버튼 간격 2px 복구 / V535 - 제목+내용 다 보여주기 (예전처럼) / V534 / V532 - 앨범1 위=입력 위, 앨범2 아래=입력 아래 (깔끔 복구) / V530 - 단순 스크롤 복구 (엉킴 제거) / V528 - 방법2: 오늘의 운세 더블클릭 힌트 토스트 / V527 - 오늘의 운세 폼 닫기 버튼 아래 고정 / V526 - 위쪽 좁은 네모칸(달력-카드 사이) 폭으로 아래 빈공간까지 맞춤 */
+/* V551 - 타임캡슐 여러개 각자 내용 표시 + PC 월이동 버튼 (휠 제거) / V550, 버튼+키보드만 (옵션3) / V548 / V547 / V546 / V545 - 메모만 한번 클릭으로 보기 / V544 - 달력 아래 공간 확보 (겹침 방지) / V543 - 타임캡슐 메모 보기 한번 클릭 복구 / V542 - 타임캡슐 사진 원본 복구 (클린) / V540 / V539 - 빨간박스 위아래 정확히 동일 2px / V538 / V537 / V536 - 메모 한번클릭 + 입력버튼 간격 2px 복구 / V535 - 제목+내용 다 보여주기 (예전처럼) / V534 / V532 - 앨범1 위=입력 위, 앨범2 아래=입력 아래 (깔끔 복구) / V530 - 단순 스크롤 복구 (엉킴 제거) / V528 - 방법2: 오늘의 운세 더블클릭 힌트 토스트 / V527 - 오늘의 운세 폼 닫기 버튼 아래 고정 / V526 - 위쪽 좁은 네모칸(달력-카드 사이) 폭으로 아래 빈공간까지 맞춤 */
 #calendar-card{
   margin-bottom: 2px !important;
   padding-bottom: 4px !important;
@@ -21976,7 +21978,7 @@ div:has(> label:has(input[name="cardStyle"])) { display:none !important; }
 
 
 <style id="V527_FORTUNE_CLOSE_FIXED">
-/* V548 - 같은일자 id+전체텍스트로 정확히 구분 / V547 / V546 / V545 - 메모만 한번 클릭으로 보기 / V544 - 달력 아래 공간 확보 (겹침 방지) / V543 - 타임캡슐 메모 보기 한번 클릭 복구 / V542 - 타임캡슐 사진 원본 복구 (클린) / V540 / V539 - 빨간박스 위아래 정확히 동일 2px / V538 / V537 / V536 - 메모 한번클릭 + 입력버튼 간격 2px 복구 / V535 - 제목+내용 다 보여주기 (예전처럼) / V534 / V532 - 앨범1 위=입력 위, 앨범2 아래=입력 아래 (깔끔 복구) / V530 - 단순 스크롤 복구 (엉킴 제거) / V528 - 방법2: 오늘의 운세 더블클릭 힌트 토스트 / V527 - 오늘의 운세 폼 닫기 버튼 아래 고정 - 현재 상태 그대로, 고정만 추가 */
+/* V551 - 타임캡슐 여러개 각자 내용 표시 + PC 월이동 버튼 (휠 제거) / V550, 버튼+키보드만 (옵션3) / V548 / V547 / V546 / V545 - 메모만 한번 클릭으로 보기 / V544 - 달력 아래 공간 확보 (겹침 방지) / V543 - 타임캡슐 메모 보기 한번 클릭 복구 / V542 - 타임캡슐 사진 원본 복구 (클린) / V540 / V539 - 빨간박스 위아래 정확히 동일 2px / V538 / V537 / V536 - 메모 한번클릭 + 입력버튼 간격 2px 복구 / V535 - 제목+내용 다 보여주기 (예전처럼) / V534 / V532 - 앨범1 위=입력 위, 앨범2 아래=입력 아래 (깔끔 복구) / V530 - 단순 스크롤 복구 (엉킴 제거) / V528 - 방법2: 오늘의 운세 더블클릭 힌트 토스트 / V527 - 오늘의 운세 폼 닫기 버튼 아래 고정 - 현재 상태 그대로, 고정만 추가 */
 #fortune-popup-overlay{
   align-items: center !important;
   padding: 12px !important;
@@ -22109,7 +22111,7 @@ div:has(> label:has(input[name="cardStyle"])) { display:none !important; }
 
 
 <style id="V528_TOAST_HINT">
-/* V548 - 같은일자 id+전체텍스트로 정확히 구분 / V547 / V546 / V545 - 메모만 한번 클릭으로 보기 / V544 - 달력 아래 공간 확보 (겹침 방지) / V543 - 타임캡슐 메모 보기 한번 클릭 복구 / V542 - 타임캡슐 사진 원본 복구 (클린) / V540 / V539 - 빨간박스 위아래 정확히 동일 2px / V538 / V537 / V536 - 메모 한번클릭 + 입력버튼 간격 2px 복구 / V535 - 제목+내용 다 보여주기 (예전처럼) / V534 / V532 - 앨범1 위=입력 위, 앨범2 아래=입력 아래 (깔끔 복구) / V530 - 단순 스크롤 복구 (엉킴 제거) / V528 - 방법2: 한번 클릭 시 안내 토스트 */
+/* V551 - 타임캡슐 여러개 각자 내용 표시 + PC 월이동 버튼 (휠 제거) / V550, 버튼+키보드만 (옵션3) / V548 / V547 / V546 / V545 - 메모만 한번 클릭으로 보기 / V544 - 달력 아래 공간 확보 (겹침 방지) / V543 - 타임캡슐 메모 보기 한번 클릭 복구 / V542 - 타임캡슐 사진 원본 복구 (클린) / V540 / V539 - 빨간박스 위아래 정확히 동일 2px / V538 / V537 / V536 - 메모 한번클릭 + 입력버튼 간격 2px 복구 / V535 - 제목+내용 다 보여주기 (예전처럼) / V534 / V532 - 앨범1 위=입력 위, 앨범2 아래=입력 아래 (깔끔 복구) / V530 - 단순 스크롤 복구 (엉킴 제거) / V528 - 방법2: 한번 클릭 시 안내 토스트 */
 #v528-toast{
   position: fixed;
   left: 50%;
@@ -22554,97 +22556,6 @@ div:has(> label:has(input[name="cardStyle"])) { display:none !important; }
 </script>
 
 
-<script id="V543_TIMECAPSULE_MEMO_CLICK">
-(function(){
-  // V543 - 타임캡슐 메모보기(사진 없는 경우) 클릭 복구
-  function isEmptyKey(k){
-    if(!k) return true;
-    const s=String(k).trim().toLowerCase();
-    return s===''||s==='null'||s==='undefined';
-  }
-
-  const origPhotoClick = window.handleTimeCapsulePhotoClick;
-  if(origPhotoClick && !window._v543Patched){
-    window._v543Patched = true;
-    window.handleTimeCapsulePhotoClick = function(el){
-      try{
-        const photoKey = el.getAttribute('data-photo-key') || '';
-        const photoDate = el.getAttribute('data-photo-date') || '';
-        const photoTextAttr = el.getAttribute('data-photo-text') || '';
-        console.log('[V543] 메모/사진 보기 클릭 - key:', photoKey, 'date:', photoDate);
-
-        // 사진이 없으면 -> 메모 텍스트 보여주기 (한번 클릭)
-        if(isEmptyKey(photoKey)){
-          // 실제 아이템 찾기
-          let item = null;
-          try{
-            const all = typeof getAllDiaries==='function' ? getAllDiaries() : [];
-            // 날짜로 찾기
-            if(photoDate){
-              const found = all.filter(d=>d.date===photoDate);
-              if(found.length>0){
-                // 텍스트가 있는 것 우선
-                item = found.find(f=>f.text && f.text.length>0) || found[0];
-              }
-            }
-            // data-photo-text에 텍스트가 있으면 사용
-            if(!item || !item.text){
-              let realText = photoTextAttr;
-              try{ realText = decodeURIComponent(realText).replace(/&quot;/g,'"'); }catch(e){}
-              if(realText && realText.length>1){
-                item = {text: realText, date: photoDate, anniversary: '', title: ''};
-              }
-            }
-          }catch(e){ console.log('V543 find item err', e); }
-
-          if(item){
-            if(window.openDiaryTextLightbox){
-              window.openDiaryTextLightbox(item);
-            } else if(window.openPhotoLightbox){
-              window.openPhotoLightbox('', item);
-            }
-            return;
-          }
-          // 아이템 못 찾아도, 메모보기 텍스트라도
-          if(photoTextAttr){
-            let rt = photoTextAttr;
-            try{ rt = decodeURIComponent(rt).replace(/&quot;/g,'"'); }catch(e){}
-            if(window.openDiaryTextLightbox){
-              window.openDiaryTextLightbox({text: rt, date: photoDate, anniversary: '', title: ''});
-              return;
-            }
-          }
-          // 그래도 안 되면 일자로 이동
-          if(photoDate && window.goToPastDiary){
-            window.goToPastDiary(photoDate);
-            return;
-          }
-          return;
-        }
-
-        // 사진이 있으면 원래 로직 그대로 실행
-        return origPhotoClick.apply(this, arguments);
-      }catch(e){
-        console.log('V543 memo click err', e);
-      }
-    };
-  }
-
-  // 더블클릭도 한번 클릭처럼 동작하게
-  document.addEventListener('dblclick', function(e){
-    const target = e.target.closest && e.target.closest('div[data-photo-key][onclick*="handleTimeCapsulePhotoClick"]');
-    if(!target) return;
-    const key = target.getAttribute('data-photo-key') || '';
-    if(isEmptyKey(key)){
-      e.preventDefault();
-      e.stopPropagation();
-      window.handleTimeCapsulePhotoClick(target);
-    }
-  }, true);
-
-  console.log('[V543] 타임캡슐 메모 보기 한번 클릭 복구 완료');
-})();
-</script>
 <style id="V543_MEMO_CURSOR">
 /* 메모 보기 버튼도 확실히 클릭 가능하게 */
 div[data-photo-key][onclick*="handleTimeCapsulePhotoClick"]{
@@ -22658,7 +22569,7 @@ div[data-photo-key][onclick*="handleTimeCapsulePhotoClick"] *{
 
 
 <style id="V544_CALENDAR_BOTTOM_SPACE">
-/* V548 - 같은일자 id+전체텍스트로 정확히 구분 / V547 / V546 / V545 - 메모만 한번 클릭으로 보기 / V544 - 달력 아래 공간 확보 (메인 화면 보호) - 달력만 수정 */
+/* V551 - 타임캡슐 여러개 각자 내용 표시 + PC 월이동 버튼 (휠 제거) / V550, 버튼+키보드만 (옵션3) / V548 / V547 / V546 / V545 - 메모만 한번 클릭으로 보기 / V544 - 달력 아래 공간 확보 (메인 화면 보호) - 달력만 수정 */
 #calendar-card{
   padding-bottom: 10px !important; /* 일자 뒤 라인 아래로 늘리기 */
   margin-bottom: 2px !important;
@@ -22680,228 +22591,96 @@ div[data-photo-key][onclick*="handleTimeCapsulePhotoClick"] *{
 </style>
 
 
-<script id="V545_MEMO_SINGLE_CLICK">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<style id="V551_PC_MONTH_NAV">
+.calendar-header{ display:flex !important; align-items:center !important; justify-content:space-between !important; gap:4px !important; }
+#cal-month-title{ flex:1 !important; text-align:center !important; cursor:pointer !important; user-select:none !important; }
+.cal-nav-btn{ font-size:14px !important; padding:4px 10px !important; border-radius:8px !important; border:1px solid #ddd !important; background:#fff !important; cursor:pointer !important; min-width:32px !important; }
+.cal-nav-btn:hover{ background:#f0eaff !important; border-color:#c9b6ff !important; }
+</style>
+<script id="V551_FIX">
 (function(){
-  function isEmpty(k){
-    if(!k) return true;
-    const s=String(k).trim().toLowerCase();
-    return s===''||s==='null'||s==='undefined';
+  function addMonthNav(){
+    const header=document.querySelector('.calendar-header');
+    const title=document.getElementById('cal-month-title');
+    if(!header||!title) return;
+    if(document.getElementById('cal-prev-btn')) return;
+    const prev=document.createElement('button'); prev.id='cal-prev-btn'; prev.className='cal-nav-btn'; prev.innerHTML='◀'; prev.title='이전 달'; prev.onclick=function(e){ e.stopPropagation(); (window.changeMonth||changeMonth)(-1); };
+    const next=document.createElement('button'); next.id='cal-next-btn'; next.className='cal-nav-btn'; next.innerHTML='▶'; next.title='다음 달'; next.onclick=function(e){ e.stopPropagation(); (window.changeMonth||changeMonth)(1); };
+    const first=header.querySelector('#top-toggle-btn')||header.firstElementChild;
+    const last=header.querySelector('button[onclick*="openSettingsModal"]')||header.lastElementChild;
+    if(first&&first.nextSibling) first.insertAdjacentElement('afterend', prev); else header.insertBefore(prev,title);
+    if(last) last.insertAdjacentElement('beforebegin', next); else header.appendChild(next);
+    title.title='클릭하면 오늘로 이동';
+    title.addEventListener('click', function(){ if(window.goToToday) window.goToToday(); else if(typeof goToToday==='function') goToToday(); });
   }
-  function openMemoByDate(dateStr, fallbackText){
-    try{
-      const all = typeof getAllDiaries==='function' ? getAllDiaries() : [];
-      let item = null;
-      if(dateStr){
-        const list = all.filter(d=>d.date===dateStr);
-        // 메모 있는 것 우선
-        item = list.find(d=> (d.text||d.memo||'').length>0 ) || list[0];
-      }
-      if(item && (item.text||item.memo||item.title||item.anniversary)){
-        if(window.openDiaryTextLightbox) { window.openDiaryTextLightbox(item); return true; }
-        if(window.openPhotoLightbox) { window.openPhotoLightbox('', item); return true; }
-      }
-      if(fallbackText){
-        let rt = fallbackText;
-        try{ rt = decodeURIComponent(rt).replace(/&quot;/g,'"'); }catch(e){}
-        if(rt && rt.length>1){
-          if(window.openDiaryTextLightbox){ window.openDiaryTextLightbox({text: rt, date: dateStr}); return true; }
-        }
-      }
-    }catch(e){ console.log('V545 openMemo err', e); }
-    return false;
-  }
-
-  function bindMemoClicks(){
-    const contents = document.querySelectorAll('#time-capsule-content, #diary-around-today-list');
-    contents.forEach(container=>{
-      const cards = container.querySelectorAll('div[style*="height:72px"]');
-      cards.forEach(card=>{
-        const sides = card.querySelectorAll('div[style*="width:50%"]');
-        if(sides.length!==2) return;
-        const left = sides[0];
-        const right = sides[1];
-        const photoKey = left.getAttribute('data-photo-key') || right.getAttribute('data-photo-key') || '';
-        if(!isEmpty(photoKey)) return; // 사진 있는 건 건드리지 않음
-
-        // 이미 바인딩 됐으면 스킵
-        if(left.dataset.v545Bound==='1') return;
-        left.dataset.v545Bound='1';
-
-        const dateStr = left.getAttribute('data-photo-date') || right.getAttribute('data-photo-date') || '';
-        const textAttr = left.getAttribute('data-photo-text') || '';
-
-        // 기존 onclick 제거하고 새 핸들러로 (한번 클릭)
-        left.style.cursor='pointer';
-        left.style.pointerEvents='auto';
-        // 왼쪽 전체 클릭 가능하게
-        left.onclick = function(ev){
-          ev.stopPropagation();
-          ev.preventDefault();
-          console.log('[V545] 메모 보기 한번 클릭', dateStr);
-          if(!openMemoByDate(dateStr, textAttr)){
-            // 실패하면 이동이라도
-            if(dateStr && window.goToPastDiary){ window.goToPastDiary(dateStr); }
-          }
-        };
-        // 더블클릭도 같은 동작
-        left.ondblclick = function(ev){
-          ev.stopPropagation();
-          ev.preventDefault();
-          left.onclick(ev);
-        };
-        // 내부 요소들도 클릭 막지 않게
-        left.querySelectorAll('*').forEach(el=>{ el.style.pointerEvents='none'; });
-      });
+  function addKeyboardNav(){
+    if(window._v551Key) return; window._v551Key=true;
+    document.addEventListener('keydown', function(e){
+      if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.isContentEditable) return;
+      if(e.key==='ArrowLeft'){ (window.changeMonth||changeMonth)(-1); e.preventDefault(); }
+      if(e.key==='ArrowRight'){ (window.changeMonth||changeMonth)(1); e.preventDefault(); }
     });
   }
 
-  // 원래 handleTimeCapsulePhotoClick도 메모용으로 한번 클릭 동작
-  const orig = window.handleTimeCapsulePhotoClick;
-  if(orig && !window._v545OrigPatched){
-    window._v545OrigPatched=true;
-    window.handleTimeCapsulePhotoClick = function(el){
-      const key = el.getAttribute('data-photo-key') || '';
-      if(isEmpty(key)){
-        const dateStr = el.getAttribute('data-photo-date') || '';
-        const textAttr = el.getAttribute('data-photo-text') || '';
-        if(openMemoByDate(dateStr, textAttr)) return;
-      }
-      return orig.apply(this, arguments);
-    };
-  }
-
-  // 타임캡슐 렌더 후마다 바인딩
-  function setupObserver(){
-    const list = document.getElementById('diary-around-today-list');
-    if(!list) return;
-    const obs = new MutationObserver(()=>{ setTimeout(bindMemoClicks, 50); });
-    obs.observe(list, {childList:true, subtree:true});
-  }
-
-  setTimeout(bindMemoClicks, 300);
-  setTimeout(bindMemoClicks, 1000);
-  setTimeout(bindMemoClicks, 2000);
-  setTimeout(setupObserver, 500);
-
-  // renderDiaryAroundToday 래핑
-  if(window.renderDiaryAroundToday && !window.renderDiaryAroundToday._v545){
-    const origRender = window.renderDiaryAroundToday;
-    window.renderDiaryAroundToday = function(){
-      const r = origRender.apply(this, arguments);
-      setTimeout(bindMemoClicks, 100);
-      setTimeout(bindMemoClicks, 500);
-      return r;
-    };
-    window.renderDiaryAroundToday._v545=true;
-  }
-
-  console.log('[V545] 메모만 있는 경우 한번 클릭으로 보기 복구');
-})();
-</script>
-
-
-
-
-
-
-
-
-<script id="V548_MULTI_MEMO_FIX">
-(function(){
+  // V551 - 타임캡슐 여러 개 정확히 구분 - 속성에서 직접 읽기
   function isEmpty(k){ if(!k) return true; const s=String(k).trim().toLowerCase(); return s===''||s==='null'||s==='undefined'; }
   function decodeText(t){ try{ return decodeURIComponent(t); }catch(e){ try{ return t.replace(/&quot;/g,'"'); }catch(e2){ return t||''; } } }
 
-  function openDirect(fullTextEnc, diaryId, dateStr){
-    try{
-      // 1) fullText가 있으면 그걸 바로 보여주기 - 가장 정확
-      if(fullTextEnc){
-        const decoded = decodeText(fullTextEnc);
-        if(decoded && decoded.trim().length>0){
-          if(window.openDiaryTextLightbox){ window.openDiaryTextLightbox({text: decoded, date: dateStr, id: diaryId}); return true; }
+  // 메모 보기: 눌린 항목 자신의 id로 정확히 찾아서 연다 (같은 날짜에 메모가 여러 개여도 각자 열림)
+  const orig=window.handleTimeCapsulePhotoClick;
+  if(orig && !window._v552Patched){
+    window._v552Patched=true;
+    window.handleTimeCapsulePhotoClick=function(el){
+      const photoKey=el.getAttribute('data-photo-key')||'';
+      if(isEmpty(photoKey)){
+        try{ if(window.event) window.event.stopPropagation(); }catch(e){}
+        const id=el.getAttribute('data-diary-id')||'';
+        const dateStr=el.getAttribute('data-photo-date')||'';
+        const decoded=decodeText(el.getAttribute('data-full-text')||el.getAttribute('data-photo-text')||'');
+        let item=null;
+        if(id){
+          try{
+            const all=typeof getAllDiaries==='function'?getAllDiaries():[];
+            item=all.find(function(d){ return String(d.id)===String(id); })||null;
+          }catch(e){}
         }
-      }
-      // 2) id로 찾기
-      if(diaryId){
-        try{
-          const all = typeof getAllDiaries==='function' ? getAllDiaries() : [];
-          const byId = all.find(d=>String(d.id)===String(diaryId));
-          if(byId){
-            if(window.openDiaryTextLightbox){ window.openDiaryTextLightbox(byId); return true; }
-          }
-        }catch(e){}
-      }
-    }catch(e){ console.log('V548 openDirect err', e); }
-    return false;
-  }
-
-  function bindMemoClicks(){
-    const container = document.getElementById('time-capsule-content') || document.getElementById('diary-around-today-list');
-    if(!container) return;
-    const cards = container.querySelectorAll('div[style*="height:72px"]');
-    cards.forEach(card=>{
-      const sides = card.querySelectorAll('div[style*="width:50%"]');
-      if(sides.length!==2) return;
-      const left = sides[0];
-      const right = sides[1];
-      const photoKey = left.getAttribute('data-photo-key') || '';
-      if(!isEmpty(photoKey)) return; // 사진 있는 건 제외
-
-      const diaryId = left.getAttribute('data-diary-id') || right.getAttribute('data-diary-id') || '';
-      const dateStr = left.getAttribute('data-photo-date') || '';
-      const fullTextEnc = left.getAttribute('data-full-text') || left.getAttribute('data-photo-text') || '';
-
-      left.dataset.v548Bound='1';
-      left.style.cursor='pointer';
-      left.style.pointerEvents='auto';
-      // 기존 onclick 제거
-      left.removeAttribute('onclick');
-      left.onclick = function(ev){
-        ev.stopPropagation(); ev.preventDefault();
-        console.log('[V548] 메모 클릭 id:', diaryId, 'date:', dateStr);
-        if(!openDirect(fullTextEnc, diaryId, dateStr)){
-          // 실패하면 원래 이동이라도
-          if(dateStr && window.goToPastDiary){ window.goToPastDiary(dateStr); }
+        if(item && (item.text||item.memo||item.title||item.anniversary) && window.openDiaryTextLightbox){
+          window.openDiaryTextLightbox(item); return;
         }
-      };
-      left.ondblclick = function(ev){ ev.stopPropagation(); ev.preventDefault(); left.onclick(ev); };
-      left.querySelectorAll('*').forEach(el=>{ el.style.pointerEvents='none'; });
-    });
-  }
-
-  const orig = window.handleTimeCapsulePhotoClick;
-  if(orig && !window._v548Patched){
-    window._v548Patched=true;
-    window.handleTimeCapsulePhotoClick = function(el){
-      const diaryId = el.getAttribute('data-diary-id') || '';
-      const dateStr = el.getAttribute('data-photo-date') || '';
-      const fullTextEnc = el.getAttribute('data-full-text') || el.getAttribute('data-photo-text') || '';
-      const key = el.getAttribute('data-photo-key') || '';
-      if(isEmpty(key) || diaryId){
-        if(openDirect(fullTextEnc, diaryId, dateStr)) return;
+        if(decoded && decoded.trim() && window.openDiaryTextLightbox){
+          window.openDiaryTextLightbox({id:id, text:decoded, date:dateStr}); return;
+        }
+        if(dateStr && window.goToPastDiary){ window.goToPastDiary(dateStr); }
+        return;
       }
       return orig.apply(this, arguments);
     };
   }
 
-  function setupObserver(){
-    const list = document.getElementById('diary-around-today-list');
-    if(!list) return;
-    const obs = new MutationObserver(()=> setTimeout(bindMemoClicks, 50));
-    obs.observe(list, {childList:true, subtree:true});
+  setTimeout(addMonthNav, 300); setTimeout(addMonthNav, 1000); setTimeout(addMonthNav, 2000);
+  setTimeout(addKeyboardNav, 500);
+
+  if(window.renderCalendar && !window.renderCalendar._v551){
+    const origC=window.renderCalendar;
+    window.renderCalendar=function(){ const r=origC.apply(this, arguments); setTimeout(addMonthNav, 20); return r; };
+    window.renderCalendar._v551=true;
   }
-
-  setTimeout(bindMemoClicks, 200);
-  setTimeout(bindMemoClicks, 800);
-  setTimeout(bindMemoClicks, 2000);
-  setTimeout(setupObserver, 500);
-
-  if(window.renderDiaryAroundToday && !window.renderDiaryAroundToday._v548){
-    const origR = window.renderDiaryAroundToday;
-    window.renderDiaryAroundToday = function(){ const r=origR.apply(this, arguments); setTimeout(bindMemoClicks,80); setTimeout(bindMemoClicks,400); return r; };
-    window.renderDiaryAroundToday._v548=true;
-  }
-
-  console.log('[V548] id+fullText로 같은일자 여러 메모 정확히 구분');
+  console.log('[V552] 타임캡슐 여러개 - 각자 내용 정확히 표시');
 })();
 </script>
 
