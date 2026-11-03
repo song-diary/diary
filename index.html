@@ -22610,8 +22610,8 @@ div[data-photo-key][onclick*="handleTimeCapsulePhotoClick"] *{
 
 
 
-<style id="V554_FINAL_FIX">
-/* V554 - 오른쪽 삼각형 정확 + 왼쪽 대칭 */
+<style id="V571 - 오늘 수정 유지 + 72px 리스트 복구 심플 72px 강제 (인스타 큰카드 버그 수정) 72px 썸네일 복구 (스크린샷 동일) 원래 1열 큰 카드 복구 반반 2열 복구 + 크기 28px + 달력 양끝 + 요일줄 제거 + 달력 양끝 정렬 + 요일줄 제거 유지 / V556 / V554_FINAL_FIX">
+/* V571 - 오늘 수정 유지 + 72px 리스트 복구 심플 72px 강제 (인스타 큰카드 버그 수정) 72px 썸네일 복구 (스크린샷 동일) 원래 1열 큰 카드 복구 반반 2열 복구 + 크기 28px + 달력 양끝 + 요일줄 제거 + 달력 양끝 정렬 + 요일줄 제거 유지 / V556 / V554 - 오른쪽 삼각형 정확 + 왼쪽 대칭 */
 .calendar-header{ display:flex !important; align-items:center !important; justify-content:space-between !important; gap:6px !important; }
 #cal-month-title{ flex:1 !important; text-align:center !important; cursor:pointer !important; user-select:none !important; }
 .cal-nav-btn{
@@ -22628,7 +22628,7 @@ div[data-photo-key][onclick*="handleTimeCapsulePhotoClick"] *{
 .cal-nav-btn:hover.next .tri{ border-color:transparent transparent transparent #7c6cff; }
 .cal-nav-btn:active{ transform: scale(0.92) !important; }
 </style>
-<script id="V554_FINAL_JS">
+<script id="V571 - 오늘 수정 유지 + 72px 리스트 복구 심플 72px 강제 (인스타 큰카드 버그 수정) 72px 썸네일 복구 (스크린샷 동일) 원래 1열 큰 카드 복구 반반 2열 복구 + 크기 28px + 달력 양끝 + 요일줄 제거 + 달력 양끝 정렬 + 요일줄 제거 유지 / V556 / V554_FINAL_JS">
 (function(){
   // 1. 달력 이동 버튼
   function addMonthNav(){
@@ -22742,7 +22742,1396 @@ div[data-photo-key][onclick*="handleTimeCapsulePhotoClick"] *{
     window.renderCalendar=function(){ const r=origC.apply(this, arguments); setTimeout(addMonthNav, 20); return r; };
     window.renderCalendar._v554=true;
   }
-  console.log('[V554] 최종 - 타임캡슐 여러개 각자 내용 + 오른쪽 삼각형 정확히 수정');
+  console.log('[V571 - 오늘 수정 유지 + 72px 리스트 복구 심플 72px 강제 (인스타 큰카드 버그 수정) 72px 썸네일 복구 (스크린샷 동일) 원래 1열 큰 카드 복구 반반 2열 복구 + 크기 28px + 달력 양끝 + 요일줄 제거 + 달력 양끝 정렬 + 요일줄 제거 유지 / V556 / V554] 최종 - 타임캡슐 여러개 각자 내용 + 오른쪽 삼각형 정확히 수정');
+})();
+</script>
+
+
+<script id="V555_SELECTED_DATE_FORTUNE_BIO">
+// V555 - 선택한 날짜에 맞춰 운세 + 바이오리듬 바로 바뀌게
+(function(){
+  // 1. sajuGetTodayInfo가 선택한 날짜 받도록 패치
+  const origGetTodayInfo = window.sajuGetTodayInfo || (typeof sajuGetTodayInfo==='function'?sajuGetTodayInfo:null);
+  function getTargetDateObj(dateStr){
+    if(!dateStr) return new Date();
+    try{
+      const d = new Date(dateStr);
+      if(!isNaN(d.getTime())) return d;
+    }catch(e){}
+    return new Date();
+  }
+
+  // sajuGetTodayInfo 오버라이드 - 인자로 날짜 받을 수 있게
+  window.sajuGetTodayInfo = function(targetDateStr){
+    try{
+      const lib = (typeof sajuGetLib==='function') ? sajuGetLib() : null;
+      const today = getTargetDateObj(targetDateStr || window.selectedViewDate || (typeof selectedViewDate!=='undefined'?selectedViewDate:null));
+      if(lib && lib.solar2lunar){
+        const lunar = lib.solar2lunar(today.getFullYear(), today.getMonth()+1, today.getDate());
+        const todayGz = lunar.gzDay;
+        return { gz: todayGz, elem: (typeof sajuElementOfGan==='function'?sajuElementOfGan(todayGz[0]):null), dateObj: today };
+      }
+      return { gz: null, elem: null, dateObj: today };
+    }catch(e){
+      return origGetTodayInfo ? origGetTodayInfo() : { gz:null, elem:null, dateObj: new Date() };
+    }
+  };
+  if(typeof sajuGetTodayInfo==='function'){
+    // 로컬 스코프의 sajuGetTodayInfo도 덮기 위해 전역에 노출된 원본이 로컬에서 참조되면 안 되므로, window 버전 사용하도록 sajuGetEnhancedFortune도 패치
+  }
+
+  // 2. sajuGetEnhancedFortune이 날짜 받도록 패치
+  const origEnhanced = window.sajuGetEnhancedFortune || (typeof sajuGetEnhancedFortune==='function'?sajuGetEnhancedFortune:null);
+  window.sajuGetEnhancedFortune = function(targetDateStr){
+    try{
+      const dateStr = targetDateStr || window.selectedViewDate || (typeof selectedViewDate!=='undefined'?selectedViewDate:null);
+      const todayInfo = window.sajuGetTodayInfo(dateStr);
+      if(!todayInfo || !todayInfo.gz) return null;
+      const sPillars = (typeof sajuPillars!=='undefined'?sajuPillars:window.sajuPillars);
+      const sBirth = (typeof sajuBirthInfo!=='undefined'?sajuBirthInfo:window.sajuBirthInfo);
+      const sDayMaster = (typeof sajuDayMasterElem!=='undefined'?sajuDayMasterElem:window.sajuDayMasterElem);
+      if(!sPillars || !sBirth) return null;
+      const dayGan = sPillars.day.gan;
+      const todayGan = todayInfo.gz[0];
+      const todayZhi = todayInfo.gz[1];
+      const tenGodGan = (typeof sajuGetTenGod==='function'?sajuGetTenGod(dayGan, todayGan):'');
+      const relation = (typeof sajuRelationOf==='function'?sajuRelationOf(sDayMaster, todayInfo.elem):'');
+      const base = (typeof SAJU_FORTUNE!=='undefined' ? (SAJU_FORTUNE[relation]||SAJU_FORTUNE['비겁']) : {total:'', score:70});
+      const strength = (typeof sajuJudgeStrength==='function'?sajuJudgeStrength(sPillars, sDayMaster):'');
+      const useful = (typeof sajuGetUsefulGod==='function'?sajuGetUsefulGod(sPillars, sDayMaster, strength):{god:'목'});
+      const myZhis = [sPillars.year?.zhi, sPillars.month?.zhi, sPillars.day?.zhi, sPillars.hour?.zhi].filter(Boolean);
+      const hapChung = (typeof sajuCheckHapChung==='function'?sajuCheckHapChung(myZhis, todayZhi):[]);
+      let score = base.score||70;
+      if(todayInfo.elem === useful.god) score = Math.min(95, score + 15);
+      if(hapChung.some(h => h.type === '육합' || h.type === '삼합')) score = Math.min(96, score + 10);
+      if(hapChung.some(h => h.type === '충')) score = Math.max(45, score - 8);
+      const luckColor = (typeof SAJU_LUCK_COLOR!=='undefined' ? (SAJU_LUCK_COLOR[useful.god]||SAJU_LUCK_COLOR['목']) : '');
+      const luckColorHex = (typeof SAJU_LUCK_COLOR_HEX!=='undefined' ? (SAJU_LUCK_COLOR_HEX[useful.god]||SAJU_LUCK_COLOR_HEX['목']) : '');
+      const luckPlace = (typeof SAJU_LUCK_PLACE!=='undefined' ? (SAJU_LUCK_PLACE[useful.god]||SAJU_LUCK_PLACE['목']) : '');
+      return {
+        base, tenGodGan, relation, strength, useful, hapChung,
+        score, todayGan, todayZhi,
+        luckColor, luckColorHex, luckPlace,
+        todayGz: todayInfo.gz,
+        dateObj: todayInfo.dateObj
+      };
+    }catch(e){
+      console.log('V555 enhanced err', e);
+      return origEnhanced ? origEnhanced() : null;
+    }
+  };
+
+  // 3. updateFortuneTeaser가 선택한 날짜 기준으로 표시
+  const origTeaser = window.updateFortuneTeaser || (typeof updateFortuneTeaser==='function'?updateFortuneTeaser:null);
+  window.updateFortuneTeaser = function(targetDateStr){
+    try{
+      const dateStr = targetDateStr || window.selectedViewDate || (typeof selectedViewDate!=='undefined'?selectedViewDate:null) || (typeof getTodayStr==='function'?getTodayStr():null);
+      const todayStr = (typeof getTodayStr==='function'?getTodayStr():new Date().toISOString().slice(0,10));
+      const isToday = !dateStr || dateStr===todayStr;
+
+      const teaserEl = document.getElementById('fortune-teaser');
+      const textEl = document.getElementById('fortune-teaser-text');
+      const subEl = document.getElementById('fortune-teaser-sub');
+      if(!textEl||!subEl) return;
+      
+      let show=false; try{ show=(typeof getShowFortune==='function'?getShowFortune():true); }catch(e){ show=true; }
+      if(teaserEl){
+        if(!show){
+          teaserEl.classList.add('fortune-hidden');
+          teaserEl.style.setProperty('display','none','important');
+          return;
+        }else{
+          teaserEl.classList.remove('fortune-hidden');
+          teaserEl.style.removeProperty('display');
+          teaserEl.style.display='';
+          teaserEl.style.setProperty('height','28px','important');
+          teaserEl.style.setProperty('min-height','28px','important');
+          teaserEl.style.setProperty('display','flex','important');
+        }
+      }
+
+      try{
+        const birthInfo = (typeof sajuBirthInfo!=='undefined'?sajuBirthInfo:window.sajuBirthInfo);
+        if(birthInfo && birthInfo.date){
+          const enh = window.sajuGetEnhancedFortune(dateStr);
+          if(enh){
+            const tenGod = enh.tenGodGan;
+            const oneLiners = {
+              '비견': '내 고집대로 가도 괜찮은 날, 근데 옆도 한번 봐줘요',
+              '겁재': '경쟁심이 올라와요, 비교 말고 내 페이스대로',
+              '식신': '아이디어가 맛있게 떠오르는 날이에요',
+              '상관': '하고 싶은 말이 많아지는 날이에요',
+              '편재': '작은 기회가 톡톡 들어오는 날이에요',
+              '정재': '차곡차곡, 실속 챙기는 날이에요',
+              '편관': '조금 부담돼도 해내면 레벨업하는 날',
+              '정관': '믿을 만한 사람으로 보이는 날이에요',
+              '편인': '번뜩이는 영감이 오는 날, 메모해둬요',
+              '정인': '누가 나를 챙겨주고, 나도 배우는 날이에요'
+            };
+            const dObj = enh.dateObj;
+            const label = isToday ? '오늘의 운세' : `${dObj.getMonth()+1}월 ${dObj.getDate()}일의 운세`;
+            textEl.textContent = label;
+            subEl.textContent = oneLiners[tenGod] || (enh.base && enh.base.total ? enh.base.total.split('.')[0] : '그날의 기운 확인하기');
+            // 팝업이 열려있으면 팝업도 갱신
+            const popupBody = document.getElementById('fortune-popup-body');
+            if(popupBody && popupBody.innerHTML && popupBody.innerHTML.includes('오늘 하루 브리핑')){
+              // 팝업은 수동으로 열 때 다시 그리므로 티저만 갱신
+            }
+            return;
+          }
+        }
+      }catch(e){ console.log('V555 teaser enh err', e); }
+
+      // fallback
+      if(origTeaser) origTeaser();
+    }catch(e){ console.log('V555 teaser err', e); if(origTeaser) origTeaser(); }
+  };
+  if(typeof updateFortuneTeaser==='function'){ updateFortuneTeaser = window.updateFortuneTeaser; }
+
+  // 4. 바이오리듬이 선택한 날짜 기준으로
+  const origRenderBio = window.renderMainBiorhythm || (typeof renderMainBiorhythm==='function'?renderMainBiorhythm:null);
+  window.renderMainBiorhythm = function(targetDateStr){
+    try{
+      const dateStr = targetDateStr || window.selectedViewDate || (typeof selectedViewDate!=='undefined'?selectedViewDate:null);
+      const targetDate = getTargetDateObj(dateStr);
+      const todayStr = (typeof getTodayStr==='function'?getTodayStr():new Date().toISOString().slice(0,10));
+      const isToday = !dateStr || dateStr===todayStr;
+
+      let birthDateObj=null;
+      try{
+        if(window.sajuBirthInfo && window.sajuBirthInfo.date) birthDateObj=new Date(window.sajuBirthInfo.date);
+        else{
+          const stored=JSON.parse(localStorage.getItem('smartDiarySajuBirth')||'null');
+          if(stored && stored.date) birthDateObj=new Date(stored.date);
+        }
+      }catch(e){}
+      const teaser=document.getElementById('main-biorhythm-teaser');
+      if(!birthDateObj){
+        if(teaser) teaser.style.display='block';
+        const birthEl=document.getElementById('main-bio-birth');
+        if(birthEl) birthEl.textContent='생년월일 설정 필요';
+        return;
+      }
+      const birthEl=document.getElementById('main-bio-birth');
+      if(birthEl) birthEl.textContent = birthDateObj.getFullYear()+'.'+String(birthDateObj.getMonth()+1).padStart(2,'0')+'.'+String(birthDateObj.getDate()).padStart(2,'0');
+
+      const daysAlive=Math.floor((targetDate - birthDateObj)/86400000);
+      const calc=(typeof calcBiorhythmPercent==='function'?calcBiorhythmPercent:function(d,p){ return Math.sin(2*Math.PI*d/p)*100; });
+      const physical=calc(daysAlive,23);
+      const emotional=calc(daysAlive,28);
+      const intellectual=calc(daysAlive,33);
+      const phEl=document.getElementById('main-bio-physical');
+      const emEl=document.getElementById('main-bio-emotional');
+      const inEl=document.getElementById('main-bio-intellectual');
+      if(phEl) phEl.textContent=physical.toFixed(1)+'%';
+      if(emEl) emEl.textContent=emotional.toFixed(1)+'%';
+      if(inEl) inEl.textContent=intellectual.toFixed(1)+'%';
+
+      for(let i=0;i<5;i++){
+        const offset=(i-2)*10;
+        const d=new Date(targetDate); d.setDate(targetDate.getDate()+offset);
+        const el=document.getElementById('main-bio-d'+(i+1));
+        if(el){
+          if(i===2) el.textContent = isToday ? '오늘' : (d.getMonth()+1)+'.'+d.getDate();
+          else el.textContent = (d.getMonth()+1)+'.'+d.getDate();
+          if(i===2) el.style.color='#E53935'; el.style.fontWeight='800';
+        }
+      }
+
+      const canvas=document.getElementById('main-biorhythm-canvas');
+      if(canvas){
+        const ctx=canvas.getContext('2d');
+        const W=canvas.width,H=canvas.height;
+        const padding={left:10,right:10,top:6,bottom:10};
+        const chartW=W-padding.left-padding.right, chartH=H-padding.top-padding.bottom;
+        ctx.clearRect(0,0,W,H);
+        ctx.strokeStyle='#E0E0E0'; ctx.lineWidth=0.5; ctx.setLineDash([2,3]);
+        const zeroY=padding.top+chartH/2;
+        ctx.beginPath(); ctx.moveTo(padding.left,zeroY); ctx.lineTo(W-padding.right,zeroY); ctx.stroke();
+        ctx.setLineDash([]);
+        const range=40;
+        const startDate=new Date(targetDate); startDate.setDate(targetDate.getDate()-20);
+        function getPts(period){
+          const pts=[];
+          for(let i=0;i<=range;i++){
+            const d=new Date(startDate); d.setDate(startDate.getDate()+i);
+            const days=Math.floor((d-birthDateObj)/86400000);
+            const val=Math.sin(2*Math.PI*days/period)*100;
+            const x=padding.left+chartW*i/range;
+            const y=zeroY-(val/100)*(chartH/2*0.85);
+            pts.push({x,y});
+          }
+          return pts;
+        }
+        const phPts=getPts(23), emPts=getPts(28), inPts=getPts(33);
+        function drawLine(pts,color,w){ ctx.strokeStyle=color; ctx.lineWidth=w; ctx.beginPath(); pts.forEach((p,i)=>{ if(i===0) ctx.moveTo(p.x,p.y); else ctx.lineTo(p.x,p.y); }); ctx.stroke(); }
+        const avgPts=phPts.map((p,i)=>({x:p.x, y:padding.top+chartH/2 - ((Math.sin(2*Math.PI*Math.floor((new Date(startDate.getTime()+i*86400000)-birthDateObj)/86400000)/23)*100 + Math.sin(2*Math.PI*Math.floor((new Date(startDate.getTime()+i*86400000)-birthDateObj)/86400000)/28)*100 + Math.sin(2*Math.PI*Math.floor((new Date(startDate.getTime()+i*86400000)-birthDateObj)/86400000)/33)*100)/3/100)*(chartH/2*0.85)}));
+        // 간단 평균선
+        drawLine(phPts,'#4CAF50',2); drawLine(emPts,'#FF7043',2); drawLine(inPts,'#29B6F6',2);
+        const todayIdx=20; const todayX=padding.left+chartW*todayIdx/range;
+        ctx.strokeStyle='#E53935'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(todayX,padding.top); ctx.lineTo(todayX,padding.top+chartH); ctx.stroke();
+        ctx.fillStyle='#E53935'; ctx.beginPath(); ctx.arc(todayX,padding.top+chartH+6,4,0,Math.PI*2); ctx.fill();
+        [phPts[todayIdx],emPts[todayIdx],inPts[todayIdx]].forEach((pt,i)=>{
+          const colors=['#4CAF50','#FF7043','#29B6F6'];
+          ctx.fillStyle=colors[i]; ctx.beginPath(); ctx.arc(pt.x,pt.y,3.5,0,Math.PI*2); ctx.fill();
+          ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(pt.x,pt.y,1.5,0,Math.PI*2); ctx.fill();
+        });
+      }
+
+      // 헤더 제목도 변경
+      const headerTitle = document.querySelector('#main-biorhythm-teaser .biorhythm-header span:nth-child(2)');
+      if(headerTitle){
+        if(isToday) headerTitle.textContent='바이오리듬';
+        else{
+          const d=targetDate;
+          headerTitle.textContent=`${d.getMonth()+1}월 ${d.getDate()}일 바이오리듬`;
+        }
+      }
+
+    }catch(e){ console.log('V555 bio err', e); if(origRenderBio) origRenderBio(); }
+  };
+  if(typeof renderMainBiorhythm==='function'){ renderMainBiorhythm = window.renderMainBiorhythm; }
+
+  // 5. selectDiaryDate에서 운세+바이오리듬 갱신
+  const origSelect = window.selectDiaryDate || (typeof selectDiaryDate==='function'?selectDiaryDate:null);
+  window.selectDiaryDate = function(dateStr){
+    const normalized = (typeof normalizeDateStr==='function'?normalizeDateStr(dateStr):dateStr);
+    try{
+      if('vibrate' in navigator) navigator.vibrate(50);
+    }catch(e){}
+    if(typeof calEnlargedDate!=='undefined') calEnlargedDate=null;
+    if(typeof selectedViewDate!=='undefined') selectedViewDate=normalized;
+    window.selectedViewDate=normalized;
+    if(typeof renderCalendar==='function') renderCalendar();
+    if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday();
+    if(typeof renderMoneyAroundToday==='function') renderMoneyAroundToday();
+    if(typeof isDiarySearchFilterOpen!=='undefined' && isDiarySearchFilterOpen && typeof filterDiaryCustomList==='function') filterDiaryCustomList();
+    
+    // V555 핵심: 운세+바이오리듬을 선택한 날짜 기준으로 즉시 갱신
+    setTimeout(function(){
+      window.updateFortuneTeaser(normalized);
+      window.renderMainBiorhythm(normalized);
+    }, 30);
+  };
+  if(typeof selectDiaryDate==='function'){ selectDiaryDate = window.selectDiaryDate; }
+
+  // goToToday도 패치 - 오늘로 돌아갈 때 오늘 기준으로
+  const origGoToday = window.goToToday || (typeof goToToday==='function'?goToToday:null);
+  window.goToToday = function(){
+    const today = (typeof getTodayStr==='function'?getTodayStr():new Date().toISOString().slice(0,10));
+    window.selectedViewDate=today;
+    if(typeof selectedViewDate!=='undefined') selectedViewDate=today;
+    localStorage.setItem('smartDiarySelectedDate', today);
+    if(typeof renderCalendar==='function') renderCalendar();
+    if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday();
+    setTimeout(function(){
+      window.updateFortuneTeaser(today);
+      window.renderMainBiorhythm(today);
+    }, 30);
+    setTimeout(function(){
+      window.scrollTo({top:0, behavior:'smooth'});
+      document.documentElement.scrollTop=0;
+      document.body.scrollTop=0;
+    }, 50);
+  };
+  if(typeof goToToday==='function'){ goToToday = window.goToToday; }
+
+  // 초기 로드 시에도 선택된 날짜 기준으로 표시
+  setTimeout(function(){
+    const cur = window.selectedViewDate || (typeof selectedViewDate!=='undefined'?selectedViewDate:null) || (typeof getTodayStr==='function'?getTodayStr():null);
+    window.updateFortuneTeaser(cur);
+    window.renderMainBiorhythm(cur);
+  }, 500);
+
+  console.log('[V555] 선택한 날짜에 맞춰 운세+바이오리듬 즉시 변경 - 과거 나의 상태 확인 가능');
+})();
+</script>
+
+
+<style id="V556_FORTUNE_TRIANGLE_BTN">
+/* V556 - 오늘의 운세 오른쪽 삼각형 버튼 - 캘린더 버튼과 동일한 크기/모양 */
+#fortune-teaser{
+  position:relative !important;
+  padding-right: 48px !important;
+}
+.fortune-tri-btn{
+  position:absolute !important;
+  right:6px !important;
+  top:50% !important;
+  transform:translateY(-50%) !important;
+  width:28px !important;
+  height:28px !important;
+  min-width:28px !important;
+  padding:0 !important;
+  border-radius:8px !important;
+  border:1px solid rgba(255,255,255,0.25) !important;
+  background:rgba(255,255,255,0.18) !important;
+  cursor:pointer !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  backdrop-filter: blur(4px);
+}
+.fortune-tri-btn .tri{
+  width:0; height:0;
+  border-style:solid;
+  display:block;
+  /* 오른쪽 삼각형 - 캘린더 버튼과 동일 7px 0 7px 10px */
+  border-width:6px 0 6px 9px;
+  border-color:transparent transparent transparent #fff;
+  transform: translateX(1px);
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.2));
+}
+.fortune-tri-btn:hover{
+  background:rgba(255,255,255,0.28) !important;
+  border-color:rgba(255,255,255,0.4) !important;
+}
+.fortune-tri-btn:active{
+  transform:translateY(-50%) scale(0.92) !important;
+  background:rgba(255,255,255,0.35) !important;
+}
+#fortune-teaser .ft-arrow{
+  display:none !important;
+}
+</style>
+<script id="V556_FORTUNE_TRIANGLE_JS">
+(function(){
+  function addFortuneTriBtn(){
+    const teaser=document.getElementById('fortune-teaser');
+    if(!teaser) return;
+    if(document.getElementById('fortune-tri-btn')) return;
+
+    // 기존 화살표 숨기기
+    const oldArrow=teaser.querySelector('.ft-arrow');
+    if(oldArrow) oldArrow.style.display='none';
+
+    const btn=document.createElement('button');
+    btn.id='fortune-tri-btn';
+    btn.className='fortune-tri-btn';
+    btn.innerHTML='<span class="tri"></span>';
+    btn.title='한번 클릭으로 운세 열기';
+    btn.type='button';
+    btn.onclick=function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      // 토스트 없이 바로 열기
+      if(typeof openFortunePopupFixed==='function'){ openFortunePopupFixed(); }
+      else if(typeof openFortunePopup==='function'){ openFortunePopup(); }
+      return false;
+    };
+    // touch도 동일
+    btn.ontouchend=function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      if(typeof openFortunePopupFixed==='function'){ openFortunePopupFixed(); }
+      else if(typeof openFortunePopup==='function'){ openFortunePopup(); }
+      return false;
+    };
+
+    teaser.appendChild(btn);
+    console.log('[V556] 운세 삼각형 버튼 추가 - 한번 클릭으로 열림');
+  }
+
+  // V528 더블클릭 로직에서 삼각형 버튼은 제외 - 토스트 안 뜨게
+  const origSetup = window.v528_showFortuneHint;
+  // 기존 fortune-teaser 클릭 핸들러를 패치: 버튼 클릭은 무시
+  function patchFortuneTeaserClick(){
+    const teaser=document.getElementById('fortune-teaser');
+    if(!teaser) return;
+    // 버튼이 이미 있으면 끝
+    addFortuneTriBtn();
+  }
+
+  setTimeout(patchFortuneTeaserClick, 200);
+  setTimeout(patchFortuneTeaserClick, 800);
+  setTimeout(patchFortuneTeaserClick, 2000);
+
+  // render가 다시 되면 다시 추가
+  const diaryCard=document.getElementById('diary-around-today-card');
+  if(diaryCard){
+    new MutationObserver(()=>{
+      setTimeout(patchFortuneTeaserClick, 100);
+    }).observe(diaryCard, {childList:true, subtree:true});
+  }
+
+  // selectDiaryDate로 운세 갱신 후에도 버튼 유지
+  if(window.renderDiaryAroundToday && !window.renderDiaryAroundToday._v556){
+    const orig=window.renderDiaryAroundToday;
+    window.renderDiaryAroundToday=function(){ const r=orig.apply(this, arguments); setTimeout(patchFortuneTeaserClick, 80); return r; };
+    window.renderDiaryAroundToday._v556=true;
+  }
+
+  console.log('[V556] 운세 오른쪽 삼각형 버튼 - 캘린더 버튼과 동일 크기, 한번 클릭 오픈');
+})();
+</script>
+
+
+<style id="V557_FIXES">
+/* V557 - 삼각형 버튼 색상 보이게 */
+.fortune-tri-btn{
+  background:#ffffff !important;
+  border:1px solid #d9d0ff !important;
+  box-shadow:0 2px 6px rgba(74,59,119,0.18) !important;
+}
+.fortune-tri-btn .tri{
+  border-width:7px 0 7px 10px !important;
+  border-color:transparent transparent transparent #4A3B77 !important;
+  filter:none !important;
+}
+.fortune-tri-btn:hover{
+  background:#f3efff !important;
+  border-color:#b8a6ff !important;
+}
+#fortune-teaser{
+  cursor: default !important;
+}
+#fortune-teaser .ft-text, #fortune-teaser .ft-sub, #fortune-teaser .ft-icon{
+  cursor: default !important;
+}
+</style>
+<script id="V557_FIX_JS">
+(function(){
+  // 2) 전체 바 클릭 비활성화 - 삼각형 버튼만 오픈 기능
+  function disableFortuneBarClick(){
+    const teaser=document.getElementById('fortune-teaser');
+    if(!teaser) return;
+    
+    // V528 핸들러 제거 - 클론 교체로 모든 클릭 이벤트 제거
+    const newTeaser=teaser.cloneNode(true);
+    teaser.parentNode.replaceChild(newTeaser, teaser);
+    
+    const ft=document.getElementById('fortune-teaser');
+    ft.removeAttribute('ondblclick');
+    ft.removeAttribute('onclick');
+    ft.style.cursor='default';
+    ft.title='오른쪽 삼각형 버튼을 누르면 운세가 열려요';
+    ft._v528=true; // V528 재설치 방지
+    ft._v557=true;
+
+    // 삼각형 버튼 다시 추가
+    let btn=document.getElementById('fortune-tri-btn');
+    if(!btn){
+      btn=document.createElement('button');
+      btn.id='fortune-tri-btn';
+      btn.className='fortune-tri-btn';
+      btn.innerHTML='<span class="tri"></span>';
+      btn.title='한번 클릭으로 운세 열기';
+      btn.type='button';
+      ft.appendChild(btn);
+    }
+    btn.onclick=function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      if(typeof openFortunePopupFixed==='function'){ openFortunePopupFixed(); }
+      else if(typeof openFortunePopup==='function'){ openFortunePopup(); }
+      return false;
+    };
+
+    // 혹시 모를 MutationObserver에서 다시 V528 설치하는거 방지
+    const diaryCard=document.getElementById('diary-around-today-card');
+    if(diaryCard && !diaryCard._v557_obs){
+      diaryCard._v557_obs=true;
+      new MutationObserver(()=>{
+        const t=document.getElementById('fortune-teaser');
+        if(t && !t._v557){
+          setTimeout(disableFortuneBarClick, 50);
+        }
+      }).observe(diaryCard, {childList:true, subtree:true});
+    }
+  }
+
+  // 3) 바이오리듬 연도일자 이상함 수정 - V555 바이오리듬 완전 재작성
+  window.renderMainBiorhythm = function(targetDateStr){
+    try{
+      const getTarget=function(s){
+        if(!s) return new Date();
+        const d=new Date(s);
+        return isNaN(d.getTime())?new Date():d;
+      };
+      const dateStr=targetDateStr || window.selectedViewDate || (typeof selectedViewDate!=='undefined'?selectedViewDate:null);
+      const targetDate=getTarget(dateStr);
+      const todayStr=(typeof getTodayStr==='function'?getTodayStr():new Date().toISOString().slice(0,10));
+      const isToday=!dateStr || dateStr===todayStr;
+
+      let birthDateObj=null;
+      try{
+        let bStr=null;
+        if(window.sajuBirthInfo && window.sajuBirthInfo.date) bStr=window.sajuBirthInfo.date;
+        else{
+          const stored=JSON.parse(localStorage.getItem('smartDiarySajuBirth')||'null');
+          if(stored && stored.date) bStr=stored.date;
+        }
+        if(bStr) {
+          // YYYY-MM-DD 형식이면 로컬로 파싱
+          if(/^\d{4}-\d{2}-\d{2}$/.test(bStr)){
+            const parts=bStr.split('-').map(Number);
+            birthDateObj=new Date(parts[0], parts[1]-1, parts[2]);
+          }else birthDateObj=new Date(bStr);
+        }
+      }catch(e){}
+
+      const teaser=document.getElementById('main-biorhythm-teaser');
+      const birthEl=document.getElementById('main-bio-birth');
+      if(!birthDateObj || isNaN(birthDateObj.getTime())){
+        if(birthEl) birthEl.textContent='생년월일 설정 필요';
+        return;
+      }
+      // 생년월일은 항상 생년월일로 표시 - 선택날짜 아님!
+      if(birthEl) birthEl.textContent = birthDateObj.getFullYear()+'.'+String(birthDateObj.getMonth()+1).padStart(2,'0')+'.'+String(birthDateObj.getDate()).padStart(2,'0');
+
+      const calc=function(days, period){ return Math.sin(2*Math.PI*days/period)*100; };
+      const daysAlive=Math.floor((targetDate - birthDateObj)/86400000);
+      const physical=calc(daysAlive,23);
+      const emotional=calc(daysAlive,28);
+      const intellectual=calc(daysAlive,33);
+
+      const phEl=document.getElementById('main-bio-physical');
+      const emEl=document.getElementById('main-bio-emotional');
+      const inEl=document.getElementById('main-bio-intellectual');
+      if(phEl) phEl.textContent=physical.toFixed(1)+'%';
+      if(emEl) emEl.textContent=emotional.toFixed(1)+'%';
+      if(inEl) inEl.textContent=intellectual.toFixed(1)+'%';
+
+      // 하단 날짜 라벨 - 선택날짜 기준 -20 -10 선택날짜 +10 +20
+      for(let i=0;i<5;i++){
+        const offset=(i-2)*10;
+        const d=new Date(targetDate); d.setDate(targetDate.getDate()+offset);
+        const el=document.getElementById('main-bio-d'+(i+1));
+        if(el){
+          el.textContent=(d.getMonth()+1)+'.'+d.getDate();
+          if(i===2){
+            el.textContent=isToday?'오늘':(d.getMonth()+1)+'.'+d.getDate();
+            el.style.color='#E53935';
+            el.style.fontWeight='800';
+          }else{
+            el.style.color='#666';
+            el.style.fontWeight='600';
+          }
+        }
+      }
+
+      // 캔버스
+      const canvas=document.getElementById('main-biorhythm-canvas');
+      if(canvas){
+        const ctx=canvas.getContext('2d');
+        const W=canvas.width,H=canvas.height;
+        const padding={left:10,right:10,top:6,bottom:10};
+        const chartW=W-padding.left-padding.right, chartH=H-padding.top-padding.bottom;
+        ctx.clearRect(0,0,W,H);
+        ctx.strokeStyle='#E0E0E0'; ctx.lineWidth=0.5; ctx.setLineDash([2,3]);
+        const zeroY=padding.top+chartH/2;
+        ctx.beginPath(); ctx.moveTo(padding.left,zeroY); ctx.lineTo(W-padding.right,zeroY); ctx.stroke();
+        ctx.setLineDash([]);
+        const range=40;
+        const startDate=new Date(targetDate); startDate.setDate(targetDate.getDate()-20);
+        function getPts(period){
+          const pts=[];
+          for(let i=0;i<=range;i++){
+            const d=new Date(startDate); d.setDate(startDate.getDate()+i);
+            const days=Math.floor((d-birthDateObj)/86400000);
+            const val=Math.sin(2*Math.PI*days/period)*100;
+            const x=padding.left+chartW*i/range;
+            const y=zeroY-(val/100)*(chartH/2*0.85);
+            pts.push({x,y});
+          }
+          return pts;
+        }
+        const phPts=getPts(23), emPts=getPts(28), inPts=getPts(33);
+        function drawLine(pts,color,w){ ctx.strokeStyle=color; ctx.lineWidth=w; ctx.beginPath(); pts.forEach((p,i)=>{ if(i===0) ctx.moveTo(p.x,p.y); else ctx.lineTo(p.x,p.y); }); ctx.stroke(); }
+        drawLine(phPts,'#4CAF50',2); drawLine(emPts,'#FF7043',2); drawLine(inPts,'#29B6F6',2);
+        const todayIdx=20; const todayX=padding.left+chartW*todayIdx/range;
+        ctx.strokeStyle='#E53935'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(todayX,padding.top); ctx.lineTo(todayX,padding.top+chartH); ctx.stroke();
+        ctx.fillStyle='#E53935'; ctx.beginPath(); ctx.arc(todayX,padding.top+chartH+6,4,0,Math.PI*2); ctx.fill();
+        [phPts[todayIdx],emPts[todayIdx],inPts[todayIdx]].forEach((pt,i)=>{
+          const colors=['#4CAF50','#FF7043','#29B6F6'];
+          ctx.fillStyle=colors[i]; ctx.beginPath(); ctx.arc(pt.x,pt.y,3.5,0,Math.PI*2); ctx.fill();
+          ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(pt.x,pt.y,1.5,0,Math.PI*2); ctx.fill();
+        });
+      }
+
+      // 헤더 제목
+      const headerDiv=document.querySelector('#main-biorhythm-teaser .biorhythm-header div');
+      if(headerDiv){
+        const titleSpan=headerDiv.querySelector('span:nth-child(2)');
+        if(titleSpan){
+          titleSpan.textContent=isToday?'바이오리듬':`${targetDate.getMonth()+1}월 ${targetDate.getDate()}일 바이오리듬`;
+        }
+      }
+
+    }catch(e){ console.log('V557 bio err', e); }
+  };
+  if(typeof renderMainBiorhythm==='function'){ renderMainBiorhythm=window.renderMainBiorhythm; }
+
+  // V555 selectDiaryDate 패치 유지
+  setTimeout(disableFortuneBarClick, 100);
+  setTimeout(disableFortuneBarClick, 600);
+  setTimeout(disableFortuneBarClick, 1500);
+
+  // 초기 바이오리듬도 다시 그리기
+  setTimeout(function(){
+    const cur=window.selectedViewDate || (typeof selectedViewDate!=='undefined'?selectedViewDate:null) || (typeof getTodayStr==='function'?getTodayStr():null);
+    window.renderMainBiorhythm(cur);
+  }, 400);
+
+  console.log('[V557] 1)삼각형 색상 수정 2)바 클릭 비활성화-버튼만 오픈 3)바이오리듬 연도 수정');
+})();
+</script>
+
+
+<style id="V558_SMALL_TRI">
+/* V558 - 삼각형 크기 바이오리듬과 동일하게 작게 */
+.fortune-tri-btn{
+  width:22px !important;
+  height:20px !important;
+  min-width:22px !important;
+  border-radius:5px !important;
+  padding:0 !important;
+}
+.fortune-tri-btn .tri{
+  border-width:5px 0 5px 7px !important;
+}
+#fortune-teaser{
+  cursor: default !important;
+  pointer-events: auto !important;
+}
+#fortune-teaser *{
+  pointer-events: auto !important;
+}
+#fortune-teaser #fortune-tri-btn{
+  pointer-events: auto !important;
+}
+</style>
+<script id="V558_FIX_BAR_CLICK">
+(function(){
+  function killFortuneBar(){
+    const ft=document.getElementById('fortune-teaser');
+    if(!ft) return;
+    
+    // 기존 버튼 보존
+    let btn=document.getElementById('fortune-tri-btn');
+    const btnHTML=btn?btn.outerHTML:'<button id="fortune-tri-btn" class="fortune-tri-btn" type="button" title="한번 클릭으로 운세 열기"><span class="tri"></span></button>';
+    
+    // V528이 설치한 핸들러를 무력화 - capture 단계에서 차단
+    // 먼저 기존 리스너 제거 위해 클론
+    const clone=ft.cloneNode(true);
+    ft.parentNode.replaceChild(clone, ft);
+    const newFt=document.getElementById('fortune-teaser');
+    
+    // 속성 제거
+    newFt.removeAttribute('ondblclick');
+    newFt.removeAttribute('onclick');
+    newFt.style.cursor='default';
+    newFt.title='오른쪽 삼각형 버튼을 누르면 운세가 열려요';
+    newFt._v528=true;
+    newFt._v557=true;
+    newFt._v558=true;
+
+    // 버튼 없으면 추가
+    if(!newFt.querySelector('#fortune-tri-btn')){
+      newFt.insertAdjacentHTML('beforeend', btnHTML);
+    }
+    const newBtn=document.getElementById('fortune-tri-btn');
+    
+    // 핵심: capture 단계에서 바 클릭을 가로채서 차단
+    newFt.addEventListener('click', function(e){
+      // 버튼이나 버튼 내부 클릭이면 허용
+      if(e.target.closest && e.target.closest('#fortune-tri-btn')) return;
+      // 그 외 바 클릭은 완전 차단 - 토스트도 안 뜨고 오픈도 안 됨
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      return false;
+    }, true); // capture!
+
+    newFt.addEventListener('touchend', function(e){
+      if(e.target.closest && e.target.closest('#fortune-tri-btn')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      return false;
+    }, true);
+
+    newFt.addEventListener('dblclick', function(e){
+      if(e.target.closest && e.target.closest('#fortune-tri-btn')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      return false;
+    }, true);
+
+    // 버튼은 단일 클릭으로 바로 오픈 - 토스트 없음
+    newBtn.onclick=function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      if(typeof openFortunePopupFixed==='function') openFortunePopupFixed();
+      else if(typeof openFortunePopup==='function') openFortunePopup();
+      return false;
+    };
+    newBtn.ontouchend=function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      if(typeof openFortunePopupFixed==='function') openFortunePopupFixed();
+      else if(typeof openFortunePopup==='function') openFortunePopup();
+      return false;
+    };
+
+    // V528 재설치 방지 - 전역 함수 무력화
+    window.v528_showFortuneHint=function(){};
+  }
+
+  // 여러 번 실행해서 V528 덮어쓰기 방지
+  setTimeout(killFortuneBar, 100);
+  setTimeout(killFortuneBar, 500);
+  setTimeout(killFortuneBar, 1200);
+  setTimeout(killFortuneBar, 2500);
+
+  // diary 카드 변경 시에도 재적용
+  const card=document.getElementById('diary-around-today-card');
+  if(card){
+    new MutationObserver(()=>{ setTimeout(killFortuneBar, 100); }).observe(card, {childList:true, subtree:true});
+  }
+
+  console.log('[V558] 삼각형 작게(바이오리듬 동일) + 바 클릭 완전 차단, 버튼만 한번 클릭 오픈');
+})();
+</script>
+
+
+<style id="V559_FIX">
+/* V559-1) 오늘의 운세 바 꿈틀(스케일) 제거 - 삼각형만 반응 */
+#fortune-teaser{
+  transform: none !important;
+  transition: none !important;
+}
+#fortune-teaser:active{
+  transform: none !important;
+}
+#fortune-teaser .ft-text,
+#fortune-teaser .ft-sub,
+#fortune-teaser .ft-icon{
+  transform: none !important;
+  transition: none !important;
+}
+#fortune-teaser:active .ft-text,
+#fortune-teaser:active .ft-sub{
+  transform: none !important;
+}
+/* 삼각형 버튼만 반응 */
+.fortune-tri-btn:active{
+  transform: translateY(-50%) scale(0.92) !important;
+}
+
+/* V559-2) 설명 타이틀 위쪽 코너 R을 바이오리듬 바와 동일하게 */
+/* 바이오리듬 바: outer 12px, header 5px 5px 0 0 */
+#fortune-teaser{
+  border-radius: 12px !important;
+}
+#main-biorhythm-teaser{
+  border-radius: 12px !important;
+}
+#main-biorhythm-teaser .biorhythm-header{
+  border-radius: 12px 12px 0 0 !important;
+}
+</style>
+<script id="V559_KEEP_TRI">
+(function(){
+  // V558 로직 유지 - 바 클릭 차단
+  function keep(){
+    const ft=document.getElementById('fortune-teaser');
+    if(!ft) return;
+    if(!ft._v558){
+      // 재적용 필요하면 V558 로직 다시
+      const btn=ft.querySelector('#fortune-tri-btn');
+      if(!btn){
+        const b=document.createElement('button');
+        b.id='fortune-tri-btn';
+        b.className='fortune-tri-btn';
+        b.innerHTML='<span class="tri"></span>';
+        b.type='button';
+        b.title='한번 클릭으로 운세 열기';
+        b.onclick=function(e){ e.preventDefault(); e.stopPropagation(); if(typeof openFortunePopupFixed==='function') openFortunePopupFixed(); else if(typeof openFortunePopup==='function') openFortunePopup(); return false; };
+        ft.appendChild(b);
+      }
+    }
+  }
+  setTimeout(keep, 300);
+})();
+</script>
+
+
+<style id="V560_FIX_R">
+/* V560 - 코너 R 반대로 - 12px를 5px로 */
+#fortune-teaser{
+  border-radius: 5px !important;
+}
+#main-biorhythm-teaser{
+  border-radius: 5px !important;
+}
+#main-biorhythm-teaser .biorhythm-header{
+  border-radius: 5px 5px 0 0 !important;
+}
+</style>
+
+
+<style id="V561_FIX">
+/* V561-1) 오늘의 운세 코너 R=5PX, 설명 코너 R=5PX로 */
+#fortune-teaser{
+  border-radius:5px !important;
+}
+.daily-explain-header{
+  border-radius:5px 5px 0 0 !important;
+}
+.daily-explain-content,
+.daily-explain-body,
+#daily-explain-box,
+.explain-content{
+  border-radius:0 0 5px 5px !important;
+}
+/* 설명 박스 전체가 12px이면 5px로 */
+.card .daily-explain-header,
+.card .daily-explain-box,
+div[class*="explain"]{
+  border-radius:5px !important;
+}
+.daily-explain-header + div{
+  border-radius:0 0 5px 5px !important;
+}
+
+/* V561-2) 삼각형 세로 정렬 - 오늘의 운세 삼각형을 왼쪽으로 이동 */
+.fortune-tri-btn{
+  right:12px !important; /* 기존 6px에서 12px로 왼쪽 이동 - 바이오리듬 ▼ 버튼과 세로 정렬 */
+}
+#main-biorhythm-teaser .biorhythm-header{
+  padding-right:12px !important;
+}
+#biorhythm-toggle-btn{
+  margin-right:0 !important;
+}
+</style>
+<script id="V561_KEEP">
+(function(){
+  // V558 로직 유지
+  function keep(){
+    const ft=document.getElementById('fortune-teaser');
+    if(!ft) return;
+    if(!ft.querySelector('#fortune-tri-btn')){
+      const b=document.createElement('button');
+      b.id='fortune-tri-btn';
+      b.className='fortune-tri-btn';
+      b.innerHTML='<span class="tri"></span>';
+      b.type='button';
+      b.title='한번 클릭으로 운세 열기';
+      b.onclick=function(e){ e.preventDefault(); e.stopPropagation(); if(typeof openFortunePopupFixed==='function') openFortunePopupFixed(); else if(typeof openFortunePopup==='function') openFortunePopup(); return false; };
+      ft.appendChild(b);
+    }
+  }
+  setTimeout(keep, 200);
+  setTimeout(keep, 800);
+})();
+</script>
+
+
+<style id="V562_CALENDAR_ALIGN">
+/* V562-1) 위쪽 네모 2칸 양쪽 끝으로 벌리기 - 달력 왼쪽끝 오른쪽끝 정렬 */
+#calendar-card .calendar-header{
+  display:flex !important;
+  justify-content:space-between !important;
+  align-items:center !important;
+  width:100% !important;
+  padding:0 0 !important;
+  margin:0 !important;
+  box-sizing:border-box !important;
+}
+#calendar-card .calendar-header #top-toggle-btn{
+  margin-left:0 !important;
+  margin-right:auto !important;
+}
+#calendar-card .calendar-header button[onclick*="openSettingsModal"]{
+  margin-right:0 !important;
+  margin-left:auto !important;
+}
+#cal-month-title{
+  flex:1 !important;
+  text-align:center !important;
+  margin:0 4px !important;
+}
+/* 삼각형 버튼도 간격 좁게 */
+#cal-prev-btn, #cal-next-btn{
+  flex-shrink:0 !important;
+}
+
+/* V562-2) 일자줄(요일 밑 선) 없애기 */
+#cal-days-name-grid{
+  border:none !important;
+  border-bottom:none !important;
+  border-top:none !important;
+  box-shadow:none !important;
+  background:transparent !important;
+}
+.cal-day-name{
+  border:none !important;
+  border-bottom:none !important;
+  box-shadow:none !important;
+  background:transparent !important;
+}
+#cal-days-name-grid + #cal-days-grid{
+  border-top:none !important;
+}
+#calendar-card{
+  border-bottom:none !important;
+}
+.calendar-header{
+  border-bottom:none !important;
+}
+</style>
+
+
+<style id="V563_REALIGN">
+/* V563-1) 달력 아이콘 진짜 양끝으로 - 카드 패딩 무시하고 양끝 정렬 */
+#calendar-card{
+  padding: 15px 8px 15px 8px !important;
+}
+#calendar-card .calendar-header{
+  display:flex !important;
+  flex-direction:row !important;
+  justify-content:space-between !important;
+  align-items:center !important;
+  width:100% !important;
+  margin:0 0 10px 0 !important;
+  padding:0 !important;
+  border:none !important;
+  border-bottom:none !important;
+  background:transparent !important;
+  box-shadow:none !important;
+}
+#calendar-card .calendar-header #top-toggle-btn{
+  margin-left:0 !important;
+  padding-left:2px !important;
+}
+#calendar-card .calendar-header button[onclick*="openSettingsModal"]{
+  margin-right:0 !important;
+  padding-right:2px !important;
+}
+#cal-month-title{
+  flex:1 !important;
+  text-align:center !important;
+}
+
+/* V563-2) 일자줄(요일 밑 선) 완전 제거 - 모든 가능한 선 제거 */
+#cal-days-name-grid{
+  border:none !important;
+  border-bottom:none !important;
+  border-top:none !important;
+  box-shadow:none !important;
+  background:transparent !important;
+  margin-bottom:0 !important;
+  padding-bottom:0 !important;
+}
+.cal-day-name{
+  border:none !important;
+  border-bottom:none !important;
+  box-shadow:none !important;
+  background:transparent !important;
+  padding-bottom:4px !important;
+}
+#cal-days-grid{
+  border-top:none !important;
+  margin-top:4px !important;
+}
+#calendar-card .calendar-header{
+  border-bottom:none !important;
+}
+#calendar-card .calendar-grid{
+  border-top:none !important;
+}
+/* 혹시 ::after 선 */
+#cal-days-name-grid::after,
+#cal-days-name-grid::before,
+.cal-day-name::after{
+  display:none !important;
+  content:none !important;
+}
+</style>
+
+
+<style id="V564_TIME_CAPSULE_SIZE_FIX">
+/* V564 - 타임캡슐 도착 화면 크기 원래대로 28px로 고정 */
+.time-capsule-banner{
+  height:28px !important;
+  min-height:28px !important;
+  max-height:28px !important;
+  padding:6px 12px !important;
+  margin:0 0 2px 0 !important;
+  border-radius:5px !important;
+  font-size:11px !important;
+  line-height:1 !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
+  white-space:nowrap !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+}
+.time-capsule-banner > div{
+  height:100% !important;
+  display:flex !important;
+  align-items:center !important;
+}
+#time-capsule-content{
+  margin-top:0 !important;
+}
+#time-capsule-content > div{
+  margin-top:2px !important;
+}
+</style>
+
+
+<style id="V565_HALF">
+/* V565 - 반반 유지: 타임캡슐 도착 그리드 반반 */
+.past-notify-grid{
+  display:grid !important;
+  grid-template-columns:1fr 1fr !important;
+  gap:8px !important;
+  margin:8px 0 !important;
+}
+.time-capsule-banner{
+  height:28px !important;
+  min-height:28px !important;
+  max-height:28px !important;
+  padding:6px 12px !important;
+  border-radius:5px !important;
+  font-size:11px !important;
+}
+</style>
+
+
+<style id="V566_HALF_FIX_DISABLED" style="display:none">
+/* V571 - 오늘 수정 유지 + 72px 리스트 복구 심플 72px 강제 (인스타 큰카드 버그 수정) 72px 썸네일 복구 (스크린샷 동일) 원래 1열 큰 카드 복구 도착 반반(2열) 복구 */
+#time-capsule-content{
+  display:grid !important;
+  grid-template-columns:1fr 1fr !important;
+  gap:8px !important;
+  width:100% !important;
+}
+#time-capsule-content > div{
+  grid-column: span 1 !important;
+  width:100% !important;
+  margin:0 !important;
+}
+/* 사진 있는 카드는 반반, 텍스트만도 반반 */
+#time-capsule-content > div.sub-memo-item,
+#time-capsule-content > div[style*="height:72px"]{
+  grid-column: span 1 !important;
+}
+
+/* 배너는 전체 너비 */
+.time-capsule-banner{
+  grid-column: 1 / -1 !important;
+}
+
+/* 혹시 diary-around-today-list가 flex로 덮인 경우, 타임캡슐 영역만 grid 유지 */
+#diary-around-today-list #time-capsule-content{
+  display:grid !important;
+  grid-template-columns:1fr 1fr !important;
+}
+</style>
+
+
+<style id="V567_ORIGINAL_RESTORE_DISABLED" style="display:none">
+/* V571 - 오늘 수정 유지 + 72px 리스트 복구 심플 72px 강제 (인스타 큰카드 버그 수정) 72px 썸네일 복구 (스크린샷 동일) 원래대로: 한 줄에 하나씩 크게 (스크린샷 복구) */
+#time-capsule-content{
+  display:flex !important;
+  flex-direction:column !important;
+  gap:8px !important;
+  width:100% !important;
+  grid-template-columns: unset !important;
+}
+#time-capsule-content > div,
+#time-capsule-content > div[style*="height:72px"],
+#time-capsule-content > div.sub-memo-item{
+  grid-column: 1 / -1 !important;
+  width:100% !important;
+  margin:0 !important;
+  flex: 0 0 auto !important;
+}
+
+/* 사진 카드 - 스크린샷처럼 배경 연한색, 사진 중앙 크게 */
+#time-capsule-content .diary-photo-wrap{
+  background:#faf8f3 !important;
+  display:flex !important;
+  justify-content:center !important;
+  align-items:center !important;
+  width:100% !important;
+}
+#time-capsule-content .diary-photo{
+  object-fit:contain !important;
+  max-height:320px !important;
+  width:auto !important;
+  margin:0 auto !important;
+}
+
+#diary-around-today-list #time-capsule-content{
+  display:flex !important;
+  flex-direction:column !important;
+}
+</style>
+
+
+<style id="V568_THUMBNAIL_FIX_DISABLED" style="display:none">
+/* V568 - 캡쳐와 동일: 타임캡슐 72px 썸네일 카드 원복 */
+#time-capsule-content{
+  display:flex !important;
+  flex-direction:column !important;
+  gap:8px !important;
+  width:100% !important;
+  grid-template-columns: unset !important;
+}
+#time-capsule-content > div{
+  width:100% !important;
+  margin:0 !important;
+}
+
+/* 큰사진 강제했던거 무력화 */
+#time-capsule-content .diary-photo-wrap{
+  background:transparent !important;
+  display:block !important;
+  width:auto !important;
+  height:auto !important;
+}
+#time-capsule-content .diary-photo{
+  width:50px !important;
+  height:50px !important;
+  max-height:50px !important;
+  object-fit:cover !important;
+  border-radius:6px !important;
+  margin:0 !important;
+}
+
+/* 스크린샷처럼: 왼쪽 얇은 선, 72px 높이, 좌우 50% 분할 카드 - 인라인 스타일 유지 */
+#time-capsule-content div[style*="height:72px"]{
+  height:72px !important;
+  min-height:72px !important;
+  max-height:72px !important;
+  border-radius:8px !important;
+  overflow:hidden !important;
+}
+#time-capsule-content div[style*="height:72px"] > div{
+  height:72px !important;
+}
+
+/* 배너 28px 유지 */
+.time-capsule-banner{
+  height:28px !important;
+  min-height:28px !important;
+  max-height:28px !important;
+  padding:6px 12px !important;
+  border-radius:5px !important;
+  font-size:11px !important;
+  margin:0 0 8px 0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+}
+
+/* 혹시 이전 큰 사진 CSS 남아있으면 덮어쓰기 */
+#diary-around-today-list #time-capsule-content{
+  display:flex !important;
+  flex-direction:column !important;
+}
+</style>
+<script id="V568_THUMBNAIL_JS">
+// 사진이 크게 나오면 썸네일로 강제 축소
+(function(){
+  function fixPhotos(){
+    const content = document.getElementById('time-capsule-content');
+    if(!content) return;
+    content.querySelectorAll('img').forEach(img=>{
+      // 타임캡슐 안의 이미지는 50x50으로
+      if(img.closest('#time-capsule-content')){
+        img.style.width='50px';
+        img.style.height='50px';
+        img.style.maxHeight='50px';
+        img.style.objectFit='cover';
+        img.style.borderRadius='6px';
+      }
+    });
+  }
+  setTimeout(fixPhotos, 300);
+  setTimeout(fixPhotos, 1000);
+  // observer
+  const list = document.getElementById('diary-around-today-list');
+  if(list){
+    new MutationObserver(()=>setTimeout(fixPhotos,50)).observe(list,{childList:true, subtree:true});
+  }
+  if(window.renderDiaryAroundToday && !window.renderDiaryAroundToday._v568){
+    const orig = window.renderDiaryAroundToday;
+    window.renderDiaryAroundToday = function(){ const r=orig.apply(this,arguments); setTimeout(fixPhotos,80); return r; };
+    window.renderDiaryAroundToday._v568=true;
+  }
+})();
+</script>
+
+
+<style id="V569_FORCE_SIMPLE_DISABLED" style="display:none">
+/* V569 - 인스타 큰카드 강제 제거, 무조건 72px 심플로 */
+#time-capsule-content .tc-photo-async,
+#time-capsule-content div[style*="height:160px"],
+#time-capsule-content div[style*="height:200px"],
+#time-capsule-content div[style*="background:#f0e6ff"],
+#time-capsule-content div[style*="background:#f8f5f0"]{
+  display:none !important;
+}
+#time-capsule-content > div[style*="border-radius:14px"],
+#time-capsule-content > div[style*="background:#fff"]{
+  height:72px !important;
+  min-height:72px !important;
+  max-height:72px !important;
+  border-radius:8px !important;
+  overflow:hidden !important;
+  border-left:3px solid #7c6cff !important;
+}
+</style>
+<script id="V569_FORCE_SIMPLE_JS_DISABLED" type="text/plain">
+(function(){
+  // 1. 과거 설정 강제 심플로
+  const origGetPastSettings = window.getPastSettings;
+  window.getPastSettings = function(){
+    let s = {};
+    try{ s = origGetPastSettings ? origGetPastSettings() : JSON.parse(localStorage.getItem('pastNotifySettings')||'{}'); }catch(e){ s={}; }
+    s.cardStyle = 'simple';
+    s.style = 'simple';
+    if(!s.intervals) s.intervals = ['1m','3m','6m','1y'];
+    s.enabled = true;
+    return s;
+  };
+  
+  // 2. 렌더 후 큰 카드가 남아있으면 심플로 재생성
+  function forceRerender(){
+    if(window.renderDiaryAroundToday && window.renderDiaryAroundToday._origForV569 !== false){
+      try{ window.renderDiaryAroundToday(); }catch(e){}
+    }
+  }
+  
+  setTimeout(forceRerender, 100);
+  setTimeout(forceRerender, 500);
+  setTimeout(forceRerender, 1200);
+  
+  // 3. 큰 카드 감지해서 강제로 72px 스타일로 덮어쓰기
+  function fixBigCards(){
+    const content = document.getElementById('time-capsule-content');
+    if(!content) return;
+    content.querySelectorAll('div').forEach(el=>{
+      const st = el.getAttribute('style')||'';
+      if(st.includes('border-radius:14px') || st.includes('height:200px') || st.includes('height:160px')){
+        // 인스타 카드면 숨기고 재렌더 유도
+        if(el.parentElement && el.parentElement.id==='time-capsule-content'){
+          // 이미 큰 카드면 전체 재렌더
+          // 하지만 일단 스타일만 덮어쓰기
+          el.style.height='72px';
+          el.style.minHeight='72px';
+          el.style.maxHeight='72px';
+          el.style.borderRadius='8px';
+          el.style.overflow='hidden';
+          el.style.display='flex';
+          el.style.borderLeft='3px solid #7c6cff';
+        }
+      }
+    });
+  }
+  
+  const list = document.getElementById('diary-around-today-list');
+  if(list){
+    new MutationObserver(()=>setTimeout(fixBigCards,30)).observe(list,{childList:true, subtree:true});
+  }
+  
+  console.log('[V569] 심플 72px 강제 고정 완료');
+})();
+</script>
+
+
+<style id="V571_KEEP_ALL_FIX">
+/* V571 - 오늘 수정 유지 + 72px 심플 복구 */
+#time-capsule-content{
+  display:flex !important;
+  flex-direction:column !important;
+  gap:8px !important;
+  width:100% !important;
+}
+#time-capsule-content > div{
+  width:100% !important;
+}
+.time-capsule-banner{
+  height:28px !important;
+  min-height:28px !important;
+  max-height:28px !important;
+  padding:6px 12px !important;
+  border-radius:5px !important;
+  font-size:11px !important;
+  margin:0 0 8px 0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+}
+/* 72px 카드 강제 */
+#time-capsule-content div[style*="height:72px"]{
+  height:72px !important;
+  min-height:72px !important;
+  max-height:72px !important;
+  border-radius:8px !important;
+  display:flex !important;
+  overflow:hidden !important;
+}
+/* 사진 썸네일 50x50 */
+#time-capsule-content img{
+  width:50px !important;
+  height:50px !important;
+  max-height:50px !important;
+  object-fit:cover !important;
+  border-radius:6px !important;
+}
+</style>
+<script id="V571_FORCE_SIMPLE_KEEP">
+(function(){
+  // localStorage 심플 고정 + 원본 함수 덮어쓰기
+  try{
+    let s = {};
+    try{ s = JSON.parse(localStorage.getItem('pastNotifySettings')||'{}'); }catch(e){}
+    s.cardStyle='simple';
+    s.style='simple';
+    if(!s.intervals || s.intervals.length===0) s.intervals=['1m','3m','6m','1y'];
+    s.enabled=true;
+    localStorage.setItem('pastNotifySettings', JSON.stringify(s));
+  }catch(e){}
+  
+  const origGetPast = window.getPastSettings;
+  window.getPastSettings = function(){
+    let base = {};
+    try{ base = origGetPast ? origGetPast() : {}; }catch(e){}
+    base.cardStyle='simple';
+    base.style='simple';
+    base.intervals = base.intervals || ['1m','3m','6m','1y'];
+    base.enabled=true;
+    return base;
+  };
+  
+  // cardStyle 변수 직접 강제 - 렌더 함수 내부 var cardStyle = ... 부분을 가로채기 위해
+  // renderDiaryAroundToday 호출 전에 cardStyle 전역을 오염시키는 대신, 원본 코드에서 cardStyle을 simple로 고정하도록 이미 패치됨 (V550 기반이 아니므로 JS로 재정의)
+  const origRender = window.renderDiaryAroundToday;
+  if(origRender){
+    window.renderDiaryAroundToday = function(){
+      // 임시로 getPastSettings를 심플로 강제하는 동안 원본 호출
+      const tmp = window.getPastSettings;
+      window.getPastSettings = function(){ return {cardStyle:'simple', style:'simple', intervals:['1m','3m','6m','1y'], enabled:true}; };
+      let r;
+      try{ r = origRender.apply(this, arguments); }catch(e){ console.error(e); }
+      window.getPastSettings = tmp;
+      return r;
+    };
+  }
+  
+  setTimeout(()=>{ try{ window.renderDiaryAroundToday && window.renderDiaryAroundToday(); }catch(e){} }, 300);
+  console.log('[V571] 오늘 수정 모두 유지 + 72px 심플 강제');
 })();
 </script>
 
