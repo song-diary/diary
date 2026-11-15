@@ -1,3 +1,7 @@
+<!-- V644: 1개월전/3개월전/1년전 라벨 원래대로 - 버튼 교체가 바깥 div까지 지우던 버그 수정 -->
+<!-- V643: 타임캡슐 카메라 아이콘 제거 + '메모보기'/'사진보기' 버튼을 날짜이동처럼 -->
+<!-- V642: 이동 버튼 가로채지 않고 원래 날짜이동으로 복원 + 버튼명 '날짜이동'으로 -->
+<!-- V641: 타임캡슐 날짜->제목->내용 왼쪽 정렬, 제목 없어도 '제목 :' 표시 -->
 <!-- V640: 제목 굵게 빼고 다른 글자랑 동일하게 (라이트박스 + 타임캡슐) -->
 <!-- V639: 타임캡슐 제목 위치를 날짜 바로 밑으로 -->
 <!-- V638: 타임캡슐 카드 자체에 '제목 : 제목&기념일' 표시 -->
@@ -23,7 +27,7 @@
 <!-- Version: V500 - 리스트>타임캡슐>바이오리듬>운세>설명 순서 확정 -->
 <!-- Version: V290 - 기능·UI 유지, 진동중복/setInterval폭주/transform충돌 정리 --> 
 <!-- Version: V187 - 초중말복 동적화, 24절기 동적화, 누적패치 제거, 5~6줄 개그 유머 100점 -->
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>포토다이어리 V640 - 사진, 추억을 담다</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>포토다이어리 V644 - 사진, 추억을 담다</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -23703,7 +23707,7 @@ div[data-photo-key][onclick*="handleTimeCapsulePhotoClick"] *{
 </style>
 
 <style id="V631_TITLE">
-#photo-lightbox-memo .lb-title{ font-weight:400; font-size:15px; line-height:1.6; margin-bottom:4px; color:#333; white-space:pre-wrap; word-break:break-word; }
+#photo-lightbox-memo .lb-title{ font-weight:400; font-size:15px; line-height:1.6; margin-bottom:4px; color:#333; white-space:pre-wrap; word-break:break-word; text-align:left; display:block; }
 #photo-lightbox-memo .lb-body{ white-space:pre-wrap; word-break:break-word; }
 </style>
 <script id="V631_TITLE_JS">
@@ -24077,6 +24081,14 @@ div[data-photo-key][onclick*="handleTimeCapsulePhotoClick"] *{
     if(!tc) return;
     // 토글/접기 버튼은 제외
     if(e.target.closest && e.target.closest('.tc-toggle-btn')) return;
+    // 이동 버튼(날짜이동)은 가로채지 않음 - 원래 goToPastDiary로 가게
+    if(e.target.closest && e.target.closest('[onclick*="handleTimeCapsuleDateClick"]')) return;
+    if(e.target.closest && e.target.closest('[onclick*="goToPastDiary"]')){
+      // 카드 전체가 goToPastDiary인 경우(인스타/편지)는 아래에서 처리하지 않고,
+      // 이동 버튼처럼 보이면(텍스트가 이동/날짜이동) 원래대로 가게
+      var _t = (e.target.textContent||'').trim();
+      if(_t === '이동 →' || _t === '이동' || _t === '날짜이동' || _t === '날짜이동 →') return;
+    }
     // 1) data-diary-id가 있는 요소부터 (simple 스타일 왼쪽/오른쪽)
     var withId = e.target.closest ? e.target.closest('[data-diary-id]') : null;
     var item = null;
@@ -24144,8 +24156,8 @@ div[data-photo-key][onclick*="handleTimeCapsulePhotoClick"] *{
   }
   function injectOne(card, item){
     if(!card || !item) return;
+    // 제목 없어도 '제목 :'은 항상 표시
     var title = String(item.anniversary || '').trim();
-    if(!title) return;
     if(card.dataset && card.dataset.tcTitleDone === '1') return;
     if(card.querySelector && card.querySelector('.tc-title-line')) return;
     var dateStr = String(item.date || '').split('T')[0];
@@ -24168,23 +24180,12 @@ div[data-photo-key][onclick*="handleTimeCapsulePhotoClick"] *{
     var el = document.createElement('div');
     el.className = 'tc-title-line';
     el.textContent = '제목 : ' + title;
-    el.style.cssText = 'font-size:12px; font-weight:400; color:#333; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin:2px 0 4px 0;';
+    el.style.cssText = 'font-size:12px; font-weight:400; color:#333; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin:2px 0 4px 0; text-align:left; display:block; width:100%;';
     if(dateEl){
-      // 날짜가 라벨과 같은 행에 있으면, 그 행 바로 밑에 넣기
-      var parent = dateEl.parentNode;
-      var row = parent;
-      // 부모가 날짜만 있는 래퍼면 부모 뒤에, 아니면 날짜 div 뒤에
-      if(parent && parent !== card && (parent.textContent||'').trim() === dateStr){
-        row = parent;
-      } else if(parent && parent !== card && (parent.textContent||'').trim().length < 40){
-        // 라벨+날짜 행: 행 뒤에 넣기
-        row = parent;
-      } else {
-        row = dateEl;
-      }
-      if(row.parentNode){
-        if(row.nextSibling) row.parentNode.insertBefore(el, row.nextSibling);
-        else row.parentNode.appendChild(el);
+      // 날짜 요소 바로 뒤에 넣기: 날짜 -> 제목 -> 내용 순서, 왼쪽 정렬
+      if(dateEl.parentNode){
+        if(dateEl.nextSibling) dateEl.parentNode.insertBefore(el, dateEl.nextSibling);
+        else dateEl.parentNode.appendChild(el);
       } else {
         card.appendChild(el);
       }
@@ -24243,6 +24244,113 @@ div[data-photo-key][onclick*="handleTimeCapsulePhotoClick"] *{
     }catch(e){ console.log('V638 tc title err', e); }
   }
   // 렌더 후에 카드가 새로 생기므로 MutationObserver로 계속 적용
+  var listEl = document.getElementById('diary-around-today-list');
+  if(listEl && typeof MutationObserver !== 'undefined'){
+    var mo = new MutationObserver(function(){ setTimeout(run, 50); });
+    mo.observe(listEl, { childList: true, subtree: true });
+  }
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(run, 300); });
+  setTimeout(run, 500);
+  setTimeout(run, 1500);
+})();
+</script>
+
+
+<script id="V642_RENAME_MOVE">
+(function(){
+  if(window._v642_done) return;
+  window._v642_done = true;
+  function rename(){
+    try{
+      document.querySelectorAll('.tc-group div').forEach(function(n){
+        var t = (n.textContent||'').trim();
+        if(t === '이동 →' || t === '이동' || t === '이동 →'){
+          n.textContent = '날짜이동';
+        }
+      });
+    }catch(e){}
+  }
+  var listEl = document.getElementById('diary-around-today-list');
+  if(listEl && typeof MutationObserver !== 'undefined'){
+    var mo = new MutationObserver(function(){ setTimeout(rename, 50); });
+    mo.observe(listEl, { childList: true, subtree: true });
+  }
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(rename, 300); });
+  setTimeout(rename, 500);
+  setTimeout(rename, 1500);
+})();
+</script>
+
+
+<script id="V643_TC_BUTTONS">
+(function(){
+  if(window._v643_done) return;
+  window._v643_done = true;
+  function findById(id){
+    if(!id || typeof getAllDiaries !== 'function') return null;
+    var all = getAllDiaries() || [];
+    for(var i=0;i<all.length;i++){ if(String(all[i].id) === String(id)) return all[i]; }
+    return null;
+  }
+  function makeBtn(label){
+    var b = document.createElement('div');
+    b.className = 'tc-view-btn';
+    b.textContent = label;
+    b.style.cssText = 'font-size:11px; color:#7c6cff; font-weight:800; background:#f0eaff; border:1px solid #e8e0ff; padding:4px 8px; border-radius:20px; white-space:nowrap; display:inline-block; text-align:center;';
+    return b;
+  }
+  function run(){
+    try{
+      document.querySelectorAll('.tc-group').forEach(function(g){
+        // simple 스타일 왼쪽 절반: "📷 사진 보기" -> 사진 있으면 "사진보기", 메모만이면 "메모보기" 버튼
+        g.querySelectorAll('[onclick*="handleTimeCapsulePhotoClick"]').forEach(function(left){
+          if(left.dataset && left.dataset.v643Done === '1') return;
+          var id = left.getAttribute('data-diary-id') || '';
+          var item = id ? findById(id) : null;
+          // 사진 있는지: 진짜 글에 photo가 있는지, 또는 왼쪽 안에 img가 있는지
+          var hasPhoto = !!(item && item.photo) || !!left.querySelector('img');
+          // "사진 보기" 텍스트 div 찾기
+          var divs = left.querySelectorAll('div');
+          for(var k=0;k<divs.length;k++){
+            // 바깥 div는 라벨(1개월 전 등)까지 포함하므로, 자식 div 없는 잎 div만 교체
+            if(divs[k].querySelector('div')) continue;
+            var t = (divs[k].textContent||'').trim();
+            if(t.indexOf('사진 보기')!==-1 || t === '📷 사진 보기' || t.indexOf('📷')!==-1){
+              // 카메라 아이콘 없애고 버튼으로 교체
+              var btn = makeBtn(hasPhoto ? '사진보기' : '메모보기');
+              divs[k].textContent = '';
+              divs[k].appendChild(btn);
+              break;
+            }
+          }
+          // 왼쪽 안에 남아있는 카메라 이모지 텍스트 노드 제거 (img는 유지)
+          if(left.dataset) left.dataset.v643Done = '1';
+        });
+        // 인스타/편지 스타일: 카드 오른쪽 📸 -> 사진/메모 버튼
+        g.querySelectorAll('div[onclick*="goToPastDiary"]').forEach(function(card){
+          if(card.closest && card.closest('[data-diary-id]')) return;
+          if(card.dataset && card.dataset.v643Done === '1') return;
+          var oc = card.getAttribute('onclick') || '';
+          var m = oc.match(/goToPastDiary\('([^']+)'\)/);
+          var dt = m ? m[1] : '';
+          // 카드에 사진 img가 있으면 사진, 없으면 메모
+          var hasPhoto2 = !!card.querySelector('img');
+          var divs2 = card.querySelectorAll('div');
+          for(var k2=0;k2<divs2.length;k2++){
+            if(divs2[k2].querySelector('div')) continue;
+            var t2 = (divs2[k2].textContent||'').trim();
+            if(t2 === '📸' || t2 === '📷'){
+              var btn2 = makeBtn(hasPhoto2 ? '사진보기' : '메모보기');
+              divs2[k2].textContent = '';
+              divs2[k2].appendChild(btn2);
+              break;
+            }
+          }
+          if(card.dataset) card.dataset.v643Done = '1';
+        });
+      });
+    }catch(e){ console.log('V643 err', e); }
+  }
   var listEl = document.getElementById('diary-around-today-list');
   if(listEl && typeof MutationObserver !== 'undefined'){
     var mo = new MutationObserver(function(){ setTimeout(run, 50); });
