@@ -1,3 +1,4 @@
+<!-- V645: 내용 폰트 크기를 제목이랑 같게, 진하게 안 함 (타임캡슐 12px / 라이트박스 15px) -->
 <!-- V644: 1개월전/3개월전/1년전 라벨 원래대로 - 버튼 교체가 바깥 div까지 지우던 버그 수정 -->
 <!-- V643: 타임캡슐 카메라 아이콘 제거 + '메모보기'/'사진보기' 버튼을 날짜이동처럼 -->
 <!-- V642: 이동 버튼 가로채지 않고 원래 날짜이동으로 복원 + 버튼명 '날짜이동'으로 -->
@@ -27,7 +28,7 @@
 <!-- Version: V500 - 리스트>타임캡슐>바이오리듬>운세>설명 순서 확정 -->
 <!-- Version: V290 - 기능·UI 유지, 진동중복/setInterval폭주/transform충돌 정리 --> 
 <!-- Version: V187 - 초중말복 동적화, 24절기 동적화, 누적패치 제거, 5~6줄 개그 유머 100점 -->
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>포토다이어리 V644 - 사진, 추억을 담다</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>포토다이어리 V645 - 사진, 추억을 담다</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -23708,6 +23709,7 @@ div[data-photo-key][onclick*="handleTimeCapsulePhotoClick"] *{
 
 <style id="V631_TITLE">
 #photo-lightbox-memo .lb-title{ font-weight:400; font-size:15px; line-height:1.6; margin-bottom:4px; color:#333; white-space:pre-wrap; word-break:break-word; text-align:left; display:block; }
+#photo-lightbox-memo .lb-body{ font-weight:400; font-size:15px; line-height:1.6; color:#333; white-space:pre-wrap; word-break:break-word; text-align:left; }
 #photo-lightbox-memo .lb-body{ white-space:pre-wrap; word-break:break-word; }
 </style>
 <script id="V631_TITLE_JS">
@@ -24194,6 +24196,23 @@ div[data-photo-key][onclick*="handleTimeCapsulePhotoClick"] *{
       if(card.firstChild) card.insertBefore(el, card.firstChild);
       else card.appendChild(el);
     }
+    // 미리보기 내용도 제목이랑 같은 크기(12px), 진하게 안 함
+    try{
+      var head2 = String(item.text||'').trim().slice(0,10);
+      if(head2){
+        var allDivs = card.querySelectorAll('div');
+        for(var q=0;q<allDivs.length;q++){
+          var tt = (allDivs[q].textContent||'').trim();
+          if(allDivs[q].querySelector('div')) continue; // 잎 div만
+          if(tt.indexOf(head2)!==-1){
+            allDivs[q].style.fontSize = '12px';
+            allDivs[q].style.fontWeight = '400';
+            allDivs[q].style.color = '#333';
+            break;
+          }
+        }
+      }
+    }catch(e){}
     if(card.dataset) card.dataset.tcTitleDone = '1';
   }
   function run(){
