@@ -1,3 +1,6 @@
+<!-- V637: 타임캡슐 클릭을 capture에서 가로채서 누른 카드의 진짜 id/날짜+미리보기로 진짜 글 직접 열기 -->
+<!-- V636: window.만 아니라 bare openPhotoLightbox/openMemoLightboxOnly도 덮어서 내부 호출까지 진짜 글 전달 -->
+<!-- V635: 타임캡슐 메모만 - data-diary-id로 진짜 글 통째로 넘김 + 40자 잘림 prefix 매칭 + 본문 전체로 복원 -->
 <!-- V634: 타임캡슐은 anniversary 안 넘기므로 date+text로 진짜 글 찾아 제목 표시. V633 이동날짜 + V631 제목 유지 -->
 <!-- V623.5: 3번 사진 용량. 새로 저장되는 사진만 1024px/0.65로. 기존 사진은 함수 안 타서 그대로. 괄호/구조 변경 없음 -->
 <!-- V623.4: 달력 깜빡임만. UI 모양 그대로. 변경=interval 1.5s->10s + transition none 1블록 추가. 괄호/함수 변경 없음 -->
@@ -17,7 +20,7 @@
 <!-- Version: V500 - 리스트>타임캡슐>바이오리듬>운세>설명 순서 확정 -->
 <!-- Version: V290 - 기능·UI 유지, 진동중복/setInterval폭주/transform충돌 정리 --> 
 <!-- Version: V187 - 초중말복 동적화, 24절기 동적화, 누적패치 제거, 5~6줄 개그 유머 100점 -->
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>포토다이어리 V634 - 사진, 추억을 담다</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>포토다이어리 V637 - 사진, 추억을 담다</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -22584,6 +22587,7 @@ div:has(> label:has(input[name="cardStyle"])) { display:none !important; }
   if(origPhotoClick && !window._v543Patched){
     window._v543Patched = true;
     window.handleTimeCapsulePhotoClick = function(el){
+    // 아래에서 bare으로도 덮음 (같은 함수 본문)
       try{
         const photoKey = el.getAttribute('data-photo-key') || '';
         const photoDate = el.getAttribute('data-photo-date') || '';
@@ -22777,6 +22781,7 @@ div[data-photo-key][onclick*="handleTimeCapsulePhotoClick"] *{
   if(orig && !window._v545OrigPatched){
     window._v545OrigPatched=true;
     window.handleTimeCapsulePhotoClick = function(el){
+    // 아래에서 bare으로도 덮음 (같은 함수 본문)
       const key = el.getAttribute('data-photo-key') || '';
       if(isEmpty(key)){
         const dateStr = el.getAttribute('data-photo-date') || '';
@@ -22889,6 +22894,7 @@ div[data-photo-key][onclick*="handleTimeCapsulePhotoClick"] *{
   if(orig && !window._v548Patched){
     window._v548Patched=true;
     window.handleTimeCapsulePhotoClick = function(el){
+    // 아래에서 bare으로도 덮음 (같은 함수 본문)
       const diaryId = el.getAttribute('data-diary-id') || '';
       const dateStr = el.getAttribute('data-photo-date') || '';
       const fullTextEnc = el.getAttribute('data-full-text') || el.getAttribute('data-photo-text') || '';
@@ -23715,7 +23721,10 @@ div[data-photo-key][onclick*="handleTimeCapsulePhotoClick"] *{
           var dt2 = String(cand.date || '').split('T')[0];
           for(var i2=0;i2<all2.length;i2++){
             var a = all2[i2];
-            if(String(a.date||'').split('T')[0] === dt2 && String(a.text||'').trim() === txt2){ return a; }
+            if(String(a.date||'').split('T')[0] !== dt2) continue;
+            var at = String(a.text||'').trim();
+            // 정확히 같거나, 타임캡슐 40자 잘림(prefix)인 경우도 같은 글로 인정
+            if(at === txt2 || (txt2 && at.indexOf(txt2) === 0) || (txt2 && txt2.indexOf(at) === 0)){ return a; }
           }
         }catch(e){}
       }
@@ -23759,6 +23768,8 @@ div[data-photo-key][onclick*="handleTimeCapsulePhotoClick"] *{
       title = title.replace(/^[📌⭐\s]+/u, '').trim();
       var bodyText = memoEl.textContent || '';
       if(bodyText.indexOf('제목 :') === 0) return;
+      // 진짜 글을 찾았으면, 잘린 본문 대신 진짜 글의 전체 내용으로 쓰기
+      if(item && item.text) bodyText = String(item.text);
       bodyText = cleanBody(bodyText);
       memoEl.textContent = '';
       var t = document.createElement('div');
@@ -23784,28 +23795,69 @@ div[data-photo-key][onclick*="handleTimeCapsulePhotoClick"] *{
   }
 
   // 호출될 때 item을 직접 저장 - 이게 핵심
+  // ★ window.만으로는 내부 bare 호출(openPhotoLightbox(...))에 안 먹힐 수 있어서 bare으로도 덮음
+  function resolveRealItem(item){
+    if(!item || typeof item !== 'object') return item;
+    if(item.id && typeof getAllDiaries === 'function'){
+      try{
+        var all0 = getAllDiaries() || [];
+        for(var k0=0;k0<all0.length;k0++){ if(String(all0[k0].id) === String(item.id)) return all0[k0]; }
+      }catch(e){}
+    }
+    // id 없으면 날짜+내용(prefix)으로 진짜 글 찾기 (타임캡슐 40자 잘림 포함)
+    if(typeof getAllDiaries === 'function'){
+      try{
+        var all1 = getAllDiaries() || [];
+        var t1 = String(item.text || '').trim();
+        var d1 = String(item.date || '').split('T')[0];
+        if(t1 && d1){
+          for(var k1=0;k1<all1.length;k1++){
+            var a1 = all1[k1];
+            if(String(a1.date||'').split('T')[0] !== d1) continue;
+            var at1 = String(a1.text||'').trim();
+            if(at1 === t1 || (t1 && at1.indexOf(t1)===0) || (t1 && t1.indexOf(at1)===0)) return a1;
+          }
+        }
+      }catch(e){}
+    }
+    return item;
+  }
   var orig = window.openPhotoLightbox;
   if(orig){
-    window.openPhotoLightbox = function(src, item){
-      // item이 객체면 그걸 저장, 문자열/없으면 null (전 제목 안 쓰기 위해)
-      if(item && typeof item === 'object') window._v631_lastItem = item;
-      else window._v631_lastItem = null;
-      var r = orig.apply(this, arguments);
+    var wrappedOpen = function(src, item){
+      var real = resolveRealItem(item);
+      // 진짜 글을 찾았으면 그걸로 교체해서 원래 함수에 넘김 (잘린 내용/빈 제목 안 넘김)
+      if(real && real !== item){
+        window._v631_lastItem = real;
+        // 사진키도 진짜 글의 사진으로 (메모만이면 null)
+        if(!src || src === item.photo) src = real.photo || null;
+        item = real;
+      } else {
+        if(item && typeof item === 'object') window._v631_lastItem = item;
+        else window._v631_lastItem = null;
+      }
+      var r = orig.apply(this, [src, item]);
       setTimeout(inject, 30);
       return r;
     };
+    window.openPhotoLightbox = wrappedOpen;
+    try{ openPhotoLightbox = wrappedOpen; }catch(e){}
   }
   // 메모만 여는 별도 함수도 같이 잡기
   var origMemo = window.openMemoLightboxOnly;
   if(origMemo){
-    window.openMemoLightboxOnly = function(text, diaryItem){
-      if(diaryItem && typeof diaryItem === 'object') window._v631_lastItem = diaryItem;
-      else if(text && typeof text === 'object') window._v631_lastItem = text;
+    var wrappedMemo = function(text, diaryItem){
+      var cand = (diaryItem && typeof diaryItem === 'object') ? diaryItem : (text && typeof text === 'object' ? text : null);
+      var realM = resolveRealItem(cand);
+      if(realM) { window._v631_lastItem = realM; diaryItem = realM; text = realM.text; }
+      else if(cand) window._v631_lastItem = cand;
       else window._v631_lastItem = null;
-      var r = origMemo.apply(this, arguments);
+      var r = origMemo.apply(this, [text, diaryItem]);
       setTimeout(inject, 30);
       return r;
     };
+    window.openMemoLightboxOnly = wrappedMemo;
+    try{ openMemoLightboxOnly = wrappedMemo; }catch(e){}
   }
   // 닫을 때 lastItem 비우기 - 다음에 전 제목 안 섞이게
   var origClose = window.closePhotoLightbox;
@@ -23948,5 +24000,120 @@ div[data-photo-key][onclick*="handleTimeCapsulePhotoClick"] *{
   }, 800);
 })();
 </script>
+
+<script id="V635_TC_MEMO">
+(function(){
+  if(window._v635_tc_done) return;
+  window._v635_tc_done = true;
+  window.handleTimeCapsulePhotoClick = function(el){
+    // 아래에서 bare으로도 덮음 (같은 함수 본문)
+    try{
+      if(window.event) window.event.stopPropagation();
+      var id = el.getAttribute('data-diary-id') || '';
+      var all = (typeof getAllDiaries === 'function') ? getAllDiaries() : [];
+      var item = null;
+      if(id){
+        for(var i=0;i<all.length;i++){ if(String(all[i].id) === String(id)){ item = all[i]; break; } }
+      }
+      if(!item){
+        // id가 없으면 날짜+잘린내용(prefix)으로 찾기
+        var dt = (el.getAttribute('data-photo-date')||'').split('T')[0];
+        var txt = el.getAttribute('data-photo-text')||'';
+        try{ txt = decodeURIComponent(el.getAttribute('data-full-text')||'') || txt; }catch(e){}
+        for(var j=0;j<all.length;j++){
+          var a = all[j];
+          if(String(a.date||'').split('T')[0] !== dt) continue;
+          var at = String(a.text||'').trim();
+          if(at === String(txt).trim() || (txt && at.indexOf(String(txt).trim())===0)){ item = a; break; }
+        }
+      }
+      if(item){
+        // 메모만 있어도 진짜 글 통째로 넘김 - 사진키는 item.photo
+        window.openPhotoLightbox(item.photo || null, item);
+        return;
+      }
+      // 못 찾으면 원래대로: 사진키라도 열어보기
+      var photoKey = el.getAttribute('data-photo-key') || '';
+      if(photoKey && typeof window.openPhotoLightbox === 'function'){
+        window.openPhotoLightbox(photoKey, {text: el.getAttribute('data-photo-text')||'', date: el.getAttribute('data-photo-date')||''});
+      }
+    }catch(e){ console.log('V635 tc err', e); }
+  };
+  try{ handleTimeCapsulePhotoClick = window.handleTimeCapsulePhotoClick; }catch(e){}
+})();
+</script>
+
+
+<script id="V637_TC_CAPTURE">
+(function(){
+  if(window._v637_done) return;
+  window._v637_done = true;
+  function findById(id){
+    if(!id || typeof getAllDiaries !== 'function') return null;
+    var all = getAllDiaries() || [];
+    for(var i=0;i<all.length;i++){ if(String(all[i].id) === String(id)) return all[i]; }
+    return null;
+  }
+  function findByDatePrefix(dateStr, preview){
+    if(typeof getAllDiaries !== 'function') return null;
+    var all = getAllDiaries() || [];
+    var dt = String(dateStr||'').split('T')[0];
+    var pv = String(preview||'').trim();
+    for(var i=0;i<all.length;i++){
+      var a = all[i];
+      if(String(a.date||'').split('T')[0] !== dt) continue;
+      var at = String(a.text||'').trim();
+      if(!pv) { if(!at) return a; continue; }
+      if(at === pv || (pv && at.indexOf(pv)===0) || (pv && pv.indexOf(at)===0)) return a;
+    }
+    return null;
+  }
+  document.addEventListener('click', function(e){
+    // 타임캡슐 그룹 안에서만 가로챔 - 다른 곳은 건드리지 않음
+    var tc = e.target.closest ? e.target.closest('.tc-group') : null;
+    if(!tc) return;
+    // 토글/접기 버튼은 제외
+    if(e.target.closest && e.target.closest('.tc-toggle-btn')) return;
+    // 1) data-diary-id가 있는 요소부터 (simple 스타일 왼쪽/오른쪽)
+    var withId = e.target.closest ? e.target.closest('[data-diary-id]') : null;
+    var item = null;
+    if(withId){
+      var id = withId.getAttribute('data-diary-id') || '';
+      if(id) item = findById(id);
+    }
+    // 2) id가 없으면 카드에서 날짜+미리보기 텍스트로 찾기 (instagram/letter 스타일)
+    if(!item){
+      var card = e.target.closest ? e.target.closest('div[onclick*="goToPastDiary"]') : null;
+      if(card){
+        var oc = card.getAttribute('onclick') || '';
+        var m = oc.match(/goToPastDiary\('([^']+)'\)/);
+        var dt2 = m ? m[1] : '';
+        // 카드 안의 미리보기 텍스트: 가장 긴 텍스트 div
+        var txt = '';
+        try{
+          var divs = card.querySelectorAll('div');
+          for(var k=0;k<divs.length;k++){
+            var t = (divs[k].textContent||'').trim();
+            // 날짜/라벨/버튼이 아닌, 본문 미리보기 (10자 이상)
+            if(t.length > txt.length && t.length >= 2 && t.indexOf('타임캡슐')===-1 && t.indexOf('이동')===-1 && t.indexOf('→')===-1) txt = t;
+          }
+          // 라벨(예: 1개월 전)이 같이 들어간 경우, 날짜 뒤 부분만
+          if(txt && dt2 && txt.indexOf(dt2)!==-1) txt = txt.split(dt2).pop().trim();
+          // 40자 미리보기면 그대로 prefix로 씀
+          txt = txt.slice(0,40);
+        }catch(err){}
+        if(dt2) item = findByDatePrefix(dt2, txt);
+      }
+    }
+    if(!item) return; // 못 찾으면 원래 동작 그대로
+    // 찾았으면 원래 핸들러(잘린 텍스트/첫번째)를 막고 진짜 글로 직접 열기
+    e.preventDefault();
+    e.stopPropagation();
+    if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+    try{ window.openPhotoLightbox(item.photo || null, item); }catch(err){}
+  }, true); // capture: 인라인 onclick보다 먼저
+})();
+</script>
+
 </body>
 </html>
