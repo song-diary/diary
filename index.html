@@ -1,3 +1,9 @@
+<!-- V651: 버튼 크기/위치 원래대로, 1개월~ 라벨만 버튼 너비에 맞춰 가운데로 -->
+<!-- V650: 타임캡슐 1개월~3개월 라벨을 메모보기/사진보기 버튼 가운데로 -->
+<!-- V649: 원본 정렬표에 2,4,5개월 추가 + 숫자 기준 정렬 - 1,3,2 고침 -->
+<!-- V648: 정렬 대상을 안쪽 래퍼로 - 사진처럼 1,3,2로 나오던 거 1,2,3으로 -->
+<!-- V647: 타임캡슐 1개월,2개월,3개월... 순차 정렬 확실히 -->
+<!-- V646: 타임캡슐 3개월 선택하면 사이 2개월도 나오게 간격 채우기 -->
 <!-- V645: 내용 폰트 크기를 제목이랑 같게, 진하게 안 함 (타임캡슐 12px / 라이트박스 15px) -->
 <!-- V644: 1개월전/3개월전/1년전 라벨 원래대로 - 버튼 교체가 바깥 div까지 지우던 버그 수정 -->
 <!-- V643: 타임캡슐 카메라 아이콘 제거 + '메모보기'/'사진보기' 버튼을 날짜이동처럼 -->
@@ -28,7 +34,7 @@
 <!-- Version: V500 - 리스트>타임캡슐>바이오리듬>운세>설명 순서 확정 -->
 <!-- Version: V290 - 기능·UI 유지, 진동중복/setInterval폭주/transform충돌 정리 --> 
 <!-- Version: V187 - 초중말복 동적화, 24절기 동적화, 누적패치 제거, 5~6줄 개그 유머 100점 -->
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>포토다이어리 V645 - 사진, 추억을 담다</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>포토다이어리 V651 - 사진, 추억을 담다</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -9566,14 +9572,13 @@ window.attachPhotoDoubleTap = function(el, handler){
                   myPastHTML += '<div class="time-capsule-banner" style="margin:0 0 8px 0; padding:8px 12px; min-height:28px; display:flex; align-items:center; justify-content:space-between; border-radius:8px; '+bannerStyle+' font-size:11px; font-weight:700;"><div style="display:flex; align-items:center; gap:6px;"><span>'+bannerIcon+'</span><span>타임캡슐 도착!</span><span style="opacity:0.9; font-weight:500; margin-left:4px;">'+allPasts.length+'개 도착</span></div><div style="font-size:14px;">'+(cardStyle==='instagram'?'📬':cardStyle==='letter'?'✉️':'→')+'</div></div>';
                 }
                 
-                var order = ['1개월 전','3개월 전','6개월 전','1년 전','2년 전','3년 전'];
+                var order = ['1개월 전','2개월 전','3개월 전','4개월 전','5개월 전','6개월 전','7개월 전','8개월 전','9개월 전','10개월 전','11개월 전','12개월 전','1년 전','2년 전','3년 전'];
                 var sortedKeys = Object.keys(grouped).sort(function(a,b){
-                  var ia = order.indexOf(a); var ib = order.indexOf(b);
-                  if(ia===-1 && ib===-1) return a.localeCompare(b);
-                  if(ia===-1) return 1;
-                  if(ib===-1) return -1;
-                  return ia-ib;
-                });
+                   function _mo(lbl){ var mm = String(lbl||'').match(/(\d+)개월 전/); if(mm) return parseInt(mm[1],10); var yy = String(lbl||'').match(/(\d+)년 전/); if(yy) return parseInt(yy[1],10)*12; return 9999; }
+                   var ia = order.indexOf(a); var ib = order.indexOf(b);
+                   if(ia!==-1 && ib!==-1) return ia-ib;
+                   return _mo(a) - _mo(b);
+                 });
                 // 🎨 카드 스타일별 렌더링 - 설정에서 선택한 스타일로!
                 var pastSettings = (typeof getPastSettings === 'function') ? getPastSettings() : {cardStyle:'instagram'};
                 var cardStyle = pastSettings.cardStyle || 'instagram';
@@ -9643,7 +9648,7 @@ window.attachPhotoDoubleTap = function(el, handler){
                           // 왼쪽 50% - 사진 확대 (data 속성으로 키 전달)
                           '<div data-photo-key="'+safeKey+'" data-diary-id="'+safeId+'" data-full-text="'+safeFullText+'" data-photo-text="'+safeText+'" data-photo-date="'+p.date+'" onclick="window.handleTimeCapsulePhotoClick(this)" style="width:50%; flex:0 0 50%; background:#f9f9f9; display:flex; align-items:center; padding:8px; cursor:pointer; " title="사진 확대 - 클릭하면 크게 보기">' +
                           photoHTML +
-                          '<div style="flex:1; margin-left:6px; overflow:hidden;"><div style="font-size:9px; color:#999; margin-bottom:2px;">'+label+'</div><div style="font-size:11px; color:#666; font-weight:600;">📷 사진 보기</div></div>' +
+                          '<div style="flex:1; margin-left:6px; overflow:hidden;"><div style="font-size:9px; color:#999; margin-bottom:2px; text-align:center;">'+label+'</div><div style="font-size:11px; color:#666; font-weight:600;">📷 사진 보기</div></div>' +
                         '</div>' +
                         // 오른쪽 50% - 일자로 이동
                         '<div data-photo-key="'+(p.photo||'')+'" data-diary-id="'+safeId+'" data-photo-date="'+p.date+'" onclick="window.handleTimeCapsuleDateClick(\''+p.date+'\', this.getAttribute(\'data-photo-key\'))" style="width:50%; flex:0 0 50%; background:#f9f9f9; display:flex; align-items:center; justify-content:space-between; padding:8px 10px; cursor:pointer;" title="일자로 이동 - 앨범으로 포커스">' +
@@ -24378,6 +24383,263 @@ div[data-photo-key][onclick*="handleTimeCapsulePhotoClick"] *{
   document.addEventListener('DOMContentLoaded', function(){ setTimeout(run, 300); });
   setTimeout(run, 500);
   setTimeout(run, 1500);
+})();
+</script>
+
+
+<script id="V646_TC_FILL_GAP">
+(function(){
+  if(window._v646_done) return;
+  window._v646_done = true;
+
+  function monthsOf(iv){
+    if(!iv) return null;
+    var m = String(iv).match(/^(\d+)m$/);
+    if(m) return parseInt(m[1],10);
+    if(iv==='1y') return 12;
+    if(iv==='2y') return 24;
+    if(iv==='3y') return 36;
+    return null;
+  }
+  function labelOf(iv){
+    var mo = monthsOf(iv);
+    if(mo !== null){
+      if(mo === 12) return '1년 전';
+      if(mo === 24) return '2년 전';
+      if(mo === 36) return '3년 전';
+      return mo + '개월 전';
+    }
+    return iv;
+  }
+  // 1) N개월 전 날짜 계산 (2m,4m,5m 등도 되게)
+  function newGetPastDate(baseDateStr, interval){
+    var mo = monthsOf(interval);
+    if(mo === null) return null;
+    var base = new Date(baseDateStr);
+    var d = new Date(base);
+    d.setMonth(d.getMonth() - mo);
+    var yyyy = d.getFullYear();
+    var mm = String(d.getMonth()+1).padStart(2,'0');
+    var dd = String(d.getDate()).padStart(2,'0');
+    return yyyy + '-' + mm + '-' + dd;
+  }
+  // 2) 간격 사이 채우기: 1m,3m이면 2m도 추가 / 3m,6m이면 4m,5m도 추가
+  var origGetPastSettings = (typeof getPastSettings === 'function') ? getPastSettings : null;
+  function newGetPastSettings(){
+    var s = origGetPastSettings ? origGetPastSettings() : {enabled:true, intervals:['1m','3m','6m','1y'], cardStyle:'instagram'};
+    try{
+      var ivs = s.intervals || [];
+      var months = [];
+      ivs.forEach(function(iv){ var mo = monthsOf(iv); if(mo!==null && months.indexOf(mo)===-1) months.push(mo); });
+      if(months.length === 0) return s;
+      months.sort(function(a,b){ return a-b; });
+      var filled = [];
+      for(var i=months[0]; i<=months[months.length-1]; i++){
+        // 12개월까지는 개월 단위로 다 채우기, 그 이상은 기존 간격만 (2년,3년은 12개월 단위)
+        if(i <= 12) filled.push(i + 'm');
+        else if(months.indexOf(i)!==-1) filled.push(i + 'm');
+      }
+      // 1y,2y,3y 표기는 그대로 유지하기 위해 12,24,36은 원래 표기로
+      var out = filled.map(function(mo){
+        if(mo==='12m' && ivs.indexOf('1y')!==-1) return '1y';
+        if(mo==='24m' && ivs.indexOf('2y')!==-1) return '2y';
+        if(mo==='36m' && ivs.indexOf('3y')!==-1) return '3y';
+        if(mo==='12m') return '12m';
+        return mo;
+      });
+      s = Object.assign({}, s, {intervals: out});
+    }catch(e){}
+    return s;
+  }
+
+  // bare + window 둘 다 덮기 (내부 bare 호출까지 먹히게)
+  try{ getPastDateByInterval = newGetPastDate; }catch(e){}
+  window.getPastDateByInterval = newGetPastDate;
+  try{ getPastSettings = newGetPastSettings; }catch(e){}
+  window.getPastSettings = newGetPastSettings;
+  var newLabel = function(iv){ return labelOf(iv); };
+  try{ getIntervalLabel = newLabel; }catch(e){}
+  window.getIntervalLabel = newLabel;
+})();
+</script>
+
+
+<script id="V647_TC_SORT">
+(function(){
+  if(window._v647_done) return;
+  window._v647_done = true;
+  function monthsOfLabel(txt){
+    var t = String(txt||'');
+    var m = t.match(/(\d+)개월 전/);
+    if(m) return parseInt(m[1],10);
+    var y = t.match(/(\d+)년 전/);
+    if(y) return parseInt(y[1],10) * 12;
+    // '1년 오늘' 같은 같은 날짜 그룹은 맨 뒤
+    if(t.indexOf('년 오늘')!==-1) return 999;
+    return 9999;
+  }
+  function sortOneGroup(g){
+    try{
+      // .tc-group 안에는 래퍼 div 하나만 있고, 그 안에 배너+헤더+카드가 있음
+      var container = g;
+      if(g.children.length === 1 && g.children[0].querySelector && g.children[0].querySelector('.time-capsule-banner')){
+        container = g.children[0];
+      }
+      var children = Array.prototype.slice.call(container.children);
+      if(children.length <= 2) return;
+      // 배너는 맨 앞에 유지
+      var banner = null;
+      var rest = [];
+      children.forEach(function(c){
+        if(c.classList && c.classList.contains('time-capsule-banner')) banner = c;
+        else rest.push(c);
+      });
+      if(rest.length === 0) return;
+      // 헤더 기준으로 세그먼트 나누기: 헤더 div(라벨 + 건수) + 그 뒤 카드들
+      var segments = [];
+      var cur = null;
+      rest.forEach(function(c){
+        var txt = (c.textContent||'').trim();
+        var isHeader = /\d+(개월|년) 전.*\(\d+건\)/.test(txt) && c.children.length === 0;
+        if(isHeader){
+          cur = { header: c, cards: [], months: monthsOfLabel(txt) };
+          segments.push(cur);
+        } else {
+          if(!cur){
+            cur = { header: null, cards: [], months: 9999 };
+            segments.push(cur);
+          }
+          cur.cards.push(c);
+        }
+      });
+      if(segments.length <= 1) return;
+      // 이미 순서대로면 건드리지 않음
+      var already = true;
+      for(var i=1;i<segments.length;i++){ if(segments[i].months < segments[i-1].months) { already = false; break; } }
+      if(already) return;
+      segments.sort(function(a,b){ return a.months - b.months; });
+      // 다시 붙이기: 배너 + 세그먼트 순서대로 (안쪽 래퍼에 붙이기)
+      segments.forEach(function(seg){
+        if(seg.header) container.appendChild(seg.header);
+        seg.cards.forEach(function(card){ container.appendChild(card); });
+      });
+    }catch(e){ console.log('V647 sort err', e); }
+  }
+  function run(){
+    try{
+      document.querySelectorAll('.tc-group').forEach(sortOneGroup);
+    }catch(e){}
+  }
+  var listEl = document.getElementById('diary-around-today-list');
+  if(listEl && typeof MutationObserver !== 'undefined'){
+    var mo = new MutationObserver(function(){ setTimeout(run, 80); });
+    mo.observe(listEl, { childList: true, subtree: true });
+  }
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(run, 400); });
+  setTimeout(run, 600);
+  setTimeout(run, 1800);
+})();
+</script>
+
+
+<script id="V650_TC_LABEL_CENTER">
+(function(){
+  if(window._v650_done) return;
+  window._v650_done = true;
+  function centerOne(left){
+    try{
+      // 왼쪽 절반 안의 라벨 div (1개월 전 ~ 3개월 전) + 버튼 들어있는 div
+      var divs = left.querySelectorAll('div');
+      for(var i=0;i<divs.length;i++){
+        var d = divs[i];
+        var t = (d.textContent||'').trim();
+        // 라벨: "1개월 전" 같은 잎 div
+        if(!d.querySelector('div') && /\d+(개월|년) 전/.test(t)){
+          d.style.textAlign = 'center';
+          d.style.width = '100%';
+          // 부모는 건드리지 않음 - 버튼이 움직이면 안 되니까
+        }
+        // 버튼은 절대 건드리지 않음 - 크기/위치 원래대로
+      }
+      // 왼쪽 래퍼도 건드리지 않음
+    }catch(e){}
+  }
+  function run(){
+    try{
+      document.querySelectorAll('.tc-group').forEach(function(g){
+        g.querySelectorAll('[onclick*="handleTimeCapsulePhotoClick"]').forEach(centerOne);
+      });
+    }catch(e){}
+  }
+  var listEl = document.getElementById('diary-around-today-list');
+  if(listEl && typeof MutationObserver !== 'undefined'){
+    var mo = new MutationObserver(function(){ setTimeout(run, 60); });
+    mo.observe(listEl, { childList: true, subtree: true });
+  }
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(run, 400); });
+  setTimeout(run, 600);
+  setTimeout(run, 1800);
+})();
+</script>
+
+
+<script id="V651_TC_LABEL_OVER_BTN">
+(function(){
+  if(window._v651_done) return;
+  window._v651_done = true;
+  function alignOne(left){
+    try{
+      // 버튼 찾기 (V643이 만든 tc-view-btn)
+      var btn = left.querySelector('.tc-view-btn');
+      if(!btn) return;
+      // 라벨 찾기: "1개월 전" 같은 잎 div
+      var divs = left.querySelectorAll('div');
+      var labelDiv = null;
+      for(var i=0;i<divs.length;i++){
+        var d = divs[i];
+        if(d.querySelector('div')) continue;
+        var t = (d.textContent||'').trim();
+        if(/\d+(개월|년) 전/.test(t) && t.indexOf('건')===-1){ labelDiv = d; break; }
+      }
+      if(!labelDiv) return;
+      // 버튼은 원래대로 복원 (V650에서 건드렸을 수 있으니)
+      btn.style.margin = '0';
+      btn.style.display = 'inline-block';
+      var btnW = btn.offsetWidth || 0;
+      if(btnW <= 0) return;
+      // 라벨 너비 = 버튼 너비, 가운데 정렬 -> 라벨 중심이 버튼 중심과 일치
+      labelDiv.style.display = 'inline-block';
+      labelDiv.style.width = btnW + 'px';
+      labelDiv.style.textAlign = 'center';
+      labelDiv.style.padding = '0';
+      labelDiv.style.margin = '0 0 2px 0';
+      // 라벨 담는 부모는 왼쪽 정렬 유지 (버튼이 안 움직이게)
+      if(labelDiv.parentNode) labelDiv.parentNode.style.textAlign = 'left';
+      // 버튼 담는 div도 원래대로
+      var btnParent = btn.parentNode;
+      if(btnParent){
+        btnParent.style.display = 'block';
+        btnParent.style.textAlign = 'left';
+        btnParent.style.justifyContent = '';
+      }
+    }catch(e){}
+  }
+  function run(){
+    try{
+      document.querySelectorAll('.tc-group').forEach(function(g){
+        g.querySelectorAll('[onclick*="handleTimeCapsulePhotoClick"]').forEach(alignOne);
+      });
+    }catch(e){}
+  }
+  var listEl = document.getElementById('diary-around-today-list');
+  if(listEl && typeof MutationObserver !== 'undefined'){
+    var mo = new MutationObserver(function(){ setTimeout(run, 60); });
+    mo.observe(listEl, { childList: true, subtree: true });
+  }
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(run, 400); });
+  setTimeout(run, 600);
+  setTimeout(run, 1200);
+  setTimeout(run, 2000);
 })();
 </script>
 
