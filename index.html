@@ -1,5 +1,9 @@
-<!-- V685: 백업 = 직접 누르는 다운로드 버튼 (자동 클릭 막힘 해결) -->
-<!-- V684: 카톡에 복사해둔 백업을 붙여넣기로 복원 -->
+<!-- V697: 설명 끄기 - body 스위치 -->
+<!-- V696: 설명/바이오리듬 끄기 - 클래스+CSS !important -->
+<!-- V695: 설정 설명/바이오리듬 끄기 수정 -->
+<!-- V694: 알림 박스 접기/펴기 (V693 무한반복 진짜 원인 수정) -->
+<!-- V691: 안드로이드 스튜디오 브릿지(AndroidBackup) 있으면 네이티브로 다운로드 폴더에 직접 저장, 없으면 기존 다운로드/공유/복사 방식 -->
+<!-- V689: 백업 시 복사 창 자동 팝업 중단, 다운로드 안내 토스트 + 복사하기 버튼으로 변경 -->
 <!-- V683: 달력 헤더 수평 정렬 (좌우 묶음 동일 너비 + 제목 진짜 가운데) -->
 <!-- V682: 다운로드 막혀도 복사 창 즉시 표시 + 앱 안 마지막 백업 상태 표시 -->
 <!-- V681: 공유 안 뜰 때 복사 폴백 (file:// 공유 차단 대응) -->
@@ -68,7 +72,7 @@
 <!-- Version: V500 - 리스트>타임캡슐>바이오리듬>운세>설명 순서 확정 -->
 <!-- Version: V290 - 기능·UI 유지, 진동중복/setInterval폭주/transform충돌 정리 --> 
 <!-- Version: V187 - 초중말복 동적화, 24절기 동적화, 누적패치 제거, 5~6줄 개그 유머 100점 -->
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>포토다이어리 V685 - 사진, 추억을 담다</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"><title>포토다이어리 V697 - 사진, 추억을 담다</title>
 <!-- V195 개선: 중복ID/이중스크립트/옵저버성능/리사이즈깜빡임/SW캐시 최적화 - 화면/기능 동일 -->
 <style>
         :root {
@@ -10922,7 +10926,7 @@ const DAILY_6LINE_V2 = {
 
                 var _pk=specials.slice().sort(function(a,b){var f=function(x){return /복$/.test(x)?0:1};return f(a)-f(b);});
                 for(var _i=0;_i<_pk.length;_i++){ if(SPECIAL_6LINE[_pk[_i]]){ storiesToShow=[{title:(SPECIAL_TITLES[_pk[_i]]||_pk[_i]),text:SPECIAL_6LINE[_pk[_i]],cat:(/복$/.test(_pk[_i])?'복날':'절기')}]; break; } }
-                var html = '<div style="grid-column:1 / -1; background:linear-gradient(135deg, #fffef8 0%, #fff8f0 30%, #f8f6ff 100%); border:1px solid #f0e6d8; border-radius:5px; padding:0; width:100%; box-sizing:border-box; box-shadow:0 4px 20px rgba(0,0,0,0.06); overflow:hidden;">';
+                var html = '<div id="daily-story-card" style="grid-column:1 / -1; background:linear-gradient(135deg, #fffef8 0%, #fff8f0 30%, #f8f6ff 100%); border:1px solid #f0e6d8; border-radius:5px; padding:0; width:100%; box-sizing:border-box; box-shadow:0 4px 20px rgba(0,0,0,0.06); overflow:hidden;">';
 
                 storiesToShow.forEach(function(item, idx){
                   var title = item.title || "";
@@ -24737,7 +24741,27 @@ div[data-photo-key][onclick*="handleTimeCapsulePhotoClick"] *{
       var _fn = '포토다이어리_백업_' + nowStamp() + '.json';
       var _shared = false;
       var _jsonStr = JSON.stringify(data);
+      // V691: 안드로이드 스튜디오 브릿지(AndroidBackup)가 있으면 네이티브로 다운로드 폴더에 직접 저장
+      var _viaBridge = false;
+      var _bridgeMsg = '';
       try{
+        if(window.AndroidBackup && typeof window.AndroidBackup.beginBackup === 'function'){
+          if(window.AndroidBackup.beginBackup(_fn)){
+            var _CH = 100000;
+            var _okBridge = true;
+            for(var _i=0; _i<_jsonStr.length; _i+=_CH){
+              try{ window.AndroidBackup.appendBackup(_jsonStr.substring(_i, _i+_CH)); }
+              catch(_ae){ _okBridge = false; break; }
+            }
+            if(_okBridge){
+              try{ _bridgeMsg = String(window.AndroidBackup.finishBackup() || ''); }
+              catch(_fe){ _okBridge = false; }
+            }
+            if(_okBridge && _bridgeMsg.indexOf('OK:') === 0){ _viaBridge = true; }
+          }
+        }
+      }catch(_be){ _viaBridge = false; }
+      if(!_viaBridge) try{
         var _blob = new Blob([_jsonStr], {type:'application/json;charset=utf-8'});
         var _file = new File([_blob], _fn, {type:'application/json'});
         if(window.isSecureContext && navigator.share && navigator.canShare && navigator.canShare({files:[_file]})){
@@ -24745,7 +24769,7 @@ div[data-photo-key][onclick*="handleTimeCapsulePhotoClick"] *{
           _shared = true;
         }
       }catch(_se){ _shared = false; }
-      // V685: 자동 a.click() 다운로드는 브라우저가 막음 -> 아래 모달에서 사용자가 직접 누르게 함
+      if(!_viaBridge && !_shared) downloadJSON(data, _fn);
       // V681: 공유도 다운로드도 안 되는 경우를 위해 백업 내용을 복사할 수 있는 창 제공
       window._v681_showBackupCopy = function(){
         try{
@@ -24754,22 +24778,14 @@ div[data-photo-key][onclick*="handleTimeCapsulePhotoClick"] *{
           m.id = 'v681-copy-modal';
           m.style.cssText = 'position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; padding:16px;';
           m.innerHTML = '<div style="background:#fff; border-radius:16px; width:100%; max-width:520px; max-height:88vh; display:flex; flex-direction:column; overflow:hidden;">'
-            + '<div style="padding:14px 16px; font-weight:800; font-size:15px;">백업 파일 받기</div>'
-            + '<div style="padding:0 16px; font-size:12px; color:#333;">⬇️ 아래 <b>초록 버튼을 직접 눌러야</b> 파일이 받아져요. 앱이 알아서 누르는 건 브라우저가 막아요.<br>받은 뒤 <b>파일 앱 &gt; 다운로드</b>에서 확인하세요. 파일이 안 받아지면 아래 복사로 보관하세요.</div>'
-            + '<a id="v685-dl" href="#" download="" style="display:block; margin:12px 16px 0; padding:14px; text-align:center; border-radius:10px; background:#27ae60; color:#fff; font-weight:800; font-size:15px; text-decoration:none;">📥 백업 파일 다운로드 (직접 누르기)</a>'
+            + '<div style="padding:14px 16px; font-weight:800; font-size:15px;">백업 내용 복사하기</div>'
+            + '<div style="padding:0 16px; font-size:12px; color:#333;">⬇️ 아래가 백업 본체예요. 다운로드 파일이 없어도 이 내용을 복사해두면 백업한 거예요.<br>📋 전체 복사 → <b>카톡 나에게 보내기</b>에 붙여넣으면 끝!</div>'
             + '<textarea id="v681-copy-ta" readonly style="margin:12px 16px; flex:1; min-height:220px; font-size:11px; padding:10px; border:1px solid #ddd; border-radius:8px; word-break:break-all;"></textarea>'
             + '<div style="padding:0 16px 16px; display:flex; gap:8px;">'
             + '<button id="v681-copy-btn" style="flex:1; padding:12px; border:none; border-radius:10px; background:#27ae60; color:#fff; font-weight:800; font-size:14px;">📋 전체 복사</button>'
             + '<button id="v681-copy-close" style="flex:1; padding:12px; border:1px solid #ddd; border-radius:10px; background:#fff; font-weight:800; font-size:14px;">닫기</button>'
             + '</div></div>';
           document.body.appendChild(m);
-          // V685: 직접 누르는 다운로드 링크 - 진짜 손가락 제스처라 브라우저가 막지 않음
-          try{
-            var dl = document.getElementById('v685-dl');
-            dl.href = URL.createObjectURL(new Blob([_jsonStr], {type:'application/json;charset=utf-8'}));
-            dl.setAttribute('download', _fn);
-            dl.onclick = function(){ setTimeout(function(){ try{ URL.revokeObjectURL(dl.href); }catch(e){} }, 30000); };
-          }catch(e){}
           var ta = document.getElementById('v681-copy-ta'); ta.value = _jsonStr;
           document.getElementById('v681-copy-close').onclick = function(){ m.remove(); };
           document.getElementById('v681-copy-btn').onclick = function(){
@@ -24783,12 +24799,35 @@ div[data-photo-key][onclick*="handleTimeCapsulePhotoClick"] *{
       catch(_qe){ try{ var _bk2={app:'PhotoDiary', version:'V680', exportedAt:new Date().toISOString(), localStorage: collectLocal(), indexedDB:{}}; localStorage.setItem('PhotoDiary_LAST_BACKUP_BEFORE_RESET', JSON.stringify(_bk2)); }catch(_e2){} }
       var diaryCount = 0;
       try{ var arr = JSON.parse(data.localStorage['smartDiaryList']||'[]'); diaryCount = arr.length; }catch(e){}
-      if(_shared){
+      if(_viaBridge){
+        alert('✅ 백업 파일을 저장했어요\n내 파일 > 다운로드 > ' + _fn + '\n일기 ' + diaryCount + '개 + 사진/설정 포함');
+      } else if(_shared){
         alert('백업 파일을 공유했어요.\n공유한 곳(카톡/드라이브/파일)에 꼭 보관해 주세요.\n일기 ' + diaryCount + '개 + 사진/설정 포함\n(앱 안에도 마지막 백업이 남았어요.)');
       } else {
-        // V685: 다운로드 버튼이 있는 창을 바로 띄움 (사용자가 직접 눌러야 받아짐)
-        if(typeof window._v681_showBackupCopy === 'function') window._v681_showBackupCopy();
-        else alert('백업이 앱 안에 저장됐어요. 일기 ' + diaryCount + '개.\n다운로드 폴더에 파일이 없으면 설정 > 마지막 백업 복원으로 복원할 수 있어요.');
+        // V689: 복사 창을 자동으로 띄우지 않음. 다운로드가 본체이고, 복사는 파일이 없을 때만 사용자가 버튼으로 선택.
+        try{
+          var _oldToast = document.getElementById('v689-backup-toast');
+          if(_oldToast) _oldToast.remove();
+          var _toast = document.createElement('div');
+          _toast.id = 'v689-backup-toast';
+          _toast.style.cssText = 'position:fixed; left:12px; right:12px; bottom:16px; z-index:99998; background:#1e1e2e; color:#fff; border-radius:14px; padding:14px 14px 12px; box-shadow:0 8px 24px rgba(0,0,0,0.35); font-size:13px; line-height:1.5;';
+          _toast.innerHTML = '<div style="font-weight:800; font-size:14px; margin-bottom:4px;">📥 백업 파일을 다운로드했어요</div>'
+            + '<div>파일 앱 &gt; 다운로드에서 <b>포토다이어리_백업_...</b> 파일을 확인해 주세요.</div>'
+            + '<div style="margin-top:4px; color:#cfc8ff;">파일이 없으면 아래 [복사하기]를 눌러 복사 방식으로 백업해 주세요.</div>'
+            + '<div style="display:flex; gap:8px; margin-top:10px;">'
+            + '<button id="v689-copy-btn" style="flex:1; padding:11px; border:none; border-radius:10px; background:#7c6cff; color:#fff; font-weight:800; font-size:14px;">📋 복사하기</button>'
+            + '<button id="v689-close-btn" style="flex:1; padding:11px; border:1px solid #555; border-radius:10px; background:transparent; color:#fff; font-weight:800; font-size:14px;">닫기 (백업 끝)</button>'
+            + '</div>';
+          document.body.appendChild(_toast);
+          document.getElementById('v689-close-btn').onclick = function(){ _toast.remove(); };
+          document.getElementById('v689-copy-btn').onclick = function(){
+            _toast.remove();
+            if(typeof window._v681_showBackupCopy === 'function') window._v681_showBackupCopy();
+            else alert('백업이 앱 안에 저장됐어요. 일기 ' + diaryCount + '개.\n다운로드 폴더에 파일이 없으면 설정 > 마지막 백업 복원으로 복원할 수 있어요.');
+          };
+        }catch(_te){
+          alert('백업이 앱 안에 저장됐어요. 일기 ' + diaryCount + '개.\n다운로드 폴더에 파일이 없으면 설정 > 마지막 백업 복원으로 복원할 수 있어요.');
+        }
       }
     }catch(e){ alert('백업에 실패했어요: ' + e.message); }
   }
@@ -24946,15 +24985,6 @@ div[data-photo-key][onclick*="handleTimeCapsulePhotoClick"] *{
         else alert('마지막 백업 복원 기능을 불러오지 못했어요. 앱을 다시 열어보세요.');
       };
       wrap.appendChild(b3);
-      var b4 = document.createElement('button');
-      b4.type = 'button';
-      b4.textContent = '📋 복사한 내용으로 복원';
-      b4.style.cssText = 'flex:1; padding:12px; border-radius:12px; border:none; background:#9b59b6; color:#fff; font-size:14px; font-weight:800; cursor:pointer;';
-      b4.onclick = function(){
-        if(typeof window.restoreFromPastedText === 'function') window.restoreFromPastedText();
-        else alert('복원 기능을 불러오지 못했어요. 앱을 다시 열어보세요.');
-      };
-      wrap.appendChild(b4);
       wrap.appendChild(fileInput);
       var info = document.createElement('div');
       info.style.cssText = 'font-size:11px; color:#666; text-align:center; margin-bottom:10px;';
@@ -26340,54 +26370,273 @@ div[data-photo-key][onclick*="handleTimeCapsulePhotoClick"] *{
 </script>
 
 
-<script id="V684_PASTE_RESTORE">
+<!-- V697: 설명 끄기 - body 스위치 -->
+<!-- V696: 설명/바이오리듬 끄기 - 클래스+CSS !important -->
+<!-- V695: 설정 설명/바이오리듬 끄기 수정 -->
+<!-- V694: 알림 박스 접기/펴기 (V693 무한반복 진짜 원인 수정 - 옵저버 제거 + 글자는 바뀔 때만 쓰기) -->
+<style id="V694_ALARM_COLLAPSE_CSS">
+#memo-form-card #reservation-box.alarm-collapsed .alarm-body{ display:none !important; }
+#reservation-box.alarm-collapsed .alarm-body{ display:none !important; }
+</style>
+<script id="V694_ALARM_COLLAPSE">
 (function(){
-  if(window._v684_done) return;
-  window._v684_done = true;
-  // V684: 카톡 나에게 보내기에 복사해둔 백업 내용을 붙여넣어서 복원
-  window.restoreFromPastedText = function(){
+  if(window._v694_done) return; window._v694_done = true;
+  var KEY = 'PhotoDiary_alarmCollapsed';
+  function isCollapsed(){ try{ return localStorage.getItem(KEY) === '1'; }catch(e){ return false; } }
+  function applyState(){
     try{
-      var old = document.getElementById('v684-paste-modal'); if(old) old.remove();
-      var m = document.createElement('div');
-      m.id = 'v684-paste-modal';
-      m.style.cssText = 'position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; padding:16px;';
-      m.innerHTML = '<div style="background:#fff; border-radius:16px; width:100%; max-width:520px; max-height:88vh; display:flex; flex-direction:column; overflow:hidden;">'
-        + '<div style="padding:14px 16px; font-weight:800; font-size:15px;">복사한 내용으로 복원</div>'
-        + '<div style="padding:0 16px; font-size:12px; color:#333;">카톡 나에게 보내기에 보관해둔 백업 내용을<br>길게 눌러 복사한 뒤, 아래에 붙여넣어 주세요.</div>'
-        + '<textarea id="v684-paste-ta" placeholder="여기에 백업 내용을 붙여넣으세요" style="margin:12px 16px; flex:1; min-height:220px; font-size:11px; padding:10px; border:1px solid #ddd; border-radius:8px; word-break:break-all;"></textarea>'
-        + '<div style="padding:0 16px 16px; display:flex; gap:8px;">'
-        + '<button id="v684-paste-do" style="flex:1; padding:12px; border:none; border-radius:10px; background:#9b59b6; color:#fff; font-weight:800; font-size:14px;">📋 이 내용으로 복원하기</button>'
-        + '<button id="v684-paste-close" style="flex:1; padding:12px; border:1px solid #ddd; border-radius:10px; background:#fff; font-weight:800; font-size:14px;">닫기</button>'
-        + '</div></div>';
-      document.body.appendChild(m);
-      document.getElementById('v684-paste-close').onclick = function(){ m.remove(); };
-      document.getElementById('v684-paste-do').onclick = async function(){
-        try{
-          var val = document.getElementById('v684-paste-ta').value.trim();
-          if(!val){ alert('붙여넣은 내용이 없어요.'); return; }
-          var data = null; try{ data = JSON.parse(val); }catch(e){ alert('백업 내용이 아니에요. 카톡에서 백업 메시지 전체를 복사했는지 확인해 주세요.'); return; }
-          if(!data || (typeof data.localStorage !== 'object' && !data.indexedDB)){ alert('백업 내용이 아니에요. 카톡에서 백업 메시지 전체를 복사했는지 확인해 주세요.'); return; }
-          var file = new File([val], '카톡백업.json', {type:'application/json'});
-          m.remove();
-          if(typeof window.restorePhotoDiaryBackup === 'function') await window.restorePhotoDiaryBackup(file);
-          else alert('복원 기능을 불러오지 못했어요.');
-        }catch(e){ alert('복원에 실패했어요: ' + e.message); }
-      };
-    }catch(e){ alert('복원 창을 열지 못했어요: ' + e.message); }
-  };
-  console.log('[V684] 붙여넣기 복원 준비');
+      var box = document.getElementById('reservation-box');
+      if(!box) return;
+      var c = isCollapsed();
+      // 클래스는 바뀔 때만 건드림 (같으면 no-op이라 안전)
+      if(box.classList.contains('alarm-collapsed') !== c) box.classList.toggle('alarm-collapsed', c);
+      var btn = document.getElementById('v694-alarm-toggle');
+      if(btn){
+        // V693 버그: 매번 textContent를 다시 써서 DOM 변화 -> 옵저버 -> 무한 반복. 바뀔 때만 쓰기
+        var want = c ? '▶' : '▼';
+        if(btn.textContent !== want) btn.textContent = want;
+      }
+    }catch(e){}
+  }
+  function ensureBtn(){
+    try{
+      var box = document.getElementById('reservation-box');
+      if(!box) return;
+      var header = box.querySelector('.alarm-header');
+      if(!header) return;
+      var btn = document.getElementById('v694-alarm-toggle');
+      if(!btn){
+        btn = document.createElement('button');
+        btn.id = 'v694-alarm-toggle';
+        btn.type = 'button';
+        btn.title = '알림 접기/펴기';
+        btn.style.cssText = 'flex-shrink:0;padding:4px 10px;font-size:12px;border:1px solid #e0c8a8;background:#fff;color:#8a7a7a;border-radius:999px;cursor:pointer;white-space:nowrap;';
+        btn.onclick = function(e){
+          e.preventDefault(); e.stopPropagation();
+          try{ localStorage.setItem(KEY, isCollapsed() ? '0' : '1'); }catch(err){}
+          applyState();
+        };
+        header.appendChild(btn);
+      } else if(header.lastElementChild !== btn){
+        header.appendChild(btn);
+      }
+      applyState();
+    }catch(e){}
+  }
+  // V693 버그 수정: MutationObserver 제거. 옵저버가 DOM 변화를 듣고 다시 DOM을 건드리는 구조 자체가 무한 반복 고리.
+  // 400ms 간격 체크만으로 폼 재생성도 충분히 잡힘.
+  setInterval(ensureBtn, 400);
+  console.log('[V694] 알림 접기/펴기');
 })();
 </script>
 
-
-<script id="V685_BACKUP_DIRECT_TAP">
+<!-- V697: 설명 끄기 - body 스위치 -->
+<!-- V696: 설명/바이오리듬 끄기 - 클래스+CSS !important -->
+<!-- V695: 설정 설명(사자성어)/바이오리듬 끄기 수정 -->
+<script id="V695_TOGGLE_FIX">
 (function(){
-  if(window._v685_done) return;
-  window._v685_done = true;
-  // V685: 백업 = 사용자가 직접 누르는 다운로드 버튼이 본체. 자동 클릭/카톡 복사는 폴백일 뿐
-  console.log('[V685] 직접 누르는 백업 다운로드 준비');
+  if(window._v695_done) return; window._v695_done = true;
+  var BIO_KEY = 'smartDiaryShowBiorhythm';
+  var STORY_KEY = 'smartDiaryDailyStoryVisible';
+  function bioShow(){ try{ var v = localStorage.getItem(BIO_KEY); if(v===null) return true; return v==='true'; }catch(e){ return true; } }
+  function storyShow(){ try{ var v = localStorage.getItem(STORY_KEY); if(v===null) return true; return v==='true' || v==='1'; }catch(e){ return true; } }
+  function hideEl(el){ if(el && el.style.display !== 'none') el.style.display = 'none'; }
+  function showEl(el, disp){ if(el && el.style.display === 'none') el.style.display = disp; }
+  function applyBio(){
+    if(bioShow()) return; // 켜져 있으면 건드리지 않음
+    hideEl(document.getElementById('main-biorhythm-teaser'));
+  }
+  function applyStory(){
+    if(storyShow()) return; // 켜져 있으면 건드리지 않음
+    var cards = document.querySelectorAll('[id="daily-story-card"]');
+    for(var i=0;i<cards.length;i++) hideEl(cards[i]);
+  }
+  // 1) 바이오리듬: V633이 V209 래퍼를 날린 걸 V695에서 다시 감싸기 (마지막이라 더 이상 덮어쓸 게 없음)
+  try{
+    var origBio = window.renderMainBiorhythm;
+    if(origBio && !origBio._v695wrapped){
+      var wBio = function(){ var r = origBio.apply(this, arguments); applyBio(); return r; };
+      wBio._v695wrapped = true;
+      window.renderMainBiorhythm = wBio;
+    }
+  }catch(e){}
+  // 2) 설명: 토글을 감싸서 끌 때 카드 직접 숨기고, 켤 때 다시 보이기
+  try{
+    var origStory = window.setDailyStoryVisibility;
+    if(origStory && !origStory._v695wrapped){
+      var wStory = function(vis){
+        var r = origStory.apply(this, arguments);
+        try{
+          var cards = document.querySelectorAll('[id="daily-story-card"]');
+          for(var i=0;i<cards.length;i++){ if(vis) showEl(cards[i], ''); else hideEl(cards[i]); }
+        }catch(e2){}
+        return r;
+      };
+      wStory._v695wrapped = true;
+      window.setDailyStoryVisibility = wStory;
+    }
+  }catch(e){}
+  // 3) 바이오리듬 토글 감싸기 (켤 때 복원까지 확실히)
+  try{
+    var origBioSet = window.setBiorhythmVisibility;
+    if(origBioSet && !origBioSet._v695wrapped){
+      var wBioSet = function(show){
+        var r = origBioSet.apply(this, arguments);
+        try{
+          var teaser = document.getElementById('main-biorhythm-teaser');
+          if(teaser){ if(show) showEl(teaser, 'block'); else hideEl(teaser); }
+        }catch(e2){}
+        return r;
+      };
+      wBioSet._v695wrapped = true;
+      window.setBiorhythmVisibility = wBioSet;
+    }
+  }catch(e){}
+  // 4) 설정창 열 때 체크박스를 저장된 값으로 맞추기 (V209 훅은 옛 openSettingsModal에 걸려서 안 먹혔음)
+  try{
+    var origOpen = window.openSettingsModal;
+    if(origOpen && !origOpen._v695wrapped){
+      var wOpen = function(){
+        var r = origOpen.apply(this, arguments);
+        try{
+          var bc = document.getElementById('toggle-biorhythm'); if(bc) bc.checked = bioShow();
+          var sc = document.getElementById('toggle-daily-story'); if(sc) sc.checked = storyShow();
+          applyBio(); applyStory();
+        }catch(e2){}
+        return r;
+      };
+      wOpen._v695wrapped = true;
+      window.openSettingsModal = wOpen;
+    }
+  }catch(e){}
+  // 5) 재렌더 후에도 설정 유지 - 옵저버 없음, 400ms 간격만 (V694 방식, 바뀔 때만 씀)
+  setInterval(function(){ applyBio(); applyStory(); }, 400);
+  setTimeout(function(){ applyBio(); applyStory(); }, 800);
+  console.log('[V695] 설명/바이오리듬 끄기 수정');
 })();
 </script>
 
+<!-- V697: 설명 끄기 - body 스위치 -->
+<!-- V696: 설명/바이오리듬 끄기 - 인라인 display 대신 클래스+CSS !important (display:block!important CSS를 이기는 유일한 방법) -->
+<style id="V696_TOGGLE_CSS">
+#main-biorhythm-teaser.bio-hidden{ display:none !important; }
+#daily-story-card.story-hidden{ display:none !important; }
+</style>
+<script id="V696_TOGGLE_FIX">
+(function(){
+  if(window._v696_done) return; window._v696_done = true;
+  var BIO_KEY = 'smartDiaryShowBiorhythm';
+  var STORY_KEY = 'smartDiaryDailyStoryVisible';
+  function bioShow(){ try{ var v = localStorage.getItem(BIO_KEY); if(v===null) return true; return v==='true'; }catch(e){ return true; } }
+  function storyShow(){ try{ var v = localStorage.getItem(STORY_KEY); if(v===null) return true; return v==='true' || v==='1'; }catch(e){ return true; } }
+  function syncBio(){
+    var teaser = document.getElementById('main-biorhythm-teaser');
+    if(teaser) teaser.classList.toggle('bio-hidden', !bioShow());
+  }
+  function syncStory(){
+    var cards = document.querySelectorAll('[id="daily-story-card"]');
+    for(var i=0;i<cards.length;i++) cards[i].classList.toggle('story-hidden', !storyShow());
+  }
+  function syncAll(){ syncBio(); syncStory(); }
+  // 1) 바이오리듬 그리는 함수 감싸기 - 그릴 때마다 클래스 다시 맞추기
+  try{
+    var origBio = window.renderMainBiorhythm;
+    if(origBio && !origBio._v696wrapped){
+      var wBio = function(){ var r = origBio.apply(this, arguments); syncBio(); return r; };
+      wBio._v696wrapped = true;
+      window.renderMainBiorhythm = wBio;
+    }
+  }catch(e){}
+  // 2) 설명 토글 감싸기 - 즉시 반영
+  try{
+    var origStory = window.setDailyStoryVisibility;
+    if(origStory && !origStory._v696wrapped){
+      var wStory = function(vis){ var r = origStory.apply(this, arguments); syncStory(); return r; };
+      wStory._v696wrapped = true;
+      window.setDailyStoryVisibility = wStory;
+    }
+  }catch(e){}
+  // 3) 바이오리듬 토글 감싸기 - 즉시 반영
+  try{
+    var origBioSet = window.setBiorhythmVisibility;
+    if(origBioSet && !origBioSet._v696wrapped){
+      var wBioSet = function(show){ var r = origBioSet.apply(this, arguments); syncBio(); return r; };
+      wBioSet._v696wrapped = true;
+      window.setBiorhythmVisibility = wBioSet;
+    }
+  }catch(e){}
+  // 4) 설정창 열 때 체크박스 동기화 + 클래스 적용
+  try{
+    var origOpen = window.openSettingsModal;
+    if(origOpen && !origOpen._v696wrapped){
+      var wOpen = function(){
+        var r = origOpen.apply(this, arguments);
+        try{
+          var bc = document.getElementById('toggle-biorhythm'); if(bc) bc.checked = bioShow();
+          var sc = document.getElementById('toggle-daily-story'); if(sc) sc.checked = storyShow();
+          syncAll();
+        }catch(e2){}
+        return r;
+      };
+      wOpen._v696wrapped = true;
+      window.openSettingsModal = wOpen;
+    }
+  }catch(e){}
+  // 5) 재렌더 후에도 유지 - 옵저버 없음, 400ms 간격만. classList.toggle(force)은 이미 맞는 상태면 no-op이라 무한반복 없음
+  setInterval(syncAll, 400);
+  setTimeout(syncAll, 800);
+  console.log('[V696] 설명/바이오리듬 끄기 수정');
+})();
+</script>
+
+<!-- V697: 설명 끄기 - body 스위치로 설명 요소 전부 숨기기 (카드가 옮겨져도 놓치지 않음) -->
+<style id="V697_EXPLAIN_CSS">
+body.explain-hidden #daily-story-card,
+body.explain-hidden .daily-explain-wrapper,
+body.explain-hidden .daily-explain-header,
+body.explain-hidden .daily-explain-content{ display:none !important; }
+</style>
+<script id="V697_EXPLAIN_FIX">
+(function(){
+  if(window._v697_done) return; window._v697_done = true;
+  var STORY_KEY = 'smartDiaryDailyStoryVisible';
+  function storyShow(){ try{ var v = localStorage.getItem(STORY_KEY); if(v===null) return true; return v==='true' || v==='1'; }catch(e){ return true; } }
+  function syncExplain(){
+    // body 스위치 - 새로 생기는 설명 카드에도 CSS가 자동 적용돼서 재렌더를 쫓을 필요 없음
+    try{ document.body.classList.toggle('explain-hidden', !storyShow()); }catch(e){}
+    // 백업: 카드 자체에도 클래스 (V696 방식 유지)
+    try{
+      var cards = document.querySelectorAll('[id="daily-story-card"]');
+      for(var i=0;i<cards.length;i++) cards[i].classList.toggle('story-hidden', !storyShow());
+    }catch(e2){}
+  }
+  try{
+    var origStory = window.setDailyStoryVisibility;
+    if(origStory && !origStory._v697wrapped){
+      var wStory = function(vis){ var r = origStory.apply(this, arguments); syncExplain(); return r; };
+      wStory._v697wrapped = true;
+      window.setDailyStoryVisibility = wStory;
+    }
+  }catch(e){}
+  try{
+    var origOpen = window.openSettingsModal;
+    if(origOpen && !origOpen._v697wrapped){
+      var wOpen = function(){
+        var r = origOpen.apply(this, arguments);
+        try{
+          var sc = document.getElementById('toggle-daily-story'); if(sc) sc.checked = storyShow();
+          syncExplain();
+        }catch(e2){}
+        return r;
+      };
+      wOpen._v697wrapped = true;
+      window.openSettingsModal = wOpen;
+    }
+  }catch(e){}
+  setInterval(syncExplain, 400);
+  setTimeout(syncExplain, 800);
+  console.log('[V697] 설명 끄기 수정');
+})();
+</script>
 </body>
 </html>
