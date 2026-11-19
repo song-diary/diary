@@ -3842,14 +3842,14 @@ div[style*="padding-top:4px"]{
                   <div class="f702-mini"><span>💪 건강운</span><b id="f702-health-stars"></b><p id="f702-health-text"></p></div>
                   <div class="f702-mini"><span>💼 일운</span><b id="f702-work-stars"></b><p id="f702-work-text"></p></div>
                 </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:7px !important;">
                   <span class="f702-chip">🎨 행운의 색 <b id="f702-color"></b></span>
                   <span class="f702-chip">🔢 행운의 숫자 <b id="f702-num"></b></span>
                   <span class="f702-chip">⏰ 좋은 시간 <b id="f702-dir"></b></span>
                   <span class="f702-chip">✅ 하면 좋은 것 <b id="f702-action"></b></span>
                 </div>
-                <div id="f702-match" style="margin-top:8px;background:#F3EFFF;border:1px solid #E3D9FF;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.5;color:#4A3B77;font-weight:600;"></div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
+                <div id="f702-match" style="margin-top:7px !important;background:#F3EFFF;border:1px solid #E3D9FF;border-radius:5px;padding:12px 10px;font-size:12px;line-height:1.5;color:#4A3B77;font-weight:600;"></div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:7px !important;">
                   <button type="button" id="f702-saju-btn" onclick="event.stopPropagation(); if(typeof openSajuDetailModal==='function'){openSajuDetailModal();}" ontouchend="event.stopPropagation();" style="padding:11px 6px;border:none;border-radius:10px;background:linear-gradient(120deg,#2C2F5B,#4A3B77 55%,#2C2F5B);color:#fff;font-size:13px;font-weight:800;cursor:pointer;touch-action:manipulation;">📜 나의 사주풀이</button>
                   <button type="button" id="f702-bucket-btn" onclick="event.stopPropagation(); if(typeof openBucketListModal==='function'){openBucketListModal();}" ontouchend="event.stopPropagation();" style="padding:11px 6px;border:1px solid #FFDAB9;border-radius:10px;background:linear-gradient(120deg,#FFF0E0,#FFE4B5);color:#5C3D2E;font-size:13px;font-weight:800;cursor:pointer;touch-action:manipulation;">🎯 나의 버킷리스트</button>
                 </div>
@@ -26768,7 +26768,7 @@ body.explain-hidden .daily-explain-content{ display:none !important; }
 .f702-mini span{font-size:11px;font-weight:700;color:#555;display:block;}
 .f702-mini b{font-size:12px;color:#FFB300;letter-spacing:1px;display:block;margin:2px 0;}
 .f702-mini p{font-size:11px;line-height:1.4;color:#444;margin:0;font-weight:500;}
-.f702-chip{background:#F5F5F5;border:1px solid #EEE;border-radius:999px;padding:4px 9px;font-size:11px;color:#555;}
+.f702-chip{background:#F5F5F5;border:1px solid #EEE;border-radius:5px;padding:8px 10px;font-size:11px;color:#555;} /* V735: 칩 안쪽 여백 */ /* V734: 4개 칩 코너 5R 통일 */
         .f702-chip b{color:#4A3B77;font-weight:800;} /* V729: 행운 값만 다른 색으로 구분 */
 .f702-chip b{color:#333;}
 #daily-story-card{border-radius:5px !important;}
@@ -26934,6 +26934,28 @@ setTimeout(function(){
 #f702-saju-btn:active{transform:none !important;}
 #fortune-v702-toggle:active{transform:none !important;}
 </style>
+
+<script> // V740: 폴더 펼침/회전 시 달력 너비 실시간 추적 - 그리드 실제 너비가 바뀔 때만 다시 그리기
+(function(){
+  var grid = document.getElementById('cal-days-grid');
+  if(!grid || grid._v740RO) return;
+  grid._v740RO = true;
+  var lastW = grid.getBoundingClientRect().width;
+  var pending = false;
+  var ro = new ResizeObserver(function(){
+    var w = grid.getBoundingClientRect().width;
+    if(Math.abs(w - lastW) > 1 && !pending){
+      pending = true;
+      requestAnimationFrame(function(){
+        pending = false;
+        lastW = grid.getBoundingClientRect().width;
+        if(typeof renderCalendar === 'function'){ try{ renderCalendar(); }catch(e){} }
+      });
+    }
+  });
+  ro.observe(grid);
+})();
+</script>
 </body>
 
 </html>
