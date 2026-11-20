@@ -17461,32 +17461,9 @@ window.openSajuDetailModal = function(){
   if(window._origOpenSajuDetail) return window._origOpenSajuDetail.apply(this,arguments);
 };
 
-// Restore autopopup
-window.maybeAutoShowFortunePopup = function(){
-  try{
-    const autoV = localStorage.getItem('smartDiaryFortuneAuto');
-    if(autoV==='0') return;
-    if(typeof getShowFortune==='function' && !getShowFortune()) return;
-    let hasBirth=false;
-    try{
-      const bi = (window.sajuBirthInfo && window.sajuBirthInfo.date) ? window.sajuBirthInfo : JSON.parse(localStorage.getItem('smartDiarySajuBirth')||'null');
-      hasBirth = !!(bi && bi.date);
-    }catch(e){}
-    if(!hasBirth) return;
-    const today = new Date().toISOString().slice(0,10);
-    const lastShown = localStorage.getItem('smartDiarySajuLastShown');
-    const sess = sessionStorage.getItem('fortuneAutoShownSession');
-    if(lastShown===today || sess===today) return;
-    if(typeof openFortunePopup==='function'){
-      setTimeout(function(){ 
-        openFortunePopup(); 
-        try{ localStorage.setItem('smartDiarySajuLastShown', today); sessionStorage.setItem('fortuneAutoShownSession', today); }catch(e){}
-      }, 1000);
-    }
-  }catch(e){}
-};
-
-// Popup biorhythm override (fixed template - no ${} bug, using string concat)
+// 자동 팝업 제거 - 메인창 카드에만 운세 표시, 팝업은 안 뜸
+window.maybeAutoShowFortunePopup = function(){ return; };
+  // Popup biorhythm override (fixed template - no ${} bug, using string concat)
 window._currentFortune = null;
 window._currentBiorhythm = null;
 
@@ -26954,6 +26931,20 @@ setTimeout(function(){
     }
   });
   ro.observe(grid);
+})();
+</script>
+
+<script id="REMOVE_FORTUNE_POPUP">
+(function(){
+  function killPopup(){
+    window.openFortunePopup = function(){ return; };
+    window.openFortunePopupFixed = function(){ return; };
+  }
+  killPopup();
+  setTimeout(killPopup, 2000);
+  var st=document.createElement('style');
+  st.textContent='#v528-toast{ display:none !important; }';
+  document.head.appendChild(st);
 })();
 </script>
 </body>
