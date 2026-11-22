@@ -10,7 +10,7 @@
 <!-- V682: 다운로드 막혀도 복사 창 즉시 표시 + 앱 안 마지막 백업 상태 표시 -->
 <!-- V681: 공유 안 뜰 때 복사 폴백 (file:// 공유 차단 대응) -->
 <!-- V680: 백업 공유 저장 + 초기화해도 마지막 백업 앱 안에 유지 + 파일 없이 복원 -->
-<!-- V679: 알림음 2번 + 10분 전 알림 + 4분 늦게 울림 방지 -->
+<!-- V761: 알림 정각으로 복구 (10분 전 -> 정각) --> <!-- V679: 알림음 2번 + 10분 전 알림 + 4분 늦게 울림 방지 -->
 <!-- V678: 메시지 테스트 전용 새 id 팝업 + html 직행 (V671 무한삭제 회피) -->
 <!-- V677: 메시지 테스트 캡처 가로채기 + 하루만 울림 체크 복원 -->
 <!-- V676: 메시지 테스트 팝업이 V671에 지워지던 것 + 설정창 뒤에 가려지던 것 수정 -->
@@ -14338,14 +14338,62 @@ async function showPhotosForDate(dateStr){
     f.sort(function(a,b){ return (a.time||'').localeCompare(b.time||''); });
     return f;
   }
+  (function(){ try{ var st=document.createElement('style'); st.id='V750_BTN_FIX'; st.textContent='\
+#diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns{width:100% !important;gap:4px !important;flex-wrap:nowrap !important;justify-content:center !important;}\n\
+#diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .rep-btn,\
+#diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .edit-btn-hidden,\
+#diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .delete-btn{flex:1 1 0 !important;min-width:0 !important;padding:3px 4px !important;font-size:12px !important;white-space:nowrap !important;text-align:center !important;justify-content:center !important;}\n\
+.sub-memo-item .memo-action-btns{flex-wrap:nowrap !important;}\n'; document.head.appendChild(st); }catch(e){} })();
+  window.setDateRepresentative = function(entryId){
+    try{
+      var all = getAll();
+      var target = null;
+      for(var i=0;i<all.length;i++){ if(String(all[i].id)===String(entryId)){ target=all[i]; break; } }
+      if(!target){ alert('항목을 찾을 수 없어요.'); return; }
+      var map = getMap();
+      var nn = normDate(target.date);
+      var dateStr2 = typeof selectedViewDate!=='undefined' && selectedViewDate ? selectedViewDate : (typeof getTodayStr==='function'?getTodayStr():'');
+      var _ex = map[nn] || map[target.date] || map[normDate(target.date)] || map[dateStr2] || map[normDate(dateStr2)];
+      if(_ex && String(_ex)===String(target.id)) return;
+      var title = ((target.anniversary||'')+'').trim() || ((target.text||'')+'').trim().split('\n')[0].trim().slice(0,20) || '이 항목';
+      if(!confirm(title + '을(를) 이 날짜의 대표로 지정할까요?')) return;
+      map[nn]=target.id; map[target.date]=target.id; map[dateStr2]=target.id; map[normDate(dateStr2)]=target.id;
+      setMap(map);
+      refreshIcons();
+      updateCalendarLabel(target.date, (target.anniversary||'').trim() || (target.text||'').trim().split('\n')[0].trim().slice(0,20) || '');
+      // V753: 여기서 renderCalendar()를 바로 부르면 래퍼/refreshIcons와 꼬여서 대표가 안 바뀌므로 호출하지 않음.
+      // 날짜 이동 시에는 래퍼의 refreshAllCalendarLabels가 라벨을 다시 씌움.
+      try{ if(navigator.vibrate) navigator.vibrate(80); }catch(e){}
+    }catch(err){ console.error('[V747] setDateRepresentative error', err); }
+  };
   function patchAnniv(){
     if(window._vFinalAnniv) return;
     if(typeof window.getAnniversaryForDate!=='function') return;
     var orig=window.getAnniversaryForDate;
     window.getAnniversaryForDate=function(dateStr){
-      var map=getMap();
-      var selId=map[normDate(dateStr)] || map[dateStr];
-      if(selId){ var all=getAll(); var d=all.find(function(x){return x.id===selId;}); if(d) return d.anniversary||''; }
+      try{
+        var map=getMap();
+        var n=normDate(dateStr);
+        var all=getAll();
+        var dayItems=all.filter(function(it){ return normDate(it.date)===n; });
+        var selId=map[n] || map[dateStr] || map[normDate(dateStr)] || null;
+        if(!selId){
+          var vals={};
+          Object.keys(map).forEach(function(k){ vals[map[k]]=true; });
+          for(var i=0;i<dayItems.length;i++){ if(vals[dayItems[i].id]){ selId=dayItems[i].id; break; } }
+        }
+        if(selId){
+          var d=null;
+          for(var j=0;j<all.length;j++){ if(String(all[j].id)===String(selId)){ d=all[j]; break; } }
+          if(d){
+            var t=(d.anniversary||'').trim();
+            if(t) return t;
+            var txt=(d.text||'').trim();
+            if(txt) return txt.split('\n')[0].trim().slice(0,20);
+            return '';
+          }
+        }
+      }catch(e){}
       return orig.call(this,dateStr);
     };
     window._vFinalAnniv=true;
@@ -14424,7 +14472,34 @@ async function showPhotosForDate(dateStr){
       }else{ if(exist) exist.remove(); }
     });
   }
-    function refreshIcons(){
+    function refreshAllCalendarLabels(){
+    try{
+      var map=getMap();
+      var all=getAll();
+      var y=typeof calYear!=='undefined'?calYear:new Date().getFullYear();
+      var m=typeof calMonth!=='undefined'?calMonth:new Date().getMonth();
+      var last=new Date(y, m+1, 0).getDate();
+      for(var day=1; day<=last; day++){
+        var ds=y+'-'+String(m+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+        var n=normDate(ds);
+        var selId=map[n] || map[ds] || map[normDate(ds)] || null;
+        if(!selId){
+          var dayItems=all.filter(function(it){ return normDate(it.date)===n; });
+          var vals={}; Object.keys(map).forEach(function(k){ vals[map[k]]=true; });
+          for(var i=0;i<dayItems.length;i++){ if(vals[dayItems[i].id]){ selId=dayItems[i].id; break; } }
+        }
+        if(!selId) continue;
+        var d=null;
+        for(var j=0;j<all.length;j++){ if(String(all[j].id)===String(selId)){ d=all[j]; break; } }
+        if(!d) continue;
+        var t=(d.anniversary||'').trim();
+        if(!t){ var txt=(d.text||'').trim(); if(txt) t=txt.split('\n')[0].trim().slice(0,20); }
+        if(t) updateCalendarLabel(ds, t);
+      }
+    }catch(e){ console.error('[V752] refreshAllCalendarLabels error', e); }
+  }
+  window.refreshAllCalendarLabels = refreshAllCalendarLabels;
+  function refreshIcons(){
     try{
       var map=getMap();
       var dateStr=typeof selectedViewDate!=='undefined' && selectedViewDate ? selectedViewDate : (typeof getTodayStr==='function'?getTodayStr():'');
@@ -14490,7 +14565,7 @@ async function showPhotosForDate(dateStr){
           ta.addEventListener('click', singleClickHandler, false);
           ta.addEventListener('dblclick', doubleClickHandler, false);
           // 폰: 싱글탭 막고 더블탭으로만 별 변경
-          ta.addEventListener('touchend', doubleTapHandler, {passive:false});
+          // V746: touchend는 문서 핸들러 하나로 통일 (이중 카운트 방지)
           ta.setAttribute('role','button'); ta.setAttribute('tabindex','0');
           ta.addEventListener('keydown', function(e){ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); return onTitleClick(e, ta); } }, false);
           ta._v67Bound=true; ta._v65Bound=true;
@@ -14507,6 +14582,29 @@ async function showPhotosForDate(dateStr){
         var selId=map[n] || map[dateStr] || map[normDate(dateStr)] || map[dd.date] || map[normDate(dd.date)];
         if(selId && String(selId)===String(dd.id)){ icon.textContent=STAR; icon.className='pin-emoji star-emoji'; }
         else { icon.textContent=PIN; icon.className='pin-emoji'; }
+        try{
+          var btns = el.querySelector('.memo-action-btns');
+          if(btns && !btns.querySelector('.rep-btn')){
+            var repBtn = document.createElement('button');
+            repBtn.className = 'rep-btn';
+            repBtn.type = 'button';
+            repBtn.textContent = '대표';
+            repBtn.style.cssText = 'color:#9C6ADE;background:none;border:1px solid #ddd;border-radius:4px;padding:3px 4px;font-size:12px;line-height:1.4;box-sizing:border-box;cursor:pointer;touch-action:manipulation;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;';
+            repBtn.addEventListener('click', function(ev){
+              ev.preventDefault(); ev.stopPropagation();
+              if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+              if(typeof window.setDateRepresentative==='function') window.setDateRepresentative(dd.id);
+            });
+            btns.insertBefore(repBtn, btns.firstChild);
+          }
+          var _rb = btns ? btns.querySelector('.rep-btn') : null;
+          if(_rb){
+            var _isRep = selId && String(selId)===String(dd.id);
+            _rb.textContent = _isRep ? '⭐' : '대표';
+            _rb.style.fontWeight = _isRep ? 'bold' : 'normal';
+            _rb.style.background = _isRep ? '#FFF9C4' : 'none';
+          }
+        }catch(_e){}
       });
     }catch(e){ console.error('[V3_67] refreshIcons error', e); }
   }
@@ -14541,6 +14639,8 @@ async function showPhotosForDate(dateStr){
       if(idx>=0 && filtered[idx]) target=filtered[idx];
     }
     if(!target) return;
+    var _cfTitle = ((target.anniversary||'') + '').trim() || ((target.text||'') + '').trim().split('\n')[0].trim().slice(0,20) || '이 항목';
+    if(!confirm(_cfTitle + '을(를) 이 날짜의 대표로 지정할까요?')) return;
     e.preventDefault(); e.stopPropagation(); if(e.stopImmediatePropagation) e.stopImmediatePropagation();
     try{
       var map=getMap();
@@ -14550,7 +14650,7 @@ async function showPhotosForDate(dateStr){
       map[normDate(dateStr2)]=target.id;
       setMap(map);
       refreshIcons();
-      updateCalendarLabel(target.date, target.anniversary||'');
+      updateCalendarLabel(target.date, (target.anniversary||'').trim() || (target.text||'').trim().split('\n')[0].trim().slice(0,20) || '');
             try{ if(navigator.vibrate) window.triggerVibration(80) || navigator.vibrate(80); else if(window.navigator && window.navigator.vibrate) window.triggerVibration(80) || (window.navigator && window.navigator.vibrate && window.window.triggerVibration(80) || navigator.vibrate(80)); }catch(e){}
       console.log('[V3_64] 별 이동', target.date, target.anniversary, target.id, 'via', e.type);
     }catch(err){ console.error('[V3_64] onTitleClick error', err); }
@@ -14592,17 +14692,16 @@ async function showPhotosForDate(dateStr){
     var ta=getTitleAreaFromEvent(e);
     if(!ta) return;
     var now = Date.now();
-    var lastTap = ta._lastTap || 0;
-    var diff = now - lastTap;
-    if(diff < 350 && diff > 0){
-      // 더블탭 감지
+    var g = window._v3GlobalTap || {el:null, time:0};
+    var isDbl = (g.el===ta && now-g.time<350 && now-g.time>0);
+    window._v3GlobalTap = {el:ta, time:now};
+    if(isDbl){
       e.preventDefault();
       handleTitleDoubleClick(e);
-      ta._lastTap = 0;
     } else {
-      // 첫 번째 탭
-      ta._lastTap = now;
-      // 싱글탭은 별 변경 안 함
+      e.preventDefault();
+      e.stopPropagation();
+      if(e.stopImmediatePropagation) e.stopImmediatePropagation();
     }
   }, {passive:false, capture:true});
   document.addEventListener('touchstart', function(e){
@@ -14628,6 +14727,8 @@ async function showPhotosForDate(dateStr){
       setTimeout(forcePin, 200);
       setTimeout(refreshIcons, 100);
       setTimeout(refreshIcons, 400);
+      setTimeout(refreshAllCalendarLabels, 120);
+      setTimeout(refreshAllCalendarLabels, 450);
       return r;
     };
     window.renderCalendar._vFinal=true;
@@ -25497,13 +25598,13 @@ div[data-photo-key][onclick*="handleTimeCapsulePhotoClick"] *{
         if(parts.length !== 2) return;
         var ih = parseInt(parts[0],10), im = parseInt(parts[1],10);
         if(isNaN(ih) || isNaN(im)) return;
-        // V679: 울리는 시각 = 예약시간 - 10분 (20:00 예약 -> 19:50에 울림, 팝업에는 20:00 그대로 표시)
-        var effTotal = ih*60 + im - 10;
+        // V761: 울리는 시각 = 예약시간 정각 (20:00 예약 -> 20:00에 울림)
+        var effTotal = ih*60 + im;
         var trigDateStr = todayStr;
         var effMin = effTotal;
         if(effTotal < 0){ effMin = effTotal + 1440; var _pd = new Date(now.getFullYear(), now.getMonth(), now.getDate()-1); trigDateStr = _pd.getFullYear() + '-' + pad(_pd.getMonth()+1) + '-' + pad(_pd.getDate()); }
         var diff = (curH*60 + curM) - effMin;
-        // 10분 전부터 9분 이내에 놓쳐도 울리게 (최대 19:59, 원래 시간 20:00 뒤로는 절대 안 울림)
+        // 정각부터 9분 이내에 놓쳐도 울리게 (늦게 열어도 최대 9분까지 울림)
         if(diff < 0 || diff > 9) return;
         var key = trigDateStr + '|' + item.id + '|' + t;
         if(notified.has(key)) return;
@@ -25729,7 +25830,7 @@ div[data-photo-key][onclick*="handleTimeCapsulePhotoClick"] *{
     var title = (item && (item.anniversary||item.text)) || '알림';
     var msg = (item && (item.text||item.anniversary||item.memo||'')) || '';
     // 제목이랑 내용이 같으면 한 번만, 다르면 둘 다 보여주기 (메시지 안 뜸 방지)
-    var bodyHtml = '<div style="font-weight:bold;color:#e06d6d;">🔔 매일 '+timeStr+' <span style="font-weight:normal;font-size:12px;color:#999;">· 10분 전 알림</span></div>'
+    var bodyHtml = '<div style="font-weight:bold;color:#e06d6d;">🔔 매일 '+timeStr+'</div>'
       + '<div style="margin-top:10px;font-size:16px;font-weight:bold;">'+title+'</div>'
       + (msg && msg!==title ? '<div style="margin-top:8px;font-size:14px;color:#333;white-space:pre-wrap;">'+msg+'</div>' : '');
     p.innerHTML = '<div id="daily-alarm-body">'+bodyHtml+'</div>'
@@ -25769,7 +25870,7 @@ div[data-photo-key][onclick*="handleTimeCapsulePhotoClick"] *{
       var toAlarm=diaries.filter(function(it){
         if(!it.dailyRepeat || !it.time) return false;
         var pp=String(it.time).substring(0,5).split(':'); if(pp.length!==2) return false;
-        var tt=parseInt(pp[0],10)*60+parseInt(pp[1],10)-10; if(tt<0) tt+=1440; // V679: 10분 전
+        var tt=parseInt(pp[0],10)*60+parseInt(pp[1],10); if(tt<0) tt+=1440; // V761: 정각
         var eff=String(Math.floor(tt/60)).padStart(2,'0')+':'+String(tt%60).padStart(2,'0');
         return eff===cur;
       });
@@ -25996,7 +26097,7 @@ div[data-photo-key][onclick*="handleTimeCapsulePhotoClick"] *{
     // 헤더: 왼쪽 "매일 시간" + 오른쪽 "소리설정하기" 버튼
     p.innerHTML = '<div id="daily-alarm-body">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">'
-      + '<span style="font-weight:bold;color:#e06d6d;">🔔 매일 '+timeStr+' <span style="font-weight:normal;font-size:11px;color:#999;">· 10분 전 알림</span></span>'
+      + '<span style="font-weight:bold;color:#e06d6d;">🔔 매일 '+timeStr+'</span>'
       + '<button id="v673-sound-btn" style="flex-shrink:0;padding:4px 8px;font-size:11px;border:1px solid #e06d6d;background:#fff;color:#e06d6d;border-radius:999px;cursor:pointer;white-space:nowrap;">🔔 소리설정하기</button>'
       + '</div>'
       + '<div style="margin-top:10px;font-size:16px;font-weight:bold;">'+title+'</div></div>'
@@ -26311,9 +26412,9 @@ div[data-photo-key][onclick*="handleTimeCapsulePhotoClick"] *{
 (function(){
   if(window._v679_done) return;
   window._v679_done = true;
-  // V679: 1) 알림음 3번->2번 (V670/V678 패치)  2) V665 체크 5초 + 10분 전~9분 윈도우로 4분 늦게 울림 방지
-  // 3) 모든 알림 10분 전 울림 (V665/V668 패치, 팝업에는 원래 시간 표시)
-  console.log('[V679] 알림음 2번 + 10분 전 알림');
+  // V679: 1) 알림음 3번->2번 (V670/V678 패치)  2) V665 체크 5초 + 정각~9분 윈도우로 늦게 울림 방지
+  // 3) 모든 알림 정각 울림 (V761, 10분 전 -> 정각)
+  console.log('[V761] 알림음 2번 + 정각 알림');
 })();
 </script>
 
@@ -26947,6 +27048,218 @@ setTimeout(function(){
   document.head.appendChild(st);
 })();
 </script>
+
+<script id="ANDROID_ALARM_BRIDGE_SYNC">
+// V745: 안드로이드 APK용 - 앱이 닫혀 있어도 알람 울리게 네이티브에 예약
+// JS는 닫히면 멈추니까, 켜져 있을 때 AlarmManager에 예약만 해둠
+(function(){
+  function getNextAlarm(item){
+    if(!item || !item.time) return null;
+    var parts = String(item.time).split(':');
+    var h = parseInt(parts[0],10), m = parseInt(parts[1],10);
+    if(isNaN(h)||isNaN(m)) return null;
+    var now = new Date();
+    var todayStr = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+    var isToday = (item.date === todayStr);
+    var isDaily = !!item.dailyRepeat;
+    var isAnnivToday = false;
+    if(item.anniversary && item.annivRepeat){
+      try{
+        var d = new Date(item.date);
+        if(item.annivRepeat==='yearly' && d.getMonth()===now.getMonth() && d.getDate()===now.getDate()) isAnnivToday = true;
+        if(item.annivRepeat==='monthly' && d.getDate()===now.getDate()) isAnnivToday = true;
+      }catch(e){}
+    }
+    if(!isToday && !isDaily && !isAnnivToday) return null;
+    var target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0, 0);
+    if(target.getTime() <= now.getTime()){
+      if(isDaily || isAnnivToday){ target.setDate(target.getDate()+1); }
+      else return null;
+    }
+    return {hour: target.getHours(), minute: target.getMinutes()};
+  }
+  window.syncAlarmsToAndroidBridge = function(){
+    try{
+      var bridge = window.AndroidAlarm || window.Android;
+      if(!bridge || typeof bridge.scheduleAlarm !== 'function') return;
+      var list = [];
+      try{ list = JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); }catch(e){ list = []; }
+      if(bridge.cancelAllAlarms){ try{ bridge.cancelAllAlarms(); }catch(e){} }
+      list.forEach(function(item, idx){
+        var next = getNextAlarm(item);
+        if(!next) return;
+        var msg = item.anniversary || item.text || '알림';
+        try{ bridge.scheduleAlarm(idx, next.hour, next.minute, String(msg).substring(0,80)); }catch(e){}
+      });
+    }catch(e){}
+  };
+  setTimeout(window.syncAlarmsToAndroidBridge, 2000);
+  document.addEventListener('visibilitychange', function(){
+    if(document.hidden) window.syncAlarmsToAndroidBridge();
+  });
+})();
+</script>
+<script id="V754_FINAL_LABEL_FIX">(function(){
+  function hook(){
+    if(typeof window.renderCalendar!=='function'){ setTimeout(hook, 300); return; }
+    if(window.renderCalendar._v754) return;
+    var orig = window.renderCalendar;
+    window.renderCalendar = function(){
+      var r = orig.apply(this, arguments);
+      // V755: setTimeout(150ms) 보정은 브라우저가 옛 글자로 한 번 그린 뒤에 고쳐서 깜빡임.
+      // rAF로 달력 그리기 직후·화면 그리기 전에 고치면 깜빡임 없이 한 번에 새 글자로 그려짐.
+      requestAnimationFrame(function(){
+        requestAnimationFrame(function(){
+          try{ if(typeof window.refreshAllCalendarLabels==='function') window.refreshAllCalendarLabels(); }catch(e){}
+        });
+      });
+      // 안전망: 값이 이미 맞으면 같은 글자를 다시 써서 눈에 안 보임
+      setTimeout(function(){ try{ if(typeof window.refreshAllCalendarLabels==='function') window.refreshAllCalendarLabels(); }catch(e){} }, 500);
+      return r;
+    };
+    window.renderCalendar._v754 = true;
+  }
+  hook();
+  setTimeout(function(){ try{ if(typeof window.refreshAllCalendarLabels==='function') window.refreshAllCalendarLabels(); }catch(e){} }, 800);
+})();</script>
+<style id="V756_BTN_UNIFY">
+/* V756: 대표/수정/삭제 버튼 완전 동일 - 대표 기준 (크기·폰트만 통일, 색은 그대로) */
+.memo-action-btns{ gap:4px !important; }
+.memo-action-btns .rep-btn,
+.memo-action-btns .edit-btn-hidden,
+.memo-action-btns .delete-btn,
+.memo-action-btns .edit-btn{
+  font-size:12px !important;
+  line-height:1.4 !important;
+  padding:3px 4px !important;
+  min-width:0 !important;
+  height:auto !important;
+  min-height:0 !important;
+  border-width:1px !important;
+  border-radius:4px !important;
+  box-sizing:border-box !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  white-space:nowrap !important;
+  flex:1 1 0 !important;
+  margin:0 !important;
+  font-weight:normal !important;
+}
+</style>
+<style id="V757_BTN_SPREAD">
+/* V757: 아이디 규칙보다 세게 (맨 마지막 + 아이디 선택자) - 버튼이 양쪽 끝까지 펼쳐지게 */
+#diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns,
+.sub-memo-item .memo-action-btns{
+  width:100% !important;
+  max-width:100% !important;
+  margin:6px 0 2px 0 !important;
+  gap:8px !important;
+  justify-content:space-between !important;
+  flex-wrap:nowrap !important;
+  align-items:stretch !important;
+  padding:0 !important;
+}
+#diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .rep-btn,
+#diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .edit-btn-hidden,
+#diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .delete-btn,
+#diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .edit-btn,
+.sub-memo-item .memo-action-btns .rep-btn,
+.sub-memo-item .memo-action-btns .edit-btn-hidden,
+.sub-memo-item .memo-action-btns .delete-btn,
+.sub-memo-item .memo-action-btns .edit-btn{
+  font-size:12px !important;
+  line-height:1.4 !important;
+  padding:6px 4px !important;
+  min-width:0 !important;
+  height:auto !important;
+  min-height:0 !important;
+  border-width:1px !important;
+  border-radius:4px !important;
+  box-sizing:border-box !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  white-space:nowrap !important;
+  flex:1 1 0 !important;
+  margin:0 !important;
+  font-weight:normal !important;
+}
+</style>
+<style id="V758_ALBUM1_FIX">
+/* V758: 앨범1(리스트) - 시계+버튼 한 행에서 삭제가 터지지 않게. 앨범2는 V757 그대로 */
+#diary-around-today-list:not(.gallery-mode) .sub-memo-item .item-top-row{
+  display:flex !important;
+  flex-wrap:nowrap !important;
+  align-items:center !important;
+  gap:6px !important;
+  min-width:0 !important;
+}
+#diary-around-today-list:not(.gallery-mode) .sub-memo-item .item-top-row .time-badge-inline{
+  flex-shrink:0 !important;
+  white-space:nowrap !important;
+}
+#diary-around-today-list:not(.gallery-mode) .sub-memo-item .item-top-row .memo-action-btns{
+  flex:1 1 auto !important;
+  width:auto !important;
+  max-width:none !important;
+  min-width:0 !important;
+  gap:4px !important;
+  margin:0 !important;
+  padding:0 !important;
+}
+#diary-around-today-list:not(.gallery-mode) .sub-memo-item .item-top-row .memo-action-btns .rep-btn,
+#diary-around-today-list:not(.gallery-mode) .sub-memo-item .item-top-row .memo-action-btns .edit-btn-hidden,
+#diary-around-today-list:not(.gallery-mode) .sub-memo-item .item-top-row .memo-action-btns .delete-btn,
+#diary-around-today-list:not(.gallery-mode) .sub-memo-item .item-top-row .memo-action-btns .edit-btn{
+  flex:1 1 0 !important;
+  min-width:0 !important;
+  font-size:12px !important;
+  line-height:1.4 !important;
+  padding:3px 2px !important;
+  border-width:1px !important;
+  border-radius:4px !important;
+  box-sizing:border-box !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  white-space:nowrap !important;
+  margin:0 !important;
+  font-weight:normal !important;
+}
+</style>
+<style id="V759_BTN_SLIM">
+/* V759: 버튼 박스 위아래 여백만 줄임 - 좌우는 그대로, 납작하게 */
+#diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .rep-btn,
+#diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .edit-btn-hidden,
+#diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .delete-btn,
+#diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .edit-btn{
+  padding:2px 4px !important;
+}
+#diary-around-today-list:not(.gallery-mode) .sub-memo-item .item-top-row .memo-action-btns .rep-btn,
+#diary-around-today-list:not(.gallery-mode) .sub-memo-item .item-top-row .memo-action-btns .edit-btn-hidden,
+#diary-around-today-list:not(.gallery-mode) .sub-memo-item .item-top-row .memo-action-btns .delete-btn,
+#diary-around-today-list:not(.gallery-mode) .sub-memo-item .item-top-row .memo-action-btns .edit-btn{
+  padding:2px 2px !important;
+}
+</style>
+<style id="V760_BTN_BORDER_UNIFY">
+/* V760: 수정/삭제 박스를 대표 박스와 동일하게 - 진한 파랑/빨강 테두리가 커 보이게 했음. 대표 노란배경은 건드리지 않음 */
+#diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .edit-btn-hidden,
+#diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .delete-btn,
+#diary-around-today-list.gallery-mode .sub-memo-item .memo-action-btns .edit-btn,
+#diary-around-today-list:not(.gallery-mode) .sub-memo-item .item-top-row .memo-action-btns .edit-btn-hidden,
+#diary-around-today-list:not(.gallery-mode) .sub-memo-item .item-top-row .memo-action-btns .delete-btn,
+#diary-around-today-list:not(.gallery-mode) .sub-memo-item .item-top-row .memo-action-btns .edit-btn,
+.sub-memo-item .memo-action-btns .edit-btn-hidden,
+.sub-memo-item .memo-action-btns .delete-btn,
+.sub-memo-item .memo-action-btns .edit-btn{
+  border:1px solid #ddd !important;
+  border-color:#ddd !important;
+  background:transparent !important;
+  background-color:transparent !important;
+}
+</style>
 </body>
 
 </html>
