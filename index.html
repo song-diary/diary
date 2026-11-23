@@ -10,7 +10,7 @@
 <!-- V682: 다운로드 막혀도 복사 창 즉시 표시 + 앱 안 마지막 백업 상태 표시 -->
 <!-- V681: 공유 안 뜰 때 복사 폴백 (file:// 공유 차단 대응) -->
 <!-- V680: 백업 공유 저장 + 초기화해도 마지막 백업 앱 안에 유지 + 파일 없이 복원 -->
-<!-- V761: 알림 정각으로 복구 (10분 전 -> 정각) --> <!-- V679: 알림음 2번 + 10분 전 알림 + 4분 늦게 울림 방지 -->
+<!-- V763: 어제의 한컷 팝업 3장 (어제/일주일 전/한 달 전 폴라로이드, 없는 슬롯 숨김, 0장이면 팝업 안 뜸) --> <!-- V761: 알림 정각으로 복구 (10분 전 -> 정각) --> <!-- V679: 알림음 2번 + 10분 전 알림 + 4분 늦게 울림 방지 -->
 <!-- V678: 메시지 테스트 전용 새 id 팝업 + html 직행 (V671 무한삭제 회피) -->
 <!-- V677: 메시지 테스트 캡처 가로채기 + 하루만 울림 체크 복원 -->
 <!-- V676: 메시지 테스트 팝업이 V671에 지워지던 것 + 설정창 뒤에 가려지던 것 수정 -->
@@ -27260,6 +27260,153 @@ setTimeout(function(){
   background-color:transparent !important;
 }
 </style>
+
+
+<style id="V763_YESTERDAY_POPUP_CSS">
+/* V763: 어제의 한컷 - 팝업 3장 (폴라로이드, 살짝 겹치게) */
+#yesterday-popup-overlay{ position:fixed; inset:0; z-index:999999; background:rgba(0,0,0,0.55);
+  display:flex; align-items:center; justify-content:center; padding:16px; }
+#yesterday-popup-card{ background:#fff; border-radius:16px; width:100%; max-width:520px; padding:18px 14px 14px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.3); }
+#yesterday-popup-card h3{ margin:0 0 4px; text-align:center; font-size:18px; color:#333; }
+#yesterday-popup-card .ys-sub{ text-align:center; font-size:12px; color:#999; margin-bottom:12px; }
+#yesterday-popup-row{ display:flex; gap:6px; justify-content:center; }
+.ys-polaroid{ position:relative; background:#fff; padding:7px 7px 6px; width:32%; max-width:170px;
+  box-shadow:0 3px 10px rgba(0,0,0,0.18); cursor:pointer; }
+.ys-polaroid:nth-child(1){ transform:rotate(-2deg); }
+.ys-polaroid:nth-child(2){ transform:rotate(0.6deg); margin-top:6px; }
+.ys-polaroid:nth-child(3){ transform:rotate(2deg); }
+.ys-polaroid img{ display:block; width:100%; height:110px; object-fit:cover; background:#f2f2f2; }
+.ys-polaroid .ys-cap{ text-align:center; padding-top:6px; }
+.ys-polaroid .ys-cap b{ display:block; font-size:12px; color:#333; }
+.ys-polaroid .ys-cap span{ display:block; font-size:11px; color:#999; margin-top:1px; }
+#yesterday-popup-btns{ display:flex; gap:8px; margin-top:14px; }
+#yesterday-popup-btns button{ flex:1; padding:11px; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; }
+#ys-btn-close{ border:1px solid #ddd; background:#fff; color:#666; }
+#ys-btn-hide{ border:none; background:#8e6b6b; color:#fff; }
+</style>
+<script id="V763_YESTERDAY_POPUP_JS">
+(function(){
+  if(window._v763_done) return; window._v763_done = true;
+  var SHOW_KEY='smartDiaryShowYesterdayShot', HIDE_KEY='smartDiaryYesterdayShotHiddenDate';
+  function todayStr(){ var n=new Date(); return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0'); }
+  function norm(d){ d=String(d||''); if(d.indexOf('T')>=0) d=d.slice(0,10); var m=d.match(/(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})/); if(m) return m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0'); return d; }
+  function getShow(){ try{ var v=localStorage.getItem(SHOW_KEY); if(v===null) return true; return v!=='false'; }catch(e){ return true; } }
+  window.getShowYesterdayShot=getShow;
+  window.onYesterdayShotToggle=function(){ var c=document.getElementById('settings-show-yesterday-shot'); if(!c) return; try{ localStorage.setItem(SHOW_KEY, c.checked?'true':'false'); }catch(e){} };
+  function syncToggle(){ var c=document.getElementById('settings-show-yesterday-shot'); if(c) c.checked=getShow(); }
+  function addSettingsToggle(){
+    try{
+      if(document.getElementById('settings-show-yesterday-shot')){ syncToggle(); return; }
+      var pin=document.getElementById('photo-pin-toggle-card'); if(!pin) return;
+      var div=document.createElement('div'); div.className='toggle-card'; div.id='yesterday-shot-toggle-card';
+      div.innerHTML='<span class="toggle-card-label">📷 어제의 한컷</span><label class="toggle-switch"><input type="checkbox" id="settings-show-yesterday-shot" onchange="onYesterdayShotToggle()"><span class="toggle-slider"></span></label>';
+      pin.parentNode.insertBefore(div, pin.nextSibling); syncToggle();
+    }catch(e){}
+  }
+  function getDiaries(){ try{ var a=JSON.parse(localStorage.getItem('smartDiaryList')||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+  function hasPhoto(it){ return !!(it && it.photo && String(it.photo).trim() && String(it.photo).toUpperCase()!=='NULL'); }
+  function repMap(){ try{ return JSON.parse(localStorage.getItem('v3_date_title_selected_map')||'{}'); }catch(e){ return {}; } }
+  function pickForDate(dateStr){
+    var all=getDiaries(), n=norm(dateStr);
+    var items=all.filter(function(it){ return norm(it.date)===n && hasPhoto(it); });
+    if(!items.length) return null;
+    var map=repMap(); var repId=map[n]||map[dateStr]||null;
+    if(repId){ for(var i=0;i<items.length;i++){ if(String(items[i].id)===String(repId)) return items[i]; } }
+    return items[0];
+  }
+  function dateLabel(dateStr){ var p=String(dateStr).split('-'); return Number(p[1])+'월 '+Number(p[2])+'일'; }
+  function shift(dateStr, days){ var d=new Date(Number(dateStr.slice(0,4)), Number(dateStr.slice(5,7))-1, Number(dateStr.slice(8,10))); d.setDate(d.getDate()+days); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  function photoSrc(key, cb){
+    if(!key){ cb(''); return; }
+    if(key.indexOf('data:')===0){ cb(key); return; }
+    try{ if(window.photoCache && window.photoCache[key]){ cb(window.photoCache[key]); return; } }catch(e){}
+    try{
+      var req=indexedDB.open('SmartDiaryPhotoDB');
+      req.onsuccess=function(){ try{
+        var db=req.result; var tx=db.transaction('photos','readonly'); var st=tx.objectStore('photos'); var g=st.get(key);
+        g.onsuccess=function(){ var rec=g.result; cb(rec && rec.data ? rec.data : ''); };
+        g.onerror=function(){ cb(''); };
+      }catch(e){ cb(''); } };
+      req.onerror=function(){ cb(''); };
+    }catch(e){ cb(''); }
+  }
+  function goToDate(dateStr){
+    try{
+      var pin=document.querySelector('.cal-photo-corner[data-date="'+dateStr+'"]');
+      var cell=pin ? pin.closest('.cal-cell') : null;
+      if(cell){ cell.click(); return; }
+      var cells=document.querySelectorAll('.cal-cell');
+      for(var i=0;i<cells.length;i++){ if(cells[i].getAttribute('data-date')===dateStr){ cells[i].click(); return; } }
+    }catch(e){}
+    try{ if(typeof window.showPhotosForDate==='function'){ window.showPhotosForDate(dateStr); return; } }catch(e){}
+    try{ var dp=document.getElementById('diary-panel'); if(dp) dp.scrollIntoView({behavior:'smooth'}); }catch(e){}
+  }
+  // 슬롯: 어제(0~3일 전 중 최근), 일주일 전(±3일 중 가장 가까운), 한 달 전(±7일 중 가장 가까운)
+  function findSlot(today, centerBack, spread, used){
+    var order=[0];
+    for(var k=1;k<=spread;k++){ order.push(-k); order.push(k); }
+    for(var i=0;i<order.length;i++){
+      var back=centerBack+order[i];
+      if(back<1) continue;
+      var cand=shift(today,-back);
+      if(used[cand]) continue;
+      var item=pickForDate(cand);
+      if(item) return {date:cand, item:item, back:back};
+    }
+    return null;
+  }
+  function buildSlots(){
+    var today=todayStr(), used={}, slots=[];
+    var s1=findSlot(today,1,2,used);
+    if(s1){ used[s1.date]=1; slots.push({title: s1.back===1 ? '어제의 한컷' : '최근의 한컷', date:s1.date, item:s1.item}); }
+    var s2=findSlot(today,7,3,used);
+    if(s2){ used[s2.date]=1; slots.push({title: s2.back===7 ? '일주일 전' : '일주일 전쯤', date:s2.date, item:s2.item}); }
+    var s3=findSlot(today,30,7,used);
+    if(s3){ used[s3.date]=1; slots.push({title: s3.back===30 ? '한 달 전' : '한 달 전쯤', date:s3.date, item:s3.item}); }
+    return slots;
+  }
+  var popupShown=false;
+  function showPopup(){
+    try{
+      if(popupShown) return;
+      if(!getShow()) return;
+      if(localStorage.getItem(HIDE_KEY)===todayStr()) return;
+      if(document.getElementById('yesterday-popup-overlay')) return;
+      var slots=buildSlots();
+      if(!slots.length) return; // 사진 하나도 없으면 팝업 자체를 안 띄움
+      popupShown=true;
+      var ov=document.createElement('div'); ov.id='yesterday-popup-overlay';
+      ov.innerHTML='<div id="yesterday-popup-card"><h3>📸 어제의 한컷</h3><div class="ys-sub">그때의 너, 기억나?</div><div id="yesterday-popup-row"></div><div id="yesterday-popup-btns"><button id="ys-btn-close">닫기</button><button id="ys-btn-hide">오늘은 안 보기</button></div></div>';
+      document.body.appendChild(ov);
+      var row=ov.querySelector('#yesterday-popup-row');
+      slots.forEach(function(sl){
+        var p=document.createElement('div'); p.className='ys-polaroid';
+        p.innerHTML='<img alt=""><div class="ys-cap"><b>'+sl.title+'</b><span>'+dateLabel(sl.date)+'</span></div>';
+        p.onclick=function(){ ov.remove(); goToDate(sl.date); };
+        row.appendChild(p);
+        var img=p.querySelector('img');
+        photoSrc(String(sl.item.photo), function(src){ if(src) img.src=src; else p.remove(); });
+      });
+      ov.querySelector('#ys-btn-close').onclick=function(){ ov.remove(); };
+      ov.querySelector('#ys-btn-hide').onclick=function(){ try{ localStorage.setItem(HIDE_KEY, todayStr()); }catch(e){} ov.remove(); };
+      ov.addEventListener('click', function(e){ if(e.target===ov) ov.remove(); });
+    }catch(e){ console.log('[V763] yesterday popup error', e); }
+  }
+  window.showYesterdayPopup=showPopup;
+  try{
+    var origOpen=window.openSettingsModal;
+    if(origOpen && !origOpen._v763wrapped){
+      var wOpen=function(){ var r=origOpen.apply(this, arguments); setTimeout(function(){ addSettingsToggle(); }, 100); return r; };
+      wOpen._v763wrapped=true; window.openSettingsModal=wOpen;
+    }
+  }catch(e){}
+  window.addEventListener('load', function(){ setTimeout(showPopup, 1000); setTimeout(function(){ addSettingsToggle(); }, 1200); });
+  console.log('[V763] 어제의 한컷 팝업 3장 준비');
+})();
+</script>
+
+
 </body>
 
 </html>
