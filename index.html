@@ -10,7 +10,7 @@
 <!-- V682: 다운로드 막혀도 복사 창 즉시 표시 + 앱 안 마지막 백업 상태 표시 -->
 <!-- V681: 공유 안 뜰 때 복사 폴백 (file:// 공유 차단 대응) -->
 <!-- V680: 백업 공유 저장 + 초기화해도 마지막 백업 앱 안에 유지 + 파일 없이 복원 -->
-<!-- V764: 팝업 사진 클릭 goToPastDiary로 이동 수정 + 알림 하루 1번만 (중복 팝업/소리 차단) --> <!-- V763: 어제의 한컷 팝업 3장 --> <!-- V761: 알림 정각으로 복구 (10분 전 -> 정각) --> <!-- V679: 알림음 2번 + 10분 전 알림 + 4분 늦게 울림 방지 -->
+<!-- V766: 팝업 문구 "사진은, 시간을 멈추는 버튼"으로 변경 --> <!-- V765: 팝업은 닫기/오늘안보기 눌렀을 때만 사라짐 --> <!-- V764: 팝업 사진 클릭 goToPastDiary로 이동 수정 + 알림 하루 1번만 --> <!-- V763: 어제의 한컷 팝업 3장 --> <!-- V761: 알림 정각으로 복구 (10분 전 -> 정각) --> <!-- V679: 알림음 2번 + 10분 전 알림 + 4분 늦게 울림 방지 -->
 <!-- V678: 메시지 테스트 전용 새 id 팝업 + html 직행 (V671 무한삭제 회피) -->
 <!-- V677: 메시지 테스트 캡처 가로채기 + 하루만 울림 체크 복원 -->
 <!-- V676: 메시지 테스트 팝업이 V671에 지워지던 것 + 설정창 뒤에 가려지던 것 수정 -->
@@ -27367,33 +27367,47 @@ setTimeout(function(){
     if(s3){ used[s3.date]=1; slots.push({title: s3.back===30 ? '한 달 전' : '한 달 전쯤', date:s3.date, item:s3.item}); }
     return slots;
   }
-  var popupShown=false;
+  var popupShown=false, wasAway=false, sessionClosed=false;
+  try{ sessionClosed = sessionStorage.getItem('v765_popup_closed_session')==='1'; }catch(e){}
   function showPopup(){
     try{
       if(popupShown) return;
+      if(sessionClosed) return; // 닫기 누른 건 이 앱 켠 동안은 다시 안 뜸
       if(!getShow()) return;
-      if(localStorage.getItem(HIDE_KEY)===todayStr()) return;
+      if(localStorage.getItem(HIDE_KEY)===todayStr()) return; // 오늘은 안 보기 누른 건 오늘 안 뜸
       if(document.getElementById('yesterday-popup-overlay')) return;
       var slots=buildSlots();
       if(!slots.length) return; // 사진 하나도 없으면 팝업 자체를 안 띄움
       popupShown=true;
       var ov=document.createElement('div'); ov.id='yesterday-popup-overlay';
-      ov.innerHTML='<div id="yesterday-popup-card"><h3>📸 어제의 한컷</h3><div class="ys-sub">그때의 너, 기억나?</div><div id="yesterday-popup-row"></div><div id="yesterday-popup-btns"><button id="ys-btn-close">닫기</button><button id="ys-btn-hide">오늘은 안 보기</button></div></div>';
+      ov.innerHTML='<div id="yesterday-popup-card"><h3>📸 어제의 한컷</h3><div class="ys-sub">사진은, 시간을 멈추는 버튼</div><div id="yesterday-popup-row"></div><div id="yesterday-popup-btns"><button id="ys-btn-close">닫기</button><button id="ys-btn-hide">오늘은 안 보기</button></div></div>';
       document.body.appendChild(ov);
       var row=ov.querySelector('#yesterday-popup-row');
       slots.forEach(function(sl){
         var p=document.createElement('div'); p.className='ys-polaroid';
         p.innerHTML='<img alt=""><div class="ys-cap"><b>'+sl.title+'</b><span>'+dateLabel(sl.date)+'</span></div>';
-        p.onclick=function(){ ov.remove(); goToDate(sl.date); };
+        // 사진 누르면: 팝업은 잠시 닫고 그날로 감. 닫기/안보기 누른 게 아니라서, 오늘로 돌아오면 팝업 다시 뜸
+        p.onclick=function(){ ov.remove(); popupShown=false; goToDate(sl.date); };
         row.appendChild(p);
         var img=p.querySelector('img');
         photoSrc(String(sl.item.photo), function(src){ if(src) img.src=src; else p.remove(); });
       });
-      ov.querySelector('#ys-btn-close').onclick=function(){ ov.remove(); };
-      ov.querySelector('#ys-btn-hide').onclick=function(){ try{ localStorage.setItem(HIDE_KEY, todayStr()); }catch(e){} ov.remove(); };
-      ov.addEventListener('click', function(e){ if(e.target===ov) ov.remove(); });
-    }catch(e){ console.log('[V763] yesterday popup error', e); }
+      ov.querySelector('#ys-btn-close').onclick=function(){ ov.remove(); popupShown=true; sessionClosed=true; try{ sessionStorage.setItem('v765_popup_closed_session','1'); }catch(e){} };
+      ov.querySelector('#ys-btn-hide').onclick=function(){ try{ localStorage.setItem(HIDE_KEY, todayStr()); }catch(e){} ov.remove(); popupShown=true; };
+      ov.addEventListener('click', function(e){ if(e.target===ov){ ov.remove(); popupShown=true; sessionClosed=true; try{ sessionStorage.setItem('v765_popup_closed_session','1'); }catch(e){} } });
+    }catch(e){ console.log('[V765] yesterday popup error', e); }
   }
+  // 다른 날짜 갔다가 오늘로 돌아오면 팝업 다시 띄우기 (닫기/안보기 누른 경우만 제외)
+  setInterval(function(){
+    try{
+      var sel=''; try{ sel=localStorage.getItem('smartDiarySelectedDate')||''; }catch(e){}
+      if(!sel) return;
+      if(sel!==todayStr()){ wasAway=true; return; }
+      if(wasAway && !popupShown && !sessionClosed && localStorage.getItem(HIDE_KEY)!==todayStr()){
+        wasAway=false; showPopup();
+      }
+    }catch(e){}
+  }, 1200);
   window.showYesterdayPopup=showPopup;
   try{
     var origOpen=window.openSettingsModal;
@@ -27403,7 +27417,7 @@ setTimeout(function(){
     }
   }catch(e){}
   window.addEventListener('load', function(){ setTimeout(showPopup, 1000); setTimeout(function(){ addSettingsToggle(); }, 1200); });
-  console.log('[V763] 어제의 한컷 팝업 3장 준비');
+  console.log('[V765] 어제의 한컷 팝업 3장 준비 - 닫기/안보기 눌렀을 때만 사라짐');
 })();
 </script>
 
