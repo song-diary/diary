@@ -10,7 +10,7 @@
 <!-- V682: 다운로드 막혀도 복사 창 즉시 표시 + 앱 안 마지막 백업 상태 표시 -->
 <!-- V681: 공유 안 뜰 때 복사 폴백 (file:// 공유 차단 대응) -->
 <!-- V680: 백업 공유 저장 + 초기화해도 마지막 백업 앱 안에 유지 + 파일 없이 복원 -->
-<!-- V763: 어제의 한컷 팝업 3장 (어제/일주일 전/한 달 전 폴라로이드, 없는 슬롯 숨김, 0장이면 팝업 안 뜸) --> <!-- V761: 알림 정각으로 복구 (10분 전 -> 정각) --> <!-- V679: 알림음 2번 + 10분 전 알림 + 4분 늦게 울림 방지 -->
+<!-- V764: 팝업 사진 클릭 goToPastDiary로 이동 수정 + 알림 하루 1번만 (중복 팝업/소리 차단) --> <!-- V763: 어제의 한컷 팝업 3장 --> <!-- V761: 알림 정각으로 복구 (10분 전 -> 정각) --> <!-- V679: 알림음 2번 + 10분 전 알림 + 4분 늦게 울림 방지 -->
 <!-- V678: 메시지 테스트 전용 새 id 팝업 + html 직행 (V671 무한삭제 회피) -->
 <!-- V677: 메시지 테스트 캡처 가로채기 + 하루만 울림 체크 복원 -->
 <!-- V676: 메시지 테스트 팝업이 V671에 지워지던 것 + 설정창 뒤에 가려지던 것 수정 -->
@@ -27332,6 +27332,7 @@ setTimeout(function(){
     }catch(e){ cb(''); }
   }
   function goToDate(dateStr){
+    try{ if(typeof window.goToPastDiary==='function'){ window.goToPastDiary(dateStr); return; } }catch(e){}
     try{
       var pin=document.querySelector('.cal-photo-corner[data-date="'+dateStr+'"]');
       var cell=pin ? pin.closest('.cal-cell') : null;
@@ -27406,6 +27407,55 @@ setTimeout(function(){
 })();
 </script>
 
+
+
+<script id="V764_ALARM_ONCE_JS">
+(function(){
+  if(window._v764_done) return; window._v764_done = true;
+  // V764: 알림은 하루 1번만. 안드로이드가 울리면 앱에서는 확인 팝업 1번만.
+  function todayStr(){ var n=new Date(); return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0'); }
+  function claimKey(){ return 'v764_daily_popup_claimed_'+todayStr(); }
+  function isClaimed(){ try{ return localStorage.getItem(claimKey())==='1'; }catch(e){ return false; } }
+  function setClaim(){ try{ localStorage.setItem(claimKey(),'1'); }catch(e){} }
+  function handlePopup(el){
+    if(!el || el.id!=='daily-alarm-popup') return;
+    if(isClaimed()){ try{ el.remove(); }catch(e){} return; } // 오늘 이미 1번 울림 -> 중복 팝업은 즉시 제거
+    setClaim(); // 첫 팝업만 살림
+  }
+  try{
+    var obs=new MutationObserver(function(muts){
+      muts.forEach(function(m){
+        m.addedNodes.forEach(function(node){
+          if(!node || node.nodeType!==1) return;
+          if(node.id==='daily-alarm-popup') handlePopup(node);
+          else if(node.querySelectorAll){ node.querySelectorAll('#daily-alarm-popup').forEach(handlePopup); }
+        });
+      });
+    });
+    obs.observe(document.documentElement, {childList:true, subtree:true});
+  }catch(e){}
+  // 이미 떠 있는 팝업이 있으면 첫 1개만 남김
+  window.addEventListener('load', function(){
+    setTimeout(function(){
+      var pops=document.querySelectorAll('#daily-alarm-popup');
+      for(var i=0;i<pops.length;i++){ if(i===0){ if(!isClaimed()) setClaim(); } else { try{ pops[i].remove(); }catch(e){} } }
+    }, 300);
+  });
+  // 알림 소리도 하루 1번만: 첫 1번만 통과, 나머지는 차단 (설정 소리 테스트는 playSound라서 안 건드림)
+  try{
+    var prevSound=window.playAlarmSound;
+    window.playAlarmSound=function(){
+      try{
+        var sk='v764_daily_sound_'+todayStr();
+        if(localStorage.getItem(sk)==='1') return; // 오늘 이미 1번 울림
+        localStorage.setItem(sk,'1');
+      }catch(e){}
+      if(typeof prevSound==='function') return prevSound.apply(this, arguments);
+    };
+  }catch(e){}
+  console.log('[V764] 알림 단일화 - 하루 1번만');
+})();
+</script>
 
 </body>
 
