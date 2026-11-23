@@ -10,7 +10,7 @@
 <!-- V682: 다운로드 막혀도 복사 창 즉시 표시 + 앱 안 마지막 백업 상태 표시 -->
 <!-- V681: 공유 안 뜰 때 복사 폴백 (file:// 공유 차단 대응) -->
 <!-- V680: 백업 공유 저장 + 초기화해도 마지막 백업 앱 안에 유지 + 파일 없이 복원 -->
-<!-- V766: 팝업 문구 "사진은, 시간을 멈추는 버튼"으로 변경 --> <!-- V765: 팝업은 닫기/오늘안보기 눌렀을 때만 사라짐 --> <!-- V764: 팝업 사진 클릭 goToPastDiary로 이동 수정 + 알림 하루 1번만 --> <!-- V763: 어제의 한컷 팝업 3장 --> <!-- V761: 알림 정각으로 복구 (10분 전 -> 정각) --> <!-- V679: 알림음 2번 + 10분 전 알림 + 4분 늦게 울림 방지 -->
+<!-- V773: 어제의 한컷 버튼 크기 = 타임캡슐 배너 (높이 28px, 글자 11px, 둥글기 5px) --> <!-- V772: 설정 토글 끄는 순간 버튼 즉시 사라짐 --> <!-- V771: 설정 끄면 버튼+팝업 둘 다 안 뜸 --> <!-- V770: 맨 처음 한 번만 자동 팝업 --> <!-- V769: 팝업 자동 실행 삭제, 달력 아래 버튼으로만 열기 --> <!-- V768: 팝업 사진 누르면 달력으로 스크롤 + 이동 확인 재시도, 오늘날짜 누르면 일기로 점프 --> <!-- V767: APK 닫기 없음 대응 - 닫기=이번만 닫기(돌아오면 다시 뜸), 오늘안보기=오늘 종일 안 뜸 --> <!-- V766: 팝업 문구 "사진은, 시간을 멈추는 버튼" --> <!-- V765: 팝업은 닫기/오늘안보기 눌렀을 때만 사라짐 --> <!-- V764: 팝업 사진 클릭 goToPastDiary로 이동 수정 + 알림 하루 1번만 --> <!-- V763: 어제의 한컷 팝업 3장 --> <!-- V761: 알림 정각으로 복구 (10분 전 -> 정각) --> <!-- V679: 알림음 2번 + 10분 전 알림 + 4분 늦게 울림 방지 -->
 <!-- V678: 메시지 테스트 전용 새 id 팝업 + html 직행 (V671 무한삭제 회피) -->
 <!-- V677: 메시지 테스트 캡처 가로채기 + 하루만 울림 체크 복원 -->
 <!-- V676: 메시지 테스트 팝업이 V671에 지워지던 것 + 설정창 뒤에 가려지던 것 수정 -->
@@ -27288,7 +27288,7 @@ setTimeout(function(){
 <script id="V763_YESTERDAY_POPUP_JS">
 (function(){
   if(window._v763_done) return; window._v763_done = true;
-  var SHOW_KEY='smartDiaryShowYesterdayShot', HIDE_KEY='smartDiaryYesterdayShotHiddenDate';
+  var SHOW_KEY='smartDiaryShowYesterdayShot', HIDE_KEY='smartDiaryYesterdayShotHiddenDate', FIRST_KEY='smartDiaryYesterdayShotFirstShown';
   function todayStr(){ var n=new Date(); return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0'); }
   function norm(d){ d=String(d||''); if(d.indexOf('T')>=0) d=d.slice(0,10); var m=d.match(/(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})/); if(m) return m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0'); return d; }
   function getShow(){ try{ var v=localStorage.getItem(SHOW_KEY); if(v===null) return true; return v!=='false'; }catch(e){ return true; } }
@@ -27367,47 +27367,35 @@ setTimeout(function(){
     if(s3){ used[s3.date]=1; slots.push({title: s3.back===30 ? '한 달 전' : '한 달 전쯤', date:s3.date, item:s3.item}); }
     return slots;
   }
-  var popupShown=false, wasAway=false, sessionClosed=false;
-  try{ sessionClosed = sessionStorage.getItem('v765_popup_closed_session')==='1'; }catch(e){}
-  function showPopup(){
+  var popupShown=false;
+  function showPopup(force){
     try{
-      if(popupShown) return;
-      if(sessionClosed) return; // 닫기 누른 건 이 앱 켠 동안은 다시 안 뜸
-      if(!getShow()) return;
-      if(localStorage.getItem(HIDE_KEY)===todayStr()) return; // 오늘은 안 보기 누른 건 오늘 안 뜸
-      if(document.getElementById('yesterday-popup-overlay')) return;
+      if(document.getElementById('yesterday-popup-overlay')) return true; // 이미 열려 있음
+      if(!getShow()) return true; // V771: 설정에서 끄면 버튼으로 열 때도 팝업 안 뜸
+      if(!force){
+        if(popupShown) return true;
+        if(localStorage.getItem(HIDE_KEY)===todayStr()) return true;
+      }
       var slots=buildSlots();
-      if(!slots.length) return; // 사진 하나도 없으면 팝업 자체를 안 띄움
+      if(!slots.length) return false; // 사진 하나도 없으면 팝업 자체를 안 띄움
       popupShown=true;
       var ov=document.createElement('div'); ov.id='yesterday-popup-overlay';
-      ov.innerHTML='<div id="yesterday-popup-card"><h3>📸 어제의 한컷</h3><div class="ys-sub">사진은, 시간을 멈추는 버튼</div><div id="yesterday-popup-row"></div><div id="yesterday-popup-btns"><button id="ys-btn-close">닫기</button><button id="ys-btn-hide">오늘은 안 보기</button></div></div>';
+      ov.innerHTML='<div id="yesterday-popup-card"><h3>📸 어제의 한컷</h3><div class="ys-sub">사진은, 시간을 멈추는 버튼</div><div id="yesterday-popup-row"></div><div id="yesterday-popup-btns"><button id="ys-btn-close">닫기</button></div></div>';
       document.body.appendChild(ov);
       var row=ov.querySelector('#yesterday-popup-row');
       slots.forEach(function(sl){
         var p=document.createElement('div'); p.className='ys-polaroid';
         p.innerHTML='<img alt=""><div class="ys-cap"><b>'+sl.title+'</b><span>'+dateLabel(sl.date)+'</span></div>';
-        // 사진 누르면: 팝업은 잠시 닫고 그날로 감. 닫기/안보기 누른 게 아니라서, 오늘로 돌아오면 팝업 다시 뜸
-        p.onclick=function(){ ov.remove(); popupShown=false; goToDate(sl.date); };
+        // 사진 누르면 팝업 닫고 그날로 감
+        p.onclick=function(){ ov.remove(); popupShown=false; if(typeof window.v768GoToDate==='function'){ window.v768GoToDate(sl.date); } else { goToDate(sl.date); } };
         row.appendChild(p);
         var img=p.querySelector('img');
         photoSrc(String(sl.item.photo), function(src){ if(src) img.src=src; else p.remove(); });
       });
-      ov.querySelector('#ys-btn-close').onclick=function(){ ov.remove(); popupShown=true; sessionClosed=true; try{ sessionStorage.setItem('v765_popup_closed_session','1'); }catch(e){} };
-      ov.querySelector('#ys-btn-hide').onclick=function(){ try{ localStorage.setItem(HIDE_KEY, todayStr()); }catch(e){} ov.remove(); popupShown=true; };
-      ov.addEventListener('click', function(e){ if(e.target===ov){ ov.remove(); popupShown=true; sessionClosed=true; try{ sessionStorage.setItem('v765_popup_closed_session','1'); }catch(e){} } });
+      ov.querySelector('#ys-btn-close').onclick=function(){ ov.remove(); popupShown=false; }; // 닫기 = 그냥 닫기. 버튼 누르면 또 열림
+      ov.addEventListener('click', function(e){ if(e.target===ov){ ov.remove(); popupShown=false; } }); // 바깥 눌러도 닫기와 동일
     }catch(e){ console.log('[V765] yesterday popup error', e); }
   }
-  // 다른 날짜 갔다가 오늘로 돌아오면 팝업 다시 띄우기 (닫기/안보기 누른 경우만 제외)
-  setInterval(function(){
-    try{
-      var sel=''; try{ sel=localStorage.getItem('smartDiarySelectedDate')||''; }catch(e){}
-      if(!sel) return;
-      if(sel!==todayStr()){ wasAway=true; return; }
-      if(wasAway && !popupShown && !sessionClosed && localStorage.getItem(HIDE_KEY)!==todayStr()){
-        wasAway=false; showPopup();
-      }
-    }catch(e){}
-  }, 1200);
   window.showYesterdayPopup=showPopup;
   try{
     var origOpen=window.openSettingsModal;
@@ -27416,8 +27404,19 @@ setTimeout(function(){
       wOpen._v763wrapped=true; window.openSettingsModal=wOpen;
     }
   }catch(e){}
-  window.addEventListener('load', function(){ setTimeout(showPopup, 1000); setTimeout(function(){ addSettingsToggle(); }, 1200); });
-  console.log('[V765] 어제의 한컷 팝업 3장 준비 - 닫기/안보기 눌렀을 때만 사라짐');
+  window.addEventListener('load', function(){
+    setTimeout(function(){ addSettingsToggle(); }, 1200);
+    // V770: 맨 처음 한 번만 자동 팝업. 그 다음부터는 버튼으로만 열림
+    setTimeout(function(){
+      try{
+        if(!getShow()) return;
+        if(localStorage.getItem(FIRST_KEY)==='1') return; // 이미 한 번 뜬 적 있음
+        var r=showPopup();
+        if(r===true){ try{ localStorage.setItem(FIRST_KEY,'1'); }catch(e){} } // 사진이 있어서 실제로 떴을 때만 '처음'으로 침. 사진 없으면 다음 실행 때 다시 시도
+      }catch(e){}
+    }, 1000);
+  });
+  console.log('[V773] 어제의 한컷 버튼 = 타임캡슐 크기 (28px/11px)');
 })();
 </script>
 
@@ -27471,6 +27470,139 @@ setTimeout(function(){
 })();
 </script>
 
+
+<script id="V768_NAV_FIX">
+// V768: 팝업 사진 누르면 달력이 움직인 게 보이게 (맨 위로 스크롤) + 이동 확인 후 재시도
+//      오늘 날짜(선택된 날짜) 누르면 일기 쪽으로 점프해서 눌린 게 보이게
+window.v768GoToDate = function(dateStr){
+  try{
+    if(typeof window.goToPastDiary==='function'){ window.goToPastDiary(dateStr); }
+    else if(typeof goToDate==='function'){ goToDate(dateStr); }
+  }catch(e){ console.log('[V768] goToPastDiary err', e); }
+  try{ localStorage.setItem('smartDiarySelectedDate', dateStr); }catch(e){}
+  // 달력이 바뀐 게 보이게 맨 위로 스크롤 (오늘로가기가 되던 이유가 이거였음)
+  try{
+    var cal = document.getElementById('calendar-card') || document.getElementById('calendar') || document.querySelector('.calendar-card');
+    if(cal){ cal.scrollIntoView({behavior:'smooth', block:'start'}); }
+    else { window.scrollTo({top:0, behavior:'smooth'}); }
+  }catch(e){ try{ window.scrollTo({top:0, behavior:'smooth'}); }catch(e2){} }
+  // 이동 확인: 400ms 뒤에도 선택 날짜가 안 바뀌었으면 직접 다시 이동
+  setTimeout(function(){
+    try{
+      var sel=''; try{ sel=localStorage.getItem('smartDiarySelectedDate')||''; }catch(e){}
+      if(sel===dateStr) return;
+      console.log('[V768] 이동 확인 실패, 재시도', dateStr);
+      try{ window.selectedViewDate=dateStr; }catch(e){}
+      try{ var d=new Date(dateStr); window.calYear=d.getFullYear(); window.calMonth=d.getMonth(); }catch(e){}
+      try{ if(typeof renderCalendar==='function') renderCalendar(); }catch(e){}
+      try{ if(typeof renderDiaryAroundToday==='function') renderDiaryAroundToday(); }catch(e){}
+      try{ window.scrollTo({top:0, behavior:'smooth'}); }catch(e){}
+    }catch(e){}
+  }, 400);
+};
+// 달력에서 이미 선택된 날짜(오늘 포함) 눌러도 반응이 보이게: 일기 쪽으로 점프
+document.addEventListener('click', function(e){
+  try{
+    var cell = e.target.closest ? e.target.closest('.cal-cell') : null;
+    if(!cell) return;
+    // 사진 코너(📌) 눌렀으면 여기서 건드리지 않음
+    if(e.target.closest && e.target.closest('.cal-photo-corner')) return;
+    var wasSelected = cell.classList.contains('selected-date') || cell.classList.contains('today-date');
+    if(!wasSelected) return;
+    setTimeout(function(){
+      try{
+        var panel = document.getElementById('diary-panel') || document.getElementById('diary-around-today-list') || document.getElementById('diary-around-today');
+        if(panel){ panel.scrollIntoView({behavior:'smooth', block:'start'}); }
+      }catch(e2){}
+    }, 220);
+  }catch(e){}
+});
+console.log('[V768] 팝업 이동 스크롤 + 오늘날짜 탭 점프 준비');
+</script>
+
+<script id="V769_YESTERDAY_BTN">
+// V769: 어제의 한컷 팝업은 저절로 안 뜸. 달력 아래 버튼을 눌러야 열림 (APK엔 닫기가 없어 닫기/안보기 구분이 무의미했음)
+(function(){
+  if(window._v769_btn_done) return; window._v769_btn_done=true;
+  function ensureBtn(){
+    try{
+      var on=true; try{ if(typeof window.getShowYesterdayShot==='function') on=window.getShowYesterdayShot(); }catch(e){}
+      var old=document.getElementById('v769-yesterday-btn');
+      if(!on){ if(old) old.remove(); return; }
+      if(old) return;
+      var cal=document.getElementById('calendar-card') || document.querySelector('.calendar-card');
+      if(!cal) return;
+      var b=document.createElement('button'); b.id='v769-yesterday-btn'; b.type='button';
+      b.textContent='📸 어제의 한컷 보기';
+      b.style.cssText='display:flex;align-items:center;justify-content:center;width:100%;height:28px;min-height:28px;margin:0 0 6px 0;padding:6px 12px;border:none;border-radius:5px;background:linear-gradient(90deg,#7c6cff 0%,#a78bfa 50%,#f472b6 100%);color:#fff;font-size:11px;font-weight:700;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;box-sizing:border-box;box-shadow:0 3px 10px rgba(124,108,255,.25);'; // V773: 타임캡슐 배너와 동일 크기 (높이 28px, 글자 11px, 둥글기 5px)
+      b.onclick=function(){
+        try{
+          var r=(typeof window.showYesterdayPopup==='function') ? window.showYesterdayPopup(true) : undefined;
+          if(r===false) alert('아직 보여줄 사진이 없어요 📷');
+        }catch(e){ alert('사진을 불러오지 못했어요'); }
+      };
+      cal.insertAdjacentElement('afterend', b);
+    }catch(e){}
+  }
+  ensureBtn();
+  setInterval(ensureBtn, 2000);
+  window.addEventListener('load', function(){ setTimeout(ensureBtn, 800); });
+})();
+</script>
+
+<script id="V772_YESTERDAY_BTN_SYNC">
+// V772: 설정 토글 끄는 순간 버튼이 바로 사라지게 (2초 폴링 대기 없음)
+(function(){
+  if(window._v772_done) return; window._v772_done=true;
+  function refreshBtn(){
+    try{
+      var on=true; try{ if(typeof window.getShowYesterdayShot==='function') on=window.getShowYesterdayShot(); }catch(e){}
+      var old=document.getElementById('v769-yesterday-btn');
+      if(!on){ if(old) old.remove(); return; } // 끄면 버튼 즉시 제거
+      if(old) return;
+      var cal=document.getElementById('calendar-card') || document.querySelector('.calendar-card');
+      if(!cal) return;
+      var b=document.createElement('button'); b.id='v769-yesterday-btn'; b.type='button';
+      b.textContent='📸 어제의 한컷 보기';
+      b.style.cssText='display:flex;align-items:center;justify-content:center;width:100%;height:28px;min-height:28px;margin:0 0 6px 0;padding:6px 12px;border:none;border-radius:5px;background:linear-gradient(90deg,#7c6cff 0%,#a78bfa 50%,#f472b6 100%);color:#fff;font-size:11px;font-weight:700;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;box-sizing:border-box;box-shadow:0 3px 10px rgba(124,108,255,.25);'; // V773: 타임캡슐 배너와 동일 크기 (높이 28px, 글자 11px, 둥글기 5px)
+      b.onclick=function(){
+        try{
+          var r=(typeof window.showYesterdayPopup==='function') ? window.showYesterdayPopup(true) : undefined;
+          if(r===false) alert('아직 보여줄 사진이 없어요 📷');
+        }catch(e){ alert('사진을 불러오지 못했어요'); }
+      };
+      cal.insertAdjacentElement('afterend', b);
+    }catch(e){}
+  }
+  // 토글 바뀌는 순간 바로 반영 (change 이벤트)
+  document.addEventListener('change', function(e){
+    try{ if(e.target && e.target.id==='settings-show-yesterday-shot'){ setTimeout(refreshBtn, 30); } }catch(err){}
+  });
+  // 토글 핸들러도 래핑 (change가 안 잡혀도 바로 반영)
+  try{
+    var orig=window.onYesterdayShotToggle;
+    if(orig && !orig._v772){
+      var w=function(){ var r=orig.apply(this, arguments); setTimeout(refreshBtn, 30); return r; };
+      w._v772=true; window.onYesterdayShotToggle=w;
+    }
+  }catch(e){}
+  window.v772RefreshYesterdayBtn=refreshBtn;
+  console.log('[V772] 설정 토글-버튼 즉시 동기화 준비');
+})();
+</script>
+
+<style id="V773_YESTERDAY_BTN_SIZE">
+/* V773: 어제의 한컷 버튼 = 타임캡슐 배너와 동일 크기 */
+#v769-yesterday-btn{
+  height:28px !important; min-height:28px !important;
+  padding:6px 12px !important; margin:0 0 6px 0 !important;
+  border-radius:5px !important; font-size:11px !important;
+  font-weight:700 !important; line-height:1 !important;
+  box-sizing:border-box !important;
+  display:flex !important; align-items:center !important; justify-content:center !important;
+  white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important;
+}
+</style>
 </body>
 
 </html>
