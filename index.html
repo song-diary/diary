@@ -10,7 +10,7 @@
 <!-- V682: 다운로드 막혀도 복사 창 즉시 표시 + 앱 안 마지막 백업 상태 표시 -->
 <!-- V681: 공유 안 뜰 때 복사 폴백 (file:// 공유 차단 대응) -->
 <!-- V680: 백업 공유 저장 + 초기화해도 마지막 백업 앱 안에 유지 + 파일 없이 복원 -->
-<!-- V773: 어제의 한컷 버튼 크기 = 타임캡슐 배너 (높이 28px, 글자 11px, 둥글기 5px) --> <!-- V772: 설정 토글 끄는 순간 버튼 즉시 사라짐 --> <!-- V771: 설정 끄면 버튼+팝업 둘 다 안 뜸 --> <!-- V770: 맨 처음 한 번만 자동 팝업 --> <!-- V769: 팝업 자동 실행 삭제, 달력 아래 버튼으로만 열기 --> <!-- V768: 팝업 사진 누르면 달력으로 스크롤 + 이동 확인 재시도, 오늘날짜 누르면 일기로 점프 --> <!-- V767: APK 닫기 없음 대응 - 닫기=이번만 닫기(돌아오면 다시 뜸), 오늘안보기=오늘 종일 안 뜸 --> <!-- V766: 팝업 문구 "사진은, 시간을 멈추는 버튼" --> <!-- V765: 팝업은 닫기/오늘안보기 눌렀을 때만 사라짐 --> <!-- V764: 팝업 사진 클릭 goToPastDiary로 이동 수정 + 알림 하루 1번만 --> <!-- V763: 어제의 한컷 팝업 3장 --> <!-- V761: 알림 정각으로 복구 (10분 전 -> 정각) --> <!-- V679: 알림음 2번 + 10분 전 알림 + 4분 늦게 울림 방지 -->
+<!-- V774: 어제의 한컷 팝업에 오늘 날짜 기준 줄 추가 (슬로건 아래) --> <!-- V773: 어제의 한컷 버튼 크기 = 타임캡슐 배너 --> <!-- V772: 설정 토글 끄는 순간 버튼 즉시 사라짐 --> <!-- V771: 설정 끄면 버튼+팝업 둘 다 안 뜸 --> <!-- V770: 맨 처음 한 번만 자동 팝업 --> <!-- V769: 팝업 자동 실행 삭제, 달력 아래 버튼으로만 열기 --> <!-- V768: 팝업 사진 누르면 달력으로 스크롤 + 이동 확인 재시도, 오늘날짜 누르면 일기로 점프 --> <!-- V767: APK 닫기 없음 대응 - 닫기=이번만 닫기(돌아오면 다시 뜸), 오늘안보기=오늘 종일 안 뜸 --> <!-- V766: 팝업 문구 "사진은, 시간을 멈추는 버튼" --> <!-- V765: 팝업은 닫기/오늘안보기 눌렀을 때만 사라짐 --> <!-- V764: 팝업 사진 클릭 goToPastDiary로 이동 수정 + 알림 하루 1번만 --> <!-- V763: 어제의 한컷 팝업 3장 --> <!-- V761: 알림 정각으로 복구 (10분 전 -> 정각) --> <!-- V679: 알림음 2번 + 10분 전 알림 + 4분 늦게 울림 방지 -->
 <!-- V678: 메시지 테스트 전용 새 id 팝업 + html 직행 (V671 무한삭제 회피) -->
 <!-- V677: 메시지 테스트 캡처 가로채기 + 하루만 울림 체크 복원 -->
 <!-- V676: 메시지 테스트 팝업이 V671에 지워지던 것 + 설정창 뒤에 가려지던 것 수정 -->
@@ -27316,6 +27316,7 @@ setTimeout(function(){
     return items[0];
   }
   function dateLabel(dateStr){ var p=String(dateStr).split('-'); return Number(p[1])+'월 '+Number(p[2])+'일'; }
+  function todayLabel(){ var n=new Date(); var w=['일','월','화','수','목','금','토'][n.getDay()]; return n.getFullYear()+'년 '+(n.getMonth()+1)+'월 '+n.getDate()+'일 ('+w+')'; } // V774: 오늘 날짜 기준 표시용
   function shift(dateStr, days){ var d=new Date(Number(dateStr.slice(0,4)), Number(dateStr.slice(5,7))-1, Number(dateStr.slice(8,10))); d.setDate(d.getDate()+days); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
   function photoSrc(key, cb){
     if(!key){ cb(''); return; }
@@ -27380,7 +27381,7 @@ setTimeout(function(){
       if(!slots.length) return false; // 사진 하나도 없으면 팝업 자체를 안 띄움
       popupShown=true;
       var ov=document.createElement('div'); ov.id='yesterday-popup-overlay';
-      ov.innerHTML='<div id="yesterday-popup-card"><h3>📸 어제의 한컷</h3><div class="ys-sub">사진은, 시간을 멈추는 버튼</div><div id="yesterday-popup-row"></div><div id="yesterday-popup-btns"><button id="ys-btn-close">닫기</button></div></div>';
+      ov.innerHTML='<div id="yesterday-popup-card"><h3>📸 어제의 한컷</h3><div class="ys-sub">사진은, 시간을 멈추는 버튼</div><div id="ys-today-ref">오늘 · '+todayLabel()+' 기준</div><div id="yesterday-popup-row"></div><div id="yesterday-popup-btns"><button id="ys-btn-close">닫기</button></div></div>';
       document.body.appendChild(ov);
       var row=ov.querySelector('#yesterday-popup-row');
       slots.forEach(function(sl){
@@ -27601,6 +27602,15 @@ console.log('[V768] 팝업 이동 스크롤 + 오늘날짜 탭 점프 준비');
   box-sizing:border-box !important;
   display:flex !important; align-items:center !important; justify-content:center !important;
   white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important;
+}
+</style>
+
+<style id="V774_YESTERDAY_TODAY_REF">
+/* V774: 어제의 한컷 팝업 - 오늘 날짜 기준 줄 (슬로건 아래, 사진 위) */
+#ys-today-ref{
+  text-align:center; font-size:11px; font-weight:700; color:#6d5fd6;
+  background:#f0ebff; border-radius:20px; padding:4px 12px;
+  margin:8px auto 10px auto; width:fit-content; max-width:100%;
 }
 </style>
 </body>
